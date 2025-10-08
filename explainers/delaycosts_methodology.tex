@@ -1,0 +1,112 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+
+\geometry{margin=1in}
+
+\title{Delay Costs Methodology\\Comprehensive Transmission Cost Calculator}
+\author{Andrew Igdal}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This document describes the methodology for calculating delay costs in transmission line construction projects. Delay costs represent the additional expenses incurred when project timelines are extended beyond the original schedule.
+
+\section{Methodology}
+
+\subsection{Delay Cost Categories}
+The delay cost calculation considers the following categories of costs that accumulate during project delays:
+
+\begin{enumerate}
+    \item \textbf{Legal Delay Costs}: Legal fees and litigation costs associated with delays
+    \item \textbf{Administrative Overhead Delay Costs}: Administrative expenses during extended project timeline
+    \item \textbf{Engineering Delay Costs}: Additional engineering work and redesign costs
+    \item \textbf{Permitting and Regulatory Compliance Delay Costs}: Extended permitting and compliance expenses
+    \item \textbf{Material and Equipment Delay Costs}: Storage, depreciation, and replacement costs for delayed materials
+    \item \textbf{Labor Delay Costs}: Extended labor costs and workforce management expenses
+    \item \textbf{Public Relations Delay Costs}: Communication and stakeholder management during delays
+    \item \textbf{Environmental Delay Costs}: Additional environmental monitoring and mitigation costs
+    \item \textbf{Miscellaneous Delay Costs}: Other unforeseen costs associated with project delays
+\end{enumerate}
+
+\subsection{Mathematical Formulation}
+
+The total annual delay costs are calculated as:
+\begin{equation}
+C_{delay,total} = \sum_{i=1}^{9} C_{delay,i}
+\end{equation}
+
+Where $C_{delay,i}$ represents the annual cost for delay category $i$.
+
+The present value of total delay costs over the delay timeline is calculated as:
+\begin{equation}
+PV_{delay} = \sum_{t=1}^{T} \frac{C_{delay,total}}{(1 + r)^t}
+\end{equation}
+
+Where:
+\begin{itemize}
+    \item $T$ = Delay timeline in years
+    \item $r$ = Firm interest rate (decimal)
+    \item $t$ = Time period (year)
+\end{itemize}
+
+\section{Input Parameters}
+
+\begin{table}[H]
+\centering
+\caption{Required Input Parameters}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Description} \\
+\midrule
+Delay Timeline & Duration of project delay in years \\
+Legal Delay Costs & Annual legal costs during delay (USD) \\
+Administrative Overhead Delay Costs & Annual administrative costs during delay (USD) \\
+Engineering Delay Costs & Annual engineering costs during delay (USD) \\
+Permitting Delay Costs & Annual permitting costs during delay (USD) \\
+Material and Equipment Delay Costs & Annual material/equipment costs during delay (USD) \\
+Labor Delay Costs & Annual labor costs during delay (USD) \\
+Public Relations Delay Costs & Annual PR costs during delay (USD) \\
+Environmental Delay Costs & Annual environmental costs during delay (USD) \\
+Miscellaneous Delay Costs & Annual miscellaneous costs during delay (USD) \\
+Firm Interest Rate & Discount rate for present value calculation (decimal) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Outputs}
+
+The script provides the following outputs:
+\begin{itemize}
+    \item Total annual delay costs
+    \item Present value of total delay costs over the project timeline
+\end{itemize}
+
+\section{Assumptions}
+
+\begin{itemize}
+    \item Delay costs are incurred annually throughout the delay period
+    \item The firm interest rate remains constant over the delay timeline
+    \item All costs are expressed in nominal USD
+    \item Delay costs are additive across all categories
+\end{itemize}
+
+\section{Usage Notes}
+
+\begin{itemize}
+    \item Input all cost values in USD
+    \item Interest rate should be entered as a decimal (e.g., 0.05 for 5\%)
+    \item Delay timeline should be entered in years
+    \item All delay cost categories should be entered as annual costs
+\end{itemize}
+
+\end{document}
