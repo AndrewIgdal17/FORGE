@@ -6,34 +6,40 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import yaml
 
-# Interest rate inputs
-firm_interest_rate = float(input("Interest rate in decimal: "))
+# Load configuration from YAML file
+config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'project_config.yaml')
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
 
-# Project lifetime input
-project_lifetime = int(input("Project lifetime in years: "))
+# Extract financial parameters
+firm_interest_rate = config['financial']['firm_interest_rate']
+project_lifetime = config['financial']['project_lifetime']
 
-# Terrain type and miles inputs
-forested_miles = float(input("Forested terrain miles: "))
-scrubbed_flat_miles = float(input("Scrubbed/Flat terrain miles: "))
-wetland_miles = float(input("Wetland terrain miles: "))
-farmland_miles = float(input("Farmland terrain miles: "))
-desert_barren_miles = float(input("Desert/Barren Land terrain miles: "))
-urban_miles = float(input("Urban terrain miles: "))
-rolling_hills_miles = float(input("Rolling Hills (2-8% Slope) terrain miles: "))
-mountain_miles = float(input("Mountain (>8% Slope) terrain miles: "))
-subsea_miles = float(input("Subsea terrain miles: "))
+# Extract terrain miles
+terrain_miles = config['terrain']['miles']
+forested_miles = terrain_miles['forested']
+scrubbed_flat_miles = terrain_miles['scrubbed_flat']
+wetland_miles = terrain_miles['wetland']
+farmland_miles = terrain_miles['farmland']
+desert_barren_miles = terrain_miles['desert_barren']
+urban_miles = terrain_miles['urban']
+rolling_hills_miles = terrain_miles['rolling_hills']
+mountain_miles = terrain_miles['mountain']
+subsea_miles = terrain_miles['subsea']
 
-# Environmental mitigation cost per mile by terrain type (USD per mile)
-forested_cost_per_mile = float(input("Environmental mitigation cost per mile for Forested terrain (USD): "))
-scrubbed_flat_cost_per_mile = float(input("Environmental mitigation cost per mile for Scrubbed/Flat terrain (USD): "))
-wetland_cost_per_mile = float(input("Environmental mitigation cost per mile for Wetland terrain (USD): "))
-farmland_cost_per_mile = float(input("Environmental mitigation cost per mile for Farmland terrain (USD): "))
-desert_barren_cost_per_mile = float(input("Environmental mitigation cost per mile for Desert/Barren Land terrain (USD): "))
-urban_cost_per_mile = float(input("Environmental mitigation cost per mile for Urban terrain (USD): "))
-rolling_hills_cost_per_mile = float(input("Environmental mitigation cost per mile for Rolling Hills terrain (USD): "))
-mountain_cost_per_mile = float(input("Environmental mitigation cost per mile for Mountain terrain (USD): "))
-subsea_cost_per_mile = float(input("Environmental mitigation cost per mile for Subsea terrain (USD): "))
+# Extract environmental mitigation costs per mile
+mitigation_costs = config['environmental_mitigation']['cost_per_mile']
+forested_cost_per_mile = mitigation_costs['forested']
+scrubbed_flat_cost_per_mile = mitigation_costs['scrubbed_flat']
+wetland_cost_per_mile = mitigation_costs['wetland']
+farmland_cost_per_mile = mitigation_costs['farmland']
+desert_barren_cost_per_mile = mitigation_costs['desert_barren']
+urban_cost_per_mile = mitigation_costs['urban']
+rolling_hills_cost_per_mile = mitigation_costs['rolling_hills']
+mountain_cost_per_mile = mitigation_costs['mountain']
+subsea_cost_per_mile = mitigation_costs['subsea']
 
 # Calculate total environmental mitigation costs by terrain type
 forested_total_cost = forested_miles * forested_cost_per_mile
@@ -46,17 +52,19 @@ rolling_hills_total_cost = rolling_hills_miles * rolling_hills_cost_per_mile
 mountain_total_cost = mountain_miles * mountain_cost_per_mile
 subsea_total_cost = subsea_miles * subsea_cost_per_mile
 
-# Total environmental mitigation cost
-total_environmental_mitigation_cost = (forested_total_cost + scrubbed_flat_total_cost + 
-                                     wetland_total_cost + farmland_total_cost + 
-                                     desert_barren_total_cost + urban_total_cost + 
-                                     rolling_hills_total_cost + mountain_total_cost + 
-                                     subsea_total_cost)
+
 
 # Total project miles
 total_project_miles = (forested_miles + scrubbed_flat_miles + wetland_miles + 
                       farmland_miles + desert_barren_miles + urban_miles + 
                       rolling_hills_miles + mountain_miles + subsea_miles)
+
+# Total environmental mitigation cost
+total_environmental_mitigation_cost = (forested_total_cost + scrubbed_flat_total_cost + 
+                                     wetland_total_cost + farmland_total_cost + 
+                                     desert_barren_total_cost + urban_total_cost + 
+                                     rolling_hills_total_cost + mountain_total_cost + 
+                                     subsea_total_cost) * project_lifetime
 
 # Present Value of Total Environmental Mitigation Costs
 t = np.arange(1, project_lifetime + 1)

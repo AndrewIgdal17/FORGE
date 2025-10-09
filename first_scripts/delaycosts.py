@@ -6,41 +6,33 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import yaml
 
-# Timeline
-delay_timeline = float(input("Delay timeline in years: "))
+# Load configuration from YAML file
+config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'project_config.yaml')
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
 
-#Delay cost categories
+# Extract delay timeline from AFUDC config (shared parameter)
+delay_timeline = config['afudc']['delay_timeline']
 
-# Legal Delay Costs
-legal_delay_costs = float(input("Legal delay costs in USD: "))
+# Extract firm interest rate for present value calculation
+firm_interest_rate = config['financial']['firm_interest_rate']
 
-#Administrative Overhead Delay Costs
-administrative_overhead_delay_costs = float(input("Administrative overhead delay costs in USD: "))
-
-# Engineering Delay Costs
-engineering_delay_costs = float(input("Engineering delay costs in USD: "))
-
-# Permitting and Regulatory Compliance Delay Costs
-permitting_delay_costs = float(input("Permitting delay costs in USD: "))
-
-# Material and Equipment Delay Costs
-material_and_equipment_delay_costs = float(input("Material and equipment delay costs in USD: "))
-
-# Labor Delay Costs
-labor_delay_costs = float(input("Labor delay costs in USD: "))
-
-# Public Relations Delay Costs
-public_relations_delay_costs = float(input("Public relations delay costs in USD: "))
-
-# Environmental Delay Costs
-environmental_delay_costs = float(input("Environmental delay costs in USD: "))
-
-# Miscellaneous Delay Costs
-miscellaneous_delay_costs = float(input("Miscellaneous delay costs in USD: "))
+# Extract delay costs
+delay_costs_config = config['delay_costs']['annual_costs']
+legal_delay_costs = delay_costs_config['legal']
+administrative_overhead_delay_costs = delay_costs_config['administrative_overhead']
+engineering_delay_costs = delay_costs_config['engineering']
+permitting_delay_costs = delay_costs_config['permitting']
+material_and_equipment_delay_costs = delay_costs_config['material_and_equipment']
+labor_delay_costs = delay_costs_config['labor']
+public_relations_delay_costs = delay_costs_config['public_relations']
+environmental_delay_costs = delay_costs_config['environmental']
+miscellaneous_delay_costs = delay_costs_config['miscellaneous']
 
 # Total Delay Costs
-total_delay_costs = (legal_delay_costs + administrative_overhead_delay_costs + financial_delay_costs + engineering_delay_costs + permitting_delay_costs + 
+total_delay_costs = (legal_delay_costs + administrative_overhead_delay_costs + engineering_delay_costs + permitting_delay_costs + 
                     material_and_equipment_delay_costs + labor_delay_costs + public_relations_delay_costs + environmental_delay_costs + miscellaneous_delay_costs)  
 
 t = np.arange(1, delay_timeline + 1)

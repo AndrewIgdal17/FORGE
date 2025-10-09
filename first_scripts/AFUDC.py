@@ -6,36 +6,42 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import yaml
 
-#Terrain adjusted build cost
-terrain_adjusted_build_cost = float(input("Terrain adjusted build cost in USD: "))
+# Load configuration from YAML file
+config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'project_config.yaml')
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
 
-#Construction and delaytimeline
-construction_timeline = float(input("Construction timeline in years: "))
-delay_timeline = float(input("Delay timeline in years: "))
+# Extract AFUDC parameters
+afudc_config = config['afudc']
+terrain_adjusted_build_cost = afudc_config['terrain_adjusted_build_cost']
+construction_timeline = afudc_config['construction_timeline']
+delay_timeline = afudc_config['delay_timeline']
 
+# Extract funding percentages
+funding_percentages = afudc_config['funding_percentages']
+short_term_debt_pct = funding_percentages['short_term_debt']
+long_term_debt_pct = funding_percentages['long_term_debt']
+preferred_stock_pct = funding_percentages['preferred_stock']
+common_stock_pct = funding_percentages['common_stock']
+internal_reserves_pct = funding_percentages['internal_reserves']
 
-#Funding types and % of funding
-short_term_debt_% = float(input("Short-term debt %: "))
-long_term_debt_% = float(input("Long-term debt %: "))
-preferred_stock_% = float(input("Preferred stock %: "))
-common_stock_% = float(input("Common stock %: "))
-internal_reserves_% = float(input("Internal reserves %: "))
+# Extract initial funding rates
+funding_rates = afudc_config['funding_rates']
+short_term_debt_rate = funding_rates['short_term_debt']
+long_term_debt_rate = funding_rates['long_term_debt']
+preferred_stock_rate = funding_rates['preferred_stock']
+common_stock_rate = funding_rates['common_stock']
+internal_reserves_rate = funding_rates['internal_reserves']
 
-#Funding types and rates
-short_term_debt_rate = float(input("Short-term debt rate in decimal: "))
-long_term_debt_rate = float(input("Long-term debt rate in decimal: "))
-preferred_stock_rate = float(input("Preferred stock rate in decimal: "))
-common_stock_rate = float(input("Common stock rate in decimal: "))
-internal_reserves_rate = float(input("Internal reserves rate in decimal: "))
-
-# Funding types and changes to rates of delay years
-
-short_term_debt_rate_change = float(input("Short-term debt rate change in decimal: "))
-long_term_debt_rate_change = float(input("Long-term debt rate change in decimal: "))
-preferred_stock_rate_change = float(input("Preferred stock rate change in decimal: "))
-common_stock_rate_change = float(input("Common stock rate change in decimal: "))
-internal_reserves_rate_change = float(input("Internal reserves rate change in decimal: "))
+# Extract rate changes
+rate_changes = afudc_config['rate_changes']
+short_term_debt_rate_change = rate_changes['short_term_debt']
+long_term_debt_rate_change = rate_changes['long_term_debt']
+preferred_stock_rate_change = rate_changes['preferred_stock']
+common_stock_rate_change = rate_changes['common_stock']
+internal_reserves_rate_change = rate_changes['internal_reserves']
 
 # Final rates
 short_term_debt_rate_final = short_term_debt_rate * (1 + short_term_debt_rate_change * delay_timeline)
@@ -45,24 +51,34 @@ common_stock_rate_final = common_stock_rate * (1 + common_stock_rate_change * de
 internal_reserves_rate_final = internal_reserves_rate * (1 + internal_reserves_rate_change * delay_timeline)
 
 # Amount funded by each type of funding
-short_term_debt_amount = short_term_debt_% * terrain_adjusted_build_cost
-long_term_debt_amount = long_term_debt_% * terrain_adjusted_build_cost
-preferred_stock_amount = preferred_stock_% * terrain_adjusted_build_cost
-common_stock_amount = common_stock_% * terrain_adjusted_build_cost
-internal_reserves_amount = internal_reserves_% * terrain_adjusted_build_cost
+short_term_debt_amount = short_term_debt_pct * terrain_adjusted_build_cost
+long_term_debt_amount = long_term_debt_pct * terrain_adjusted_build_cost
+preferred_stock_amount = preferred_stock_pct * terrain_adjusted_build_cost
+common_stock_amount = common_stock_pct * terrain_adjusted_build_cost
+internal_reserves_amount = internal_reserves_pct * terrain_adjusted_build_cost
 
 # Total amount funded
 total_amount_funded = short_term_debt_amount + long_term_debt_amount + preferred_stock_amount + common_stock_amount + internal_reserves_amount
 
 # Weighted cost
-short_term_debt_weighted_cost_% = short_term_debt_% * short_term_debt_rate_final
-long_term_debt_weighted_cost_% = long_term_debt_% * long_term_debt_rate_final
-preferred_stock_weighted_cost_% = preferred_stock_% * preferred_stock_rate_final
-common_stock_weighted_cost_% = common_stock_% * common_stock_rate_final
-internal_reserves_weighted_cost_% = internal_reserves_% * internal_reserves_rate_final
+short_term_debt_weighted_cost_pct = short_term_debt_pct * short_term_debt_rate_final
+long_term_debt_weighted_cost_pct = long_term_debt_pct * long_term_debt_rate_final
+preferred_stock_weighted_cost_pct = preferred_stock_pct * preferred_stock_rate_final
+common_stock_weighted_cost_pct = common_stock_pct * common_stock_rate_final
+internal_reserves_weighted_cost_pct = internal_reserves_pct * internal_reserves_rate_final
 
 # Total weighted cost
-total_weighted_cost_of_capital = short_term_debt_weighted_cost_% + long_term_debt_weighted_cost_% + preferred_stock_weighted_cost_% + common_stock_weighted_cost_% + internal_reserves_weighted_cost_%
+total_weighted_cost_of_capital = short_term_debt_weighted_cost_pct + long_term_debt_weighted_cost_pct + preferred_stock_weighted_cost_pct + common_stock_weighted_cost_pct + internal_reserves_weighted_cost_pct
 
 # AFUDC
 afudc = terrain_adjusted_build_cost * ((1+total_weighted_cost_of_capital)**construction_timeline - 1)
+
+print("================================================================")
+print("AFUDC CALCULATION RESULTS")
+print("================================================================")
+print(f"Terrain adjusted build cost: ${terrain_adjusted_build_cost:,.2f}")
+print(f"Construction timeline: {construction_timeline} years")
+print(f"Delay timeline: {delay_timeline} years")
+print(f"Total weighted cost of capital: {total_weighted_cost_of_capital:.4f} ({total_weighted_cost_of_capital*100:.2f}%)")
+print(f"AFUDC: ${afudc:,.2f}")
+print("================================================================")

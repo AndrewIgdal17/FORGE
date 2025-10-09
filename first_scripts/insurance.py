@@ -6,28 +6,30 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import yaml
 
+# Load configuration from YAML file
+config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'project_config.yaml')
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
 
-#Infrastructure cost inputs
-conductor_cost = float(input("Conductor cost in USD: "))
-structure_cost = float(input("Structure cost in USD: "))
-converter_cost = float(input("Converter cost in USD: "))
+# Extract financial parameters
+firm_interest_rate = config['financial']['firm_interest_rate']
+risk_free_interest_rate = config['financial']['risk_free_interest_rate']
+project_lifetime = config['financial']['project_lifetime']
 
-#Binary variable for converter presence
-phi_converter = int(input("Phi converter (0 = no converter (AC Project), 1 = converter (DC Project)): "))
+# Extract project length (total miles from terrain configuration)
+terrain_miles = config['terrain']['miles']
+project_length = sum(terrain_miles.values())
 
-#Interest rate inputs
-firm_interest_rate = float(input("Interest rate in decimal: "))
-risk_free_interest_rate = float(input("Risk-free interest rate in decimal: "))
-
-#Project lifetime input
-project_lifetime = int(input("Project lifetime in years: "))
-
-# Insurrance premium input
-insurance_premium = float(input("Insurance premium in decimal: "))
-
-# Length of project
-project_length = float(input("Length of project in miles: "))
+# Extract insurance configuration
+insurance_config = config['insurance']
+insurance_premium = insurance_config['premium_rate']
+infrastructure_costs = insurance_config['infrastructure_costs']
+conductor_cost = infrastructure_costs['conductor_per_mile']
+structure_cost = infrastructure_costs['structure_per_mile']
+converter_cost = infrastructure_costs['converter_total']
+phi_converter = 1 if insurance_config['has_converter'] else 0
 
 # annual payment
 mile_line_payment_ = (conductor_cost + structure_cost) * insurance_premium

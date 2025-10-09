@@ -6,13 +6,19 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import yaml
 
+# Load configuration from YAML file
+config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'project_config.yaml')
+with open(config_path, 'r') as file:
+    config = yaml.safe_load(file)
 
-# Reporting and compliance costs
-EIS_cost = float(input("EIS cost in USD: "))
-EIR_cost = float(input("EIR cost in USD: "))
-NEPA_cost = float(input("NEPA cost in USD: "))
-NHPA_cost = float(input("NHPA cost in USD: "))
+# Extract environmental reporting costs
+env_reporting_config = config['environmental_reporting']
+EIS_cost = env_reporting_config['EIS_cost']
+EIR_cost = env_reporting_config['EIR_cost']
+NEPA_cost = env_reporting_config['NEPA_cost']
+NHPA_cost = env_reporting_config['NHPA_cost']
 
 # Total reporting and compliance costs
 total_reporting_and_compliance_costs = EIS_cost + EIR_cost + NEPA_cost + NHPA_cost
