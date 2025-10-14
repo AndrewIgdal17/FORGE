@@ -1,0 +1,8 @@
+# O&M Structures
+# Operations and maintenance costs for transmission structures
+
+structure_maintenance:
+  annual_cost_per_mile: 0
+  replacement_cost_per_mile: 0
+  replacement_frequency: 0  # years between replacements
+

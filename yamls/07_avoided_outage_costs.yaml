@@ -1,0 +1,12 @@
+# Avoided Outage Costs
+# Cost savings from improved reliability
+
+outage:
+  outage_risk_growth_rate: 0 # % totally fine if its zero but useful 
+  event_per_mile_year: 0 # events per mile per year
+  outage_given_event: 0 # outage given event
+  outage_hour: 0 # outage hour given event
+
+  capacity_at_risk: 0 # capacity at risk 1 if radial, less than 1 if not (will likely be less than 1)
+
+  value_of_lost_load: 0 #$/mwh could be a tiered system

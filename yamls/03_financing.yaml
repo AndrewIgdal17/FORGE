@@ -1,0 +1,8 @@
+# Financing Parameters
+financial:
+  inflation_rate: 0
+  base_year: 2025 
+  wacc_nominal: 0
+  social_discount_rate: 0
+  contingency: 0 # %
+  

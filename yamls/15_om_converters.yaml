@@ -1,0 +1,8 @@
+# O&M Converters
+# Operations and maintenance costs for converters (DC projects)
+
+converter_maintenance:
+  annual_cost_total: 0
+  replacement_cost_total: 0
+  replacement_frequency: 0  # years between replacements
+

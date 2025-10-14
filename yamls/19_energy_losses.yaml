@@ -1,0 +1,8 @@
+# Energy Losses
+# Costs associated with transmission energy losses
+
+energy_losses:
+  loss_rate_percent: 0
+  energy_price_per_mwh: 0
+  loss_cost_per_mile: 0
+

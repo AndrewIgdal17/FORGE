@@ -1,0 +1,7 @@
+# Congestion Reductions
+# Cost savings from reduced transmission congestion
+
+congestion_reductions:
+  avoided_congestion_cost_per_mwh: 0
+  congestion_reduction_factor: 0
+

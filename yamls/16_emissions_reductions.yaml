@@ -1,0 +1,9 @@
+# Emissions Reductions
+# Environmental benefits from emissions reductions
+
+emissions_reductions:
+  co2_reduction_per_mwh: 0
+  nox_reduction_per_mwh: 0
+  so2_reduction_per_mwh: 0
+  carbon_price_per_ton: 0
+
