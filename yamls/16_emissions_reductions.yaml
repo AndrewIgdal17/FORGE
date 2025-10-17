@@ -2,8 +2,76 @@
 # Environmental benefits from emissions reductions
 
 emissions_reductions:
-  co2_reduction_per_mwh: 0
-  nox_reduction_per_mwh: 0
-  so2_reduction_per_mwh: 0
-  carbon_price_per_ton: 0
+  # User Inputs - Energy Source Mix (Yellow)
+  energy_source_mix:
+    coal:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: -0.05
+    oil:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: -0.04
+    natural_gas:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: 0.0
+    solar:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: 0.05
+    wind:
+      percentage: 100.0
+      normalized_percentage: 1.0
+      rate_of_change: 0.04
+    hydro:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: 0.0
+    nuclear:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: 0.0
+    other:
+      percentage: 0.0
+      normalized_percentage: 0.0
+      rate_of_change: 0.0
 
+  # User Inputs - Emission Intensities (Blue)
+  emission_intensities:
+    co2_intensity_kg_per_mwh:
+      coal: 820
+      oil: 650
+      natural_gas: 450
+      solar: 48
+      wind: 12
+      hydro: 4
+      nuclear: 12
+      other: 0
+    sox_intensity_kg_per_mwh:
+      coal: 13
+      oil: 10
+      natural_gas: 0.1
+      solar: 0
+      wind: 0
+      hydro: 0
+      nuclear: 0
+      other: 0
+    nox_intensity_kg_per_mwh:
+      coal: 4
+      oil: 3.5
+      natural_gas: 0.2
+      solar: 0
+      wind: 0
+      hydro: 0
+      nuclear: 0
+      other: 0
+
+  # User Inputs - Societal Costs (Yellow)
+  societal_costs_per_kg:
+    co2_cost_per_kg: 0.051  # $/KGCO2
+    sox_cost_per_kg: 6.2   # $/KGSOX
+    nox_cost_per_kg: 5.0   # $/KGNOX
+
+
+ 
