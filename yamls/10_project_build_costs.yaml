@@ -1,7 +1,0 @@
-# Build Costs
-# Base construction costs and cost multipliers
-
-build_costs:
-  base_cost_per_mile: 0
-  conductor_database_file: "conductor_database.yaml"
-

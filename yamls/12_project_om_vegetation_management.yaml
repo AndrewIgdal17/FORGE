@@ -14,7 +14,6 @@ vegetation_management: # cost per mile [construction type][terrain type]
     subsea: 0
 
   underground_direct_buried:
-
     forested: 0
     scrubbed_flat: 0
     wetland: 0
