@@ -1,0 +1,48 @@
+# Avoided Wildfire inputs and parameters
+
+wildfire:
+  risk_growth_rate: 0 # %
+  cost: 0 #$/event or could eventually be a tiered like system
+
+  ignition_rates: # [construction type][terrain type]
+    overhead:
+      forested: 0
+      scrubbed_flat: 0
+      wetland: 0
+      farmland: 0
+      desert_barren: 0
+      urban: 0
+      rolling_hills: 0
+      mountain: 0
+      subsea: 0
+    underground_direct_buried:
+      forested: 0
+      scrubbed_flat: 0
+      wetland: 0
+      farmland: 0
+      desert_barren: 0
+      urban: 0
+      rolling_hills: 0
+      mountain: 0
+      subsea: 0
+    underground_tunnel:
+      forested: 0
+      scrubbed_flat: 0
+      wetland: 0
+      farmland: 0
+      desert_barren: 0
+      urban: 0
+      rolling_hills: 0
+      mountain: 0
+      subsea: 0
+    subsea: # might not really need this
+      forested: 0
+      scrubbed_flat: 0
+      wetland: 0
+      farmland: 0
+      desert_barren: 0
+      urban: 0
+      rolling_hills: 0
+      mountain: 0
+      subsea: 0 # subsea will always be subsea lol
+

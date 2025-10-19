@@ -1,0 +1,6 @@
+# Insurance Parameters
+# Insurance costs and coverage details
+
+insurance:
+  premium_rate: 0 # %
+  

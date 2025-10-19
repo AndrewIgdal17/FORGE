@@ -1,0 +1,17 @@
+# Project Technical Details
+# Core technical specifications for the transmission project
+
+project:
+  name: ""
+  construction_type: "" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea, Reconductoring
+  ac_dc: "" # AC or DC
+  conductor_type: "" #
+  converter_type: "" # LCC or VSC
+  capacity_mw: 0 # MW
+  line_utilization: 0 # %
+  
+timeline:
+  construction_years: 0
+  delay_years: 0
+  project_lifetime: 0
+

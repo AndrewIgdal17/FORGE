@@ -1,0 +1,225 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+
+\title{Comprehensive Transmission Cost Calculator\\Methodology Documentation}
+\author{Andrew Igdal}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+The Comprehensive Transmission Cost Calculator is a suite of Python scripts designed to calculate various cost components associated with transmission line construction projects. This document provides a comprehensive overview of the methodologies used in each component of the calculator.
+
+\section{Calculator Components}
+
+The transmission cost calculator consists of three main components:
+
+\begin{enumerate}
+    \item \textbf{Delay Costs Calculator} (\texttt{delaycosts.py})
+    \item \textbf{Insurance Costs Calculator} (\texttt{insurance.py})
+    \item \textbf{Environmental Impact Mitigation Costs Calculator} (\texttt{environmental\_impact\_mitigation.py})
+\end{enumerate}
+
+Each component addresses a specific aspect of transmission project costs and can be used independently or in combination to provide a comprehensive cost assessment.
+
+\section{Delay Costs Calculator}
+
+\subsection{Overview}
+The delay costs calculator quantifies the additional expenses incurred when transmission line construction projects experience delays beyond their original schedule. These costs accumulate annually throughout the delay period and include various categories of project-related expenses.
+
+\subsection{Key Features}
+\begin{itemize}
+    \item Nine distinct delay cost categories
+    \item Annual cost accumulation during delay periods
+    \item Present value calculations using firm interest rates
+    \item Comprehensive cost breakdown and reporting
+\end{itemize}
+
+\subsection{Delay Cost Categories}
+\begin{enumerate}
+    \item Legal Delay Costs
+    \item Administrative Overhead Delay Costs
+    \item Engineering Delay Costs
+    \item Permitting and Regulatory Compliance Delay Costs
+    \item Material and Equipment Delay Costs
+    \item Labor Delay Costs
+    \item Public Relations Delay Costs
+    \item Environmental Delay Costs
+    \item Miscellaneous Delay Costs
+\end{enumerate}
+
+\subsection{Mathematical Foundation}
+The total annual delay costs are calculated as:
+\begin{equation}
+C_{delay,total} = \sum_{i=1}^{9} C_{delay,i}
+\end{equation}
+
+The present value of delay costs over the delay timeline is:
+\begin{equation}
+PV_{delay} = \sum_{t=1}^{T} \frac{C_{delay,total}}{(1 + r)^t}
+\end{equation}
+
+\section{Insurance Costs Calculator}
+
+\subsection{Overview}
+The insurance costs calculator determines the annual and lifetime insurance expenses for transmission line projects, accommodating both AC and DC transmission systems. The calculation considers different infrastructure components and their associated insurance premiums.
+
+\subsection{Key Features}
+\begin{itemize}
+    \item Support for both AC and DC transmission projects
+    \item Component-based cost calculation (conductor, structure, converter)
+    \item Annual and lifetime cost projections
+    \item Present value calculations for financial planning
+\end{itemize}
+
+\subsection{Project Types}
+\begin{itemize}
+    \item \textbf{AC Projects}: Traditional alternating current transmission lines
+    \item \textbf{DC Projects}: Direct current transmission lines with converter stations
+\end{itemize}
+
+\subsection{Mathematical Foundation}
+The annual insurance payment per mile is:
+\begin{equation}
+P_{mile} = (C_{conductor} + C_{structure}) \times \pi_{insurance}
+\end{equation}
+
+The total annual insurance payment is:
+\begin{equation}
+P_{annual} = P_{mile} \times L + C_{converter} \times \pi_{insurance} \times \phi_{converter}
+\end{equation}
+
+The present value of lifetime insurance payments is:
+\begin{equation}
+PV_{insurance} = \sum_{t=1}^{T} \frac{P_{annual}}{(1 + r)^t}
+\end{equation}
+
+\section{Environmental Impact Mitigation Costs Calculator}
+
+\subsection{Overview}
+The environmental impact mitigation costs calculator assesses the environmental costs associated with transmission line construction across different terrain types. This component provides a comprehensive evaluation of environmental mitigation requirements and associated costs.
+
+\subsection{Key Features}
+\begin{itemize}
+    \item Nine distinct terrain types with specific environmental considerations
+    \item Terrain-specific cost per mile calculations
+    \item Comprehensive environmental impact assessment
+    \item Detailed cost breakdown by terrain type
+\end{itemize}
+
+\subsection{Terrain Types}
+\begin{enumerate}
+    \item Forested
+    \item Scrubbed/Flat
+    \item Wetland
+    \item Farmland
+    \item Desert/Barren Land
+    \item Urban
+    \item Rolling Hills (2-8\% Slope)
+    \item Mountain (>8\% Slope)
+    \item Subsea
+\end{enumerate}
+
+\subsection{Mathematical Foundation}
+The environmental mitigation cost for each terrain type is:
+\begin{equation}
+C_{terrain,i} = L_i \times c_{terrain,i}
+\end{equation}
+
+The total environmental mitigation cost is:
+\begin{equation}
+C_{total} = \sum_{i=1}^{9} C_{terrain,i}
+\end{equation}
+
+The present value of environmental costs is:
+\begin{equation}
+PV_{environmental} = \sum_{t=1}^{T} \frac{C_{total}}{(1 + r)^t}
+\end{equation}
+
+\section{Common Input Parameters}
+
+All calculators share certain common input parameters:
+
+\begin{table}[H]
+\centering
+\caption{Common Input Parameters}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Description} \\
+\midrule
+Firm Interest Rate & Discount rate for present value calculations (decimal) \\
+Project Lifetime & Expected project lifetime in years \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Output Formats}
+
+All calculators provide standardized output formats including:
+\begin{itemize}
+    \item Detailed cost breakdowns
+    \item Total cost calculations
+    \item Present value calculations
+    \item Formatted reporting with clear section separators
+\end{itemize}
+
+\section{Usage Guidelines}
+
+\subsection{Input Requirements}
+\begin{itemize}
+    \item All monetary values should be entered in USD
+    \item Interest rates should be entered as decimals (e.g., 0.05 for 5\%)
+    \item Time periods should be entered in years
+    \item Distances should be entered in miles
+\end{itemize}
+
+\subsection{Assumptions}
+\begin{itemize}
+    \item Interest rates remain constant over project lifetimes
+    \item All costs are expressed in nominal USD
+    \item Cost escalation is not explicitly modeled
+    \item Environmental mitigation costs are incurred annually
+\end{itemize}
+
+\section{Integration and Workflow}
+
+The calculators are designed to work independently or in combination:
+
+\begin{enumerate}
+    \item Run individual calculators for specific cost components
+    \item Combine outputs for comprehensive project cost assessment
+    \item Use present value calculations for financial planning and comparison
+    \item Apply results to project feasibility studies and cost-benefit analyses
+\end{enumerate}
+
+\section{Documentation References}
+
+For detailed methodology documentation for each calculator component, refer to:
+\begin{itemize}
+    \item \href{delaycosts_methodology.tex}{Delay Costs Methodology}
+    \item \href{insurance_methodology.tex}{Insurance Costs Methodology}
+    \item \href{environmental_impact_mitigation_methodology.tex}{Environmental Impact Mitigation Costs Methodology}
+\end{itemize}
+
+\section{Conclusion}
+
+The Comprehensive Transmission Cost Calculator provides a systematic approach to quantifying various cost components of transmission line projects. By breaking down costs into specific categories and providing detailed methodologies, the calculator enables accurate cost estimation and informed decision-making for transmission infrastructure development.
+
+The modular design allows users to focus on specific cost components while maintaining consistency in calculation methods and output formats across all components.
+
+\end{document}

@@ -1,0 +1,26 @@
+# Project Physical Details
+# Physical characteristics and terrain information
+
+terrain:
+  terrain_miles: # miles by terrain type
+    forested: 0
+    scrubbed_flat: 0
+    wetland: 0
+    farmland: 0
+    desert_barren: 0
+    urban: 0
+    rolling_hills: 0
+    mountain: 0
+    subsea: 0
+      
+  terrain_multipliers: # terrain multipliers
+    forested: 0
+    scrubbed_flat: 0
+    wetland: 0
+    farmland: 0
+    desert_barren: 0
+    urban: 0
+    rolling_hills: 0
+    mountain: 0
+    subsea: 0
+

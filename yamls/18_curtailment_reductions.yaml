@@ -1,0 +1,7 @@
+# Curtailment Reductions
+# Cost savings from reduced renewable energy curtailment
+
+curtailment_reductions:
+  avoided_curtailment_cost_per_mwh: 0
+  curtailment_reduction_factor: 0
+

@@ -1,0 +1,1027 @@
+# Project Category O&M Structures
+# Operations and maintenance costs for transmission structures across all 128 transmission project configurations
+
+project_categories_om_structures:
+  # OVERHEAD AC CONFIGURATIONS (16 total)
+  overhead_ac:
+    "Overhead/AC/140MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 140
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/140MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 140
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/329MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 329
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/329MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 329
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/394MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 394
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/394MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 394
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/460MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 460
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/460MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 460
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/657MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 657
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/657MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 657
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/1792MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 1792
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/1792MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 1792
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/2598MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 2598
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/2598MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 2598
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/6625MW/Standard Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 6625
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/AC/6625MW/Advanced Aluminum Conductor/NA":
+      installation_method: "Overhead"
+      current_type: "AC"
+      capacity_mw: 6625
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "NA"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+
+  # OVERHEAD DC CONFIGURATIONS (20 total)
+  overhead_dc:
+    "Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Standard Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "LCC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+      
+    "Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter":
+      installation_method: "Overhead"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Advanced Aluminum Conductor"
+      converter_type: "VSC Converter"
+      structures_per_mile_forested: 0
+      structures_per_mile_scrubbed_flat: 0
+      structures_per_mile_wetland: 0
+      structures_per_mile_farmland: 0
+      structures_per_mile_desert_barren: 0
+      structures_per_mile_urban: 0
+      structures_per_mile_rolling_hills: 0
+      structures_per_mile_mountain: 0
+      cost_per_structure_per_year: 0
+
+  # UNDERGROUND DIRECT-BURIED AC CONFIGURATIONS (8 total)
+  underground_direct_buried_ac:
+    "Underground direct-buried/AC/140MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 140
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/329MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 329
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/394MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 394
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/460MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 460
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/657MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 657
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 1792
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 2598
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA":
+      installation_method: "Underground direct-buried"
+      current_type: "AC"
+      capacity_mw: 6625
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+
+  # UNDERGROUND DIRECT-BURIED DC CONFIGURATIONS (10 total)
+  underground_direct_buried_dc:
+    "Underground direct-buried/DC/500MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground direct-buried"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+
+  # UNDERGROUND TUNNEL AC CONFIGURATIONS (8 total)
+  underground_tunnel_ac:
+    "Underground tunnel/AC/140MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 140
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/329MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 329
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/394MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 394
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/460MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 460
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/657MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 657
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/1792MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 1792
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/2598MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 2598
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/AC/6625MW/Underground Copper Conductor/NA":
+      installation_method: "Underground tunnel"
+      current_type: "AC"
+      capacity_mw: 6625
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+
+  # UNDERGROUND TUNNEL DC CONFIGURATIONS (10 total)
+  underground_tunnel_dc:
+    "Underground tunnel/DC/500MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter":
+      installation_method: "Underground tunnel"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Underground Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+
+  # SUBSEA AC CONFIGURATIONS (8 total)
+  subsea_ac:
+    "Subsea/AC/140MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 140
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/329MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 329
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/394MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 394
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/460MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 460
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/657MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 657
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/1792MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 1792
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/2598MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 2598
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/AC/6625MW/Subsea Copper Conductor/NA":
+      installation_method: "Subsea"
+      current_type: "AC"
+      capacity_mw: 6625
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "NA"
+      variable_cost_per_mile_year: 0
+
+  # SUBSEA DC CONFIGURATIONS (10 total)
+  subsea_dc:
+    "Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 500
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 1500
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 2000
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 2400
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "LCC Converter"
+      variable_cost_per_mile_year: 0
+      
+    "Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter":
+      installation_method: "Subsea"
+      current_type: "DC"
+      capacity_mw: 6000
+      conductor_type: "Subsea Copper Conductor"
+      converter_type: "VSC Converter"
+      variable_cost_per_mile_year: 0
