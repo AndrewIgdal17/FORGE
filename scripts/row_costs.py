@@ -37,7 +37,7 @@ def load_project_technical_details():
     "construction_type/AC_or_DC/capacity_MW/conductor_type/converter_type"
 
     Returns:
-        tuple: (category, delay_year, construction_years, project_lifetime)
+        tuple: (category, delay_year, construction_years, project_lifetime, reconductoring)
     """
     with open("../yamls/01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
@@ -49,6 +49,8 @@ def load_project_technical_details():
     conductor_type = project_details["project"]["conductor_type"]
     converter_type = project_details["project"]["converter_type"]
 
+    reconductoring = project_details["project"]["reconductoring"]
+
     # Construct category identifier for row width lookup
     category = (
         f"{construction_type}/{ac_dc}/{capacity_mw}/{conductor_type}/{converter_type}"
@@ -59,7 +61,7 @@ def load_project_technical_details():
     construction_years = project_details["timeline"]["construction_years"]
     project_lifetime = project_details["timeline"]["project_lifetime"]
 
-    return category, delay_year, construction_years, project_lifetime
+    return category, delay_year, construction_years, project_lifetime, reconductoring
 
 
 def load_row_widths(category):
@@ -161,7 +163,7 @@ def main():
     Main function to calculate and display ROW costs.
     """
     # Load project specifications and timeline
-    category, delay_year, construction_years, project_lifetime = (
+    category, delay_year, construction_years, project_lifetime, reconductoring = (
         load_project_technical_details()
     )
 
@@ -183,23 +185,37 @@ def main():
     rent_start_year = delay_year + 1
     rent_total_years = project_lifetime + construction_years
 
-    # Calculate total nominal costs over project lifetime
-    total_holding_cost = yearly_holding_cost * delay_year
-    total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
-    total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
-    # Calculate present values of all costs
-    # Holding costs: incurred annually during delay period
-    total_holding_cost_pv = calculate_present_value(
-        yearly_holding_cost, wacc_real, int(delay_year)
-    )
+    if reconductoring:
+        total_holding_cost = 0
+        acquisition_cost = 0
+        total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+        total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
 
-    # Acquisition costs: one-time payment at end of delay period
-    total_acquisition_cost_pv = acquisition_cost / (1 + wacc_real) ** delay_year
+        # present values
+        total_holding_cost_pv = 0
+        total_acquisition_cost_pv = 0
+        total_rent_cost_pv = calculate_present_value(
+            yearly_rent_cost, wacc_real, int(rent_total_years), int(rent_start_year)
+        )
 
-    # Rent costs: incurred annually during operation period
-    total_rent_cost_pv = calculate_present_value(
-        yearly_rent_cost, wacc_real, int(rent_total_years), int(rent_start_year)
-    )
+    else:
+        # Calculate total nominal costs over project lifetime
+        total_holding_cost = yearly_holding_cost * delay_year
+        total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+        total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
+        # Calculate present values of all costs
+        # Holding costs: incurred annually during delay period
+        total_holding_cost_pv = calculate_present_value(
+            yearly_holding_cost, wacc_real, int(delay_year)
+        )
+
+        # Acquisition costs: one-time payment at end of delay period
+        total_acquisition_cost_pv = acquisition_cost / (1 + wacc_real) ** delay_year
+
+        # Rent costs: incurred annually during operation period
+        total_rent_cost_pv = calculate_present_value(
+            yearly_rent_cost, wacc_real, int(rent_total_years), int(rent_start_year)
+        )
 
     # Display results
     print("=" * 60)
