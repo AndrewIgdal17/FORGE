@@ -2,12 +2,12 @@
 # Annual costs during project delays
 
 annual_delay_costs:
-  legal: 0 #$/year
-  admin: 0 #$/year
-  labor: 0 #$/year
-  material_and_equipment: 0 #$/year
-  regulatory: 0 #$/year
-  public_relations: 0 #$/year
-  project_management: 0 #$/year
-  miscellaneous: 0 #$/year
+  legal: 200000 #$/year
+  admin: 100000 #$/year
+  labor: 1000000 #$/year
+  material_and_equipment: 800000 #$/year
+  regulatory: 300000 #$/year
+  public_relations: 50000 #$/year
+  project_management: 400000 #$/year
+  miscellaneous: 100000 #$/year
 
