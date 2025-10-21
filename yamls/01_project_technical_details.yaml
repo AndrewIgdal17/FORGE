@@ -3,16 +3,15 @@
 
 project:
   name: ""
-  construction_type: "" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea, Reconductoring
-  ac_dc: "" # AC or DC
-  capacity_mw: 0 # MW
-  conductor_type: "" #
-  converter_type: "" # LCC or VSC
-  
-  line_utilization: 0 # %
-  
-timeline:
-  construction_years: 0
-  delay_years: 0
-  project_lifetime: 0
+  construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea, Reconductoring
+  ac_dc: "AC" # AC or DC
+  capacity_mw: 140 # MW
+  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  converter_type: "NA" # LCC or VSC
 
+  line_utilization: 0 # %
+
+timeline:
+  construction_years: 1
+  delay_years: 1.5
+  project_lifetime: 50

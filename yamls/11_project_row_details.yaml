@@ -3,80 +3,78 @@
 
 right_of_way:
   zone_1:
-    miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period  )
+    miles: 25
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 9 #$/acre * year
+    hold_cost: 9 #$/acre (default .1 of rent cost per year during holding(permitting) period  )
   zone_2:
-    miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    miles: 25
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 18 #$/acre * year
+    hold_cost: 18 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_3:
-    miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    miles: 30
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 35 #$/acre * year
+    hold_cost: 35 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_4:
-    miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    miles: 15
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 53 #$/acre * year
+    hold_cost: 53 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_5:
-    miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    miles: 5
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 73 #$/acre * year
+    hold_cost: 73 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_6:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 106 #$/acre * year
+    hold_cost: 106 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_7:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 148 #$/acre * year
+    hold_cost: 148 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_8:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 205 #$/acre * year
+    hold_cost: 205 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_9:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 507 #$/acre * year
+    hold_cost: 507 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_10:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 1556 #$/acre * year
+    hold_cost: 1556 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_11:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 3112 #$/acre * year
+    hold_cost: 3112 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_12:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 7779 #$/acre * year
+    hold_cost: 7779 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_13:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 15558 #$/acre * year
+    hold_cost: 15558 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_14:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 23337 #$/acre * year
+    hold_cost: 23337 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_15:
     miles: 0
-    acquistion_cost: 0 #$/acre
-    rent_cost: 0 #$/acre * year 
-    hold_cost: 0 #$/acre (default .1 of rent cost per year during holding(permitting) period)
-  
-
+    acquisition_cost: 13569 #$/acre
+    rent_cost: 31116 #$/acre * year
+    hold_cost: 31116 #$/acre (default .1 of rent cost per year during holding(permitting) period)
 
