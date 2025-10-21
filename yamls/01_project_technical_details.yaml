@@ -5,9 +5,10 @@ project:
   name: ""
   construction_type: "" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea, Reconductoring
   ac_dc: "" # AC or DC
+  capacity_mw: 0 # MW
   conductor_type: "" #
   converter_type: "" # LCC or VSC
-  capacity_mw: 0 # MW
+  
   line_utilization: 0 # %
   
 timeline:
