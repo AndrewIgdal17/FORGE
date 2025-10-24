@@ -7,6 +7,7 @@ import pandas as pd
 import yaml
 import numpy as np
 import argparse
+import math
 
 
 def load_project_technical_details():
@@ -61,9 +62,17 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
     Returns:
         float: Present value of the payment stream
     """
+    n_full_years = math.floor(total_years)
+    frac = total_years - n_full_years
     total_pv = 0
-    for year in range(round(start_year), round(start_year) + round(total_years)):
-        total_pv += annual_cost / (1 + wacc_real) ** year
+    for year in range(n_full_years):
+        t = start_year + year
+        total_pv += annual_cost / (1 + wacc_real) ** t
+
+    if frac > 0:
+        t_frac = start_year + n_full_years + frac
+        total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
+
     return total_pv
 
 

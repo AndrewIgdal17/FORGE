@@ -7,7 +7,7 @@ import pandas as pd
 import yaml
 import numpy as np
 import argparse
-
+import math
 
 # Get info from project technical details
 with open("../yamls/01_project_technical_details.yaml", "r") as file:
@@ -147,9 +147,17 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
     Returns:
         float: Present value of the payment stream
     """
+    n_full_years = math.floor(total_years)
+    frac = total_years - n_full_years
     total_pv = 0
-    for year in range(round(start_year), round(start_year) + round(total_years)):
-        total_pv += annual_cost / (1 + wacc_real) ** year
+    for year in range(n_full_years):
+        t = start_year + year
+        total_pv += annual_cost / (1 + wacc_real) ** t
+
+    if frac > 0:
+        t_frac = start_year + n_full_years + frac
+        total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
+
     return total_pv
 
 
@@ -237,6 +245,22 @@ def calculate_congestion_reduction_costs(
         start_year=delay_years + construction_years,
     )
 
+    annual_congestion_during_delay_and_construction = binding_hours * average_exceedance
+    annual_congestion_during_delay_and_construction_cost = (
+        annual_congestion_during_delay_and_construction * average_congestion_price
+    )
+
+    lifetime_congestion_during_delay_and_construction_cost = (
+        annual_congestion_during_delay_and_construction_cost
+        * (delay_years + construction_years)
+    )
+    lifetime_congestion_during_delay_and_construction_pv = calculate_present_value(
+        annual_congestion_during_delay_and_construction_cost,
+        wacc_real,
+        delay_years + construction_years,
+        start_year=1,
+    )
+
     return (
         lifetime_congestion_reduction_cost,
         lifetime_congestion_reduction_cost_haircut,
@@ -250,6 +274,8 @@ def calculate_congestion_reduction_costs(
         energy_congestion_reduction,
         energy_congestion_residual,
         E_near,
+        lifetime_congestion_during_delay_and_construction_cost,
+        lifetime_congestion_during_delay_and_construction_pv,
     )
 
 
@@ -296,6 +322,8 @@ def main():
         energy_congestion_reduction,
         energy_congestion_residual,
         E_near,
+        lifetime_congestion_during_delay_and_construction_cost,
+        lifetime_congestion_during_delay_and_construction_pv,
     ) = calculate_congestion_reduction_costs(
         reconductoring,
         capacity_mw,
@@ -321,6 +349,18 @@ def main():
     print(f"Energy congestion reduction: {energy_congestion_reduction:,.2f} MWh/yr")
     print(f"Energy congestion residual: {energy_congestion_residual:,.2f} MWh/yr")
     print(f"E_near: {E_near:,.2f} MWh/yr")
+
+    print()
+    print("=" * 60)
+    print("CONGESTION DURING DELAY AND CONSTRUCTION RESULTS AND QUANTITIES")
+    print("=" * 60)
+
+    print(
+        f"Lifetime congestion during delay and construction cost: ${lifetime_congestion_during_delay_and_construction_cost:,.2f}"
+    )
+    print(
+        f"Lifetime congestion during delay and construction PV: ${lifetime_congestion_during_delay_and_construction_pv:,.2f}"
+    )
 
     print()
     print("=" * 60)
