@@ -48,6 +48,7 @@ def main():
         "weighted_miles.py",
         "row_costs.py",
         "delay_costs.py",
+        "congestion_reduction.py",
         # Add more scripts as you create them
     ]
 

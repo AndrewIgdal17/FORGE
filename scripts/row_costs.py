@@ -24,7 +24,7 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
         float: Present value of the payment stream
     """
     total_pv = 0
-    for year in range(start_year, start_year + total_years):
+    for year in range(round(start_year), round(start_year) + round(total_years)):
         total_pv += annual_cost / (1 + wacc_real) ** year
     return total_pv
 

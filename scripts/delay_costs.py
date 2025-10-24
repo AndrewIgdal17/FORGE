@@ -62,7 +62,7 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
         float: Present value of the payment stream
     """
     total_pv = 0
-    for year in range(start_year, start_year + total_years):
+    for year in range(round(start_year), round(start_year) + round(total_years)):
         total_pv += annual_cost / (1 + wacc_real) ** year
     return total_pv
 
@@ -101,7 +101,11 @@ def main():
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
     total_delay_cost_pv = calculate_present_value(
-        total_yearly_delay_cost, wacc_real, int(round(delay_year))
+        total_yearly_delay_cost,
+        wacc_real,
+        int(
+            round(delay_year)
+        ),  # Move rounding to the actual function, outside of main to prevent headaches
     )
 
     print("=" * 60)
