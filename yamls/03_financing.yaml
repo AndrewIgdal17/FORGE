@@ -3,5 +3,5 @@ financial:
   inflation_rate: 0.03
   base_year: 2025
   wacc_nominal: 0.08
-  social_discount_rate: 0
+  social_discount_rate: 0.03 # for sensitivty do .02 to .07 U.S. Office of Management and Budget, Circular A-4: Regulatory Analysis (2003, reaffirmed 2023).
   contingency: 0 # %

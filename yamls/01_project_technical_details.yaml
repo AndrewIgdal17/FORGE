@@ -4,9 +4,9 @@
 project:
   name: ""
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
-  ac_dc: "DC" # AC or DC
+  ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
-  capacity_mw: 1500 # MW
+  capacity_mw: 140 # MW
   conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
   converter_type: "LCC Converter" # LCC Converter or VSC Converter
 

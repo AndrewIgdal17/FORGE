@@ -56,7 +56,11 @@ def load_project_technical_details():
     ac_dc = project_details["project"]["ac_dc"]
     capacity_mw = f"{project_details['project']['capacity_mw']}MW"
     conductor_type = project_details["project"]["conductor_type"]
-    converter_type = project_details["project"]["converter_type"]
+
+    if ac_dc == "AC":
+        converter_type = "NA"
+    else:
+        converter_type = project_details["project"]["converter_type"]
 
     reconductoring = project_details["project"]["reconductoring"]
 

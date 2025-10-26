@@ -2,38 +2,39 @@
 # Environmental benefits from emissions reductions
 
 emissions_reductions:
+  compensation_percent: 0.9 # [0,1]
   # User Inputs - Energy Source Mix (Yellow)
   energy_source_mix:
     coal:
-      percentage: 0.0
+      percentage: 10
       # will have to be normalized
       rate_of_change: -0.05
     oil:
-      percentage: 0.0
+      percentage: 2
       # will have to be normalized
       rate_of_change: -0.04
     natural_gas:
-      percentage: 0.0
+      percentage: 38
       # will have to be normalized
       rate_of_change: 0.0
     solar:
-      percentage: 0.0
+      percentage: 10
       # will have to be normalized
       rate_of_change: 0.05
     wind:
-      percentage: 100.0
+      percentage: 26
       # will have to be normalized
       rate_of_change: 0.04
     hydro:
-      percentage: 0.0
+      percentage: 5
       # will have to be normalized
       rate_of_change: 0.0
     nuclear:
-      percentage: 0.0
+      percentage: 5
       # will have to be normalized
       rate_of_change: 0.0
     other:
-      percentage: 0.0
+      percentage: 4
       # will have to be normalized
       rate_of_change: 0.0
 
@@ -69,9 +70,7 @@ emissions_reductions:
 
   # User Inputs - Societal Costs (Yellow)
   societal_costs_per_kg:
-    co2_cost_per_kg: 0.051  # $/KGCO2
-    sox_cost_per_kg: 6.2   # $/KGSOX
-    nox_cost_per_kg: 5.0   # $/KGNOX
+    co2_cost_per_kg: 0.051 # $/KGCO2
+    sox_cost_per_kg: 6.2 # $/KGSOX
+    nox_cost_per_kg: 5.0 # $/KGNOX
 
-
- 

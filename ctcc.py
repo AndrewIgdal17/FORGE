@@ -49,6 +49,8 @@ def main():
         "row_costs.py",
         "delay_costs.py",
         "congestion_curtailment_reduction.py",
+        "energy_losses.py",
+        "emissions.py",
         # Add more scripts as you create them
     ]
 
