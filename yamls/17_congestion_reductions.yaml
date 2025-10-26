@@ -17,7 +17,6 @@ greenfield_congestion_reductions:
 
   costs:
     average_congestion_price: 20 # $/mwh
-    average_curtailment_price: 0 # $/mwh
     value_of_lost_load: 0 # $/mwh # I alredady have this in the outages section will need to think about it (can tie a decrease
     # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.
 
@@ -30,7 +29,7 @@ reconductoring_congestion_reductions:
     near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding
     near_average_exceedance: 0 # MW exceedance during near binding hours
     # near baseline congestion energy = H_n * X mwh/yr
-    near_binding_relief_factor: # [0,1]
+    near_binding_relief_factor: 0 # [0,1]
     saturation_factor: 0 # [0, something greater than 0??] # bascially 0 fora radial line and more for a meshed system
 
     hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT

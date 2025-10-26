@@ -114,6 +114,17 @@ def load_congestion_reductions():
     )
 
 
+def load_curtailment_reductions():
+    with open("../yamls/18_curtailment_reductions.yaml", "r") as f:
+        y = yaml.load(f, Loader=yaml.FullLoader)["curtailment_reductions"]
+
+    Hc_tot = float(y.get("curtailment_hours_total", 0))
+    avg_curt_mw = float(y.get("average_curtailment_mw", 0))
+    avg_curt_price = float(y.get("average_curtailment_price", 0))
+    curtailment_saturation_factor = float(y.get("curtailment_saturation_factor", 0))
+    return Hc_tot, avg_curt_mw, avg_curt_price, curtailment_saturation_factor
+
+
 def load_financing_details():
     """
     Load financing parameters and calculate real WACC using Fisher equation.
@@ -161,6 +172,65 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
     return total_pv
 
 
+def allocate_curtailment_then_congestion(
+    ΔC_eff_mw: float,
+    # binding inputs
+    binding_hours_total: float,
+    average_exceedance_mw: float,
+    # curtailment inputs
+    curtailment_hours_total: float,
+    average_curtailment_mw: float,
+    average_curtailment_price: float,
+):
+    """
+    Allocate effective capacity relief between curtailment and congestion to avoid double-counting.
+
+    Returns:
+        dict: Allocation results including curtailment benefits and congestion capacity splits
+    """
+    Hb = max(0.0, float(binding_hours_total))
+    X = max(0.0, float(average_exceedance_mw))
+    Hc = max(0.0, float(curtailment_hours_total))
+    ΔC = max(0.0, float(ΔC_eff_mw))
+    Cc = max(0.0, float(average_curtailment_mw))
+    λc = max(0.0, float(average_curtailment_price))
+
+    # Curtailment relief (MWh/yr); if Hc==0 or Cc==0, this is zero.
+    E_curt = Hc * min(ΔC, Cc)
+    curt_benefit = E_curt * λc
+
+    if Hb <= 0:
+        # No binding hours; nothing to value under congestion.
+        return {
+            "E_curt_mwh_yr": E_curt,
+            "curtailment_benefit_$_yr": curt_benefit,
+            "theta_overlap": 0.0,
+            "H_bc": 0.0,
+            "H_bnon": 0.0,
+            "ΔC_used_bc_mw": 0.0,
+            "ΔC_remain_bc_mw": ΔC,
+        }
+
+    # Overlap proxy between binding and curtailment time
+    theta = min(1.0, Hc / Hb) if Hc > 0 else 0.0
+    H_bc = theta * Hb
+    H_bnon = (1.0 - theta) * Hb
+
+    # Headroom consumed by curtailment in overlap hours (MW basis)
+    ΔC_used_bc = min(ΔC, Cc)
+    ΔC_remain_bc = max(0.0, ΔC - ΔC_used_bc)
+
+    return {
+        "E_curt_mwh_yr": E_curt,
+        "curtailment_benefit_$_yr": curt_benefit,
+        "theta_overlap": theta,
+        "H_bc": H_bc,
+        "H_bnon": H_bnon,
+        "ΔC_used_bc_mw": ΔC_used_bc,
+        "ΔC_remain_bc_mw": ΔC_remain_bc,
+    }
+
+
 def calculate_congestion_reduction_costs(
     reconductoring: bool,
     capacity_mw: int,
@@ -177,43 +247,75 @@ def calculate_congestion_reduction_costs(
     delay_years: int,
     construction_years: int,
     wacc_real: float,
+    curtailment_hours_total: float,
+    average_curtailment_mw: float,
+    average_curtailment_price: float,
+    curtailment_saturation_factor: float,
 ):
     """
     Calculate the congestion reduction costs for a transmission line project.
     """
     if reconductoring == False:
         effective_capacity_relief = max(0, flow_factor * capacity_mw)
-
     else:
         effective_capacity_relief = max(0, capacity_mw - old_capacity_mw)
 
-    energy_congestion_reduction = binding_hours * min(
-        effective_capacity_relief, average_exceedance
+    # Allocate capacity relief between curtailment and congestion
+    alloc = allocate_curtailment_then_congestion(
+        ΔC_eff_mw=effective_capacity_relief,
+        binding_hours_total=binding_hours,
+        average_exceedance_mw=average_exceedance,
+        curtailment_hours_total=curtailment_hours_total,
+        average_curtailment_mw=average_curtailment_mw,
+        average_curtailment_price=average_curtailment_price,
     )
-    energy_congestion_residual = binding_hours * max(
-        0, average_exceedance - effective_capacity_relief
-    )  # THIS IS ACTUALLY REMAINING CONGESTION. IF RESIDUAL CONGESTION EXISTS IT IS STILL A COST.
 
-    annual_congestion_reduction_cost = (
-        energy_congestion_reduction * average_congestion_price
-    )
-    annual_congestion_residual_cost = (
-        energy_congestion_residual * average_congestion_price
-    )  # THIS IS ACTUALLY THE COST OF THE REMAINING CONGESTION. IF RESIDUAL CONGESTION EXISTS IT IS STILL A COST.
+    # Curtailment results
+    E_curt = alloc["E_curt_mwh_yr"]
+    annual_curtailment_benefit = alloc["curtailment_benefit_$_yr"]
 
-    # near binding
+    # Congestion split with no double counting
+    H_bc = alloc["H_bc"]
+    H_bnon = alloc["H_bnon"]
+    ΔC_rem = alloc["ΔC_remain_bc_mw"]
+
+    # Congestion relief energy (MWh/yr) on overlap & non-overlap binding hours
+    E_cong_bc = H_bc * min(ΔC_rem, average_exceedance)
+    E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
+
+    # Near-binding add (unchanged)
     k = max(0.0, min(1.0, near_binding_relief_factor))
     near_hours = max(0.0, near_binding_hours)
     E_near = k * near_hours * effective_capacity_relief  #  MWh/yr
 
-    annual_near_congestion_reduction_cost = E_near * average_congestion_price
+    # Total congestion energy
+    energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
 
-    total_annual_congestion_reduction_cost = (
-        annual_congestion_reduction_cost + annual_near_congestion_reduction_cost
+    # Monetize congestion ($/yr) — apply saturation haircut to $ only
+    annual_congestion_reduction_cost_raw = (
+        energy_congestion_reduction * average_congestion_price
     )
-    total_annual_congestion_reduction_cost_haircut = (
+    annual_congestion_reduction_cost_haircut = (
         1 - saturation_factor
-    ) * total_annual_congestion_reduction_cost
+    ) * annual_congestion_reduction_cost_raw
+
+    # Residual congestion energy (MWh/yr) on binding hours
+    energy_congestion_residual = H_bc * max(
+        0.0, average_exceedance - ΔC_rem
+    ) + H_bnon * max(0.0, average_exceedance - effective_capacity_relief)
+    annual_congestion_residual_cost = (
+        energy_congestion_residual * average_congestion_price
+    )
+
+    # Apply curtailment saturation factor
+    annual_curtailment_benefit_haircut = (
+        1 - curtailment_saturation_factor
+    ) * annual_curtailment_benefit
+
+    total_annual_congestion_reduction_cost = annual_congestion_reduction_cost_raw
+    total_annual_congestion_reduction_cost_haircut = (
+        annual_congestion_reduction_cost_haircut
+    )
 
     lifetime_congestion_reduction_cost = (
         total_annual_congestion_reduction_cost * project_lifetime
@@ -261,6 +363,44 @@ def calculate_congestion_reduction_costs(
         start_year=1,
     )
 
+    # Curtailment lifetime calculations
+    lifetime_curtailment_benefit = annual_curtailment_benefit * project_lifetime
+    lifetime_curtailment_benefit_pv = calculate_present_value(
+        annual_curtailment_benefit,
+        wacc_real,
+        project_lifetime,
+        start_year=delay_years + construction_years,
+    )
+
+    lifetime_curtailment_benefit_haircut = (
+        annual_curtailment_benefit_haircut * project_lifetime
+    )
+    lifetime_curtailment_benefit_haircut_pv = calculate_present_value(
+        annual_curtailment_benefit_haircut,
+        wacc_real,
+        project_lifetime,
+        start_year=delay_years + construction_years,
+    )
+
+    # Curtailment costs during delay period
+    annual_curtailment_during_delay_and_construction = (
+        curtailment_hours_total * average_curtailment_mw
+    )
+    annual_curtailment_during_delay_and_construction_cost = (
+        annual_curtailment_during_delay_and_construction * average_curtailment_price
+    )
+
+    lifetime_curtailment_during_delay_and_construction_cost = (
+        annual_curtailment_during_delay_and_construction_cost
+        * (delay_years + construction_years)
+    )
+    lifetime_curtailment_during_delay_and_construction_pv = calculate_present_value(
+        annual_curtailment_during_delay_and_construction_cost,
+        wacc_real,
+        delay_years + construction_years,
+        start_year=1,
+    )
+
     return (
         lifetime_congestion_reduction_cost,
         lifetime_congestion_reduction_cost_haircut,
@@ -268,7 +408,7 @@ def calculate_congestion_reduction_costs(
         lifetime_congestion_reduction_cost_pv,
         lifetime_congestion_reduction_cost_haircut_pv,
         lifetime_congestion_residual_cost_pv,
-        annual_congestion_reduction_cost,
+        annual_congestion_reduction_cost_raw,
         annual_congestion_residual_cost,
         effective_capacity_relief,
         energy_congestion_reduction,
@@ -276,6 +416,21 @@ def calculate_congestion_reduction_costs(
         E_near,
         lifetime_congestion_during_delay_and_construction_cost,
         lifetime_congestion_during_delay_and_construction_pv,
+        # Curtailment values
+        E_curt,
+        annual_curtailment_benefit,
+        annual_curtailment_benefit_haircut,
+        lifetime_curtailment_benefit,
+        lifetime_curtailment_benefit_pv,
+        lifetime_curtailment_benefit_haircut,
+        lifetime_curtailment_benefit_haircut_pv,
+        lifetime_curtailment_during_delay_and_construction_cost,
+        lifetime_curtailment_during_delay_and_construction_pv,
+        # Allocation metrics
+        alloc["theta_overlap"],
+        H_bc,
+        H_bnon,
+        ΔC_rem,
     )
 
 
@@ -308,6 +463,14 @@ def main():
     # Load financing details
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
+    # Load curtailment reduction parameters
+    (
+        curtailment_hours_total,
+        average_curtailment_mw,
+        average_curtailment_price,
+        curtailment_saturation_factor,
+    ) = load_curtailment_reductions()
+
     # Calculate congestion reduction costs
     (
         lifetime_congestion_reduction_cost,
@@ -316,7 +479,7 @@ def main():
         lifetime_congestion_reduction_cost_pv,
         lifetime_congestion_reduction_cost_haircut_pv,
         lifetime_congestion_residual_cost_pv,
-        annual_congestion_reduction_cost,
+        annual_congestion_reduction_cost_raw,
         annual_congestion_residual_cost,
         effective_capacity_relief,
         energy_congestion_reduction,
@@ -324,6 +487,21 @@ def main():
         E_near,
         lifetime_congestion_during_delay_and_construction_cost,
         lifetime_congestion_during_delay_and_construction_pv,
+        # Curtailment values
+        E_curt,
+        annual_curtailment_benefit,
+        annual_curtailment_benefit_haircut,
+        lifetime_curtailment_benefit,
+        lifetime_curtailment_benefit_pv,
+        lifetime_curtailment_benefit_haircut,
+        lifetime_curtailment_benefit_haircut_pv,
+        lifetime_curtailment_during_delay_and_construction_cost,
+        lifetime_curtailment_during_delay_and_construction_pv,
+        # Allocation metrics
+        theta_overlap,
+        H_bc,
+        H_bnon,
+        ΔC_rem,
     ) = calculate_congestion_reduction_costs(
         reconductoring,
         capacity_mw,
@@ -340,6 +518,10 @@ def main():
         delay_years,
         construction_years,
         wacc_real,
+        curtailment_hours_total,
+        average_curtailment_mw,
+        average_curtailment_price,
+        curtailment_saturation_factor,
     )
 
     print("=" * 60)
@@ -360,6 +542,49 @@ def main():
     )
     print(
         f"Lifetime congestion during delay and construction PV: ${lifetime_congestion_during_delay_and_construction_pv:,.2f}"
+    )
+
+    print()
+    print("=" * 60)
+    print("CURTAILMENT REDUCTION RESULTS AND QUANTITIES")
+    print("=" * 60)
+    print(f"Curtailment energy reduction: {E_curt:,.2f} MWh/yr")
+    print(f"Annual curtailment benefit: ${annual_curtailment_benefit:,.2f}")
+    print(
+        f"Annual curtailment benefit haircut: ${annual_curtailment_benefit_haircut:,.2f}"
+    )
+    print(f"Overlap factor (theta): {theta_overlap:.3f}")
+    print(f"Binding hours (overlap): {H_bc:,.0f} hrs/yr")
+    print(f"Binding hours (non-overlap): {H_bnon:,.0f} hrs/yr")
+    print(f"Remaining capacity for congestion: {ΔC_rem:,.2f} MW")
+
+    print()
+    print("=" * 60)
+    print("CURTAILMENT DURING DELAY AND CONSTRUCTION RESULTS")
+    print("=" * 60)
+    print(
+        f"Lifetime curtailment during delay and construction cost: ${lifetime_curtailment_during_delay_and_construction_cost:,.2f}"
+    )
+    print(
+        f"Lifetime curtailment during delay and construction PV: ${lifetime_curtailment_during_delay_and_construction_pv:,.2f}"
+    )
+
+    print()
+    print("=" * 60)
+    print("CURTAILMENT REDUCTION COST CALCULATION RESULTS")
+    print("=" * 60)
+    print(f"Lifetime curtailment benefit: ${lifetime_curtailment_benefit:,.2f}")
+    print(
+        f"Lifetime curtailment benefit haircut: ${lifetime_curtailment_benefit_haircut:,.2f}"
+    )
+
+    print()
+    print(
+        f"PRESENT VALUES (discounted to base year (2025) using real WACC ({wacc_real:.2%})):"
+    )
+    print(f"Lifetime curtailment benefit PV: ${lifetime_curtailment_benefit_pv:,.2f}")
+    print(
+        f"Lifetime curtailment benefit haircut PV: ${lifetime_curtailment_benefit_haircut_pv:,.2f}"
     )
 
     print()

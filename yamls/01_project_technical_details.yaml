@@ -11,8 +11,8 @@ project:
 
   line_utilization: 0 # %
 
-  reconductoring: False # True or False
-  old_capacity_mw: 0 # MW
+  reconductoring: True # True or False
+  old_capacity_mw: 100 # MW
 
 timeline:
   construction_years: 1
