@@ -1,1279 +1,1175 @@
 # Project Category Circuit and Resistance Details
-# Electrical and physical circuit specifications and resistance values for all 128 transmission project configurations
+# Electrical and physical circuit specifications and resistance values for all 90 transmission project configurations
+# All values synchronized with categorydata.csv on 2025-10-26
 
 project_categories_circuit_and_resistance_details:
-  # OVERHEAD AC CONFIGURATIONS (16 total)
-  overhead_ac:
-    "Overhead/AC/140MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 140
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 69
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.2323 # ohms/mile
-      DC_20_resistance: 0.1880 # ohms/mile
-
-    "Overhead/AC/140MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 140
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 69
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.2517 # ohms/mile
-      DC_20_resistance: 0.2055 # ohms/mile
-
-    "Overhead/AC/329MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 329
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 138
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/329MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 329
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 138
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.2517 # ohms/mile
-      DC_20_resistance: 0.2055 # ohms/mile
-
-    "Overhead/AC/394MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 394
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/394MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 394
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1065 # ohms/mile
-      DC_20_resistance: 0.08630 # ohms/mile
-
-    "Overhead/AC/460MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 460
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/460MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 460
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1065 # ohms/mile
-      DC_20_resistance: 0.08630 # ohms/mile
-
-    "Overhead/AC/657MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 657
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 230
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/657MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 657
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 230
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1065 # ohms/mile
-      DC_20_resistance: 0.08630 # ohms/mile
-
-    "Overhead/AC/1792MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 1792
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 345
-      conductors_per_phase: 2
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/1792MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 1792
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 345
-      conductors_per_phase: 2
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1065 # ohms/mile
-      DC_20_resistance: 0.08630 # ohms/mile
-
-    "Overhead/AC/2598MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 2598
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 3
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1214 # ohms/mile
-      DC_20_resistance: 0.09451 # ohms/mile
-
-    "Overhead/AC/2598MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 2598
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 3
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1065 # ohms/mile
-      DC_20_resistance: 0.08630 # ohms/mile
-
-    "Overhead/AC/6625MW/Standard Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 6625
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 765
-      conductors_per_phase: 6
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/AC/6625MW/Advanced Aluminum Conductor/NA":
-      installation_method: "Overhead"
-      current_type: "AC"
-      capacity_mw: 6625
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "NA"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 765
-      conductors_per_phase: 6
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1509 # ohms/mile
-      DC_20_resistance: 0.1225 # ohms/mile
-
-  # OVERHEAD DC CONFIGURATIONS (20 total)
-  overhead_dc:
-    "Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07392 # ohms/mile
-      DC_20_resistance: 0.05702 # ohms/mile
-
-    "Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.07140 # ohms/mile
-      DC_20_resistance: 0.05660 # ohms/mile
-
-    "Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Standard Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACSR 477 kcmil Hawk"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1373 # ohms/mile
-      DC_20_resistance: 0.1130 # ohms/mile
-
-    "Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1334 # ohms/mile
-      DC_20_resistance: 0.1081 # ohms/mile
-
-    "Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter":
-      installation_method: "Overhead"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Advanced Aluminum Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "ACCC 430 kcmil Linnet"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.1334 # ohms/mile
-      DC_20_resistance: 0.1081 # ohms/mile
-
-  # UNDERGROUND DIRECT-BURIED AC CONFIGURATIONS (8 total)
-  underground_direct_buried_ac:
-    "Underground direct-buried/AC/140MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 140
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 69
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.030 # ohms/mile
-      DC_20_resistance: 0.021 # ohms/mile
-
-    "Underground direct-buried/AC/329MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 329
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 138
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.030 # ohms/mile
-      DC_20_resistance: 0.021 # ohms/mile
-
-    "Underground direct-buried/AC/394MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 394
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Underground direct-buried/AC/460MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 460
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01979 # ohms/mile
-      DC_20_resistance: 0.01159 # ohms/mile
-
-    "Underground direct-buried/AC/657MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 657
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 230
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 1792
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 345
-      conductors_per_phase: 2
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 2598
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 3
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA":
-      installation_method: "Underground direct-buried"
-      current_type: "AC"
-      capacity_mw: 6625
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 765
-      conductors_per_phase: 6
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-  # UNDERGROUND DIRECT-BURIED DC CONFIGURATIONS (10 total)
-  underground_direct_buried_dc:
-    "Underground direct-buried/DC/500MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground direct-buried"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-  # UNDERGROUND TUNNEL AC CONFIGURATIONS (8 total)
-  underground_tunnel_ac:
-    "Underground tunnel/AC/140MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 140
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 69
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Underground tunnel/AC/329MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 329
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 138
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Underground tunnel/AC/394MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 394
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Underground tunnel/AC/460MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 460
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01979 # ohms/mile
-      DC_20_resistance: 0.01159 # ohms/mile
-
-    "Underground tunnel/AC/657MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 657
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 230
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Underground tunnel/AC/1792MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 1792
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 345
-      conductors_per_phase: 2
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Underground tunnel/AC/2598MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 2598
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 3
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/AC/6625MW/Underground Copper Conductor/NA":
-      installation_method: "Underground tunnel"
-      current_type: "AC"
-      capacity_mw: 6625
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 765
-      conductors_per_phase: 6
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-  # UNDERGROUND TUNNEL DC CONFIGURATIONS (10 total)
-  underground_tunnel_dc:
-    "Underground tunnel/DC/500MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter":
-      installation_method: "Underground tunnel"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Underground Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-  # SUBSEA AC CONFIGURATIONS (8 total)
-  subsea_ac:
-    "Subsea/AC/140MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 140
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 69
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Subsea/AC/329MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 329
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 138
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Subsea/AC/394MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 394
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02977 # ohms/mile
-      DC_20_resistance: 0.02076 # ohms/mile
-
-    "Subsea/AC/460MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 460
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 161
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01979 # ohms/mile
-      DC_20_resistance: 0.01159 # ohms/mile
-
-    "Subsea/AC/657MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 657
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 230
-      conductors_per_phase: 1
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Subsea/AC/1792MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 1792
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 345
-      conductors_per_phase: 2
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.02285 # ohms/mile
-      DC_20_resistance: 0.01448 # ohms/mile
-
-    "Subsea/AC/2598MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 2598
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 3
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/AC/6625MW/Subsea Copper Conductor/NA":
-      installation_method: "Subsea"
-      current_type: "AC"
-      capacity_mw: 6625
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "NA"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 765
-      conductors_per_phase: 6
-      number_of_phases: 3
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-  # SUBSEA DC CONFIGURATIONS (10 total)
-  subsea_dc:
-    "Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 500
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.04334 # ohms/mile
-      DC_20_resistance: 0.03191 # ohms/mile
-
-    "Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 1500
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 2000
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 2400
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 1400 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "LCC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
-
-    "Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter":
-      installation_method: "Subsea"
-      current_type: "DC"
-      capacity_mw: 6000
-      conductor_type: "Subsea Copper Conductor"
-      converter_type: "VSC Converter"
-      conductor_specification: "XLPE Copper 3000 mm^2"
-      voltage_kv: 500
-      conductors_per_phase: 1
-      number_of_phases: 1
-      number_of_circuits_poles: 2
-      AC_75_resistance: 0.01650 # ohms/mile
-      DC_20_resistance: 0.009795 # ohms/mile
+  Overhead/AC/140MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 140
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 69
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.23232
+    DC_20_resistance: 0.187968
+  Overhead/AC/140MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 140
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 69
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.2517
+    DC_20_resistance: 0.2055
+  Overhead/AC/329MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 329
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 115
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/329MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 329
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 115
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.2517
+    DC_20_resistance: 0.2055
+  Overhead/AC/394MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 394
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 138
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/394MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 394
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 138
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.1065
+    DC_20_resistance: 0.0863
+  Overhead/AC/460MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 460
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 161
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/460MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 460
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 161
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.1065
+    DC_20_resistance: 0.0863
+  Overhead/AC/657MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 657
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 230
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/657MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 657
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 230
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.1065
+    DC_20_resistance: 0.0863
+  Overhead/AC/1792MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 1792
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 345
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/1792MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 1792
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 345
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.1065
+    DC_20_resistance: 0.0863
+  Overhead/AC/2598MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 2598
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 500
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.12144
+    DC_20_resistance: 0.094512
+  Overhead/AC/2598MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 2598
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 500
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.1065
+    DC_20_resistance: 0.0863
+  Overhead/AC/6625MW/Standard Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 6625
+    conductor_type: Standard Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 765
+    conductors_per_phase: 6
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/AC/6625MW/Advanced Aluminum Conductor/NA:
+    installation_method: Overhead
+    current_type: AC
+    capacity_mw: 6625
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: NA
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 765
+    conductors_per_phase: 6
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.150878197
+    DC_20_resistance: 0.122529715
+  Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Standard Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Standard Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Standard Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 400
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Standard Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 400
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 400
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 400
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Standard Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Standard Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Standard Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Standard Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.07392
+    DC_20_resistance: 0.057024
+  Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.0714
+    DC_20_resistance: 0.0566
+  Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Standard Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 640
+    conductors_per_phase: 6
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Standard Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACSR 477 kcmil Hawk
+    voltage_kv: 640
+    conductors_per_phase: 6
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.13728
+    DC_20_resistance: 0.112992
+  Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: LCC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 640
+    conductors_per_phase: 6
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.1334
+    DC_20_resistance: 0.1081
+  Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter:
+    installation_method: Overhead
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Advanced Aluminum Conductor
+    converter_type: VSC Converter
+    conductor_specification: ACCC 430 kcmil Linnet
+    voltage_kv: 640
+    conductors_per_phase: 6
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.1334
+    DC_20_resistance: 0.1081
+  Underground direct-buried/AC/140MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 140
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 69
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground direct-buried/AC/329MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 329
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 115
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground direct-buried/AC/394MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 394
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 138
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground direct-buried/AC/460MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 460
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 161
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.019794937
+    DC_20_resistance: 0.01158728
+  Underground direct-buried/AC/657MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 657
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 230
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 1792
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 345
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 2598
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA:
+    installation_method: Underground direct-buried
+    current_type: AC
+    capacity_mw: 6625
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 765
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/500MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground direct-buried
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/AC/140MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 140
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 69
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground tunnel/AC/329MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 329
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 115
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground tunnel/AC/394MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 394
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 138
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Underground tunnel/AC/460MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 460
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 161
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.019794937
+    DC_20_resistance: 0.01158728
+  Underground tunnel/AC/657MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 657
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 230
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Underground tunnel/AC/1792MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 1792
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 345
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Underground tunnel/AC/2598MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 2598
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/AC/6625MW/Underground Copper Conductor/NA:
+    installation_method: Underground tunnel
+    current_type: AC
+    capacity_mw: 6625
+    conductor_type: Underground Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 765
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/500MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Underground Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter:
+    installation_method: Underground tunnel
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Underground Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/AC/140MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 140
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 69
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Subsea/AC/329MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 329
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 115
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Subsea/AC/394MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 394
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 138
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.029772873
+    DC_20_resistance: 0.020760544
+  Subsea/AC/460MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 460
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 161
+    conductors_per_phase: 1
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.019794937
+    DC_20_resistance: 0.01158728
+  Subsea/AC/657MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 657
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 230
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Subsea/AC/1792MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 1792
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 345
+    conductors_per_phase: 3
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.022852692
+    DC_20_resistance: 0.0144841
+  Subsea/AC/2598MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 2598
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/AC/6625MW/Subsea Copper Conductor/NA:
+    installation_method: Subsea
+    current_type: AC
+    capacity_mw: 6625
+    conductor_type: Subsea Copper Conductor
+    converter_type: NA
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 765
+    conductors_per_phase: 2
+    number_of_phases: 3
+    number_of_circuits_poles: 1
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Subsea Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 500
+    conductor_type: Subsea Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 250
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.043341867
+    DC_20_resistance: 0.031910864
+  Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Subsea Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 1500
+    conductor_type: Subsea Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 400
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Subsea Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 2000
+    conductor_type: Subsea Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 500
+    conductors_per_phase: 1
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Subsea Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 2400
+    conductor_type: Subsea Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 1400 mm^2
+    voltage_kv: 600
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Subsea Copper Conductor
+    converter_type: LCC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
+  Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:
+    installation_method: Subsea
+    current_type: DC
+    capacity_mw: 6000
+    conductor_type: Subsea Copper Conductor
+    converter_type: VSC Converter
+    conductor_specification: XLPE Copper 3000 mm^2
+    voltage_kv: 640
+    conductors_per_phase: 2
+    number_of_phases: 1
+    number_of_circuits_poles: 2
+    AC_75_resistance: 0.016502847
+    DC_20_resistance: 0.009794776
