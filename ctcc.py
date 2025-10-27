@@ -52,6 +52,7 @@ def main():
         "energy_losses.py",
         "emissions.py",
         "line_loss_costs.py",
+        "oandm.py",
         # Add more scripts as you create them
     ]
 
