@@ -6,14 +6,19 @@ project:
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
-  capacity_mw: 140 # MW
-  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  capacity_mw: 394 # MW
+  conductor_type: "Advanced Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
   converter_type: "LCC Converter" # LCC Converter or VSC Converter
 
   line_utilization: .70 # % [0,1]
 
+  baseline_electricity_price_per_mwh: 50.0 # $/MWh
+  social_discount_rate: 0.03 # Annual discount rate for NPV calculations (3%)
+
   reconductoring: True # True or False
-  old_capacity_mw: 100 # MW
+  old_capacity_mw: 140 # MW
+  old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  old_ac_dc: "AC" # AC or DC
 
 timeline:
   construction_years: 1

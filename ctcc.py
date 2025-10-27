@@ -51,6 +51,7 @@ def main():
         "congestion_curtailment_reduction.py",
         "energy_losses.py",
         "emissions.py",
+        "line_loss_costs.py",
         # Add more scripts as you create them
     ]
 
