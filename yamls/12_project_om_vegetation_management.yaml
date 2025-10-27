@@ -1,49 +1,47 @@
 # O&M Vegetation Management
 # Operations and maintenance costs for vegetation management
 
-vegetation_management: # cost per mile [construction type][terrain type]
-  overhead:
-    forested: 0
-    scrubbed_flat: 0
-    wetland: 0
-    farmland: 0
-    desert_barren: 0
-    urban: 0
-    rolling_hills: 0
-    mountain: 0
-    subsea: 0
+vegetation_management_om_costs: # cost per mile [construction type][terrain type]
+  Overhead:
+    forested: 8000 # $/mile year
+    scrubbed_flat: 10000 # $/mile year
+    wetland: 7000 # $/mile year
+    farmland: 500 # $/mile year
+    desert_barren: 300 # $/mile year
+    urban: 5000 # $/mile year
+    rolling_hills: 3000 # $/mile year
+    mountain: 9000 # $/mile year
+    subsea: 0 # $/mile year
 
-  underground_direct_buried:
-    forested: 0
-    scrubbed_flat: 0
-    wetland: 0
-    farmland: 0
-    desert_barren: 0
-    urban: 0
-    rolling_hills: 0
-    mountain: 0
-    subsea: 0 
+  Underground Direct Buried:
+    forested: 0 # $/mile year
+    scrubbed_flat: 0 # $/mile year
+    wetland: 0 # $/mile year
+    farmland: 0 # $/mile year
+    desert_barren: 0 # $/mile year
+    urban: 0 # $/mile year
+    rolling_hills: 0 # $/mile year
+    mountain: 0 # $/mile year
+    subsea: 0 # $/mile year
 
-  underground_tunnel:
-    forested: 0
-    scrubbed_flat: 0
-    wetland: 0
-    farmland: 0
-    desert_barren: 0
-    urban: 0
-    rolling_hills: 0
-    mountain: 0
-    subsea: 0
+  Underground Tunnel:
+    forested: 0 # $/mile year
+    scrubbed_flat: 0 # $/mile year
+    wetland: 0 # $/mile year
+    farmland: 0 # $/mile year
+    desert_barren: 0 # $/mile year
+    urban: 0 # $/mile year
+    rolling_hills: 0 # $/mile year
+    mountain: 0 # $/mile year
+    subsea: 0 # $/mile year
 
-  subsea:
-    forested: 0
-    scrubbed_flat: 0
-    wetland: 0
-    farmland: 0
-    desert_barren: 0
-    urban: 0
-    rolling_hills: 0
-    mountain: 0
-    subsea: 0
-
-
+  Subsea:
+    forested: 0 # $/mile year
+    scrubbed_flat: 0 # $/mile year
+    wetland: 0 # $/mile year
+    farmland: 0 # $/mile year
+    desert_barren: 0 # $/mile year
+    urban: 0 # $/mile year
+    rolling_hills: 0 # $/mile year
+    mountain: 0 # $/mile year
+    subsea: 0 # $/mile year

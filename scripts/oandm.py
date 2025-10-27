@@ -144,6 +144,24 @@ def load_physical_details():
     )
 
 
+def load_vegetation_management_om_costs(construction_type):
+    """
+    Load vegetation management O&M costs from YAML file.
+
+    Args:
+        construction_type: Type of construction (Overhead/Subsea)
+
+    Returns:
+        float: Variable vegetation management cost per mile per year
+    """
+    with open("../yamls/12_project_om_vegetation_management.yaml", "r") as file:
+        vegetation_management_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
+            "vegetation_management_om_costs"
+        ]
+
+    return vegetation_management_om_costs[construction_type]
+
+
 def load_conductor_om_costs(
     construction_type, ac_dc, capacity_mw, conductor_type, converter_type
 ):
@@ -321,6 +339,57 @@ def load_structure_om_costs(
             "mountain": mountain_structures,
             "subsea": subsea_structures,
         }
+
+        vegetation_management_cost_per_mile_year = load_vegetation_management_om_costs(
+            construction_type
+        )
+
+        # should be multiplying the different veg amangement for each terrain type by the miles of that terrain type
+        forested_vegetation_management_cost_per_year = (
+            forested_miles * vegetation_management_cost_per_mile_year["forested"]
+        )
+        scrubbed_flat_vegetation_management_cost_per_year = (
+            scrubbed_flat_miles
+            * vegetation_management_cost_per_mile_year["scrubbed_flat"]
+        )
+        wetland_vegetation_management_cost_per_year = (
+            wetland_miles * vegetation_management_cost_per_mile_year["wetland"]
+        )
+        farmland_vegetation_management_cost_per_year = (
+            farmland_miles * vegetation_management_cost_per_mile_year["farmland"]
+        )
+        desert_barren_vegetation_management_cost_per_year = (
+            desert_barren_miles
+            * vegetation_management_cost_per_mile_year["desert_barren"]
+        )
+        urban_vegetation_management_cost_per_year = (
+            urban_miles * vegetation_management_cost_per_mile_year["urban"]
+        )
+        rolling_hills_vegetation_management_cost_per_year = (
+            rolling_hills_miles
+            * vegetation_management_cost_per_mile_year["rolling_hills"]
+        )
+        mountain_vegetation_management_cost_per_year = (
+            mountain_miles * vegetation_management_cost_per_mile_year["mountain"]
+        )
+        subsea_vegetation_management_cost_per_year = (
+            subsea_miles * vegetation_management_cost_per_mile_year["subsea"]
+        )
+
+        total_vegetation_management_cost_per_year = (
+            forested_vegetation_management_cost_per_year
+            + scrubbed_flat_vegetation_management_cost_per_year
+            + wetland_vegetation_management_cost_per_year
+            + farmland_vegetation_management_cost_per_year
+            + desert_barren_vegetation_management_cost_per_year
+            + urban_vegetation_management_cost_per_year
+            + rolling_hills_vegetation_management_cost_per_year
+            + mountain_vegetation_management_cost_per_year
+            + subsea_vegetation_management_cost_per_year
+        )
+
+        variable_structure_cost_per_year += total_vegetation_management_cost_per_year
+
     else:
         variable_structure_cost_per_year = 0
         variable_structure_cost_per_mile_year = structure_om_costs[category][
@@ -331,6 +400,7 @@ def load_structure_om_costs(
         variable_structure_cost_per_mile_year,
         variable_structure_cost_per_year,
         structure_dict,
+        total_vegetation_management_cost_per_year,
     )
 
 
@@ -366,10 +436,12 @@ def main():
     variable_converter_cost_per_mile_year = load_converter_om_costs(
         construction_type, ac_dc, capacity_mw, conductor_type, converter_type
     )
+
     (
         variable_structure_cost_per_mile_year,
         variable_structure_cost_per_year,
         structure_dict,
+        total_vegetation_management_cost_per_year,
     ) = load_structure_om_costs(
         construction_type,
         forested_miles,
@@ -391,6 +463,9 @@ def main():
     total_structure_cost_lifetime = variable_structure_cost_per_year * project_lifetime
     total_conductor_cost_lifetime = total_conductor_cost_per_year * project_lifetime
     total_converter_cost_lifetime = total_converter_cost_per_year * project_lifetime
+    total_vegetation_management_cost_lifetime = (
+        total_vegetation_management_cost_per_year * project_lifetime
+    )
 
     # Calculate present values
     pv_conductor = calculate_present_value(
@@ -402,7 +477,13 @@ def main():
     pv_structure = calculate_present_value(
         variable_structure_cost_per_year, wacc_real, project_lifetime, start_year=1
     )
-    pv_total = pv_conductor + pv_converter + pv_structure
+    pv_vegetation_management = calculate_present_value(
+        total_vegetation_management_cost_per_year,
+        wacc_real,
+        project_lifetime,
+        start_year=1,
+    )
+    pv_total = pv_conductor + pv_converter + pv_structure + pv_vegetation_management
 
     # Print results
     print("\n" + "=" * 80)
@@ -450,18 +531,20 @@ def main():
     print(f"Conductor:  ${total_conductor_cost_per_year:,.2f}")
     print(f"Converter:  ${total_converter_cost_per_year:,.2f}")
     print(f"Structure:  ${variable_structure_cost_per_year:,.2f}")
+    print(f"Vegetation Management:  ${total_vegetation_management_cost_per_year:,.2f}")
     print(f"{'─' * 40}")
     print(
-        f"Total:      ${total_conductor_cost_per_year + total_converter_cost_per_year + variable_structure_cost_per_year:,.2f}"
+        f"Total:      ${total_conductor_cost_per_year + total_converter_cost_per_year + variable_structure_cost_per_year + total_vegetation_management_cost_per_year:,.2f}"
     )
 
     print("\n--- Lifetime Total Costs (Undiscounted) ---")
     print(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
     print(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
     print(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
+    print(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
     print(f"{'─' * 40}")
     print(
-        f"Total:      ${total_conductor_cost_lifetime + total_converter_cost_lifetime + total_structure_cost_lifetime:,.2f}"
+        f"Total:      ${total_conductor_cost_lifetime + total_converter_cost_lifetime + total_structure_cost_lifetime + total_vegetation_management_cost_lifetime:,.2f}"
     )
 
     print("\n--- Present Value Calculations ---")
@@ -469,6 +552,7 @@ def main():
     print(f"PV Conductor:  ${pv_conductor:,.2f}")
     print(f"PV Converter:  ${pv_converter:,.2f}")
     print(f"PV Structure:  ${pv_structure:,.2f}")
+    print(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
     print(f"{'─' * 40}")
     print(f"PV Total:      ${pv_total:,.2f}")
     print("\n" + "=" * 80)
