@@ -14,8 +14,15 @@ from yaml_loaders import (
     load_physical_details,
     load_contingencies,
     load_financing_details,
+    load_cost_timing_patterns,
+    load_afudc_config,
 )
-from financial_utils import calculate_present_value, calculate_amortized_cost
+from financial_utils import (
+    calculate_present_value,
+    calculate_amortized_cost,
+    calculate_afudc_rate,
+    calculate_afudc_capitalized_cost,
+)
 from weighted_miles import calculate_weighted_miles
 
 
@@ -122,8 +129,6 @@ def main():
     # Determine number of converters
     if ac_dc == "DC":
         # Load from YAML to get number_of_converters
-        import yaml
-
         with open("../yamls/01_project_technical_details.yaml", "r") as file:
             pd = yaml.load(file, Loader=yaml.FullLoader)
         number_of_converters = pd["project"]["number_of_converters"]
@@ -132,7 +137,7 @@ def main():
 
     total_miles = load_physical_details()
     contingencies = load_contingencies()
-    _, _, _, wacc_real = load_financing_details()
+    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
     (
         total_cost,
@@ -149,6 +154,31 @@ def main():
         category, total_miles, number_of_converters, contingencies, reconductoring
     )
 
+    # Load AFUDC configuration and timing patterns
+    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
+    apply_afudc, delay_active = load_afudc_config()
+
+    # Load full financing YAML for AFUDC rate calculation
+    with open("../yamls/03_financing.yaml", "r") as file:
+        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
+
+    # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
+    if apply_afudc:
+        # Build costs are AFUDC-eligible and occur during construction
+        (
+            capitalized_cost_with_contingencies,
+            afudc_amount,
+        ) = calculate_afudc_capitalized_cost(
+            total_cost_with_contingencies,
+            timing_patterns["build_costs"],
+            delay_year,
+            construction_years,
+            afudc_rate,
+            delay_active,
+        )
+
+    # ===== SOCIETAL PERSPECTIVE: Present Value and Amortization =====
     # Calculate amortized cost
     annual_amortized_cost = calculate_amortized_cost(
         total_cost_with_contingencies, wacc_real, project_lifetime
@@ -170,6 +200,8 @@ def main():
     print(f"  Weighted Miles:           {weighted_miles:,.2f} miles")
     print(f"  Terrain Multiplier:       {average_terrain_multiplier:.2f}")
     print()
+
+    print("[NOMINAL VALUES]")
     print("Base Build Costs:")
     print(f"  Conductor Costs:          ${conductor_cost:,.2f}")
     print(f"  Structure Costs:          ${structure_cost:,.2f}")
@@ -182,13 +214,31 @@ def main():
     print(f"  Structure Costs:          ${structure_cost_with_contingencies:,.2f}")
     print(f"  Converter Costs:          ${converter_cost_with_contingencies:,.2f}")
     print("  " + "-" * 52)
-    print(f"  Total with Contingencies: ${total_cost_with_contingencies:,.2f}")
+    print(f"  TOTAL NOMINAL COST:       ${total_cost_with_contingencies:,.2f}")
+    print()
+
+    if apply_afudc:
+        print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+        print(f"  AFUDC Rate: {afudc_rate:.2%} ({afudc_source})")
+        print(f"  Delay Period Active Work: {'Yes' if delay_active else 'No'}")
+        print()
+        print(
+            f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
+        )
+        print(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
+        print(
+            f"    (Build costs incurred during {construction_years} year construction)"
+        )
+        print()
+
+    print("[SOCIETAL PERSPECTIVE - Present Value & Amortization]")
+    print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
+    print(f"  Base Year: {base_year}")
     print()
     print("Amortized Costs (Annual Payments):")
     print(
         f"  Annual Payment (over {project_lifetime} years): ${annual_amortized_cost:,.2f}"
     )
-    print(f"  Using WACC (real): {wacc_real:.2%}")
     print(f"  PV of amortized payments (verification): ${pv_of_amortized:,.2f}")
     print("=" * 80)
 

@@ -46,7 +46,10 @@ def main():
     # List of scripts to run in order
     scripts = [
         "weighted_miles.py",
+        "build_costs.py",
+        "insurance_costs.py",
         "row_costs.py",
+        "environmental_mitigation.py",
         "delay_costs.py",
         "congestion_curtailment_reduction.py",
         "energy_losses.py",

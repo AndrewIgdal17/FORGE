@@ -156,3 +156,32 @@ def load_physical_details_detailed():
         terrain.get("mountain", 0),
         terrain.get("subsea", 0),
     )
+
+
+def load_environmental_mitigation():
+    """Load environmental mitigation parameters from YAML."""
+    with open("../yamls/09_environmental_mitigation.yaml", "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def load_cost_timing_patterns():
+    """Load cost timing patterns for AFUDC calculations."""
+    with open("../yamls/19_cost_timing_patterns.yaml", "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def load_afudc_config():
+    """Load AFUDC configuration from financing YAML."""
+    with open("../yamls/03_financing.yaml", "r") as file:
+        fin = yaml.load(file, Loader=yaml.FullLoader)
+    afudc_cfg = fin["financial"].get("afudc", {})
+    return (
+        afudc_cfg.get("apply_afudc", False),
+        afudc_cfg.get("delay_period_active_work", False),
+    )
+
+
+def load_insurance_details():
+    """Load insurance parameters from YAML."""
+    with open("../yamls/04_insurance.yaml", "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)

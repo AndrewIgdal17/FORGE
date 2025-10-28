@@ -2,46 +2,63 @@
 # Costs per mile by terrain type for environmental mitigation
 
 environmental_mitigation:
-  cost_per_mile: # $/mile [construction type][terrain type]
-    overhead:
-      forested: 0
-      scrubbed_flat: 0
-      wetland: 0
-      farmland: 0
-      desert_barren: 0
-      urban: 0
-      rolling_hills: 0
-      mountain: 0
-      subsea: 0
-    underground_direct_buried:
-      forested: 0
-      scrubbed_flat: 0
-      wetland: 0
-      farmland: 0
-      desert_barren: 0
-      urban: 0
-      rolling_hills: 0
-      mountain: 0
-      subsea: 0
-    underground_tunnel:
-      forested: 0
-      scrubbed_flat: 0
-      wetland: 0
-      farmland: 0
-      desert_barren: 0
-      urban: 0
-      rolling_hills: 0
-      mountain: 0
-      subsea: 0
-    subsea:
-      forested: 0
-      scrubbed_flat: 0
-      wetland: 0
-      farmland: 0
-      desert_barren: 0
-      urban: 0
-      rolling_hills: 0
-      mountain: 0
-      subsea: 0
-    
+  mitigation_uplift_factor: 1.25 # to account for the fact that the width isnt just row width but also consturciton width via TCEs
 
+  # All-in construction/restoration mitigation ($/acre) by terrain + construction type
+  base_mitigation_cost_per_acre:
+    overhead:
+      forested: 5000
+      scrubbed_flat: 1000
+      wetland: 5000
+      farmland: 800
+      desert_barren: 1000
+      urban: 1500
+      rolling_hills: 1500
+      mountain: 7000
+      subsea: 1000 # onshore landfall/construction yard
+
+    underground_direct_buried:
+      forested: 5000
+      scrubbed_flat: 1000
+      wetland: 10000
+      farmland: 800
+      desert_barren: 1000
+      urban: 2000
+      rolling_hills: 1500
+      mountain: 9000
+      subsea: 1000
+
+    underground_tunnel:
+      forested: 5000
+      scrubbed_flat: 1000
+      wetland: 10000
+      farmland: 800
+      desert_barren: 1000
+      urban: 2000
+      rolling_hills: 1500
+      mountain: 9000
+      subsea: 1000
+      linear_corridor_default: 1500 # if terrain not known
+      shaft_site_default: 1000 # pad/disturbed site avg cost
+
+    subsea:
+      seabed_corridor_default: 0 # passive recovery (no cost)
+      landfall_default: 1000 # for basic onshore site (flat/open)
+
+  # Credit purchases (off-site mitigation via banks)
+  credit_cost_per_acre:
+    wetlands:
+      palustrine: 50000
+      estuarine: 100000
+      other: 25000
+    habitat:
+      default: 30000
+
+  # Mitigation ratios (acres required per acre impacted)
+  credit_ratios:
+    wetlands:
+      palustrine: 1.5
+      estuarine: 2.5
+      other: 1.0
+    habitat:
+      default: 1.0
