@@ -3,11 +3,12 @@
 # Description: This script calculates the delay costs for a transmission line.
 #              It computes the delay costs for a transmission line over the delay period.
 
-import pandas as pd
+# Standard library imports
 import yaml
-import numpy as np
-import argparse
-import math
+
+# Local utility imports
+from yaml_loaders import load_delay_costs, load_financing_details
+from financial_utils import calculate_present_value
 
 
 def load_project_technical_details():
@@ -18,62 +19,6 @@ def load_project_technical_details():
         project_details = yaml.load(file, Loader=yaml.FullLoader)
     delay_year = project_details["timeline"]["delay_years"]
     return delay_year
-
-
-def load_delay_costs():
-    """
-    Load delay costs from yaml file.
-    """
-    with open("../yamls/05_delays.yaml", "r") as file:
-        delay_costs = yaml.load(file, Loader=yaml.FullLoader)
-    return delay_costs
-
-
-def load_financing_details():
-    """
-    Load financing parameters and calculate real WACC using Fisher equation.
-
-    Returns:
-        tuple: (inflation_rate, base_year, wacc_nominal, wacc_real)
-    """
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_data = yaml.load(file, Loader=yaml.FullLoader)
-
-    inflation_rate = financing_data["financial"]["inflation_rate"]
-    base_year = financing_data["financial"]["base_year"]
-    wacc_nominal = financing_data["financial"]["wacc_nominal"]
-
-    # Use Fisher equation to convert nominal WACC to real WACC
-    wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-
-    return inflation_rate, base_year, wacc_nominal, wacc_real
-
-
-def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
-    """
-    Calculate the present value of annual payments over a given time period.
-
-    Args:
-        annual_cost (float): Annual cost amount
-        wacc_real (float): Real weighted average cost of capital (discount rate)
-        total_years (int): Number of years over which payments occur
-        start_year (int): Year when payments begin (default: 1)
-
-    Returns:
-        float: Present value of the payment stream
-    """
-    n_full_years = math.floor(total_years)
-    frac = total_years - n_full_years
-    total_pv = 0
-    for year in range(n_full_years):
-        t = start_year + year
-        total_pv += annual_cost / (1 + wacc_real) ** t
-
-    if frac > 0:
-        t_frac = start_year + n_full_years + frac
-        total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
-
-    return total_pv
 
 
 def main():

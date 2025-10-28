@@ -6,9 +6,11 @@
 #
 
 import sys
-import math
 
-# Import functions from energy_losses
+# Standard library imports
+import yaml
+
+# Local utility imports
 from energy_losses import (
     load_physical_details,
     load_circuit_and_resistance_details,
@@ -16,43 +18,39 @@ from energy_losses import (
     full_load_adjusted,
     calculate_line_losses,
 )
-
-import yaml
+from financial_utils import calculate_present_value
 
 
 def load_project_details():
-    """
-    Load project technical details and construct category identifiers.
+    """Load project technical details with line_loss_costs specific fields."""
+    import yaml
 
-    Returns:
-        tuple: All necessary project details
-    """
     with open("../yamls/01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
 
-    # Extract project specifications
     construction_type = project_details["project"]["construction_type"]
     ac_dc = project_details["project"]["ac_dc"]
     capacity_mw = project_details["project"]["capacity_mw"]
     conductor_type = project_details["project"]["conductor_type"]
-    number_of_converters = project_details["project"]["number_of_converters"]
-    converter_type = project_details["project"]["converter_type"]
-
-    if ac_dc == "AC":
-        converter_type = "NA"
-
+    converter_type = (
+        project_details["project"]["converter_type"] if ac_dc != "AC" else "NA"
+    )
     line_utilization_percent = project_details["project"]["line_utilization"]
     baseline_electricity_price = project_details["project"][
         "baseline_electricity_price_per_mwh"
     ]
     social_discount_rate = project_details["project"]["social_discount_rate"]
-
     reconductoring = project_details["project"]["reconductoring"]
 
-    # Extract timeline information
     delay_years = project_details["timeline"]["delay_years"]
     construction_years = project_details["timeline"]["construction_years"]
     project_lifetime = project_details["timeline"]["project_lifetime"]
+
+    # Get number_of_converters if DC
+    if ac_dc == "DC":
+        number_of_converters = project_details["project"]["number_of_converters"]
+    else:
+        number_of_converters = 0
 
     return (
         construction_type,

@@ -4,11 +4,7 @@
 # 1. Delays and long construction times slowing the deployment of new renewable energy capacity
 # 2. Line losses being compensated for by generators (i.e. they have to burn more fuel to make up for losses)
 
-import yaml
-import sys
-
-# Import energy loss calculation functions
-sys.path.append(".")
+# Local utility imports
 from energy_losses import (
     load_project_technical_details,
     load_physical_details,
@@ -18,78 +14,8 @@ from energy_losses import (
     calculate_line_losses,
     calculate_converter_losses,
 )
-
-
-def load_emissions_details():
-    with open("../yamls/16_emissions_reductions.yaml", "r") as file:
-        emissions_reductions_details = yaml.safe_load(file)
-
-    # get the compensation percentage
-    compensation_percent = emissions_reductions_details["emissions_reductions"][
-        "compensation_percent"
-    ]
-
-    # get the energy source mix details
-    energy_source_mix_details = emissions_reductions_details["emissions_reductions"][
-        "energy_source_mix"
-    ]
-
-    # get the emissions intensities details
-    emissions_intensities_details = emissions_reductions_details[
-        "emissions_reductions"
-    ]["emission_intensities"]
-
-    # get the societal cost details
-    societal_costs_details = emissions_reductions_details["emissions_reductions"][
-        "societal_costs_per_kg"
-    ]
-
-    # return 3 dictionaries
-    return (
-        compensation_percent,
-        energy_source_mix_details,
-        emissions_intensities_details,
-        societal_costs_details,
-    )
-
-
-def load_financing_details():
-    """Load financing details including social discount rate."""
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_details = yaml.safe_load(file)
-
-    social_discount_rate = financing_details["financial"]["social_discount_rate"]
-    return social_discount_rate
-
-
-def calculate_present_value(annual_cost, discount_rate, total_years, start_year=1):
-    """
-    Calculate present value of annual payments.
-
-    Args:
-        annual_cost: Annual cost amount
-        discount_rate: Discount rate (social discount rate for emissions)
-        total_years: Number of years over which payments occur
-        start_year: Year when payments begin
-
-    Returns:
-        Present value of the payment stream
-    """
-    import math
-
-    n_full_years = math.floor(total_years)
-    frac = total_years - n_full_years
-    total_pv = 0
-
-    for year in range(n_full_years):
-        t = start_year + year
-        total_pv += annual_cost / (1 + discount_rate) ** t
-
-    if frac > 0:
-        t_frac = start_year + n_full_years + frac
-        total_pv += annual_cost * frac / (1 + discount_rate) ** t_frac
-
-    return total_pv
+from yaml_loaders import load_emissions_details, load_financing_social_discount_rate
+from financial_utils import calculate_present_value
 
 
 def calculate_total_energy_losses():
@@ -101,17 +27,32 @@ def calculate_total_energy_losses():
     """
     # Load project details
     (
-        category,
+        construction_type,
+        ac_dc,
+        capacity_mw,
+        conductor_type,
+        converter_type,
+        line_utilization_percent,
+        reconductoring,
         delay_year,
         construction_years,
         project_lifetime,
-        reconductoring,
-        line_utilization_percent,
-        ac_dc,
-        capacity_mw,
-        number_of_converters,
-        converter_type,
     ) = load_project_technical_details()
+
+    # Construct category locally
+    category = (
+        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+    )
+
+    # Get number of converters if DC
+    if ac_dc == "DC":
+        import yaml
+
+        with open("../yamls/01_project_technical_details.yaml", "r") as file:
+            pd = yaml.load(file, Loader=yaml.FullLoader)
+        number_of_converters = pd["project"]["number_of_converters"]
+    else:
+        number_of_converters = 0
 
     line_length = load_physical_details()
 
@@ -124,8 +65,11 @@ def calculate_total_energy_losses():
         DC_20_resistance,
     ) = load_circuit_and_resistance_details(category)
 
-    # Convert capacity_mw to numeric
-    capacity_mw_numeric = int(capacity_mw.replace("MW", ""))
+    # Convert capacity_mw to numeric (handle both int and string with MW suffix)
+    if isinstance(capacity_mw, str):
+        capacity_mw_numeric = int(capacity_mw.replace("MW", ""))
+    else:
+        capacity_mw_numeric = int(capacity_mw)
 
     # Calculate phase current and full load adjustment
     phase_current = calculate_phase_current(
@@ -298,7 +242,7 @@ def calculate_lifetime_emissions(
                 lifetime_cost_pv, total_costs_by_pollutant_pv)
     """
     # Calculate start year (when project becomes operational)
-    start_year = delay_years + construction_years + 1
+    start_year = int(delay_years) + int(construction_years) + 1
 
     # Calculate TEC (Total Energy Compensated)
     tec = compensation_percent * total_losses_mwh_per_year
@@ -480,21 +424,31 @@ def main():
     ) = load_emissions_details()
 
     # Load financing details
-    social_discount_rate = load_financing_details()
+    social_discount_rate = load_financing_social_discount_rate()
 
     # Get delay and construction years from project details
     (
-        category,
+        construction_type,
+        ac_dc,
+        capacity_mw,
+        conductor_type,
+        converter_type,
+        line_utilization_percent,
+        reconductoring,
         delay_years,
         construction_years,
         project_lifetime,
-        reconductoring,
-        line_utilization_percent,
-        ac_dc,
-        capacity_mw,
-        number_of_converters,
-        converter_type,
     ) = load_project_technical_details()
+
+    # Get number_of_converters if DC
+    if ac_dc == "DC":
+        import yaml
+
+        with open("../yamls/01_project_technical_details.yaml", "r") as file:
+            pd = yaml.load(file, Loader=yaml.FullLoader)
+        number_of_converters = pd["project"]["number_of_converters"]
+    else:
+        number_of_converters = 0
 
     # Calculate total energy losses
     total_losses_mwh_per_year, project_lifetime_from_losses = (

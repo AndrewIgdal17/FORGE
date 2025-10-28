@@ -3,145 +3,17 @@
 # Description: This script calculates the O&M costs for a transmission line project.
 #              It calculates O&M costs for conductors, converters, and structures.
 
-import math
+# Standard library imports
 import yaml
 
-
-def load_financing_details():
-    """
-    Load financing parameters and calculate real WACC using Fisher equation.
-
-    Returns:
-        tuple: (inflation_rate, base_year, wacc_nominal, wacc_real)
-    """
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_data = yaml.load(file, Loader=yaml.FullLoader)
-
-    inflation_rate = financing_data["financial"]["inflation_rate"]
-    base_year = financing_data["financial"]["base_year"]
-    wacc_nominal = financing_data["financial"]["wacc_nominal"]
-
-    # Use Fisher equation to convert nominal WACC to real WACC
-    wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-
-    return inflation_rate, base_year, wacc_nominal, wacc_real
-
-
-def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
-    """
-    Calculate the present value of annual payments over a given time period.
-
-    Args:
-        annual_cost (float): Annual cost amount
-        wacc_real (float): Real weighted average cost of capital (discount rate)
-        total_years (int): Number of years over which payments occur
-        start_year (int): Year when payments begin (default: 1)
-
-    Returns:
-        float: Present value of the payment stream
-    """
-    n_full_years = math.floor(total_years)
-    frac = total_years - n_full_years
-    total_pv = 0
-    for year in range(n_full_years):
-        t = start_year + year
-        total_pv += annual_cost / (1 + wacc_real) ** t
-
-    if frac > 0:
-        t_frac = start_year + n_full_years + frac
-        total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
-
-    return total_pv
-
-
-def load_project_technical_details():
-    """
-    Load project technical details and construct category identifier.
-
-    The category identifier follows the format:
-    "construction_type/AC_or_DC/capacity_MW/conductor_type/converter_type"
-
-    Returns:
-        tuple: (category, delay_year, construction_years, project_lifetime, reconductoring)
-    """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
-
-    # Extract project specifications
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
-
-    if ac_dc == "AC":
-        converter_type = "NA"
-    else:
-        converter_type = project_details["project"]["converter_type"]
-
-    line_utilization = project_details["project"]["line_utilization"]
-    reconductoring = project_details["project"]["reconductoring"]
-
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
-
-    return (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        delay_years,
-        construction_years,
-        project_lifetime,
-    )
-
-
-def load_physical_details():
-    """
-    Load physical project details and calculate total miles.
-
-    Returns:
-        float: Total miles of transmission line across all terrain types
-    """
-    with open("../yamls/02_project_physical_details.yaml", "r") as file:
-        physical_details = yaml.load(file, Loader=yaml.FullLoader)
-
-    # Sum miles across all terrain types to get total line length
-    forested_miles = physical_details["terrain"]["terrain_miles"]["forested"]
-    scrubbed_flat_miles = physical_details["terrain"]["terrain_miles"]["scrubbed_flat"]
-    wetland_miles = physical_details["terrain"]["terrain_miles"]["wetland"]
-    farmland_miles = physical_details["terrain"]["terrain_miles"]["farmland"]
-    desert_barren_miles = physical_details["terrain"]["terrain_miles"]["desert_barren"]
-    urban_miles = physical_details["terrain"]["terrain_miles"]["urban"]
-    rolling_hills_miles = physical_details["terrain"]["terrain_miles"]["rolling_hills"]
-    mountain_miles = physical_details["terrain"]["terrain_miles"]["mountain"]
-    subsea_miles = physical_details["terrain"]["terrain_miles"]["subsea"]
-    total_miles = (
-        forested_miles
-        + scrubbed_flat_miles
-        + wetland_miles
-        + farmland_miles
-        + desert_barren_miles
-        + urban_miles
-        + rolling_hills_miles
-        + mountain_miles
-        + subsea_miles
-    )
-    return (
-        total_miles,
-        forested_miles,
-        scrubbed_flat_miles,
-        wetland_miles,
-        farmland_miles,
-        desert_barren_miles,
-        urban_miles,
-        rolling_hills_miles,
-        mountain_miles,
-        subsea_miles,
-    )
+# Local utility imports
+from yaml_loaders import (
+    load_financing_details,
+    load_project_technical_details,
+    load_physical_details_detailed,
+    load_circuit_and_resistance_details,
+)
+from financial_utils import calculate_present_value
 
 
 def load_vegetation_management_om_costs(construction_type):
@@ -428,7 +300,7 @@ def main():
         rolling_hills_miles,
         mountain_miles,
         subsea_miles,
-    ) = load_physical_details()
+    ) = load_physical_details_detailed()
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
     variable_conductor_cost_per_mile_year = load_conductor_om_costs(
         construction_type, ac_dc, capacity_mw, conductor_type, converter_type
