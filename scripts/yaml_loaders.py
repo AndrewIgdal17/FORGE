@@ -185,3 +185,15 @@ def load_insurance_details():
     """Load insurance parameters from YAML."""
     with open("../yamls/04_insurance.yaml", "r") as file:
         return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def load_wildfire_costs():
+    """Load wildfire cost parameters from YAML."""
+    with open("../yamls/06_wildfire_costs.yaml", "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def load_outage_costs():
+    """Load outage cost parameters from YAML."""
+    with open("../yamls/07_outage_costs.yaml", "r") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)

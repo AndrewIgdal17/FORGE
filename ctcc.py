@@ -51,6 +51,8 @@ def main():
         "row_costs.py",
         "environmental_mitigation.py",
         "delay_costs.py",
+        "wildfire_costs.py",
+        "outage_costs.py",
         "congestion_curtailment_reduction.py",
         "energy_losses.py",
         "emissions.py",
