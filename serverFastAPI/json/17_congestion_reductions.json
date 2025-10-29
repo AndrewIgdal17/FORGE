@@ -1,0 +1,29 @@
+{
+  "greenfield_congestion_reductions": {
+    "constraints": {
+      "flow_factor": 0.5,
+      "binding_hours": 0,
+      "average_exceedance": 0,
+      "near_binding_hours": 0,
+      "near_average_exceedance": 0,
+      "near_binding_relief_factor": null,
+      "saturation_factor": 0
+    },
+    "costs": {
+      "average_congestion_price": 0,
+      "average_curtailment_price": 0,
+      "value_of_lost_load": 0
+    }
+  },
+  "reconductoring_congestion_reductions": {
+    "constraints": {
+      "binding_hours": 0,
+      "average_exceedance": 0,
+      "near_binding_hours": 0,
+      "near_average_exceedance": 0,
+      "near_binding_relief_factor": null,
+      "saturation_factor": 0,
+      "hot_hour_weights": 0
+    }
+  }
+}

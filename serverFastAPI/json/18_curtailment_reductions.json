@@ -1,0 +1,6 @@
+{
+  "curtailment_reductions": {
+    "avoided_curtailment_cost_per_mwh": 0,
+    "curtailment_reduction_factor": 0
+  }
+}

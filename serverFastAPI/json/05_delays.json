@@ -1,0 +1,12 @@
+{
+  "annual_delay_costs": {
+    "legal": 0,
+    "admin": 0,
+    "labor": 0,
+    "material_and_equipment": 0,
+    "regulatory": 0,
+    "public_relations": 0,
+    "project_management": 0,
+    "miscellaneous": 0
+  }
+}

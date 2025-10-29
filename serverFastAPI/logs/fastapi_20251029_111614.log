@@ -1,0 +1,16 @@
+INFO:     Will watch for changes in these directories: ['/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/serverFastAPI']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [31591] using WatchFiles
+INFO:     Started server process [31594]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:65109 - "OPTIONS /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65109 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65109 - "GET /api/final_combined HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65109 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     192.168.1.1:49243 - "OPTIONS /api/process HTTP/1.1" 200 OK
+INFO:     192.168.1.1:49243 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     198.37.111.15:16657 - "OPTIONS /api/process HTTP/1.1" 200 OK
+INFO:     198.37.111.15:16657 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     198.37.111.15:11443 - "GET /api/final_combined HTTP/1.1" 200 OK
+INFO:     198.37.111.15:11443 - "POST /api/process HTTP/1.1" 200 OK

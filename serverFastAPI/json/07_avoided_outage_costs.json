@@ -1,0 +1,10 @@
+{
+  "outage": {
+    "outage_risk_growth_rate": 0,
+    "event_per_mile_year": 0,
+    "outage_given_event": 0,
+    "outage_hour": 0,
+    "capacity_at_risk": 0,
+    "value_of_lost_load": 0
+  }
+}

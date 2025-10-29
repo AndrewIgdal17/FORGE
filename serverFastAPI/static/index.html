@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FastAPI JSON Template</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 2rem;
+        line-height: 1.6;
+      }
+      form {
+        display: grid;
+        gap: 1rem;
+        max-width: 960px;
+      }
+      .section {
+        display: grid;
+        gap: 0.5rem;
+      }
+      .section h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      label {
+        display: grid;
+        gap: 0.4rem;
+        max-width: 480px;
+      }
+      label.radio {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        max-width: none;
+      }
+      textarea,
+      input[type="text"],
+      input[type="url"],
+      input[type="file"],
+      button {
+        font: inherit;
+        padding: 0.75rem;
+      }
+      button {
+        cursor: pointer;
+      }
+      pre {
+        background: rgba(0, 0, 0, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        white-space: pre;
+        display: inline-block;
+        min-width: 100%;
+        box-sizing: border-box;
+      }
+      .error {
+        color: #b00020;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FastAPI JSON Template</h1>
+    <p>
+      Submit some sample data below. The client sends JSON to the FastAPI backend, the
+      backend calls <code>processor.generate_result</code>, and returns the generated JSON
+      back to the browser.
+    </p>
+
+    <form id="demo-form">
+      <div class="section">
+        <h2>API Connection</h2>
+        <label for="api-base">API Base URL</label>
+        <input
+          id="api-base"
+          name="api-base"
+          type="url"
+          required
+          data-default-port="8000"
+          placeholder="http://example.com:8000"
+        />
+      </div>
+
+      <hr />
+
+      <div class="section">
+        <h2>Mode</h2>
+        <label class="radio">
+          <input type="radio" name="mode" value="simple" checked />
+          <span>Simple: send message + values and receive summary stats.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="bulk" />
+          <span>Bulk: send <code>final_combined.json</code> and receive flattened key/value pairs.</span>
+        </label>
+      </div>
+
+      <hr />
+
+      <div id="simple-section" class="section">
+        <h2>Simple Payload</h2>
+        <label for="message">Message</label>
+        <input id="message" name="message" type="text" value="Hello from the browser!" />
+
+        <label for="values">Values (comma separated)</label>
+        <textarea id="values" name="values" rows="3">1, 2, 3.5</textarea>
+      </div>
+
+      <div id="bulk-section" class="section" hidden>
+        <h2>Bulk Payload</h2>
+        <p>
+          When in bulk mode you can either load the server's <code>final_combined.json</code>
+          or select a JSON file manually.
+        </p>
+
+        <label class="radio">
+          <input type="radio" name="bulk-source" value="server" checked />
+          <span>Fetch <code>/api/final_combined</code> from the API server</span>
+        </label>
+        <label class="radio" for="bulk-file">
+          <input type="radio" name="bulk-source" value="file" />
+          <span>Upload a JSON file</span>
+        </label>
+        <input type="file" id="bulk-file" accept="application/json,.json" />
+      </div>
+
+      <hr />
+
+      <button type="submit">Send JSON</button>
+    </form>
+
+    <section>
+      <h2>Result</h2>
+      <div id="status"></div>
+      <pre id="result">Submit the form to see the API response.</pre>
+    </section>
+
+    <script>
+      const form = document.getElementById("demo-form");
+      const apiBaseInput = document.getElementById("api-base");
+      const messageInput = document.getElementById("message");
+      const valuesInput = document.getElementById("values");
+      const resultEl = document.getElementById("result");
+      const statusEl = document.getElementById("status");
+      const modeInputs = document.querySelectorAll('input[name="mode"]');
+  const simpleSection = document.getElementById("simple-section");
+  const bulkSection = document.getElementById("bulk-section");
+
+      const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
+
+      function deriveDefaultApiBase(currentUrl, defaultPort) {
+        try {
+          const url = new URL(currentUrl);
+          if (url.protocol === "file:") {
+            return `http://127.0.0.1:${defaultPort}`;
+          }
+
+          url.port = String(defaultPort);
+          url.pathname = "";
+          url.search = "";
+          url.hash = "";
+          return url.origin;
+        } catch (error) {
+          return `http://127.0.0.1:${defaultPort}`;
+        }
+      }
+
+      function initialiseApiBase() {
+        const derived = deriveDefaultApiBase(window.location.href, DEFAULT_PORT);
+        apiBaseInput.value = derived;
+      }
+
+      function selectedMode() {
+        const checked = Array.from(modeInputs).find((input) => input.checked);
+        return checked ? checked.value : "simple";
+      }
+
+      function updateModeVisibility() {
+        const mode = selectedMode();
+        const isSimple = mode === "simple";
+        simpleSection.hidden = !isSimple;
+        bulkSection.hidden = isSimple;
+      }
+
+      function parseValues(raw) {
+        return raw
+          .split(",")
+          .map((value) => value.trim())
+          .filter((value) => value.length)
+          .map((value) => Number(value))
+          .filter((value) => !Number.isNaN(value));
+      }
+
+      async function fetchFinalCombined(baseUrl) {
+        const finalUrl = new URL("/api/final_combined", baseUrl).toString();
+        const response = await fetch(finalUrl);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to load final_combined.json: ${response.status} ${response.statusText} ${errorText}`);
+        }
+        return response.json();
+      }
+
+      async function readFileAsJson(file) {
+        const text = await file.text();
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error("The selected file is not valid JSON.");
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        statusEl.textContent = "Preparing request...";
+        statusEl.classList.remove("error");
+        resultEl.textContent = "";
+
+        try {
+          const baseUrl = apiBaseInput.value.trim();
+          const mode = selectedMode();
+          const payload = { mode };
+
+          if (mode === "simple") {
+            payload.message = messageInput.value;
+            payload.values = parseValues(valuesInput.value);
+          } else {
+            statusEl.textContent = "Loading combined JSON…";
+            const bulkSource = Array.from(
+              document.querySelectorAll('input[name="bulk-source"]')
+            ).find((input) => input.checked)?.value ?? "server";
+            if (bulkSource === "file") {
+              const fileInput = document.getElementById("bulk-file");
+              const file = fileInput?.files?.[0];
+              if (!file) {
+                throw new Error("Choose a JSON file or switch back to server mode.");
+              }
+              payload.combinedData = await readFileAsJson(file);
+            } else {
+              payload.combinedData = await fetchFinalCombined(baseUrl);
+            }
+          }
+          statusEl.textContent = "Sending...";
+
+          const endpoint = new URL("/api/process", baseUrl).toString();
+
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${errorText}`);
+          }
+
+          const json = await response.json();
+          statusEl.textContent = "Success";
+          statusEl.classList.remove("error");
+          if (json.mode === "bulk" && json.text) {
+            resultEl.textContent = json.text;
+          } else {
+            resultEl.textContent = JSON.stringify(json, null, 2);
+          }
+        } catch (error) {
+          statusEl.textContent = "Request failed";
+          statusEl.classList.add("error");
+          resultEl.textContent = error.message;
+        }
+      });
+
+      initialiseApiBase();
+      updateModeVisibility();
+      modeInputs.forEach((input) => {
+        input.addEventListener("change", updateModeVisibility);
+      });
+    </script>
+  </body>
+</html>
