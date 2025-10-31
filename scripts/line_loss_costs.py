@@ -6,6 +6,11 @@
 #
 
 import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Standard library imports
 import yaml
@@ -202,7 +207,61 @@ def main():
     print()
 
     if not reconductoring:
-        print("Greenfield project detected, skipping this calculation.")
+        print("Greenfield project detected - calculating line loss costs.")
+        print()
+
+        # Calculate losses for the greenfield configuration
+        losses_mwh_per_year, lifetime_losses_mwh = calculate_configuration_losses(
+            construction_type,
+            ac_dc,
+            capacity_mw,
+            conductor_type,
+            converter_type,
+            line_utilization_percent,
+            project_lifetime,
+        )
+
+        # Calculate costs (losses × price)
+        annual_loss_cost = losses_mwh_per_year * baseline_electricity_price
+        lifetime_nominal_cost = annual_loss_cost * project_lifetime
+
+        # Calculate present value
+        start_year = delay_years + construction_years
+        pv_loss_cost = calculate_present_value(
+            annual_loss_cost, social_discount_rate, project_lifetime, start_year
+        )
+
+        # Print results
+        print("=" * 70)
+        print("GREENFIELD LINE LOSS COST RESULTS")
+        print("=" * 70)
+        print()
+        print(f"Project Capacity: {capacity_mw} MW")
+        print(f"Line Utilization: {line_utilization_percent * 100:.1f}%")
+        print(f"Electricity Price: ${baseline_electricity_price:.2f}/MWh")
+        print()
+        print("NOMINAL VALUES:")
+        print(f"  Line Losses: {losses_mwh_per_year:,.2f} MWh/year")
+        print(f"  Annual Cost: ${annual_loss_cost:,.2f}/year")
+        print(f"  Lifetime Cost: ${lifetime_nominal_cost:,.2f}")
+        print()
+        print("DISCOUNTED VALUES (NPV):")
+        print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+        print(f"  Start Year: {start_year:.1f} years")
+        print(f"  Net Present Value: ${pv_loss_cost:,.2f}")
+        print()
+        print("=" * 70)
+
+        # Write to CSV
+        csv_manager = CTCCOutputManager()
+        results = {
+            "annual_cost": annual_loss_cost,
+            "total_nominal": lifetime_nominal_cost,  # Cost, not benefit
+            "total_afudc": 0,
+            "total_pv": pv_loss_cost,
+        }
+        csv_manager.add_line_loss_costs(results)
+        csv_manager.write_batch_summary()
         return
 
     # Load baseline configuration details
@@ -399,6 +458,25 @@ def main():
     print()
 
     print("=" * 70)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+
+    # Prepare results dictionary
+    results = {
+        "annual_cost": normalized_annual_benefit,  # For reconductoring, this is a benefit (negative cost)
+        "total_nominal": normalized_lifetime_benefit,
+        "total_afudc": 0,  # Line loss benefits are not AFUDC-eligible
+        "total_pv": normalized_npv,
+    }
+
+    # Write to CSV
+    csv_manager.add_line_loss_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

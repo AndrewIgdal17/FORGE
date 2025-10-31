@@ -6,6 +6,7 @@
 import subprocess
 import sys
 import os
+from datetime import datetime
 
 
 def run_script(script_name):
@@ -42,6 +43,11 @@ def main():
     print("=" * 80)
     print("COMPREHENSIVE TRANSMISSION COST CALCULATOR (CTCC)")
     print("=" * 80)
+
+    # Generate a single scenario_id for this entire run
+    scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    os.environ['CTCC_SCENARIO_ID'] = scenario_id
+    print(f"\n📋 Scenario ID: {scenario_id}\n")
 
     # List of scripts to run in order
     scripts = [

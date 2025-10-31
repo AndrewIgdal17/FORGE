@@ -8,6 +8,12 @@ import yaml
 import numpy as np
 import argparse
 import math
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Get info from project technical details
 with open("../yamls/01_project_technical_details.yaml", "r") as file:
@@ -621,6 +627,57 @@ def main():
         f"Lifetime congestion residual cost PV: ${lifetime_congestion_residual_cost_pv:,.2f}"
     )
     print("=" * 60)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Prepare results dictionary with all calculated values
+    results = {
+        # BENEFITS - Congestion reduction (operational benefits)
+        "congestion_benefit_annual": annual_congestion_reduction_cost_raw,
+        "congestion_benefit_nominal": lifetime_congestion_reduction_cost,
+        "congestion_benefit_pv": lifetime_congestion_reduction_cost_pv,
+        "congestion_benefit_haircut_annual": annual_congestion_reduction_cost_raw * (1 - saturation_factor),
+        "congestion_benefit_haircut_nominal": lifetime_congestion_reduction_cost_haircut,
+        "congestion_benefit_haircut_pv": lifetime_congestion_reduction_cost_haircut_pv,
+        
+        # BENEFITS - Curtailment reduction (operational benefits)
+        "curtailment_benefit_annual": annual_curtailment_benefit,
+        "curtailment_benefit_nominal": lifetime_curtailment_benefit,
+        "curtailment_benefit_pv": lifetime_curtailment_benefit_pv,
+        "curtailment_benefit_haircut_annual": annual_curtailment_benefit_haircut,
+        "curtailment_benefit_haircut_nominal": lifetime_curtailment_benefit_haircut,
+        "curtailment_benefit_haircut_pv": lifetime_curtailment_benefit_haircut_pv,
+        
+        # COSTS - Delay/construction opportunity costs
+        "congestion_delay_cost_nominal": lifetime_congestion_during_delay_and_construction_cost,
+        "congestion_delay_cost_pv": lifetime_congestion_during_delay_and_construction_pv,
+        "curtailment_delay_cost_nominal": lifetime_curtailment_during_delay_and_construction_cost,
+        "curtailment_delay_cost_pv": lifetime_curtailment_during_delay_and_construction_pv,
+        
+        # COSTS - Residual unrelieved congestion
+        "residual_congestion_annual": annual_congestion_residual_cost,
+        "residual_congestion_nominal": lifetime_congestion_residual_cost,
+        "residual_congestion_pv": lifetime_congestion_residual_cost_pv,
+        
+        # Physical metrics (for reference)
+        "effective_capacity_relief_mw": effective_capacity_relief,
+        "energy_congestion_reduction_mwh_yr": energy_congestion_reduction,
+        "energy_congestion_residual_mwh_yr": energy_congestion_residual,
+        "energy_curtailment_reduction_mwh_yr": E_curt,
+        "theta_overlap": theta_overlap,
+        "binding_hours_overlap": H_bc,
+        "binding_hours_non_overlap": H_bnon,
+        "remaining_capacity_mw": ΔC_rem,
+    }
+    
+    # Write to CSV
+    csv_manager.add_congestion_curtailment(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

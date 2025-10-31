@@ -5,6 +5,12 @@
 
 # Standard library imports
 import yaml
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import (
@@ -428,6 +434,52 @@ def main():
     print(f"{'─' * 40}")
     print(f"PV Total:      ${pv_total:,.2f}")
     print("\n" + "=" * 80)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Calculate total annual cost
+    total_annual = (
+        total_conductor_cost_per_year
+        + total_converter_cost_per_year
+        + variable_structure_cost_per_year
+        + total_vegetation_management_cost_per_year
+    )
+    
+    # Calculate total nominal cost
+    total_nominal = (
+        total_conductor_cost_lifetime
+        + total_converter_cost_lifetime
+        + total_structure_cost_lifetime
+        + total_vegetation_management_cost_lifetime
+    )
+    
+    # Prepare results dictionary
+    results = {
+        "total_annual": total_annual,
+        "total_nominal": total_nominal,
+        "total_pv": pv_total,
+        "conductor_annual": total_conductor_cost_per_year,
+        "conductor_nominal": total_conductor_cost_lifetime,
+        "conductor_pv": pv_conductor,
+        "converter_annual": total_converter_cost_per_year,
+        "converter_nominal": total_converter_cost_lifetime,
+        "converter_pv": pv_converter,
+        "structure_annual": variable_structure_cost_per_year,
+        "structure_nominal": total_structure_cost_lifetime,
+        "structure_pv": pv_structure,
+        "vegetation_annual": total_vegetation_management_cost_per_year,
+        "vegetation_nominal": total_vegetation_management_cost_lifetime,
+        "vegetation_pv": pv_vegetation_management,
+    }
+    
+    # Write to CSV
+    csv_manager.add_oandm_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

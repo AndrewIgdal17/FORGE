@@ -4,6 +4,14 @@
 # 1. Delays and long construction times slowing the deployment of new renewable energy capacity
 # 2. Line losses being compensated for by generators (i.e. they have to burn more fuel to make up for losses)
 
+# Standard library imports
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
+
 # Local utility imports
 from energy_losses import (
     load_project_technical_details,
@@ -497,6 +505,33 @@ def main():
         total_losses_mwh_per_year,
         tec,
     )
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Prepare results dictionary
+    results = {
+        "total_nominal": lifetime_cost,
+        "total_pv": lifetime_cost_pv,
+        "annual_cost": avg_annual_costs,
+        "co2_emissions_kg": total_emissions["co2"],
+        "co2_cost_nominal": total_costs_by_pollutant["co2"],
+        "co2_cost_pv": total_costs_by_pollutant_pv["co2"],
+        "sox_emissions_kg": total_emissions["sox"],
+        "sox_cost_nominal": total_costs_by_pollutant["sox"],
+        "sox_cost_pv": total_costs_by_pollutant_pv["sox"],
+        "nox_emissions_kg": total_emissions["nox"],
+        "nox_cost_nominal": total_costs_by_pollutant["nox"],
+        "nox_cost_pv": total_costs_by_pollutant_pv["nox"],
+    }
+    
+    # Write to CSV
+    csv_manager.add_emissions_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

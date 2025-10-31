@@ -6,6 +6,12 @@
 
 # Standard library imports
 import yaml
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import (
@@ -288,6 +294,17 @@ def main():
     print("NOTE: Outage costs are probabilistic future losses, not capital costs.")
     print("      No AFUDC applies to expected loss calculations.")
     print("=" * 80)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Write to CSV (results dict already has all needed values)
+    csv_manager.add_outage_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

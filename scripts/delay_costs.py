@@ -5,6 +5,12 @@
 
 # Standard library imports
 import yaml
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import load_delay_costs, load_financing_details
@@ -76,6 +82,24 @@ def main():
 
     print(f"TOTAL PRESENT VALUE DELAY COST: ${total_delay_cost_pv:,.2f}")
     print("=" * 60)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Prepare results dictionary
+    results = {
+        "total_nominal": total_delay_cost,
+        "total_afudc": 0,  # Delay costs are not AFUDC-eligible
+        "total_pv": total_delay_cost_pv,
+    }
+    
+    # Write to CSV
+    csv_manager.add_delay_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

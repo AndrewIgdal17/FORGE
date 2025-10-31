@@ -7,6 +7,12 @@
 # Standard library imports
 import math
 import yaml
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import (
@@ -241,6 +247,30 @@ def main():
     )
     print(f"  PV of amortized payments (verification): ${pv_of_amortized:,.2f}")
     print("=" * 80)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Prepare results dictionary
+    results = {
+        "total_nominal": total_cost_with_contingencies,
+        "total_afudc": capitalized_cost_with_contingencies if apply_afudc else 0,
+        "total_pv": pv_of_amortized,
+        "conductor_nominal": conductor_cost_with_contingencies,
+        "structure_nominal": structure_cost_with_contingencies,
+        "converter_nominal": converter_cost_with_contingencies,
+        "conductor_afudc": 0,  # Component-level AFUDC not calculated separately
+        "structure_afudc": 0,
+        "converter_afudc": 0,
+    }
+    
+    # Write to CSV
+    csv_manager.add_build_costs(results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":

@@ -6,6 +6,12 @@
 
 # Standard library imports
 import yaml
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import (
@@ -265,6 +271,26 @@ def main():
     print(f"  ---")
     print(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
     print("=" * 80)
+
+    # ========================================================================
+    # CSV OUTPUT - Write results to batch summary and detail CSV
+    # ========================================================================
+    
+    # Initialize CSV output manager
+    csv_manager = CTCCOutputManager()
+    
+    # Prepare results dictionary
+    csv_results = {
+        "total_nominal": results["total"],
+        "total_afudc": total_capitalized if apply_afudc else 0,
+        "total_pv": total_pv,
+        "base_cost_nominal": results["base_cost"],
+        "credits_nominal": results["total_credits"],
+    }
+    
+    # Write to CSV
+    csv_manager.add_environmental_mitigation(csv_results)
+    csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":
