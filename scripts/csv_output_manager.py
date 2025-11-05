@@ -861,3 +861,21 @@ class CTCCOutputManager:
                 "grand_total_cost_pv": grand_total_pv,
             }
         )
+
+    def add_bcr_metrics(self, bcr_results):
+        """
+        Add benefit-cost ratio metrics to batch summary.
+        
+        Args:
+            bcr_results: Dictionary containing BCR metrics from bcr_calculator
+                Expected keys:
+                - total_benefits_pv
+                - total_benefits_haircut_pv
+                - total_costs_pv
+                - capital_costs_pv
+                - bcr_system
+                - bcr_capital
+                - bcr_haircut
+                - net_benefit_pv
+        """
+        self.append_to_batch_summary(bcr_results)

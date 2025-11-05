@@ -8,6 +8,11 @@ import sys
 import os
 from datetime import datetime
 
+# Add scripts directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts'))
+from bcr_calculator import calculate_and_display_bcr
+from csv_output_manager import CTCCOutputManager
+
 
 def run_script(script_name):
     """
@@ -83,6 +88,27 @@ def main():
 
     if successful_runs == total_runs:
         print("🎉 All calculations completed successfully!")
+        
+        # Calculate and display BCR metrics
+        print("\n" + "=" * 80)
+        print("CALCULATING BENEFIT-COST RATIOS...")
+        print("=" * 80)
+        
+        try:
+            bcr_results = calculate_and_display_bcr(scenario_id, output_dir="outputs")
+            
+            if bcr_results:
+                # Update batch_summary.csv with BCR metrics
+                csv_manager = CTCCOutputManager(output_dir="outputs", scenario_id=scenario_id)
+                csv_manager.add_bcr_metrics(bcr_results)
+                csv_manager.write_batch_summary()
+                print("✅ BCR metrics added to batch_summary.csv")
+            else:
+                print("⚠️  BCR calculation completed but no results returned")
+                
+        except Exception as e:
+            print(f"⚠️  BCR calculation failed: {e}")
+            print("This does not affect the validity of the cost calculations above.")
     else:
         print("⚠️  Some calculations failed. Check the output above.")
 
