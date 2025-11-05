@@ -1,0 +1,91 @@
+﻿Categories,Variable Conductor Cost (USD/mile),Fixed Conductor Cost (USD),Variable Structure Cost (USD/mile),Fixed Converter  Cost (USD)
+Overhead/AC/140MW/Standard Aluminum Conductor/NA,90483.36,0,568735.5,0
+Overhead/AC/140MW/Advanced Aluminum Conductor/NA,157362.3911,0,568735.5,0
+Overhead/AC/329MW/Standard Aluminum Conductor/NA,111914.88,0,642826.5,0
+Overhead/AC/329MW/Advanced Aluminum Conductor/NA,132501.9684,0,642826.5,0
+Overhead/AC/394MW/Standard Aluminum Conductor/NA,111914.88,0,664308.25,0
+Overhead/AC/394MW/Advanced Aluminum Conductor/NA,182751.36,0,664308.25,0
+Overhead/AC/460MW/Standard Aluminum Conductor/NA,111914.88,0,663528.25,0
+Overhead/AC/460MW/Advanced Aluminum Conductor/NA,182751.36,0,663528.25,0
+Overhead/AC/657MW/Standard Aluminum Conductor/NA,111914.88,0,625635.5,0
+Overhead/AC/657MW/Advanced Aluminum Conductor/NA,147754.5787,0,625635.5,0
+Overhead/AC/1792MW/Standard Aluminum Conductor/NA,180549.6,0,1018734.25,0
+Overhead/AC/1792MW/Advanced Aluminum Conductor/NA,322222.56,0,1018734.25,0
+Overhead/AC/2598MW/Standard Aluminum Conductor/NA,280737.6,0,1039008,0
+Overhead/AC/2598MW/Advanced Aluminum Conductor/NA,461693.76,0,1039008,0
+Overhead/AC/6625MW/Standard Aluminum Conductor/NA,455088.48,0,1378084.5,0
+Overhead/AC/6625MW/Advanced Aluminum Conductor/NA,727773.5466,0,1378084.5,0
+Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter,119248.8,0,516618.25,73800000
+Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter,119248.8,0,516618.25,98600000
+Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter,155437.92,0,516618.25,73800000
+Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter,155437.92,0,516618.25,98600000
+Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter,195217.44,0,692217.5,220100000
+Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter,195217.44,0,692217.5,286000000
+Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter,267595.68,0,692217.5,220100000
+Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter,267595.68,0,692217.5,286000000
+Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter,195217.44,0,698601.25,297100000
+Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter,195217.44,0,698601.25,384500000
+Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter,267595.68,0,698601.25,297100000
+Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter,267595.68,0,698601.25,384500000
+Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter,195217.44,0,757820.75,357500000
+Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter,195217.44,0,757820.75,465200000
+Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter,267595.68,0,757820.75,357500000
+Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter,267595.68,0,757820.75,465200000
+Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter,317819.04,0,1901393,445300000
+Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter,317819.04,0,1901393,566200000
+Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter,531979.7192,0,1901393,445300000
+Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter,531979.7192,0,1901393,566200000
+Underground direct-buried/AC/140MW/Underground Copper Conductor/NA,11590886.1,6831263.416,0,0
+Underground direct-buried/AC/329MW/Underground Copper Conductor/NA,11590886.1,6831263.416,0,0
+Underground direct-buried/AC/394MW/Underground Copper Conductor/NA,11590886.1,6831263.416,0,0
+Underground direct-buried/AC/460MW/Underground Copper Conductor/NA,20698010.9,12198684.67,0,0
+Underground direct-buried/AC/657MW/Underground Copper Conductor/NA,40903985.66,17891404.19,0,0
+Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA,40903985.66,17891404.19,0,0
+Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA,40903985.66,17891404.19,0,0
+Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA,40903985.66,17891404.19,0,0
+Underground direct-buried/DC/500MW/Underground Copper Conductor/LCC Converter,4967522.616,2927684.321,0,73800000
+Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter,4967522.616,2927684.321,0,98600000
+Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter,16558408.72,9758947.738,0,220100000
+Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter,16558408.72,9758947.738,0,286000000
+Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter,16558408.72,9758947.738,0,297100000
+Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter,16558408.72,9758947.738,0,384500000
+Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter,30068050.1,14313123.35,0,357500000
+Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter,30068050.1,14313123.35,0,465200000
+Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter,30068050.1,14313123.35,0,445300000
+Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter,30068050.1,14313123.35,0,566200000
+Underground tunnel/AC/140MW/Underground Copper Conductor/NA,37746112.15,358966627.6,0,0
+Underground tunnel/AC/329MW/Underground Copper Conductor/NA,37746112.15,358966627.6,0,0
+Underground tunnel/AC/394MW/Underground Copper Conductor/NA,37746112.15,358966627.6,0,0
+Underground tunnel/AC/460MW/Underground Copper Conductor/NA,44917231.78,364334048.9,0,0
+Underground tunnel/AC/657MW/Underground Copper Conductor/NA,62918275.26,370026768.4,0,0
+Underground tunnel/AC/1792MW/Underground Copper Conductor/NA,62918275.26,370026768.4,0,0
+Underground tunnel/AC/2598MW/Underground Copper Conductor/NA,62918275.26,370026768.4,0,0
+Underground tunnel/AC/6625MW/Underground Copper Conductor/NA,62918275.26,370026768.4,0,0
+Underground tunnel/DC/500MW/Underground Copper Conductor/LCC Converter,32530752.42,355063048.5,0,73800000
+Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter,32530752.42,355063048.5,0,98600000
+Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter,41657631.95,361894311.9,0,220100000
+Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter,41657631.95,361894311.9,0,286000000
+Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter,41657631.95,361894311.9,0,297100000
+Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter,41657631.95,361894311.9,0,384500000
+Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter,51485261.04,366448487.5,0,357500000
+Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter,51485261.04,366448487.5,0,465200000
+Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter,51485261.04,366448487.5,0,445300000
+Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter,51485261.04,366448487.5,0,566200000
+Subsea/AC/140MW/Subsea Copper Conductor/NA,2579891.587,22945725.87,0,0
+Subsea/AC/329MW/Subsea Copper Conductor/NA,2579891.587,22945725.87,0,0
+Subsea/AC/394MW/Subsea Copper Conductor/NA,2579891.587,22945725.87,0,0
+Subsea/AC/460MW/Subsea Copper Conductor/NA,4606949.262,35223701.99,0,0
+Subsea/AC/657MW/Subsea Copper Conductor/NA,10958518.8,74107009.38,0,0
+Subsea/AC/1792MW/Subsea Copper Conductor/NA,10958518.8,74107009.38,0,0
+Subsea/AC/2598MW/Subsea Copper Conductor/NA,10958518.8,74107009.38,0,0
+Subsea/AC/6625MW/Subsea Copper Conductor/NA,10958518.8,74107009.38,0,0
+Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter,1105667.823,14016288.69,0,73800000
+Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter,1105667.823,14016288.69,0,98600000
+Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter,3685559.409,29642803.75,0,220100000
+Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter,3685559.409,29642803.75,0,286000000
+Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter,3685559.409,29642803.75,0,297100000
+Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter,3685559.409,29642803.75,0,384500000
+Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter,7305679.199,51844409.86,0,357500000
+Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter,7305679.199,51844409.86,0,465200000
+Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter,7305679.199,51844409.86,0,445300000
+Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter,7305679.199,51844409.86,0,566200000

@@ -1,6 +1,18 @@
 # Insurance Parameters
-# Insurance costs and coverage details
+# Operational insurance costs for transmission line assets
 
 insurance:
-  premium_rate: 0 # %
-  
+  premium_rate: 0.002 # Annual premium rate (0.2% = 0.002)
+
+  # Insurable components (which assets are insured)
+  insurable_components:
+    conductors: true # Include conductor costs in insurable value
+    structures: true # Include structure costs in insurable value
+    converters: true # Include converter costs in insurable value
+
+  # Premium rate can vary by construction type (optional)
+  # If not specified, uses premium_rate above
+  premium_by_construction_type:
+    overhead: 0.002 # 0.2%
+    underground: 0.0015 # 0.15% (typically lower risk)
+    subsea: 0.0025 # 0.25% (typically higher risk)

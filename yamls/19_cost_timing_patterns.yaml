@@ -1,0 +1,59 @@
+# Cost Incurrence Timing for AFUDC Capitalization
+# Defines when costs hit CWIP (Account 107) during project lifecycle
+# Per FERC USoA: AFUDC applies when (i) capex incurred AND (ii) activities in progress
+
+cost_timing_patterns:
+  # Build costs (conductor, structure, converter)
+  build_costs:
+    during_delay: 0.0 # % of cost incurred during delay (typically 0)
+    during_construction: 1.0 # % spread uniformly over construction period
+    afudc_eligible: true # Qualifies for AFUDC (in CWIP Account 107)
+
+  # ROW acquisition costs
+  row_acquisition:
+    during_delay: 0.80 # Acquisition typically happens before construction
+    during_construction: 0.20 # Final acquisitions during early construction
+    afudc_eligible: true # Capitalized to plant cost
+
+  # ROW holding costs (annual cost during delay)
+  row_holding:
+    during_delay: 1.0 # Holding costs occur only during delay period
+    during_construction: 0.0 # No holding costs once construction starts
+    afudc_eligible: false # Operating expense, not capitalized to CWIP
+
+  # ROW rent costs (annual cost during operation)
+  row_rent:
+    during_delay: 0.0 # No rent during delay
+    during_construction: 0.0 # No rent during construction
+    afudc_eligible: false # Operational expense, not in CWIP
+
+  # Environmental mitigation - base restoration
+  environmental_mitigation_base:
+    during_delay: 0.0 # Restoration happens during construction
+    during_construction: 1.0 # Spread over construction period
+    afudc_eligible: true # Necessary for plant to be ready for service
+
+  # Environmental mitigation - credit purchases
+  environmental_mitigation_credits:
+    during_delay: 0.20 # Some credits purchased upfront (early permitting)
+    during_construction: 0.80 # Most credits purchased as construction progresses
+    afudc_eligible: true # Required for regulatory approval
+
+  # Delay costs (regulatory/legal expenses)
+  delay_costs:
+    during_delay: 1.0 # By definition, occur during delay period
+    during_construction: 0.0
+    afudc_eligible: false # Typically expensed, not capitalized
+
+  # O&M costs (operational period)
+  operations_and_maintenance:
+    during_delay: 0.0
+    during_construction: 0.0 # O&M begins after COD
+    afudc_eligible: false # Operating expenses
+
+  # Insurance during construction
+  construction_insurance: # THIS isnt not implemented yet but could be if I want to
+    during_delay: 0.0
+    during_construction: 1.0 # Spread over construction period
+    afudc_eligible: true # Part of construction cost (can be capitalized)
+

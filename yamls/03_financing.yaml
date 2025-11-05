@@ -3,5 +3,24 @@ financial:
   inflation_rate: 0.03
   base_year: 2025
   wacc_nominal: 0.08
-  social_discount_rate: 0
-  contingency: 0 # %
+  social_discount_rate: 0.03 # for sensitivty do .02 to .07 U.S. Office of Management and Budget, Circular A-4: Regulatory Analysis (2003, reaffirmed 2023).
+
+  contingencies:
+    conductor_contingency: .10 # % [0,1]
+    structure_contingency: .10 # % [0,1]
+    converter_contingency: .10 # % [0,1]
+
+  # Capital structure (optional - if absent, WACC used as proxy for AFUDC)
+  capital_structure:
+    equity_percent: 0.50 # % equity financing
+    debt_percent: 0.50 # % debt financing
+    cost_of_equity: 0.10 # return on equity
+    cost_of_debt: 0.05 # interest rate on debt
+
+  # AFUDC configuration
+  afudc:
+    apply_afudc: true # Toggle AFUDC calculations on/off
+    # Cost-specific AFUDC application during delay period
+    # true = AFUDC accrues if active work continues (permitting, design, CWIP-eligible costs)
+    # false = AFUDC suspended during delay (conservative default per FERC)
+    delay_period_active_work: false

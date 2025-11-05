@@ -1,0 +1,54 @@
+% ---- Conversions
+\begin{align}
+    L_{\mathrm{mi}} &= \kappa \, L_{\mathrm{km}},           & \kappa &= 0.621371 \\
+    \end{align}
+    
+    % ---- Per-mile build cost from source table (in million GBP at year t_0)
+    \begin{align}
+    C_{i}^{\$/\mathrm{mi}}
+      &= \frac{10^{6}\, M_{i}^{\pounds}(t_0)\; \mathrm{FX}_{t_0}^{\$/\pounds}\; \Pi_{t_0\rightarrow t_1}}
+              {L_{\mathrm{mi}}} ,
+    \end{align}
+    
+    % Use i = "Conductors + OPGW materials" for conductor materials per mile.
+    % Sum over items i as needed for totals.
+    
+    % ---- Per-mile-year O&M from lifetime total (in million GBP at year t_0)
+    \begin{align}
+    O^{\$/(\mathrm{mi}\! \cdot\! \mathrm{yr})}
+      &= \frac{10^{6}\, M_{\mathrm{O\&M}}^{\pounds}(t_0)\; \mathrm{FX}_{t_0}^{\$/\pounds}\; \Pi_{t_0\rightarrow t_1}}
+              {L_{\mathrm{mi}} \; T} ,
+    \end{align}
+    
+    % ---- Conductor metal area bookkeeping
+    \begin{align}
+    A_{\mathrm{tot}} &= c \; m \; b \; A_{\mathrm{cond}} \quad [\mathrm{mm}^{2}],
+    \end{align}
+    % where:
+    %   c = number of circuits,
+    %   m = number of phases (AC: 3; HVDC bipole: 2; monopole: 1),
+    %   b = sub-conductors per phase (bundle size),
+    %   A_cond = cross-sectional area per sub-conductor (mm^2).
+    
+    % ---- Area-normalized intensities
+    \begin{align}
+    \tilde{C}_{\mathrm{cond}}^{\$/(\mathrm{mm}^{2}\!\cdot\!\mathrm{mi})}
+      &= \frac{C_{\mathrm{cond}}^{\$/\mathrm{mi}}}{A_{\mathrm{tot}}},\\[4pt]
+    \tilde{O}^{\$/(\mathrm{mm}^{2}\!\cdot\!\mathrm{mi}\!\cdot\!\mathrm{yr})}
+      &= \frac{O^{\$/(\mathrm{mi}\!\cdot\!\mathrm{yr})}}{A_{\mathrm{tot}}}.
+    \end{align}
+    
+    % ---- Optional roll-ups
+    \begin{align}
+    C_{\mathrm{var}}^{\$/\mathrm{mi}} &= \sum_{i \in \mathcal{S}} C_{i}^{\$/\mathrm{mi}},\\
+    O_{\mathrm{var}}^{\$/(\mathrm{mi}\!\cdot\!\mathrm{yr})} &= \sum_{k \in \mathcal{K}} O_{k}^{\$/(\mathrm{mi}\!\cdot\!\mathrm{yr})}.
+    \end{align}
+    
+    % ---- Symbol notes (edit to taste)
+    % M_{i}^{\pounds}(t_0): item i cost from source table (million GBP, year t_0)
+    % FX_{t_0}^{\$/\pounds}: USD/GBP exchange rate for year t_0
+    % \Pi_{t_0\rightarrow t_1}: USD inflation multiplier from t_0 to target year t_1
+    % T: assumed asset life (years) used to annualize O&M totals
+    % L_{km}, L_{mi}: project length (km, miles); \kappa converts km→mi
+    % C_{\mathrm{cond}}: take i = “Conductors + OPGW materials” (or cable materials)
+    

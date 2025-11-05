@@ -1,0 +1,6 @@
+project_name,construction_type,ac_dc,capacity_mw,conductor_type,line_length_miles,line_utilization,converter_type,number_of_converters,reconductoring,old_capacity_mw,old_conductor_type,old_ac_dc,baseline_electricity_price_per_mwh,social_discount_rate,construction_years,delay_years,project_lifetime_years,scenario_id,timestamp,row_type,total_nominal,total_afudc,total_pv
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,False,0,,,50.0,0.03,1,1.5,50,20251031_103707,2025-10-31T10:37:08.402946,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,False,0,,,50.0,0.03,1,1.5,50,20251031_103910,2025-10-31T10:39:10.962537,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251031_103947,2025-10-31T10:39:48.346171,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251104_153750,2025-11-04T15:37:51.779993,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251104_154329,2025-11-04T15:43:30.581294,summary,4425000.0,0,5496600.651577503
