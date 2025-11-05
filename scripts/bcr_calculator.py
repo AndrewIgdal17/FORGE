@@ -224,25 +224,34 @@ def calculate_bcr_metrics(benefits, costs):
     total_benefits_haircut = benefits['total_benefits_haircut_pv']
     total_costs_pv = costs['total_costs_pv']
     capital_costs_pv = costs['capital_costs_pv']
+    risk_costs_pv = costs['risk_costs_pv']  # Wildfire + Outage
     
     # Nominal metrics
     total_benefits_nominal = benefits['total_benefits_nominal']
     total_costs_nominal = costs['total_costs_nominal']
     
+    # Calculate costs excluding risk (wildfire + outage)
+    total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
+    
     # Prevent division by zero
     bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
     bcr_capital = total_benefits_pv / capital_costs_pv if capital_costs_pv > 0 else 0
     bcr_haircut = total_benefits_haircut / total_costs_pv if total_costs_pv > 0 else 0
+    bcr_excluding_risk = total_benefits_pv / total_costs_excluding_risk_pv if total_costs_excluding_risk_pv > 0 else 0
     
     net_benefit_pv = total_benefits_pv - total_costs_pv
     net_benefit_nominal = total_benefits_nominal - total_costs_nominal
+    net_benefit_excluding_risk_pv = total_benefits_pv - total_costs_excluding_risk_pv
     
     return {
         'bcr_system': bcr_system,
         'bcr_capital': bcr_capital,
         'bcr_haircut': bcr_haircut,
+        'bcr_excluding_risk': bcr_excluding_risk,
         'net_benefit_pv': net_benefit_pv,
         'net_benefit_nominal': net_benefit_nominal,
+        'net_benefit_excluding_risk_pv': net_benefit_excluding_risk_pv,
+        'total_costs_excluding_risk_pv': total_costs_excluding_risk_pv,
     }
 
 
@@ -355,10 +364,20 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data):
     print(f"  System BCR (full):           {bcr_system:>6.3f}  {viable_symbol} ({viable_text})")
     print(f"  System BCR (haircut):        {bcr_metrics['bcr_haircut']:>6.3f}")
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
+    
+    # BCR excluding risk costs
+    bcr_excluding_risk = bcr_metrics['bcr_excluding_risk']
+    viable_symbol_norisk = "✅" if bcr_excluding_risk >= 1.0 else "❌"
+    viable_text_norisk = ">= 1.0: economically viable" if bcr_excluding_risk >= 1.0 else "< 1.0: not economically viable"
+    risk_costs_pv = costs['risk_costs_pv']
+    
+    print(f"  System BCR (excl. risk):     {bcr_excluding_risk:>6.3f}  {viable_symbol_norisk} ({viable_text_norisk})")
+    print(f"    (Excludes ${risk_costs_pv:>15,.0f} in wildfire/outage costs)")
     print()
     
     net_benefit_pv = bcr_metrics['net_benefit_pv']
     net_benefit_nominal = bcr_metrics['net_benefit_nominal']
+    net_benefit_excluding_risk_pv = bcr_metrics['net_benefit_excluding_risk_pv']
     
     net_symbol_pv = "✅" if net_benefit_pv >= 0 else "❌"
     net_text_pv = "positive: benefits exceed costs" if net_benefit_pv >= 0 else "negative: costs exceed benefits"
@@ -366,8 +385,12 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data):
     net_symbol_nominal = "✅" if net_benefit_nominal >= 0 else "❌"
     net_text_nominal = "positive: benefits exceed costs" if net_benefit_nominal >= 0 else "negative: costs exceed benefits"
     
+    net_symbol_norisk = "✅" if net_benefit_excluding_risk_pv >= 0 else "❌"
+    net_text_norisk = "positive: benefits exceed costs" if net_benefit_excluding_risk_pv >= 0 else "negative: costs exceed benefits"
+    
     print(f"  Net Benefit (PV):            ${net_benefit_pv:>15,.0f}  {net_symbol_pv} ({net_text_pv})")
     print(f"  Net Benefit (Nominal):       ${net_benefit_nominal:>15,.0f}  {net_symbol_nominal} ({net_text_nominal})")
+    print(f"  Net Benefit (excl. risk):    ${net_benefit_excluding_risk_pv:>15,.0f}  {net_symbol_norisk} ({net_text_norisk})")
     print()
     print("=" * 80)
     print()

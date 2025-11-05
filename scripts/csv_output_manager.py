@@ -49,12 +49,19 @@ class CTCCOutputManager:
             Dictionary of technical parameters
         """
         try:
+            # Get the directory where this script is located
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            # Build path to yamls directory (parent of scripts/)
+            yaml_dir = os.path.join(os.path.dirname(script_dir), "yamls")
+            
             # Load project technical details
-            with open("../yamls/01_project_technical_details.yaml", "r") as file:
+            tech_yaml_path = os.path.join(yaml_dir, "01_project_technical_details.yaml")
+            with open(tech_yaml_path, "r") as file:
                 tech_data = yaml.load(file, Loader=yaml.FullLoader)
             
             # Load physical details for total line length
-            with open("../yamls/02_project_physical_details.yaml", "r") as file:
+            phys_yaml_path = os.path.join(yaml_dir, "02_project_physical_details.yaml")
+            with open(phys_yaml_path, "r") as file:
                 physical_data = yaml.load(file, Loader=yaml.FullLoader)
             
             # Calculate total line length
