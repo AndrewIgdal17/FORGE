@@ -17,12 +17,6 @@ financial:
     cost_of_equity: 0.10 # return on equity
     cost_of_debt: 0.05 # interest rate on debt
 
-  # Wildfire liability insurance (optional)
-  wildfire_liability:
-    enabled: true # Set to false to disable
-    liability_limit: 100000000 # $100M liability limit
-    rate_on_line: 0.80 # 80% ROL (annual premium = 0.80 × $100M = $80M/year)
-
   # AFUDC configuration
   afudc:
     apply_afudc: true # Toggle AFUDC calculations on/off

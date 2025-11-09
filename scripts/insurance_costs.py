@@ -82,7 +82,7 @@ def calculate_insurance_costs(
 
 
 def calculate_wildfire_liability_premium(
-    financing_yaml,
+    insurance_yaml,
     project_lifetime,
 ):
     """
@@ -92,15 +92,15 @@ def calculate_wildfire_liability_premium(
     Premium = ROL × Liability Limit (annual)
     
     Args:
-        financing_yaml: Loaded financing YAML data
+        insurance_yaml: Loaded insurance YAML data
         project_lifetime: Project lifetime in years
     
     Returns:
         dict: Contains liability_limit, rate_on_line, annual_premium, nominal_lifetime_cost
               Returns None if disabled or not configured
     """
-    financial = financing_yaml.get("financial", {})
-    wildfire_liability = financial.get("wildfire_liability", {})
+    insurance = insurance_yaml.get("insurance", {})
+    wildfire_liability = insurance.get("wildfire_liability", {})
     
     # Check if enabled
     if not wildfire_liability.get("enabled", False):
@@ -192,13 +192,9 @@ def main():
     # Load financing parameters for present value calculation
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
-    # Load full financing YAML for wildfire liability
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
-
     # Calculate wildfire liability insurance
     wildfire_liability_results = calculate_wildfire_liability_premium(
-        financing_yaml,
+        insurance_yaml,
         project_lifetime,
     )
 
