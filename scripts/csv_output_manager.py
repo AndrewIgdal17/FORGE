@@ -385,7 +385,7 @@ class CTCCOutputManager:
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
     def add_insurance_costs(self, results):
-        """Add insurance cost results to batch summary."""
+        """Add operational insurance cost results to batch summary."""
         self.append_to_batch_summary(
             {
                 "insurance_annual": results.get("annual_premium", 0),
@@ -397,12 +397,34 @@ class CTCCOutputManager:
         # Write module CSV
         summary_row = {
             "scenario_id": self.scenario_id,
-            "row_type": "summary",
+            "row_type": "operational",
             "annual_premium": results.get("annual_premium", 0),
             "nominal_total": results.get("nominal_lifetime_cost", 0),
             "pv_total": results.get("pv_total", 0),
             "insurable_value": results.get("insurable_value", 0),
             "premium_rate": results.get("premium_rate", 0),
+        }
+        self.write_module_csv("insurance_costs", summary_row=summary_row)
+
+    def add_wildfire_liability_costs(self, results):
+        """Add wildfire liability insurance cost results to batch summary."""
+        self.append_to_batch_summary(
+            {
+                "wildfire_liability_annual": results.get("annual_premium", 0),
+                "wildfire_liability_nominal": results.get("nominal_lifetime_cost", 0),
+                "wildfire_liability_pv": results.get("pv_total", 0),
+            }
+        )
+
+        # Write module CSV
+        summary_row = {
+            "scenario_id": self.scenario_id,
+            "row_type": "wildfire_liability",
+            "annual_premium": results.get("annual_premium", 0),
+            "nominal_total": results.get("nominal_lifetime_cost", 0),
+            "pv_total": results.get("pv_total", 0),
+            "liability_limit": results.get("liability_limit", 0),
+            "rate_on_line": results.get("rate_on_line", 0),
         }
         self.write_module_csv("insurance_costs", summary_row=summary_row)
 

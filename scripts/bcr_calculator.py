@@ -125,22 +125,26 @@ def calculate_costs(data):
     # Operational costs (PV)
     oandm_pv = data.get('oandm_pv', 0) or 0
     insurance_pv = data.get('insurance_pv', 0) or 0
+    wildfire_liability_pv = data.get('wildfire_liability_pv', 0) or 0
+    total_insurance_pv = insurance_pv + wildfire_liability_pv
     emissions_pv = data.get('emissions_cost_pv', 0) or 0
     
     # Line losses - only count as cost if positive (greenfield)
     line_loss_pv = data.get('line_loss_cost_pv', 0) or 0
     line_loss_cost_pv = max(0, line_loss_pv)
     
-    operational_costs_pv = oandm_pv + insurance_pv + line_loss_cost_pv + emissions_pv
+    operational_costs_pv = oandm_pv + total_insurance_pv + line_loss_cost_pv + emissions_pv
     
     # Operational costs (Nominal)
     oandm_nominal = data.get('oandm_nominal', 0) or 0
     insurance_nominal = data.get('insurance_nominal', 0) or 0
+    wildfire_liability_nominal = data.get('wildfire_liability_nominal', 0) or 0
+    total_insurance_nominal = insurance_nominal + wildfire_liability_nominal
     emissions_nominal = data.get('emissions_cost_nominal', 0) or 0
     line_loss_nominal = data.get('line_loss_cost_nominal', 0) or 0
     line_loss_cost_nominal = max(0, line_loss_nominal)
     
-    operational_costs_nominal = oandm_nominal + insurance_nominal + line_loss_cost_nominal + emissions_nominal
+    operational_costs_nominal = oandm_nominal + total_insurance_nominal + line_loss_cost_nominal + emissions_nominal
     
     # Risk costs (PV)
     wildfire_pv = data.get('wildfire_pv', 0) or 0
@@ -180,6 +184,8 @@ def calculate_costs(data):
         # Operational (PV)
         'oandm_pv': oandm_pv,
         'insurance_pv': insurance_pv,
+        'wildfire_liability_pv': wildfire_liability_pv,
+        'total_insurance_pv': total_insurance_pv,
         'line_loss_cost_pv': line_loss_cost_pv,
         'emissions_cost_pv': emissions_pv,
         'operational_costs_pv': operational_costs_pv,
@@ -333,7 +339,10 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data):
     print()
     print("  Operational Costs:")
     print(f"    O&M:                       ${costs['oandm_pv']:>15,.0f}")
-    print(f"    Insurance:                 ${costs['insurance_pv']:>15,.0f}")
+    print(f"    Insurance (operational):  ${costs['insurance_pv']:>15,.0f}")
+    if costs.get('wildfire_liability_pv', 0) > 0:
+        print(f"    Insurance (wildfire liab): ${costs['wildfire_liability_pv']:>15,.0f}")
+    print(f"    Insurance (total):         ${costs['total_insurance_pv']:>15,.0f}")
     print(f"    Line Losses:               ${costs['line_loss_cost_pv']:>15,.0f}")
     print(f"    Emissions:                 ${costs['emissions_cost_pv']:>15,.0f}")
     print(f"    Subtotal:                  ${costs['operational_costs_pv']:>15,.0f}")
