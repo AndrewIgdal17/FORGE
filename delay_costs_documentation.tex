@@ -1,0 +1,219 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Delay Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{delay\_costs.py} script calculates the costs incurred during the delay period (permitting/regulatory delays) for a transmission line project. These costs include legal, administrative, labor, materials, regulatory, public relations, project management, and miscellaneous expenses.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates delay costs by:
+\begin{enumerate}
+    \item Loading annual delay cost components from YAML configuration
+    \item Summing all annual delay cost components
+    \item Multiplying by the number of delay years to get total nominal cost
+    \item Calculating present value of annual delay costs
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The delay cost calculation follows this structure:
+
+\begin{align}
+\text{Total Yearly Delay Cost} &= \sum_{\text{components}} \text{Annual Component Cost} \\
+\text{Total Delay Cost} &= \text{Total Yearly Delay Cost} \times \text{Delay Years} \\
+\text{Present Value} &= \sum_{t=1}^{D} \frac{\text{Total Yearly Delay Cost}}{(1 + r)^t}
+\end{align}
+
+where $D$ is the number of delay years and $r$ is the real WACC discount rate.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Annual delay cost components (legal, admin, labor, materials, regulatory, public relations, project management, miscellaneous)
+    \item Delay years (from project timeline)
+    \item Financing parameters (WACC for present value)
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Total yearly delay cost
+    \item Total nominal delay cost
+    \item Present value of delay costs
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads delay cost configuration and financing parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{load\_project\_technical\_details()}}
+
+Loads delay years from project technical details YAML file.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{delay\_year} (float): Number of delay years
+\end{itemize}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the delay cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads delay cost components from YAML
+    \item Loads delay years from project technical details
+    \item Sums all annual delay cost components
+    \item Calculates total nominal cost (annual cost × delay years)
+    \item Calculates present value of annual delay costs
+    \item Displays results and writes to CSV
+\end{enumerate}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Load annual delay cost components
+legal = delay_cost_df["annual_delay_costs"]["legal"]
+admin = delay_cost_df["annual_delay_costs"]["admin"]
+labor = delay_cost_df["annual_delay_costs"]["labor"]
+material_and_equipment = delay_cost_df["annual_delay_costs"]["material_and_equipment"]
+regulatory = delay_cost_df["annual_delay_costs"]["regulatory"]
+public_relations = delay_cost_df["annual_delay_costs"]["public_relations"]
+project_management = delay_cost_df["annual_delay_costs"]["project_management"]
+miscellaneous = delay_cost_df["annual_delay_costs"]["miscellaneous"]
+
+# Sum components
+total_yearly_delay_cost = (legal + admin + labor + material_and_equipment 
+                          + regulatory + public_relations + project_management 
+                          + miscellaneous)
+
+# Calculate total nominal cost
+total_delay_cost = total_yearly_delay_cost * delay_year
+
+# Calculate present value
+total_delay_cost_pv = calculate_present_value(
+    total_yearly_delay_cost,
+    wacc_real,
+    int(round(delay_year))
+)
+\end{lstlisting}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the delay cost calculation:
+
+\begin{lstlisting}
+# Example: 2-year delay period
+# 
+# Inputs (from YAML):
+#   - Legal: $50,000/year
+#   - Admin: $30,000/year
+#   - Labor: $100,000/year
+#   - Materials: $20,000/year
+#   - Regulatory: $40,000/year
+#   - Public Relations: $25,000/year
+#   - Project Management: $80,000/year
+#   - Miscellaneous: $15,000/year
+#   - Delay years: 2
+#   - Real WACC: 3%
+#
+# Calculation:
+#   Total yearly delay cost = $50k + $30k + $100k + $20k + $40k 
+#                           + $25k + $80k + $15k = $360,000/year
+#   Total nominal cost = $360,000 * 2 = $720,000
+#   Present value = $360,000 * PV annuity (2 years, 3%) = $697,000
+#
+# Output:
+#   - Total yearly delay cost: $360,000
+#   - Total nominal cost: $720,000
+#   - Present value: $697,000
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+results = {
+    "total_nominal": total_delay_cost,
+    "total_afudc": 0,  # Delay costs are not AFUDC-eligible
+    "total_pv": total_delay_cost_pv,
+}
+csv_manager.add_delay_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Delay Cost Components}
+
+The script includes eight delay cost components:
+\begin{itemize}
+    \item \textbf{Legal}: Legal fees and expenses
+    \item \textbf{Admin}: Administrative costs
+    \item \textbf{Labor}: Labor costs during delay
+    \item \textbf{Material and Equipment}: Material and equipment holding costs
+    \item \textbf{Regulatory}: Regulatory compliance costs
+    \item \textbf{Public Relations}: Public relations and community engagement
+    \item \textbf{Project Management}: Project management overhead
+    \item \textbf{Miscellaneous}: Other delay-related expenses
+\end{itemize}
+
+\subsection{AFUDC Treatment}
+
+Delay costs are not AFUDC-eligible because they are operating expenses during the delay period, not construction costs. AFUDC applies only to construction work in progress (CWIP).
+
+\subsection{Present Value Timing}
+
+Delay costs are incurred annually during the delay period (years 1 to delay\_year). The present value calculation discounts these annual payments back to the base year.
+
+\subsection{Simplified Structure}
+
+This script has a simpler structure than other cost scripts because delay costs are straightforward: annual costs multiplied by delay years, with no complex terrain adjustments or component-level calculations.
+
+\end{document}
+

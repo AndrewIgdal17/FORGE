@@ -1,0 +1,122 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Purpose}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}How to Use This Guide}{2}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Project Categories}{2}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Core Project Configuration}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Purpose}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Parameter Choices}{3}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Project Identification}{3}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Construction Type}{3}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Current Type}{3}{subsubsection.2.2.3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Capacity}{3}{subsubsection.2.2.4}%
+\contentsline {subsubsection}{\numberline {2.2.5}Conductor Type}{4}{subsubsection.2.2.5}%
+\contentsline {subsubsection}{\numberline {2.2.6}Converter Configuration (DC Only)}{4}{subsubsection.2.2.6}%
+\contentsline {subsubsection}{\numberline {2.2.7}Line Utilization}{4}{subsubsection.2.2.7}%
+\contentsline {subsubsection}{\numberline {2.2.8}Electricity Price}{4}{subsubsection.2.2.8}%
+\contentsline {subsubsection}{\numberline {2.2.9}Social Discount Rate}{5}{subsubsection.2.2.9}%
+\contentsline {subsubsection}{\numberline {2.2.10}Reconductoring Configuration}{5}{subsubsection.2.2.10}%
+\contentsline {subsubsection}{\numberline {2.2.11}Timeline Parameters}{5}{subsubsection.2.2.11}%
+\contentsline {subsection}{\numberline {2.3}Example Configuration}{6}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Physical Project Details}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Purpose}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Parameter Choices}{6}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Terrain Distribution}{6}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Terrain Multipliers}{7}{subsubsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.3}Total Line Length}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Example Configuration}{7}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Financing Parameters}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Purpose}{8}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Parameter Choices}{8}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Inflation and Base Year}{8}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Discount Rates}{8}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Contingencies}{9}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Capital Structure (Optional)}{9}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}AFUDC Configuration}{9}{subsubsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.3}Example Configuration}{10}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Insurance Configuration}{10}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Purpose}{10}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Parameter Choices}{10}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Default Premium Rate}{10}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Insurable Components}{10}{subsubsection.5.2.2}%
+\contentsline {subsubsection}{\numberline {5.2.3}Construction Type-Specific Premiums (Optional)}{11}{subsubsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.3}Example Configuration}{11}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Delay Costs}{11}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Purpose}{11}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Parameter Choices}{11}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Total Annual Delay Cost}{12}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Example Configuration}{12}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Wildfire Risk Parameters}{12}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Purpose}{12}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Parameter Choices}{12}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {7.2.1}Event Severity}{12}{subsubsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.2}Risk Growth}{12}{subsubsection.7.2.2}%
+\contentsline {subsubsection}{\numberline {7.2.3}Discount Rate Configuration}{13}{subsubsection.7.2.3}%
+\contentsline {subsubsection}{\numberline {7.2.4}Base Ignition Rates by Terrain}{13}{subsubsection.7.2.4}%
+\contentsline {subsubsection}{\numberline {7.2.5}Ignition Rate Multipliers by Construction Type}{13}{subsubsection.7.2.5}%
+\contentsline {subsection}{\numberline {7.3}Example Configuration}{13}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Outage Risk Parameters}{14}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Purpose}{14}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Parameter Choices}{14}{subsection.8.2}%
+\contentsline {subsubsection}{\numberline {8.2.1}Risk Growth}{14}{subsubsection.8.2.1}%
+\contentsline {subsubsection}{\numberline {8.2.2}Discount Rate}{14}{subsubsection.8.2.2}%
+\contentsline {subsubsection}{\numberline {8.2.3}Capacity at Risk}{14}{subsubsection.8.2.3}%
+\contentsline {subsubsection}{\numberline {8.2.4}Value of Lost Load (VoLL)}{15}{subsubsection.8.2.4}%
+\contentsline {subsubsection}{\numberline {8.2.5}Outage Duration by Terrain}{15}{subsubsection.8.2.5}%
+\contentsline {subsubsection}{\numberline {8.2.6}Duration Multipliers by Construction Type}{15}{subsubsection.8.2.6}%
+\contentsline {subsubsection}{\numberline {8.2.7}Outage Rates}{15}{subsubsection.8.2.7}%
+\contentsline {subsection}{\numberline {8.3}Example Configuration}{16}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Environmental Mitigation}{16}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Purpose}{16}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Parameter Choices}{17}{subsection.9.2}%
+\contentsline {subsubsection}{\numberline {9.2.1}Mitigation Uplift Factor}{17}{subsubsection.9.2.1}%
+\contentsline {subsubsection}{\numberline {9.2.2}Base Mitigation Costs}{17}{subsubsection.9.2.2}%
+\contentsline {subsubsection}{\numberline {9.2.3}Credit Purchase Costs}{17}{subsubsection.9.2.3}%
+\contentsline {subsubsection}{\numberline {9.2.4}Mitigation Ratios}{17}{subsubsection.9.2.4}%
+\contentsline {subsection}{\numberline {9.3}Example Configuration}{18}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Right-of-Way Configuration}{18}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Purpose}{18}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Parameter Choices}{19}{subsection.10.2}%
+\contentsline {subsubsection}{\numberline {10.2.1}Zone Configuration}{19}{subsubsection.10.2.1}%
+\contentsline {subsection}{\numberline {10.3}Zone Definitions}{19}{subsection.10.3}%
+\contentsline {subsection}{\numberline {10.4}Example Configuration}{19}{subsection.10.4}%
+\contentsline {section}{\numberline {11}O\&M Vegetation Management}{20}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Purpose}{20}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Parameter Choices}{20}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Example Configuration}{21}{subsection.11.3}%
+\contentsline {section}{\numberline {12}Category-Specific O\&M Costs}{21}{section.12}%
+\contentsline {subsection}{\numberline {12.1}Conductor O\&M}{21}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}Structure O\&M}{21}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}Converter O\&M}{22}{subsection.12.3}%
+\contentsline {section}{\numberline {13}Emissions Reductions}{22}{section.13}%
+\contentsline {subsection}{\numberline {13.1}Purpose}{22}{subsection.13.1}%
+\contentsline {subsection}{\numberline {13.2}Parameter Choices}{22}{subsection.13.2}%
+\contentsline {subsubsection}{\numberline {13.2.1}Compensation Percentage}{22}{subsubsection.13.2.1}%
+\contentsline {subsubsection}{\numberline {13.2.2}Energy Source Mix}{22}{subsubsection.13.2.2}%
+\contentsline {subsubsection}{\numberline {13.2.3}Emission Intensities}{23}{subsubsection.13.2.3}%
+\contentsline {subsubsection}{\numberline {13.2.4}Societal Costs}{23}{subsubsection.13.2.4}%
+\contentsline {subsection}{\numberline {13.3}Example Configuration}{23}{subsection.13.3}%
+\contentsline {section}{\numberline {14}Congestion Reductions}{24}{section.14}%
+\contentsline {subsection}{\numberline {14.1}Purpose}{24}{subsection.14.1}%
+\contentsline {subsection}{\numberline {14.2}Parameter Choices}{24}{subsection.14.2}%
+\contentsline {subsubsection}{\numberline {14.2.1}Greenfield Congestion Reductions}{24}{subsubsection.14.2.1}%
+\contentsline {subsubsection}{\numberline {14.2.2}Reconductoring Congestion Reductions}{25}{subsubsection.14.2.2}%
+\contentsline {subsection}{\numberline {14.3}Example Configuration}{25}{subsection.14.3}%
+\contentsline {section}{\numberline {15}Curtailment Reductions}{26}{section.15}%
+\contentsline {subsection}{\numberline {15.1}Purpose}{26}{subsection.15.1}%
+\contentsline {subsection}{\numberline {15.2}Parameter Choices}{26}{subsection.15.2}%
+\contentsline {subsection}{\numberline {15.3}Example Configuration}{26}{subsection.15.3}%
+\contentsline {section}{\numberline {16}Cost Timing Patterns}{26}{section.16}%
+\contentsline {subsection}{\numberline {16.1}Purpose}{27}{subsection.16.1}%
+\contentsline {subsection}{\numberline {16.2}Parameter Choices}{27}{subsection.16.2}%
+\contentsline {subsection}{\numberline {16.3}Cost Categories}{27}{subsection.16.3}%
+\contentsline {subsection}{\numberline {16.4}Example Configuration}{28}{subsection.16.4}%
+\contentsline {section}{\numberline {17}Category-Specific Technical Data}{29}{section.17}%
+\contentsline {subsection}{\numberline {17.1}ROW Widths}{29}{subsection.17.1}%
+\contentsline {subsection}{\numberline {17.2}Circuit and Resistance Details}{29}{subsection.17.2}%
+\contentsline {section}{\numberline {18}Special Considerations}{29}{section.18}%
+\contentsline {subsection}{\numberline {18.1}Project Category Construction}{29}{subsection.18.1}%
+\contentsline {subsection}{\numberline {18.2}Reconductoring vs. Greenfield}{30}{subsection.18.2}%
+\contentsline {subsection}{\numberline {18.3}AC vs. DC}{30}{subsection.18.3}%
+\contentsline {subsection}{\numberline {18.4}Construction Type Effects}{31}{subsection.18.4}%
+\contentsline {subsection}{\numberline {18.5}Terrain Distribution}{32}{subsection.18.5}%
+\contentsline {section}{\numberline {19}Summary}{32}{section.19}%

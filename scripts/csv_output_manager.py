@@ -64,6 +64,11 @@ class CTCCOutputManager:
             with open(phys_yaml_path, "r") as file:
                 physical_data = yaml.load(file, Loader=yaml.FullLoader)
             
+            # Load financing details for social discount rate
+            financing_yaml_path = os.path.join(yaml_dir, "03_financing.yaml")
+            with open(financing_yaml_path, "r") as file:
+                financing_data = yaml.load(file, Loader=yaml.FullLoader)
+            
             # Calculate total line length
             terrain_miles = physical_data.get("terrain", {}).get("terrain_miles", {})
             total_line_length = sum(terrain_miles.values())
@@ -96,7 +101,7 @@ class CTCCOutputManager:
                 
                 # Financial parameters
                 "baseline_electricity_price_per_mwh": project.get("baseline_electricity_price_per_mwh", 0),
-                "social_discount_rate": project.get("social_discount_rate", 0),
+                "social_discount_rate": financing_data.get("financial", {}).get("social_discount_rate", 0),
                 
                 # Timeline
                 "construction_years": timeline.get("construction_years", 0),

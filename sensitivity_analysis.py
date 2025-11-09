@@ -98,8 +98,8 @@ PARAM_DEFINITIONS = {
     'social_discount_rate_mult': {
         'type': 'linear',
         'range': (0.7, 1.4),
-        'yaml_file': '01_project_technical_details.yaml',
-        'yaml_path': ['project', 'social_discount_rate'],
+        'yaml_file': '03_financing.yaml',
+        'yaml_path': ['financial', 'social_discount_rate'],
         'description': 'Social discount rate multiplier'
     },
     

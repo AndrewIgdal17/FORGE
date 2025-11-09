@@ -24,6 +24,7 @@ from energy_losses import (
     calculate_line_losses,
 )
 from financial_utils import calculate_present_value
+from yaml_loaders import load_financing_social_discount_rate
 
 
 def load_project_details():
@@ -44,7 +45,7 @@ def load_project_details():
     baseline_electricity_price = project_details["project"][
         "baseline_electricity_price_per_mwh"
     ]
-    social_discount_rate = project_details["project"]["social_discount_rate"]
+    social_discount_rate = load_financing_social_discount_rate()
     reconductoring = project_details["project"]["reconductoring"]
 
     delay_years = project_details["timeline"]["delay_years"]

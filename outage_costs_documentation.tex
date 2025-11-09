@@ -1,0 +1,321 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Outage Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{outage\_costs.py} script calculates expected outage costs using a simplified probabilistic reliability approach. It models outage rates by terrain and construction type, applies a multiplicative duration model, and uses piecewise value of lost load (VoLL) to calculate costs.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates outage costs by:
+\begin{enumerate}
+    \item Calculating segment-specific outage rates by terrain and construction type
+    \item Applying duration multipliers based on construction type
+    \item Calculating unserved energy per event
+    \item Applying piecewise VoLL to calculate cost per event
+    \item Computing Expected Annual Cost (EAC)
+    \item Calculating nominal total cost using growing annuity
+    \item Computing present value using growing annuity formula
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The outage cost calculation follows this structure:
+
+\begin{align}
+\lambda_{segment} &= \text{Miles}_{terrain} \times \text{Outage Rate}_{terrain,construction} \\
+H_{eff} &= H_{base} \times \text{Duration Multiplier}_{construction} \\
+\text{MW Lost} &= \phi \times \text{Capacity} \\
+\text{Unserved MWh} &= H_{eff} \times \text{MW Lost} \\
+\text{Cost/Event} &= \text{Piecewise VoLL}(\text{Unserved MWh}) \\
+\text{EAC} &= \sum_{\text{terrains}} \lambda_{segment} \times \text{Cost/Event} \\
+\text{Nominal Total} &= \text{EAC} \times \frac{(1+g)^N - 1}{g} \\
+\text{PV} &= \text{EAC} \times \frac{1 - \left(\frac{1+g}{1+d}\right)^N}{d - g}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $\lambda$ = annual outage rate (outages/year)
+    \item $H_{eff}$ = effective outage duration (hours)
+    \item $\phi$ = capacity at risk factor
+    \item $g$ = risk growth rate
+    \item $d$ = discount rate
+    \item $N$ = project lifetime
+\end{itemize}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, capacity)
+    \item Physical details (terrain distribution)
+    \item Outage parameters (outage rates, duration by terrain, duration multipliers, VoLL tiers, capacity at risk factor, growth rate)
+    \item Discount rate source (social or WACC real)
+    \item Project lifetime
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Total annual outage rate (lambda)
+    \item Expected Annual Cost (EAC)
+    \item Outage details by terrain segment
+    \item Nominal total cost (growing annuity)
+    \item Present value cost (growing annuity with discounting)
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and outage parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{get\_discount\_rate(outage\_yaml, financing\_yaml)}}
+
+Gets discount rate based on configuration source.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{outage\_yaml} (dict): Loaded outage YAML data
+    \item \texttt{financing\_yaml} (dict): Loaded financing YAML data
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{discount\_rate} (float): Discount rate to use
+    \item \texttt{source\_description} (str): Description of rate source
+\end{itemize}
+
+\subsection{\texttt{calculate\_voll\_cost\_piecewise(duration\_hours, mw\_lost, tiers)}}
+
+Calculates total cost using piecewise VoLL with tiered pricing.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{duration\_hours} (float): Duration of outage in hours
+    \item \texttt{mw\_lost} (float): MW capacity lost during outage
+    \item \texttt{tiers} (list): List of tier dicts with \texttt{max\_hours} and \texttt{value\_per\_mwh}
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{total\_cost} (float): Total cost for the outage
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Piecewise VoLL: Hours 0-4 at tier 1, hours 4-24 at tier 2, hours 24+ at tier 3
+total_cost = 0
+hours_remaining = duration_hours
+prev_threshold = 0
+
+for tier in tiers:
+    max_hours = tier["max_hours"]
+    value_per_mwh = tier["value_per_mwh"]
+    hours_in_tier = min(hours_remaining, max_hours - prev_threshold)
+    if hours_in_tier > 0:
+        mwh_in_tier = hours_in_tier * mw_lost
+        total_cost += mwh_in_tier * value_per_mwh
+        hours_remaining -= hours_in_tier
+        prev_threshold = max_hours
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_outage\_costs(outage\_yaml, construction\_type, terrain\_miles, capacity\_mw, project\_lifetime, discount\_rate)}}
+
+Calculates expected outage costs using simplified outage rate model.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{outage\_yaml} (dict): Loaded outage YAML data
+    \item \texttt{construction\_type} (str): Construction type (overhead, underground, subsea)
+    \item \texttt{terrain\_miles} (dict): Dictionary of terrain type to miles
+    \item \texttt{capacity\_mw} (float): Project capacity in MW
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+    \item \texttt{discount\_rate} (float): Discount rate for PV calculation
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary containing:
+    \begin{itemize}
+        \item \texttt{lambda\_total} (float): Total annual outage rate
+        \item \texttt{EAC} (float): Expected Annual Cost
+        \item \texttt{outage\_by\_terrain} (dict): Outage details by terrain segment
+        \item \texttt{capacity\_at\_risk} (float): Capacity at risk factor
+        \item \texttt{growth\_rate} (float): Risk growth rate
+        \item \texttt{nominal\_total} (float): Total nominal cost
+        \item \texttt{pv\_cost} (float): Present value cost
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# For each terrain segment:
+for terrain, miles in terrain_miles.items():
+    # Outage rate
+    outage_rate = outage_rates[construction_type][terrain]
+    lambda_segment = miles * outage_rate
+    
+    # Effective duration (multiplicative model)
+    H_base = duration_by_terrain[terrain]
+    duration_mult = duration_multiplier[construction_type]
+    H_eff = H_base * duration_mult
+    
+    # MW lost per event
+    mw_lost_per_event = capacity_at_risk * capacity_mw
+    
+    # Unserved energy per event
+    unserved_mwh_per_event = H_eff * mw_lost_per_event
+    
+    # Cost per event (piecewise VoLL)
+    cost_per_event = calculate_voll_cost_piecewise(
+        H_eff, mw_lost_per_event, voll_tiers
+    )
+    
+    # Annual cost for this terrain
+    annual_cost = lambda_segment * cost_per_event
+    EAC += annual_cost
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the outage cost calculation and output.
+
+\section{Example}
+
+The following example demonstrates a typical usage of the outage cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - Terrain distribution:
+#     * Forested: 40 miles, outage rate: 0.05 outages/mi/yr
+#     * Farmland: 60 miles, outage rate: 0.02 outages/mi/yr
+#   - Duration: 8h (forested), 4h (farmland)
+#   - Duration multiplier: 1.0 (overhead)
+#   - Capacity at risk: 50%
+#   - VoLL tiers:
+#     * 0-4h: $10,000/MWh
+#     * 4-24h: $5,000/MWh
+#     * 24h+: $2,000/MWh
+#   - Risk growth rate: 1% per year
+#   - Project lifetime: 50 years
+#   - Discount rate: 3% (social)
+#
+# Calculation:
+#   Forested segment:
+#     Outages/year = 40 * 0.05 = 2.0
+#     Duration = 8h * 1.0 = 8h
+#     MW lost = 0.5 * 500 = 250 MW
+#     Unserved MWh = 8 * 250 = 2000 MWh
+#     Cost/event = (4h * 250MW * $10k) + (4h * 250MW * $5k) = $15M
+#     Annual cost = 2.0 * $15M = $30M/year
+#   
+#   Farmland segment:
+#     Outages/year = 60 * 0.02 = 1.2
+#     Duration = 4h * 1.0 = 4h
+#     MW lost = 250 MW
+#     Unserved MWh = 4 * 250 = 1000 MWh
+#     Cost/event = 4h * 250MW * $10k = $10M
+#     Annual cost = 1.2 * $10M = $12M/year
+#   
+#   Total EAC = $42M/year
+#   Nominal total = $42M * ((1.01^50 - 1) / 0.01) = $2.7B
+#   PV = $42M * ((1 - (1.01/1.03)^50) / (0.03 - 0.01)) = $1.2B
+#
+# Output:
+#   - Total outages/year: 3.2 events/year
+#   - EAC: $42M/year
+#   - Nominal total: $2.7B
+#   - Present value: $1.2B
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+# Results dict already has all needed values
+csv_manager.add_outage_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Piecewise Value of Lost Load (VoLL)}
+
+The script uses a tiered VoLL structure where different outage durations have different values:
+\begin{itemize}
+    \item \textbf{Tier 1} (0-4 hours): Highest value (e.g., \$10,000/MWh) - immediate impacts
+    \item \textbf{Tier 2} (4-24 hours): Medium value (e.g., \$5,000/MWh) - short-term impacts
+    \item \textbf{Tier 3} (24+ hours): Lower value (e.g., \$2,000/MWh) - longer-term impacts
+\end{itemize}
+
+This reflects the reality that shorter outages have higher economic impact per MWh.
+
+\subsection{Multiplicative Duration Model}
+
+The effective duration is calculated as:
+\[
+H_{eff} = H_{base} \times \text{Duration Multiplier}_{construction}
+\]
+
+Different construction types have different duration multipliers. For example, underground lines may have shorter repair times (lower multiplier) than overhead lines.
+
+\subsection{Capacity at Risk Factor}
+
+The capacity at risk factor ($\phi$) represents the fraction of project capacity that is lost during an outage. This accounts for partial outages and system redundancy.
+
+\subsection{Growing Annuity Formula}
+
+Similar to wildfire costs, the script accounts for increasing outage risk over time using a growing annuity formula.
+
+\subsection{AFUDC Treatment}
+
+Outage costs are probabilistic future losses, not capital costs. Therefore, they are not AFUDC-eligible.
+
+\end{document}
+

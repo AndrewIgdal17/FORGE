@@ -1,0 +1,234 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Insurance Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{insurance\_costs.py} script calculates operational insurance costs for transmission line assets. Insurance premiums are based on insurable asset value (conductors, structures, converters) and are paid annually over the project lifetime.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates insurance costs by:
+\begin{enumerate}
+    \item Determining insurable asset value from build costs (with contingencies)
+    \item Applying premium rate based on construction type
+    \item Calculating annual premium
+    \item Computing lifetime nominal cost
+    \item Calculating present value of annual premiums
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The insurance cost calculation follows this structure:
+
+\begin{align}
+\text{Insurable Value} &= \sum_{\text{insured components}} \text{Component Cost with Contingencies} \\
+\text{Annual Premium} &= \text{Insurable Value} \times \text{Premium Rate} \\
+\text{Lifetime Nominal Cost} &= \text{Annual Premium} \times \text{Project Lifetime} \\
+\text{Present Value} &= \sum_{t=1}^{T} \frac{\text{Annual Premium}}{(1 + r)^t}
+\end{align}
+
+where $T$ is the project lifetime and $r$ is the real WACC discount rate.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Build costs (conductor, structure, converter) with contingencies
+    \item Insurance configuration (premium rates, insurable components)
+    \item Construction type (affects premium rate)
+    \item Project lifetime
+    \item Financing parameters (WACC for present value)
+    \item Timeline (delay years, construction years for payment start)
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Insurable asset value
+    \item Annual premium
+    \item Premium rate
+    \item Lifetime nominal cost
+    \item Present value of insurance costs
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{build\_costs.py} - Provides insurable asset values (see \texttt{build\_costs\_documentation.tex})
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and insurance parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{calculate\_insurance\_costs(insurance\_yaml, conductor\_cost\_with\_contingencies, structure\_cost\_with\_contingencies, converter\_cost\_with\_contingencies, construction\_type, project\_lifetime)}}
+
+Calculates operational insurance costs based on insurable asset value.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{insurance\_yaml} (dict): Loaded insurance YAML data
+    \item \texttt{conductor\_cost\_with\_contingencies} (float): Conductor cost with contingencies
+    \item \texttt{structure\_cost\_with\_contingencies} (float): Structure cost with contingencies
+    \item \texttt{converter\_cost\_with\_contingencies} (float): Converter cost with contingencies
+    \item \texttt{construction\_type} (str): Type of construction (overhead, underground, subsea)
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary containing:
+    \begin{itemize}
+        \item \texttt{insurable\_value} (float): Total insurable asset value
+        \item \texttt{annual\_premium} (float): Annual insurance premium
+        \item \texttt{premium\_rate} (float): Premium rate applied
+        \item \texttt{nominal\_lifetime\_cost} (float): Total lifetime cost in nominal terms
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate insurable value based on which components are insured
+insurable_value = 0.0
+if components.get("conductors", True):
+    insurable_value += conductor_cost_with_contingencies
+if components.get("structures", True):
+    insurable_value += structure_cost_with_contingencies
+if components.get("converters", True):
+    insurable_value += converter_cost_with_contingencies
+
+# Get premium rate (construction type specific or default)
+premium_rate = premium_by_type.get(
+    construction_type.lower(), 
+    ins_cfg.get("premium_rate", 0.002)
+)
+
+# Calculate annual premium
+annual_premium = insurable_value * premium_rate
+nominal_lifetime_cost = annual_premium * project_lifetime
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the insurance cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and constructs category identifier
+    \item Loads build costs to get insurable asset values
+    \item Loads insurance parameters
+    \item Calls \texttt{calculate\_insurance\_costs()} to compute costs
+    \item Calculates present value of annual premiums
+    \item Displays results and writes to CSV
+\end{enumerate}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the insurance cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs:
+#   - Conductor cost (with contingencies): $55M
+#   - Structure cost (with contingencies): $25M
+#   - Converter cost: $0 (AC project)
+#   - Premium rate: 0.2% (overhead construction)
+#   - Project lifetime: 50 years
+#   - Payment start: Year 3 (after 2-year construction)
+#
+# Calculation:
+#   Insurable value = $55M + $25M + $0 = $80M
+#   Annual premium = $80M * 0.002 = $160,000
+#   Lifetime nominal = $160,000 * 50 = $8M
+#   Present value = $160,000 * PV annuity (50 years, 3% discount) = $4.2M
+#
+# Output:
+#   - Insurable value: $80M
+#   - Annual premium: $160,000
+#   - Lifetime nominal: $8M
+#   - Present value: $4.2M
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+# 1. Script loads build costs from build_costs.py
+# 2. Calculates insurance costs
+# 3. Writes to CSV via CTCCOutputManager:
+csv_manager = CTCCOutputManager()
+csv_results = {
+    "annual_premium": results["annual_premium"],
+    "nominal_lifetime_cost": results["nominal_lifetime_cost"],
+    "pv_total": insurance_pv,
+    "insurable_value": results["insurable_value"],
+    "premium_rate": results["premium_rate"],
+}
+csv_manager.add_insurance_costs(csv_results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Insurable Components}
+
+The script allows configuration of which components are insurable (conductors, structures, converters). By default, all components are insured, but this can be customized in the YAML configuration.
+
+\subsection{Premium Rate by Construction Type}
+
+Different construction types may have different premium rates. The script first checks for a construction-type-specific rate, then falls back to a default rate if not specified.
+
+\subsection{Payment Timing}
+
+Insurance premiums start at Commercial Operation Date (COD), which is after the delay and construction periods. Premiums are paid annually for the project lifetime.
+
+\subsection{AFUDC Treatment}
+
+Operational insurance is not AFUDC-eligible because it is an operating expense, not a construction cost. Only construction-period costs are eligible for AFUDC capitalization.
+
+\subsection{Dependency on Build Costs}
+
+This script requires build costs to be calculated first (via \texttt{build\_costs.py}) to determine insurable asset values. It imports and calls \texttt{load\_costs()} from \texttt{build\_costs.py}.
+
+\end{document}
+
