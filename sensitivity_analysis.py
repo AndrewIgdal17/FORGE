@@ -81,6 +81,72 @@ PARAM_DEFINITIONS = {
         ],
         "description": "Congestion price multiplier",
     },
+    "congestion_flow_factor_mult": {
+        "type": "linear",
+        "range": (0.5, 1.2),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "flow_factor",
+        ],
+        "description": "Flow factor multiplier (affects effective capacity relief)",
+    },
+    "congestion_binding_hours_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "binding_hours",
+        ],
+        "description": "Binding hours multiplier (hours per year line is binding)",
+    },
+    "congestion_average_exceedance_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "average_exceedance",
+        ],
+        "description": "Average exceedance multiplier (MW exceedance during binding hours)",
+    },
+    "congestion_near_binding_hours_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "near_binding_hours",
+        ],
+        "description": "Near binding hours multiplier",
+    },
+    "congestion_near_binding_relief_factor_mult": {
+        "type": "linear",
+        "range": (0.5, 1.5),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "near_binding_relief_factor",
+        ],
+        "description": "Near binding relief factor multiplier [0,1]",
+    },
+    "congestion_saturation_factor_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "saturation_factor",
+        ],
+        "description": "Saturation factor multiplier (affects congestion benefit haircut)",
+    },
     "electricity_price_mult": {
         "type": "linear",
         "range": (0.7, 1.5),
@@ -116,41 +182,103 @@ PARAM_DEFINITIONS = {
         "yaml_path": ["financial", "wacc_nominal"],
         "description": "WACC nominal multiplier",
     },
-    # ROW Cost Zones (5) - using zone_1 through zone_5 as representative
-    "row_cost_mult_forested": {
+    "inflation_rate_mult": {
         "type": "linear",
-        "range": (0.7, 1.5),
-        "yaml_file": "11_project_row_details.yaml",
-        "yaml_path": ["right_of_way", "zone_1"],  # zone_1 represents forested
-        "description": "ROW cost multiplier (forested/zone_1)",
+        "range": (0.7, 1.4),
+        "yaml_file": "03_financing.yaml",
+        "yaml_path": ["financial", "inflation_rate"],
+        "description": "Inflation rate multiplier",
     },
-    "row_cost_mult_scrubbed_flat": {
+    # ROW Cost Multipliers (3) - apply to all zones 1-15
+    "row_acquisition_cost_mult": {
         "type": "linear",
         "range": (0.7, 1.5),
         "yaml_file": "11_project_row_details.yaml",
-        "yaml_path": ["right_of_way", "zone_2"],  # zone_2 represents scrubbed flat
-        "description": "ROW cost multiplier (scrubbed flat/zone_2)",
+        "yaml_path": ["right_of_way"],
+        "target_fields": [
+            "acquisition_cost"
+        ],  # Only multiply acquisition_cost across all zones
+        "description": "ROW acquisition cost multiplier (all zones)",
     },
-    "row_cost_mult_wetland": {
+    "row_rent_cost_mult": {
         "type": "linear",
         "range": (0.7, 1.5),
         "yaml_file": "11_project_row_details.yaml",
-        "yaml_path": ["right_of_way", "zone_3"],  # zone_3 represents wetland
-        "description": "ROW cost multiplier (wetland/zone_3)",
+        "yaml_path": ["right_of_way"],
+        "target_fields": ["rent_cost"],  # Only multiply rent_cost across all zones
+        "description": "ROW rent cost multiplier (all zones)",
     },
-    "row_cost_mult_farmland": {
+    "row_hold_cost_mult": {
         "type": "linear",
         "range": (0.7, 1.5),
         "yaml_file": "11_project_row_details.yaml",
-        "yaml_path": ["right_of_way", "zone_4"],  # zone_4 represents farmland
-        "description": "ROW cost multiplier (farmland/zone_4)",
+        "yaml_path": ["right_of_way"],
+        "target_fields": ["hold_cost"],  # Only multiply hold_cost across all zones
+        "description": "ROW hold cost multiplier (all zones)",
     },
-    "row_cost_mult_rolling_hills": {
+    # Terrain Multipliers (9) - from 02_project_physical_details.yaml
+    "terrain_mult_forested": {
         "type": "linear",
         "range": (0.7, 1.5),
-        "yaml_file": "11_project_row_details.yaml",
-        "yaml_path": ["right_of_way", "zone_5"],  # zone_5 represents rolling hills
-        "description": "ROW cost multiplier (rolling hills/zone_5)",
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "forested"],
+        "description": "Terrain multiplier (forested)",
+    },
+    "terrain_mult_scrubbed_flat": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "scrubbed_flat"],
+        "description": "Terrain multiplier (scrubbed flat)",
+    },
+    "terrain_mult_wetland": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "wetland"],
+        "description": "Terrain multiplier (wetland)",
+    },
+    "terrain_mult_farmland": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "farmland"],
+        "description": "Terrain multiplier (farmland)",
+    },
+    "terrain_mult_desert_barren": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "desert_barren"],
+        "description": "Terrain multiplier (desert barren)",
+    },
+    "terrain_mult_urban": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "urban"],
+        "description": "Terrain multiplier (urban)",
+    },
+    "terrain_mult_rolling_hills": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "rolling_hills"],
+        "description": "Terrain multiplier (rolling hills)",
+    },
+    "terrain_mult_mountain": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "mountain"],
+        "description": "Terrain multiplier (mountain)",
+    },
+    "terrain_mult_subsea": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "subsea"],
+        "description": "Terrain multiplier (subsea)",
     },
     # Operational/Risk (5)
     "outage_rate_mult": {
@@ -373,10 +501,28 @@ def store_baseline_values(yaml_files, param_definitions):
 
         if current_value is not None:
             if isinstance(current_value, dict):
-                # For nested dicts, store the entire structure
-                baselines[param_name] = yaml.load(
-                    yaml.dump(current_value), Loader=yaml.FullLoader
-                )  # Deep copy
+                # Check if target_fields is specified (for field-specific multipliers)
+                target_fields = param_def.get("target_fields")
+
+                if target_fields:
+                    # Store only the target fields for each zone/key
+                    baseline_dict = {}
+                    for zone_key, zone_dict in current_value.items():
+                        if isinstance(zone_dict, dict):
+                            baseline_dict[zone_key] = {}
+                            for field_name in target_fields:
+                                if field_name in zone_dict and isinstance(
+                                    zone_dict[field_name], (int, float)
+                                ):
+                                    baseline_dict[zone_key][field_name] = zone_dict[
+                                        field_name
+                                    ]
+                    baselines[param_name] = baseline_dict
+                else:
+                    # For nested dicts, store the entire structure
+                    baselines[param_name] = yaml.load(
+                        yaml.dump(current_value), Loader=yaml.FullLoader
+                    )  # Deep copy
             else:
                 baselines[param_name] = current_value
 
@@ -415,28 +561,60 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
                 baseline_value = baselines[param_name]
 
                 if isinstance(baseline_value, dict):
-                    # For nested dicts, multiply all values recursively
-                    def multiply_nested_dict(base_dict, mult, target_dict):
-                        """Multiply all numeric values in nested dict structure."""
-                        for key, value in base_dict.items():
-                            if isinstance(value, dict):
-                                if key not in target_dict:
-                                    target_dict[key] = {}
-                                multiply_nested_dict(value, mult, target_dict[key])
-                            elif isinstance(value, (int, float)):
-                                target_dict[key] = value * mult
+                    # Check if target_fields is specified (for field-specific multiplication)
+                    target_fields = param_def.get("target_fields")
 
-                    # Get target dict
-                    current = yaml_files[yaml_file_name]
-                    for key in param_def["yaml_path"]:
-                        if key in current:
-                            current = current[key]
-                        else:
-                            current = None
-                            break
+                    if target_fields:
+                        # Field-specific multiplication: only multiply specified fields
+                        # Get target dict
+                        current = yaml_files[yaml_file_name]
+                        for key in param_def["yaml_path"]:
+                            if key in current:
+                                current = current[key]
+                            else:
+                                current = None
+                                break
 
-                    if current is not None:
-                        multiply_nested_dict(baseline_value, param_value, current)
+                        if current is not None:
+                            # Iterate through all zones/keys in the dict
+                            for zone_key, zone_dict in current.items():
+                                if isinstance(zone_dict, dict):
+                                    # For each target field, multiply if it exists
+                                    for field_name in target_fields:
+                                        if field_name in zone_dict and isinstance(
+                                            zone_dict[field_name], (int, float)
+                                        ):
+                                            # Get baseline value for this field
+                                            baseline_field_value = baseline_value.get(
+                                                zone_key, {}
+                                            ).get(field_name)
+                                            if baseline_field_value is not None:
+                                                zone_dict[field_name] = (
+                                                    baseline_field_value * param_value
+                                                )
+                    else:
+                        # For nested dicts, multiply all values recursively (original behavior)
+                        def multiply_nested_dict(base_dict, mult, target_dict):
+                            """Multiply all numeric values in nested dict structure."""
+                            for key, value in base_dict.items():
+                                if isinstance(value, dict):
+                                    if key not in target_dict:
+                                        target_dict[key] = {}
+                                    multiply_nested_dict(value, mult, target_dict[key])
+                                elif isinstance(value, (int, float)):
+                                    target_dict[key] = value * mult
+
+                        # Get target dict
+                        current = yaml_files[yaml_file_name]
+                        for key in param_def["yaml_path"]:
+                            if key in current:
+                                current = current[key]
+                            else:
+                                current = None
+                                break
+
+                        if current is not None:
+                            multiply_nested_dict(baseline_value, param_value, current)
                 else:
                     # Simple numeric value
                     new_value = baseline_value * param_value
