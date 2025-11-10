@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # Add scripts directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from bcr_calculator import calculate_and_display_bcr
 from csv_output_manager import CTCCOutputManager
 
@@ -51,7 +51,7 @@ def main():
 
     # Generate a single scenario_id for this entire run
     scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    os.environ['CTCC_SCENARIO_ID'] = scenario_id
+    os.environ["CTCC_SCENARIO_ID"] = scenario_id
     print(f"\n📋 Scenario ID: {scenario_id}\n")
 
     # List of scripts to run in order
@@ -88,27 +88,40 @@ def main():
 
     if successful_runs == total_runs:
         print("🎉 All calculations completed successfully!")
-        
+
         # Calculate and display BCR metrics
         print("\n" + "=" * 80)
         print("CALCULATING BENEFIT-COST RATIOS...")
         print("=" * 80)
-        
+
         try:
             bcr_results = calculate_and_display_bcr(scenario_id, output_dir="outputs")
-            
+
             if bcr_results:
                 # Update batch_summary.csv with BCR metrics
-                csv_manager = CTCCOutputManager(output_dir="outputs", scenario_id=scenario_id)
+                csv_manager = CTCCOutputManager(
+                    output_dir="outputs", scenario_id=scenario_id
+                )
                 csv_manager.add_bcr_metrics(bcr_results)
                 csv_manager.write_batch_summary()
                 print("✅ BCR metrics added to batch_summary.csv")
             else:
                 print("⚠️  BCR calculation completed but no results returned")
-                
+                print(f"   Scenario ID: {scenario_id}")
+                print(
+                    "   This may indicate missing required columns in batch_summary.csv"
+                )
+
         except Exception as e:
+            import traceback
+
             print(f"⚠️  BCR calculation failed: {e}")
-            print("This does not affect the validity of the cost calculations above.")
+            print(f"   Scenario ID: {scenario_id}")
+            print("   Full error traceback:")
+            traceback.print_exc()
+            print(
+                "   This does not affect the validity of the cost calculations above."
+            )
     else:
         print("⚠️  Some calculations failed. Check the output above.")
 

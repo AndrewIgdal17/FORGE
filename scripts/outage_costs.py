@@ -89,6 +89,8 @@ def calculate_outage_costs(
     capacity_mw,
     project_lifetime,
     discount_rate,
+    delay_years=0,
+    construction_years=0,
 ):
     """
     Calculate expected outage costs using simplified outage rate model.
@@ -100,6 +102,8 @@ def calculate_outage_costs(
         capacity_mw: Project capacity in MW
         project_lifetime: Project lifetime in years
         discount_rate: Discount rate for PV calculation
+        delay_years: Years of delay before construction starts
+        construction_years: Years of construction
 
     Returns:
         dict: Contains EAC, outage_by_terrain, nominal_cost, pv_cost
@@ -181,6 +185,16 @@ def calculate_outage_costs(
     else:
         pv_cost = EAC * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
 
+    # Discount for delay and construction periods
+    # Risks only start accumulating after operations begin (after delay + construction)
+    # Discount the PV by the delay period to account for when risks actually start
+    # Handle None values by defaulting to 0
+    delay_years = delay_years if delay_years is not None else 0
+    construction_years = construction_years if construction_years is not None else 0
+    delay_period = delay_years + construction_years
+    if delay_period > 0:
+        pv_cost = pv_cost / ((1 + d) ** delay_period)
+
     return {
         "lambda_total": lambda_total,
         "EAC": EAC,
@@ -236,6 +250,8 @@ def main():
         capacity_mw,
         project_lifetime,
         discount_rate,
+        delay_years=delay_year,
+        construction_years=construction_years,
     )
 
     # Display results

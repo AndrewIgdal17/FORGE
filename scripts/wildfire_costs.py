@@ -53,7 +53,8 @@ def get_discount_rate(wildfire_yaml, financing_yaml):
 
 
 def calculate_wildfire_costs(
-    wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate
+    wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate,
+    delay_years=0, construction_years=0
 ):
     """
     Calculate expected wildfire costs using segment-based ignition rates.
@@ -64,6 +65,8 @@ def calculate_wildfire_costs(
         terrain_miles: Dictionary of terrain type to miles
         project_lifetime: Project lifetime in years
         discount_rate: Discount rate for PV calculation
+        delay_years: Years of delay before construction starts
+        construction_years: Years of construction
 
     Returns:
         dict: Contains lambda_total, EAL, lambda_by_terrain, nominal_cost, pv_cost
@@ -124,6 +127,16 @@ def calculate_wildfire_costs(
     else:
         pv_cost = EAL * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
 
+    # Step 5: Discount for delay and construction periods
+    # Risks only start accumulating after operations begin (after delay + construction)
+    # Discount the PV by the delay period to account for when risks actually start
+    # Handle None values by defaulting to 0
+    delay_years = delay_years if delay_years is not None else 0
+    construction_years = construction_years if construction_years is not None else 0
+    delay_period = delay_years + construction_years
+    if delay_period > 0:
+        pv_cost = pv_cost / ((1 + d) ** delay_period)
+
     return {
         "lambda_total": lambda_total,
         "EAL": EAL,
@@ -173,7 +186,8 @@ def main():
 
     # Calculate wildfire costs
     results = calculate_wildfire_costs(
-        wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate
+        wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate,
+        delay_years=delay_year, construction_years=construction_years
     )
 
     # Display results

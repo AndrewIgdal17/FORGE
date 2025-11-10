@@ -14,7 +14,7 @@ project:
 
   baseline_electricity_price_per_mwh: 50.0 # $/MWh
 
-  reconductoring: True # True or False
+  reconductoring: False # True or False
   old_capacity_mw: 140 # MW
   old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
   old_ac_dc: "AC" # AC or DC

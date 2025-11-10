@@ -21,6 +21,7 @@ from scipy.stats import qmc
 from scipy.stats import spearmanr
 from scipy import stats
 import matplotlib.pyplot as plt
+import seaborn as sns
 import time
 from datetime import datetime
 from pathlib import Path
@@ -663,6 +664,107 @@ def remove_baseline_markers(data):
 # ============================================================================
 
 
+def calculate_bcr_fallback(data):
+    """
+    Fallback BCR calculation when BCR columns are missing from batch_summary.csv.
+    Uses the same logic as bcr_calculator.py but works directly with data dict.
+
+    Args:
+        data: Dictionary with scenario data from batch_summary.csv
+
+    Returns:
+        Dictionary with BCR metrics, or None if calculation fails
+    """
+    try:
+        # Calculate benefits (present value)
+        congestion_benefit_pv = data.get("congestion_benefit_pv", 0) or 0
+        curtailment_benefit_pv = data.get("curtailment_benefit_pv", 0) or 0
+        line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
+
+        # For reconductoring, line losses are negative (benefit)
+        line_loss_benefit_pv = abs(line_loss_pv) if line_loss_pv < 0 else 0
+        total_benefits_pv = (
+            congestion_benefit_pv + curtailment_benefit_pv + line_loss_benefit_pv
+        )
+
+        # Haircut benefits (conservative)
+        congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
+        curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
+        total_benefits_haircut_pv = (
+            congestion_benefit_haircut
+            + curtailment_benefit_haircut
+            + line_loss_benefit_pv
+        )
+
+        # Calculate costs (present value)
+        build_cost_pv = data.get("build_cost_pv", 0) or 0
+        row_cost_pv = data.get("row_cost_pv", 0) or 0
+        env_mitigation_pv = data.get("env_mitigation_pv", 0) or 0
+        capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
+
+        oandm_pv = data.get("oandm_pv", 0) or 0
+        insurance_pv = data.get("insurance_pv", 0) or 0
+        wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
+        total_insurance_pv = insurance_pv + wildfire_liability_pv
+        emissions_pv = data.get("emissions_cost_pv", 0) or 0
+        line_loss_cost_pv = max(0, line_loss_pv)  # Only count as cost if positive
+
+        operational_costs_pv = (
+            oandm_pv + total_insurance_pv + line_loss_cost_pv + emissions_pv
+        )
+
+        wildfire_pv = data.get("wildfire_pv", 0) or 0
+        outage_pv = data.get("outage_pv", 0) or 0
+        risk_costs_pv = wildfire_pv + outage_pv
+
+        delay_cost_pv = data.get("delay_cost_pv", 0) or 0
+        congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
+        curtailment_delay_pv = data.get("curtailment_delay_cost_pv", 0) or 0
+        residual_congestion_pv = data.get("residual_congestion_pv", 0) or 0
+        delay_costs_pv = (
+            delay_cost_pv
+            + congestion_delay_pv
+            + curtailment_delay_pv
+            + residual_congestion_pv
+        )
+
+        total_costs_pv = (
+            capital_costs_pv + operational_costs_pv + risk_costs_pv + delay_costs_pv
+        )
+        total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
+
+        # Calculate BCR metrics
+        if total_costs_pv > 0:
+            bcr_system = total_benefits_pv / total_costs_pv
+        else:
+            bcr_system = 0
+
+        if capital_costs_pv > 0:
+            bcr_capital = total_benefits_pv / capital_costs_pv
+        else:
+            bcr_capital = 0
+
+        if total_costs_pv > 0:
+            bcr_haircut = total_benefits_haircut_pv / total_costs_pv
+        else:
+            bcr_haircut = 0
+
+        if total_costs_excluding_risk_pv > 0:
+            bcr_excluding_risk = total_benefits_pv / total_costs_excluding_risk_pv
+        else:
+            bcr_excluding_risk = 0
+
+        return {
+            "bcr_system": bcr_system,
+            "bcr_capital": bcr_capital,
+            "bcr_haircut": bcr_haircut,
+            "bcr_excluding_risk": bcr_excluding_risk,
+        }
+    except Exception as e:
+        # If calculation fails, return None
+        return None
+
+
 def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
     """
     Run CTCC with temporary YAML directory.
@@ -693,12 +795,71 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
             timeout=300,  # 5 minute timeout per run
         )
 
+        # Check for BCR-related errors in output
+        if result.returncode != 0:
+            error_msg = f"CTCC failed with return code {result.returncode}"
+            if result.stderr:
+                error_msg += f"\nStderr: {result.stderr[-500:]}"
+            if result.stdout:
+                error_msg += f"\nStdout (last 500 chars): {result.stdout[-500:]}"
+            return None, error_msg
+
+        # Check for BCR calculation issues in stdout
+        bcr_warning_detected = False
+        if result.stdout:
+            if (
+                "BCR calculation failed" in result.stdout
+                or "no results returned" in result.stdout
+            ):
+                bcr_warning_detected = True
+                # Log the relevant portion of stdout for debugging
+                stdout_lines = result.stdout.split("\n")
+                bcr_section = []
+                in_bcr_section = False
+                for line in stdout_lines:
+                    if "BENEFIT-COST" in line or "CALCULATING BENEFIT" in line:
+                        in_bcr_section = True
+                    if in_bcr_section:
+                        bcr_section.append(line)
+                        if len(bcr_section) > 50:  # Limit to last 50 lines
+                            bcr_section.pop(0)
+                if bcr_section:
+                    # This will be logged if BCR columns are missing later
+                    pass
+
         # Extract results from batch_summary.csv
         batch_summary_path = Path(base_dir) / "outputs" / "batch_summary.csv"
         if batch_summary_path.exists():
             df = pd.read_csv(batch_summary_path)
             if len(df) > 0:
                 results = df.iloc[-1].to_dict()
+
+                # Check if BCR columns are missing and attempt fallback calculation
+                bcr_columns = [
+                    "bcr_system",
+                    "bcr_capital",
+                    "bcr_haircut",
+                    "bcr_excluding_risk",
+                ]
+                missing_bcr = [col for col in bcr_columns if col not in results]
+
+                if missing_bcr:
+                    # Attempt fallback BCR calculation
+                    fallback_bcr = calculate_bcr_fallback(results)
+                    if fallback_bcr:
+                        # Add fallback BCR metrics to results
+                        results.update(fallback_bcr)
+                        # Note: We don't return an error since we successfully calculated BCR
+                    else:
+                        # Fallback calculation also failed
+                        error_info = f"BCR columns missing: {missing_bcr}. "
+                        if bcr_warning_detected:
+                            error_info += (
+                                "CTCC stdout indicates BCR calculation issue. "
+                            )
+                        error_info += "Fallback BCR calculation also failed."
+                        return results, error_info
+
                 return results, None
             else:
                 return None, "batch_summary.csv is empty"
@@ -842,6 +1003,166 @@ def generate_scatter_plots(results_df, top_params, output_path):
     plt.close()
 
 
+def generate_prcc_heatmap(prcc_all, output_path, top_n=20):
+    """
+    Generate heatmap showing PRCC values across all BCR metrics.
+
+    Args:
+        prcc_all: DataFrame with PRCC values (index=parameters, columns=BCR metrics)
+        output_path: Path to save the plot
+        top_n: Number of top parameters to show (by average absolute PRCC)
+    """
+    # Calculate average absolute PRCC across all metrics to rank parameters
+    prcc_all_copy = prcc_all.copy()
+    prcc_all_copy["avg_abs_prcc"] = prcc_all_copy.abs().mean(axis=1)
+
+    # Select top N parameters
+    top_params = prcc_all_copy.nlargest(top_n, "avg_abs_prcc").index.tolist()
+    heatmap_data = prcc_all_copy.loc[top_params].drop("avg_abs_prcc", axis=1)
+
+    # Create figure
+    fig, ax = plt.subplots(
+        figsize=(max(8, len(heatmap_data.columns) * 2), max(10, len(top_params) * 0.4))
+    )
+
+    # Create heatmap with custom colormap
+    # Use diverging colormap: red (negative) -> white (zero) -> blue (positive)
+    sns.heatmap(
+        heatmap_data,
+        annot=True,  # Show PRCC values in cells
+        fmt=".2f",  # Format to 2 decimal places
+        cmap="RdBu_r",  # Red-Blue reversed (red=negative, blue=positive)
+        center=0,  # Center colormap at zero
+        vmin=-1,  # Min value
+        vmax=1,  # Max value
+        cbar_kws={"label": "PRCC"},
+        linewidths=0.5,
+        linecolor="gray",
+        ax=ax,
+    )
+
+    ax.set_title(
+        "PRCC Heatmap: Parameter Sensitivity Across BCR Metrics",
+        fontsize=12,
+        fontweight="bold",
+        pad=20,
+    )
+    ax.set_xlabel("BCR Metric", fontsize=10)
+    ax.set_ylabel("Parameter", fontsize=10)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=8)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+def generate_parallel_coordinates_plot(
+    results_df, top_params, bcr_col, output_path, n_samples_to_plot=300
+):
+    """
+    Generate parallel coordinates plot showing parameter combinations and BCR outcomes.
+
+    Args:
+        results_df: DataFrame with all results
+        top_params: List of top parameter names to include
+        bcr_col: BCR column name to use for coloring
+        output_path: Path to save the plot
+        n_samples_to_plot: Number of samples to plot (for readability, default all)
+    """
+    # Select top parameters + BCR
+    plot_cols = top_params + [bcr_col]
+
+    # Subset data
+    plot_data = results_df[plot_cols].copy()
+
+    # Limit number of samples if too many (for readability)
+    if len(plot_data) > n_samples_to_plot:
+        plot_data = plot_data.sample(n=n_samples_to_plot, random_state=42)
+
+    # Normalize all columns to [0, 1] for parallel coordinates
+    normalized_data = plot_data.copy()
+    for col in plot_cols:
+        col_min = normalized_data[col].min()
+        col_max = normalized_data[col].max()
+        if col_max > col_min:
+            normalized_data[col] = (normalized_data[col] - col_min) / (
+                col_max - col_min
+            )
+        else:
+            normalized_data[col] = 0.5  # Constant value
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(max(12, len(plot_cols) * 1.5), 8))
+
+    # Color by BCR value
+    bcr_values = plot_data[bcr_col].values
+    bcr_normalized = normalized_data[bcr_col].values
+
+    # Use a colormap (green for high BCR, red for low BCR)
+    cmap = plt.cm.get_cmap("RdYlGn")  # Red-Yellow-Green
+    colors = cmap(bcr_normalized)
+
+    # Plot parallel coordinates manually for better control
+    n_samples = len(normalized_data)
+    n_axes = len(plot_cols)
+
+    # Create positions for axes
+    positions = np.linspace(0, 1, n_axes)
+
+    # Plot lines
+    for idx in range(n_samples):
+        values = normalized_data.iloc[idx].values
+        ax.plot(positions, values, alpha=0.3, color=colors[idx], linewidth=0.5)
+
+    # Set axis labels and positions
+    ax.set_xticks(positions)
+    ax.set_xticklabels(plot_cols, rotation=45, ha="right", fontsize=9)
+    ax.set_ylabel("Normalized Value", fontsize=10)
+    ax.set_title(
+        f"Parallel Coordinates: Parameter Combinations → {bcr_col}",
+        fontsize=12,
+        fontweight="bold",
+        pad=20,
+    )
+    ax.grid(True, alpha=0.3, axis="y")
+
+    # Add colorbar
+    sm = plt.cm.ScalarMappable(
+        cmap=cmap, norm=plt.Normalize(vmin=bcr_values.min(), vmax=bcr_values.max())
+    )
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, pad=0.02)
+    cbar.set_label(bcr_col, fontsize=10, rotation=270, labelpad=15)
+
+    # Add min/max labels on right side of each axis
+    for i, col in enumerate(plot_cols):
+        col_min = plot_data[col].min()
+        col_max = plot_data[col].max()
+        ax.text(
+            positions[i],
+            -0.05,
+            f"{col_min:.2f}",
+            ha="center",
+            va="top",
+            fontsize=7,
+            transform=ax.get_xaxis_transform(),
+        )
+        ax.text(
+            positions[i],
+            1.05,
+            f"{col_max:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+            transform=ax.get_xaxis_transform(),
+        )
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
 # ============================================================================
 # MAIN WORKFLOW
 # ============================================================================
@@ -963,9 +1284,12 @@ def main():
                     remaining = (args.n_samples - sample_idx - 1) * avg_time
 
                     bcr = result_dict.get("bcr_system", "N/A")
+                    bcr_str = (
+                        f"{bcr:.4f}" if isinstance(bcr, (int, float)) else str(bcr)
+                    )
                     print(
                         f"[{sample_idx + 1}/{args.n_samples}] {sample_id} complete. "
-                        f"BCR_system: {bcr:.4f if isinstance(bcr, (int, float)) else bcr}. "
+                        f"BCR_system: {bcr_str}. "
                         f"Est. time remaining: {remaining/60:.1f} min"
                     )
 
@@ -1032,6 +1356,13 @@ def main():
             print(f"  Columns: {', '.join(available_bcr_columns)}")
             print()
 
+            # Generate PRCC heatmap
+            print("Generating PRCC heatmap...")
+            heatmap_path = output_dir / "prcc_heatmap.png"
+            generate_prcc_heatmap(prcc_all, heatmap_path, top_n=25)
+            print(f"  Saved PRCC heatmap: {heatmap_path}")
+            print()
+
             # Generate tornado plots for each BCR metric
             print("Generating tornado diagrams...")
             for bcr_col in available_bcr_columns:
@@ -1051,6 +1382,16 @@ def main():
                 scatter_path = output_dir / "scatter_top6.png"
                 generate_scatter_plots(results_df, top_6_params, scatter_path)
                 print(f"  Saved scatter plots: {scatter_path}")
+                print()
+
+                # Generate parallel coordinates plot
+                print("Generating parallel coordinates plot...")
+                top_8_params = prcc_values_system.abs().nlargest(8).index.tolist()
+                parallel_path = output_dir / "parallel_coordinates_bcr_system.png"
+                generate_parallel_coordinates_plot(
+                    results_df, top_8_params, "bcr_system", parallel_path
+                )
+                print(f"  Saved parallel coordinates plot: {parallel_path}")
                 print()
 
             # Summary statistics for all BCR metrics

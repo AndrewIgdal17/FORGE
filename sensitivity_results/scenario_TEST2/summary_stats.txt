@@ -1,0 +1,35 @@
+LHS Sensitivity Analysis Summary
+================================================================================
+Scenario: TEST2
+Samples: 300
+Successful runs: 300
+Failed runs: 0
+
+bcr_system Statistics:
+  Mean: 0.0038
+  Median (P50): 0.0029
+  P95: 0.0095
+  P5: 0.0008
+  Std: 0.0028
+
+bcr_capital Statistics:
+  Mean: 2.5425
+  Median (P50): 2.1119
+  P95: 5.5122
+  P5: 0.8918
+  Std: 1.5906
+
+bcr_haircut Statistics:
+  Mean: 0.0029
+  Median (P50): 0.0022
+  P95: 0.0075
+  P5: 0.0006
+  Std: 0.0022
+
+bcr_excluding_risk Statistics:
+  Mean: 0.0108
+  Median (P50): 0.0097
+  P95: 0.0204
+  P5: 0.0050
+  Std: 0.0050
+
