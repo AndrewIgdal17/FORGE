@@ -19,6 +19,7 @@ from .ctcc_processor import run_ctcc_calculation
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
+OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
 INDEX_FILE = STATIC_DIR / "index.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
 
@@ -132,6 +133,48 @@ async def calculate_ctcc(payload: CTCCInputPayload) -> JSONResponse:
     payload_dict = payload.model_dump()
     result = run_ctcc_calculation(payload_dict)
     return JSONResponse(result)
+
+
+@app.get("/api/outputs/{filename}")
+async def get_output_file(filename: str, download: bool = False):
+    """
+    Serve CSV output files from the outputs directory.
+
+    Args:
+        filename: Name of the CSV file to retrieve
+        download: If True, forces download; if False, displays inline (default)
+
+    Returns:
+        FileResponse with CSV content
+    """
+    # Security: only allow CSV files and prevent directory traversal
+    if not filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+
+    if '/' in filename or '\\' in filename or '..' in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    file_path = OUTPUTS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {filename}")
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=400, detail="Invalid file")
+
+    # Return file with appropriate headers
+    # When download=True, browser will download the file
+    # When download=False, browser will display inline (for preview)
+    headers = {}
+    if download:
+        headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    return FileResponse(
+        path=file_path,
+        media_type="text/csv",
+        filename=filename,
+        headers=headers
+    )
 
 
 if __name__ == "__main__":

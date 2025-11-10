@@ -1,3 +1,0 @@
-127.0.0.1 - - [20/Oct/2025 11:02:51] "GET /index.html HTTP/1.1" 304 -
-127.0.0.1 - - [20/Oct/2025 11:02:56] code 501, message Unsupported method ('POST')
-127.0.0.1 - - [20/Oct/2025 11:02:56] "POST /api/process HTTP/1.1" 501 -

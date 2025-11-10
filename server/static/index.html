@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CTCC API Server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 2rem;
+        line-height: 1.6;
+      }
+      form {
+        display: grid;
+        gap: 1rem;
+        max-width: 960px;
+      }
+      .section {
+        display: grid;
+        gap: 0.5rem;
+      }
+      .section[hidden] {
+        display: none !important;
+      }
+      .section h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      label {
+        display: grid;
+        gap: 0.4rem;
+        max-width: 480px;
+      }
+      label.radio {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        max-width: none;
+      }
+      textarea,
+      input[type="text"],
+      input[type="url"],
+      input[type="file"],
+      button {
+        font: inherit;
+        padding: 0.75rem;
+      }
+      button {
+        cursor: pointer;
+      }
+      pre {
+        background: rgba(0, 0, 0, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        white-space: pre;
+        display: inline-block;
+        min-width: 100%;
+        box-sizing: border-box;
+      }
+      .error {
+        color: #b00020;
+      }
+      .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+      .tab-button {
+        padding: 0.5rem 1rem;
+        background: rgba(0, 0, 0, 0.03);
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+      }
+      .tab-button:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .tab-button.active {
+        background: rgba(0, 100, 200, 0.1);
+        border-bottom-color: #0066cc;
+        font-weight: 600;
+      }
+      .tab-content {
+        display: none;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 0.5rem;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1rem;
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .form-field label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.75);
+        text-transform: capitalize;
+      }
+      .form-field input,
+      .form-field select {
+        padding: 0.6rem;
+        font: inherit;
+        font-size: 0.95rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 0.375rem;
+        background: white;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .form-field input:focus,
+      .form-field select:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+      }
+      .form-field input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+      .section-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 1.5rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(0, 100, 200, 0.2);
+        color: #0066cc;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.95rem;
+      }
+      .section-header:first-child {
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CTCC API Server</h1>
+    <p>
+      Submit data to the FastAPI backend. Choose between Simple/Bulk demo modes or run full CTCC calculations.
+    </p>
+
+    <form id="demo-form">
+      <div class="section">
+        <h2>API Connection</h2>
+        <label for="api-base">API Base URL</label>
+        <input
+          id="api-base"
+          name="api-base"
+          type="url"
+          required
+          data-default-port="8000"
+          placeholder="http://example.com:8000"
+        />
+      </div>
+
+      <hr />
+
+      <div class="section">
+        <h2>Mode</h2>
+        <label class="radio">
+          <input type="radio" name="mode" value="simple" checked />
+          <span>Simple: send message + values and receive summary stats.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="bulk" />
+          <span>Bulk: send <code>final_combined.json</code> and receive flattened key/value pairs.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="ctcc" />
+          <span>CTCC: run transmission cost calculations with configurable input/output modes.</span>
+        </label>
+      </div>
+
+      <hr />
+
+      <div id="simple-section" class="section">
+        <h2>Simple Payload</h2>
+        <label for="message">Message</label>
+        <input id="message" name="message" type="text" value="Hello from the browser!" />
+
+        <label for="values">Values (comma separated)</label>
+        <textarea id="values" name="values" rows="3">1, 2, 3.5</textarea>
+      </div>
+
+      <div id="bulk-section" class="section" hidden>
+        <h2>Bulk Payload</h2>
+        <p>
+          When in bulk mode you can either load the server's <code>final_combined.json</code>
+          or select a JSON file manually.
+        </p>
+
+        <label class="radio">
+          <input type="radio" name="bulk-source" value="server" checked />
+          <span>Fetch <code>/api/final_combined</code> from the API server</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="bulk-source" value="file" />
+          <span>Upload a JSON file</span>
+        </label>
+        <div id="bulk-file-input" hidden>
+          <input type="file" id="bulk-file" accept="application/json,.json" />
+        </div>
+      </div>
+
+      <div id="ctcc-section" class="section" hidden>
+        <h2>CTCC Configuration</h2>
+
+        <label for="scenario-id">Scenario ID (optional)</label>
+        <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+          <div>
+            <h3 style="margin-top: 0;">Input Mode</h3>
+            <label class="radio">
+              <input type="radio" name="ctcc-input-mode" value="json" checked />
+              <span>JSON: use <code>final_combined.json</code> from server</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="ctcc-input-mode" value="yaml" />
+              <span>YAML: use local YAML files on server (requires server-side YAMLs)</span>
+            </label>
+          </div>
+
+          <div>
+            <h3 style="margin-top: 0;">Output Mode</h3>
+            <label class="radio">
+              <input type="radio" name="ctcc-output-mode" value="json" checked />
+              <span>JSON: return results as JSON response to browser</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="ctcc-output-mode" value="csv" />
+              <span>CSV: write CSV files to server outputs folder (returns file list)</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="ctcc-json-inputs" hidden>
+          <h3>Input Data</h3>
+          <p id="load-status" style="margin: 0.5rem 0 1rem 0; font-size: 0.9rem; min-height: 1.5rem;"></p>
+          <div id="tabs-container" style="display: none;">
+            <div class="tabs" id="tab-buttons"></div>
+            <div id="tab-contents"></div>
+          </div>
+        </div>
+
+        <div id="ctcc-yaml-message" hidden>
+          <h3>Input Data</h3>
+          <p style="padding: 1rem; background: rgba(0, 0, 0, 0.05); border-radius: 0.5rem;">
+            YAML mode will use YAML files located on the server. Make sure the server has access to the YAML files in the expected directory.
+          </p>
+        </div>
+      </div>
+
+      <hr />
+
+      <button type="submit">Send JSON</button>
+    </form>
+
+    <section>
+      <h2>Result</h2>
+      <div id="status"></div>
+      <pre id="result">Submit the form to see the API response.</pre>
+    </section>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      const form = document.getElementById("demo-form");
+      console.log('Form element:', form);
+      const apiBaseInput = document.getElementById("api-base");
+      const messageInput = document.getElementById("message");
+      const valuesInput = document.getElementById("values");
+      const resultEl = document.getElementById("result");
+      const statusEl = document.getElementById("status");
+      const modeInputs = document.querySelectorAll('input[name="mode"]');
+      const simpleSection = document.getElementById("simple-section");
+      const bulkSection = document.getElementById("bulk-section");
+      const ctccSection = document.getElementById("ctcc-section");
+      console.log('Sections found:', {simpleSection, bulkSection, ctccSection});
+      const scenarioIdInput = document.getElementById("scenario-id");
+      const loadStatus = document.getElementById("load-status");
+      const tabsContainer = document.getElementById("tabs-container");
+      const tabButtonsContainer = document.getElementById("tab-buttons");
+      const tabContentsContainer = document.getElementById("tab-contents");
+      const ctccJsonInputs = document.getElementById("ctcc-json-inputs");
+      const ctccYamlMessage = document.getElementById("ctcc-yaml-message");
+      const ctccInputModeInputs = document.querySelectorAll('input[name="ctcc-input-mode"]');
+      const bulkSourceInputs = document.querySelectorAll('input[name="bulk-source"]');
+      const bulkFileInput = document.getElementById("bulk-file-input");
+
+      let ctccJsonData = null;
+      let activeTabIndex = 0;
+
+      const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
+
+      function deriveDefaultApiBase(currentUrl, defaultPort) {
+        try {
+          const url = new URL(currentUrl);
+          if (url.protocol === "file:") {
+            return `http://127.0.0.1:${defaultPort}`;
+          }
+
+          url.port = String(defaultPort);
+          url.pathname = "";
+          url.search = "";
+          url.hash = "";
+          return url.origin;
+        } catch (error) {
+          return `http://127.0.0.1:${defaultPort}`;
+        }
+      }
+
+      function initialiseApiBase() {
+        const derived = deriveDefaultApiBase(window.location.href, DEFAULT_PORT);
+        apiBaseInput.value = derived;
+      }
+
+      function selectedMode() {
+        const checked = Array.from(modeInputs).find((input) => input.checked);
+        return checked ? checked.value : "simple";
+      }
+
+      function updateModeVisibility() {
+        const mode = selectedMode();
+        console.log('updateModeVisibility called, mode:', mode);
+        console.log('Setting hidden properties...');
+        simpleSection.hidden = mode !== "simple";
+        bulkSection.hidden = mode !== "bulk";
+        ctccSection.hidden = mode !== "ctcc";
+        console.log('Hidden states - simple:', simpleSection.hidden, 'bulk:', bulkSection.hidden, 'ctcc:', ctccSection.hidden);
+
+        // Update mode-specific visibility
+        if (mode === "ctcc") {
+          updateCtccInputVisibility();
+        } else if (mode === "bulk") {
+          updateBulkSourceVisibility();
+        }
+      }
+
+      function updateCtccInputVisibility() {
+        const inputMode = Array.from(ctccInputModeInputs).find((input) => input.checked)?.value ?? "json";
+
+        if (inputMode === "json") {
+          ctccJsonInputs.hidden = false;
+          ctccYamlMessage.hidden = true;
+          // Auto-load JSON data if not already loaded
+          if (!ctccJsonData) {
+            loadCtccJson();
+          }
+        } else {
+          ctccJsonInputs.hidden = true;
+          ctccYamlMessage.hidden = false;
+        }
+      }
+
+      function updateBulkSourceVisibility() {
+        const bulkSource = Array.from(bulkSourceInputs).find((input) => input.checked)?.value ?? "server";
+        bulkFileInput.hidden = bulkSource !== "file";
+      }
+
+      function parseValues(raw) {
+        return raw
+          .split(",")
+          .map((value) => value.trim())
+          .filter((value) => value.length)
+          .map((value) => Number(value))
+          .filter((value) => !Number.isNaN(value));
+      }
+
+      async function fetchFinalCombined(baseUrl) {
+        const finalUrl = new URL("/api/final_combined", baseUrl).toString();
+        const response = await fetch(finalUrl);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to load final_combined.json: ${response.status} ${response.statusText} ${errorText}`);
+        }
+        return response.json();
+      }
+
+      async function readFileAsJson(file) {
+        const text = await file.text();
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error("The selected file is not valid JSON.");
+        }
+      }
+
+      function humanizeKey(key) {
+        return key
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+      }
+
+      function createFormField(key, value, path = '') {
+        // Skip objects and arrays - they should be rendered recursively
+        if (value && typeof value === 'object') {
+          return null;
+        }
+
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'form-field';
+
+        const label = document.createElement('label');
+        label.textContent = humanizeKey(key);
+        label.htmlFor = path;
+        fieldDiv.appendChild(label);
+
+        let input;
+        if (typeof value === 'boolean') {
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = value;
+        } else if (typeof value === 'number') {
+          input = document.createElement('input');
+          input.type = 'number';
+          input.step = 'any';
+          input.value = value;
+        } else if (value === null || value === undefined) {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.value = '';
+          input.placeholder = 'null';
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.value = String(value);
+        }
+
+        input.id = path;
+        input.dataset.path = path;
+        fieldDiv.appendChild(input);
+
+        return fieldDiv;
+      }
+
+      function renderObjectAsForm(obj, container, basePath = '', level = 0) {
+        const entries = Object.entries(obj);
+
+        // Check if this object contains only primitives (no nested objects)
+        const hasOnlyPrimitives = entries.every(([k, v]) =>
+          v === null || typeof v !== 'object' || Array.isArray(v)
+        );
+
+        if (hasOnlyPrimitives || level > 0) {
+          // Create a single grid for all fields at this level
+          const gridContainer = document.createElement('div');
+          gridContainer.className = 'form-grid';
+
+          entries.forEach(([key, value]) => {
+            const path = basePath ? `${basePath}.${key}` : key;
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              // Nested object within a grid - add header and fields inline
+              Object.entries(value).forEach(([subKey, subValue]) => {
+                const subPath = `${path}.${subKey}`;
+                const field = createFormField(`${humanizeKey(key)} - ${humanizeKey(subKey)}`, subValue, subPath);
+                if (field) gridContainer.appendChild(field);
+              });
+            } else {
+              const field = createFormField(key, value, path);
+              if (field) gridContainer.appendChild(field);
+            }
+          });
+
+          container.appendChild(gridContainer);
+        } else {
+          // Top-level with nested sections
+          entries.forEach(([key, value]) => {
+            const path = basePath ? `${basePath}.${key}` : key;
+
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              const sectionHeader = document.createElement('div');
+              sectionHeader.className = 'section-header';
+              sectionHeader.textContent = humanizeKey(key);
+              container.appendChild(sectionHeader);
+
+              renderObjectAsForm(value, container, path, level + 1);
+            } else {
+              const gridContainer = document.createElement('div');
+              gridContainer.className = 'form-grid';
+              const field = createFormField(key, value, path);
+              if (field) {
+                gridContainer.appendChild(field);
+                container.appendChild(gridContainer);
+              }
+            }
+          });
+        }
+      }
+
+      function renderJsonInputs(data) {
+        tabButtonsContainer.innerHTML = '';
+        tabContentsContainer.innerHTML = '';
+        ctccJsonData = data;
+
+        const sections = Object.keys(data).filter(key => key !== 'project_category_template');
+
+        sections.forEach((key, index) => {
+          // Create tab button
+          const tabButton = document.createElement('button');
+          tabButton.type = 'button';
+          tabButton.className = 'tab-button';
+          if (index === 0) tabButton.classList.add('active');
+          tabButton.textContent = key.replace(/^\d+_/, '').replace(/_/g, ' ');
+          tabButton.dataset.tabIndex = index;
+          tabButton.addEventListener('click', () => switchTab(index));
+          tabButtonsContainer.appendChild(tabButton);
+
+          // Create tab content
+          const tabContent = document.createElement('div');
+          tabContent.className = 'tab-content';
+          if (index === 0) tabContent.classList.add('active');
+          tabContent.dataset.sectionKey = key;
+
+          renderObjectAsForm(data[key], tabContent, key);
+          tabContentsContainer.appendChild(tabContent);
+        });
+
+        tabsContainer.style.display = 'block';
+      }
+
+      function switchTab(index) {
+        const buttons = tabButtonsContainer.querySelectorAll('.tab-button');
+        const contents = tabContentsContainer.querySelectorAll('.tab-content');
+
+        buttons.forEach((btn, i) => {
+          btn.classList.toggle('active', i === index);
+        });
+
+        contents.forEach((content, i) => {
+          content.classList.toggle('active', i === index);
+        });
+
+        activeTabIndex = index;
+      }
+
+      function collectJsonData() {
+        if (!ctccJsonData) return null;
+
+        // Deep clone the original data to preserve nested structures
+        const result = JSON.parse(JSON.stringify(ctccJsonData));
+
+        // Update with edited values from form inputs
+        const inputs = tabContentsContainer.querySelectorAll('input');
+
+        inputs.forEach(input => {
+          const path = input.dataset.path;
+          if (!path) return;
+
+          let value;
+          if (input.type === 'checkbox') {
+            value = input.checked;
+          } else if (input.type === 'number') {
+            value = parseFloat(input.value);
+          } else {
+            value = input.value;
+          }
+
+          // Navigate to the correct location in the cloned data and update the value
+          const keys = path.split('.');
+          let current = result;
+
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!current[keys[i]]) {
+              current[keys[i]] = {};
+            }
+            current = current[keys[i]];
+          }
+
+          current[keys[keys.length - 1]] = value;
+        });
+
+        return result;
+      }
+
+      async function loadCtccJson() {
+        try {
+          loadStatus.textContent = 'Loading...';
+          loadStatus.style.color = '';
+          const baseUrl = apiBaseInput.value.trim();
+          const data = await fetchFinalCombined(baseUrl);
+          renderJsonInputs(data);
+          const sectionCount = Object.keys(data).filter(k => k !== 'project_category_template').length;
+          loadStatus.textContent = `✓ Loaded ${sectionCount} input sections`;
+          loadStatus.style.color = '#0a0';
+          setTimeout(() => { loadStatus.textContent = ''; }, 5000);
+        } catch (error) {
+          loadStatus.textContent = '✗ ' + error.message;
+          loadStatus.style.color = '#b00020';
+        }
+      }
+
+      async function displayCsvFiles(apiResponse, baseUrl) {
+        try {
+          const csvFiles = apiResponse.csv_files || [];
+          const outputDir = apiResponse.output_dir || '../outputs';
+
+          if (csvFiles.length === 0) {
+            resultEl.textContent = "No CSV files generated.";
+            statusEl.textContent = "Success (no CSV files)";
+            return;
+          }
+
+          // Create HTML structure to display CSV files
+          let html = '<div style="font-family: monospace; white-space: pre-wrap;">';
+          html += `<h3>Generated ${csvFiles.length} CSV file(s):</h3>`;
+
+          // Add "Download All" button
+          html += `<div style="margin-bottom: 20px;">`;
+          html += `<button onclick="downloadAllCsvFiles()" style="padding: 10px 20px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Download All CSV Files</button>`;
+          html += `</div>\n\n`;
+
+          // Fetch and display each CSV file
+          for (const csvFile of csvFiles) {
+            try {
+              // Construct URL to fetch CSV from server
+              const csvUrl = new URL(`/api/outputs/${csvFile}`, baseUrl).toString();
+              const response = await fetch(csvUrl);
+
+              if (response.ok) {
+                const csvContent = await response.text();
+                html += `<div style="margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 4px;">`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">`;
+                html += `<h4 style="margin: 0; color: #0066cc;">${csvFile}</h4>`;
+                html += `<button onclick="downloadCsvFile('${csvFile}', '${csvUrl}')" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Download</button>`;
+                html += `</div>`;
+                html += `<pre style="overflow-x: auto; background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 400px;">${csvContent}</pre>`;
+                html += `</div>`;
+              } else {
+                html += `<div style="margin-bottom: 20px;">`;
+                html += `<h4 style="color: #b00020;">${csvFile}</h4>`;
+                html += `<p>Could not fetch file (${response.status})</p>`;
+                html += `</div>`;
+              }
+            } catch (error) {
+              html += `<div style="margin-bottom: 20px;">`;
+              html += `<h4 style="color: #b00020;">${csvFile}</h4>`;
+              html += `<p>Error: ${error.message}</p>`;
+              html += `</div>`;
+            }
+          }
+
+          html += '</div>';
+          resultEl.innerHTML = html;
+          statusEl.textContent = `Success - ${csvFiles.length} CSV file(s) displayed`;
+        } catch (error) {
+          resultEl.textContent = `Error displaying CSV files: ${error.message}`;
+          statusEl.textContent = "Error";
+        }
+      }
+
+      function downloadCsvFile(filename, url) {
+        // Add download=true parameter to force download
+        const downloadUrl = url.includes('?') ? `${url}&download=true` : `${url}?download=true`;
+
+        // Create a temporary link element and trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      async function downloadAllCsvFiles() {
+        // Get all download buttons
+        const buttons = resultEl.querySelectorAll('button[onclick^="downloadCsvFile"]');
+
+        if (buttons.length === 0) {
+          alert('No CSV files to download');
+          return;
+        }
+
+        // Extract filename and URL from each button's onclick attribute
+        buttons.forEach((button, index) => {
+          setTimeout(() => {
+            // Parse the onclick attribute to get filename and URL
+            const onclickAttr = button.getAttribute('onclick');
+            const match = onclickAttr.match(/downloadCsvFile\('([^']+)',\s*'([^']+)'\)/);
+            if (match) {
+              const filename = match[1];
+              const url = match[2];
+              downloadCsvFile(filename, url);
+            }
+          }, index * 200); // Stagger downloads by 200ms to avoid browser blocking
+        });
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        statusEl.textContent = "Preparing request...";
+        statusEl.classList.remove("error");
+        resultEl.textContent = "";
+
+        try {
+          const baseUrl = apiBaseInput.value.trim();
+          const mode = selectedMode();
+          let payload = { mode };
+          let endpoint;
+
+          if (mode === "simple") {
+            payload.message = messageInput.value;
+            payload.values = parseValues(valuesInput.value);
+            endpoint = new URL("/api/process", baseUrl).toString();
+          } else if (mode === "bulk") {
+            statusEl.textContent = "Loading combined JSON…";
+            const bulkSource = Array.from(
+              document.querySelectorAll('input[name="bulk-source"]')
+            ).find((input) => input.checked)?.value ?? "server";
+            if (bulkSource === "file") {
+              const fileInput = document.getElementById("bulk-file");
+              const file = fileInput?.files?.[0];
+              if (!file) {
+                throw new Error("Choose a JSON file or switch back to server mode.");
+              }
+              payload.combinedData = await readFileAsJson(file);
+            } else {
+              payload.combinedData = await fetchFinalCombined(baseUrl);
+            }
+            endpoint = new URL("/api/process", baseUrl).toString();
+          } else if (mode === "ctcc") {
+            statusEl.textContent = "Preparing CTCC calculation…";
+
+            // Get CTCC configuration
+            const inputMode = Array.from(
+              document.querySelectorAll('input[name="ctcc-input-mode"]')
+            ).find((input) => input.checked)?.value ?? "json";
+
+            const outputMode = Array.from(
+              document.querySelectorAll('input[name="ctcc-output-mode"]')
+            ).find((input) => input.checked)?.value ?? "json";
+
+            const scenarioId = scenarioIdInput.value.trim() || null;
+
+            // Build CTCC payload
+            payload = {
+              mode: "calculate",
+              input_mode: inputMode,
+              output_mode: outputMode,
+              scenario_id: scenarioId,
+              combined_data: null
+            };
+
+            // If input mode is JSON, use the edited data or fetch from server
+            if (inputMode === "json") {
+              if (ctccJsonData && tabsContainer.style.display !== 'none') {
+                statusEl.textContent = "Collecting edited input data…";
+                payload.combined_data = collectJsonData();
+              } else {
+                statusEl.textContent = "Loading combined JSON from server…";
+                payload.combined_data = await fetchFinalCombined(baseUrl);
+              }
+            }
+
+            endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
+          }
+
+          statusEl.textContent = "Sending...";
+
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`${response.status} ${response.statusText}: ${errorText}`);
+          }
+
+          const json = await response.json();
+          statusEl.textContent = "Success";
+          statusEl.classList.remove("error");
+
+          if (json.mode === "bulk" && json.text) {
+            resultEl.textContent = json.text;
+          } else if (mode === "ctcc" && json.output_mode === "csv" && json.csv_files) {
+            // CSV output mode - fetch and display CSV contents
+            statusEl.textContent = "Fetching CSV files...";
+            await displayCsvFiles(json, baseUrl);
+          } else {
+            resultEl.textContent = JSON.stringify(json, null, 2);
+          }
+        } catch (error) {
+          statusEl.textContent = "Request failed";
+          statusEl.classList.add("error");
+          resultEl.textContent = error.message;
+        }
+      });
+
+      console.log('Calling initialiseApiBase and updateModeVisibility...');
+      initialiseApiBase();
+      updateModeVisibility();
+      console.log('Event listeners being attached to mode inputs:', modeInputs.length);
+      modeInputs.forEach((input) => {
+        input.addEventListener("change", updateModeVisibility);
+      });
+      ctccInputModeInputs.forEach((input) => {
+        input.addEventListener("change", updateCtccInputVisibility);
+      });
+      bulkSourceInputs.forEach((input) => {
+        input.addEventListener("change", updateBulkSourceVisibility);
+      });
+      }); // End DOMContentLoaded
+    </script>
+  </body>
+</html>

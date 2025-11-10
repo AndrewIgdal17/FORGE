@@ -29,7 +29,7 @@ echo
 # Check if virtual environment exists
 if [[ ! -d ".venv" ]]; then
   echo "Error: Virtual environment not found at .venv" >&2
-  echo "Please run this script from the serverFastAPI directory with a configured .venv" >&2
+  echo "Please run this script from the server directory with a configured .venv" >&2
   exit 1
 fi
 
@@ -97,7 +97,7 @@ prompt_for_directory() {
 
 # Define possible YAML directories
 ctcc_yaml_dir="$(dirname "$SCRIPT_DIR")/yamls"  # CTCC/yamls/
-local_yaml_dir="$SCRIPT_DIR/yamls"              # serverFastAPI/yamls/
+local_yaml_dir="$SCRIPT_DIR/yamls"              # server/yamls/
 
 echo "Select YAML source directory:"
 echo "1. CTCC/yamls/ ($(basename "$(dirname "$SCRIPT_DIR")")/yamls/)"

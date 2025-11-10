@@ -1,5 +1,5 @@
 # Logs directory
-serverFastAPI/logs/
+server/logs/
 
 # Python
 __pycache__/
@@ -55,3 +55,8 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+
+# Generated data files
+combined_data.json
+outputs/ctcc_results_*.json
+outputs/json_output_*.json

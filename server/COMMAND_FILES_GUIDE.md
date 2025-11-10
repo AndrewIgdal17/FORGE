@@ -102,7 +102,7 @@ STATIC_PORT=8080 ./web_ui_server.command  # Use custom port
 
 **Interactive Options:**
 1. Use `../yamls/` (CTCC project directory)
-2. Use `yamls/` (local copy in serverFastAPI)
+2. Use `yamls/` (local copy in server)
 3. Browse for directory (macOS file picker)
 
 **Output:**
@@ -137,7 +137,7 @@ open http://127.0.0.1:8000
 ### For Development:
 ```bash
 # Terminal 1: Start FastAPI server
-cd serverFastAPI
+cd server
 ./run_fastapi.command
 
 # Terminal 2: Watch for changes (optional)
@@ -147,7 +147,7 @@ cd serverFastAPI
 ### For Testing CTCC:
 ```bash
 # 1. Ensure YAMLs are converted to JSON
-cd serverFastAPI
+cd server
 ./convert_yamls.command
 
 # 2. Start FastAPI server
@@ -174,7 +174,7 @@ HOST=0.0.0.0 PORT=8000 ./run_fastapi.command
 ## 📂 Directory Structure
 
 ```
-serverFastAPI/
+server/
 ├── app/
 │   ├── main.py                 # FastAPI application
 │   ├── processor.py            # Demo mode processor
