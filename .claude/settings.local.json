@@ -45,7 +45,13 @@
       "Bash(export CTCC_SCENARIO_ID=test_final_json)",
       "Bash(.venv/bin/python:*)",
       "Bash(xargs kill:*)",
-      "Bash(export CTCC_INPUT_MODE=json export CTCC_OUTPUT_MODE=json venv/bin/python3:*)"
+      "Bash(export CTCC_INPUT_MODE=json export CTCC_OUTPUT_MODE=json venv/bin/python3:*)",
+      "Bash(git config:*)",
+      "Bash(export CTCC_SCENARIO_ID=test_debug)",
+      "Bash(export CTCC_SCENARIO_ID=test_env_vars:*)",
+      "Bash(export CTCC_SCENARIO_ID=test_env_final)",
+      "Bash(server/.venv/bin/python3:*)",
+      "Bash(/tmp/test_api_flags.sh)"
     ],
     "deny": [],
     "ask": []

@@ -54,16 +54,7 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             temp_json_file.close()
 
         try:
-            # Set up environment for ctcc.py
-            env = os.environ.copy()
-            env['CTCC_SCENARIO_ID'] = scenario_id
-            env['CTCC_INPUT_MODE'] = input_mode
-            env['CTCC_OUTPUT_MODE'] = output_mode
-            if temp_json_file:
-                env['CTCC_JSON_DATA_FILE'] = temp_json_file.name
-
-            # Import and run ctcc.py main function directly
-            # This ensures we use the latest ctcc.py implementation
+            # Build command-line arguments for ctcc.py
             import subprocess
 
             # Use venv python if available
@@ -72,13 +63,30 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             if venv_python.exists():
                 python_exe = str(venv_python)
 
-            # Run ctcc.py as subprocess
+            # Build command with flags
+            cmd = [python_exe, "ctcc.py"]
+
+            # Add input mode flag
+            if input_mode == "json":
+                cmd.append("--json")
+
+            # Add output mode flag
+            if output_mode == "json":
+                cmd.append("--json-out")
+
+            # Add scenario ID
+            cmd.extend(["--id", scenario_id])
+
+            # Add JSON file path if available
+            if temp_json_file:
+                cmd.extend(["--json-file", temp_json_file.name])
+
+            # Run ctcc.py as subprocess with command-line flags
             result = subprocess.run(
-                [python_exe, "ctcc.py"],
+                cmd,
                 capture_output=True,
                 text=True,
                 cwd=str(CTCC_ROOT),
-                env=env,
                 timeout=600  # 10 minute timeout
             )
 

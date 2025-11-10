@@ -91,6 +91,13 @@ Examples:
         help='Custom scenario identifier (default: auto-generated timestamp)'
     )
 
+    parser.add_argument(
+        '--json-file',
+        dest='json_file',
+        type=str,
+        help='Path to combined JSON data file (required when using --json flag)'
+    )
+
     return parser.parse_args()
 
 
@@ -101,7 +108,7 @@ def main():
     # Parse command line arguments
     args = parse_arguments()
 
-    # Determine modes from command-line flags only
+    # Determine modes from command-line flags
     input_mode = 'json' if args.json else 'yaml'
     output_mode = 'json' if args.json_out else 'csv'
 
@@ -119,35 +126,46 @@ def main():
 
     print(f"📋 Scenario ID: {scenario_id}\n")
 
-    # If JSON input mode, convert YAML to JSON first
+    # If JSON input mode, determine JSON data file path
+    combined_json_file = None
     if input_mode == 'json':
-        print("🔄 Converting YAML files to combined JSON...")
-        try:
+        if args.json_file:
+            # Use provided JSON file path
             from pathlib import Path
-            script_dir = Path(__file__).parent
-            yamls_dir = script_dir / "yamls"
-            combined_json_file = script_dir / "combined_data.json"
-
-            # Run yaml_to_json.py
-            result = subprocess.run(
-                [sys.executable, "yaml_to_json.py", str(yamls_dir), str(combined_json_file)],
-                capture_output=True,
-                text=True,
-                cwd=str(script_dir)
-            )
-
-            if result.returncode == 0:
-                print(f"✅ YAML to JSON conversion successful")
-                print(result.stdout)
-            else:
-                print(f"❌ YAML to JSON conversion failed:")
-                print(result.stderr)
+            combined_json_file = Path(args.json_file)
+            if not combined_json_file.exists():
+                print(f"❌ Error: JSON file not found: {combined_json_file}")
                 return
-        except Exception as e:
-            print(f"❌ Error during YAML to JSON conversion: {e}")
-            return
+            print(f"📄 Using JSON file: {combined_json_file}\n")
+        else:
+            # No JSON file provided, convert from YAML
+            print("🔄 Converting YAML files to combined JSON...")
+            try:
+                from pathlib import Path
+                script_dir = Path(__file__).parent
+                yamls_dir = script_dir / "yamls"
+                combined_json_file = script_dir / "combined_data.json"
 
-        print("-" * 80)
+                # Run yaml_to_json.py
+                result = subprocess.run(
+                    [sys.executable, "yaml_to_json.py", str(yamls_dir), str(combined_json_file)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(script_dir)
+                )
+
+                if result.returncode == 0:
+                    print(f"✅ YAML to JSON conversion successful")
+                    print(result.stdout)
+                else:
+                    print(f"❌ YAML to JSON conversion failed:")
+                    print(result.stderr)
+                    return
+            except Exception as e:
+                print(f"❌ Error during YAML to JSON conversion: {e}")
+                return
+
+            print("-" * 80)
 
     # List of scripts to run in order
     scripts = [
@@ -176,11 +194,9 @@ def main():
     env['CTCC_SCENARIO_ID'] = scenario_id
     env['CTCC_INPUT_MODE'] = input_mode
     env['CTCC_OUTPUT_MODE'] = output_mode
-    if input_mode == 'json':
-        from pathlib import Path
-        script_dir = Path(__file__).parent
-        combined_json_file = script_dir / "combined_data.json"
-        env['CTCC_JSON_DATA_FILE'] = str(combined_json_file)
+    if input_mode == 'json' and combined_json_file:
+        # Convert to absolute path since subprocesses run in scripts/ directory
+        env['CTCC_JSON_DATA_FILE'] = str(combined_json_file.absolute())
 
     for script in scripts:
         print(f"\n🔄 Running {script}...")
