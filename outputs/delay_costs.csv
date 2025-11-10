@@ -50,3 +50,6 @@ project_name,construction_type,ac_dc,capacity_mw,conductor_type,line_length_mile
 ,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,yaml_test_full,2025-11-10T13:48:29.850983,summary,4425000.0,0,5496600.651577503
 ,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251110_135122,2025-11-10T13:51:23.899018,summary,4425000.0,0,5496600.651577503
 ,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251110_140929,2025-11-10T14:09:30.539493,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251110_141059,2025-11-10T14:11:00.912462,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251110_141503,2025-11-10T14:15:05.022071,summary,4425000.0,0,5496600.651577503
+,Overhead,AC,394,Advanced Aluminum Conductor,100,0.7,LCC Converter,0,True,140,Standard Aluminum Conductor,AC,50.0,0.03,1,1.5,50,20251110_141523,2025-11-10T14:15:24.209664,summary,4425000.0,0,5496600.651577503

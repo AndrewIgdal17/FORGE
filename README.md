@@ -220,16 +220,7 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
 ./run_json_json.command     # JSON → JSON (full JSON mode)
 ```
 
-### Environment Variables
-```bash
-export CTCC_INPUT_MODE=json
-export CTCC_OUTPUT_MODE=json
-export CTCC_SCENARIO_ID=my_scenario
-export CTCC_JSON_DATA_FILE=path/to/data.json
-venv/bin/python3 ctcc.py
-```
-
-**Note:** Command-line flags override environment variables.
+**Note:** These convenience scripts use command-line flags internally.
 
 ## Project Structure
 

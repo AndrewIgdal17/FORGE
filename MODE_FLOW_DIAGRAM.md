@@ -466,10 +466,11 @@ Located in `scripts/` directory:
 **Purpose:** Identifies calculation run for output files
 
 **Set by:**
-- `ctcc.py` from `--id` flag or auto-generated
-- `ctcc_processor.py` from API payload or auto-generated
+- `ctcc.py` sets for subprocesses based on `--id` flag or auto-generated timestamp
+- `ctcc_processor.py` sets for subprocesses from API payload or auto-generated
 
 **Used by:**
+- Subprocess calculation scripts
 - Output managers for file naming
 - BCR calculator for tracking scenarios
 
@@ -480,11 +481,14 @@ Located in `scripts/` directory:
 **Purpose:** Specifies location of combined JSON configuration
 
 **Set by:**
-- `ctcc.py` when JSON input mode is used
-- `ctcc_processor.py` when writing temp file for API
+- `ctcc.py` sets for subprocesses when JSON input mode is used
+- `ctcc_processor.py` sets for subprocesses when writing temp file for API
 
 **Used by:**
+- Subprocess calculation scripts
 - `json_loaders.py` to load configuration data
+
+**Note:** Environment variables are used for **subprocess communication only**. The main `ctcc.py` script uses command-line flags exclusively.
 
 ---
 

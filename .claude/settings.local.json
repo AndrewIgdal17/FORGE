@@ -44,7 +44,8 @@
       "Bash(export CTCC_SCENARIO_ID=test_json_output)",
       "Bash(export CTCC_SCENARIO_ID=test_final_json)",
       "Bash(.venv/bin/python:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(export CTCC_INPUT_MODE=json export CTCC_OUTPUT_MODE=json venv/bin/python3:*)"
     ],
     "deny": [],
     "ask": []

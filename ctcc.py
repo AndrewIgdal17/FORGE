@@ -101,17 +101,9 @@ def main():
     # Parse command line arguments
     args = parse_arguments()
 
-    # Determine modes from arguments or environment variables
-    # Command-line flags take precedence over environment variables
-    if args.json:
-        input_mode = 'json'
-    else:
-        input_mode = os.environ.get('CTCC_INPUT_MODE', 'yaml').lower()
-
-    if args.json_out:
-        output_mode = 'json'
-    else:
-        output_mode = os.environ.get('CTCC_OUTPUT_MODE', 'csv').lower()
+    # Determine modes from command-line flags only
+    input_mode = 'json' if args.json else 'yaml'
+    output_mode = 'json' if args.json_out else 'csv'
 
     print("=" * 80)
     print("COMPREHENSIVE TRANSMISSION COST CALCULATOR (CTCC)")
@@ -121,10 +113,9 @@ def main():
     print(f"🔧 Output Mode: {output_mode.upper()}")
 
     # Generate a single scenario_id for this entire run
-    scenario_id = args.scenario_id or os.environ.get('CTCC_SCENARIO_ID')
+    scenario_id = args.scenario_id
     if not scenario_id:
         scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        os.environ['CTCC_SCENARIO_ID'] = scenario_id
 
     print(f"📋 Scenario ID: {scenario_id}\n")
 
@@ -148,8 +139,6 @@ def main():
             if result.returncode == 0:
                 print(f"✅ YAML to JSON conversion successful")
                 print(result.stdout)
-                # Set environment variable for JSON data file location
-                os.environ['CTCC_JSON_DATA_FILE'] = str(combined_json_file)
             else:
                 print(f"❌ YAML to JSON conversion failed:")
                 print(result.stderr)
@@ -182,12 +171,16 @@ def main():
     total_runs = len(scripts)
 
     # Prepare environment variables for subprocess scripts
+    # Note: Subprocesses still use environment variables for configuration
     env = os.environ.copy()
     env['CTCC_SCENARIO_ID'] = scenario_id
     env['CTCC_INPUT_MODE'] = input_mode
-    env['CTCC_OUTPUT_MODE'] = output_mode  # Pass through the output mode to scripts
-    if input_mode == 'json' and 'CTCC_JSON_DATA_FILE' in os.environ:
-        env['CTCC_JSON_DATA_FILE'] = os.environ['CTCC_JSON_DATA_FILE']
+    env['CTCC_OUTPUT_MODE'] = output_mode
+    if input_mode == 'json':
+        from pathlib import Path
+        script_dir = Path(__file__).parent
+        combined_json_file = script_dir / "combined_data.json"
+        env['CTCC_JSON_DATA_FILE'] = str(combined_json_file)
 
     for script in scripts:
         print(f"\n🔄 Running {script}...")
