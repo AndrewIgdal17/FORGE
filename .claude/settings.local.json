@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(cat:*)",
+      "Bash(python yaml_to_json.py:*)",
+      "Bash(git checkout:*)",
+      "Bash(export CTCC_INPUT_MODE=json)",
+      "Bash(export CTCC_JSON_DATA_FILE=../serverFastAPI/json/final_combined.json)",
+      "Bash(export CTCC_JSON_DATA_FILE=serverFastAPI/json/final_combined.json)",
+      "Bash(venv/bin/python3:*)",
+      "Bash(awk:*)",
+      "Bash(for:*)",
+      "Bash(do sed -i.bak 's/from csv_output_manager import CTCCOutputManager/from smart_output import CTCCOutputManager/' \"$f\")",
+      "Bash(done)",
+      "Bash(/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/venv/bin/python3:*)",
+      "Bash(export CTCC_OUTPUT_MODE=json)",
+      "Bash(export CTCC_SCENARIO_ID=test)",
+      "Bash(export CTCC_JSON_DATA_FILE=/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/serverFastAPI/json/final_combined.json)",
+      "Bash(export CTCC_SCENARIO_ID=test123)",
+      "Bash(/dev/null)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

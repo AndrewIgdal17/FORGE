@@ -4,7 +4,6 @@
 #              It computes the congestion reduction costs for a transmission line over the project lifetime.
 
 import pandas as pd
-import yaml
 import numpy as np
 import argparse
 import math
@@ -13,57 +12,63 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
 
-# Get info from project technical details
-with open("../yamls/01_project_technical_details.yaml", "r") as file:
-    project_details = yaml.load(file, Loader=yaml.FullLoader)
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
+# Import from smart_loaders which automatically selects YAML or JSON based on environment
+from smart_loaders import (
+    load_project_technical_details as load_tech_details_base,
+    load_congestion_reductions,
+    load_curtailment_reductions,
+    load_financing_details,
+)
 
-    if ac_dc == "AC":
-        converter_type = "NA"
-    else:
-        converter_type = project_details["project"]["converter_type"]
-
-    line_utilization = project_details["project"]["line_utilization"]
-    reconductoring = project_details["project"]["reconductoring"]
-
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
+# Load initial project technical details for module-level use
+(
+    construction_type,
+    ac_dc,
+    capacity_mw,
+    conductor_type,
+    converter_type,
+    line_utilization,
+    reconductoring,
+    delay_years,
+    construction_years,
+    project_lifetime,
+) = load_tech_details_base()
 
 
 def load_project_technical_details():
     """
     Load project technical details and construct category identifier.
 
-    The category identifier follows the format:
-    "construction_type/AC_or_DC/capacity_MW/conductor_type/converter_type"
-
     Returns:
-        tuple: (category, delay_year, construction_years, project_lifetime, reconductoring)
+        tuple: (delay_year, construction_years, project_lifetime, reconductoring,
+                capacity_mw, old_capacity_mw)
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
+    # Load all details
+    (
+        construction_type,
+        ac_dc,
+        capacity_mw,
+        conductor_type,
+        converter_type,
+        line_utilization,
+        reconductoring,
+        delay_years,
+        construction_years,
+        project_lifetime,
+    ) = load_tech_details_base()
 
-    # Extract project specifications
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
-    converter_type = project_details["project"]["converter_type"]
+    # For reconductoring projects, we need old_capacity_mw from the JSON/YAML
+    # This is accessed directly from the data source
+    import os
+    if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+        from json_loaders import _data_source
+    else:
+        from yaml_loaders import _data_source
 
-    reconductoring = project_details["project"]["reconductoring"]
-
-    old_capacity_mw = project_details["project"]["old_capacity_mw"]
-
-    # Extract timeline information
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
+    tech_data = _data_source.get_data("01_project_technical_details")
+    old_capacity_mw = tech_data["project"].get("old_capacity_mw", 0)
 
     return (
         delay_years,
@@ -73,87 +78,6 @@ def load_project_technical_details():
         capacity_mw,
         old_capacity_mw,
     )
-
-
-def load_congestion_reductions():
-    """
-    Load congestion reduction parameters from YAML file.
-
-    Returns:
-        tuple: (flow_factor, binding_hours, average_exceedance, near_binding_hours,
-               near_average_exceedance, near_binding_relief_factor, saturation_factor,
-               average_congestion_price)
-    """
-    with open("../yamls/17_congestion_reductions.yaml", "r") as file:
-        congestion_reductions = yaml.load(file, Loader=yaml.FullLoader)
-        flow_factor = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["flow_factor"]
-        binding_hours = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["binding_hours"]
-        average_exceedance = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["average_exceedance"]
-        near_binding_hours = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["near_binding_hours"]
-        near_average_exceedance = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["constraints"]["near_average_exceedance"]
-        near_binding_relief_factor = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["constraints"]["near_binding_relief_factor"]
-        saturation_factor = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["saturation_factor"]
-
-        # costs
-        average_congestion_price = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["costs"]["average_congestion_price"]
-
-    return (
-        flow_factor,
-        binding_hours,
-        average_exceedance,
-        near_binding_hours,
-        near_average_exceedance,
-        near_binding_relief_factor,
-        saturation_factor,
-        average_congestion_price,
-    )
-
-
-def load_curtailment_reductions():
-    with open("../yamls/18_curtailment_reductions.yaml", "r") as f:
-        y = yaml.load(f, Loader=yaml.FullLoader)["curtailment_reductions"]
-
-    Hc_tot = float(y.get("curtailment_hours_total", 0))
-    avg_curt_mw = float(y.get("average_curtailment_mw", 0))
-    avg_curt_price = float(y.get("average_curtailment_price", 0))
-    curtailment_saturation_factor = float(y.get("curtailment_saturation_factor", 0))
-    return Hc_tot, avg_curt_mw, avg_curt_price, curtailment_saturation_factor
-
-
-def load_financing_details():
-    """
-    Load financing parameters and calculate real WACC using Fisher equation.
-
-    Returns:
-        tuple: (inflation_rate, base_year, wacc_nominal, wacc_real)
-    """
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_data = yaml.load(file, Loader=yaml.FullLoader)
-
-    inflation_rate = financing_data["financial"]["inflation_rate"]
-    base_year = financing_data["financial"]["base_year"]
-    wacc_nominal = financing_data["financial"]["wacc_nominal"]
-
-    # Use Fisher equation to convert nominal WACC to real WACC
-    wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-
-    return inflation_rate, base_year, wacc_nominal, wacc_real
 
 
 def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):

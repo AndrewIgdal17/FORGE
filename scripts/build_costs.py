@@ -12,10 +12,16 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_contingencies,
@@ -50,10 +56,8 @@ def load_costs(
                 converter_cost, conductor_cost_with_contingencies, structure_cost_with_contingencies,
                 converter_cost_with_contingencies, weighted_miles, average_terrain_multiplier)
     """
-    with open("../yamls/10_project_category_build_costs.yaml", "r") as file:
-        costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_build_costs"
-        ]
+    build_costs_data = _data_source.get_data("10_project_category_build_costs")
+    costs = build_costs_data["project_categories_build_costs"]
 
     weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
 
@@ -134,9 +138,8 @@ def main():
 
     # Determine number of converters
     if ac_dc == "DC":
-        # Load from YAML to get number_of_converters
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
+        # Load technical details to get number_of_converters
+        pd = _data_source.get_data("01_project_technical_details")
         number_of_converters = pd["project"]["number_of_converters"]
     else:
         number_of_converters = 0
@@ -165,8 +168,7 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    financing_yaml = _data_source.get_data("03_financing")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====

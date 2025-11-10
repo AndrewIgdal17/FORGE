@@ -1,0 +1,40 @@
+{
+  "scenario_id": "test123",
+  "timestamp": "2025-11-10T11:16:11.347169",
+  "technical_details": {
+    "project_name": "",
+    "construction_type": "Overhead",
+    "ac_dc": "AC",
+    "capacity_mw": 394,
+    "conductor_type": "Advanced Aluminum Conductor",
+    "line_length_miles": 100,
+    "line_utilization": 0.7,
+    "converter_type": "NA",
+    "number_of_converters": 0,
+    "reconductoring": true,
+    "old_capacity_mw": 140,
+    "old_conductor_type": "Standard Aluminum Conductor",
+    "old_ac_dc": "AC",
+    "baseline_electricity_price_per_mwh": 50.0,
+    "social_discount_rate": 0.03,
+    "construction_years": 1,
+    "delay_years": 1.5,
+    "project_lifetime_years": 50
+  },
+  "costs": {
+    "build": {
+      "total_nominal": 13760256.972000001,
+      "total_afudc": 14266938.085329844,
+      "total_pv": 13760256.972000003,
+      "conductor_nominal": 13760256.972000001,
+      "structure_nominal": 0.0,
+      "converter_nominal": 0.0,
+      "conductor_afudc": 0,
+      "structure_afudc": 0,
+      "converter_afudc": 0
+    }
+  },
+  "benefits": {},
+  "summary": {},
+  "bcr": {}
+}

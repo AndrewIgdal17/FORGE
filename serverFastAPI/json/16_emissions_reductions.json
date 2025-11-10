@@ -1,36 +1,37 @@
 {
   "emissions_reductions": {
+    "compensation_percent": 0.9,
     "energy_source_mix": {
       "coal": {
-        "percentage": 0.0,
+        "percentage": 10,
         "rate_of_change": -0.05
       },
       "oil": {
-        "percentage": 0.0,
+        "percentage": 2,
         "rate_of_change": -0.04
       },
       "natural_gas": {
-        "percentage": 0.0,
+        "percentage": 38,
         "rate_of_change": 0.0
       },
       "solar": {
-        "percentage": 0.0,
+        "percentage": 10,
         "rate_of_change": 0.05
       },
       "wind": {
-        "percentage": 100.0,
+        "percentage": 26,
         "rate_of_change": 0.04
       },
       "hydro": {
-        "percentage": 0.0,
+        "percentage": 5,
         "rate_of_change": 0.0
       },
       "nuclear": {
-        "percentage": 0.0,
+        "percentage": 5,
         "rate_of_change": 0.0
       },
       "other": {
-        "percentage": 0.0,
+        "percentage": 4,
         "rate_of_change": 0.0
       }
     },

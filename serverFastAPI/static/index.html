@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>FastAPI JSON Template</title>
+    <title>CTCC API Server</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
@@ -64,11 +64,9 @@
     </style>
   </head>
   <body>
-    <h1>FastAPI JSON Template</h1>
+    <h1>CTCC API Server</h1>
     <p>
-      Submit some sample data below. The client sends JSON to the FastAPI backend, the
-      backend calls <code>processor.generate_result</code>, and returns the generated JSON
-      back to the browser.
+      Submit data to the FastAPI backend. Choose between Simple/Bulk demo modes or run full CTCC calculations.
     </p>
 
     <form id="demo-form">
@@ -96,6 +94,10 @@
         <label class="radio">
           <input type="radio" name="mode" value="bulk" />
           <span>Bulk: send <code>final_combined.json</code> and receive flattened key/value pairs.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="mode" value="ctcc" />
+          <span>CTCC: run transmission cost calculations with configurable input/output modes.</span>
         </label>
       </div>
 
@@ -128,6 +130,33 @@
         <input type="file" id="bulk-file" accept="application/json,.json" />
       </div>
 
+      <div id="ctcc-section" class="section" hidden>
+        <h2>CTCC Configuration</h2>
+
+        <label for="scenario-id">Scenario ID (optional)</label>
+        <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" />
+
+        <h3>Input Mode</h3>
+        <label class="radio">
+          <input type="radio" name="ctcc-input-mode" value="json" checked />
+          <span>JSON: use <code>final_combined.json</code> from server</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="ctcc-input-mode" value="yaml" />
+          <span>YAML: use local YAML files on server (requires server-side YAMLs)</span>
+        </label>
+
+        <h3>Output Mode</h3>
+        <label class="radio">
+          <input type="radio" name="ctcc-output-mode" value="json" checked />
+          <span>JSON: return results as JSON response to browser</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="ctcc-output-mode" value="csv" />
+          <span>CSV: write CSV files to server outputs folder (returns file list)</span>
+        </label>
+      </div>
+
       <hr />
 
       <button type="submit">Send JSON</button>
@@ -147,8 +176,10 @@
       const resultEl = document.getElementById("result");
       const statusEl = document.getElementById("status");
       const modeInputs = document.querySelectorAll('input[name="mode"]');
-  const simpleSection = document.getElementById("simple-section");
-  const bulkSection = document.getElementById("bulk-section");
+      const simpleSection = document.getElementById("simple-section");
+      const bulkSection = document.getElementById("bulk-section");
+      const ctccSection = document.getElementById("ctcc-section");
+      const scenarioIdInput = document.getElementById("scenario-id");
 
       const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
 
@@ -181,9 +212,9 @@
 
       function updateModeVisibility() {
         const mode = selectedMode();
-        const isSimple = mode === "simple";
-        simpleSection.hidden = !isSimple;
-        bulkSection.hidden = isSimple;
+        simpleSection.hidden = mode !== "simple";
+        bulkSection.hidden = mode !== "bulk";
+        ctccSection.hidden = mode !== "ctcc";
       }
 
       function parseValues(raw) {
@@ -223,12 +254,14 @@
         try {
           const baseUrl = apiBaseInput.value.trim();
           const mode = selectedMode();
-          const payload = { mode };
+          let payload = { mode };
+          let endpoint;
 
           if (mode === "simple") {
             payload.message = messageInput.value;
             payload.values = parseValues(valuesInput.value);
-          } else {
+            endpoint = new URL("/api/process", baseUrl).toString();
+          } else if (mode === "bulk") {
             statusEl.textContent = "Loading combined JSON…";
             const bulkSource = Array.from(
               document.querySelectorAll('input[name="bulk-source"]')
@@ -243,10 +276,40 @@
             } else {
               payload.combinedData = await fetchFinalCombined(baseUrl);
             }
-          }
-          statusEl.textContent = "Sending...";
+            endpoint = new URL("/api/process", baseUrl).toString();
+          } else if (mode === "ctcc") {
+            statusEl.textContent = "Preparing CTCC calculation…";
 
-          const endpoint = new URL("/api/process", baseUrl).toString();
+            // Get CTCC configuration
+            const inputMode = Array.from(
+              document.querySelectorAll('input[name="ctcc-input-mode"]')
+            ).find((input) => input.checked)?.value ?? "json";
+
+            const outputMode = Array.from(
+              document.querySelectorAll('input[name="ctcc-output-mode"]')
+            ).find((input) => input.checked)?.value ?? "json";
+
+            const scenarioId = scenarioIdInput.value.trim() || null;
+
+            // Build CTCC payload
+            payload = {
+              mode: "calculate",
+              input_mode: inputMode,
+              output_mode: outputMode,
+              scenario_id: scenarioId,
+              combined_data: null
+            };
+
+            // If input mode is JSON, fetch the combined data
+            if (inputMode === "json") {
+              statusEl.textContent = "Loading combined JSON…";
+              payload.combined_data = await fetchFinalCombined(baseUrl);
+            }
+
+            endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
+          }
+
+          statusEl.textContent = "Sending...";
 
           const response = await fetch(endpoint, {
             method: "POST",

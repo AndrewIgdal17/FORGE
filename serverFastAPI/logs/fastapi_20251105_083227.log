@@ -12,3 +12,11 @@ INFO:     45.144.115.145:56512 - "POST /api/process HTTP/1.1" 200 OK
 INFO:     45.144.115.145:49893 - "POST /api/process HTTP/1.1" 200 OK
 INFO:     45.144.115.145:60292 - "GET /api/final_combined HTTP/1.1" 200 OK
 INFO:     45.144.115.145:60292 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     45.144.115.145:56305 - "GET /api/final_combined HTTP/1.1" 200 OK
+INFO:     45.144.115.145:56305 - "OPTIONS /api/process HTTP/1.1" 200 OK
+INFO:     45.144.115.145:56305 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     45.144.115.145:61271 - "POST /api/process HTTP/1.1" 200 OK
+INFO:     45.144.115.145:62182 - "GET /api/final_combined HTTP/1.1" 200 OK
+INFO:     45.144.115.145:62182 - "POST /api/process HTTP/1.1" 200 OK
+WARNING:  Invalid HTTP request received.
+WARNING:  Invalid HTTP request received.

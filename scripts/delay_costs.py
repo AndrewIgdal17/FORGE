@@ -10,10 +10,16 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
-from yaml_loaders import load_delay_costs, load_financing_details
+from smart_loaders import load_delay_costs, load_financing_details
 from financial_utils import calculate_present_value
 
 
@@ -21,8 +27,7 @@ def load_project_technical_details():
     """
     Load project technical details and construct category identifier.
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
+    project_details = _data_source.get_data("01_project_technical_details")
     delay_year = project_details["timeline"]["delay_years"]
     return delay_year
 

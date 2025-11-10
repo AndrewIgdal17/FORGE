@@ -2,9 +2,21 @@
 # Date: 2025-10-27
 # Descriptions: This script calculates transmission line losses
 
+# Standard library imports
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_circuit_and_resistance_details,
@@ -109,8 +121,7 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
+        pd = _data_source.get_data("01_project_technical_details")
         number_of_converters = pd["project"]["number_of_converters"]
     else:
         number_of_converters = 0

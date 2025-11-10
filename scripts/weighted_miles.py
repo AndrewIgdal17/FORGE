@@ -3,47 +3,38 @@
 # Description: This script calculates the weighted miles of a transmission line.
 
 import pandas as pd
-import yaml
 import numpy as np
 import argparse
+
+# Import from smart_loaders which automatically selects YAML or JSON based on environment
+from smart_loaders import load_terrain_data
 
 
 def calculate_weighted_miles():
     """
     Calculate weighted miles and average terrain multiplier from project physical details.
 
-    From yaml 02_project_physical_details.yaml, get the miles of the transmission line in each terrain type.
-    terrain_miles and terrain_multipliers are in project_physical_details_df, both contained under terrain.
-    To get weighted miles, multiply terrain_miles[terrain_type] by terrain_multipliers[terrain_type]
+    Loads terrain data (miles and multipliers) and calculates weighted average.
+    Works with both YAML and JSON input based on CTCC_INPUT_MODE environment variable.
 
     Returns:
         tuple: (weighted_miles, average_terrain_multiplier)
     """
-    # From yaml 02_project_physical_details.yaml, get the miles of the transmission line in each terrain type
-    with open(
-        "../yamls/02_project_physical_details.yaml", "r"
-    ) as project_physical_details_file:
-        project_physical_details_df = yaml.load(
-            project_physical_details_file, Loader=yaml.FullLoader
-        )
+    # Load terrain data using smart loader (works with both YAML and JSON)
+    terrain_data = load_terrain_data()
 
-    # terrain_miles and terrain_multipliers are in project_physical_details_df, both contained under terrain.
+    # terrain_miles and terrain_multipliers are both contained under terrain
     # To get weighted miles, multiply terrain_miles[terrain_type] by terrain_multipliers[terrain_type]
 
     weighted_miles = 0
 
-    for terrain_type, terrain_miles in project_physical_details_df["terrain"][
-        "terrain_miles"
-    ].items():
+    for terrain_type, terrain_miles in terrain_data["terrain_miles"].items():
         weighted_miles += (
-            terrain_miles
-            * project_physical_details_df["terrain"]["terrain_multipliers"][
-                terrain_type
-            ]
+            terrain_miles * terrain_data["terrain_multipliers"][terrain_type]
         )
 
     average_terrain_multiplier = weighted_miles / sum(
-        project_physical_details_df["terrain"]["terrain_miles"].values()
+        terrain_data["terrain_miles"].values()
     )
 
     return weighted_miles, average_terrain_multiplier

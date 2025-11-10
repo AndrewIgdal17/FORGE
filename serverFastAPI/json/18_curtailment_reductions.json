@@ -1,6 +1,8 @@
 {
   "curtailment_reductions": {
-    "avoided_curtailment_cost_per_mwh": 0,
-    "curtailment_reduction_factor": 0
+    "curtailment_hours_total": 300,
+    "average_curtailment_mw": 60,
+    "average_curtailment_price": 25,
+    "curtailment_saturation_factor": 0.1
   }
 }

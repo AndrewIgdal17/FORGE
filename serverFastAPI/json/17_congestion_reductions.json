@@ -1,17 +1,16 @@
 {
   "greenfield_congestion_reductions": {
     "constraints": {
-      "flow_factor": 0.5,
-      "binding_hours": 0,
-      "average_exceedance": 0,
-      "near_binding_hours": 0,
+      "flow_factor": 0.6,
+      "binding_hours": 1200,
+      "average_exceedance": 150,
+      "near_binding_hours": 800,
       "near_average_exceedance": 0,
-      "near_binding_relief_factor": null,
-      "saturation_factor": 0
+      "near_binding_relief_factor": 0.25,
+      "saturation_factor": 0.2
     },
     "costs": {
-      "average_congestion_price": 0,
-      "average_curtailment_price": 0,
+      "average_congestion_price": 20,
       "value_of_lost_load": 0
     }
   },
@@ -21,7 +20,7 @@
       "average_exceedance": 0,
       "near_binding_hours": 0,
       "near_average_exceedance": 0,
-      "near_binding_relief_factor": null,
+      "near_binding_relief_factor": 0,
       "saturation_factor": 0,
       "hot_hour_weights": 0
     }

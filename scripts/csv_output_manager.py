@@ -44,17 +44,23 @@ class CTCCOutputManager:
     def load_technical_details(self):
         """
         Load technical parameters from YAML files to include in CSV outputs.
-        
+
         Returns:
             Dictionary of technical parameters
         """
         try:
+            # Get the scripts directory and yaml directory using absolute paths
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            yaml_dir = os.path.join(script_dir, "..", "yamls")
+
             # Load project technical details
-            with open("../yamls/01_project_technical_details.yaml", "r") as file:
+            tech_file = os.path.join(yaml_dir, "01_project_technical_details.yaml")
+            with open(tech_file, "r") as file:
                 tech_data = yaml.load(file, Loader=yaml.FullLoader)
-            
+
             # Load physical details for total line length
-            with open("../yamls/02_project_physical_details.yaml", "r") as file:
+            physical_file = os.path.join(yaml_dir, "02_project_physical_details.yaml")
+            with open(physical_file, "r") as file:
                 physical_data = yaml.load(file, Loader=yaml.FullLoader)
             
             # Calculate total line length

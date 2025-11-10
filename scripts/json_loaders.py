@@ -1,0 +1,258 @@
+# Author: Claude Code
+# Date: 2025-11-10
+# Description: JSON-based data loading utilities for transmission cost calculator.
+#              Parallel implementation to yaml_loaders.py that uses JSON input instead of YAML files.
+
+import os
+import json
+from typing import Dict, Any, Optional
+
+
+class JSONDataSource:
+    """
+    Singleton data source for JSON-based configuration.
+    Stores the combined JSON data in memory for all loader functions to access.
+    Automatically loads from CTCC_JSON_DATA_FILE environment variable if set.
+    """
+    _instance = None
+    _json_data: Optional[Dict[str, Any]] = None
+    _loaded_from_file = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def set_data(self, json_data: Dict[str, Any]):
+        """Set the JSON data source."""
+        self._json_data = json_data
+        self._loaded_from_file = False
+
+    def get_data(self, key: str) -> Dict[str, Any]:
+        """Get data for a specific key."""
+        # Auto-load from file if data not set and environment variable exists
+        if self._json_data is None and not self._loaded_from_file:
+            self._load_from_env_file()
+
+        if self._json_data is None:
+            raise RuntimeError("JSON data not set. Call set_data() first or set CTCC_JSON_DATA_FILE environment variable.")
+        if key not in self._json_data:
+            raise KeyError(f"Key '{key}' not found in JSON data.")
+        return self._json_data[key]
+
+    def _load_from_env_file(self):
+        """Load JSON data from file specified in CTCC_JSON_DATA_FILE environment variable."""
+        json_file_path = os.environ.get('CTCC_JSON_DATA_FILE')
+        if json_file_path and os.path.exists(json_file_path):
+            try:
+                with open(json_file_path, 'r') as f:
+                    self._json_data = json.load(f)
+                self._loaded_from_file = True
+            except Exception as e:
+                raise RuntimeError(f"Failed to load JSON data from {json_file_path}: {e}")
+
+    def clear(self):
+        """Clear the JSON data."""
+        self._json_data = None
+        self._loaded_from_file = False
+
+
+# Global instance
+_data_source = JSONDataSource()
+
+
+def set_json_data(combined_json: Dict[str, Any]):
+    """
+    Set the combined JSON data for all loader functions.
+
+    Args:
+        combined_json: Dictionary containing all configuration data
+                      (e.g., loaded from final_combined.json)
+    """
+    _data_source.set_data(combined_json)
+
+
+def clear_json_data():
+    """Clear the JSON data source."""
+    _data_source.clear()
+
+
+def load_financing_details():
+    """Load financing parameters and calculate real WACC using Fisher equation."""
+    financing_data = _data_source.get_data("03_financing")
+    inflation_rate = financing_data["financial"]["inflation_rate"]
+    base_year = financing_data["financial"]["base_year"]
+    wacc_nominal = financing_data["financial"]["wacc_nominal"]
+    wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
+    return inflation_rate, base_year, wacc_nominal, wacc_real
+
+
+def load_project_technical_details():
+    """Load project technical details - returns all project specs."""
+    project_details = _data_source.get_data("01_project_technical_details")
+    pd = project_details["project"]
+    tl = project_details["timeline"]
+    construction_type = pd["construction_type"]
+    ac_dc = pd["ac_dc"]
+    capacity_mw = pd["capacity_mw"]
+    conductor_type = pd["conductor_type"]
+    converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
+    return (
+        construction_type,
+        ac_dc,
+        capacity_mw,
+        conductor_type,
+        converter_type,
+        pd["line_utilization"],
+        pd["reconductoring"],
+        tl["delay_years"],
+        tl["construction_years"],
+        tl["project_lifetime"],
+    )
+
+
+def load_physical_details():
+    """Load physical project details - return total miles only."""
+    physical_details = _data_source.get_data("02_project_physical_details")
+    return sum(physical_details["terrain"]["terrain_miles"].values())
+
+
+def load_circuit_and_resistance_details(category):
+    """Load circuit and resistance details for specified category."""
+    data = _data_source.get_data("21_project_category_circuit_and_resistance_detail")
+    crd = data["project_categories_circuit_and_resistance_details"]
+    return (
+        crd[category]["voltage_kv"],
+        crd[category]["conductors_per_phase"],
+        crd[category]["number_of_phases"],
+        crd[category]["number_of_circuits_poles"],
+        crd[category]["AC_75_resistance"],
+        crd[category]["DC_20_resistance"],
+    )
+
+
+def load_row_widths(category):
+    """Load ROW width for specified category."""
+    row_widths = _data_source.get_data("20_project_category_row_widths")
+    return row_widths["project_categories_row_widths"][category]["row_width_feet"]
+
+
+def load_row_details():
+    """Load ROW details from JSON."""
+    return _data_source.get_data("11_project_row_details")
+
+
+def load_delay_costs():
+    """Load delay costs from JSON."""
+    return _data_source.get_data("05_delays")
+
+
+def load_emissions_details():
+    """Load emissions reductions details from JSON."""
+    data = _data_source.get_data("16_emissions_reductions")
+    erd = data["emissions_reductions"]
+    return (
+        erd["compensation_percent"],
+        erd["energy_source_mix"],
+        erd["emission_intensities"],
+        erd["societal_costs_per_kg"],
+    )
+
+
+def load_congestion_reductions():
+    """Load congestion reduction parameters from JSON."""
+    data = _data_source.get_data("17_congestion_reductions")
+    cr = data["greenfield_congestion_reductions"]
+    return (
+        cr["constraints"]["flow_factor"],
+        cr["constraints"]["binding_hours"],
+        cr["constraints"]["average_exceedance"],
+        cr["constraints"]["near_binding_hours"],
+        cr["constraints"]["near_average_exceedance"],
+        cr["constraints"]["near_binding_relief_factor"],
+        cr["constraints"]["saturation_factor"],
+        cr["costs"]["average_congestion_price"],
+    )
+
+
+def load_curtailment_reductions():
+    """Load curtailment reductions parameters from JSON."""
+    data = _data_source.get_data("18_curtailment_reductions")
+    y = data["curtailment_reductions"]
+    return (
+        float(y.get("curtailment_hours_total", 0)),
+        float(y.get("average_curtailment_mw", 0)),
+        float(y.get("average_curtailment_price", 0)),
+        float(y.get("curtailment_saturation_factor", 0)),
+    )
+
+
+def load_contingencies():
+    """Load contingencies from financing JSON."""
+    financing_data = _data_source.get_data("03_financing")
+    return financing_data["financial"]["contingencies"]
+
+
+def load_financing_social_discount_rate():
+    """Load social discount rate from financing JSON."""
+    financing_data = _data_source.get_data("03_financing")
+    return financing_data["financial"]["social_discount_rate"]
+
+
+def load_physical_details_detailed():
+    """Load physical project details - return detailed terrain breakdown."""
+    physical_details = _data_source.get_data("02_project_physical_details")
+    terrain = physical_details["terrain"]["terrain_miles"]
+    return (
+        sum(terrain.values()),  # total_miles
+        terrain.get("forested", 0),
+        terrain.get("scrubbed_flat", 0),
+        terrain.get("wetland", 0),
+        terrain.get("farmland", 0),
+        terrain.get("desert_barren", 0),
+        terrain.get("urban", 0),
+        terrain.get("rolling_hills", 0),
+        terrain.get("mountain", 0),
+        terrain.get("subsea", 0),
+    )
+
+
+def load_environmental_mitigation():
+    """Load environmental mitigation parameters from JSON."""
+    return _data_source.get_data("09_environmental_mitigation")
+
+
+def load_cost_timing_patterns():
+    """Load cost timing patterns for AFUDC calculations."""
+    return _data_source.get_data("19_cost_timing_patterns")
+
+
+def load_afudc_config():
+    """Load AFUDC configuration from financing JSON."""
+    fin = _data_source.get_data("03_financing")
+    afudc_cfg = fin["financial"].get("afudc", {})
+    return (
+        afudc_cfg.get("apply_afudc", False),
+        afudc_cfg.get("delay_period_active_work", False),
+    )
+
+
+def load_insurance_details():
+    """Load insurance parameters from JSON."""
+    return _data_source.get_data("04_insurance")
+
+
+def load_wildfire_costs():
+    """Load wildfire cost parameters from JSON."""
+    return _data_source.get_data("06_wildfire_costs")
+
+
+def load_outage_costs():
+    """Load outage cost parameters from JSON."""
+    return _data_source.get_data("07_outage_costs")
+
+
+def load_terrain_data():
+    """Load terrain data including terrain miles and multipliers from JSON."""
+    physical_details = _data_source.get_data("02_project_physical_details")
+    return physical_details["terrain"]
