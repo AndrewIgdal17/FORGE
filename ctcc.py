@@ -196,7 +196,10 @@ def main():
     env['CTCC_OUTPUT_MODE'] = output_mode
     if input_mode == 'json' and combined_json_file:
         # Convert to absolute path since subprocesses run in scripts/ directory
-        env['CTCC_JSON_DATA_FILE'] = str(combined_json_file.absolute())
+        json_file_path = str(combined_json_file.absolute())
+        env['CTCC_JSON_DATA_FILE'] = json_file_path
+        # Also set for parent process (for aggregation and BCR calculation)
+        os.environ['CTCC_JSON_DATA_FILE'] = json_file_path
 
     for script in scripts:
         print(f"\n🔄 Running {script}...")

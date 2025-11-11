@@ -16,7 +16,6 @@ class JSONDataSource:
     """
     _instance = None
     _json_data: Optional[Dict[str, Any]] = None
-    _loaded_from_file = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -26,12 +25,11 @@ class JSONDataSource:
     def set_data(self, json_data: Dict[str, Any]):
         """Set the JSON data source."""
         self._json_data = json_data
-        self._loaded_from_file = False
 
     def get_data(self, key: str) -> Dict[str, Any]:
         """Get data for a specific key."""
-        # Auto-load from file if data not set and environment variable exists
-        if self._json_data is None and not self._loaded_from_file:
+        # Auto-load from environment variable if data not set
+        if self._json_data is None:
             self._load_from_env_file()
 
         if self._json_data is None:
@@ -47,14 +45,12 @@ class JSONDataSource:
             try:
                 with open(json_file_path, 'r') as f:
                     self._json_data = json.load(f)
-                self._loaded_from_file = True
             except Exception as e:
                 raise RuntimeError(f"Failed to load JSON data from {json_file_path}: {e}")
 
     def clear(self):
         """Clear the JSON data."""
         self._json_data = None
-        self._loaded_from_file = False
 
 
 # Global instance

@@ -136,6 +136,13 @@ CTCC follows a **subprocess-based architecture** where:
 venv/bin/python3 ctcc.py [-j] [-o] [--id SCENARIO_ID]
 ```
 
+**Important Note on Environment Variables:**
+When running in JSON input mode, `ctcc.py` sets `CTCC_JSON_DATA_FILE` in two places:
+1. In the `env` dict passed to subprocess scripts (for calculation modules)
+2. In `os.environ` for the parent process (for BCR calculation and JSON aggregation)
+
+This is necessary because `json_output_manager.py` runs in the parent process during result aggregation and needs access to the JSON data file.
+
 #### 2. API: `server/app/ctcc_processor.py`
 
 **Purpose:** Web API backend
@@ -640,7 +647,21 @@ tests/
 
 **Solution:** Refactored to delegate to `ctcc.py` via subprocess (189 lines, 58% reduction).
 
-### Issue 3: Module-Specific CSV Files Not Generated
+### Issue 3: JSON Data Loading in Parent Process (FIXED)
+
+**Status:** ✅ Resolved in v2.0
+
+**Problem:** `json_output_manager.py` failed to load technical details with error "JSON data not set" when running in the parent `ctcc.py` process during result aggregation.
+
+**Root Cause:** `CTCC_JSON_DATA_FILE` environment variable was only set for subprocess scripts, not for the parent process. When `JSONOutputManager` initialized during aggregation (line 256 in ctcc.py), it couldn't access the JSON data file.
+
+**Solution:** Modified `ctcc.py` line 202 to set `os.environ['CTCC_JSON_DATA_FILE']` for the parent process in addition to the subprocess `env` dict. Also simplified `json_loaders.py` to automatically load from the environment variable when `get_data()` is called.
+
+**Files Modified:**
+- `ctcc.py:202` - Added `os.environ['CTCC_JSON_DATA_FILE'] = json_file_path`
+- `json_loaders.py:32-36` - Auto-load from env var in `get_data()` method
+
+### Issue 4: Module-Specific CSV Files Not Generated
 
 **Status:** ⚠️ Known limitation
 

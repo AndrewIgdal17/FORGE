@@ -10,8 +10,18 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
       body {
-        margin: 2rem;
+        margin: 0;
         line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      body > h1 {
+        margin: 0;
+        padding: 1.5rem 2rem 1rem 2rem;
+        background: rgba(0, 100, 200, 0.03);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       }
       form {
         display: grid;
@@ -39,6 +49,15 @@
         align-items: flex-start;
         gap: 0.4rem;
         max-width: none;
+      }
+      .mode-selection {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .mode-row {
+        display: flex;
+        gap: 2rem;
       }
       textarea,
       input[type="text"],
@@ -88,9 +107,17 @@
         border-bottom-color: #0066cc;
         font-weight: 600;
       }
+      .tab-button.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .tab-button.disabled:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
       .tab-content {
         display: none;
-        padding: 1.5rem;
+        padding: 2rem;
         background: rgba(0, 0, 0, 0.02);
         border-radius: 0.5rem;
         max-height: 70vh;
@@ -98,6 +125,116 @@
       }
       .tab-content.active {
         display: block;
+      }
+      .tab-content .results-grid {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.375rem;
+      }
+      .main-tabs {
+        display: inline-flex;
+        gap: 0.5rem;
+        border-bottom: 3px solid rgba(0, 0, 0, 0.1);
+        background: white;
+        padding: 0 2rem;
+        flex-shrink: 0;
+      }
+      .main-tab-button {
+        padding: 1rem 2rem;
+        background: rgba(0, 0, 0, 0.03);
+        border: none;
+        border-bottom: 4px solid transparent;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-sizing: border-box;
+        min-width: 120px;
+        white-space: nowrap;
+        position: relative;
+      }
+      .main-tab-button::after {
+        content: attr(data-tab);
+        font-weight: 700;
+        height: 0;
+        visibility: hidden;
+        overflow: hidden;
+        user-select: none;
+        pointer-events: none;
+        display: block;
+        text-transform: capitalize;
+      }
+      .main-tab-button.active {
+        font-weight: 700;
+      }
+      .main-tab-button:hover:not(.disabled) {
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .main-tab-button.active {
+        background: rgba(0, 100, 200, 0.15);
+        border-bottom-color: #0066cc;
+      }
+      .main-tab-button.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .main-tab-button.results-available {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+      }
+      .main-tab-button.results-available.active {
+        border-bottom-color: #10b981;
+      }
+      .main-tab-button.results-available:hover:not(.disabled) {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
+      }
+      .main-tab-content {
+        display: none;
+        overflow-y: auto;
+        flex: 1;
+        padding: 2rem;
+      }
+      .main-tab-content.active {
+        display: block;
+      }
+      .results-notification {
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+      }
+      .results-notification.visible {
+        display: flex;
+      }
+      .results-notification-icon {
+        font-size: 1.5rem;
+      }
+      .results-notification-text {
+        flex: 1;
+      }
+      .results-notification-button {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .results-notification-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .submit-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
       }
       .form-grid {
         display: grid;
@@ -152,17 +289,229 @@
       .section-header:first-child {
         margin-top: 0;
       }
+      /* Results Display Styles */
+      .results-container {
+        max-width: 1400px;
+      }
+      .results-header {
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+      }
+      .results-header h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+      }
+      .results-metadata {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: #0066cc;
+      }
+      .results-metadata-item {
+        display: flex;
+        flex-direction: column;
+      }
+      .results-metadata-label {
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.7;
+      }
+      .results-metadata-item > div:last-child {
+        font-weight: 500;
+        margin-top: 0.25rem;
+      }
+      .results-category {
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+      }
+      .results-category-header {
+        background: rgba(0, 100, 200, 0.08);
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid rgba(0, 100, 200, 0.2);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+      }
+      .results-category-header:hover {
+        background: rgba(0, 100, 200, 0.12);
+      }
+      .results-category-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #0066cc;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .results-category-toggle {
+        font-size: 1.2rem;
+        color: #0066cc;
+        transition: transform 0.2s;
+      }
+      .results-category.collapsed .results-category-toggle {
+        transform: rotate(-90deg);
+      }
+      .results-category-content {
+        padding: 1.5rem;
+        display: grid;
+        gap: 1.5rem;
+      }
+      .results-category.collapsed .results-category-content {
+        display: none;
+      }
+      .results-subcategory {
+        background: rgba(0, 0, 0, 0.02);
+        padding: 1.25rem;
+        border-radius: 0.375rem;
+        border-left: 4px solid #0066cc;
+        margin-bottom: 1.5rem;
+      }
+      .results-subcategory .results-grid {
+        background: transparent;
+        padding: 0;
+      }
+      .results-subcategory-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 0 0 1.25rem 0;
+        color: #0066cc;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        font-size: 0.85rem;
+      }
+      .results-terrain-section {
+        grid-column: 1 / -1;
+        margin: 1.5rem 0;
+      }
+      .results-terrain-column {
+        display: flex;
+        flex-direction: column;
+      }
+      .results-terrain-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        color: #333;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        gap: 0;
+      }
+      .results-grid > .results-item,
+      .results-grid > .results-subcategory,
+      .results-grid > .results-terrain-column {
+        position: relative;
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      .results-grid > .results-item:first-child,
+      .results-grid > .results-subcategory:first-child,
+      .results-grid > .results-terrain-column:first-child {
+        padding-left: 0;
+      }
+      .results-grid > .results-item:last-child,
+      .results-grid > .results-subcategory:last-child,
+      .results-grid > .results-terrain-column:last-child {
+        padding-right: 0;
+      }
+      .results-grid > .results-item:not(:first-child)::before,
+      .results-grid > .results-subcategory:not(:first-child)::before,
+      .results-grid > .results-terrain-column:not(:first-child)::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .results-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+        padding-top: 0.35rem;
+        padding-bottom: 0.35rem;
+        align-items: baseline;
+      }
+      .results-item-label {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 0.9rem;
+        word-wrap: break-word;
+      }
+      .results-item-value {
+        font-weight: 600;
+        color: #000;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        font-size: 0.9rem;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .results-item-value.currency {
+        color: #0a7c0a;
+      }
+      .results-item-value.negative {
+        color: #b00020;
+      }
+      .results-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .results-summary-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        border: 2px solid rgba(0, 100, 200, 0.2);
+      }
+      .results-summary-card.highlight {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-color: #0066cc;
+      }
+      .results-summary-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 0.5rem;
+      }
+      .results-summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0066cc;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      }
+      .results-summary-value.large {
+        font-size: 1.8rem;
+      }
     </style>
   </head>
   <body>
-    <h1>CTCC API Server</h1>
-    <p>
-      Submit data to the FastAPI backend. Choose between Simple/Bulk demo modes or run full CTCC calculations.
-    </p>
+    <h1>CTCC Online</h1>
 
+    <!-- Main Tabs -->
+    <div class="main-tabs">
+      <button type="button" class="main-tab-button active" data-tab="inputs">Inputs</button>
+      <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
+      <button type="button" class="main-tab-button disabled" data-tab="scenarios">Scenarios</button>
+    </div>
+
+    <!-- Inputs Tab -->
+    <div class="main-tab-content active" id="main-tab-inputs">
     <form id="demo-form">
       <div class="section">
-        <h2>API Connection</h2>
         <label for="api-base">API Base URL</label>
         <input
           id="api-base"
@@ -178,18 +527,24 @@
 
       <div class="section">
         <h2>Mode</h2>
-        <label class="radio">
-          <input type="radio" name="mode" value="simple" checked />
-          <span>Simple: send message + values and receive summary stats.</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="mode" value="bulk" />
-          <span>Bulk: send <code>final_combined.json</code> and receive flattened key/value pairs.</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="mode" value="ctcc" />
-          <span>CTCC: run transmission cost calculations with configurable input/output modes.</span>
-        </label>
+        <div class="mode-selection">
+          <div class="mode-row">
+            <label class="radio">
+              <input type="radio" name="mode" value="simple" checked />
+              <span>Simple Test</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="mode" value="bulk" />
+              <span>Bulk Test</span>
+            </label>
+          </div>
+          <div class="mode-row">
+            <label class="radio">
+              <input type="radio" name="mode" value="ctcc" />
+              <span>CTCC</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <hr />
@@ -224,8 +579,6 @@
       </div>
 
       <div id="ctcc-section" class="section" hidden>
-        <h2>CTCC Configuration</h2>
-
         <label for="scenario-id">Scenario ID (optional)</label>
         <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" />
 
@@ -272,16 +625,35 @@
         </div>
       </div>
 
-      <hr />
+      <div class="submit-row">
+        <!-- Results Notification (inline) -->
+        <div id="results-notification" class="results-notification">
+          <span class="results-notification-icon">✓</span>
+          <div class="results-notification-text">
+            <strong>Results available</strong><br>
+            <span id="results-timestamp"></span>
+          </div>
+          <button type="button" class="results-notification-button" onclick="document.querySelector('.main-tab-button[data-tab=&quot;results&quot;]').click()">View Results</button>
+        </div>
 
-      <button type="submit">Send JSON</button>
+        <button type="submit">Send JSON</button>
+      </div>
     </form>
+    </div>
 
-    <section>
-      <h2>Result</h2>
-      <div id="status"></div>
+    <!-- Results Tab -->
+    <div class="main-tab-content" id="main-tab-results">
+      <div id="status" style="display: none;"></div>
       <pre id="result">Submit the form to see the API response.</pre>
-    </section>
+    </div>
+
+    <!-- Scenarios Tab (inactive) -->
+    <div class="main-tab-content" id="main-tab-scenarios">
+      <h2>Scenarios</h2>
+      <p style="color: rgba(0, 0, 0, 0.5); font-style: italic;">
+        Scenario management will be available in a future release. This feature will allow you to save, load, and compare multiple calculation scenarios.
+      </p>
+    </div>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -309,8 +681,75 @@
       const bulkSourceInputs = document.querySelectorAll('input[name="bulk-source"]');
       const bulkFileInput = document.getElementById("bulk-file-input");
 
+      // Main tab elements
+      const mainTabButtons = document.querySelectorAll('.main-tab-button');
+      const mainTabContents = document.querySelectorAll('.main-tab-content');
+      const resultsNotification = document.getElementById('results-notification');
+      const resultsTimestamp = document.getElementById('results-timestamp');
+
       let ctccJsonData = null;
       let activeTabIndex = 0;
+
+      // Main tab switching
+      function switchMainTab(tabName) {
+        mainTabButtons.forEach(btn => {
+          const isActive = btn.dataset.tab === tabName;
+          const isDisabled = btn.classList.contains('disabled');
+
+          if (isActive && !isDisabled) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        mainTabContents.forEach(content => {
+          if (content.id === `main-tab-${tabName}`) {
+            content.classList.add('active');
+          } else {
+            content.classList.remove('active');
+          }
+        });
+      }
+
+      function enableResultsTab() {
+        const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
+        if (resultsButton) {
+          resultsButton.classList.remove('disabled');
+        }
+      }
+
+      function markResultsAvailable(durationMs) {
+        const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
+        if (resultsButton) {
+          resultsButton.classList.remove('disabled');
+          resultsButton.classList.add('results-available');
+        }
+
+        // Show notification with timestamp and duration
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        // Format duration
+        const durationSeconds = (durationMs / 1000).toFixed(2);
+
+        resultsTimestamp.textContent = `${timeStr} ${dateStr} • ${durationSeconds}s`;
+        resultsNotification.classList.add('visible');
+      }
+
+      function hideResultsNotification() {
+        resultsNotification.classList.remove('visible');
+      }
+
+      // Attach click handlers to main tabs
+      mainTabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!btn.classList.contains('disabled')) {
+            switchMainTab(btn.dataset.tab);
+          }
+        });
+      });
 
       const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
 
@@ -707,8 +1146,369 @@
         });
       }
 
+      // Format numbers for display
+      function formatNumber(value, decimals = 2) {
+        if (value === null || value === undefined) return 'N/A';
+        const num = Number(value);
+        if (isNaN(num)) return String(value);
+        return num.toLocaleString('en-US', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+
+      function formatCurrency(value, decimals = 2) {
+        if (value === null || value === undefined) return 'N/A';
+        const num = Number(value);
+        if (isNaN(num)) return String(value);
+        const sign = num < 0 ? '-' : '';
+        const absNum = Math.abs(num);
+        return sign + '$' + absNum.toLocaleString('en-US', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+
+      function humanizeLabel(key) {
+        return key
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase())
+          .replace(/Mw\b/g, 'MW')
+          .replace(/Mwh\b/g, 'MWh')
+          .replace(/Pv\b/g, 'PV')
+          .replace(/Afudc\b/g, 'AFUDC')
+          .replace(/Bcr\b/g, 'BCR')
+          .replace(/Co2\b/g, 'CO2')
+          .replace(/Sox\b/g, 'SOx')
+          .replace(/Nox\b/g, 'NOx')
+          .replace(/Eal\b/g, 'EAL')
+          .replace(/Eac\b/g, 'EAC');
+      }
+
+      function createResultItem(label, value, isCurrency = false) {
+        const item = document.createElement('div');
+        item.className = 'results-item';
+
+        const labelEl = document.createElement('span');
+        labelEl.className = 'results-item-label';
+        labelEl.textContent = humanizeLabel(label);
+
+        const valueEl = document.createElement('span');
+        valueEl.className = 'results-item-value';
+
+        if (isCurrency) {
+          const numValue = Number(value);
+          valueEl.textContent = formatCurrency(value);
+          valueEl.classList.add('currency');
+          if (numValue < 0) {
+            valueEl.classList.add('negative');
+          }
+        } else {
+          valueEl.textContent = typeof value === 'number' ? formatNumber(value) : String(value);
+        }
+
+        item.appendChild(labelEl);
+        item.appendChild(valueEl);
+        return item;
+      }
+
+      function renderObjectAsResults(obj, container, isCurrency = false) {
+        Object.entries(obj).forEach(([key, value]) => {
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            // Check if this is a "by terrain" section that should be full-width
+            const isByTerrainSection = key === 'lambda_by_terrain' || key === 'outage_by_terrain';
+
+            if (isByTerrainSection) {
+              // Create full-width section with title
+              const terrainSection = document.createElement('div');
+              terrainSection.className = 'results-terrain-section';
+
+              const title = document.createElement('div');
+              title.className = 'results-subcategory-title';
+              title.textContent = humanizeLabel(key);
+              terrainSection.appendChild(title);
+
+              // Create grid where each terrain type gets its own column
+              const grid = document.createElement('div');
+              grid.className = 'results-grid';
+
+              // Each child (terrain type) becomes a column
+              Object.entries(value).forEach(([terrainKey, terrainValue]) => {
+                if (terrainValue && typeof terrainValue === 'object' && !Array.isArray(terrainValue)) {
+                  const terrainColumn = document.createElement('div');
+                  terrainColumn.className = 'results-terrain-column';
+
+                  const terrainTitle = document.createElement('div');
+                  terrainTitle.className = 'results-terrain-title';
+                  terrainTitle.textContent = humanizeLabel(terrainKey);
+                  terrainColumn.appendChild(terrainTitle);
+
+                  // Render the terrain data items
+                  Object.entries(terrainValue).forEach(([itemKey, itemValue]) => {
+                    const item = createResultItem(itemKey, itemValue, isCurrency);
+                    terrainColumn.appendChild(item);
+                  });
+
+                  grid.appendChild(terrainColumn);
+                }
+              });
+
+              terrainSection.appendChild(grid);
+              container.appendChild(terrainSection);
+            } else {
+              // Normal nested object - create subcategory
+              const subcategory = document.createElement('div');
+              subcategory.className = 'results-subcategory';
+
+              const title = document.createElement('div');
+              title.className = 'results-subcategory-title';
+              title.textContent = humanizeLabel(key);
+              subcategory.appendChild(title);
+
+              const grid = document.createElement('div');
+              grid.className = 'results-grid';
+              renderObjectAsResults(value, grid, isCurrency);
+              subcategory.appendChild(grid);
+
+              container.appendChild(subcategory);
+            }
+          } else {
+            // Primitive value - create item
+            const item = createResultItem(key, value, isCurrency);
+            container.appendChild(item);
+          }
+        });
+      }
+
+      function createCategory(title, content, isCollapsed = false) {
+        const category = document.createElement('div');
+        category.className = 'results-category';
+        if (isCollapsed) category.classList.add('collapsed');
+
+        const header = document.createElement('div');
+        header.className = 'results-category-header';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = title;
+
+        const toggle = document.createElement('span');
+        toggle.className = 'results-category-toggle';
+        toggle.textContent = '▼';
+
+        header.appendChild(h3);
+        header.appendChild(toggle);
+
+        header.addEventListener('click', () => {
+          category.classList.toggle('collapsed');
+        });
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'results-category-content';
+        contentDiv.appendChild(content);
+
+        category.appendChild(header);
+        category.appendChild(contentDiv);
+
+        return category;
+      }
+
+      function renderCTCCResults(results) {
+        resultEl.innerHTML = '';
+        resultEl.className = 'results-container';
+
+        // Header with metadata
+        const header = document.createElement('div');
+        header.className = 'results-header';
+
+        if (results.scenario_id || results.timestamp || results.input_mode) {
+          const metadata = document.createElement('div');
+          metadata.className = 'results-metadata';
+
+          if (results.scenario_id) {
+            const item = document.createElement('div');
+            item.className = 'results-metadata-item';
+            item.innerHTML = `<span class="results-metadata-label">Scenario ID</span><span>${results.scenario_id}</span>`;
+            metadata.appendChild(item);
+          }
+
+          if (results.timestamp) {
+            const item = document.createElement('div');
+            item.className = 'results-metadata-item';
+            const date = new Date(results.timestamp);
+            item.innerHTML = `<span class="results-metadata-label">Timestamp</span><span>${date.toLocaleString()}</span>`;
+            metadata.appendChild(item);
+          }
+
+          if (results.input_mode) {
+            const item = document.createElement('div');
+            item.className = 'results-metadata-item';
+            item.innerHTML = `<span class="results-metadata-label">Input Mode</span><span>${results.input_mode.toUpperCase()}</span>`;
+            metadata.appendChild(item);
+          }
+
+          header.appendChild(metadata);
+        }
+
+        resultEl.appendChild(header);
+
+        // BCR Summary Cards (if present)
+        if (results.bcr && Object.keys(results.bcr).length > 0) {
+          const summaryGrid = document.createElement('div');
+          summaryGrid.className = 'results-summary-grid';
+
+          // Key BCR metrics
+          const keyMetrics = [
+            { key: 'bcr_system', label: 'System BCR', highlight: true },
+            { key: 'bcr_capital', label: 'Capital BCR', highlight: true },
+            { key: 'net_benefit_pv', label: 'Net Benefit (PV)', currency: true },
+            { key: 'total_benefits_pv', label: 'Total Benefits (PV)', currency: true },
+            { key: 'total_costs_pv', label: 'Total Costs (PV)', currency: true }
+          ];
+
+          keyMetrics.forEach(metric => {
+            if (results.bcr[metric.key] !== undefined) {
+              const card = document.createElement('div');
+              card.className = 'results-summary-card';
+              if (metric.highlight) card.classList.add('highlight');
+
+              const label = document.createElement('div');
+              label.className = 'results-summary-label';
+              label.textContent = metric.label;
+
+              const value = document.createElement('div');
+              value.className = 'results-summary-value';
+              if (metric.highlight) value.classList.add('large');
+
+              const numValue = Number(results.bcr[metric.key]);
+              if (metric.currency) {
+                value.textContent = formatCurrency(numValue, 0);
+                if (numValue < 0) value.style.color = '#b00020';
+              } else {
+                value.textContent = formatNumber(numValue, 3);
+              }
+
+              card.appendChild(label);
+              card.appendChild(value);
+              summaryGrid.appendChild(card);
+            }
+          });
+
+          resultEl.appendChild(summaryGrid);
+        }
+
+        // Create tabs for different sections
+        const sections = [];
+
+        // Collect available sections
+        if (results.technical_parameters || results.technical_details) {
+          const techData = results.technical_parameters || results.technical_details;
+          sections.push({
+            id: 'technical',
+            label: 'Technical Parameters',
+            data: techData,
+            isCurrency: false
+          });
+        }
+
+        if (results.costs && Object.keys(results.costs).length > 0) {
+          sections.push({
+            id: 'costs',
+            label: 'Costs',
+            data: results.costs,
+            isCurrency: true
+          });
+        }
+
+        if (results.benefits && Object.keys(results.benefits).length > 0) {
+          sections.push({
+            id: 'benefits',
+            label: 'Benefits',
+            data: results.benefits,
+            isCurrency: true
+          });
+        }
+
+        if (results.summary && Object.keys(results.summary).length > 0) {
+          sections.push({
+            id: 'summary',
+            label: 'Summary',
+            data: results.summary,
+            isCurrency: true
+          });
+        }
+
+        if (results.bcr && Object.keys(results.bcr).length > 0) {
+          sections.push({
+            id: 'bcr',
+            label: 'BCR Details',
+            data: results.bcr,
+            isCurrency: true
+          });
+        }
+
+        // Create tabs container
+        if (sections.length > 0) {
+          const tabsContainer = document.createElement('div');
+          tabsContainer.style.marginTop = '2rem';
+
+          // Tab buttons
+          const tabButtons = document.createElement('div');
+          tabButtons.className = 'tabs';
+
+          // Tab contents
+          const tabContents = document.createElement('div');
+
+          sections.forEach((section, index) => {
+            // Create tab button
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'tab-button';
+            if (index === 0) button.classList.add('active');
+            button.textContent = section.label;
+            button.dataset.tabId = section.id;
+
+            button.addEventListener('click', () => {
+              // Update active tab button
+              tabButtons.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+              button.classList.add('active');
+
+              // Update active tab content
+              tabContents.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+              const content = tabContents.querySelector(`[data-tab-id="${section.id}"]`);
+              if (content) content.classList.add('active');
+            });
+
+            tabButtons.appendChild(button);
+
+            // Create tab content
+            const content = document.createElement('div');
+            content.className = 'tab-content';
+            if (index === 0) content.classList.add('active');
+            content.dataset.tabId = section.id;
+
+            if (section.id === 'technical') {
+              // Technical parameters use simple grid
+              content.className += ' results-grid';
+              content.style.padding = '1.5rem';
+              renderObjectAsResults(section.data, content, section.isCurrency);
+            } else {
+              // Other sections render with subcategories
+              content.style.padding = '1.5rem';
+              renderObjectAsResults(section.data, content, section.isCurrency);
+            }
+
+            tabContents.appendChild(content);
+          });
+
+          tabsContainer.appendChild(tabButtons);
+          tabsContainer.appendChild(tabContents);
+          resultEl.appendChild(tabsContainer);
+        }
+      }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const startTime = performance.now();
         statusEl.textContent = "Preparing request...";
         statusEl.classList.remove("error");
         resultEl.textContent = "";
@@ -801,15 +1601,28 @@
             // CSV output mode - fetch and display CSV contents
             statusEl.textContent = "Fetching CSV files...";
             await displayCsvFiles(json, baseUrl);
+          } else if (mode === "ctcc" && json.output_mode === "json" && json.results) {
+            // JSON output mode - render structured CTCC results
+            renderCTCCResults(json.results);
           } else {
+            // Fallback to raw JSON display
             resultEl.textContent = JSON.stringify(json, null, 2);
           }
+
+          // Mark results available (but don't switch tabs)
+          const endTime = performance.now();
+          const duration = endTime - startTime;
+          markResultsAvailable(duration);
         } catch (error) {
           statusEl.textContent = "Request failed";
           statusEl.classList.add("error");
           resultEl.textContent = error.message;
         }
       });
+
+      // Hide results notification when any input changes
+      form.addEventListener('input', hideResultsNotification);
+      form.addEventListener('change', hideResultsNotification);
 
       console.log('Calling initialiseApiBase and updateModeVisibility...');
       initialiseApiBase();
