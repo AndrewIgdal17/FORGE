@@ -2,11 +2,11 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: ""
+  name: "S1_Rural_Overhead_AC_500MW"
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
-  capacity_mw: 394 # MW
+  capacity_mw: 460 # MW
   conductor_type: "Advanced Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
   converter_type: "LCC Converter" # LCC Converter or VSC Converter
 
@@ -21,5 +21,5 @@ project:
 
 timeline:
   construction_years: 1
-  delay_years: 1.5
+  delay_years: 4
   project_lifetime: 50

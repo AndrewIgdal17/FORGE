@@ -10,8 +10,7 @@ This document outlines a comprehensive scenario analysis framework for the CTCC 
 
 - **5 baseline scenarios** representing different transmission project types
 - **6 sensitivity parameters** to be varied for each scenario
-- **~31 runs per scenario** (1 baseline + 30 sensitivity runs)
-- **155 total runs** across all scenarios
+- **~31 runs per scenario** (1 baseline + 300 sensitivity runs)
 
 The goal is to understand how transmission project economics vary with key technical and financial parameters, and to identify the primary cost and benefit drivers for different project types.
 
@@ -30,8 +29,8 @@ project:
   name: "S1_Rural_Overhead_AC_500MW"
   construction_type: "Overhead"
   ac_dc: "AC"
-  capacity_mw: 500
-  conductor_type: "Advanced Aluminum Conductor"
+  capacity_mw: 460
+  conductor_type: "Standard Aluminum Conductor"
   line_utilization: 0.70
   baseline_electricity_price_per_mwh: 50.0
   social_discount_rate: 0.03
@@ -39,7 +38,7 @@ project:
 
 timeline:
   construction_years: 1
-  delay_years: 1.5
+  delay_years: 4
   project_lifetime: 50
 
 terrain:

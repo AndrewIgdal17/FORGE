@@ -21,7 +21,8 @@ class CTCCOutputManager:
         """
         self.output_dir = output_dir
         # Use environment variable if set (for coordinated batch runs), otherwise generate new one
-        self.scenario_id = scenario_id or os.environ.get('CTCC_SCENARIO_ID') or datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Use microseconds to ensure uniqueness even if runs happen in the same second
+        self.scenario_id = scenario_id or os.environ.get('CTCC_SCENARIO_ID') or datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         self.timestamp = datetime.now().isoformat()
 
         # Ensure output directory exists

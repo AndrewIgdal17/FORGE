@@ -50,7 +50,8 @@ def main():
     print("=" * 80)
 
     # Generate a single scenario_id for this entire run
-    scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Use microseconds to ensure uniqueness even if runs happen in the same second
+    scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     os.environ["CTCC_SCENARIO_ID"] = scenario_id
     print(f"\n📋 Scenario ID: {scenario_id}\n")
 

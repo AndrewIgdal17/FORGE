@@ -370,9 +370,9 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data):
     viable_symbol = "✅" if bcr_system >= 1.0 else "❌"
     viable_text = ">= 1.0: economically viable" if bcr_system >= 1.0 else "< 1.0: not economically viable"
     
-    print(f"  System BCR (full):           {bcr_system:>6.3f}  {viable_symbol} ({viable_text})")
-    print(f"  System BCR (haircut):        {bcr_metrics['bcr_haircut']:>6.3f}")
-    print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
+    print(f"  System BCR (full):           {bcr_system:>8.6f}  {viable_symbol} ({viable_text})")
+    print(f"  System BCR (haircut):        {bcr_metrics['bcr_haircut']:>8.6f}")
+    print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>8.6f}")
     
     # BCR excluding risk costs
     bcr_excluding_risk = bcr_metrics['bcr_excluding_risk']
@@ -380,7 +380,7 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data):
     viable_text_norisk = ">= 1.0: economically viable" if bcr_excluding_risk >= 1.0 else "< 1.0: not economically viable"
     risk_costs_pv = costs['risk_costs_pv']
     
-    print(f"  System BCR (excl. risk):     {bcr_excluding_risk:>6.3f}  {viable_symbol_norisk} ({viable_text_norisk})")
+    print(f"  System BCR (excl. risk):     {bcr_excluding_risk:>8.6f}  {viable_symbol_norisk} ({viable_text_norisk})")
     print(f"    (Excludes ${risk_costs_pv:>15,.0f} in wildfire/outage costs)")
     print()
     
