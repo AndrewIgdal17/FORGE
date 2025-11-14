@@ -184,17 +184,18 @@ def main():
             delay_active,
         )
 
-    # ===== SOCIETAL PERSPECTIVE: Present Value and Amortization =====
-    # Calculate amortized cost
-    annual_amortized_cost = calculate_amortized_cost(
-        total_cost_with_contingencies, wacc_real, project_lifetime
-    )
-
-    # Verify amortization: discount the annual payments back to present value
-    # This should equal the original cost
-    pv_of_amortized = calculate_present_value(
-        annual_amortized_cost, wacc_real, project_lifetime
-    )
+    # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
+    # Build costs: spread evenly over construction period
+    # Annual cost during construction years
+    construction_start_year = delay_year + 1
+    if construction_years > 0:
+        annual_build_cost = total_cost_with_contingencies / construction_years
+        build_cost_pv = calculate_present_value(
+            annual_build_cost, wacc_real, construction_years, construction_start_year
+        )
+    else:
+        # If construction_years is 0, treat as one-time cost at construction_start_year
+        build_cost_pv = total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
 
     # Format and display results
     print("=" * 80)
@@ -237,15 +238,19 @@ def main():
         )
         print()
 
-    print("[SOCIETAL PERSPECTIVE - Present Value & Amortization]")
+    print("[SOCIETAL PERSPECTIVE - Present Value]")
     print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
     print(f"  Base Year: {base_year}")
     print()
-    print("Amortized Costs (Annual Payments):")
-    print(
-        f"  Annual Payment (over {project_lifetime} years): ${annual_amortized_cost:,.2f}"
-    )
-    print(f"  PV of amortized payments (verification): ${pv_of_amortized:,.2f}")
+    print("Build costs incurred during construction period:")
+    if construction_years > 0:
+        print(
+            f"  Annual Cost (over {construction_years} year(s) construction): ${annual_build_cost:,.2f}"
+        )
+        print(f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}")
+    else:
+        print(f"  One-time cost at Year {construction_start_year}")
+    print(f"  Build Cost PV: ${build_cost_pv:,.2f}")
     print("=" * 80)
 
     # ========================================================================
@@ -259,7 +264,7 @@ def main():
     results = {
         "total_nominal": total_cost_with_contingencies,
         "total_afudc": capitalized_cost_with_contingencies if apply_afudc else 0,
-        "total_pv": pv_of_amortized,
+        "total_pv": build_cost_pv,
         "conductor_nominal": conductor_cost_with_contingencies,
         "structure_nominal": structure_cost_with_contingencies,
         "converter_nominal": converter_cost_with_contingencies,

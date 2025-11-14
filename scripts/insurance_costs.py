@@ -192,15 +192,17 @@ def main():
     # Load financing parameters for present value calculation
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
-    # Calculate wildfire liability insurance
-    wildfire_liability_results = calculate_wildfire_liability_premium(
-        insurance_yaml,
-        project_lifetime,
-    )
+    # Calculate wildfire liability insurance (skip if flag is set)
+    wildfire_liability_results = None
+    if "CTCC_NO_WF_LIABILITY" not in os.environ:
+        wildfire_liability_results = calculate_wildfire_liability_premium(
+            insurance_yaml,
+            project_lifetime,
+        )
 
     # Calculate Present Value for operational insurance
     # Insurance payments start at COD (after construction) and continue for project lifetime
-    insurance_start_year = delay_year + construction_years
+    insurance_start_year = delay_year + construction_years + 1
     insurance_pv = calculate_present_value(
         results["annual_premium"],
         wacc_real,

@@ -387,6 +387,53 @@ def map_samples_to_ranges(samples_df, param_definitions):
     return mapped_df
 
 
+def create_baseline_sample(param_definitions, yaml_files):
+    """
+    Create a baseline sample dictionary with all parameters at their baseline values.
+    
+    Args:
+        param_definitions: Dictionary of parameter definitions
+        yaml_files: Dictionary of loaded YAML data
+        
+    Returns:
+        Dictionary with parameter_name: baseline_value pairs
+    """
+    baseline_sample = {}
+    
+    for param_name, param_def in param_definitions.items():
+        # Check if this is a multiplier parameter
+        is_multiplier = param_name.endswith("_mult")
+        
+        if is_multiplier:
+            # For multipliers, baseline value is always 1.0
+            baseline_sample[param_name] = 1.0
+        else:
+            # For non-multiplier parameters, read baseline value from YAML
+            yaml_file_name = param_def["yaml_file"]
+            if yaml_file_name in yaml_files:
+                baseline_value = get_nested_value(
+                    yaml_files[yaml_file_name], param_def["yaml_path"]
+                )
+                if baseline_value is not None:
+                    baseline_sample[param_name] = baseline_value
+                else:
+                    # If value not found, use midpoint of range as fallback
+                    min_val, max_val = param_def["range"]
+                    if param_def["type"] == "integer":
+                        baseline_sample[param_name] = int((min_val + max_val) / 2)
+                    else:
+                        baseline_sample[param_name] = (min_val + max_val) / 2
+            else:
+                # If YAML file not found, use midpoint of range as fallback
+                min_val, max_val = param_def["range"]
+                if param_def["type"] == "integer":
+                    baseline_sample[param_name] = int((min_val + max_val) / 2)
+                else:
+                    baseline_sample[param_name] = (min_val + max_val) / 2
+    
+    return baseline_sample
+
+
 # ============================================================================
 # YAML MANIPULATION
 # ============================================================================
@@ -702,20 +749,21 @@ def calculate_bcr_fallback(data):
         env_mitigation_pv = data.get("env_mitigation_pv", 0) or 0
         capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
 
+        # Operational costs (PV) - O&M and operational insurance only
         oandm_pv = data.get("oandm_pv", 0) or 0
         insurance_pv = data.get("insurance_pv", 0) or 0
-        wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
-        total_insurance_pv = insurance_pv + wildfire_liability_pv
+        operational_costs_pv = oandm_pv + insurance_pv
+
+        # Energy & Emissions costs (PV) - Line losses and emissions
         emissions_pv = data.get("emissions_cost_pv", 0) or 0
         line_loss_cost_pv = max(0, line_loss_pv)  # Only count as cost if positive
+        energy_emissions_costs_pv = line_loss_cost_pv + emissions_pv
 
-        operational_costs_pv = (
-            oandm_pv + total_insurance_pv + line_loss_cost_pv + emissions_pv
-        )
-
+        # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
         wildfire_pv = data.get("wildfire_pv", 0) or 0
         outage_pv = data.get("outage_pv", 0) or 0
-        risk_costs_pv = wildfire_pv + outage_pv
+        wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
+        risk_costs_pv = wildfire_pv + outage_pv + wildfire_liability_pv
 
         delay_cost_pv = data.get("delay_cost_pv", 0) or 0
         congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
@@ -729,9 +777,17 @@ def calculate_bcr_fallback(data):
         )
 
         total_costs_pv = (
-            capital_costs_pv + operational_costs_pv + risk_costs_pv + delay_costs_pv
+            capital_costs_pv
+            + operational_costs_pv
+            + energy_emissions_costs_pv
+            + risk_costs_pv
+            + delay_costs_pv
         )
         total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
+        total_costs_excluding_emissions_pv = total_costs_pv - energy_emissions_costs_pv
+        total_costs_excluding_emissions_and_risk_pv = (
+            total_costs_pv - energy_emissions_costs_pv - risk_costs_pv
+        )
 
         # Calculate BCR metrics
         if total_costs_pv > 0:
@@ -754,38 +810,91 @@ def calculate_bcr_fallback(data):
         else:
             bcr_excluding_risk = 0
 
+        if total_costs_excluding_emissions_pv > 0:
+            bcr_excluding_emissions = (
+                total_benefits_pv / total_costs_excluding_emissions_pv
+            )
+        else:
+            bcr_excluding_emissions = 0
+
+        if total_costs_excluding_emissions_and_risk_pv > 0:
+            bcr_excluding_emissions_and_risk = (
+                total_benefits_pv / total_costs_excluding_emissions_and_risk_pv
+            )
+        else:
+            bcr_excluding_emissions_and_risk = 0
+
         return {
             "bcr_system": bcr_system,
             "bcr_capital": bcr_capital,
             "bcr_haircut": bcr_haircut,
             "bcr_excluding_risk": bcr_excluding_risk,
+            "bcr_excluding_emissions": bcr_excluding_emissions,
+            "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
         }
     except Exception as e:
         # If calculation fails, return None
         return None
 
 
-def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
+def read_results_by_scenario_id(batch_summary_path, scenario_id):
+    """
+    Read results from batch_summary.csv by matching scenario_id.
+
+    Args:
+        batch_summary_path: Path to batch_summary.csv
+        scenario_id: Scenario ID to search for
+
+    Returns:
+        Dictionary of results if found, None otherwise
+    """
+    if not batch_summary_path.exists():
+        return None
+
+    try:
+        df = pd.read_csv(batch_summary_path)
+        if len(df) == 0:
+            return None
+
+        # Find row with matching scenario_id
+        matching_rows = df[df["scenario_id"] == scenario_id]
+        if len(matching_rows) > 0:
+            return matching_rows.iloc[-1].to_dict()  # Take last if multiple matches
+        else:
+            return None
+    except Exception as e:
+        return None
+
+
+def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
     """
     Run CTCC with temporary YAML directory.
 
-    Strategy: Temporarily rename yamls/ to yamls_backup/ and yamls_temp/ to yamls/
-    Then restore after running.
+    Args:
+        temp_yaml_dir: Path to temporary YAML directory
+        base_dir: Base directory of the project
+        scenario_id: Unique scenario ID for this sample
+
+    Returns:
+        Tuple of (result_dict, error_message)
     """
-    yamls_dir = Path(base_dir) / "yamls"
-    yamls_backup = Path(base_dir) / "yamls_backup"
-    yamls_temp = Path(temp_yaml_dir)
-
-    # Backup original yamls directory
-    if yamls_dir.exists():
-        if yamls_backup.exists():
-            shutil.rmtree(yamls_backup)
-        shutil.move(str(yamls_dir), str(yamls_backup))
-
-    # Move temp to yamls
-    shutil.move(str(yamls_temp), str(yamls_dir))
+    yamls_dir = base_dir / "yamls"
+    yamls_backup = base_dir / "yamls_backup"
 
     try:
+        # Backup original yamls directory if it exists
+        if yamls_dir.exists():
+            if yamls_backup.exists():
+                shutil.rmtree(yamls_backup)
+            shutil.move(str(yamls_dir), str(yamls_backup))
+
+        # Move temp to main yamls location
+        shutil.move(str(temp_yaml_dir), str(yamls_dir))
+
+        # Set environment variable for scenario ID
+        env = os.environ.copy()
+        env["CTCC_SCENARIO_ID"] = scenario_id
+
         # Run CTCC
         result = subprocess.run(
             [sys.executable, "ctcc.py"],
@@ -793,9 +902,10 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout per run
+            env=env,
         )
 
-        # Check for BCR-related errors in output
+        # Check for errors
         if result.returncode != 0:
             error_msg = f"CTCC failed with return code {result.returncode}"
             if result.stderr:
@@ -803,6 +913,16 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
             if result.stdout:
                 error_msg += f"\nStdout (last 500 chars): {result.stdout[-500:]}"
             return None, error_msg
+
+        # Extract actual scenario_id from CTCC output (it prints it)
+        actual_scenario_id = scenario_id
+        if result.stdout:
+            for line in result.stdout.split("\n"):
+                if "Scenario ID:" in line:
+                    parts = line.split("Scenario ID:")
+                    if len(parts) > 1:
+                        actual_scenario_id = parts[1].strip()
+                        break
 
         # Check for BCR calculation issues in stdout
         bcr_warning_detected = False
@@ -812,59 +932,86 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
                 or "no results returned" in result.stdout
             ):
                 bcr_warning_detected = True
-                # Log the relevant portion of stdout for debugging
-                stdout_lines = result.stdout.split("\n")
-                bcr_section = []
-                in_bcr_section = False
-                for line in stdout_lines:
-                    if "BENEFIT-COST" in line or "CALCULATING BENEFIT" in line:
-                        in_bcr_section = True
-                    if in_bcr_section:
-                        bcr_section.append(line)
-                        if len(bcr_section) > 50:  # Limit to last 50 lines
-                            bcr_section.pop(0)
-                if bcr_section:
-                    # This will be logged if BCR columns are missing later
-                    pass
 
-        # Extract results from batch_summary.csv
+        # Extract results from batch_summary.csv by scenario_id
         batch_summary_path = Path(base_dir) / "outputs" / "batch_summary.csv"
-        if batch_summary_path.exists():
-            df = pd.read_csv(batch_summary_path)
-            if len(df) > 0:
-                results = df.iloc[-1].to_dict()
+        results = read_results_by_scenario_id(batch_summary_path, actual_scenario_id)
 
-                # Check if BCR columns are missing and attempt fallback calculation
-                bcr_columns = [
-                    "bcr_system",
-                    "bcr_capital",
-                    "bcr_haircut",
-                    "bcr_excluding_risk",
-                ]
-                missing_bcr = [col for col in bcr_columns if col not in results]
-
-                if missing_bcr:
-                    # Attempt fallback BCR calculation
-                    fallback_bcr = calculate_bcr_fallback(results)
-                    if fallback_bcr:
-                        # Add fallback BCR metrics to results
-                        results.update(fallback_bcr)
-                        # Note: We don't return an error since we successfully calculated BCR
-                    else:
-                        # Fallback calculation also failed
-                        error_info = f"BCR columns missing: {missing_bcr}. "
-                        if bcr_warning_detected:
-                            error_info += (
-                                "CTCC stdout indicates BCR calculation issue. "
+        if results is None:
+            # Fallback: try to read the last row (in case scenario_id format changed)
+            if batch_summary_path.exists():
+                df = pd.read_csv(batch_summary_path)
+                if len(df) > 0:
+                    # Try to find a row with scenario_id that contains our sample index
+                    sample_idx_str = (
+                        scenario_id.split("_")[1] if "_" in scenario_id else None
+                    )
+                    if sample_idx_str:
+                        matching = df[
+                            df["scenario_id"]
+                            .astype(str)
+                            .str.contains(sample_idx_str, na=False)
+                        ]
+                        if len(matching) > 0:
+                            results = matching.iloc[-1].to_dict()
+                            actual_scenario_id = results.get(
+                                "scenario_id", actual_scenario_id
                             )
-                        error_info += "Fallback BCR calculation also failed."
-                        return results, error_info
 
-                return results, None
+                    # Last resort: use the last row
+                    if results is None:
+                        results = df.iloc[-1].to_dict()
+                        actual_scenario_id = results.get(
+                            "scenario_id", actual_scenario_id
+                        )
+
+            if results is None:
+                return (
+                    None,
+                    f"Results not found for scenario_id: {scenario_id} (tried: {actual_scenario_id})",
+                )
+
+        # Check if BCR columns are missing or empty/NaN and attempt fallback calculation
+        bcr_columns = [
+            "bcr_system",
+            "bcr_capital",
+            "bcr_haircut",
+            "bcr_excluding_risk",
+            "bcr_excluding_emissions",
+            "bcr_excluding_emissions_and_risk",
+        ]
+        # Check for missing columns OR empty/NaN values
+        missing_bcr = []
+        for col in bcr_columns:
+            if col not in results:
+                missing_bcr.append(col)
             else:
-                return None, "batch_summary.csv is empty"
-        else:
-            return None, "batch_summary.csv not found"
+                # Check if value is empty, None, NaN, or empty string
+                val = results.get(col)
+                # Use pandas.isna for proper NaN/None/empty checking
+                is_empty = (
+                    val is None
+                    or pd.isna(val)
+                    or val == '' 
+                    or (isinstance(val, str) and val.strip() == '')
+                )
+                if is_empty:
+                    missing_bcr.append(col)
+
+        if missing_bcr:
+            # Attempt fallback BCR calculation
+            fallback_bcr = calculate_bcr_fallback(results)
+            if fallback_bcr:
+                # Add fallback BCR metrics to results
+                results.update(fallback_bcr)
+            else:
+                error_info = f"BCR columns missing or empty: {missing_bcr}. "
+                if bcr_warning_detected:
+                    error_info += "CTCC stdout indicates BCR calculation issue. "
+                error_info += "Fallback BCR calculation also failed."
+                return results, error_info
+
+        return results, None
 
     except subprocess.TimeoutExpired:
         return None, "CTCC run timed out"
@@ -876,6 +1023,89 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir):
             shutil.rmtree(yamls_dir)
         if yamls_backup.exists():
             shutil.move(str(yamls_backup), str(yamls_dir))
+
+
+# ============================================================================
+# SAMPLE PROCESSING FUNCTION
+# ============================================================================
+
+
+def process_single_sample(args_tuple):
+    """
+    Process a single sample.
+
+    Args:
+        args_tuple: Tuple containing:
+            - sample_idx: Index of the sample
+            - sample_dict: Dictionary of parameter values
+            - base_dir: Base directory path (as string)
+            - baseline_yamls: Dictionary of baseline YAML data
+            - param_definitions: Parameter definitions
+            - baselines: Baseline values for multipliers
+
+    Returns:
+        Tuple of (sample_id, result_dict, error_message)
+        If successful: (sample_id, result_dict, None)
+        If failed: (sample_id, None, error_message)
+    """
+    (
+        sample_idx,
+        sample_dict,
+        base_dir_str,
+        baseline_yamls,
+        param_definitions,
+        baselines,
+    ) = args_tuple
+
+    base_dir = Path(base_dir_str)
+    sample_id = f"sample_{sample_idx + 1:04d}"
+    # Generate unique scenario_id for this sample
+    scenario_id = f"sample_{sample_idx}_{int(time.time() * 1000000)}"
+
+    try:
+        # Create unique temporary YAML directory for this sample
+        temp_yaml_dir = base_dir / f"yamls_temp_sample_{sample_idx}"
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+
+        # Deep copy baseline YAMLs
+        yaml_files_copy = {}
+        for yaml_name, yaml_data in baseline_yamls.items():
+            yaml_files_copy[yaml_name] = yaml.load(
+                yaml.dump(yaml_data), Loader=yaml.FullLoader
+            )  # Deep copy
+
+        # Apply sample to YAMLs
+        apply_sample_to_yamls(
+            yaml_files_copy, sample_dict, param_definitions, baselines
+        )
+
+        # Save to temp directory
+        save_yamls_to_temp(yaml_files_copy, temp_yaml_dir)
+
+        # Run CTCC
+        result_dict, error = run_ctcc_with_temp_yamls(
+            temp_yaml_dir, base_dir, scenario_id
+        )
+
+        # Cleanup temp YAML directory
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+
+        if result_dict:
+            # Combine inputs and outputs
+            combined = {**sample_dict, **result_dict}
+            combined["sample_id"] = sample_id
+            return (sample_id, combined, None)
+        else:
+            return (sample_id, None, error)
+
+    except Exception as e:
+        # Cleanup on error
+        temp_yaml_dir = base_dir / f"yamls_temp_sample_{sample_idx}"
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+        return (sample_id, None, str(e))
 
 
 # ============================================================================
@@ -977,8 +1207,15 @@ def generate_tornado_plot(prcc_values, output_path, bcr_metric_name=None):
     plt.close()
 
 
-def generate_scatter_plots(results_df, top_params, output_path):
-    """Generate scatter plots for top N parameters vs BCR."""
+def generate_scatter_plots(results_df, top_params, bcr_col, output_path):
+    """Generate scatter plots for top N parameters vs a specific BCR metric.
+
+    Args:
+        results_df: DataFrame with all results
+        top_params: List of top parameter names to include
+        bcr_col: BCR column name to plot against
+        output_path: Path to save the plot
+    """
     n_params = len(top_params)
     n_cols = 3
     n_rows = (n_params + n_cols - 1) // n_cols
@@ -988,11 +1225,11 @@ def generate_scatter_plots(results_df, top_params, output_path):
 
     for idx, param in enumerate(top_params):
         ax = axes[idx]
-        ax.scatter(results_df[param], results_df["bcr_system"], alpha=0.5, s=20)
+        ax.scatter(results_df[param], results_df[bcr_col], alpha=0.5, s=20)
         ax.set_xlabel(param, fontsize=9)
-        ax.set_ylabel("BCR_system", fontsize=9)
+        ax.set_ylabel(bcr_col, fontsize=9)
         ax.grid(alpha=0.3)
-        ax.set_title(f"{param} vs BCR", fontsize=10)
+        ax.set_title(f"{param} vs {bcr_col}", fontsize=10)
 
     # Hide unused subplots
     for idx in range(n_params, len(axes)):
@@ -1229,23 +1466,34 @@ def main():
     )
     samples_mapped = map_samples_to_ranges(samples_uniform, PARAM_DEFINITIONS)
 
-    # Save LHS samples
+    # Create baseline sample and prepend it to samples
+    print("Creating baseline sample...")
+    baseline_sample = create_baseline_sample(PARAM_DEFINITIONS, baseline_yamls)
+    baseline_df = pd.DataFrame([baseline_sample])
+    samples_mapped = pd.concat([baseline_df, samples_mapped], ignore_index=True)
+    total_runs = args.n_samples + 1
+    print(f"Including baseline run as sample_0001 (total runs: {total_runs})")
+    print()
+
+    # Save LHS samples (includes baseline as first row)
     samples_path = output_dir / "lhs_samples.csv"
     samples_mapped.to_csv(samples_path, index=False)
-    print(f"Saved LHS samples to {samples_path}")
+    print(f"Saved samples (1 baseline + {args.n_samples} LHS) to {samples_path}")
     print()
 
     # Step 3: Run CTCC for each sample
-    print("Running CTCC for each sample...")
+    print(f"Running CTCC for each sample (1 baseline + {args.n_samples} LHS samples)...")
     print("-" * 80)
 
     results_list = []
     failed_samples = []
     start_time = time.time()
 
-    for sample_idx in range(args.n_samples):
+    # Process samples sequentially
+    for sample_idx in range(total_runs):
         sample_dict = samples_mapped.iloc[sample_idx].to_dict()
         sample_id = f"sample_{sample_idx + 1:04d}"
+        scenario_id = f"sample_{sample_idx}_{int(time.time() * 1000000)}"
 
         try:
             # Create temporary YAML directory
@@ -1269,7 +1517,7 @@ def main():
             save_yamls_to_temp(yaml_files_copy, temp_yaml_dir)
 
             # Run CTCC
-            result_dict, error = run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir)
+            result_dict, error = run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id)
 
             if result_dict:
                 # Combine inputs and outputs
@@ -1281,14 +1529,15 @@ def main():
                 if (sample_idx + 1) % 10 == 0:
                     elapsed = time.time() - start_time
                     avg_time = elapsed / (sample_idx + 1)
-                    remaining = (args.n_samples - sample_idx - 1) * avg_time
+                    remaining = (total_runs - sample_idx - 1) * avg_time
 
                     bcr = result_dict.get("bcr_system", "N/A")
                     bcr_str = (
                         f"{bcr:.4f}" if isinstance(bcr, (int, float)) else str(bcr)
                     )
+                    sample_type = "baseline" if sample_idx == 0 else "LHS"
                     print(
-                        f"[{sample_idx + 1}/{args.n_samples}] {sample_id} complete. "
+                        f"[{sample_idx + 1}/{total_runs}] {sample_id} complete ({sample_type}). "
                         f"BCR_system: {bcr_str}. "
                         f"Est. time remaining: {remaining/60:.1f} min"
                     )
@@ -1302,16 +1551,16 @@ def main():
             else:
                 failed_samples.append((sample_id, error))
                 print(
-                    f"[{sample_idx + 1}/{args.n_samples}] {sample_id} FAILED: {error}"
+                    f"[{sample_idx + 1}/{total_runs}] {sample_id} FAILED: {error}"
                 )
 
         except Exception as e:
             failed_samples.append((sample_id, str(e)))
-            print(f"[{sample_idx + 1}/{args.n_samples}] {sample_id} ERROR: {e}")
+            print(f"[{sample_idx + 1}/{total_runs}] {sample_id} ERROR: {e}")
 
     print()
     print("=" * 80)
-    print(f"Completed: {len(results_list)}/{args.n_samples} successful")
+    print(f"Completed: {len(results_list)}/{total_runs} successful")
     if failed_samples:
         print(f"Failed: {len(failed_samples)} samples")
         print("Failed samples:")
@@ -1323,14 +1572,23 @@ def main():
 
     # Step 4: Save results
     if results_list:
-        results_df = pd.DataFrame(results_list)
+        # Sort results by sample_id for consistency
+        results_list_sorted = sorted(results_list, key=lambda x: x.get("sample_id", ""))
+        results_df = pd.DataFrame(results_list_sorted)
         results_path = output_dir / "results.csv"
         results_df.to_csv(results_path, index=False)
         print(f"Saved results to {results_path}")
         print()
 
         # Step 5: Calculate PRCC and generate plots for all BCR metrics
-        bcr_columns = ["bcr_system", "bcr_capital", "bcr_haircut", "bcr_excluding_risk"]
+        bcr_columns = [
+            "bcr_system",
+            "bcr_capital",
+            "bcr_haircut",
+            "bcr_excluding_risk",
+            "bcr_excluding_emissions",
+            "bcr_excluding_emissions_and_risk",
+        ]
         available_bcr_columns = [
             col for col in bcr_columns if col in results_df.columns
         ]
@@ -1374,18 +1632,20 @@ def main():
                 print(f"  Saved tornado diagram: {tornado_path}")
             print()
 
-            # Generate scatter plots using bcr_system (most important one)
-            if "bcr_system" in available_bcr_columns:
-                print("Generating scatter plots...")
-                prcc_values_system = prcc_all["bcr_system"]
-                top_6_params = prcc_values_system.abs().nlargest(6).index.tolist()
-                scatter_path = output_dir / "scatter_top6.png"
-                generate_scatter_plots(results_df, top_6_params, scatter_path)
+            # Generate scatter plots for each BCR metric
+            print("Generating scatter plots...")
+            for bcr_col in available_bcr_columns:
+                prcc_values = prcc_all[bcr_col]
+                top_6_params = prcc_values.abs().nlargest(6).index.tolist()
+                scatter_path = output_dir / f"scatter_top6_{bcr_col}.png"
+                generate_scatter_plots(results_df, top_6_params, bcr_col, scatter_path)
                 print(f"  Saved scatter plots: {scatter_path}")
-                print()
+            print()
 
-                # Generate parallel coordinates plot
+            # Generate parallel coordinates plot using bcr_system (most important one)
+            if "bcr_system" in available_bcr_columns:
                 print("Generating parallel coordinates plot...")
+                prcc_values_system = prcc_all["bcr_system"]
                 top_8_params = prcc_values_system.abs().nlargest(8).index.tolist()
                 parallel_path = output_dir / "parallel_coordinates_bcr_system.png"
                 generate_parallel_coordinates_plot(
@@ -1411,7 +1671,7 @@ def main():
                 f.write("LHS Sensitivity Analysis Summary\n")
                 f.write("=" * 80 + "\n")
                 f.write(f"Scenario: {args.scenario}\n")
-                f.write(f"Samples: {args.n_samples}\n")
+                f.write(f"Total runs: {total_runs} (1 baseline + {args.n_samples} LHS samples)\n")
                 f.write(f"Successful runs: {len(results_list)}\n")
                 f.write(f"Failed runs: {len(failed_samples)}\n")
                 f.write("\n")

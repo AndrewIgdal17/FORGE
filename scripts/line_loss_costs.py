@@ -227,7 +227,8 @@ def main():
         lifetime_nominal_cost = annual_loss_cost * project_lifetime
 
         # Calculate present value
-        start_year = delay_years + construction_years
+        # Line losses start at first year of operation (COD)
+        start_year = delay_years + construction_years + 1
         pv_loss_cost = calculate_present_value(
             annual_loss_cost, social_discount_rate, project_lifetime, start_year
         )
@@ -375,7 +376,8 @@ def main():
     )
     normalized_lifetime_benefit = normalized_annual_benefit * project_lifetime
 
-    start_year = delay_years + construction_years
+    # Line losses start at first year of operation (COD)
+    start_year = delay_years + construction_years + 1
 
     # Calculate NPVs for all three methods
     direct_npv = calculate_present_value(

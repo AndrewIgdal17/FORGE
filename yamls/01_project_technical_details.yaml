@@ -7,7 +7,7 @@ project:
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
   capacity_mw: 460 # MW
-  conductor_type: "Advanced Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
   converter_type: "LCC Converter" # LCC Converter or VSC Converter
 
   line_utilization: .70 # % [0,1]
