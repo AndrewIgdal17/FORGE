@@ -17,6 +17,47 @@ sys.path.insert(0, str(CTCC_ROOT))
 sys.path.insert(0, str(CTCC_ROOT / "scripts"))
 
 
+def ensure_cli_venv() -> str:
+    """
+    Ensure CLI virtual environment exists and has dependencies installed.
+    Returns the path to the venv Python executable.
+    """
+    import subprocess
+
+    venv_dir = CTCC_ROOT / "venv"
+    venv_python = venv_dir / "bin" / "python3"
+    requirements_file = CTCC_ROOT / "requirements.txt"
+
+    # If venv doesn't exist, create it
+    if not venv_dir.exists():
+        print(f"Creating CLI virtual environment at {venv_dir}")
+        subprocess.run(
+            [sys.executable, "-m", "venv", str(venv_dir)],
+            check=True,
+            cwd=str(CTCC_ROOT)
+        )
+
+    # Verify venv Python exists
+    if not venv_python.exists():
+        raise RuntimeError(f"Virtual environment creation failed: {venv_python} not found")
+
+    # Install/update dependencies if requirements.txt exists
+    if requirements_file.exists():
+        print(f"Installing/updating CLI dependencies from {requirements_file}")
+        subprocess.run(
+            [str(venv_python), "-m", "pip", "install", "--upgrade", "pip"],
+            capture_output=True,
+            cwd=str(CTCC_ROOT)
+        )
+        subprocess.run(
+            [str(venv_python), "-m", "pip", "install", "-r", str(requirements_file)],
+            check=True,
+            cwd=str(CTCC_ROOT)
+        )
+
+    return str(venv_python)
+
+
 def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Run complete CTCC calculations based on input payload.
@@ -57,11 +98,8 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             # Build command-line arguments for ctcc.py
             import subprocess
 
-            # Use venv python if available
-            python_exe = sys.executable
-            venv_python = CTCC_ROOT / "venv" / "bin" / "python3"
-            if venv_python.exists():
-                python_exe = str(venv_python)
+            # Ensure CLI venv exists and has dependencies
+            python_exe = ensure_cli_venv()
 
             # Build command with flags
             cmd = [python_exe, "ctcc.py"]
