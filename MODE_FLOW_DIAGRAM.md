@@ -1,9 +1,9 @@
 # CTCC Architecture & Mode Flow Diagram
 
-Complete technical documentation of CTCC's architecture, data flow, and mode combinations.
+Complete technical documentation of CTCC's architecture, data flow, and mode combinations, with detailed JSON conversion behavior.
 
-**Last Updated:** 2025-11-10
-**Version:** 2.0
+**Last Updated:** 2025-11-17
+**Version:** 2.1
 
 ---
 
@@ -151,6 +151,45 @@ venv/bin/python3 ctcc.py -j -o
 
 ## Data Flow
 
+### JSON Conversion vs Direct Loading
+
+CTCC handles JSON input in two distinct ways depending on the context:
+
+#### When JSON is Auto-Converted from YAML:
+
+1. **CLI with `-j` flag but no `--json-file`:**
+   - `ctcc.py` automatically converts YAML→JSON using `yaml_to_json.py`
+   - Creates `combined_data.json` in project root
+   - Then proceeds with JSON input mode
+
+2. **API with no `combined_data` in payload:**
+   - Server returns error (combined_data required)
+
+#### When JSON is Loaded Directly (No Conversion):
+
+1. **CLI with `-j` and `--json-file` flags:**
+   - Uses specified JSON file directly
+   - No YAML conversion occurs
+   - Example: `ctcc.py -j --json-file server/json/final_combined.json`
+
+2. **API with `combined_data` in payload:**
+   - Uses JSON from API request directly
+   - Writes to temporary file for subprocess
+   - No YAML files accessed
+
+3. **Pre-existing `combined_data.json`:**
+   - If `ctcc.py -j` finds existing `combined_data.json`, uses it
+   - Only converts YAML if file doesn't exist
+
+**Summary Decision Tree:**
+```
+JSON mode requested?
+├─ NO → Load from YAML files directly
+└─ YES → Does JSON file exist or was it provided?
+    ├─ YES → Load from JSON (no conversion)
+    └─ NO → Convert YAML→JSON, then load JSON
+```
+
 ### YAML → CSV (Traditional Mode)
 
 ```
@@ -169,7 +208,8 @@ yamls/
      │
      ├─ smart_loaders.py
      │    └─> yaml_loaders.py
-     │         └─> Loads individual YAML files
+     │         └─> Loads individual YAML files DIRECTLY
+     │              (No JSON conversion ever occurs)
      │
      ├─ Calculation Logic
      │
@@ -186,15 +226,22 @@ yamls/
 
 ### JSON → JSON (API Mode)
 
+#### Scenario A: JSON Provided (API) - NO CONVERSION
+
 ```
-combined_data.json
-  (or auto-generated from YAML)
+API Request
+  combined_data: { ... }
            │
            ▼
-      [ctcc.py -j -o]
+  [ctcc_processor.py]
+  Writes combined_data to temp file:
+  /tmp/ctcc_api_[id]_[timestamp].json
+           │
+           ▼
+      [ctcc.py subprocess]
     Sets: CTCC_INPUT_MODE=json
           CTCC_OUTPUT_MODE=json
-          CTCC_JSON_DATA_FILE=path/to/data.json
+          CTCC_JSON_DATA_FILE=/tmp/ctcc_api_[id]_*.json
            │
            ▼
   [13 Calculation Scripts]
@@ -202,6 +249,7 @@ combined_data.json
      ├─ smart_loaders.py
      │    └─> json_loaders.py
      │         └─> Loads from CTCC_JSON_DATA_FILE
+     │              (JSON already exists - NO YAML ACCESS)
      │
      ├─ Calculation Logic
      │
@@ -217,35 +265,95 @@ combined_data.json
      (single combined file)
            │
            ▼
-  [Cleanup temp files]
+  [Cleanup: temp input + temp output files]
+```
+
+#### Scenario B: JSON from CLI - AUTO-CONVERTED IF NEEDED
+
+```
+User: ctcc.py -j -o
+
+      [ctcc.py checks]
+           │
+           ▼
+   Does combined_data.json exist?
+   OR --json-file provided?
+           │
+    ┌──────┴──────┐
+    NO            YES
+    │             │
+    ▼             ▼
+[Convert]    [Use existing]
+    │             │
+    ▼             │
+yaml_to_json.py   │
+  yamls/ ─────────┤
+  └─> combined_data.json
+           │
+           └──────┴──────┐
+                         ▼
+                  [ctcc.py -j -o]
+                Sets: CTCC_INPUT_MODE=json
+                      CTCC_OUTPUT_MODE=json
+                      CTCC_JSON_DATA_FILE=combined_data.json
+                         │
+                         ▼
+                [13 Calculation Scripts]
+                   (same as Scenario A)
+                         │
+                         ▼
+                outputs/ctcc_results_[id].json
 ```
 
 ### JSON → CSV (Hybrid Mode)
 
+**Note:** Same conversion logic as JSON→JSON mode applies here.
+
 ```
-combined_data.json
+User: ctcc.py -j
+(Note: NO -o flag = CSV output)
+
+      [ctcc.py checks]
            │
            ▼
-      [ctcc.py -j]
-    Sets: CTCC_INPUT_MODE=json
-          CTCC_OUTPUT_MODE=csv
+   Does combined_data.json exist?
+   OR --json-file provided?
            │
-           ▼
-  [13 Calculation Scripts]
-     │
-     ├─ smart_loaders.py
-     │    └─> json_loaders.py
-     │
-     ├─ Calculation Logic
-     │
-     └─ smart_output.py
-          └─> csv_output_manager.py
+    ┌──────┴──────┐
+    NO            YES
+    │             │
+    ▼             ▼
+[Convert]    [Use existing]
+yaml_to_json.py   │
+  yamls/ ─────────┤
+  └─> combined_data.json
            │
-           ▼
-      outputs/
-        ├─ batch_summary.csv
-        ├─ build_costs.csv
-        └─ ... (12 files)
+           └──────┴──────┐
+                         ▼
+                  [ctcc.py -j]
+                Sets: CTCC_INPUT_MODE=json
+                      CTCC_OUTPUT_MODE=csv
+                      CTCC_JSON_DATA_FILE=combined_data.json
+                         │
+                         ▼
+                [13 Calculation Scripts]
+                   │
+                   ├─ smart_loaders.py
+                   │    └─> json_loaders.py
+                   │         └─> Loads from JSON
+                   │              (NO YAML ACCESS after this point)
+                   │
+                   ├─ Calculation Logic
+                   │
+                   └─ smart_output.py
+                        └─> csv_output_manager.py
+                             └─> Writes to batch_summary.csv
+                         │
+                         ▼
+                    outputs/
+                      ├─ batch_summary.csv
+                      ├─ build_costs.csv
+                      └─ ... (12 files)
 ```
 
 ---
@@ -514,31 +622,54 @@ $ venv/bin/python3 ctcc.py
 # 8. Outputs 12 CSV files
 ```
 
-### Example 2: CLI JSON→JSON
+### Example 2: CLI JSON→JSON (with auto-conversion)
 
 ```bash
 $ venv/bin/python3 ctcc.py -j -o --id test
+# Assumes NO combined_data.json exists and NO --json-file provided
 
 # Internal flow:
 # 1. -j flag → JSON input, -o flag → JSON output
-# 2. Runs yaml_to_json.py → combined_data.json
-# 3. Sets CTCC_INPUT_MODE=json
-# 4. Sets CTCC_OUTPUT_MODE=json
-# 5. Sets CTCC_SCENARIO_ID=test
-# 6. Sets CTCC_JSON_DATA_FILE=combined_data.json
-# 7. Runs 13 scripts
-# 8. Each script:
+# 2. Checks for combined_data.json or --json-file
+# 3. NOT FOUND → Runs yaml_to_json.py to convert yamls/ → combined_data.json
+#    (This is the ONLY time YAML files are accessed in JSON mode)
+# 4. Sets CTCC_INPUT_MODE=json
+# 5. Sets CTCC_OUTPUT_MODE=json
+# 6. Sets CTCC_SCENARIO_ID=test
+# 7. Sets CTCC_JSON_DATA_FILE=combined_data.json (absolute path)
+# 8. Runs 13 scripts as subprocesses
+# 9. Each script:
 #    - Uses smart_loaders → json_loaders
+#    - json_loaders reads ONLY from CTCC_JSON_DATA_FILE
+#    - YAML files are NEVER accessed at this point
 #    - Calculates
 #    - Uses smart_output → json_output_manager
 #    - Writes temp JSON: json_output_test_[module].json
-# 9. Aggregates temp JSONs → ctcc_results_test.json
-# 10. Cleans up temp files
-# 11. Calculates BCR (adds to JSON)
-# 12. Outputs single JSON file
+# 10. Aggregates temp JSONs → ctcc_results_test.json
+# 11. Cleans up temp files
+# 12. Calculates BCR (adds to JSON)
+# 13. Outputs single JSON file
 ```
 
-### Example 3: API JSON→JSON
+### Example 2b: CLI JSON→JSON (with existing JSON - no conversion)
+
+```bash
+$ venv/bin/python3 ctcc.py -j -o --id test --json-file server/json/final_combined.json
+# OR: combined_data.json already exists from previous run
+
+# Internal flow:
+# 1. -j flag → JSON input, -o flag → JSON output
+# 2. Checks for combined_data.json or --json-file
+# 3. FOUND → Uses existing JSON file directly
+#    (NO yaml_to_json.py call, NO YAML access, FASTER startup)
+# 4. Sets CTCC_INPUT_MODE=json
+# 5. Sets CTCC_OUTPUT_MODE=json
+# 6. Sets CTCC_SCENARIO_ID=test
+# 7. Sets CTCC_JSON_DATA_FILE=server/json/final_combined.json (absolute path)
+# 8-13. Same as Example 2 (steps 8-13)
+```
+
+### Example 3: API JSON→JSON (NO conversion - JSON provided)
 
 ```bash
 $ curl -X POST http://localhost:8000/api/ctcc/calculate \
@@ -547,25 +678,87 @@ $ curl -X POST http://localhost:8000/api/ctcc/calculate \
     "input_mode": "json",
     "output_mode": "json",
     "scenario_id": "api_test",
-    "combined_data": { ... }
+    "combined_data": { ... }  # Client provides JSON directly
   }'
 
 # Internal flow:
-# 1. FastAPI receives request
+# 1. FastAPI receives request with combined_data already in JSON
 # 2. ctcc_processor.run_ctcc_calculation() called
 # 3. Writes combined_data to temp file: /tmp/ctcc_api_api_test_*.json
-# 4. Sets environment variables:
+#    (NO YAML CONVERSION - JSON is already provided by client)
+# 4. Sets environment variables for subprocess:
 #    - CTCC_INPUT_MODE=json
 #    - CTCC_OUTPUT_MODE=json
 #    - CTCC_SCENARIO_ID=api_test
-#    - CTCC_JSON_DATA_FILE=/tmp/ctcc_api_api_test_*.json
-# 5. Runs: venv/bin/python3 ctcc.py (subprocess)
-# 6. ctcc.py runs 13 scripts (same as Example 2)
-# 7. Reads outputs/ctcc_results_api_test.json
-# 8. Cleans up temp input file
-# 9. Cleans up output JSON file
-# 10. Returns structured response to API client
+#    - CTCC_JSON_DATA_FILE=/tmp/ctcc_api_api_test_*.json (absolute path)
+# 5. Runs: venv/bin/python3 ctcc.py as subprocess
+#    (ctcc.py skips YAML check because CTCC_JSON_DATA_FILE is already set)
+# 6. ctcc.py runs 13 scripts
+# 7. Each script:
+#    - smart_loaders → json_loaders
+#    - json_loaders reads from CTCC_JSON_DATA_FILE
+#    - YAML files are NEVER accessed (not even checked)
+#    - Calculates and writes temp JSON
+# 8. ctcc.py aggregates → outputs/ctcc_results_api_test.json
+# 9. ctcc_processor reads outputs/ctcc_results_api_test.json
+# 10. Cleans up temp input file (/tmp/ctcc_api_*.json)
+# 11. Cleans up output JSON file (outputs/ctcc_results_*.json)
+# 12. Returns structured response to API client with results embedded
 ```
+
+---
+
+## JSON Conversion Summary
+
+### When Does YAML→JSON Conversion Occur?
+
+| Scenario | Conversion? | Why? |
+|----------|-------------|------|
+| `ctcc.py` (default, no flags) | ❌ NO | YAML mode - loads YAML files directly |
+| `ctcc.py -j` (first time) | ✅ YES | JSON mode but no JSON file exists yet |
+| `ctcc.py -j` (subsequent) | ❌ NO | JSON mode and combined_data.json already exists |
+| `ctcc.py -j --json-file <path>` | ❌ NO | JSON mode with explicit file - uses provided file |
+| API request with `combined_data` | ❌ NO | JSON already provided in request payload |
+| API request without `combined_data` | ❌ ERROR | API requires combined_data (no auto-conversion) |
+
+### Key Points
+
+1. **YAML mode NEVER touches JSON:**
+   - When `ctcc.py` runs without `-j` flag
+   - Scripts use `yaml_loaders.py` exclusively
+   - No conversion, no JSON files created or read
+
+2. **JSON mode conversion is LAZY:**
+   - Only converts if JSON file doesn't exist
+   - Checks in order: `--json-file` flag → existing `combined_data.json` → convert from YAML
+   - Once converted, reused for subsequent runs (until deleted)
+
+3. **API mode is JSON-ONLY:**
+   - Client must provide `combined_data` in request
+   - No YAML conversion available via API
+   - Server writes JSON to temp file for subprocess
+
+4. **Conversion is ONE-WAY at runtime:**
+   - YAML can be converted to JSON (via `yaml_to_json.py`)
+   - JSON is never converted back to YAML during calculations
+   - Conversion is a preprocessing step, not part of calculation flow
+
+5. **Subprocess isolation:**
+   - Once `CTCC_JSON_DATA_FILE` is set, scripts never look at YAML
+   - Environment variables determine behavior, not file presence
+   - Clean separation between input modes
+
+### Performance Implications
+
+**Conversion overhead:**
+- First JSON mode run: +2-3 seconds (YAML→JSON conversion)
+- Subsequent JSON mode runs: 0 seconds (uses cached JSON)
+- YAML mode: 0 seconds (no conversion ever)
+
+**Recommendation:**
+- For repeated runs: Use `--json-file` or keep `combined_data.json`
+- For single runs: YAML or JSON mode have similar performance
+- For API: Always provide JSON (no choice)
 
 ---
 

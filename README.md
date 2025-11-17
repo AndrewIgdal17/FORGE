@@ -299,16 +299,20 @@ venv/bin/python3 ctcc.py -j
 ### Testing
 
 ```bash
-# API vs CLI comparison
-venv/bin/python3 test_api_vs_cli.py
+# Run automated test suite
+cd testing
+../venv/bin/python3 run_tests.py --quick
 
-# Mode comparison
-venv/bin/python3 test_mode_comparison.py
+# See testing/README.md for more options
 ```
 
 ## Documentation
 
 - **README.md** (this file) - Quick start guide
+- **testing/** - Automated test suite
+  - **testing/README.md** - Testing quick start
+  - **testing/TESTING.md** - Complete testing guide
+  - **testing/TEST_PLAN.md** - Full test plan
 - **Claude.md** - Comprehensive development documentation
 - **MODE_FLOW_DIAGRAM.md** - Architecture and flow diagrams
 - **server/COMMAND_FILES_GUIDE.md** - Server command documentation

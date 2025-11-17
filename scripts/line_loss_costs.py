@@ -21,8 +21,7 @@ from energy_losses import (
     calculate_line_losses,
 )
 from financial_utils import calculate_present_value
-from smart_loaders import load_project_technical_details
-# from yaml_loaders import load_financing_social_discount_rate
+from smart_loaders import load_project_technical_details, load_financing_social_discount_rate
 
 def load_project_details():
     """Load project technical details with line_loss_costs specific fields."""
@@ -50,20 +49,7 @@ def load_project_details():
     # Load additional fields from data source
     tech_data = _data_source.get_data("01_project_technical_details")
     baseline_electricity_price = tech_data["project"]["baseline_electricity_price_per_mwh"]
-    
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
-    converter_type = (
-        project_details["project"]["converter_type"] if ac_dc != "AC" else "NA"
-    )
-    line_utilization_percent = project_details["project"]["line_utilization"]
-    baseline_electricity_price = project_details["project"][
-        "baseline_electricity_price_per_mwh"
-    ]
     social_discount_rate = load_financing_social_discount_rate()
-    reconductoring = project_details["project"]["reconductoring"]
 
     # Get social_discount_rate from financing data
     financing_data = _data_source.get_data("03_financing")

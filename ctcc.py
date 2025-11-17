@@ -15,21 +15,14 @@ from bcr_calculator import calculate_and_display_bcr
 from smart_output import CTCCOutputManager
 
 
-<<<<<<< HEAD
-def run_script(script_name, env=None):
-=======
-def run_script(script_name, quiet=False):
->>>>>>> master
+def run_script(script_name, env=None, quiet=False):
     """
     Run a Python script and capture its output.
 
     Args:
         script_name (str): Name of the script to run
-<<<<<<< HEAD
         env (dict): Optional environment variables to pass to the script
-=======
         quiet (bool): If True, suppress output messages
->>>>>>> master
 
     Returns:
         bool: True if successful, False if error
@@ -80,9 +73,13 @@ Examples:
   # Short flags
   python ctcc.py -j -o      # JSON → JSON
   python ctcc.py -j         # JSON → CSV
+
+  # Skip certain calculations
+  python ctcc.py --norisk --no_emissions
         """
     )
 
+    # JSON mode arguments
     parser.add_argument(
         '-j', '--json',
         action='store_true',
@@ -109,6 +106,43 @@ Examples:
         help='Path to combined JSON data file (required when using --json flag)'
     )
 
+    # Calculation control arguments
+    parser.add_argument(
+        '--norisk',
+        action='store_true',
+        help='Skip risk cost calculations (wildfire and outage costs)'
+    )
+
+    parser.add_argument(
+        '--simple',
+        action='store_true',
+        help='Simple output mode: only show BCR analysis (suppress intermediate outputs)'
+    )
+
+    parser.add_argument(
+        '--no_wf_liability',
+        action='store_true',
+        help='Skip wildfire liability insurance calculation'
+    )
+
+    parser.add_argument(
+        '--no_emissions',
+        action='store_true',
+        help='Skip emissions cost calculations'
+    )
+
+    parser.add_argument(
+        '--no_linelosses',
+        action='store_true',
+        help='Skip line loss cost calculations'
+    )
+
+    parser.add_argument(
+        '--capital_only',
+        action='store_true',
+        help='Run only capital cost scripts (build, ROW, environmental mitigation) plus prerequisites'
+    )
+
     return parser.parse_args()
 
 
@@ -123,44 +157,6 @@ def main():
     input_mode = 'json' if args.json else 'yaml'
     output_mode = 'json' if args.json_out else 'csv'
 
-    print("=" * 80)
-    print("COMPREHENSIVE TRANSMISSION COST CALCULATOR (CTCC)")
-    print("=" * 80)
-    parser = argparse.ArgumentParser(
-        description="Comprehensive Transmission Cost Calculator (CTCC)"
-    )
-    parser.add_argument(
-        "--norisk",
-        action="store_true",
-        help="Skip risk cost calculations (wildfire and outage costs)",
-    )
-    parser.add_argument(
-        "--simple",
-        action="store_true",
-        help="Simple output mode: only show BCR analysis (suppress intermediate outputs)",
-    )
-    parser.add_argument(
-        "--no_wf_liability",
-        action="store_true",
-        help="Skip wildfire liability insurance calculation",
-    )
-    parser.add_argument(
-        "--no_emissions",
-        action="store_true",
-        help="Skip emissions cost calculations",
-    )
-    parser.add_argument(
-        "--no_linelosses",
-        action="store_true",
-        help="Skip line loss cost calculations",
-    )
-    parser.add_argument(
-        "--capital_only",
-        action="store_true",
-        help="Run only capital cost scripts (build, ROW, environmental mitigation) plus prerequisites",
-    )
-    args = parser.parse_args()
-    
     # Set environment variable for insurance_costs.py to check
     if args.no_wf_liability:
         os.environ["CTCC_NO_WF_LIABILITY"] = "1"
@@ -195,9 +191,18 @@ def main():
     # Generate a single scenario_id for this entire run
     scenario_id = args.scenario_id
     if not scenario_id:
-        scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Only generate if not already set (for parallel sensitivity analysis)
+        # Use microseconds to ensure uniqueness even if runs happen in the same second
+        if "CTCC_SCENARIO_ID" not in os.environ:
+            scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        else:
+            scenario_id = os.environ["CTCC_SCENARIO_ID"]
 
-    print(f"📋 Scenario ID: {scenario_id}\n")
+    # Set scenario ID in environment for subprocesses
+    os.environ["CTCC_SCENARIO_ID"] = scenario_id
+
+    if not args.simple:
+        print(f"📋 Scenario ID: {scenario_id}\n")
 
     # If JSON input mode, determine JSON data file path
     combined_json_file = None
@@ -306,12 +311,9 @@ def main():
         os.environ['CTCC_JSON_DATA_FILE'] = json_file_path
 
     for script in scripts:
-        print(f"\n🔄 Running {script}...")
-        if run_script(script, env=env):
-    for script in scripts:
         if not args.simple:
             print(f"\n🔄 Running {script}...")
-        if run_script(script, quiet=args.simple):
+        if run_script(script, env=env, quiet=args.simple):
             successful_runs += 1
         if not args.simple:
             print("-" * 60)
@@ -335,7 +337,13 @@ def main():
             print("=" * 80)
 
         try:
-            bcr_results = calculate_and_display_bcr(scenario_id, output_dir="outputs")
+            bcr_results = calculate_and_display_bcr(
+                scenario_id,
+                output_dir="outputs",
+                no_emissions=args.no_emissions,
+                no_linelosses=args.no_linelosses,
+                capital_only=args.capital_only,
+            )
 
             if bcr_results:
                 # Update batch_summary with BCR metrics
@@ -345,15 +353,28 @@ def main():
                 output_manager.write_batch_summary()
 
                 if output_mode == 'csv':
-                    print("✅ BCR metrics added to batch_summary.csv")
+                    if not args.simple:
+                        print("✅ BCR metrics added to batch_summary.csv")
                 else:
                     print("✅ BCR metrics added to output")
             else:
-                print("⚠️  BCR calculation completed but no results returned")
+                if not args.simple:
+                    print("⚠️  BCR calculation completed but no results returned")
+                    print(f"   Scenario ID: {scenario_id}")
+                    print("   This may indicate missing required columns in batch_summary.csv")
 
         except Exception as e:
-            print(f"⚠️  BCR calculation failed: {e}")
-            print("This does not affect the validity of the cost calculations above.")
+            import traceback
+
+            if not args.simple:
+                print(f"⚠️  BCR calculation failed: {e}")
+                print(f"   Scenario ID: {scenario_id}")
+                print("   Full error traceback:")
+                traceback.print_exc()
+                print("   This does not affect the validity of the cost calculations above.")
+            else:
+                # In simple mode, still show errors
+                print(f"⚠️  BCR calculation failed: {e}")
 
         # If JSON output mode, aggregate and save final JSON results
         if output_mode == 'json':
@@ -411,45 +432,6 @@ def main():
                 print(f"⚠️  JSON aggregation failed: {e}")
                 import traceback
                 traceback.print_exc()
-            bcr_results = calculate_and_display_bcr(
-                scenario_id,
-                output_dir="outputs",
-                no_emissions=args.no_emissions,
-                no_linelosses=args.no_linelosses,
-                capital_only=args.capital_only,
-            )
-
-            if bcr_results:
-                # Update batch_summary.csv with BCR metrics
-                csv_manager = CTCCOutputManager(
-                    output_dir="outputs", scenario_id=scenario_id
-                )
-                csv_manager.add_bcr_metrics(bcr_results)
-                csv_manager.write_batch_summary()
-                if not args.simple:
-                    print("✅ BCR metrics added to batch_summary.csv")
-            else:
-                if not args.simple:
-                    print("⚠️  BCR calculation completed but no results returned")
-                    print(f"   Scenario ID: {scenario_id}")
-                    print(
-                        "   This may indicate missing required columns in batch_summary.csv"
-                    )
-
-        except Exception as e:
-            import traceback
-
-            if not args.simple:
-                print(f"⚠️  BCR calculation failed: {e}")
-                print(f"   Scenario ID: {scenario_id}")
-                print("   Full error traceback:")
-                traceback.print_exc()
-                print(
-                    "   This does not affect the validity of the cost calculations above."
-                )
-            else:
-                # In simple mode, still show errors
-                print(f"⚠️  BCR calculation failed: {e}")
     else:
         if not args.simple:
             print("⚠️  Some calculations failed. Check the output above.")

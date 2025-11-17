@@ -121,6 +121,10 @@ class JSONOutputManager:
         """Add insurance cost results."""
         self.costs["insurance"] = results
 
+    def add_wildfire_liability_costs(self, results: Dict[str, Any]):
+        """Add wildfire liability insurance cost results."""
+        self.costs["wildfire_liability"] = results
+
     def add_wildfire_costs(self, results: Dict[str, Any]):
         """Add wildfire cost results."""
         self.costs["wildfire"] = results
