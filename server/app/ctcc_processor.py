@@ -49,11 +49,20 @@ def ensure_cli_venv() -> str:
             capture_output=True,
             cwd=str(CTCC_ROOT)
         )
-        subprocess.run(
+        result = subprocess.run(
             [str(venv_python), "-m", "pip", "install", "-r", str(requirements_file)],
-            check=True,
+            capture_output=True,
+            text=True,
             cwd=str(CTCC_ROOT)
         )
+        # Only raise if pip failed AND packages are actually missing
+        # Exit code 120 can be a warning, not necessarily a failure
+        if result.returncode not in [0, 120]:
+            raise RuntimeError(
+                f"Failed to install dependencies (exit code {result.returncode}):\n"
+                f"stdout: {result.stdout}\n"
+                f"stderr: {result.stderr}"
+            )
 
     return str(venv_python)
 

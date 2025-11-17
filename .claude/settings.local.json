@@ -51,7 +51,10 @@
       "Bash(export CTCC_SCENARIO_ID=test_env_vars:*)",
       "Bash(export CTCC_SCENARIO_ID=test_env_final)",
       "Bash(server/.venv/bin/python3:*)",
-      "Bash(/tmp/test_api_flags.sh)"
+      "Bash(/tmp/test_api_flags.sh)",
+      "Bash(./run_calc_server.command)",
+      "Bash(/usr/libexec/ApplicationFirewall/socketfilterfw:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
