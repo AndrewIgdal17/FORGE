@@ -1,0 +1,1735 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+
+\geometry{margin=1in}
+
+\title{CTCC YAML Configuration Guide\\
+\large Comprehensive User Reference for All Configuration Choices}
+\author{Comprehensive Transmission Cost Calculator}
+\date{\today}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+% Code listing style
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+This document serves as a comprehensive guide to all configuration choices available in the Comprehensive Transmission Cost Calculator (CTCC). The CTCC uses YAML (YAML Ain't Markup Language) configuration files to define project parameters, financial settings, risk parameters, and operational characteristics.
+
+\subsection{Purpose}
+
+This guide explains:
+\begin{itemize}
+    \item What each YAML file configures
+    \item All available parameters and their meanings
+    \item Valid values and typical ranges
+    \item How parameters interact with each other
+    \item How choices affect cost calculations
+\end{itemize}
+
+\subsection{How to Use This Guide}
+
+This guide is organized by YAML file, following the numerical naming convention used in the CTCC. Each section covers:
+\begin{enumerate}
+    \item \textbf{Purpose}: What the file configures
+    \item \textbf{Parameter Choices}: All configurable parameters
+    \item \textbf{Valid Values}: Ranges, options, or typical values
+    \item \textbf{Meaning}: What each parameter affects
+    \item \textbf{Interactions}: How parameters relate to other files
+    \item \textbf{Examples}: Typical configurations
+\end{enumerate}
+
+\subsection{Project Categories}
+
+Many parameters reference \textit{project categories}, which are constructed from core technical details using the format:
+\begin{verbatim}
+"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+\end{verbatim}
+
+For example: \texttt{"Overhead/AC/394MW/Advanced Aluminum Conductor/NA"}
+
+For AC projects, \texttt{converter_type} is always \texttt{"NA"}. For DC projects, it is either \texttt{"LCC Converter"} or \texttt{"VSC Converter"}.
+
+\section{Core Project Configuration}
+\label{sec:technical_details}
+
+\textbf{File:} \texttt{01\_project\_technical\_details.yaml}
+
+\subsection{Purpose}
+
+This file defines the core technical specifications that identify the transmission project. These parameters are used to construct the project category identifier and are included as the first columns in all CSV outputs for scenario comparison.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Project Identification}
+
+\begin{itemize}
+    \item \textbf{name} (string): Project identifier or name
+    \begin{itemize}
+        \item \textbf{Valid Values}: Any string (typically descriptive name)
+        \item \textbf{Meaning}: Used for identification in outputs
+        \item \textbf{Example}: \texttt{"Rural Corridor 500MW Overhead"}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Construction Type}
+
+\begin{itemize}
+    \item \textbf{construction\_type} (string): Installation method
+    \begin{itemize}
+        \item \textbf{Valid Values}: 
+        \begin{itemize}
+            \item \texttt{"Overhead"} - Traditional overhead transmission lines
+            \item \texttt{"Underground Direct-Buried"} - Direct-buried underground cables
+            \item \texttt{"Underground Tunnel"} - Underground tunnel installations
+            \item \texttt{"Subsea"} - Submarine transmission cables
+        \end{itemize}
+        \item \textbf{Meaning}: Determines build costs, ROW requirements, O\&M costs, wildfire/outage risks, and environmental mitigation costs
+        \item \textbf{Interactions}: Affects parameters in files 06 (wildfire), 07 (outage), 09 (environmental), 10-15 (category costs), 20-21 (category technical data)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Current Type}
+
+\begin{itemize}
+    \item \textbf{ac\_dc} (string): Alternating or direct current
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{"AC"} or \texttt{"DC"}
+        \item \textbf{Meaning}: 
+        \begin{itemize}
+            \item \texttt{"AC"}: Standard alternating current transmission
+            \item \texttt{"DC"}: Direct current transmission (requires converters)
+        \end{itemize}
+        \item \textbf{Interactions}: If \texttt{"DC"}, must specify \texttt{converter\_type} and \texttt{number\_of\_converters}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Capacity}
+
+\begin{itemize}
+    \item \textbf{capacity\_mw} (float): Rated capacity in megawatts
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (typical: 140, 329, 394, 460, 500, 657, 1000, 1500 MW)
+        \item \textbf{Meaning}: Determines project category, affects build costs, line losses, and benefit calculations
+        \item \textbf{Interactions}: Must match a valid capacity in category files (10, 13-15, 20-21)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Conductor Type}
+
+\begin{itemize}
+    \item \textbf{conductor\_type} (string): Conductor technology
+    \begin{itemize}
+        \item \textbf{Valid Values}: 
+        \begin{itemize}
+            \item \texttt{"Standard Aluminum Conductor"} - Traditional ACSR conductors
+            \item \texttt{"Advanced Aluminum Conductor"} - Advanced composite core conductors (ACCC)
+        \end{itemize}
+        \item \textbf{Meaning}: Affects conductor costs, resistance (line losses), and O\&M costs
+        \item \textbf{Interactions}: Used in project category construction; affects files 10 (build costs), 13 (conductor O\&M), 21 (resistance)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Converter Configuration (DC Only)}
+
+\begin{itemize}
+    \item \textbf{converter\_type} (string): Converter technology (DC projects only)
+    \begin{itemize}
+        \item \textbf{Valid Values}: 
+        \begin{itemize}
+            \item \texttt{"LCC Converter"} - Line Commutated Converter
+            \item \texttt{"VSC Converter"} - Voltage Source Converter
+        \end{itemize}
+        \item \textbf{Meaning}: Determines converter costs and O\&M
+        \item \textbf{Note}: For AC projects, this parameter is set to \texttt{"NA"} automatically
+    \end{itemize}
+    
+    \item \textbf{number\_of\_converters} (integer): Number of converter stations
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{1} or \texttt{2}
+        \item \textbf{Meaning}: Typically 2 (one at each end) for point-to-point DC lines
+        \item \textbf{Interactions}: Multiplies converter costs from category files
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Line Utilization}
+
+\begin{itemize}
+    \item \textbf{line\_utilization} (float): Average capacity factor
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.5 to 0.9)
+        \item \textbf{Meaning}: Fraction of rated capacity used on average; affects line loss calculations
+        \item \textbf{Example}: 0.70 = 70\% average utilization
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Electricity Price}
+
+\begin{itemize}
+    \item \textbf{baseline\_electricity\_price\_per\_mwh} (float): Base electricity price
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (typical: 30-100 \$/MWh)
+        \item \textbf{Meaning}: Used for line loss cost/benefit calculations and congestion/curtailment benefit valuations
+        \item \textbf{Interactions}: Affects files 16 (emissions), 17 (congestion), 18 (curtailment), line loss calculations
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Social Discount Rate}
+
+\begin{itemize}
+    \item \textbf{social\_discount\_rate} (float): Public sector discount rate
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.02 to 0.07 (2\% to 7\%)
+        \item \textbf{Meaning}: Used for present value calculations in public benefit-cost analysis
+        \item \textbf{Reference}: U.S. Office of Management and Budget, Circular A-4 (2003, reaffirmed 2023) recommends 3\% for intergenerational projects
+        \item \textbf{Interactions}: Used in files 06 (wildfire), 07 (outage), and all present value calculations
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Reconductoring Configuration}
+
+\begin{itemize}
+    \item \textbf{reconductoring} (boolean): Whether this is a reconductoring project
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{True} or \texttt{False}
+        \item \textbf{Meaning}: 
+        \begin{itemize}
+            \item \texttt{True}: Upgrading existing line (lower build costs, line loss benefits)
+            \item \texttt{False}: New greenfield project (full build costs, line loss costs)
+        \end{itemize}
+        \item \textbf{Interactions}: If \texttt{True}, must specify old line parameters below
+    \end{itemize}
+    
+    \item \textbf{old\_capacity\_mw} (float): Original line capacity (reconductoring only)
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers, typically less than \texttt{capacity\_mw}
+        \item \textbf{Meaning}: Original line capacity before upgrade
+    \end{itemize}
+    
+    \item \textbf{old\_conductor\_type} (string): Original conductor type (reconductoring only)
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{"Standard Aluminum Conductor"} or \texttt{"Advanced Aluminum Conductor"}
+        \item \textbf{Meaning}: Used to calculate line loss benefits (reduction in losses)
+    \end{itemize}
+    
+    \item \textbf{old\_ac\_dc} (string): Original current type (reconductoring only)
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{"AC"} or \texttt{"DC"}
+        \item \textbf{Meaning}: Used for benefit calculations
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Timeline Parameters}
+
+\begin{itemize}
+    \item \textbf{construction\_years} (float): Years to complete construction
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (typical: 1-5 years)
+        \item \textbf{Meaning}: Duration of construction period; affects cost timing and AFUDC calculations
+    \end{itemize}
+    
+    \item \textbf{delay\_years} (float): Years of delay before construction
+    \begin{itemize}
+        \item \textbf{Valid Values}: Non-negative numbers (typical: 0-5 years)
+        \item \textbf{Meaning}: Permitting/regulatory delay period; affects delay costs, ROW holding costs, and AFUDC eligibility
+    \end{itemize}
+    
+    \item \textbf{project\_lifetime} (integer): Operational lifetime in years
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive integers (typical: 40-60 years)
+        \item \textbf{Meaning}: Duration of operational period; affects present value calculations for all recurring costs and benefits
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+project:
+  name: "Rural Corridor 500MW"
+  construction_type: "Overhead"
+  ac_dc: "AC"
+  number_of_converters: 2
+  capacity_mw: 500
+  conductor_type: "Advanced Aluminum Conductor"
+  converter_type: "NA"
+  line_utilization: 0.70
+  baseline_electricity_price_per_mwh: 50.0
+  social_discount_rate: 0.03
+  reconductoring: False
+  old_capacity_mw: 0
+  old_conductor_type: "Standard Aluminum Conductor"
+  old_ac_dc: "AC"
+
+timeline:
+  construction_years: 2
+  delay_years: 1.5
+  project_lifetime: 50
+\end{lstlisting}
+
+\section{Physical Project Details}
+\label{sec:physical_details}
+
+\textbf{File:} \texttt{02\_project\_physical\_details.yaml}
+
+\subsection{Purpose}
+
+This file defines the physical route characteristics, including terrain distribution and terrain-specific cost multipliers. The terrain distribution determines how many miles of the line pass through each terrain type, which affects build costs, O\&M costs, wildfire risks, outage risks, and environmental mitigation costs.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Terrain Distribution}
+
+\begin{itemize}
+    \item \textbf{terrain\_miles} (dictionary): Miles in each terrain type
+    \begin{itemize}
+        \item \textbf{Valid Terrain Types}:
+        \begin{itemize}
+            \item \texttt{forested} - Forested areas
+            \item \texttt{scrubbed\_flat} - Scrubland/flat terrain
+            \item \texttt{wetland} - Wetlands
+            \item \texttt{farmland} - Agricultural land
+            \item \texttt{desert\_barren} - Desert/barren land
+            \item \texttt{urban} - Urban areas
+            \item \texttt{rolling\_hills} - Rolling hills
+            \item \texttt{mountain} - Mountainous terrain
+            \item \texttt{subsea} - Subsea (for subsea projects)
+        \end{itemize}
+        \item \textbf{Valid Values}: Non-negative numbers (miles)
+        \item \textbf{Meaning}: The sum of all terrain miles equals total line length
+        \item \textbf{Interactions}: Affects files 06 (wildfire ignition rates), 07 (outage rates/durations), 09 (environmental mitigation), 12 (vegetation management), 14 (structure O\&M)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Terrain Multipliers}
+
+\begin{itemize}
+    \item \textbf{terrain\_multipliers} (dictionary): Cost multipliers by terrain
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (typical: 1.0 to 2.5)
+        \item \textbf{Meaning}: Multiplier applied to base build costs for each terrain type
+        \begin{itemize}
+            \item \texttt{forested}: 2.25 (highest cost - difficult access)
+            \item \texttt{scrubbed\_flat}: 1.0 (baseline)
+            \item \texttt{wetland}: 1.2 (moderate increase)
+            \item \texttt{farmland}: 1.0 (baseline)
+            \item \texttt{desert\_barren}: 1.05 (slight increase)
+            \item \texttt{urban}: 1.59 (higher - urban constraints)
+            \item \texttt{rolling\_hills}: 1.4 (moderate increase)
+            \item \texttt{mountain}: 1.75 (high - difficult terrain)
+            \item \texttt{subsea}: 1.0 (baseline for subsea)
+        \end{itemize}
+        \item \textbf{Interactions}: Applied to build costs in file 10
+    \end{itemize}
+\end{itemize}
+
+\subsection{Total Line Length}
+
+The total line length is automatically calculated as the sum of all \texttt{terrain\_miles} values. This total is used throughout the CTCC for:
+\begin{itemize}
+    \item Build cost calculations (variable costs per mile)
+    \item ROW cost calculations (acres = miles × ROW width)
+    \item O\&M cost calculations (per mile per year)
+    \item Risk calculations (per mile rates)
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+terrain:
+  terrain_miles:
+    forested: 25
+    scrubbed_flat: 35
+    wetland: 5
+    farmland: 20
+    desert_barren: 0
+    urban: 0
+    rolling_hills: 15
+    mountain: 0
+    subsea: 0
+
+  terrain_multipliers:
+    forested: 2.25
+    scrubbed_flat: 1.0
+    wetland: 1.2
+    farmland: 1.0
+    desert_barren: 1.05
+    urban: 1.59
+    rolling_hills: 1.4
+    mountain: 1.75
+    subsea: 1.0
+\end{lstlisting}
+
+\textbf{Total Line Length}: 100 miles
+
+\section{Financing Parameters}
+\label{sec:financing}
+
+\textbf{File:} \texttt{03\_financing.yaml}
+
+\subsection{Purpose}
+
+This file defines financial parameters including inflation, discount rates, contingencies, capital structure, and AFUDC (Allowance for Funds Used During Construction) configuration. These parameters affect present value calculations, cost escalation, and regulatory accounting.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Inflation and Base Year}
+
+\begin{itemize}
+    \item \textbf{inflation\_rate} (float): Annual inflation rate
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.02 to 0.05 (2\% to 5\%)
+        \item \textbf{Meaning}: Used to escalate costs from base year to actual year
+    \end{itemize}
+    
+    \item \textbf{base\_year} (integer): Reference year for costs
+    \begin{itemize}
+        \item \textbf{Valid Values}: Year (e.g., 2025)
+        \item \textbf{Meaning}: All costs are expressed in base year dollars
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Discount Rates}
+
+\begin{itemize}
+    \item \textbf{wacc\_nominal} (float): Weighted Average Cost of Capital (nominal)
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.06 to 0.12 (6\% to 12\%)
+        \item \textbf{Meaning}: Private sector discount rate; used for AFUDC calculations if capital structure not specified
+        \item \textbf{Note}: Real WACC = (1 + nominal WACC) / (1 + inflation) - 1
+    \end{itemize}
+    
+    \item \textbf{social\_discount\_rate} (float): Public sector discount rate
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.02 to 0.07 (2\% to 7\%)
+        \item \textbf{Meaning}: For public benefit-cost analysis; can differ from value in file 01 (this one takes precedence for financial calculations)
+        \item \textbf{Reference}: OMB Circular A-4 recommends 3\% for intergenerational projects
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Contingencies}
+
+\begin{itemize}
+    \item \textbf{contingencies} (dictionary): Contingency percentages
+    \begin{itemize}
+        \item \textbf{conductor\_contingency} (float): Range [0, 1] (typical: 0.10 = 10\%)
+        \item \textbf{structure\_contingency} (float): Range [0, 1] (typical: 0.10 = 10\%)
+        \item \textbf{converter\_contingency} (float): Range [0, 1] (typical: 0.10 = 10\%)
+        \item \textbf{Meaning}: Applied to base build costs to account for uncertainty
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Capital Structure (Optional)}
+
+\begin{itemize}
+    \item \textbf{capital\_structure} (dictionary, optional): Equity/debt breakdown
+    \begin{itemize}
+        \item \textbf{equity\_percent} (float): Range [0, 1] (typical: 0.50 = 50\%)
+        \item \textbf{debt\_percent} (float): Range [0, 1] (must sum to 1.0 with equity)
+        \item \textbf{cost\_of\_equity} (float): Return on equity (typical: 0.10 = 10\%)
+        \item \textbf{cost\_of\_debt} (float): Interest rate on debt (typical: 0.05 = 5\%)
+        \item \textbf{Meaning}: If specified, used to calculate AFUDC rate; otherwise WACC used as proxy
+        \item \textbf{Note}: WACC = equity\_percent × cost\_of\_equity + debt\_percent × cost\_of\_debt
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{AFUDC Configuration}
+
+\begin{itemize}
+    \item \textbf{afudc} (dictionary): AFUDC settings
+    \begin{itemize}
+        \item \textbf{apply\_afudc} (boolean): Enable/disable AFUDC calculations
+        \begin{itemize}
+            \item \textbf{Valid Values}: \texttt{true} or \texttt{false}
+            \item \textbf{Meaning}: Toggles AFUDC capitalization on/off
+        \end{itemize}
+        
+        \item \textbf{delay\_period\_active\_work} (boolean): AFUDC during delay period
+        \begin{itemize}
+            \item \textbf{Valid Values}: \texttt{true} or \texttt{false}
+            \item \textbf{Meaning}: 
+            \begin{itemize}
+                \item \texttt{true}: AFUDC accrues if active work continues (permitting, design, CWIP-eligible costs)
+                \item \texttt{false}: AFUDC suspended during delay (conservative default per FERC)
+            \end{itemize}
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+financial:
+  inflation_rate: 0.03
+  base_year: 2025
+  wacc_nominal: 0.08
+  social_discount_rate: 0.03
+
+  contingencies:
+    conductor_contingency: 0.10
+    structure_contingency: 0.10
+    converter_contingency: 0.10
+
+  capital_structure:
+    equity_percent: 0.50
+    debt_percent: 0.50
+    cost_of_equity: 0.10
+    cost_of_debt: 0.05
+
+  afudc:
+    apply_afudc: true
+    delay_period_active_work: false
+\end{lstlisting}
+
+\section{Insurance Configuration}
+\label{sec:insurance}
+
+\textbf{File:} \texttt{04\_insurance.yaml}
+
+\subsection{Purpose}
+
+This file configures operational insurance costs for transmission line assets. Insurance premiums are calculated as a percentage of insurable asset value (conductors, structures, converters).
+
+\subsection{Parameter Choices}
+
+\subsubsection{Default Premium Rate}
+
+\begin{itemize}
+    \item \textbf{premium\_rate} (float): Annual insurance premium rate
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.001 to 0.005 (0.1\% to 0.5\%)
+        \item \textbf{Meaning}: Applied to insurable asset value to calculate annual premium
+        \item \textbf{Example}: 0.002 = 0.2\% annual premium
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Insurable Components}
+
+\begin{itemize}
+    \item \textbf{insurable\_components} (dictionary): Which assets are insured
+    \begin{itemize}
+        \item \textbf{conductors} (boolean): Include conductor costs
+        \item \textbf{structures} (boolean): Include structure costs
+        \item \textbf{converters} (boolean): Include converter costs
+        \item \textbf{Meaning}: Determines total insurable value
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Construction Type-Specific Premiums (Optional)}
+
+\begin{itemize}
+    \item \textbf{premium\_by\_construction\_type} (dictionary, optional): Premium rates by construction type
+    \begin{itemize}
+        \item \textbf{overhead} (float): Premium for overhead lines (typical: 0.002 = 0.2\%)
+        \item \textbf{underground} (float): Premium for underground lines (typical: 0.0015 = 0.15\%)
+        \item \textbf{subsea} (float): Premium for subsea lines (typical: 0.0025 = 0.25\%)
+        \item \textbf{Meaning}: If specified, overrides default \texttt{premium\_rate} for that construction type
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+insurance:
+  premium_rate: 0.002
+
+  insurable_components:
+    conductors: true
+    structures: true
+    converters: true
+
+  premium_by_construction_type:
+    overhead: 0.002
+    underground: 0.0015
+    subsea: 0.0025
+\end{lstlisting}
+
+\section{Delay Costs}
+\label{sec:delays}
+
+\textbf{File:} \texttt{05\_delays.yaml}
+
+\subsection{Purpose}
+
+This file defines annual costs incurred during project delays (permitting, regulatory, legal processes). These costs occur during the \texttt{delay\_years} period defined in file 01.
+
+\subsection{Parameter Choices}
+
+All parameters are annual costs in dollars per year:
+
+\begin{itemize}
+    \item \textbf{legal} (float): Legal expenses (\$/year)
+    \item \textbf{admin} (float): Administrative costs (\$/year)
+    \item \textbf{labor} (float): Labor costs (\$/year)
+    \item \textbf{material\_and\_equipment} (float): Material/equipment costs (\$/year)
+    \item \textbf{regulatory} (float): Regulatory compliance costs (\$/year)
+    \item \textbf{public\_relations} (float): Public relations costs (\$/year)
+    \item \textbf{project\_management} (float): Project management costs (\$/year)
+    \item \textbf{miscellaneous} (float): Other delay-related costs (\$/year)
+\end{itemize}
+
+\subsection{Total Annual Delay Cost}
+
+The total annual delay cost is the sum of all components. Total delay cost = annual cost × \texttt{delay\_years} (from file 01).
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+annual_delay_costs:
+  legal: 200000
+  admin: 100000
+  labor: 1000000
+  material_and_equipment: 800000
+  regulatory: 300000
+  public_relations: 50000
+  project_management: 400000
+  miscellaneous: 100000
+\end{lstlisting}
+
+\textbf{Total Annual Delay Cost}: \$2,950,000/year
+
+\section{Wildfire Risk Parameters}
+\label{sec:wildfire}
+
+\textbf{File:} \texttt{06\_wildfire\_costs.yaml}
+
+\subsection{Purpose}
+
+This file configures wildfire risk parameters, including event severity, ignition rates by terrain and construction type, and discount rate selection. Wildfire costs are calculated as expected annual loss = ignition rate × severity per event.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Event Severity}
+
+\begin{itemize}
+    \item \textbf{severity\_per\_event} (float): Mean loss per wildfire event
+    \begin{itemize}
+        \item \textbf{Valid Values}: Large numbers (typical: \$1B to \$10B)
+        \item \textbf{Meaning}: Expected financial loss if a wildfire is ignited by the line
+        \item \textbf{Example}: 5000000000 = \$5 billion per event
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Risk Growth}
+
+\begin{itemize}
+    \item \textbf{risk\_growth\_rate} (float, optional): Annual increase in ignition probability
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.0 to 0.05 (0\% to 5\%)
+        \item \textbf{Meaning}: Accounts for increasing wildfire risk over time (climate change, etc.)
+        \item \textbf{Default}: 0.02 = 2\% annual increase
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Discount Rate Configuration}
+
+\begin{itemize}
+    \item \textbf{discount\_rate\_source} (string): Source of discount rate
+    \begin{itemize}
+        \item \textbf{Valid Values}: 
+        \begin{itemize}
+            \item \texttt{"social"} - Use social discount rate from file 03
+            \item \texttt{"wacc\_real"} - Use real WACC from file 03
+            \item \texttt{"custom"} - Use custom rate specified below
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{discount\_rate\_custom} (float): Custom discount rate (if source = "custom")
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.02 to 0.07
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Base Ignition Rates by Terrain}
+
+\begin{itemize}
+    \item \textbf{ignition\_rates\_by\_terrain} (dictionary): Base ignition rates (events per mile per year)
+    \begin{itemize}
+        \item \textbf{Valid Values}: Small positive numbers (typical: 0.00001 to 0.0001)
+        \item \textbf{Meaning}: Baseline ignition rate for overhead lines in each terrain
+        \item \textbf{Typical Values}:
+        \begin{itemize}
+            \item \texttt{forested}: 0.0001 (highest risk)
+            \item \texttt{mountain}: 0.0001
+            \item \texttt{scrubbed\_flat}: 0.00005
+            \item \texttt{rolling\_hills}: 0.00006
+            \item \texttt{desert\_barren}: 0.00008
+            \item \texttt{farmland}: 0.00003
+            \item \texttt{urban}: 0.00002
+            \item \texttt{wetland}: 0.00001 (lowest risk)
+            \item \texttt{subsea}: 0.0 (no risk)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Ignition Rate Multipliers by Construction Type}
+
+\begin{itemize}
+    \item \textbf{ignition\_rate\_multiplier} (dictionary): Multipliers by construction type
+    \begin{itemize}
+        \item \textbf{overhead} (float): 1.0 (baseline)
+        \item \textbf{underground} (float): 0.02 (98\% reduction)
+        \item \textbf{subsea} (float): 0.0 (no risk)
+        \item \textbf{Meaning}: Effective rate = base terrain rate × multiplier
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+wildfire:
+  severity_per_event: 5000000000
+  risk_growth_rate: 0.02
+  discount_rate_source: "social"
+  discount_rate_custom: 0.03
+
+  ignition_rates_by_terrain:
+    forested: 0.0001
+    scrubbed_flat: 0.00005
+    wetland: 0.00001
+    farmland: 0.00003
+    desert_barren: 0.00008
+    urban: 0.00002
+    rolling_hills: 0.00006
+    mountain: 0.0001
+    subsea: 0.0
+
+  ignition_rate_multiplier:
+    overhead: 1.0
+    underground: 0.02
+    subsea: 0.0
+\end{lstlisting}
+
+\section{Outage Risk Parameters}
+\label{sec:outage}
+
+\textbf{File:} \texttt{07\_outage\_costs.yaml}
+
+\subsection{Purpose}
+
+This file configures outage risk parameters, including outage rates by construction type and terrain, outage durations, value of lost load (VoLL), and capacity at risk factors. Outage costs are calculated as expected annual cost = outage rate × duration × capacity at risk × VoLL.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Risk Growth}
+
+\begin{itemize}
+    \item \textbf{risk\_growth\_rate} (float): Annual increase in outage rates
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 0.0 (no growth)
+        \item \textbf{Meaning}: Accounts for increasing outage risk over time
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Discount Rate}
+
+\begin{itemize}
+    \item \textbf{discount\_rate\_type} (string): Discount rate source
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{"social"} or \texttt{"wacc\_real"}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Capacity at Risk}
+
+\begin{itemize}
+    \item \textbf{capacity\_at\_risk\_factor} (float): Fraction of capacity at risk during outage
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.5 to 1.0)
+        \item \textbf{Meaning}: 
+        \begin{itemize}
+            \item 1.0 = Radial line (100\% of capacity lost during outage)
+            \item <1.0 = Meshed/redundant system (partial capacity loss)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Value of Lost Load (VoLL)}
+
+\begin{itemize}
+    \item \textbf{value\_of\_lost\_load} (dictionary): Tiered VoLL by outage duration
+    \begin{itemize}
+        \item \textbf{tiers} (list): List of tier definitions
+        \begin{itemize}
+            \item \textbf{max\_hours} (float): Maximum hours for this tier (use \texttt{.inf} for infinity)
+            \item \textbf{value\_per\_mwh} (float): VoLL in \$/MWh for this tier
+        \end{itemize}
+        \item \textbf{Typical Tiers}:
+        \begin{itemize}
+            \item Tier 1: 0-4 hours, \$5,000/MWh (short outages)
+            \item Tier 2: 4-24 hours, \$10,000/MWh (medium outages)
+            \item Tier 3: 24+ hours, \$15,000/MWh (long outages)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Outage Duration by Terrain}
+
+\begin{itemize}
+    \item \textbf{outage\_duration\_by\_terrain} (dictionary): Hours per outage event by terrain
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (hours)
+        \item \textbf{Typical Values}:
+        \begin{itemize}
+            \item \texttt{urban}: 2 hours (fastest repair)
+            \item \texttt{farmland}: 3 hours
+            \item \texttt{scrubbed\_flat}: 4 hours
+            \item \texttt{desert\_barren}: 5 hours
+            \item \texttt{wetland}: 6 hours
+            \item \texttt{rolling\_hills}: 6 hours
+            \item \texttt{forested}: 8 hours
+            \item \texttt{mountain}: 12 hours
+            \item \texttt{subsea}: 240 hours (10 days - very slow repair)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Duration Multipliers by Construction Type}
+
+\begin{itemize}
+    \item \textbf{outage\_duration\_multiplier} (dictionary): Multipliers by construction type
+    \begin{itemize}
+        \item \textbf{overhead} (float): 1.0 (baseline)
+        \item \textbf{underground} (float): 2.0 (longer repair times)
+        \item \textbf{subsea} (float): 3.0 (very long repair times)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Outage Rates}
+
+\begin{itemize}
+    \item \textbf{outage\_rates} (dictionary): Outages per mile per year by construction type and terrain
+    \begin{itemize}
+        \item \textbf{Structure}: \texttt{outage\_rates[construction\_type][terrain]}
+        \item \textbf{Valid Values}: Positive numbers (typical: 0.001 to 0.1 outages/mile/year)
+        \item \textbf{Meaning}: Direct specification of outage frequency (no f × p split)
+        \item \textbf{Note}: Must specify for all construction types and all terrain types
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+outage:
+  risk_growth_rate: 0.0
+  discount_rate_type: "social"
+  capacity_at_risk_factor: 1.0
+
+  value_of_lost_load:
+    tiers:
+      - max_hours: 4
+        value_per_mwh: 5000
+      - max_hours: 24
+        value_per_mwh: 10000
+      - max_hours: .inf
+        value_per_mwh: 15000
+
+  outage_duration_by_terrain:
+    forested: 8
+    scrubbed_flat: 4
+    wetland: 6
+    farmland: 3
+    desert_barren: 5
+    urban: 2
+    rolling_hills: 6
+    mountain: 12
+    subsea: 240
+
+  outage_duration_multiplier:
+    overhead: 1.0
+    underground: 2.0
+    subsea: 3.0
+
+  outage_rates:
+    overhead:
+      forested: 0.04
+      scrubbed_flat: 0.021
+      # ... (all terrain types)
+    underground:
+      forested: 0.005
+      # ... (all terrain types)
+    subsea:
+      # All terrains: 0.00475
+\end{lstlisting}
+
+\section{Environmental Mitigation}
+\label{sec:environmental}
+
+\textbf{File:} \texttt{09\_environmental\_mitigation.yaml}
+
+\subsection{Purpose}
+
+This file configures environmental mitigation costs, including base restoration costs per acre by construction type and terrain, credit purchase costs (off-site mitigation), and mitigation ratios (acres required per acre impacted).
+
+\subsection{Parameter Choices}
+
+\subsubsection{Mitigation Uplift Factor}
+
+\begin{itemize}
+    \item \textbf{mitigation\_uplift\_factor} (float): Width multiplier for mitigation area
+    \begin{itemize}
+        \item \textbf{Valid Values}: Typically 1.0 to 1.5
+        \item \textbf{Meaning}: Accounts for construction width beyond ROW width (TCE - Temporary Construction Easement)
+        \item \textbf{Example}: 1.25 = mitigation area is 25\% larger than ROW area
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Base Mitigation Costs}
+
+\begin{itemize}
+    \item \textbf{base\_mitigation\_cost\_per\_acre} (dictionary): Restoration costs by construction type and terrain
+    \begin{itemize}
+        \item \textbf{Structure}: \texttt{base\_mitigation\_cost\_per\_acre[construction\_type][terrain]}
+        \item \textbf{Valid Values}: Positive numbers (\$/acre)
+        \item \textbf{Construction Types}:
+        \begin{itemize}
+            \item \texttt{overhead}
+            \item \texttt{underground\_direct\_buried}
+            \item \texttt{underground\_tunnel}
+            \item \texttt{subsea}
+        \end{itemize}
+        \item \textbf{Typical Values}: \$800 to \$10,000 per acre
+        \item \textbf{Special Values}:
+        \begin{itemize}
+            \item \texttt{linear\_corridor\_default}: Default for unknown terrain (tunnel)
+            \item \texttt{shaft\_site\_default}: Default for pad/disturbed sites (tunnel)
+            \item \texttt{seabed\_corridor\_default}: 0 for subsea (passive recovery)
+            \item \texttt{landfall\_default}: Onshore landfall costs (subsea)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Credit Purchase Costs}
+
+\begin{itemize}
+    \item \textbf{credit\_cost\_per\_acre} (dictionary): Off-site mitigation credit costs
+    \begin{itemize}
+        \item \textbf{wetlands} (dictionary): Wetland credit costs by subtype
+        \begin{itemize}
+            \item \texttt{palustrine}: \$50,000/acre
+            \item \texttt{estuarine}: \$100,000/acre
+            \item \texttt{other}: \$25,000/acre
+        \end{itemize}
+        \item \textbf{habitat} (dictionary): Habitat credit costs
+        \begin{itemize}
+            \item \texttt{default}: \$30,000/acre
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Mitigation Ratios}
+
+\begin{itemize}
+    \item \textbf{credit\_ratios} (dictionary): Acres required per acre impacted
+    \begin{itemize}
+        \item \textbf{wetlands} (dictionary):
+        \begin{itemize}
+            \item \texttt{palustrine}: 1.5 (1.5 acres required per acre impacted)
+            \item \texttt{estuarine}: 2.5
+            \item \texttt{other}: 1.0
+        \end{itemize}
+        \item \textbf{habitat} (dictionary):
+        \begin{itemize}
+            \item \texttt{default}: 1.0
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+environmental_mitigation:
+  mitigation_uplift_factor: 1.25
+
+  base_mitigation_cost_per_acre:
+    overhead:
+      forested: 5000
+      scrubbed_flat: 1000
+      wetland: 5000
+      farmland: 800
+      # ... (all terrain types)
+    underground_direct_buried:
+      # ... (all terrain types)
+    underground_tunnel:
+      linear_corridor_default: 1500
+      shaft_site_default: 1000
+    subsea:
+      seabed_corridor_default: 0
+      landfall_default: 1000
+
+  credit_cost_per_acre:
+    wetlands:
+      palustrine: 50000
+      estuarine: 100000
+      other: 25000
+    habitat:
+      default: 30000
+
+  credit_ratios:
+    wetlands:
+      palustrine: 1.5
+      estuarine: 2.5
+      other: 1.0
+    habitat:
+      default: 1.0
+\end{lstlisting}
+
+\section{Right-of-Way Configuration}
+\label{sec:row}
+
+\textbf{File:} \texttt{11\_project\_row\_details.yaml}
+
+\subsection{Purpose}
+
+This file configures right-of-way (ROW) acquisition and management costs using a zone-based approach. Each zone represents a segment of the line with different land values and rental costs.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Zone Configuration}
+
+The file defines up to 15 zones (zone\_1 through zone\_15), each with:
+
+\begin{itemize}
+    \item \textbf{miles} (float): Miles of line in this zone
+    \begin{itemize}
+        \item \textbf{Valid Values}: Non-negative numbers
+        \item \textbf{Meaning}: Sum of all zone miles should equal total line length
+    \end{itemize}
+    
+    \item \textbf{acquisition\_cost} (float): One-time acquisition cost per acre
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (\$/acre)
+        \item \textbf{Meaning}: Cost to acquire ROW land
+        \item \textbf{Typical Values}: \$5,000 to \$20,000 per acre
+    \end{itemize}
+    
+    \item \textbf{rent\_cost} (float): Annual rental cost per acre
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (\$/acre/year)
+        \item \textbf{Meaning}: Annual rent if ROW is leased rather than owned
+        \item \textbf{Typical Values}: \$9 to \$31,116 per acre/year (varies significantly by zone)
+    \end{itemize}
+    
+    \item \textbf{hold\_cost} (float): Annual holding cost per acre during delay period
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (\$/acre)
+        \item \textbf{Meaning}: Cost to hold/secure ROW during permitting delay
+        \item \textbf{Typical Values}: Often set to 0.1 × rent\_cost per year
+        \item \textbf{Note}: Applied during \texttt{delay\_years} period
+    \end{itemize}
+\end{itemize}
+
+\subsection{Zone Definitions}
+
+Zones typically represent increasing land values:
+\begin{itemize}
+    \item \textbf{Zones 1-3}: Rural/low-value land (\$9-\$35/acre/year rent)
+    \item \textbf{Zones 4-6}: Moderate-value land (\$53-\$106/acre/year rent)
+    \item \textbf{Zones 7-9}: High-value land (\$148-\$507/acre/year rent)
+    \item \textbf{Zones 10-15}: Very high-value land (\$1,556-\$31,116/acre/year rent)
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+right_of_way:
+  zone_1:
+    miles: 25
+    acquisition_cost: 13569
+    rent_cost: 9
+    hold_cost: 9
+  zone_2:
+    miles: 25
+    acquisition_cost: 13569
+    rent_cost: 18
+    hold_cost: 18
+  zone_3:
+    miles: 30
+    acquisition_cost: 13569
+    rent_cost: 35
+    hold_cost: 35
+  # ... (zones 4-15, with miles: 0 if not used)
+\end{lstlisting}
+
+\section{O\&M Vegetation Management}
+\label{sec:vegetation}
+
+\textbf{File:} \texttt{12\_project\_om\_vegetation\_management.yaml}
+
+\subsection{Purpose}
+
+This file configures operations and maintenance costs for vegetation management, which applies only to overhead lines. Underground and subsea lines have zero vegetation management costs.
+
+\subsection{Parameter Choices}
+
+\begin{itemize}
+    \item \textbf{vegetation\_management\_om\_costs} (dictionary): Costs by construction type and terrain
+    \begin{itemize}
+        \item \textbf{Structure}: \texttt{vegetation\_management\_om\_costs[construction\_type][terrain]}
+        \item \textbf{Valid Values}: Non-negative numbers (\$/mile/year)
+        \item \textbf{Construction Types}:
+        \begin{itemize}
+            \item \texttt{Overhead}
+            \item \texttt{Underground Direct Buried}
+            \item \texttt{Underground Tunnel}
+            \item \texttt{Subsea}
+        \end{itemize}
+        \item \textbf{Typical Values for Overhead}:
+        \begin{itemize}
+            \item \texttt{scrubbed\_flat}: \$10,000/mile/year (highest - dense vegetation)
+            \item \texttt{forested}: \$8,000/mile/year
+            \item \texttt{mountain}: \$9,000/mile/year
+            \item \texttt{wetland}: \$7,000/mile/year
+            \item \texttt{rolling\_hills}: \$3,000/mile/year
+            \item \texttt{urban}: \$5,000/mile/year
+            \item \texttt{farmland}: \$500/mile/year
+            \item \texttt{desert\_barren}: \$300/mile/year (lowest)
+        \end{itemize}
+        \item \textbf{Note}: All non-overhead construction types have 0 cost
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+vegetation_management_om_costs:
+  Overhead:
+    forested: 8000
+    scrubbed_flat: 10000
+    wetland: 7000
+    farmland: 500
+    desert_barren: 300
+    urban: 5000
+    rolling_hills: 3000
+    mountain: 9000
+    subsea: 0
+  Underground Direct Buried:
+    # All terrains: 0
+  Underground Tunnel:
+    # All terrains: 0
+  Subsea:
+    # All terrains: 0
+\end{lstlisting}
+
+\section{Category-Specific O\&M Costs}
+\label{sec:category_om}
+
+\subsection{Conductor O\&M}
+\textbf{File:} \texttt{13\_category\_om\_conductors.yaml}
+
+This file defines O\&M costs for conductors organized by project category. Each category entry includes:
+\begin{itemize}
+    \item \textbf{variable\_cost\_per\_mile\_year} (float): Annual O\&M cost per mile (\$/mile/year)
+    \item \textbf{Typical Values}: \$500 to \$2,000 per mile per year
+    \item \textbf{Note}: Costs vary by capacity and conductor type
+\end{itemize}
+
+\subsection{Structure O\&M}
+\textbf{File:} \texttt{14\_category\_om\_structures.yaml}
+
+This file defines O\&M costs for transmission structures. Unlike other category files, structure O\&M is organized by installation method only (not by individual categories):
+\begin{itemize}
+    \item \textbf{Overhead}: Structure density and cost per structure
+    \begin{itemize}
+        \item \textbf{structures\_per\_mile\_[terrain]} (float): Structures per mile by terrain type
+        \item \textbf{cost\_per\_structure\_per\_year} (float): Annual maintenance cost per structure (\$/structure/year)
+    \end{itemize}
+    \item \textbf{Underground/Subsea}: Variable cost per mile per year (typically 0)
+\end{itemize}
+
+\subsection{Converter O\&M}
+\textbf{File:} \texttt{15\_category\_om\_converters.yaml}
+
+This file defines O\&M costs for converters (DC projects only), organized by project category. Each category entry includes:
+\begin{itemize}
+    \item \textbf{converter\_om\_cost\_per\_mile\_year} (float): Annual O\&M cost per mile (\$/mile/year)
+    \item \textbf{Note}: Only applies to DC projects; AC projects have "NA" converter type
+\end{itemize}
+
+\section{Emissions Reductions}
+\label{sec:emissions}
+
+\textbf{File:} \texttt{16\_emissions\_reductions.yaml}
+
+\subsection{Purpose}
+
+This file configures environmental benefits from emissions reductions associated with line losses. When transmission lines lose energy, that energy must be compensated by additional generation, which has associated emissions. This file defines the energy source mix, emission intensities, and societal costs of pollutants.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Compensation Percentage}
+
+\begin{itemize}
+    \item \textbf{compensation\_percent} (float): Fraction of losses compensated by additional generation
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.9 = 90\%)
+        \item \textbf{Meaning}: Not all losses require compensation (some are absorbed by system)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Energy Source Mix}
+
+\begin{itemize}
+    \item \textbf{energy\_source\_mix} (dictionary): Generation mix percentages and growth rates
+    \begin{itemize}
+        \item \textbf{Structure}: For each energy source (coal, oil, natural\_gas, solar, wind, hydro, nuclear, other):
+        \begin{itemize}
+            \item \textbf{percentage} (float): Initial percentage in mix (will be normalized)
+            \item \textbf{rate\_of\_change} (float): Annual growth/decay rate (typical: -0.05 to 0.05)
+        \end{itemize}
+        \item \textbf{Note}: Percentages are normalized to sum to 100\%
+        \item \textbf{Typical Values}:
+        \begin{itemize}
+            \item Coal: 10\%, rate: -0.05 (declining)
+            \item Natural Gas: 38\%, rate: 0.0 (stable)
+            \item Wind: 26\%, rate: 0.04 (growing)
+            \item Solar: 10\%, rate: 0.05 (growing)
+            \item Hydro: 5\%, rate: 0.0 (stable)
+            \item Nuclear: 5\%, rate: 0.0 (stable)
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Emission Intensities}
+
+\begin{itemize}
+    \item \textbf{emission\_intensities} (dictionary): Pollutant emissions per MWh by energy source
+    \begin{itemize}
+        \item \textbf{co2\_intensity\_kg\_per\_mwh} (dictionary): CO2 emissions (kg/MWh)
+        \begin{itemize}
+            \item Coal: 820 kg/MWh
+            \item Oil: 650 kg/MWh
+            \item Natural Gas: 450 kg/MWh
+            \item Solar: 48 kg/MWh
+            \item Wind: 12 kg/MWh
+            \item Hydro: 4 kg/MWh
+            \item Nuclear: 12 kg/MWh
+        \end{itemize}
+        \item \textbf{sox\_intensity\_kg\_per\_mwh} (dictionary): SOx emissions (kg/MWh)
+        \item \textbf{nox\_intensity\_kg\_per\_mwh} (dictionary): NOx emissions (kg/MWh)
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Societal Costs}
+
+\begin{itemize}
+    \item \textbf{societal\_costs\_per\_kg} (dictionary): Social cost of pollutants
+    \begin{itemize}
+        \item \textbf{co2\_cost\_per\_kg} (float): Social cost of carbon (\$/kg CO2)
+        \begin{itemize}
+            \item \textbf{Typical}: \$0.051/kg = \$51/tonne CO2
+        \end{itemize}
+        \item \textbf{sox\_cost\_per\_kg} (float): Social cost of SOx (\$/kg SOx)
+        \begin{itemize}
+            \item \textbf{Typical}: \$6.2/kg
+        \end{itemize}
+        \item \textbf{nox\_cost\_per\_kg} (float): Social cost of NOx (\$/kg NOx)
+        \begin{itemize}
+            \item \textbf{Typical}: \$5.0/kg
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+emissions_reductions:
+  compensation_percent: 0.9
+
+  energy_source_mix:
+    coal:
+      percentage: 10
+      rate_of_change: -0.05
+    natural_gas:
+      percentage: 38
+      rate_of_change: 0.0
+    wind:
+      percentage: 26
+      rate_of_change: 0.04
+    solar:
+      percentage: 10
+      rate_of_change: 0.05
+    # ... (other sources)
+
+  emission_intensities:
+    co2_intensity_kg_per_mwh:
+      coal: 820
+      natural_gas: 450
+      wind: 12
+      # ... (other sources)
+    # ... (sox, nox)
+
+  societal_costs_per_kg:
+    co2_cost_per_kg: 0.051
+    sox_cost_per_kg: 6.2
+    nox_cost_per_kg: 5.0
+\end{lstlisting}
+
+\section{Congestion Reductions}
+\label{sec:congestion}
+
+\textbf{File:} \texttt{17\_congestion\_reductions.yaml}
+
+\subsection{Purpose}
+
+This file configures cost savings from reduced transmission congestion. Congestion occurs when transmission lines are at capacity and cannot deliver all desired power, leading to price differences between regions. This file defines both greenfield (new line) and reconductoring congestion reduction parameters.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Greenfield Congestion Reductions}
+
+\begin{itemize}
+    \item \textbf{greenfield\_congestion\_reductions} (dictionary):
+    \begin{itemize}
+        \item \textbf{constraints} (dictionary):
+        \begin{itemize}
+            \item \textbf{flow\_factor} (float): Deliverability factor [0, 1]
+            \begin{itemize}
+                \item \textbf{Valid Values}: Range [0, 1] (typical: 0.6)
+                \item \textbf{Meaning}: Fraction of line capacity that effectively relieves the constraint
+                \item \textbf{Formula}: $\Delta C_{eff} = S \times \text{capacity}$
+            \end{itemize}
+            
+            \item \textbf{binding\_hours} (integer): Hours per year line is at capacity
+            \begin{itemize}
+                \item \textbf{Valid Values}: Non-negative integers (typical: 500-2000 hours/year)
+                \item \textbf{Meaning}: Number of hours when the constraint is binding
+            \end{itemize}
+            
+            \item \textbf{average\_exceedance} (float): Average MW exceedance during binding hours
+            \begin{itemize}
+                \item \textbf{Valid Values}: Non-negative numbers (MW)
+                \item \textbf{Meaning}: Average amount by which demand exceeds capacity during binding hours
+                \item \textbf{Formula}: Baseline congestion energy = $H_b \times X$ MWh/year
+            \end{itemize}
+            
+            \item \textbf{near\_binding\_hours} (integer): Hours per year line is near capacity
+            \begin{itemize}
+                \item \textbf{Valid Values}: Non-negative integers
+                \item \textbf{Meaning}: Hours when constraint is nearly binding
+            \end{itemize}
+            
+            \item \textbf{near\_average\_exceedance} (float): Average MW exceedance during near-binding hours
+            \begin{itemize}
+                \item \textbf{Valid Values}: Non-negative numbers (MW)
+            \end{itemize}
+            
+            \item \textbf{near\_binding\_relief\_factor} (float): Relief factor for near-binding hours [0, 1]
+            \begin{itemize}
+                \item \textbf{Valid Values}: Range [0, 1] (typical: 0.25)
+                \item \textbf{Meaning}: Fraction of near-binding congestion relieved
+            \end{itemize}
+            
+            \item \textbf{saturation\_factor} (float): System saturation factor
+            \begin{itemize}
+                \item \textbf{Valid Values}: Non-negative numbers (typical: 0.0 to 0.3)
+                \item \textbf{Meaning}: 
+                \begin{itemize}
+                    \item 0.0 = Radial line (full benefit)
+                    \item >0.0 = Meshed system (diminishing returns)
+                \end{itemize}
+            \end{itemize}
+        \end{itemize}
+        
+        \item \textbf{costs} (dictionary):
+        \begin{itemize}
+            \item \textbf{average\_congestion\_price} (float): Average congestion price (\$/MWh)
+            \begin{itemize}
+                \item \textbf{Valid Values}: Positive numbers (typical: 10-50 \$/MWh)
+                \item \textbf{Meaning}: Price difference between constrained and unconstrained regions
+            \end{itemize}
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Reconductoring Congestion Reductions}
+
+\begin{itemize}
+    \item \textbf{reconductoring\_congestion\_reductions} (dictionary): Similar structure to greenfield, but:
+    \begin{itemize}
+        \item \textbf{Meaning}: $\Delta C_{eff} = \Delta C_{eff,new} - \Delta C_{eff,old}$ (incremental benefit)
+        \item \textbf{hot\_hour\_weights} (float): Fraction of hours at or near Maximum Operating Temperature (MOT)
+        \begin{itemize}
+            \item \textbf{Valid Values}: Range [0, 1]
+            \item \textbf{Meaning}: Accounts for thermal constraints in reconductoring
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+greenfield_congestion_reductions:
+  constraints:
+    flow_factor: 0.6
+    binding_hours: 1200
+    average_exceedance: 150
+    near_binding_hours: 800
+    near_average_exceedance: 0
+    near_binding_relief_factor: 0.25
+    saturation_factor: 0.2
+  costs:
+    average_congestion_price: 20
+
+reconductoring_congestion_reductions:
+  constraints:
+    binding_hours: 0
+    average_exceedance: 0
+    near_binding_hours: 0
+    near_average_exceedance: 0
+    near_binding_relief_factor: 0
+    saturation_factor: 0
+    hot_hour_weights: 0
+\end{lstlisting}
+
+\section{Curtailment Reductions}
+\label{sec:curtailment}
+
+\textbf{File:} \texttt{18\_curtailment\_reductions.yaml}
+
+\subsection{Purpose}
+
+This file configures cost savings from reduced renewable energy curtailment. Curtailment occurs when renewable generators must reduce output because transmission capacity is insufficient to deliver power to demand centers.
+
+\subsection{Parameter Choices}
+
+\begin{itemize}
+    \item \textbf{curtailment\_hours\_total} (integer): Hours per year with curtailment
+    \begin{itemize}
+        \item \textbf{Valid Values}: Non-negative integers (set to 0 if not applicable)
+        \item \textbf{Meaning}: Total hours per year when curtailment occurs on the exporting side of the constraint
+    \end{itemize}
+    
+    \item \textbf{average\_curtailment\_mw} (float): Average curtailed MW during curtailment hours
+    \begin{itemize}
+        \item \textbf{Valid Values}: Non-negative numbers (MW)
+        \item \textbf{Meaning}: Average amount of renewable generation curtailed
+        \item \textbf{Note}: Leave at 0 if using total MWh instead
+    \end{itemize}
+    
+    \item \textbf{average\_curtailment\_price} (float): Average curtailment price (\$/MWh)
+    \begin{itemize}
+        \item \textbf{Valid Values}: Positive numbers (typical: 20-40 \$/MWh)
+        \item \textbf{Meaning}: PPA proxy or avoided cost of curtailed renewable energy
+    \end{itemize}
+    
+    \item \textbf{curtailment\_saturation\_factor} (float): Saturation factor [0, 1]
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.1)
+        \item \textbf{Meaning}: Accounts for diminishing returns in meshed systems
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+curtailment_reductions:
+  curtailment_hours_total: 300
+  average_curtailment_mw: 60
+  average_curtailment_price: 25
+  curtailment_saturation_factor: 0.1
+\end{lstlisting}
+
+\section{Cost Timing Patterns}
+\label{sec:timing}
+
+\textbf{File:} \texttt{19\_cost\_timing\_patterns.yaml}
+
+\subsection{Purpose}
+
+This file defines when costs are incurred during the project lifecycle for AFUDC (Allowance for Funds Used During Construction) capitalization. Per FERC Uniform System of Accounts, AFUDC applies when (i) capital expenditure is incurred AND (ii) activities are in progress.
+
+\subsection{Parameter Choices}
+
+For each cost category, the file specifies:
+
+\begin{itemize}
+    \item \textbf{during\_delay} (float): Percentage of cost incurred during delay period
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1]
+    \end{itemize}
+    
+    \item \textbf{during\_construction} (float): Percentage of cost incurred during construction period
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1]
+        \item \textbf{Note}: Should sum to 1.0 with \texttt{during\_delay}
+    \end{itemize}
+    
+    \item \textbf{afudc\_eligible} (boolean): Whether cost qualifies for AFUDC
+    \begin{itemize}
+        \item \textbf{Valid Values}: \texttt{true} or \texttt{false}
+        \item \textbf{Meaning}: 
+        \begin{itemize}
+            \item \texttt{true}: Capitalized to CWIP (Account 107)
+            \item \texttt{false}: Operating expense, not capitalized
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Cost Categories}
+
+\begin{itemize}
+    \item \textbf{build\_costs}: Conductor, structure, converter costs
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.0 (typically no cost during delay)
+        \item \texttt{during\_construction}: 1.0 (spread uniformly over construction)
+        \item \texttt{afudc\_eligible}: true
+    \end{itemize}
+    
+    \item \textbf{row\_acquisition}: ROW acquisition costs
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.80 (acquisition happens before construction)
+        \item \texttt{during\_construction}: 0.20 (final acquisitions during early construction)
+        \item \texttt{afudc\_eligible}: true
+    \end{itemize}
+    
+    \item \textbf{row\_holding}: ROW holding costs during delay
+    \begin{itemize}
+        \item \texttt{during\_delay}: 1.0 (only during delay period)
+        \item \texttt{during\_construction}: 0.0
+        \item \texttt{afudc\_eligible}: false (operating expense)
+    \end{itemize}
+    
+    \item \textbf{row\_rent}: ROW rent costs during operation
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.0
+        \item \texttt{during\_construction}: 0.0
+        \item \texttt{afudc\_eligible}: false (operating expense)
+    \end{itemize}
+    
+    \item \textbf{environmental\_mitigation\_base}: Base restoration costs
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.0
+        \item \texttt{during\_construction}: 1.0
+        \item \texttt{afudc\_eligible}: true
+    \end{itemize}
+    
+    \item \textbf{environmental\_mitigation\_credits}: Credit purchases
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.20 (some credits purchased upfront)
+        \item \texttt{during\_construction}: 0.80
+        \item \texttt{afudc\_eligible}: true
+    \end{itemize}
+    
+    \item \textbf{delay\_costs}: Regulatory/legal expenses
+    \begin{itemize}
+        \item \texttt{during\_delay}: 1.0
+        \item \texttt{during\_construction}: 0.0
+        \item \texttt{afudc\_eligible}: false (typically expensed)
+    \end{itemize}
+    
+    \item \textbf{operations\_and\_maintenance}: O\&M costs
+    \begin{itemize}
+        \item \texttt{during\_delay}: 0.0
+        \item \texttt{during\_construction}: 0.0 (O\&M begins after COD)
+        \item \texttt{afudc\_eligible}: false
+    \end{itemize}
+\end{itemize}
+
+\subsection{Example Configuration}
+
+\begin{lstlisting}[language=yaml]
+cost_timing_patterns:
+  build_costs:
+    during_delay: 0.0
+    during_construction: 1.0
+    afudc_eligible: true
+
+  row_acquisition:
+    during_delay: 0.80
+    during_construction: 0.20
+    afudc_eligible: true
+
+  row_holding:
+    during_delay: 1.0
+    during_construction: 0.0
+    afudc_eligible: false
+
+  # ... (other cost categories)
+\end{lstlisting}
+
+\section{Category-Specific Technical Data}
+\label{sec:category_technical}
+
+\subsection{ROW Widths}
+\textbf{File:} \texttt{20\_project\_category\_row\_widths.yaml}
+
+This file defines right-of-way width requirements for all project categories. Each category entry includes:
+\begin{itemize}
+    \item \textbf{row\_width\_feet} (float): Required ROW width in feet
+    \begin{itemize}
+        \item \textbf{Typical Values}: 80 to 200 feet (varies by capacity and construction type)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Circuit and Resistance Details}
+\textbf{File:} \texttt{21\_project\_category\_circuit\_and\_resistance\_detail.yaml}
+
+This file defines electrical and physical circuit specifications for all project categories. Each category entry includes:
+\begin{itemize}
+    \item \textbf{conductor\_specification} (string): Specific conductor model (e.g., "ACSR 477 kcmil Hawk")
+    \item \textbf{voltage\_kv} (float): Operating voltage in kilovolts
+    \item \textbf{conductors\_per\_phase} (integer): Number of conductors per phase
+    \item \textbf{number\_of\_phases} (integer): Number of phases (typically 3 for AC)
+    \item \textbf{number\_of\_circuits\_poles} (integer): Number of circuits or poles
+    \item \textbf{AC\_75\_resistance} (float): AC resistance at 75°C (ohms per mile)
+    \item \textbf{DC\_20\_resistance} (float): DC resistance at 20°C (ohms per mile)
+    \item \textbf{Meaning}: Used for line loss calculations in \texttt{energy\_losses.py} and \texttt{line\_loss\_costs.py}
+\end{itemize}
+
+\section{Special Considerations}
+
+\subsection{Project Category Construction}
+
+Project categories are automatically constructed from core technical details (file 01) using the format:
+\begin{verbatim}
+"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+\end{verbatim}
+
+The CTCC uses this category to look up:
+\begin{itemize}
+    \item Build costs (file 10)
+    \item ROW widths (file 20)
+    \item Circuit specifications (file 21)
+    \item O\&M costs (files 13-15)
+\end{itemize}
+
+\subsection{Reconductoring vs. Greenfield}
+
+\begin{itemize}
+    \item \textbf{Greenfield}: New line construction
+    \begin{itemize}
+        \item Full build costs
+        \item Line losses are a \textit{cost} (new losses created)
+        \item Full congestion/curtailment benefits
+    \end{itemize}
+    
+    \item \textbf{Reconductoring}: Upgrading existing line
+    \begin{itemize}
+        \item Lower build costs (conductor replacement only)
+        \item Line losses are a \textit{benefit} (reduced losses vs. old line)
+        \item Incremental congestion/curtailment benefits
+        \item Must specify old line parameters in file 01
+    \end{itemize}
+\end{itemize}
+
+\subsection{AC vs. DC}
+
+\begin{itemize}
+    \item \textbf{AC Projects}:
+    \begin{itemize}
+        \item \texttt{converter\_type} = \texttt{"NA"}
+        \item \texttt{number\_of\_converters} = 0 (not used)
+        \item No converter costs or O\&M
+    \end{itemize}
+    
+    \item \textbf{DC Projects}:
+    \begin{itemize}
+        \item Must specify \texttt{converter\_type} ("LCC Converter" or "VSC Converter")
+        \item Must specify \texttt{number\_of\_converters} (typically 2)
+        \item Converter costs and O\&M apply
+    \end{itemize}
+\end{itemize}
+
+\subsection{Construction Type Effects}
+
+Each construction type affects multiple cost categories:
+
+\begin{itemize}
+    \item \textbf{Overhead}:
+    \begin{itemize}
+        \item Moderate build costs
+        \item High wildfire risk
+        \item Moderate outage risk
+        \item Vegetation management required
+        \item Structure O\&M required
+    \end{itemize}
+    
+    \item \textbf{Underground Direct-Buried}:
+    \begin{itemize}
+        \item High build costs
+        \item Low wildfire risk (98\% reduction)
+        \item Lower outage rates but longer repair times
+        \item No vegetation management
+        \item Higher environmental mitigation (wetland impacts)
+    \end{itemize}
+    
+    \item \textbf{Underground Tunnel}:
+    \begin{itemize}
+        \item Very high build costs
+        \item Low wildfire risk
+        \item Lower outage rates but very long repair times
+        \item No vegetation management
+        \item Minimal surface disruption (major advantage)
+    \end{itemize}
+    
+    \item \textbf{Subsea}:
+    \begin{itemize}
+        \item Very high build costs
+        \item No wildfire risk
+        \item Low outage rates but extremely long repair times (240 hours)
+        \item No vegetation management
+        \item Specialized construction and maintenance
+    \end{itemize}
+\end{itemize}
+
+\subsection{Terrain Distribution}
+
+The terrain distribution (file 02) affects:
+\begin{itemize}
+    \item Build costs (via terrain multipliers)
+    \item Wildfire ignition rates (file 06)
+    \item Outage rates and durations (file 07)
+    \item Environmental mitigation costs (file 09)
+    \item Vegetation management costs (file 12)
+    \item Structure density and O\&M (file 14)
+\end{itemize}
+
+\section{Summary}
+
+This guide has covered all 21 YAML configuration files used in the CTCC. Key takeaways:
+
+\begin{enumerate}
+    \item \textbf{File 01} defines core project identity and is used to construct project categories
+    \item \textbf{File 02} defines physical route characteristics affecting multiple cost categories
+    \item \textbf{Files 03-09} define financial, risk, and environmental parameters
+    \item \textbf{Files 10-15, 20-21} contain category-specific data (build costs, O\&M, technical specs)
+    \item \textbf{Files 16-18} define benefit parameters (emissions, congestion, curtailment)
+    \item \textbf{File 19} defines cost timing for AFUDC calculations
+    \item \textbf{File 11} defines ROW costs using a zone-based approach
+\end{enumerate}
+
+All parameters work together to produce comprehensive cost and benefit calculations. Users should ensure consistency across files (e.g., construction type in file 01 matches category selections in files 10-15, 20-21).
+
+\end{document}
+

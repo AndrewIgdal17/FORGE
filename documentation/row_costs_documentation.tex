@@ -1,0 +1,238 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Right-of-Way Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{row\_costs.py} script calculates the right-of-way (ROW) costs for a transmission line project. It computes acquisition costs (one-time purchase), holding costs (annual costs during delay period), and rental costs (annual costs during operation), then calculates both regulatory (AFUDC) and societal (present value) perspectives.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates ROW costs by:
+\begin{enumerate}
+    \item Determining ROW width based on project category
+    \item Calculating acres for each terrain zone
+    \item Computing acquisition, holding, and rental costs per zone
+    \item Aggregating costs across all zones
+    \item Applying AFUDC capitalization for regulatory perspective (acquisition only)
+    \item Computing present values for societal perspective
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The ROW cost calculation follows this structure:
+
+\begin{align}
+\text{Zone Acres} &= \frac{\text{Zone Miles} \times 5280 \times \text{ROW Width (feet)}}{43560} \\
+\text{Acquisition Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Acquisition Cost/Acre} \\
+\text{Holding Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Holding Cost/Acre/Year} \times \text{Delay Years} \\
+\text{Rent Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Rent Cost/Acre/Year} \times \text{Operation Years} \\
+\text{Total Nominal} &= \text{Acquisition} + \text{Holding} + \text{Rent}
+\end{align}
+
+For reconductoring projects, acquisition and holding costs are zero since existing ROW is used. Only rental costs apply.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, AC/DC, capacity, etc.)
+    \item Physical details (terrain distribution by zone)
+    \item ROW width for project category
+    \item ROW cost parameters (acquisition, holding, rent per acre) by zone
+    \item Financing parameters (WACC, inflation, AFUDC rate)
+    \item Timeline (delay years, construction years, project lifetime)
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Nominal costs (acquisition, holding, rent)
+    \item AFUDC capitalized costs (acquisition only, regulatory perspective)
+    \item Present value costs (societal perspective)
+    \item Total acres required
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and ROW details (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{calculate\_zone\_costs(row\_width\_feet)}}
+
+Calculates ROW costs for each zone where the transmission line passes.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{row\_width\_feet} (float): Right-of-way width in feet for this project category
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{yearly\_holding\_cost} (float): Total annual holding cost across all zones
+    \item \texttt{acquisition\_cost} (float): Total one-time acquisition cost
+    \item \texttt{yearly\_rent\_cost} (float): Total annual rental cost across all zones
+    \item \texttt{total\_acres} (float): Total acres required across all zones
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# For each zone with miles > 0:
+for zone_details in row_details["right_of_way"].values():
+    if zone_details["miles"] > 0:
+        # Calculate acres: (miles * 5280 ft/mile * width_ft) / 43560 ft^2/acre
+        zone_acres = (zone_details["miles"] * 5280 * row_width_feet) / 43560
+        
+        # Accumulate costs
+        acquisition_cost += zone_acres * zone_details["acquisition_cost"]
+        yearly_rent_cost += zone_acres * zone_details["rent_cost"]
+        yearly_holding_cost += zone_acres * zone_details["hold_cost"]
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the ROW cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and constructs category identifier
+    \item Loads ROW width for the project category
+    \item Calls \texttt{calculate\_zone\_costs()} to compute costs per zone
+    \item Handles reconductoring vs. new build logic
+    \item Calculates AFUDC capitalized costs (acquisition only, if enabled)
+    \item Calculates present values for all cost components
+    \item Displays results and writes to CSV
+\end{enumerate}
+
+\textbf{Reconductoring Logic:}
+\begin{lstlisting}
+if reconductoring:
+    # No acquisition or holding costs (existing ROW)
+    total_holding_cost = 0
+    acquisition_cost = 0
+    # Only rent costs apply
+    total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+else:
+    # New build: all costs apply
+    total_holding_cost = yearly_holding_cost * delay_year
+    total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+\end{lstlisting}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the ROW cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - ROW width: 200 feet
+#   - Terrain distribution:
+#     * Zone 1 (Forested): 40 miles, $5000/acre acquisition, $50/acre/year rent
+#     * Zone 2 (Farmland): 60 miles, $3000/acre acquisition, $30/acre/year rent
+#   - Delay period: 2 years
+#   - Project lifetime: 50 years
+#   - Construction: 2 years
+#
+# Calculation:
+#   Zone 1 acres = (40 * 5280 * 200) / 43560 = 969.7 acres
+#   Zone 2 acres = (60 * 5280 * 200) / 43560 = 1454.5 acres
+#   Total acres = 2424.2 acres
+#
+#   Acquisition = (969.7 * $5000) + (1454.5 * $3000) = $7.3M
+#   Holding (2 years) = (969.7 * $50 * 2) + (1454.5 * $30 * 2) = $0.2M
+#   Rent (52 years) = (969.7 * $50 * 52) + (1454.5 * $30 * 52) = $5.2M
+#   Total nominal = $12.7M
+#
+# Output:
+#   - Nominal cost: $12.7M
+#   - AFUDC capitalized (acquisition): $7.5M (if AFUDC enabled)
+#   - Present value: $11.2M (discounted at real WACC)
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+results = {
+    "total_nominal": total_nominal_cost,
+    "total_afudc": acquisition_capitalized + total_holding_cost + total_rent_cost,
+    "total_pv": total_pv_cost,
+    "acquisition_nominal": acquisition_cost,
+    "holding_nominal": total_holding_cost,
+    "rent_nominal": total_rent_cost,
+}
+csv_manager.add_row_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{AFUDC Eligibility}
+
+Only acquisition costs are AFUDC-eligible (capitalized to plant cost). Holding costs are operating expenses during the delay period, and rent costs are operational period expenses. Neither holding nor rent costs receive AFUDC treatment.
+
+\subsection{Reconductoring Handling}
+
+For reconductoring projects, acquisition and holding costs are set to zero since existing ROW is used. Only rental costs apply during the operational period.
+
+\subsection{Present Value Timing}
+
+\begin{itemize}
+    \item \textbf{Holding costs}: Incurred annually during delay period (years 1 to delay\_year)
+    \item \textbf{Acquisition costs}: One-time payment at end of delay period (year delay\_year)
+    \item \textbf{Rent costs}: Incurred annually during operation (years delay\_year+1 to delay\_year+construction\_years+project\_lifetime)
+\end{itemize}
+
+\subsection{Acres Calculation}
+
+The script converts miles and ROW width to acres using the standard conversion:
+\[
+\text{Acres} = \frac{\text{Miles} \times 5280 \text{ ft/mile} \times \text{ROW Width (ft)}}{43560 \text{ ft}^2/\text{acre}}
+\]
+
+\end{document}
+

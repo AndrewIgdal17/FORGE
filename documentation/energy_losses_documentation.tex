@@ -1,0 +1,264 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Energy Losses Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{energy\_losses.py} script calculates transmission line losses and converter losses for a given project configuration. It provides the foundation for line loss cost/benefit calculations and is used by both \texttt{line\_loss\_costs.py} and \texttt{emissions.py}.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates energy losses by:
+\begin{enumerate}
+    \item Loading project technical and physical details
+    \item Loading circuit and resistance details for the project category
+    \item Calculating phase current based on capacity and system configuration
+    \item Calculating full load adjustment based on line utilization
+    \item Calculating line losses using resistance and current
+    \item Calculating converter losses (for DC projects)
+    \item Displaying results
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The energy loss calculation follows this structure:
+
+\textbf{Line Losses:}
+\begin{align}
+I_{phase} &= \frac{P}{\sqrt{3} \times V \times N_{circuits}} \quad \text{(AC)} \\
+I_{phase} &= \frac{P}{V \times N_{poles}} \quad \text{(DC)} \\
+P_{loss} &= I^2 \times R \times N_{phases} \times N_{circuits} \\
+\text{Losses (MWh/year)} &= P_{loss} \times \text{Full Load Adj} \times 8760
+\end{align}
+
+\textbf{Converter Losses (DC only):}
+\begin{align}
+P_{converter} &= P \times \text{Utilization} \times \text{Loss Rate} \\
+\text{Converter Losses (MWh/year)} &= P_{converter} \times 8760
+\end{align}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, AC/DC, capacity, conductor type, converter type, utilization)
+    \item Physical details (line length)
+    \item Circuit and resistance details (voltage, conductors per phase, number of phases, circuits/poles, resistance values)
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Line losses (MW/mile, MWh/year, percentage)
+    \item Converter losses (MW, MWh/year, percentage)
+    \item Total losses (line + converter)
+    \item Lifetime losses
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{line\_loss\_costs.py} - Uses energy losses to calculate costs/benefits (see \texttt{line\_loss\_costs\_documentation.tex})
+    \item \texttt{emissions.py} - Uses energy losses to calculate emissions costs (see \texttt{emissions\_documentation.tex})
+    \item \texttt{yaml\_loaders.py} - Loads project configuration (see \texttt{utilities\_documentation.tex})
+    \item \texttt{calculation\_utils.py} - Provides calculation functions (see \texttt{utilities\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{print\_results(...)}}
+
+Prints organized results in sections (system configuration, line losses, converter losses, summary).
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item Multiple parameters including voltage, phase current, resistance, losses, etc.
+\end{itemize}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the energy loss calculation.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and constructs category identifier
+    \item Determines number of converters (0 for AC projects)
+    \item Loads physical details (line length)
+    \item Loads circuit and resistance details
+    \item Calculates phase current using \texttt{calculate\_phase\_current()}
+    \item Calculates full load adjustment using \texttt{full\_load\_adjusted()}
+    \item Calculates line losses using \texttt{calculate\_line\_losses()}
+    \item Calculates converter losses using \texttt{calculate\_converter\_losses()} (DC only)
+    \item Displays results
+\end{enumerate}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Construct category identifier
+category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+
+# Load circuit and resistance details
+voltage_kv, conductors_per_phase, number_of_phases, 
+number_of_circuits_poles, AC_75_resistance, DC_20_resistance = (
+    load_circuit_and_resistance_details(category)
+)
+
+# Calculate phase current
+phase_current = calculate_phase_current(
+    capacity_mw, voltage_kv, number_of_phases, 
+    number_of_circuits_poles, ac_dc
+)
+
+# Calculate full load adjustment
+full_load_adj = full_load_adjusted(line_utilization_percent)
+
+# Calculate line losses
+losses_mwh_per_year, lifetime_losses_mwh, ... = calculate_line_losses(
+    phase_current, full_load_adj, AC_75_resistance, DC_20_resistance,
+    ac_dc, number_of_circuits_poles, conductors_per_phase,
+    number_of_phases, line_length, project_lifetime,
+    capacity_mw_numeric, line_utilization_percent
+)
+
+# Calculate converter losses (DC only)
+if ac_dc == "DC":
+    total_converter_losses_mw, total_converter_losses_mwh, ... = (
+        calculate_converter_losses(
+            number_of_converters, converter_type,
+            line_utilization_percent, capacity_mw_numeric, ac_dc
+        )
+    )
+\end{lstlisting}
+
+\section{Example}
+
+The following example demonstrates a typical usage:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - Capacity: 500 MW
+#   - Voltage: 345 kV
+#   - Conductors per phase: 2
+#   - Number of phases: 3
+#   - Number of circuits: 1
+#   - AC resistance (75°C): 0.05 ohms/mile
+#   - Line utilization: 70%
+#   - Line length: 100 miles
+#   - Project lifetime: 50 years
+#
+# Calculation:
+#   Phase current = 500 MW / (√3 × 345 kV × 1) = 837 A
+#   Full load adj = 0.7² = 0.49
+#   Line loss = (837² × 0.05 × 3 × 1) × 0.49 = 51.4 MW
+#   Line loss % = 51.4 / 500 = 10.3%
+#   Losses MWh/year = 51.4 × 8760 = 450,000 MWh/year
+#   Lifetime losses = 450,000 × 50 = 22.5M MWh
+#
+# Output:
+#   - Line loss: 0.514 MW/mile
+#   - Line loss %: 10.3%
+#   - Losses MWh/year: 450,000
+#   - Lifetime losses: 22.5M MWh
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# Used by line_loss_costs.py:
+from energy_losses import (
+    load_project_technical_details,
+    load_physical_details,
+    load_circuit_and_resistance_details,
+    calculate_phase_current,
+    full_load_adjusted,
+    calculate_line_losses,
+)
+
+# Calculate losses for a configuration
+losses_mwh_per_year, lifetime_losses_mwh = calculate_configuration_losses(
+    construction_type, ac_dc, capacity_mw, conductor_type,
+    converter_type, line_utilization_percent, project_lifetime
+)
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{AC vs. DC Calculations}
+
+The script handles both AC and DC systems:
+\begin{itemize}
+    \item \textbf{AC}: Uses $\sqrt{3}$ factor, resistance at 75°C
+    \item \textbf{DC}: No $\sqrt{3}$ factor, resistance at 20°C
+\end{itemize}
+
+\subsection{Full Load Adjustment}
+
+The full load adjustment accounts for the fact that losses are proportional to current squared, and average current is less than peak current due to utilization. The adjustment is typically $u^2$ where $u$ is the utilization factor.
+
+\subsection{Converter Losses}
+
+Converter losses only apply to DC projects and are calculated based on:
+\begin{itemize}
+    \item Number of converters
+    \item Converter type (loss rate)
+    \item Line utilization
+    \item Capacity
+\end{itemize}
+
+\subsection{Resistance Values}
+
+The script uses different resistance values:
+\begin{itemize}
+    \item \textbf{AC}: Resistance at 75°C (operating temperature)
+    \item \textbf{DC}: Resistance at 20°C (reference temperature)
+\end{itemize}
+
+\subsection{Multiple Circuits/Poles}
+
+The script accounts for multiple circuits (AC) or poles (DC) by multiplying losses by the number of circuits/poles.
+
+\subsection{Standalone vs. Library Use}
+
+This script can be run standalone (displays results) or imported as a library (used by other scripts). The calculation functions are in \texttt{calculation\_utils.py} for reuse.
+
+\end{document}
+

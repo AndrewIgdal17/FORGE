@@ -1,0 +1,280 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Operations and Maintenance Costs Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{oandm.py} script calculates operations and maintenance (O\&M) costs for a transmission line project. It computes annual and lifetime costs for conductors, converters, structures, and vegetation management, then calculates present values.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates O\&M costs by:
+\begin{enumerate}
+    \item Loading O\&M cost parameters by component (conductor, converter, structure, vegetation)
+    \item Calculating annual costs per component
+    \item Computing lifetime nominal costs
+    \item Calculating present values of annual O\&M payments
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The O\&M cost calculation follows this structure:
+
+\begin{align}
+\text{Conductor Annual} &= \text{Cost/Mile/Year} \times \text{Total Miles} \\
+\text{Converter Annual} &= \text{Cost/Mile/Year} \times \text{Total Miles} \quad \text{(DC only)} \\
+\text{Structure Annual} &= \begin{cases}
+\text{Cost/Structure/Year} \times \text{Total Structures} & \text{(Overhead)} \\
+\text{Cost/Mile/Year} \times \text{Total Miles} & \text{(Other)}
+\end{cases} \\
+\text{Vegetation Annual} &= \sum_{\text{terrains}} \text{Cost/Mile/Year}_{terrain} \times \text{Miles}_{terrain} \\
+\text{Total Annual} &= \text{Conductor} + \text{Converter} + \text{Structure} + \text{Vegetation} \\
+\text{Lifetime Nominal} &= \text{Annual} \times \text{Project Lifetime} \\
+\text{Present Value} &= \sum_{t=1}^{N} \frac{\text{Annual}}{(1 + r)^t}
+\end{align}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, AC/DC, capacity, conductor type, converter type)
+    \item Physical details (total miles, terrain distribution)
+    \item O\&M cost parameters (conductor, converter, structure, vegetation management)
+    \item Financing parameters (WACC for present value)
+    \item Project lifetime
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Annual costs by component
+    \item Lifetime nominal costs by component
+    \item Present value costs by component
+    \item Total annual, nominal, and PV costs
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and O\&M parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{load\_vegetation\_management\_om\_costs(construction\_type)}}
+
+Loads vegetation management O\&M costs from YAML file.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{construction\_type} (str): Type of construction (Overhead/Subsea)
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{variable\_vegetation\_cost\_per\_mile\_year} (dict): Dictionary of terrain-specific costs per mile per year
+\end{itemize}
+
+\subsection{\texttt{load\_conductor\_om\_costs(construction\_type, ac\_dc, capacity\_mw, conductor\_type, converter\_type)}}
+
+Loads conductor O\&M costs from YAML file.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{construction\_type} (str): Type of construction
+    \item \texttt{ac\_dc} (str): AC or DC designation
+    \item \texttt{capacity\_mw} (float): Capacity in megawatts
+    \item \texttt{conductor\_type} (str): Type of conductor
+    \item \texttt{converter\_type} (str): Type of converter
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{variable\_conductor\_cost\_per\_mile\_year} (float): Variable conductor cost per mile per year
+\end{itemize}
+
+\subsection{\texttt{load\_converter\_om\_costs(construction\_type, ac\_dc, capacity\_mw, conductor\_type, converter\_type)}}
+
+Loads converter O\&M costs from YAML file. Returns 0 for AC projects.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{construction\_type} (str): Type of construction
+    \item \texttt{ac\_dc} (str): AC or DC designation
+    \item \texttt{capacity\_mw} (float): Capacity in megawatts
+    \item \texttt{conductor\_type} (str): Type of conductor
+    \item \texttt{converter\_type} (str): Type of converter
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{variable\_converter\_cost\_per\_mile\_year} (float): Variable converter cost per mile per year (0 for AC)
+\end{itemize}
+
+\subsection{\texttt{load\_structure\_om\_costs(construction\_type, ...terrain\_miles...)}}
+
+Loads structure O\&M costs and calculates total costs. For overhead projects, calculates total structures by terrain and applies cost per structure. For other construction types, uses cost per mile.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{construction\_type} (str): Type of construction
+    \item Multiple terrain mile parameters (forested, scrubbed\_flat, wetland, etc.)
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{variable\_structure\_cost\_per\_mile\_year} (float): Structure cost per mile per year (for non-overhead)
+    \item \texttt{variable\_structure\_cost\_per\_year} (float): Total structure cost per year
+    \item \texttt{structure\_dict} (dict): Dictionary of structure counts by terrain
+    \item \texttt{total\_vegetation\_management\_cost\_per\_year} (float): Total vegetation management cost per year
+\end{itemize}
+
+\textbf{Key Logic for Overhead:}
+\begin{lstlisting}
+# Calculate structures by terrain
+for terrain in terrains:
+    structures_per_mile = structure_om_costs[construction_type][f"structures_per_mile_{terrain}"]
+    terrain_structures = terrain_miles * structures_per_mile
+    total_structures += terrain_structures
+
+# Calculate structure O&M cost
+variable_structure_cost_per_year = (cost_per_structure_per_year * total_structures)
+
+# Add vegetation management (terrain-specific)
+for terrain, miles in terrain_miles.items():
+    vegetation_cost += miles * vegetation_cost_per_mile_year[terrain]
+variable_structure_cost_per_year += vegetation_cost
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the O\&M cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and physical details
+    \item Loads O\&M cost parameters for each component
+    \item Calculates annual costs per component
+    \item Calculates lifetime nominal costs
+    \item Calculates present values
+    \item Displays results and writes to CSV
+\end{enumerate}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the O\&M cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - Total miles: 100 miles
+#   - Terrain: 60% farmland, 40% forested
+#   - Conductor O&M: $5,000/mile/year
+#   - Converter O&M: $0 (AC project)
+#   - Structure O&M: $500/structure/year
+#   - Structures: 2.5/mile (farmland), 3.0/mile (forested)
+#   - Vegetation: $2,000/mile/year (farmland), $3,000/mile/year (forested)
+#   - Project lifetime: 50 years
+#   - Real WACC: 3%
+#
+# Calculation:
+#   Conductor annual = $5,000 * 100 = $500,000/year
+#   Converter annual = $0
+#   Total structures = (60 * 2.5) + (40 * 3.0) = 270 structures
+#   Structure annual = $500 * 270 = $135,000/year
+#   Vegetation annual = (60 * $2,000) + (40 * $3,000) = $240,000/year
+#   Total annual = $875,000/year
+#   Lifetime nominal = $875,000 * 50 = $43.75M
+#   PV = $875,000 * PV annuity (50 years, 3%) = $20.1M
+#
+# Output:
+#   - Total annual: $875,000
+#   - Lifetime nominal: $43.75M
+#   - Present value: $20.1M
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+results = {
+    "total_annual": total_annual,
+    "total_nominal": total_nominal,
+    "total_pv": pv_total,
+    "conductor_annual": total_conductor_cost_per_year,
+    # ... component-level costs
+}
+csv_manager.add_oandm_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Structure O\&M for Overhead Projects}
+
+For overhead projects, structure O\&M is calculated based on the number of structures, which varies by terrain type. The script:
+\begin{enumerate}
+    \item Calculates structures per terrain based on structures per mile
+    \item Sums to get total structures
+    \item Multiplies by cost per structure per year
+\end{enumerate}
+
+\subsection{Vegetation Management}
+
+Vegetation management costs are terrain-specific and only apply to overhead projects. The script multiplies terrain-specific costs per mile by miles in each terrain type.
+
+\subsection{Converter O\&M}
+
+Converter O\&M costs only apply to DC projects. For AC projects, the function returns 0.
+
+\subsection{Present Value Timing}
+
+O\&M costs start at year 1 (beginning of operation) and continue for the project lifetime. The present value calculation discounts these annual payments back to the base year.
+
+\subsection{Component-Level Tracking}
+
+The script tracks costs at the component level (conductor, converter, structure, vegetation) for detailed analysis and reporting.
+
+\end{document}
+

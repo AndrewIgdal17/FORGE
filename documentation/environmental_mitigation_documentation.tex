@@ -1,0 +1,251 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Environmental Mitigation Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{environmental\_mitigation.py} script calculates environmental mitigation costs for a transmission line project. It computes base construction/restoration costs and wetland/habitat credit purchases across different construction types and terrain types, applying uplift factors for effective acreage.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates environmental mitigation costs by:
+\begin{enumerate}
+    \item Calculating ROW acres by terrain type
+    \item Applying uplift factor to determine effective acres (TCE - Total Cost Equivalent)
+    \item Computing base mitigation/restoration costs per effective acre
+    \item Calculating wetland credit purchases for impacted wetland acres
+    \item Calculating habitat credit purchases for impacted natural habitat acres
+    \item Applying AFUDC capitalization for regulatory perspective
+    \item Computing present values for societal perspective
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The environmental mitigation cost calculation follows this structure:
+
+\begin{align}
+\text{Terrain Acres} &= \frac{\text{Terrain Miles} \times 5280 \times \text{ROW Width (feet)}}{43560} \\
+\text{Effective Acres} &= \text{Base Acres} \times \text{Uplift Factor} \\
+\text{Base Cost} &= \sum_{\text{terrains}} \text{Cost/Acre} \times \text{Effective Acres} \\
+\text{Wetland Credits} &= \text{Wetland Cost/Acre} \times \text{Ratio} \times \text{Wetland Impacted Acres} \\
+\text{Habitat Credits} &= \text{Habitat Cost/Acre} \times \text{Ratio} \times \text{Habitat Impacted Acres} \\
+\text{Total} &= \text{Base Cost} + \text{Wetland Credits} + \text{Habitat Credits}
+\end{align}
+
+The uplift factor accounts for additional mitigation requirements beyond the physical ROW footprint (e.g., buffer zones, restoration areas).
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, AC/DC, capacity, etc.)
+    \item Physical details (terrain distribution)
+    \item ROW width for project category
+    \item Environmental mitigation parameters (base costs, credit costs, credit ratios, uplift factor)
+    \item Financing parameters (WACC, inflation, AFUDC rate)
+    \item Timeline (delay years, construction years)
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Nominal costs (base mitigation, wetland credits, habitat credits)
+    \item AFUDC capitalized costs (regulatory perspective)
+    \item Present value costs (societal perspective)
+    \item Acreage metrics (base acres, effective acres, impacted acres)
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and environmental mitigation parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{calculate\_environmental\_mitigation\_costs(em\_yaml, category, terrain\_miles\_dict, row\_width\_feet)}}
+
+Calculates environmental mitigation costs including base mitigation and credit purchases.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{em\_yaml} (dict): Loaded environmental mitigation YAML data
+    \item \texttt{category} (str): Project category identifier
+    \item \texttt{terrain\_miles\_dict} (dict): Dictionary mapping terrain type to miles
+    \item \texttt{row\_width\_feet} (float): Right-of-way width in feet
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary containing:
+    \begin{itemize}
+        \item \texttt{base\_cost} (float): Base mitigation/restoration cost
+        \item \texttt{wetlands\_credits} (float): Wetland credit purchase cost
+        \item \texttt{habitat\_credits} (float): Habitat credit purchase cost
+        \item \texttt{total\_credits} (float): Sum of wetland and habitat credits
+        \item \texttt{total} (float): Total mitigation cost
+        \item \texttt{uplift\_factor\_applied} (float): Uplift factor used
+        \item \texttt{total\_base\_acres} (float): Base ROW acres
+        \item \texttt{total\_effective\_acres} (float): Effective acres with uplift
+        \item \texttt{wetland\_impacted\_acres} (float): Wetland acres impacted
+        \item \texttt{habitat\_impacted\_acres} (float): Habitat acres impacted
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate acres by terrain
+for terrain, miles in terrain_miles_dict.items():
+    if miles > 0:
+        terrain_acres = (miles * 5280 * row_width_feet) / 43560
+        effective_acres = terrain_acres * uplift_factor
+        cost_per_acre = base_costs[construction_type][terrain]
+        base_cost += cost_per_acre * effective_acres
+
+# Calculate credit purchases
+wetland_impacted_acres = acres_by_terrain["wetland"] * uplift_factor
+wetlands_credits = (wetland_cost_per_acre * wetland_ratio 
+                     * wetland_impacted_acres)
+
+habitat_impacted_acres = sum(acres_by_terrain[t] for t in habitat_terrains) 
+                         * uplift_factor
+habitat_credits = (habitat_cost_per_acre * habitat_ratio 
+                   * habitat_impacted_acres)
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the environmental mitigation cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and constructs category identifier
+    \item Loads ROW width and terrain distribution
+    \item Loads environmental mitigation parameters
+    \item Calls \texttt{calculate\_environmental\_mitigation\_costs()} to compute costs
+    \item Calculates AFUDC capitalized costs (base and credits separately)
+    \item Calculates present values (base spread over construction, credits upfront)
+    \item Displays results and writes to CSV
+\end{enumerate}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the environmental mitigation cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - ROW width: 200 feet
+#   - Terrain distribution:
+#     * Forested: 40 miles
+#     * Wetland: 10 miles
+#     * Farmland: 50 miles
+#   - Uplift factor: 1.5x
+#   - Base cost: $2000/acre (overhead, forested), $3000/acre (overhead, wetland)
+#   - Wetland credit: $5000/acre, ratio 2.0:1
+#   - Habitat credit: $3000/acre, ratio 1.5:1
+#   - Construction: 2 years
+#
+# Calculation:
+#   Forested acres = (40 * 5280 * 200) / 43560 = 969.7 acres
+#   Wetland acres = (10 * 5280 * 200) / 43560 = 242.4 acres
+#   Farmland acres = (50 * 5280 * 200) / 43560 = 1212.1 acres
+#
+#   Effective acres (with 1.5x uplift):
+#   * Forested: 969.7 * 1.5 = 1454.6 acres
+#   * Wetland: 242.4 * 1.5 = 363.6 acres
+#
+#   Base cost = (1454.6 * $2000) + (363.6 * $3000) = $4.4M
+#   Wetland credits = $5000 * 2.0 * 363.6 = $3.6M
+#   Habitat credits = $3000 * 1.5 * 1454.6 = $6.5M
+#   Total = $14.5M
+#
+# Output:
+#   - Nominal cost: $14.5M
+#   - AFUDC capitalized: $15.2M (if AFUDC enabled)
+#   - Present value: $13.8M (base spread over 2 years, credits upfront)
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+csv_results = {
+    "total_nominal": results["total"],
+    "total_afudc": total_capitalized if apply_afudc else 0,
+    "total_pv": total_pv,
+    "base_cost_nominal": results["base_cost"],
+    "credits_nominal": results["total_credits"],
+}
+csv_manager.add_environmental_mitigation(csv_results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Uplift Factor}
+
+The uplift factor (TCE - Total Cost Equivalent) accounts for mitigation requirements beyond the physical ROW footprint. For example, a 1.5x uplift means that for every acre of ROW, 1.5 acres of mitigation is required (including buffer zones, restoration areas, etc.).
+
+\subsection{Credit Ratios}
+
+Credit ratios represent the mitigation requirement. For example, a 2.0:1 ratio for wetlands means that for every acre of wetland impacted, 2 acres of wetland credits must be purchased.
+
+\subsection{Habitat Terrain Classification}
+
+The script identifies habitat-impacted acres by summing natural terrain types: forested, scrubbed\_flat, desert\_barren, and rolling\_hills. This is a conservative approach that captures all potential habitat impacts.
+
+\subsection{Present Value Timing}
+
+\begin{itemize}
+    \item \textbf{Base mitigation costs}: Spread evenly over construction period (annual payments)
+    \item \textbf{Credit costs}: One-time payment at start of construction (end of delay period)
+\end{itemize}
+
+\subsection{AFUDC Treatment}
+
+Base mitigation and credit costs are treated separately for AFUDC calculation, as they may have different timing patterns during construction.
+
+\end{document}
+

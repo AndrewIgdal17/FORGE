@@ -1,0 +1,280 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Wildfire Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{wildfire\_costs.py} script calculates expected wildfire costs using a probabilistic risk approach. It models ignition rates by terrain and construction type, event severity, and applies a growing annuity formula to account for increasing risk over the project lifetime.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates wildfire costs by:
+\begin{enumerate}
+    \item Calculating segment-specific ignition rates by terrain and construction type
+    \item Aggregating to total annual event rate (lambda)
+    \item Computing Expected Annual Loss (EAL) = lambda × severity
+    \item Calculating nominal total cost using growing annuity (accounting for risk growth)
+    \item Computing present value using growing annuity formula
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The wildfire cost calculation follows this structure:
+
+\begin{align}
+f_{i,t} &= \text{Base Rate}_{terrain} \times \text{Construction Multiplier} \\
+\lambda_{segment} &= \text{Miles}_{terrain} \times f_{i,t} \\
+\lambda_{total} &= \sum_{\text{terrains}} \lambda_{segment} \\
+\text{EAL} &= \lambda_{total} \times \text{Severity} \\
+\text{Nominal Total} &= \text{EAL} \times \frac{(1+g)^N - 1}{g} \quad \text{(if } g \neq 0 \text{)} \\
+\text{PV} &= \text{EAL} \times \frac{1 - \left(\frac{1+g}{1+d}\right)^N}{d - g} \quad \text{(if } d \neq g \text{)}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $f_{i,t}$ = effective ignition rate per mile for terrain $i$ and construction type $t$
+    \item $\lambda$ = annual event rate (events/year)
+    \item $g$ = risk growth rate (annual increase in expected losses)
+    \item $d$ = discount rate
+    \item $N$ = project lifetime
+\end{itemize}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type)
+    \item Physical details (terrain distribution)
+    \item Wildfire parameters (ignition rates by terrain, severity, growth rate, construction multipliers)
+    \item Discount rate source (social, WACC real, or custom)
+    \item Project lifetime
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Total annual event rate (lambda)
+    \item Expected Annual Loss (EAL)
+    \item Event rates by terrain segment
+    \item Nominal total cost (growing annuity)
+    \item Present value cost (growing annuity with discounting)
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{yaml\_loaders.py} - Loads project configuration and wildfire parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{get\_discount\_rate(wildfire\_yaml, financing\_yaml)}}
+
+Gets discount rate based on configuration source.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{wildfire\_yaml} (dict): Loaded wildfire YAML data
+    \item \texttt{financing\_yaml} (dict): Loaded financing YAML data
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{discount\_rate} (float): Discount rate to use
+    \item \texttt{source\_description} (str): Description of rate source
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+source = wildfire_yaml["wildfire"]["discount_rate_source"]
+
+if source == "social":
+    rate = financing_yaml["financial"]["social_discount_rate"]
+elif source == "wacc_real":
+    wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
+    inflation = financing_yaml["financial"]["inflation_rate"]
+    rate = (1 + wacc_nominal) / (1 + inflation) - 1
+elif source == "custom":
+    rate = wildfire_yaml["wildfire"]["discount_rate_custom"]
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_wildfire\_costs(wildfire\_yaml, construction\_type, terrain\_miles, project\_lifetime, discount\_rate)}}
+
+Calculates expected wildfire costs using segment-based ignition rates.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{wildfire\_yaml} (dict): Loaded wildfire YAML data
+    \item \texttt{construction\_type} (str): Construction type (overhead, underground, etc.)
+    \item \texttt{terrain\_miles} (dict): Dictionary of terrain type to miles
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+    \item \texttt{discount\_rate} (float): Discount rate for PV calculation
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary containing:
+    \begin{itemize}
+        \item \texttt{lambda\_total} (float): Total annual event rate
+        \item \texttt{EAL} (float): Expected Annual Loss
+        \item \texttt{lambda\_by\_terrain} (dict): Event rates by terrain segment
+        \item \texttt{severity} (float): Mean loss per event
+        \item \texttt{growth\_rate} (float): Risk growth rate
+        \item \texttt{nominal\_total} (float): Total nominal cost
+        \item \texttt{pv\_cost} (float): Present value cost
+    \end{itemize}
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate segment-specific ignition rates
+for terrain, miles in terrain_miles.items():
+    if miles > 0:
+        base_rate = ignition_rates_by_terrain.get(terrain, 0.0)
+        f_i_t = base_rate * construction_multiplier
+        lambda_segment = miles * f_i_t
+        lambda_total += lambda_segment
+
+# Calculate EAL
+EAL = lambda_total * severity
+
+# Calculate nominal total (growing annuity)
+if abs(growth_rate) < 1e-9:
+    nominal_total = EAL * project_lifetime
+else:
+    nominal_total = EAL * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate
+
+# Calculate PV (growing annuity with discounting)
+if abs(discount_rate - growth_rate) < 1e-9:
+    pv_cost = EAL * project_lifetime
+else:
+    pv_cost = EAL * ((1 - ((1 + growth_rate) / (1 + discount_rate)) ** project_lifetime) 
+                     / (discount_rate - growth_rate))
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the wildfire cost calculation and output.
+
+\textbf{Workflow:}
+\begin{enumerate}
+    \item Loads project technical details and terrain distribution
+    \item Loads wildfire parameters
+    \item Gets discount rate based on configuration
+    \item Calls \texttt{calculate\_wildfire\_costs()} to compute costs
+    \item Displays detailed results and writes to CSV
+\end{enumerate}
+
+\section{Example}
+
+The following example demonstrates a typical usage of the wildfire cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
+# 
+# Inputs (from YAML):
+#   - Terrain distribution:
+#     * Forested: 40 miles, base rate: 0.0001 events/mi/yr
+#     * Farmland: 60 miles, base rate: 0.00005 events/mi/yr
+#   - Construction multiplier: 1.0 (overhead baseline)
+#   - Severity: $50M per event
+#   - Risk growth rate: 2% per year
+#   - Project lifetime: 50 years
+#   - Discount rate: 3% (social)
+#
+# Calculation:
+#   Forested segment: 40 * 0.0001 * 1.0 = 0.004 events/year
+#   Farmland segment: 60 * 0.00005 * 1.0 = 0.003 events/year
+#   Total lambda = 0.007 events/year
+#   EAL = 0.007 * $50M = $350,000/year
+#   Nominal total = $350k * ((1.02^50 - 1) / 0.02) = $28.5M
+#   PV = $350k * ((1 - (1.02/1.03)^50) / (0.03 - 0.02)) = $12.3M
+#
+# Output:
+#   - Total annual events: 0.007 events/year
+#   - EAL: $350,000/year
+#   - Nominal total: $28.5M
+#   - Present value: $12.3M
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+# Results dict already has all needed values from calculate_wildfire_costs()
+csv_manager.add_wildfire_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Probabilistic Risk Approach}
+
+The script uses a probabilistic approach where wildfire events are modeled as Poisson processes. The annual event rate (lambda) represents the expected number of events per year, and EAL represents the expected annual loss.
+
+\subsection{Construction Type Multipliers}
+
+Different construction types have different ignition rates. Overhead lines have the highest risk (multiplier = 1.0), while underground and subsea have much lower multipliers (e.g., 0.01 for underground).
+
+\subsection{Growing Annuity Formula}
+
+The script accounts for increasing wildfire risk over time using a growing annuity formula. This reflects the reality that climate change and other factors may increase wildfire frequency and severity.
+
+\subsection{Edge Cases}
+
+The script handles edge cases:
+\begin{itemize}
+    \item If growth rate = 0: Uses simple annuity formula
+    \item If discount rate = growth rate: Uses simplified formula (PV = EAL × N)
+\end{itemize}
+
+\subsection{AFUDC Treatment}
+
+Wildfire costs are probabilistic future losses, not capital costs. Therefore, they are not AFUDC-eligible. AFUDC applies only to construction work in progress.
+
+\subsection{Warning for High Growth Rates}
+
+If the risk growth rate exceeds the discount rate, the script issues a warning because the present value grows over time, indicating that risk is escalating faster than discounting.
+
+\end{document}
+

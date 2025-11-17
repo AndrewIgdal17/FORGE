@@ -21,7 +21,12 @@ class CTCCOutputManager:
         """
         self.output_dir = output_dir
         # Use environment variable if set (for coordinated batch runs), otherwise generate new one
-        self.scenario_id = scenario_id or os.environ.get('CTCC_SCENARIO_ID') or datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Use microseconds to ensure uniqueness even if runs happen in the same second
+        self.scenario_id = (
+            scenario_id
+            or os.environ.get("CTCC_SCENARIO_ID")
+            or datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        )
         self.timestamp = datetime.now().isoformat()
 
         # Ensure output directory exists
@@ -62,19 +67,23 @@ class CTCCOutputManager:
             physical_file = os.path.join(yaml_dir, "02_project_physical_details.yaml")
             with open(physical_file, "r") as file:
                 physical_data = yaml.load(file, Loader=yaml.FullLoader)
-            
+
+            # Load financing details for social discount rate
+            financing_yaml_path = os.path.join(yaml_dir, "03_financing.yaml")
+            with open(financing_yaml_path, "r") as file:
+                financing_data = yaml.load(file, Loader=yaml.FullLoader)
+
             # Calculate total line length
             terrain_miles = physical_data.get("terrain", {}).get("terrain_miles", {})
             total_line_length = sum(terrain_miles.values())
-            
+
             # Extract key technical parameters
             project = tech_data.get("project", {})
             timeline = tech_data.get("timeline", {})
-            
+
             technical_details = {
                 # Project identification
                 "project_name": project.get("name", ""),
-                
                 # Core technical specs
                 "construction_type": project.get("construction_type", ""),
                 "ac_dc": project.get("ac_dc", ""),
@@ -82,29 +91,45 @@ class CTCCOutputManager:
                 "conductor_type": project.get("conductor_type", ""),
                 "line_length_miles": total_line_length,
                 "line_utilization": project.get("line_utilization", 0),
-                
                 # Converter details (for DC projects)
                 "converter_type": project.get("converter_type", "NA"),
-                "number_of_converters": project.get("number_of_converters", 0) if project.get("ac_dc") == "DC" else 0,
-                
+                "number_of_converters": (
+                    project.get("number_of_converters", 0)
+                    if project.get("ac_dc") == "DC"
+                    else 0
+                ),
                 # Reconductoring details
                 "reconductoring": project.get("reconductoring", False),
-                "old_capacity_mw": project.get("old_capacity_mw", 0) if project.get("reconductoring") else 0,
-                "old_conductor_type": project.get("old_conductor_type", "") if project.get("reconductoring") else "",
-                "old_ac_dc": project.get("old_ac_dc", "") if project.get("reconductoring") else "",
-                
+                "old_capacity_mw": (
+                    project.get("old_capacity_mw", 0)
+                    if project.get("reconductoring")
+                    else 0
+                ),
+                "old_conductor_type": (
+                    project.get("old_conductor_type", "")
+                    if project.get("reconductoring")
+                    else ""
+                ),
+                "old_ac_dc": (
+                    project.get("old_ac_dc", "")
+                    if project.get("reconductoring")
+                    else ""
+                ),
                 # Financial parameters
-                "baseline_electricity_price_per_mwh": project.get("baseline_electricity_price_per_mwh", 0),
-                "social_discount_rate": project.get("social_discount_rate", 0),
-                
+                "baseline_electricity_price_per_mwh": project.get(
+                    "baseline_electricity_price_per_mwh", 0
+                ),
+                "social_discount_rate": financing_data.get("financial", {}).get(
+                    "social_discount_rate", 0
+                ),
                 # Timeline
                 "construction_years": timeline.get("construction_years", 0),
                 "delay_years": timeline.get("delay_years", 0),
                 "project_lifetime_years": timeline.get("project_lifetime", 0),
             }
-            
+
             return technical_details
-            
+
         except Exception as e:
             print(f"Warning: Could not load technical details: {e}")
             return {}
@@ -135,17 +160,17 @@ class CTCCOutputManager:
                 fieldnames = list(existing_fields) + [
                     f for f in fieldnames if f not in existing_fields
                 ]
-                
+
                 # Read all existing rows
                 existing_rows = list(reader)
-            
+
             # Check if this scenario_id already exists
             scenario_row_idx = None
             for idx, row in enumerate(existing_rows):
-                if row.get('scenario_id') == self.scenario_id:
+                if row.get("scenario_id") == self.scenario_id:
                     scenario_row_idx = idx
                     break
-            
+
             # Update existing row or append new one
             if scenario_row_idx is not None:
                 # Merge new data into existing row
@@ -153,7 +178,7 @@ class CTCCOutputManager:
             else:
                 # Add as new row
                 existing_rows.append(self.batch_summary_data)
-            
+
             # Write all rows back
             with open(batch_path, "w", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -195,21 +220,33 @@ class CTCCOutputManager:
 
         # Extract technical parameters to prepend to each row
         tech_param_keys = [
-            'project_name', 'construction_type', 'ac_dc', 'capacity_mw', 
-            'conductor_type', 'line_length_miles', 'line_utilization',
-            'converter_type', 'number_of_converters', 'reconductoring',
-            'old_capacity_mw', 'old_conductor_type', 'old_ac_dc',
-            'baseline_electricity_price_per_mwh', 'social_discount_rate',
-            'construction_years', 'delay_years', 'project_lifetime_years'
+            "project_name",
+            "construction_type",
+            "ac_dc",
+            "capacity_mw",
+            "conductor_type",
+            "line_length_miles",
+            "line_utilization",
+            "converter_type",
+            "number_of_converters",
+            "reconductoring",
+            "old_capacity_mw",
+            "old_conductor_type",
+            "old_ac_dc",
+            "baseline_electricity_price_per_mwh",
+            "social_discount_rate",
+            "construction_years",
+            "delay_years",
+            "project_lifetime_years",
         ]
-        
+
         # Build technical params dict from batch_summary_data
-        tech_params = {k: self.batch_summary_data.get(k, '') for k in tech_param_keys}
-        
+        tech_params = {k: self.batch_summary_data.get(k, "") for k in tech_param_keys}
+
         # Add scenario_id and timestamp
-        tech_params['scenario_id'] = self.scenario_id
-        tech_params['timestamp'] = self.timestamp
-        
+        tech_params["scenario_id"] = self.scenario_id
+        tech_params["timestamp"] = self.timestamp
+
         # Prepend technical parameters to each row
         enriched_rows = []
         for row in all_rows:
@@ -379,7 +416,7 @@ class CTCCOutputManager:
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
     def add_insurance_costs(self, results):
-        """Add insurance cost results to batch summary."""
+        """Add operational insurance cost results to batch summary."""
         self.append_to_batch_summary(
             {
                 "insurance_annual": results.get("annual_premium", 0),
@@ -391,12 +428,34 @@ class CTCCOutputManager:
         # Write module CSV
         summary_row = {
             "scenario_id": self.scenario_id,
-            "row_type": "summary",
+            "row_type": "operational",
             "annual_premium": results.get("annual_premium", 0),
             "nominal_total": results.get("nominal_lifetime_cost", 0),
             "pv_total": results.get("pv_total", 0),
             "insurable_value": results.get("insurable_value", 0),
             "premium_rate": results.get("premium_rate", 0),
+        }
+        self.write_module_csv("insurance_costs", summary_row=summary_row)
+
+    def add_wildfire_liability_costs(self, results):
+        """Add wildfire liability insurance cost results to batch summary."""
+        self.append_to_batch_summary(
+            {
+                "wildfire_liability_annual": results.get("annual_premium", 0),
+                "wildfire_liability_nominal": results.get("nominal_lifetime_cost", 0),
+                "wildfire_liability_pv": results.get("pv_total", 0),
+            }
+        )
+
+        # Write module CSV
+        summary_row = {
+            "scenario_id": self.scenario_id,
+            "row_type": "wildfire_liability",
+            "annual_premium": results.get("annual_premium", 0),
+            "nominal_total": results.get("nominal_lifetime_cost", 0),
+            "pv_total": results.get("pv_total", 0),
+            "liability_limit": results.get("liability_limit", 0),
+            "rate_on_line": results.get("rate_on_line", 0),
         }
         self.write_module_csv("insurance_costs", summary_row=summary_row)
 
@@ -603,11 +662,11 @@ class CTCCOutputManager:
     def add_congestion_curtailment(self, results):
         """
         Add congestion and curtailment benefits and costs to batch summary.
-        
+
         Benefits (reduce system cost):
         - Congestion reduction benefit (operational, full + haircut)
         - Curtailment reduction benefit (operational, full + haircut)
-        
+
         Costs (increase system cost):
         - Congestion during delay/construction (opportunity cost)
         - Curtailment during delay/construction (opportunity cost)
@@ -617,21 +676,43 @@ class CTCCOutputManager:
         self.append_to_batch_summary(
             {
                 # BENEFITS (reduce system cost)
-                "congestion_benefit_annual": results.get("congestion_benefit_annual", 0),
-                "congestion_benefit_nominal": results.get("congestion_benefit_nominal", 0),
+                "congestion_benefit_annual": results.get(
+                    "congestion_benefit_annual", 0
+                ),
+                "congestion_benefit_nominal": results.get(
+                    "congestion_benefit_nominal", 0
+                ),
                 "congestion_benefit_pv": results.get("congestion_benefit_pv", 0),
-                "congestion_benefit_haircut_pv": results.get("congestion_benefit_haircut_pv", 0),
-                "curtailment_benefit_annual": results.get("curtailment_benefit_annual", 0),
-                "curtailment_benefit_nominal": results.get("curtailment_benefit_nominal", 0),
+                "congestion_benefit_haircut_pv": results.get(
+                    "congestion_benefit_haircut_pv", 0
+                ),
+                "curtailment_benefit_annual": results.get(
+                    "curtailment_benefit_annual", 0
+                ),
+                "curtailment_benefit_nominal": results.get(
+                    "curtailment_benefit_nominal", 0
+                ),
                 "curtailment_benefit_pv": results.get("curtailment_benefit_pv", 0),
-                "curtailment_benefit_haircut_pv": results.get("curtailment_benefit_haircut_pv", 0),
+                "curtailment_benefit_haircut_pv": results.get(
+                    "curtailment_benefit_haircut_pv", 0
+                ),
                 # COSTS (increase system cost)
-                "congestion_delay_cost_nominal": results.get("congestion_delay_cost_nominal", 0),
+                "congestion_delay_cost_nominal": results.get(
+                    "congestion_delay_cost_nominal", 0
+                ),
                 "congestion_delay_cost_pv": results.get("congestion_delay_cost_pv", 0),
-                "curtailment_delay_cost_nominal": results.get("curtailment_delay_cost_nominal", 0),
-                "curtailment_delay_cost_pv": results.get("curtailment_delay_cost_pv", 0),
-                "residual_congestion_annual": results.get("residual_congestion_annual", 0),
-                "residual_congestion_nominal": results.get("residual_congestion_nominal", 0),
+                "curtailment_delay_cost_nominal": results.get(
+                    "curtailment_delay_cost_nominal", 0
+                ),
+                "curtailment_delay_cost_pv": results.get(
+                    "curtailment_delay_cost_pv", 0
+                ),
+                "residual_congestion_annual": results.get(
+                    "residual_congestion_annual", 0
+                ),
+                "residual_congestion_nominal": results.get(
+                    "residual_congestion_nominal", 0
+                ),
                 "residual_congestion_pv": results.get("residual_congestion_pv", 0),
             }
         )
@@ -718,19 +799,16 @@ class CTCCOutputManager:
         ]
 
         # Calculate summary totals
-        total_benefits_annual = (
-            results.get("congestion_benefit_annual", 0)
-            + results.get("curtailment_benefit_annual", 0)
+        total_benefits_annual = results.get(
+            "congestion_benefit_annual", 0
+        ) + results.get("curtailment_benefit_annual", 0)
+        total_benefits_nominal = results.get(
+            "congestion_benefit_nominal", 0
+        ) + results.get("curtailment_benefit_nominal", 0)
+        total_benefits_pv = results.get("congestion_benefit_pv", 0) + results.get(
+            "curtailment_benefit_pv", 0
         )
-        total_benefits_nominal = (
-            results.get("congestion_benefit_nominal", 0)
-            + results.get("curtailment_benefit_nominal", 0)
-        )
-        total_benefits_pv = (
-            results.get("congestion_benefit_pv", 0)
-            + results.get("curtailment_benefit_pv", 0)
-        )
-        
+
         total_costs_nominal = (
             results.get("congestion_delay_cost_nominal", 0)
             + results.get("curtailment_delay_cost_nominal", 0)
@@ -871,7 +949,7 @@ class CTCCOutputManager:
     def add_bcr_metrics(self, bcr_results):
         """
         Add benefit-cost ratio metrics to batch summary.
-        
+
         Args:
             bcr_results: Dictionary containing BCR metrics from bcr_calculator
                 Expected keys:

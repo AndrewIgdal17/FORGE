@@ -6,7 +6,7 @@ wildfire:
   severity_per_event: 5000000000 # Mean loss per wildfire event ($/event)
 
   # Risk growth (optional - wildfire risk increases over time)
-  risk_growth_rate: 0.02 # Annual increase in ignition probability (2%)
+  risk_growth_rate: 0.01 # Annual increase in ignition probability (2%)
 
   # Discount rate configuration
   discount_rate_source: "social" # Options: "social" | "wacc_real" | "custom"
@@ -15,13 +15,13 @@ wildfire:
   # Base ignition rates by terrain (for overhead baseline)
   # Units: events per mile per year
   ignition_rates_by_terrain:
-    forested: 0.0001 # Higher risk in forested areas
-    scrubbed_flat: 0.00005
-    wetland: 0.00001 # Lower risk in wet areas
-    farmland: 0.00003
-    desert_barren: 0.00008
-    urban: 0.00002
-    rolling_hills: 0.00006
+    forested: 0.002 # Higher risk in forested areas
+    scrubbed_flat: 0.001
+    wetland: 0.0001 # Lower risk in wet areas
+    farmland: 0.0002
+    desert_barren: 0.0001
+    urban: 0.0001
+    rolling_hills: 0.001
     mountain: 0.0001
     subsea: 0.0 # No wildfire risk subsea
 

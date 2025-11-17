@@ -1,0 +1,362 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Benefit-Cost Ratio Calculator Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{bcr\_calculator.py} script calculates Benefit-Cost Ratios (BCR) and Net Benefits for transmission projects. It aggregates benefits and costs from all CTCC modules and computes multiple BCR metrics to evaluate project economics from different perspectives.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates BCR metrics by:
+\begin{enumerate}
+    \item Loading scenario data from \texttt{batch\_summary.csv}
+    \item Aggregating benefits (congestion, curtailment, line loss benefits for reconductoring)
+    \item Aggregating costs by category (capital, operational, risk, delay)
+    \item Calculating multiple BCR metrics (system, capital, haircut, excluding risk)
+    \item Computing net benefits (total and excluding risk)
+    \item Displaying formatted summary and updating CSV
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The BCR calculation follows this structure:
+
+\begin{align}
+\text{Total Benefits} &= \text{Congestion} + \text{Curtailment} + \text{Line Loss Benefits} \\
+\text{Total Costs} &= \text{Capital} + \text{Operational} + \text{Risk} + \text{Delay} \\
+\text{BCR}_{system} &= \frac{\text{Total Benefits}}{\text{Total Costs}} \\
+\text{BCR}_{capital} &= \frac{\text{Total Benefits}}{\text{Capital Costs}} \\
+\text{BCR}_{haircut} &= \frac{\text{Haircut Benefits}}{\text{Total Costs}} \\
+\text{BCR}_{excluding\_risk} &= \frac{\text{Total Benefits}}{\text{Total Costs} - \text{Risk Costs}} \\
+\text{Net Benefit} &= \text{Total Benefits} - \text{Total Costs}
+\end{align}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Scenario ID (to load from \texttt{batch\_summary.csv})
+    \item All cost and benefit metrics from CTCC modules
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item BCR metrics (system, capital, haircut, excluding risk)
+    \item Net benefits (total and excluding risk)
+    \item Benefit and cost breakdowns
+    \item Formatted summary display
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{csv\_output\_manager.py} - Reads from and writes to \texttt{batch\_summary.csv} (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item All CTCC cost/benefit calculation scripts - Aggregates their outputs
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{load\_scenario\_data(scenario\_id, output\_dir)}}
+
+Loads scenario data from \texttt{batch\_summary.csv} for the given scenario ID.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{scenario\_id} (str): Unique identifier for the scenario
+    \item \texttt{output\_dir} (str): Directory containing \texttt{batch\_summary.csv}
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary with all data for the scenario, or None if not found
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Read CSV and find matching scenario_id
+with open(batch_path, 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        if row.get('scenario_id') == scenario_id:
+            # Convert numeric strings to floats
+            for key, value in row.items():
+                if value and value != '':
+                    try:
+                        row[key] = float(value)
+                    except (ValueError, TypeError):
+                        pass
+            return row
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_benefits(data)}}
+
+Calculates total benefits from scenario data.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{data} (dict): Dictionary with scenario data
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary with benefit breakdown and totals (PV, nominal, haircut)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Present value benefits
+congestion_benefit_pv = data.get('congestion_benefit_pv', 0) or 0
+curtailment_benefit_pv = data.get('curtailment_benefit_pv', 0) or 0
+line_loss_pv = data.get('line_loss_cost_pv', 0) or 0
+
+# For reconductoring, line losses are negative (benefit)
+line_loss_benefit_pv = 0
+if line_loss_pv < 0:
+    line_loss_benefit_pv = abs(line_loss_pv)
+
+total_benefits_pv = (congestion_benefit_pv + curtailment_benefit_pv 
+                     + line_loss_benefit_pv)
+
+# Haircut benefits (conservative)
+total_benefits_haircut_pv = (congestion_benefit_haircut 
+                            + curtailment_benefit_haircut 
+                            + line_loss_benefit_pv)
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_costs(data)}}
+
+Calculates total costs from scenario data, organized by category.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{data} (dict): Dictionary with scenario data
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary with cost breakdown by category and totals (PV and nominal)
+\end{itemize}
+
+\textbf{Cost Categories:}
+\begin{itemize}
+    \item \textbf{Capital}: Build, ROW, environmental mitigation
+    \item \textbf{Operational}: O\&M, insurance, line losses (greenfield), emissions
+    \item \textbf{Risk}: Wildfire, outage
+    \item \textbf{Delay}: Construction delay, congestion/curtailment delay, residual congestion
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Capital costs
+capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
+
+# Operational costs (line losses only if positive - greenfield)
+line_loss_cost_pv = max(0, line_loss_pv)
+operational_costs_pv = oandm_pv + insurance_pv + line_loss_cost_pv + emissions_pv
+
+# Risk costs
+risk_costs_pv = wildfire_pv + outage_pv
+
+# Delay costs
+delay_costs_pv = (delay_cost_pv + congestion_delay_pv 
+                 + curtailment_delay_pv + residual_congestion_pv)
+
+# Totals
+total_costs_pv = (capital_costs_pv + operational_costs_pv 
+                 + risk_costs_pv + delay_costs_pv)
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_bcr\_metrics(benefits, costs)}}
+
+Calculates benefit-cost ratios and net benefits.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{benefits} (dict): Dictionary with benefit breakdown
+    \item \texttt{costs} (dict): Dictionary with cost breakdown
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary with BCR metrics and net benefits
+\end{itemize}
+
+\textbf{BCR Metrics:}
+\begin{itemize}
+    \item \textbf{BCR\_system}: Total benefits / Total costs (primary metric)
+    \item \textbf{BCR\_capital}: Total benefits / Capital costs (investor perspective)
+    \item \textbf{BCR\_haircut}: Haircut benefits / Total costs (conservative)
+    \item \textbf{BCR\_excluding\_risk}: Total benefits / (Total costs - Risk costs) (core economics)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate costs excluding risk
+total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
+
+# Calculate BCRs (with division by zero protection)
+bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
+bcr_capital = total_benefits_pv / capital_costs_pv if capital_costs_pv > 0 else 0
+bcr_haircut = total_benefits_haircut / total_costs_pv if total_costs_pv > 0 else 0
+bcr_excluding_risk = (total_benefits_pv / total_costs_excluding_risk_pv 
+                      if total_costs_excluding_risk_pv > 0 else 0)
+
+# Net benefits
+net_benefit_pv = total_benefits_pv - total_costs_pv
+net_benefit_excluding_risk_pv = total_benefits_pv - total_costs_excluding_risk_pv
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_and\_display\_bcr(scenario\_id, output\_dir)}}
+
+Main function to calculate and display BCR analysis.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{scenario\_id} (str): Unique identifier for the scenario
+    \item \texttt{output\_dir} (str): Directory containing \texttt{batch\_summary.csv}
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Dictionary with all BCR results, or None if calculation fails
+\end{itemize}
+
+\subsection{\texttt{print\_bcr\_summary(benefits, costs, bcr\_metrics, data)}}
+
+Prints formatted BCR summary to terminal.
+
+\section{Example}
+
+The following example demonstrates a typical usage:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# Scenario ID: "20250101_120000"
+# 
+# Inputs (from batch_summary.csv):
+#   - Congestion benefit PV: $500M
+#   - Curtailment benefit PV: $200M
+#   - Line loss cost PV: $10M (greenfield - cost)
+#   - Build cost PV: $100M
+#   - ROW cost PV: $20M
+#   - Environmental PV: $15M
+#   - O&M PV: $50M
+#   - Insurance PV: $5M
+#   - Emissions PV: $8M
+#   - Wildfire PV: $1B
+#   - Outage PV: $500M
+#   - Delay costs PV: $2M
+#   - Residual congestion PV: $50M
+#
+# Calculation:
+#   Total Benefits = $500M + $200M + $0 = $700M
+#   Capital Costs = $100M + $20M + $15M = $135M
+#   Operational Costs = $50M + $5M + $10M + $8M = $73M
+#   Risk Costs = $1B + $500M = $1.5B
+#   Delay Costs = $2M + $50M = $52M
+#   Total Costs = $135M + $73M + $1.5B + $52M = $1.76B
+#   
+#   BCR_system = $700M / $1.76B = 0.40
+#   BCR_capital = $700M / $135M = 5.19
+#   BCR_excluding_risk = $700M / ($1.76B - $1.5B) = 2.69
+#   Net Benefit = $700M - $1.76B = -$1.06B
+#
+# Output:
+#   - BCR_system: 0.40
+#   - BCR_capital: 5.19
+#   - BCR_excluding_risk: 2.69
+#   - Net benefit: -$1.06B
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+from scripts.bcr_calculator import calculate_and_display_bcr
+
+# After all other scripts complete
+scenario_id = os.environ.get('CTCC_SCENARIO_ID')
+results = calculate_and_display_bcr(scenario_id)
+
+# Update batch_summary.csv with BCR metrics
+csv_manager = CTCCOutputManager()
+csv_manager.add_bcr_metrics(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Line Loss Treatment}
+
+The script handles line losses differently for greenfield vs. reconductoring:
+\begin{itemize}
+    \item \textbf{Greenfield}: Line losses are positive (costs) - counted in operational costs
+    \item \textbf{Reconductoring}: Line losses are negative (benefits) - counted in benefits
+\end{itemize}
+
+\subsection{Multiple BCR Perspectives}
+
+The script calculates four BCR metrics to provide different perspectives:
+\begin{itemize}
+    \item \textbf{System BCR}: Overall project economics including all costs
+    \item \textbf{Capital BCR}: Benefits relative to capital investment (investor view)
+    \item \textbf{Haircut BCR}: Conservative estimate using saturation-adjusted benefits
+    \item \textbf{Excluding Risk BCR}: Core economics without wildfire/outage risk costs
+\end{itemize}
+
+\subsection{Net Benefits}
+
+The script calculates net benefits in addition to BCRs:
+\begin{itemize}
+    \item \textbf{Net Benefit}: Total benefits - Total costs
+    \item \textbf{Net Benefit Excluding Risk}: Total benefits - (Total costs - Risk costs)
+\end{itemize}
+
+\subsection{Division by Zero Protection}
+
+All BCR calculations include checks to prevent division by zero, returning 0 if the denominator is zero or negative.
+
+\subsection{Data Loading}
+
+The script loads data from \texttt{batch\_summary.csv} using the scenario ID, automatically converting numeric strings to floats for calculations.
+
+\end{document}
+

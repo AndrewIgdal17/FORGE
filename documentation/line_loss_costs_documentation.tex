@@ -1,0 +1,272 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Line Loss Costs/Benefits Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{line\_loss\_costs.py} script calculates line loss costs for greenfield projects and line loss benefits for reconductoring projects. For greenfield projects, line losses represent a cost (energy that must be generated to compensate). For reconductoring projects, reduced losses compared to the old conductor represent a benefit.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates line loss costs/benefits by:
+\begin{enumerate}
+    \item Determining if project is greenfield or reconductoring
+    \item For greenfield: Calculating losses and converting to costs
+    \item For reconductoring: Comparing old vs. new conductor losses to calculate benefits
+    \item Computing present values using appropriate discount rates
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+\textbf{Greenfield Projects:}
+\begin{align}
+\text{Annual Loss Cost} &= \text{Losses (MWh/year)} \times \text{Electricity Price (\$/MWh)} \\
+\text{Lifetime Nominal} &= \text{Annual Cost} \times \text{Project Lifetime} \\
+\text{Present Value} &= \sum_{t=1}^{N} \frac{\text{Annual Cost}}{(1 + r)^{t + \text{start\_year} - 1}}
+\end{align}
+
+\textbf{Reconductoring Projects:}
+\begin{align}
+\text{Loss Reduction} &= \text{Old Losses} - \text{New Losses} \\
+\text{Annual Benefit} &= \text{Loss Reduction} \times \text{Electricity Price} \\
+\text{Lifetime Benefit} &= \text{Annual Benefit} \times \text{Project Lifetime} \\
+\text{Present Value} &= \sum_{t=1}^{N} \frac{\text{Annual Benefit}}{(1 + r)^{t + \text{start\_year} - 1}}
+\end{align}
+
+The script uses a normalized comparison method that accounts for capacity differences between old and new configurations.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Project technical details (construction type, AC/DC, capacity, conductor type, reconductoring status)
+    \item Old configuration details (for reconductoring: old capacity, old conductor type, old AC/DC)
+    \item Physical details (line length)
+    \item Circuit and resistance details
+    \item Electricity price
+    \item Social discount rate
+    \item Project lifetime, delay years, construction years
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Annual cost/benefit
+    \item Lifetime nominal cost/benefit
+    \item Present value cost/benefit
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{energy\_losses.py} - Calculates line losses for configurations (see \texttt{energy\_losses\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{load\_project\_details()}}
+
+Loads project technical details with line\_loss\_costs specific fields.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Multiple values including construction type, AC/DC, capacity, conductor type, utilization, reconductoring status, timeline parameters
+\end{itemize}
+
+\subsection{\texttt{calculate\_configuration\_losses(construction\_type, ac\_dc, capacity\_mw, conductor\_type, converter\_type, line\_utilization\_percent, project\_lifetime)}}
+
+Calculates line losses for a given configuration.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{construction\_type} (str): Construction type
+    \item \texttt{ac\_dc} (str): AC or DC
+    \item \texttt{capacity\_mw} (float): Capacity in MW
+    \item \texttt{conductor\_type} (str): Type of conductor
+    \item \texttt{converter\_type} (str): Converter type (for DC) or "NA"
+    \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{losses\_mwh\_per\_year} (float): Annual losses in MWh
+    \item \texttt{lifetime\_losses\_mwh} (float): Lifetime losses in MWh
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Build category string for lookup
+category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+
+# Load physical and circuit details
+line_length = load_physical_details()
+voltage_kv, conductors_per_phase, ... = load_circuit_and_resistance_details(category)
+
+# Calculate phase current and full load adjustment
+phase_current = calculate_phase_current(...)
+full_load_adj = full_load_adjusted(line_utilization_percent)
+
+# Calculate line losses
+losses_mwh_per_year, lifetime_losses_mwh, ... = calculate_line_losses(...)
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the line loss cost/benefit calculation.
+
+\textbf{Workflow for Greenfield:}
+\begin{enumerate}
+    \item Calculates losses for the greenfield configuration
+    \item Converts losses to costs (losses × electricity price)
+    \item Calculates present value
+    \item Writes to CSV as costs
+\end{enumerate}
+
+\textbf{Workflow for Reconductoring:}
+\begin{enumerate}
+    \item Calculates losses for baseline (old) configuration
+    \item Calculates losses for new configuration
+    \item Calculates counterfactual baseline losses (old conductor at new capacity)
+    \item Compares using normalized method
+    \item Calculates benefits (reduced losses)
+    \item Calculates present value
+    \item Writes to CSV as benefits
+\end{enumerate}
+
+\section{Example}
+
+The following example demonstrates a typical usage:
+
+\begin{lstlisting}
+# Example 1: Greenfield Project
+# 500 MW Overhead AC line
+# 
+# Inputs:
+#   - Capacity: 500 MW
+#   - Line utilization: 70%
+#   - Line length: 100 miles
+#   - Losses: 5,000 MWh/year
+#   - Electricity price: $50/MWh
+#   - Project lifetime: 50 years
+#   - Start year: 3 (after 2-year construction)
+#
+# Calculation:
+#   Annual cost = 5,000 * $50 = $250,000/year
+#   Lifetime nominal = $250,000 * 50 = $12.5M
+#   PV = $250,000 * PV annuity (50 years, 3%, start year 3) = $8.2M
+#
+# Output:
+#   - Annual cost: $250,000
+#   - Lifetime nominal: $12.5M
+#   - Present value: $8.2M
+
+# Example 2: Reconductoring Project
+# Upgrade 200 MW line to 350 MW
+# 
+# Inputs:
+#   - Old: 200 MW, Standard Aluminum, losses: 3,000 MWh/year
+#   - New: 350 MW, Advanced Aluminum, losses: 4,000 MWh/year
+#   - Counterfactual (old conductor @ 350 MW): 5,500 MWh/year
+#   - Electricity price: $50/MWh
+#
+# Calculation (Normalized Method):
+#   Loss reduction = 5,500 - 4,000 = 1,500 MWh/year
+#   Annual benefit = 1,500 * $50 = $75,000/year
+#   Lifetime benefit = $75,000 * 50 = $3.75M
+#   PV = $75,000 * PV annuity (50 years, 3%) = $1.8M
+#
+# Output:
+#   - Annual benefit: $75,000
+#   - Lifetime benefit: $3.75M
+#   - Present value: $1.8M
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+results = {
+    "annual_cost": annual_loss_cost,  # or annual_benefit for reconductoring
+    "total_nominal": lifetime_nominal_cost,  # or lifetime_benefit
+    "total_afudc": 0,  # Line losses not AFUDC-eligible
+    "total_pv": pv_loss_cost,  # or pv_benefit
+}
+csv_manager.add_line_loss_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Greenfield vs. Reconductoring}
+
+The script handles two distinct cases:
+\begin{itemize}
+    \item \textbf{Greenfield}: Line losses are a cost (energy that must be generated)
+    \item \textbf{Reconductoring}: Reduced losses are a benefit (compared to old conductor)
+\end{itemize}
+
+\subsection{Comparison Methods for Reconductoring}
+
+The script implements three comparison methods:
+\begin{enumerate}
+    \item \textbf{Direct Comparison}: Old losses @ old capacity vs. new losses @ new capacity
+    \item \textbf{Counterfactual Comparison}: Old conductor @ new capacity vs. new conductor @ new capacity (used for output)
+    \item \textbf{Normalized Comparison}: Loss percentages weighted by delivered energy
+\end{enumerate}
+
+The normalized method is used for the final output as it accounts for capacity differences.
+
+\subsection{Counterfactual Baseline}
+
+For reconductoring, the script calculates what losses would be if the old conductor were used at the new capacity. This provides a fair comparison by isolating the effect of the conductor upgrade.
+
+\subsection{Present Value Timing}
+
+Costs/benefits start when the project becomes operational (after delay and construction periods). The present value calculation discounts annual payments back to the base year.
+
+\subsection{AFUDC Treatment}
+
+Line loss costs/benefits are not AFUDC-eligible because they are operational costs/benefits, not construction costs.
+
+\end{document}
+

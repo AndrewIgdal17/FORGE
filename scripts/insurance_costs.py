@@ -87,6 +87,53 @@ def calculate_insurance_costs(
     }
 
 
+def calculate_wildfire_liability_premium(
+    insurance_yaml,
+    project_lifetime,
+):
+    """
+    Calculate wildfire liability insurance premium using rate-on-line (ROL).
+    
+    ROL is the annual premium as a fraction of the liability limit.
+    Premium = ROL × Liability Limit (annual)
+    
+    Args:
+        insurance_yaml: Loaded insurance YAML data
+        project_lifetime: Project lifetime in years
+    
+    Returns:
+        dict: Contains liability_limit, rate_on_line, annual_premium, nominal_lifetime_cost
+              Returns None if disabled or not configured
+    """
+    insurance = insurance_yaml.get("insurance", {})
+    wildfire_liability = insurance.get("wildfire_liability", {})
+    
+    # Check if enabled
+    if not wildfire_liability.get("enabled", False):
+        return None
+    
+    # Get parameters
+    liability_limit = wildfire_liability.get("liability_limit", 0)
+    rate_on_line = wildfire_liability.get("rate_on_line", 0)
+    
+    # Validate parameters
+    if liability_limit <= 0 or rate_on_line <= 0:
+        return None
+    
+    # Calculate annual premium
+    annual_premium = rate_on_line * liability_limit
+    
+    # Calculate lifetime cost (annual premium × project lifetime)
+    nominal_lifetime_cost = annual_premium * project_lifetime
+    
+    return {
+        "liability_limit": liability_limit,
+        "rate_on_line": rate_on_line,
+        "annual_premium": annual_premium,
+        "nominal_lifetime_cost": nominal_lifetime_cost,
+    }
+
+
 def main():
     """Main function to calculate and display insurance costs."""
     # Load project specifications
@@ -137,7 +184,7 @@ def main():
     # Load insurance parameters
     insurance_yaml = load_insurance_details()
 
-    # Calculate insurance costs
+    # Calculate operational insurance costs
     results = calculate_insurance_costs(
         insurance_yaml,
         conductor_cost_with_contingencies,
@@ -150,15 +197,33 @@ def main():
     # Load financing parameters for present value calculation
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
 
-    # Calculate Present Value
+    # Calculate wildfire liability insurance (skip if flag is set)
+    wildfire_liability_results = None
+    if "CTCC_NO_WF_LIABILITY" not in os.environ:
+        wildfire_liability_results = calculate_wildfire_liability_premium(
+            insurance_yaml,
+            project_lifetime,
+        )
+
+    # Calculate Present Value for operational insurance
     # Insurance payments start at COD (after construction) and continue for project lifetime
-    insurance_start_year = delay_year + construction_years
+    insurance_start_year = delay_year + construction_years + 1
     insurance_pv = calculate_present_value(
         results["annual_premium"],
         wacc_real,
         project_lifetime,
         insurance_start_year,
     )
+
+    # Calculate Present Value for wildfire liability (if enabled)
+    wildfire_liability_pv = 0
+    if wildfire_liability_results:
+        wildfire_liability_pv = calculate_present_value(
+            wildfire_liability_results["annual_premium"],
+            wacc_real,
+            project_lifetime,
+            insurance_start_year,
+        )
 
     # Display results
     print("=" * 80)
@@ -198,6 +263,31 @@ def main():
     print("NOTE: Operational insurance is not AFUDC-eligible (operating expense).")
     print("=" * 80)
 
+    # Display wildfire liability if enabled
+    if wildfire_liability_results:
+        print()
+        print("=" * 80)
+        print("WILDFIRE LIABILITY INSURANCE COST CALCULATION RESULTS")
+        print("=" * 80)
+        print(f"Liability Limit: ${wildfire_liability_results['liability_limit']:,.2f}")
+        print(f"Rate-on-Line (ROL): {wildfire_liability_results['rate_on_line']:.2%}")
+        print()
+        print("[NOMINAL VALUES]")
+        print(f"  Annual Premium: ${wildfire_liability_results['annual_premium']:,.2f}")
+        print(f"  Project Lifetime: {project_lifetime} years")
+        print(f"  ---")
+        print(f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}")
+        print()
+        print("[SOCIETAL PERSPECTIVE - Present Value]")
+        print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
+        print(f"  Base Year: {base_year}")
+        print(f"  Payment Start: Year {insurance_start_year} (at COD)")
+        print(f"  ---")
+        print(f"  TOTAL PRESENT VALUE: ${wildfire_liability_pv:,.2f}")
+        print()
+        print("NOTE: Wildfire liability insurance is not AFUDC-eligible (operating expense).")
+        print("=" * 80)
+
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
@@ -205,7 +295,7 @@ def main():
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
     
-    # Prepare results dictionary for CSV
+    # Prepare operational insurance results dictionary for CSV
     csv_results = {
         "annual_premium": results["annual_premium"],
         "nominal_lifetime_cost": results["nominal_lifetime_cost"],
@@ -213,9 +303,19 @@ def main():
         "insurable_value": results["insurable_value"],
         "premium_rate": results["premium_rate"],
     }
-    
-    # Write to CSV
     csv_manager.add_insurance_costs(csv_results)
+    
+    # Add wildfire liability if enabled
+    if wildfire_liability_results:
+        wildfire_csv_results = {
+            "annual_premium": wildfire_liability_results["annual_premium"],
+            "nominal_lifetime_cost": wildfire_liability_results["nominal_lifetime_cost"],
+            "pv_total": wildfire_liability_pv,
+            "liability_limit": wildfire_liability_results["liability_limit"],
+            "rate_on_line": wildfire_liability_results["rate_on_line"],
+        }
+        csv_manager.add_wildfire_liability_costs(wildfire_csv_results)
+    
     csv_manager.write_batch_summary()
 
 

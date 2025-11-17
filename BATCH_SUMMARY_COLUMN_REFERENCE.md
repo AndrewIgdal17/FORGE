@@ -1,7 +1,7 @@
 # Batch Summary CSV Column Reference
 
 **Comprehensive Transmission Cost Calculator (CTCC)**  
-**Total Columns: 94**
+**Total Columns: 97**
 
 ---
 
@@ -65,48 +65,56 @@
 
 ## SECTION 3: INSURANCE COSTS (Columns 27-29)
 
-27. **insurance_annual** - Annual insurance premium
-28. **insurance_nominal** - Lifetime insurance costs (undiscounted)
-29. **insurance_pv** - Insurance present value
+27. **insurance_annual** - Annual operational insurance premium
+28. **insurance_nominal** - Lifetime operational insurance costs (undiscounted)
+29. **insurance_pv** - Operational insurance present value
 
 ---
 
-## SECTION 4: RIGHT-OF-WAY (ROW) COSTS (Columns 30-35)
+## SECTION 3a: WILDFIRE LIABILITY INSURANCE (Columns 30-32)
+
+30. **wildfire_liability_annual** - Annual wildfire liability insurance premium (ROL × Liability Limit)
+31. **wildfire_liability_nominal** - Lifetime wildfire liability insurance costs (undiscounted)
+32. **wildfire_liability_pv** - Wildfire liability insurance present value
+
+---
+
+## SECTION 4: RIGHT-OF-WAY (ROW) COSTS (Columns 33-38)
 
 ### Total ROW Costs
 
-30. **row_cost_nominal** - Total ROW costs (undiscounted)
-31. **row_cost_afudc** - ROW costs with AFUDC
-32. **row_cost_pv** - ROW present value
+33. **row_cost_nominal** - Total ROW costs (undiscounted)
+34. **row_cost_afudc** - ROW costs with AFUDC
+35. **row_cost_pv** - ROW present value
 
 ### ROW Cost Components
 
-33. **row_acquisition_nominal** - Land acquisition costs
-34. **row_holding_nominal** - Holding costs during development
-35. **row_rent_nominal** - Annual rent payments (if leasing)
+36. **row_acquisition_nominal** - Land acquisition costs
+37. **row_holding_nominal** - Holding costs during development
+38. **row_rent_nominal** - Annual rent payments (if leasing)
 
 ---
 
-## SECTION 5: ENVIRONMENTAL MITIGATION (Columns 36-40)
+## SECTION 5: ENVIRONMENTAL MITIGATION (Columns 39-43)
 
 ### Total Environmental Costs
 
-36. **env_mitigation_nominal** - Total environmental mitigation (undiscounted)
-37. **env_mitigation_afudc** - Environmental costs with AFUDC
-38. **env_mitigation_pv** - Environmental mitigation present value
+39. **env_mitigation_nominal** - Total environmental mitigation (undiscounted)
+40. **env_mitigation_afudc** - Environmental costs with AFUDC
+41. **env_mitigation_pv** - Environmental mitigation present value
 
 ### Environmental Components
 
-39. **env_base_cost** - Base environmental compliance costs
-40. **env_credits_cost** - Environmental offset/credit costs
+42. **env_base_cost** - Base environmental compliance costs
+43. **env_credits_cost** - Environmental offset/credit costs
 
 ---
 
-## SECTION 6: DELAY COSTS (Columns 41-43)
+## SECTION 6: DELAY COSTS (Columns 44-46)
 
-41. **delay_cost_nominal** - Cost of construction delays (undiscounted)
-42. **delay_cost_afudc** - Delay costs with AFUDC accumulation
-43. **delay_cost_pv** - Delay cost present value
+44. **delay_cost_nominal** - Cost of construction delays (undiscounted)
+45. **delay_cost_afudc** - Delay costs with AFUDC accumulation
+46. **delay_cost_pv** - Delay cost present value
 
 _Note: Delay costs include carrying costs during permitting/siting delays_
 

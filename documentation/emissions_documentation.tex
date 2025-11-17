@@ -1,0 +1,341 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Emissions Costs Calculation Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{emissions.py} script calculates the societal costs of emissions due to line losses being compensated by generators. When transmission lines lose energy, generators must produce additional energy to compensate, resulting in additional emissions (CO2, SOx, NOx) that have societal costs.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+This script calculates emissions costs by:
+\begin{enumerate}
+    \item Calculating total energy losses (line losses + converter losses)
+    \item Determining total energy compensated (TEC) = losses × compensation percentage
+    \item Projecting energy mix evolution over project lifetime
+    \item Calculating emissions by pollutant for each year
+    \item Applying societal costs per kg of pollutant
+    \item Computing present value of lifetime emissions costs
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+The emissions cost calculation follows this structure:
+
+\begin{align}
+\text{TEC} &= \alpha \times \text{Total Energy Losses} \\
+\text{Emissions}_k &= \text{TEC} \times \sum_j (p_j \times I_{j,k}) \\
+\text{Cost}_k &= \text{Emissions}_k \times c_k \\
+\text{Total Cost} &= \sum_k \text{Cost}_k \\
+\text{PV} &= \sum_{t=1}^{N} \frac{\text{Annual Cost}_t}{(1 + r)^{t + \text{start\_year} - 1}}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $\alpha$ = compensation percentage (fraction of losses compensated)
+    \item $p_j$ = percentage of energy from source $j$ in year $t$
+    \item $I_{j,k}$ = emission intensity of pollutant $k$ from source $j$ (kg/MWh)
+    \item $c_k$ = societal cost per kg of pollutant $k$
+    \item $r$ = social discount rate
+\end{itemize}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Total energy losses (from \texttt{energy\_losses.py})
+    \item Compensation percentage (fraction of losses compensated by generators)
+    \item Energy source mix (initial percentages and growth/decay rates)
+    \item Emission intensities by source and pollutant
+    \item Societal costs per kg of pollutant
+    \item Social discount rate
+    \item Project lifetime, delay years, construction years
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Average annual emissions by pollutant (CO2, SOx, NOx)
+    \item Average annual costs by pollutant
+    \item Lifetime total emissions and costs
+    \item Present value of lifetime emissions costs
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+This script integrates with:
+\begin{itemize}
+    \item \texttt{energy\_losses.py} - Calculates line and converter losses (see \texttt{energy\_losses\_documentation.tex})
+    \item \texttt{yaml\_loaders.py} - Loads emissions parameters (see \texttt{utilities\_documentation.tex})
+    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
+    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{calculate\_total\_energy\_losses()}}
+
+Calculates total energy losses by reusing energy\_losses functions.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{total\_losses\_mwh\_per\_year} (float): Total energy losses in MWh/year
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate line losses
+losses_mwh_per_year, ... = calculate_line_losses(...)
+
+# Calculate converter losses (for DC projects)
+total_converter_losses_mwh, ... = calculate_converter_losses(...)
+
+# Total energy losses
+total_losses_mwh_per_year = losses_mwh_per_year + total_converter_losses_mwh
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_energy\_mix\_by\_year(energy\_source\_mix\_details, project\_lifetime)}}
+
+Calculates energy mix for each year with growth/decay rates.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{energy\_source\_mix\_details} (dict): Dictionary with percentage and rate\_of\_change for each source
+    \item \texttt{project\_lifetime} (int): Number of years in project
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{energy\_mix\_by\_year} (list): List of dictionaries, one per year, with normalized percentages
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# For each year:
+for year in range(1, project_lifetime + 1):
+    # Apply growth/decay rates
+    next_mix = {}
+    for source in sources:
+        next_mix[source] = current_mix[source] * (1 + rates[source])
+    
+    # Normalize to sum to 1.0
+    total = sum(next_mix.values())
+    normalized_mix = {source: next_mix[source] / total for source in sources}
+    energy_mix_by_year.append(normalized_mix)
+    current_mix = normalized_mix
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_emissions\_by\_year(tec, energy\_mix, emission\_intensities)}}
+
+Calculates emissions for a single year.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{tec} (float): Total energy compensated in MWh
+    \item \texttt{energy\_mix} (dict): Dictionary of energy source percentages for the year
+    \item \texttt{emission\_intensities} (dict): Dictionary of emission intensities by pollutant and source
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{emissions} (dict): Emissions in kg for each pollutant (CO2, SOx, NOx)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# For each pollutant:
+for pollutant in ["co2", "sox", "nox"]:
+    emissions[pollutant] = 0.0
+    # For each energy source:
+    for source in sources:
+        p_j = energy_mix[source]  # Percentage from source j
+        I_jk = emission_intensities[pollutant][source]  # Intensity
+        emissions[pollutant] += tec * p_j * I_jk
+\end{lstlisting}
+
+\subsection{\texttt{calculate\_lifetime\_emissions(...)}}
+
+Calculates emissions across project lifetime.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{total\_losses\_mwh\_per\_year} (float): Total energy losses per year
+    \item \texttt{compensation\_percent} (float): Fraction of losses compensated
+    \item \texttt{energy\_source\_mix\_details} (dict): Initial mix and growth rates
+    \item \texttt{emission\_intensities} (dict): Emission intensities by source and pollutant
+    \item \texttt{societal\_costs} (dict): Costs per kg of pollutant
+    \item \texttt{project\_lifetime} (int): Project lifetime
+    \item \texttt{social\_discount\_rate} (float): Social discount rate
+    \item \texttt{delay\_years} (float): Delay years
+    \item \texttt{construction\_years} (float): Construction years
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Multiple values including yearly emissions, total emissions, average annual costs, lifetime costs, and present values
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Calculate TEC
+tec = compensation_percent * total_losses_mwh_per_year
+
+# Calculate energy mix for each year
+energy_mix_by_year = calculate_energy_mix_by_year(...)
+
+# For each year:
+for year, energy_mix in enumerate(energy_mix_by_year, 1):
+    # Calculate emissions
+    emissions = calculate_emissions_by_year(tec, energy_mix, emission_intensities)
+    
+    # Calculate costs: C_k = E_k × c_k
+    year_cost = 0.0
+    for pollutant, emissions_kg in emissions.items():
+        cost_per_kg = societal_costs[f"{pollutant}_cost_per_kg"]
+        pollutant_cost = emissions_kg * cost_per_kg
+        year_cost += pollutant_cost
+    
+    # Calculate present value
+    year_discount_year = start_year + year - 1
+    year_pv = year_cost / ((1 + social_discount_rate) ** year_discount_year)
+    lifetime_cost_pv += year_pv
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Main execution function that orchestrates the emissions cost calculation and output.
+
+\section{Example}
+
+The following example demonstrates a typical usage of the emissions cost calculation:
+
+\begin{lstlisting}
+# Example: 500 MW Overhead AC line
+# 
+# Inputs (from YAML):
+#   - Total energy losses: 10,000 MWh/year
+#   - Compensation percentage: 100% (all losses compensated)
+#   - Initial energy mix:
+#     * Coal: 20%, rate: -2%/year
+#     * Natural gas: 30%, rate: -1%/year
+#     * Solar: 15%, rate: +5%/year
+#     * Wind: 20%, rate: +3%/year
+#     * Other: 15%, rate: 0%
+#   - Emission intensities:
+#     * Coal: CO2=1000 kg/MWh, SOx=5 kg/MWh, NOx=3 kg/MWh
+#     * Natural gas: CO2=400 kg/MWh, SOx=0.1 kg/MWh, NOx=0.5 kg/MWh
+#     * Solar/Wind: CO2=0, SOx=0, NOx=0
+#   - Societal costs:
+#     * CO2: $0.05/kg
+#     * SOx: $10/kg
+#     * NOx: $15/kg
+#   - Project lifetime: 50 years
+#   - Social discount rate: 3%
+#
+# Calculation (Year 1):
+#   TEC = 1.0 * 10,000 = 10,000 MWh/year
+#   CO2 = 10,000 * (0.20*1000 + 0.30*400 + 0.15*0 + 0.20*0) = 3.2M kg
+#   SOx = 10,000 * (0.20*5 + 0.30*0.1) = 10,300 kg
+#   NOx = 10,000 * (0.20*3 + 0.30*0.5) = 7,500 kg
+#   Cost = (3.2M * $0.05) + (10,300 * $10) + (7,500 * $15) = $250,000/year
+#
+#   (Costs decrease over time as grid decarbonizes)
+#
+# Output:
+#   - Average annual CO2: 2.5M kg/year
+#   - Average annual cost: $150,000/year
+#   - Lifetime cost: $7.5M
+#   - Present value: $4.2M
+\end{lstlisting}
+
+\textbf{Integration Example:}
+
+\begin{lstlisting}
+# When called from ctcc.py:
+csv_manager = CTCCOutputManager()
+results = {
+    "total_nominal": lifetime_cost,
+    "total_pv": lifetime_cost_pv,
+    "co2_nominal": total_costs_by_pollutant["co2"],
+    "sox_nominal": total_costs_by_pollutant["sox"],
+    "nox_nominal": total_costs_by_pollutant["nox"],
+    # ... more fields
+}
+csv_manager.add_emissions_costs(results)
+csv_manager.write_batch_summary()
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Compensation Percentage}
+
+The compensation percentage ($\alpha$) represents the fraction of line losses that are compensated by generators. A value of 1.0 means all losses are compensated, while 0.0 means no compensation (no emissions cost).
+
+\subsection{Energy Mix Evolution}
+
+The script models how the energy mix evolves over the project lifetime using growth/decay rates. Each year, the mix is updated and normalized to sum to 100\%. This captures grid decarbonization trends.
+
+\subsection{Emission Intensities}
+
+Emission intensities vary by energy source:
+\begin{itemize}
+    \item \textbf{Fossil fuels} (coal, oil, natural gas): High CO2, SOx, NOx
+    \item \textbf{Renewables} (solar, wind, hydro): Zero emissions
+    \item \textbf{Nuclear}: Zero CO2, minimal SOx/NOx
+\end{itemize}
+
+\subsection{Societal Costs}
+
+Societal costs represent the external costs of emissions (health impacts, climate change, etc.). These are typically higher than market prices and reflect the true societal impact.
+
+\subsection{Present Value Timing}
+
+Emissions costs start when the project becomes operational (after delay and construction periods). The present value calculation discounts annual costs back to the base year using the social discount rate.
+
+\subsection{Year-by-Year Calculation}
+
+The script calculates emissions and costs for each year individually, accounting for:
+\begin{itemize}
+    \item Changing energy mix over time
+    \item Time-varying discounting
+    \item Pollutant-specific tracking
+\end{itemize}
+
+\end{document}
+

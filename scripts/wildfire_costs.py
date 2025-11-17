@@ -32,6 +32,9 @@ def get_discount_rate(wildfire_yaml, financing_yaml):
     """
     Get discount rate based on configuration source.
 
+    Social discount rate must come from 03_financing.yaml.
+    Defaults to "social" if discount_rate_source is not specified.
+
     Args:
         wildfire_yaml: Loaded wildfire YAML data
         financing_yaml: Loaded financing YAML data
@@ -39,7 +42,8 @@ def get_discount_rate(wildfire_yaml, financing_yaml):
     Returns:
         tuple: (discount_rate, source_description)
     """
-    source = wildfire_yaml["wildfire"]["discount_rate_source"]
+    # Default to "social" if not specified (social discount rate from financing.yaml)
+    source = wildfire_yaml["wildfire"].get("discount_rate_source", "social")
 
     if source == "social":
         rate = financing_yaml["financial"]["social_discount_rate"]
@@ -49,17 +53,23 @@ def get_discount_rate(wildfire_yaml, financing_yaml):
         inflation = financing_yaml["financial"]["inflation_rate"]
         rate = (1 + wacc_nominal) / (1 + inflation) - 1
         desc = "real WACC"
-    elif source == "custom":
-        rate = wildfire_yaml["wildfire"]["discount_rate_custom"]
-        desc = "custom rate"
     else:
-        raise ValueError(f"Unknown discount_rate_source: {source}")
+        raise ValueError(
+            f"Unknown discount_rate_source: {source}. "
+            f"Must be 'social' (uses social_discount_rate from financing.yaml) or 'wacc_real'"
+        )
 
     return rate, desc
 
 
 def calculate_wildfire_costs(
-    wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate
+    wildfire_yaml,
+    construction_type,
+    terrain_miles,
+    project_lifetime,
+    discount_rate,
+    delay_years=0,
+    construction_years=0,
 ):
     """
     Calculate expected wildfire costs using segment-based ignition rates.
@@ -70,6 +80,8 @@ def calculate_wildfire_costs(
         terrain_miles: Dictionary of terrain type to miles
         project_lifetime: Project lifetime in years
         discount_rate: Discount rate for PV calculation
+        delay_years: Years of delay before construction starts
+        construction_years: Years of construction
 
     Returns:
         dict: Contains lambda_total, EAL, lambda_by_terrain, nominal_cost, pv_cost
@@ -130,6 +142,16 @@ def calculate_wildfire_costs(
     else:
         pv_cost = EAL * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
 
+    # Step 5: Discount for delay and construction periods
+    # Risks only start accumulating after operations begin (after delay + construction)
+    # Discount the PV by the delay period to account for when risks actually start
+    # Handle None values by defaulting to 0
+    delay_years = delay_years if delay_years is not None else 0
+    construction_years = construction_years if construction_years is not None else 0
+    delay_period = delay_years + construction_years
+    if delay_period > 0:
+        pv_cost = pv_cost / ((1 + d) ** delay_period)
+
     return {
         "lambda_total": lambda_total,
         "EAL": EAL,
@@ -177,7 +199,13 @@ def main():
 
     # Calculate wildfire costs
     results = calculate_wildfire_costs(
-        wildfire_yaml, construction_type, terrain_miles, project_lifetime, discount_rate
+        wildfire_yaml,
+        construction_type,
+        terrain_miles,
+        project_lifetime,
+        discount_rate,
+        delay_years=delay_year,
+        construction_years=construction_years,
     )
 
     # Display results
@@ -240,10 +268,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Write to CSV (results dict already has all needed values)
     csv_manager.add_wildfire_costs(results)
     csv_manager.write_batch_summary()

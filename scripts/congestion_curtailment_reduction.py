@@ -259,7 +259,7 @@ def calculate_congestion_reduction_costs(
         total_annual_congestion_reduction_cost,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years,
+        start_year=delay_years + construction_years + 1,
     )
 
     lifetime_congestion_reduction_cost_haircut = (
@@ -269,7 +269,7 @@ def calculate_congestion_reduction_costs(
         total_annual_congestion_reduction_cost_haircut,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years,
+        start_year=delay_years + construction_years + 1,
     )
 
     lifetime_congestion_residual_cost = (
@@ -279,7 +279,7 @@ def calculate_congestion_reduction_costs(
         annual_congestion_residual_cost,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years,
+        start_year=delay_years + construction_years + 1,
     )
 
     annual_congestion_during_delay_and_construction = binding_hours * average_exceedance
@@ -304,7 +304,7 @@ def calculate_congestion_reduction_costs(
         annual_curtailment_benefit,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years,
+        start_year=delay_years + construction_years + 1,
     )
 
     lifetime_curtailment_benefit_haircut = (
@@ -314,7 +314,7 @@ def calculate_congestion_reduction_costs(
         annual_curtailment_benefit_haircut,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years,
+        start_year=delay_years + construction_years + 1,
     )
 
     # Curtailment costs during delay period

@@ -344,20 +344,22 @@ def main():
     )
 
     # Calculate present values
+    # O&M costs start at first year of operation (COD)
+    oandm_start_year = delay_years + construction_years + 1
     pv_conductor = calculate_present_value(
-        total_conductor_cost_per_year, wacc_real, project_lifetime, start_year=1
+        total_conductor_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
     )
     pv_converter = calculate_present_value(
-        total_converter_cost_per_year, wacc_real, project_lifetime, start_year=1
+        total_converter_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
     )
     pv_structure = calculate_present_value(
-        variable_structure_cost_per_year, wacc_real, project_lifetime, start_year=1
+        variable_structure_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
     )
     pv_vegetation_management = calculate_present_value(
         total_vegetation_management_cost_per_year,
         wacc_real,
         project_lifetime,
-        start_year=1,
+        start_year=oandm_start_year,
     )
     pv_total = pv_conductor + pv_converter + pv_structure + pv_vegetation_management
 

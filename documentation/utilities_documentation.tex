@@ -1,0 +1,565 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Utility Modules Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document describes the utility modules used throughout the CTCC: \texttt{yaml\_loaders.py}, \texttt{financial\_utils.py}, \texttt{calculation\_utils.py}, and \texttt{weighted\_miles.py}. These modules provide shared functionality for loading configuration data, performing financial calculations, computing transmission line parameters, and calculating terrain-adjusted distances.
+
+\section{yaml\_loaders.py}
+
+\subsection{Method Overview}
+
+The \texttt{yaml\_loaders.py} module provides centralized functions for loading YAML configuration files. It eliminates code duplication by providing a single interface for accessing project parameters, financing details, physical details, and cost parameters.
+
+\subsection{Key Functions}
+
+\subsubsection{\texttt{load\_project\_technical\_details()}}
+
+Loads project technical details from \texttt{01\_project\_technical\_details.yaml}.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (construction\_type, ac\_dc, capacity\_mw, conductor\_type, converter\_type, line\_utilization, reconductoring, delay\_years, construction\_years, project\_lifetime)
+\end{itemize}
+
+\subsubsection{\texttt{load\_physical\_details()}}
+
+Loads physical project details and returns total miles only.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{total\_miles} (float): Sum of all terrain miles
+\end{itemize}
+
+\subsubsection{\texttt{load\_physical\_details\_detailed()}}
+
+Loads physical project details with detailed terrain breakdown.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (total\_miles, forested\_miles, scrubbed\_flat\_miles, wetland\_miles, farmland\_miles, desert\_barren\_miles, urban\_miles, rolling\_hills\_miles, mountain\_miles, subsea\_miles)
+\end{itemize}
+
+\subsubsection{\texttt{load\_financing\_details()}}
+
+Loads financing parameters and calculates real WACC using Fisher equation.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (inflation\_rate, base\_year, wacc\_nominal, wacc\_real)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
+\end{lstlisting}
+
+\subsubsection{\texttt{load\_circuit\_and\_resistance\_details(category)}}
+
+Loads circuit and resistance details for specified project category.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{category} (str): Project category identifier
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (voltage\_kv, conductors\_per\_phase, number\_of\_phases, number\_of\_circuits\_poles, AC\_75\_resistance, DC\_20\_resistance)
+\end{itemize}
+
+\subsubsection{Other Loader Functions}
+
+Additional loader functions include:
+\begin{itemize}
+    \item \texttt{load\_row\_widths(category)} - ROW width for project category
+    \item \texttt{load\_row\_details()} - ROW cost parameters
+    \item \texttt{load\_delay\_costs()} - Delay cost components
+    \item \texttt{load\_emissions\_details()} - Emissions parameters
+    \item \texttt{load\_congestion\_reductions()} - Congestion reduction parameters
+    \item \texttt{load\_curtailment\_reductions()} - Curtailment reduction parameters
+    \item \texttt{load\_contingencies()} - Contingency percentages
+    \item \texttt{load\_environmental\_mitigation()} - Environmental mitigation parameters
+    \item \texttt{load\_cost\_timing\_patterns()} - AFUDC timing patterns
+    \item \texttt{load\_afudc\_config()} - AFUDC configuration
+    \item \texttt{load\_insurance\_details()} - Insurance parameters
+    \item \texttt{load\_wildfire\_costs()} - Wildfire parameters
+    \item \texttt{load\_outage\_costs()} - Outage parameters
+\end{itemize}
+
+\subsection{Example}
+
+\begin{lstlisting}
+from yaml_loaders import (
+    load_project_technical_details,
+    load_financing_details,
+    load_physical_details
+)
+
+# Load project specs
+construction_type, ac_dc, capacity_mw, ... = load_project_technical_details()
+
+# Load financing
+inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+
+# Load physical details
+total_miles = load_physical_details()
+\end{lstlisting}
+
+\section{financial\_utils.py}
+
+\subsection{Method Overview}
+
+The \texttt{financial\_utils.py} module provides shared financial calculation functions for present value calculations, amortization, and AFUDC capitalization.
+
+\subsection{Key Functions}
+
+\subsubsection{\texttt{calculate\_present\_value(annual\_cost, wacc\_real, total\_years, start\_year=1)}}
+
+Calculates the present value of annual payments over a given time period.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{annual\_cost} (float): Annual cost amount
+    \item \texttt{wacc\_real} (float): Real WACC (discount rate)
+    \item \texttt{total\_years} (float): Number of years
+    \item \texttt{start\_year} (int): Year when payments begin (default: 1)
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{present\_value} (float): Present value of the payment stream
+\end{itemize}
+
+\textbf{Formula:}
+\[
+PV = \sum_{t=start}^{start+total-1} \frac{C}{(1 + r)^t}
+\]
+
+\subsubsection{\texttt{calculate\_amortized\_cost(principal, wacc\_real, project\_lifetime)}}
+
+Calculates annual amortized cost using standard amortization formula.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{principal} (float): Initial cost
+    \item \texttt{wacc\_real} (float): Real WACC (discount rate)
+    \item \texttt{project\_lifetime} (int): Number of years to amortize
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{annual\_payment} (float): Annual amortized payment
+\end{itemize}
+
+\textbf{Formula:}
+\[
+A = P \times \frac{r(1+r)^n}{(1+r)^n - 1}
+\]
+
+where $P$ is principal, $r$ is rate, and $n$ is number of years.
+
+\subsubsection{\texttt{calculate\_afudc\_rate(financing\_yaml)}}
+
+Calculates AFUDC rate from capital structure or falls back to WACC.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{financing\_yaml} (dict): Loaded financing YAML data
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (\texttt{afudc\_rate}, \texttt{source\_description})
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+if capital_structure specified:
+    rate = equity_percent * cost_of_equity + debt_percent * cost_of_debt
+    source = "capital structure"
+else:
+    rate = wacc_nominal
+    source = "WACC nominal"
+\end{lstlisting}
+
+\subsubsection{\texttt{calculate\_afudc\_capitalized\_cost(nominal\_cost, timing\_pattern, delay\_years, construction\_years, afudc\_rate, delay\_has\_active\_work)}}
+
+Capitalizes a cost using AFUDC (compounds forward to Commercial Operation Date).
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{nominal\_cost} (float): Total nominal cost
+    \item \texttt{timing\_pattern} (dict): Dict with \texttt{during\_delay}, \texttt{during\_construction}, \texttt{afudc\_eligible}
+    \item \texttt{delay\_years} (float): Number of delay years
+    \item \texttt{construction\_years} (float): Number of construction years
+    \item \texttt{afudc\_rate} (float): AFUDC rate (annual)
+    \item \texttt{delay\_has\_active\_work} (bool): Whether active CWIP work continues during delay
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (\texttt{capitalized\_cost}, \texttt{afudc\_amount})
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Cost during delay period
+delay_cost = nominal_cost * timing_pattern["during_delay"]
+if delay_has_active_work:
+    # Compound from midpoint of delay to COD
+    avg_years_to_cod = total_years_to_cod - (delay_years / 2)
+    capitalized_cost += delay_cost * (1 + afudc_rate) ** avg_years_to_cod
+else:
+    # No AFUDC during delay, compound only during construction
+    capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
+
+# Cost during construction period
+construction_cost = nominal_cost * timing_pattern["during_construction"]
+# Compound from midpoint of construction to COD
+avg_years_to_cod = construction_years / 2
+capitalized_cost += construction_cost * (1 + afudc_rate) ** avg_years_to_cod
+
+afudc_amount = capitalized_cost - nominal_cost
+\end{lstlisting}
+
+\subsection{Example}
+
+\begin{lstlisting}
+from financial_utils import (
+    calculate_present_value,
+    calculate_amortized_cost,
+    calculate_afudc_capitalized_cost
+)
+
+# Present value of annual O&M costs
+pv = calculate_present_value(
+    annual_cost=1000000,
+    wacc_real=0.03,
+    total_years=50,
+    start_year=3
+)
+
+# Amortize build cost
+annual_payment = calculate_amortized_cost(
+    principal=100000000,
+    wacc_real=0.03,
+    project_lifetime=50
+)
+
+# AFUDC capitalization
+capitalized, afudc = calculate_afudc_capitalized_cost(
+    nominal_cost=100000000,
+    timing_pattern={"during_delay": 0.1, "during_construction": 0.9, "afudc_eligible": True},
+    delay_years=2,
+    construction_years=2,
+    afudc_rate=0.05,
+    delay_has_active_work=False
+)
+\end{lstlisting}
+
+\section{calculation\_utils.py}
+
+\subsection{Method Overview}
+
+The \texttt{calculation\_utils.py} module provides shared calculation functions for transmission line parameters, including phase current, full load adjustment, line losses, and converter losses.
+
+\subsection{Key Functions}
+
+\subsubsection{\texttt{calculate\_phase\_current(capacity\_mw, voltage\_kv, number\_of\_phases, number\_of\_circuits\_poles, ac\_dc)}}
+
+Calculates phase current based on AC or DC transmission type.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{capacity\_mw} (float or str): Line capacity in MW
+    \item \texttt{voltage\_kv} (float): Voltage in kV
+    \item \texttt{number\_of\_phases} (int): Number of phases
+    \item \texttt{number\_of\_circuits\_poles} (int): Number of circuits/poles
+    \item \texttt{ac\_dc} (str): "AC" or "DC"
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{phase\_current} (float): Phase current in Amps
+\end{itemize}
+
+\textbf{Formulas:}
+\begin{align}
+I_{AC} &= \frac{P \times 1000}{0.95 \times V \times \sqrt{N_{phases}} \times N_{circuits}} \\
+I_{DC} &= \frac{P \times 1000}{V \times \sqrt{N_{phases}} \times N_{poles}}
+\end{align}
+
+\subsubsection{\texttt{full\_load\_adjusted(line\_utilization\_percent)}}
+
+Calculates full load adjustment based on line utilization.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal (0-1)
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item \texttt{adjustment\_factor} (float): Full load adjustment factor
+\end{itemize}
+
+\textbf{Formula:}
+\[
+\text{Adjustment} = \frac{u + u^2}{2}
+\]
+
+where $u$ is the utilization factor.
+
+\subsubsection{\texttt{calculate\_line\_losses(...)}}
+
+Calculates line losses for transmission lines.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{phase\_current} (float): Phase current in Amps
+    \item \texttt{full\_load\_adj} (float): Full load adjustment factor
+    \item \texttt{AC\_75\_resistance} (float): AC resistance at 75°C (ohms/mile)
+    \item \texttt{DC\_20\_resistance} (float): DC resistance at 20°C (ohms/mile)
+    \item \texttt{ac\_dc} (str): "AC" or "DC"
+    \item \texttt{number\_of\_circuits\_poles} (int): Number of circuits/poles
+    \item \texttt{conductors\_per\_phase} (int): Number of conductors per phase
+    \item \texttt{number\_of\_phases} (int): Number of phases
+    \item \texttt{line\_length} (float): Line length in miles
+    \item \texttt{project\_lifetime} (int): Project lifetime in years
+    \item \texttt{capacity\_mw\_numeric} (float): Capacity in MW
+    \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (losses\_mwh\_per\_year, lifetime\_losses\_mwh, losses\_mw\_per\_mile, resistance\_per\_mile, line\_loss\_per\_mile\_percent, total\_line\_loss\_mw, total\_line\_loss\_percent)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+# Select resistance based on AC/DC
+resistance_per_mile = AC_75_resistance if ac_dc == "AC" else DC_20_resistance
+
+# Calculate losses per mile
+number_of_conductors = conductors_per_phase * number_of_phases * number_of_circuits_poles
+losses_mw_per_mile = ((phase_current / conductors_per_phase) ** 2 
+                     * number_of_conductors 
+                     * resistance_per_mile 
+                     * full_load_adj / 1000000)
+
+# Total losses
+total_line_loss_mw = losses_mw_per_mile * line_length
+losses_mwh_per_year = total_line_loss_mw * 8760
+lifetime_losses_mwh = losses_mwh_per_year * project_lifetime
+\end{lstlisting}
+
+\subsubsection{\texttt{calculate\_converter\_losses(number\_of\_converters, converter\_type, line\_utilization\_percent, capacity\_mw\_numeric, ac\_dc)}}
+
+Calculates converter losses based on number of converters (DC only).
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{number\_of\_converters} (int): Number of converters
+    \item \texttt{converter\_type} (str): Converter type (LCC or VSC)
+    \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal
+    \item \texttt{capacity\_mw\_numeric} (float): Capacity in MW
+    \item \texttt{ac\_dc} (str): "AC" or "DC"
+\end{itemize}
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (total\_converter\_losses\_mw, total\_converter\_losses\_mwh, converter\_loss\_percent)
+\end{itemize}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+if ac_dc == "DC":
+    converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
+    converter_losses_mw = (converter_loss_percentage 
+                          * line_utilization_percent 
+                          * capacity_mw_numeric)
+    total_converter_losses_mw = converter_losses_mw * number_of_converters
+    total_converter_losses_mwh = total_converter_losses_mw * 8760
+else:
+    total_converter_losses_mw = 0
+    total_converter_losses_mwh = 0
+\end{lstlisting}
+
+\subsection{Example}
+
+\begin{lstlisting}
+from calculation_utils import (
+    calculate_phase_current,
+    full_load_adjusted,
+    calculate_line_losses
+)
+
+# Calculate phase current
+phase_current = calculate_phase_current(
+    capacity_mw=500,
+    voltage_kv=345,
+    number_of_phases=3,
+    number_of_circuits_poles=1,
+    ac_dc="AC"
+)
+
+# Calculate full load adjustment
+full_load_adj = full_load_adjusted(0.7)  # 70% utilization
+
+# Calculate line losses
+losses_mwh_per_year, lifetime_losses_mwh, ... = calculate_line_losses(
+    phase_current, full_load_adj, AC_75_resistance, DC_20_resistance,
+    "AC", 1, 2, 3, 100, 50, 500, 0.7
+)
+\end{lstlisting}
+
+\section{weighted\_miles.py}
+
+\subsection{Method Overview}
+
+The \texttt{weighted\_miles.py} module calculates weighted miles and average terrain multiplier for transmission lines. Weighted miles account for terrain complexity by multiplying miles in each terrain type by a terrain-specific cost multiplier.
+
+\subsection{Key Functions}
+
+\subsubsection{\texttt{calculate\_weighted\_miles()}}
+
+Calculates weighted miles and average terrain multiplier from project physical details.
+
+\textbf{Returns:}
+\begin{itemize}
+    \item Tuple: (\texttt{weighted\_miles}, \texttt{average\_terrain\_multiplier})
+\end{itemize}
+
+\textbf{Calculation:}
+\begin{align}
+\text{Weighted Miles} &= \sum_{\text{terrains}} \text{Miles}_{terrain} \times \text{Multiplier}_{terrain} \\
+\text{Average Multiplier} &= \frac{\text{Weighted Miles}}{\text{Total Miles}}
+\end{align}
+
+\textbf{Key Logic:}
+\begin{lstlisting}
+weighted_miles = 0
+for terrain_type, terrain_miles in terrain_miles_dict.items():
+    multiplier = terrain_multipliers[terrain_type]
+    weighted_miles += terrain_miles * multiplier
+
+average_terrain_multiplier = weighted_miles / total_miles
+\end{lstlisting}
+
+\subsection{Example}
+
+\begin{lstlisting}
+from weighted_miles import calculate_weighted_miles
+
+# Calculate weighted miles
+weighted_miles, avg_multiplier = calculate_weighted_miles()
+
+# Example calculation:
+# Terrain distribution:
+#   - Forested: 40 miles, multiplier: 2.25
+#   - Farmland: 60 miles, multiplier: 1.0
+#   - Total: 100 miles
+#
+# Weighted miles = (40 * 2.25) + (60 * 1.0) = 150 miles
+# Average multiplier = 150 / 100 = 1.5
+\end{lstlisting}
+
+\section{Integration Examples}
+
+\subsection{Combined Usage}
+
+\begin{lstlisting}
+# Typical usage in a cost calculation script:
+from yaml_loaders import (
+    load_project_technical_details,
+    load_financing_details,
+    load_physical_details
+)
+from financial_utils import calculate_present_value
+from weighted_miles import calculate_weighted_miles
+
+# Load configuration
+construction_type, ac_dc, capacity_mw, ... = load_project_technical_details()
+inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+total_miles = load_physical_details()
+
+# Calculate weighted miles
+weighted_miles, avg_multiplier = calculate_weighted_miles()
+
+# Calculate present value
+pv = calculate_present_value(
+    annual_cost=1000000,
+    wacc_real=wacc_real,
+    total_years=50,
+    start_year=3
+)
+\end{lstlisting}
+
+\section{Key Implementation Details}
+
+\subsection{Path Resolution}
+
+All YAML loaders use relative paths (\texttt{"../yamls/"}) assuming scripts are run from the project root directory. The \texttt{csv\_output\_manager.py} uses dynamic path resolution to handle different execution contexts.
+
+\subsection{Fisher Equation}
+
+The real WACC calculation uses the Fisher equation to convert nominal WACC to real WACC, accounting for inflation:
+\[
+r_{real} = \frac{1 + r_{nominal}}{1 + \pi} - 1
+\]
+
+\subsection{Full Load Adjustment}
+
+The full load adjustment accounts for the fact that losses are proportional to current squared, and average current is less than peak current. The formula $(u + u^2)/2$ provides a better approximation than simple $u^2$ for typical utilization patterns.
+
+\subsection{AFUDC Timing}
+
+AFUDC capitalization compounds costs forward to Commercial Operation Date (COD). The calculation accounts for:
+\begin{itemize}
+    \item Costs during delay period (may or may not have AFUDC depending on active work)
+    \item Costs during construction period (always has AFUDC)
+    \item Uniform spending assumption (uses midpoint of each period)
+\end{itemize}
+
+\subsection{Terrain Multipliers}
+
+Terrain multipliers reflect the relative cost/complexity of construction in different terrain types. For example, forested terrain may have a multiplier of 2.25, meaning construction costs 2.25x more per mile than baseline terrain.
+
+\end{document}
+

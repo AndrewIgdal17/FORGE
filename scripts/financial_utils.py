@@ -66,7 +66,8 @@ def calculate_afudc_rate(financing_yaml):
     Calculate AFUDC rate from capital structure or fall back to WACC.
 
     Per FERC USoA: AFUDC rate should reflect the utility's capital structure
-    (equity return + debt cost). Falls back to WACC if capital structure not specified.
+    (equity return + debt cost). Falls back to WACC if capital structure not specified
+    or if capital structure values are invalid (zero costs or percentages don't sum to 1.0).
 
     Args:
         financing_yaml (dict): Loaded financing YAML data
@@ -81,12 +82,26 @@ def calculate_afudc_rate(financing_yaml):
         k in cap_struct
         for k in ["equity_percent", "cost_of_equity", "debt_percent", "cost_of_debt"]
     ):
-        # Calculate AFUDC rate from capital structure
-        rate = (
-            cap_struct["equity_percent"] * cap_struct["cost_of_equity"]
-            + cap_struct["debt_percent"] * cap_struct["cost_of_debt"]
-        )
-        source = "capital structure (equity + debt)"
+        # Validate capital structure values
+        cost_of_equity = cap_struct["cost_of_equity"]
+        cost_of_debt = cap_struct["cost_of_debt"]
+        equity_percent = cap_struct["equity_percent"]
+        debt_percent = cap_struct["debt_percent"]
+        
+        # Check if both costs are zero (invalid)
+        if cost_of_equity == 0 and cost_of_debt == 0:
+            # Fallback to WACC nominal
+            rate = financial.get("wacc_nominal", 0.08)
+            source = "WACC nominal (capital structure costs are zero)"
+        # Check if percentages don't sum to 1.0 (within tolerance for floating point)
+        elif abs(equity_percent + debt_percent - 1.0) > 0.001:
+            # Fallback to WACC nominal
+            rate = financial.get("wacc_nominal", 0.08)
+            source = "WACC nominal (capital structure percentages don't sum to 1.0)"
+        else:
+            # Valid capital structure, calculate AFUDC rate
+            rate = equity_percent * cost_of_equity + debt_percent * cost_of_debt
+            source = "capital structure (equity + debt)"
     else:
         # Fallback to WACC nominal
         rate = financial.get("wacc_nominal", 0.08)
