@@ -6,14 +6,24 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 REM Determine Python binary
-set PYTHON_BIN=python
+set PYTHON_BIN=
 where python >nul 2>&1
-if errorlevel 1 (
-    set PYTHON_BIN=python3
+if %errorlevel% equ 0 (
+    set PYTHON_BIN=python
+) else (
     where python3 >nul 2>&1
-    if errorlevel 1 (
-        echo Python interpreter not found. Install Python 3 or add to PATH.
-        exit /b 1
+    if !errorlevel! equ 0 (
+        set PYTHON_BIN=python3
+    ) else (
+        where py >nul 2>&1
+        if !errorlevel! equ 0 (
+            set PYTHON_BIN=py -3
+        ) else (
+            echo Python interpreter not found. Please install Python 3.8+ from python.org
+            echo Make sure to check "Add Python to PATH" during installation.
+            pause
+            exit /b 1
+        )
     )
 )
 

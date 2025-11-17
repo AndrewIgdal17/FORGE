@@ -16,14 +16,24 @@ set LOG_FILE=logs\fastapi_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time
 set LOG_FILE=%LOG_FILE: =0%
 
 REM Determine Python binary
-set PYTHON_BIN=python
+set PYTHON_BIN=
 where python >nul 2>&1
-if errorlevel 1 (
-    set PYTHON_BIN=python3
+if %errorlevel% equ 0 (
+    set PYTHON_BIN=python
+) else (
     where python3 >nul 2>&1
-    if errorlevel 1 (
-        echo Python interpreter not found. Install Python 3 or add to PATH.
-        exit /b 1
+    if !errorlevel! equ 0 (
+        set PYTHON_BIN=python3
+    ) else (
+        where py >nul 2>&1
+        if !errorlevel! equ 0 (
+            set PYTHON_BIN=py -3
+        ) else (
+            echo Python interpreter not found. Please install Python 3.8+ from python.org
+            echo Make sure to check "Add Python to PATH" during installation.
+            pause
+            exit /b 1
+        )
     )
 )
 
@@ -111,7 +121,8 @@ echo   Local  : http://127.0.0.1:%PORT%
 echo Press Ctrl+C to stop the server.
 echo.
 
-REM Start uvicorn server
-uvicorn app.main:app --host %HOST% --port %PORT% --reload --access-log 2>&1 | tee -a "%LOG_FILE%"
+REM Start uvicorn server (log output to file)
+echo Starting uvicorn... >> "%LOG_FILE%"
+uvicorn app.main:app --host %HOST% --port %PORT% --reload --access-log
 
 endlocal
