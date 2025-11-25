@@ -415,6 +415,30 @@ class CTCCOutputManager:
         }
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
+    def add_revenue(self, results):
+        """Add revenue calculation results to batch summary."""
+        self.append_to_batch_summary(
+            {
+                "revenue_nominal": results.get("revenue_nominal", 0),
+                "revenue_pv": results.get("revenue_pv", 0),
+                "annual_revenue": results.get("annual_revenue", 0),
+                "rate_base_pv": results.get("rate_base_pv", 0),
+                "allowed_return_rate": results.get("allowed_return_rate", 0),
+            }
+        )
+
+        # Write module CSV
+        summary_row = {
+            "scenario_id": self.scenario_id,
+            "row_type": "rate_based",
+            "annual_revenue": results.get("annual_revenue", 0),
+            "nominal_total": results.get("revenue_nominal", 0),
+            "pv_total": results.get("revenue_pv", 0),
+            "rate_base_pv": results.get("rate_base_pv", 0),
+            "allowed_return_rate": results.get("allowed_return_rate", 0),
+        }
+        self.write_module_csv("revenue", summary_row=summary_row)
+
     def add_insurance_costs(self, results):
         """Add operational insurance cost results to batch summary."""
         self.append_to_batch_summary(

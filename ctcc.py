@@ -251,16 +251,6 @@ def main():
                 return
 
             print("-" * 80)
-    # Only generate if not already set (for parallel sensitivity analysis)
-    # Use microseconds to ensure uniqueness even if runs happen in the same second
-    if "CTCC_SCENARIO_ID" not in os.environ:
-        scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        os.environ["CTCC_SCENARIO_ID"] = scenario_id
-    else:
-        scenario_id = os.environ["CTCC_SCENARIO_ID"]
-
-    if not args.simple:
-        print(f"\n📋 Scenario ID: {scenario_id}\n")
 
     # List of scripts to run in order
     # If --capital_only is set, only run capital scripts plus prerequisites
@@ -279,6 +269,7 @@ def main():
             "row_costs.py",
             "environmental_mitigation.py",
             "delay_costs.py",
+            "revenue.py",
         ]
 
         # Add risk cost scripts only if --norisk flag is not set
