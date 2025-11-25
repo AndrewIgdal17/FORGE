@@ -85,7 +85,7 @@ def main():
         help="Run only capital cost scripts (build, ROW, environmental mitigation) plus prerequisites",
     )
     args = parser.parse_args()
-    
+
     # Set environment variable for insurance_costs.py to check
     if args.no_wf_liability:
         os.environ["CTCC_NO_WF_LIABILITY"] = "1"
@@ -99,7 +99,9 @@ def main():
             print("   Skipping: wildfire_costs.py, outage_costs.py")
             print("=" * 80)
         if args.no_wf_liability:
-            print("⚠️  Wildfire liability insurance disabled (--no_wf_liability flag set)")
+            print(
+                "⚠️  Wildfire liability insurance disabled (--no_wf_liability flag set)"
+            )
             print("=" * 80)
         if args.no_emissions:
             print("⚠️  Emissions costs disabled (--no_emissions flag set)")
@@ -111,7 +113,9 @@ def main():
             print("=" * 80)
         if args.capital_only:
             print("⚠️  Capital-only mode enabled (--capital_only flag set)")
-            print("   Running only: weighted_miles.py, build_costs.py, row_costs.py, environmental_mitigation.py")
+            print(
+                "   Running only: weighted_miles.py, build_costs.py, row_costs.py, environmental_mitigation.py"
+            )
             print("=" * 80)
 
     # Generate a single scenario_id for this entire run
@@ -122,7 +126,7 @@ def main():
         os.environ["CTCC_SCENARIO_ID"] = scenario_id
     else:
         scenario_id = os.environ["CTCC_SCENARIO_ID"]
-    
+
     if not args.simple:
         print(f"\n📋 Scenario ID: {scenario_id}\n")
 
@@ -143,25 +147,26 @@ def main():
             "row_costs.py",
             "environmental_mitigation.py",
             "delay_costs.py",
+            "revenue.py",
         ]
-        
+
         # Add risk cost scripts only if --norisk flag is not set
         if not args.norisk:
             scripts.extend(["wildfire_costs.py", "outage_costs.py"])
-        
+
         # Add remaining scripts
         remaining_scripts = [
             "congestion_curtailment_reduction.py",
             "energy_losses.py",
             "oandm.py",
         ]
-        
+
         # Conditionally add emissions and line_loss_costs based on flags
         if not args.no_emissions:
             remaining_scripts.append("emissions.py")
         if not args.no_linelosses:
             remaining_scripts.append("line_loss_costs.py")
-        
+
         scripts.extend(remaining_scripts)
         # Add more scripts as you create them
 

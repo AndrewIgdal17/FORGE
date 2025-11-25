@@ -76,16 +76,22 @@ def calculate_benefits(data):
         line_loss_benefit_pv = abs(line_loss_pv)
         line_loss_benefit_nominal = abs(line_loss_nominal)
 
+    # Add revenue (rate-based revenue requirement)
+    revenue_pv = data.get("revenue_pv", 0) or 0
+    revenue_nominal = data.get("revenue_nominal", 0) or 0
+
     total_benefits_pv = (
-        congestion_benefit_pv + curtailment_benefit_pv + line_loss_benefit_pv
+        congestion_benefit_pv + curtailment_benefit_pv + line_loss_benefit_pv + revenue_pv
     )
     total_benefits_nominal = (
         congestion_benefit_nominal
         + curtailment_benefit_nominal
         + line_loss_benefit_nominal
+        + revenue_nominal
     )
 
     # Also calculate haircut benefits (conservative estimate)
+    # Note: Revenue is NOT included in haircut (firm revenue requirement is certain)
     congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
     curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
     total_benefits_haircut_pv = (
@@ -96,6 +102,7 @@ def calculate_benefits(data):
         "congestion_benefit_pv": congestion_benefit_pv,
         "curtailment_benefit_pv": curtailment_benefit_pv,
         "line_loss_benefit_pv": line_loss_benefit_pv,
+        "revenue_pv": revenue_pv,
         "total_benefits_pv": total_benefits_pv,
         "total_benefits_nominal": total_benefits_nominal,
         "total_benefits_haircut_pv": total_benefits_haircut_pv,
@@ -448,6 +455,13 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     else:
         print(
             f"  Line Loss Impact:            ${-line_loss_pv:>15,.0f}  (cost - see below)"
+        )
+
+    # Add revenue display
+    revenue_pv = benefits.get("revenue_pv", 0) or 0
+    if revenue_pv > 0:
+        print(
+            f"  Revenue (Rate-Based):        ${revenue_pv:>15,.0f}"
         )
 
     print("  " + "-" * 78)
