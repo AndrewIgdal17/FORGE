@@ -982,9 +982,11 @@ class CTCCOutputManager:
                 - total_benefits_haircut_pv
                 - total_costs_pv
                 - capital_costs_pv
-                - bcr_system
-                - bcr_capital
-                - bcr_haircut
+                - bcr_system (uses conservative/haircut benefits)
+                - bcr_capital (uses conservative/haircut benefits)
+                - bcr_excluding_risk (uses conservative/haircut benefits)
+                - bcr_excluding_emissions (uses conservative/haircut benefits)
+                - bcr_excluding_emissions_and_risk (uses conservative/haircut benefits)
                 - net_benefit_pv
         """
         self.append_to_batch_summary(bcr_results)

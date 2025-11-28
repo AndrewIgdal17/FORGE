@@ -229,7 +229,6 @@ def run_single_parameter_sweep(
                 bcr_columns = [
                     "bcr_system",
                     "bcr_capital",
-                    "bcr_haircut",
                     "bcr_excluding_risk",
                     "bcr_excluding_emissions",
                     "bcr_excluding_emissions_and_risk",
@@ -335,7 +334,6 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
                 bcr_columns = [
                     "bcr_system",
                     "bcr_capital",
-                    "bcr_haircut",
                     "bcr_excluding_risk",
                     "bcr_excluding_emissions",
                     "bcr_excluding_emissions_and_risk",
@@ -662,7 +660,6 @@ def main():
     bcr_columns = [
         "bcr_system",
         "bcr_capital",
-        "bcr_haircut",
         "bcr_excluding_risk",
         "bcr_excluding_emissions",
         "bcr_excluding_emissions_and_risk",

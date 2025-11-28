@@ -57,7 +57,7 @@ def load_project_technical_details():
 
 def get_capital_costs_pv():
     """
-    Get capital costs PV from batch_summary.csv.
+    Get capital costs PV from batch_summary.csv for the current scenario.
     
     Capital costs = build_cost_pv + row_cost_pv + env_mitigation_pv
     
@@ -69,21 +69,44 @@ def get_capital_costs_pv():
     if not os.path.exists(batch_summary_path):
         return 0
     
+    # Get current scenario_id from environment variable
+    scenario_id = os.environ.get("CTCC_SCENARIO_ID")
+    
+    if not scenario_id:
+        print("⚠️  Warning: CTCC_SCENARIO_ID not set. Cannot filter by scenario_id.")
+        print("   Falling back to last row (may be incorrect if multiple runs exist).")
+        # Fallback to last row if scenario_id is not available
+        try:
+            with open(batch_summary_path, "r") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+                if rows:
+                    latest_row = rows[-1]
+                    build_pv = float(latest_row.get("build_cost_pv", 0) or 0)
+                    row_pv = float(latest_row.get("row_cost_pv", 0) or 0)
+                    env_pv = float(latest_row.get("env_mitigation_pv", 0) or 0)
+                    return build_pv + row_pv + env_pv
+        except (ValueError, KeyError, IOError) as e:
+            print(f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}")
+        return 0
+    
     try:
-        with open(batch_summary_path, "r") as f:
+        with open(batch_summary_path, "r", newline="") as f:
             reader = csv.DictReader(f)
-            rows = list(reader)
-            if rows:
-                # Get most recent row
-                latest_row = rows[-1]
-                build_pv = float(latest_row.get("build_cost_pv", 0) or 0)
-                row_pv = float(latest_row.get("row_cost_pv", 0) or 0)
-                env_pv = float(latest_row.get("env_mitigation_pv", 0) or 0)
-                return build_pv + row_pv + env_pv
+            # Find row matching current scenario_id
+            for row in reader:
+                if row.get("scenario_id") == scenario_id:
+                    build_pv = float(row.get("build_cost_pv", 0) or 0)
+                    row_pv = float(row.get("row_cost_pv", 0) or 0)
+                    env_pv = float(row.get("env_mitigation_pv", 0) or 0)
+                    return build_pv + row_pv + env_pv
+            
+            # If scenario_id not found, warn and return 0
+            print(f"⚠️  Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
+            return 0
     except (ValueError, KeyError, IOError) as e:
         print(f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}")
-    
-    return 0
+        return 0
 
 
 def main():

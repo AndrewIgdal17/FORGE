@@ -790,36 +790,32 @@ def calculate_bcr_fallback(data):
         )
 
         # Calculate BCR metrics
+        # Use conservative (haircut) benefits for all BCR calculations
         if total_costs_pv > 0:
-            bcr_system = total_benefits_pv / total_costs_pv
+            bcr_system = total_benefits_haircut_pv / total_costs_pv
         else:
             bcr_system = 0
 
         if capital_costs_pv > 0:
-            bcr_capital = total_benefits_pv / capital_costs_pv
+            bcr_capital = total_benefits_haircut_pv / capital_costs_pv
         else:
             bcr_capital = 0
 
-        if total_costs_pv > 0:
-            bcr_haircut = total_benefits_haircut_pv / total_costs_pv
-        else:
-            bcr_haircut = 0
-
         if total_costs_excluding_risk_pv > 0:
-            bcr_excluding_risk = total_benefits_pv / total_costs_excluding_risk_pv
+            bcr_excluding_risk = total_benefits_haircut_pv / total_costs_excluding_risk_pv
         else:
             bcr_excluding_risk = 0
 
         if total_costs_excluding_emissions_pv > 0:
             bcr_excluding_emissions = (
-                total_benefits_pv / total_costs_excluding_emissions_pv
+                total_benefits_haircut_pv / total_costs_excluding_emissions_pv
             )
         else:
             bcr_excluding_emissions = 0
 
         if total_costs_excluding_emissions_and_risk_pv > 0:
             bcr_excluding_emissions_and_risk = (
-                total_benefits_pv / total_costs_excluding_emissions_and_risk_pv
+                total_benefits_haircut_pv / total_costs_excluding_emissions_and_risk_pv
             )
         else:
             bcr_excluding_emissions_and_risk = 0
@@ -827,7 +823,6 @@ def calculate_bcr_fallback(data):
         return {
             "bcr_system": bcr_system,
             "bcr_capital": bcr_capital,
-            "bcr_haircut": bcr_haircut,
             "bcr_excluding_risk": bcr_excluding_risk,
             "bcr_excluding_emissions": bcr_excluding_emissions,
             "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
@@ -975,7 +970,6 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
         bcr_columns = [
             "bcr_system",
             "bcr_capital",
-            "bcr_haircut",
             "bcr_excluding_risk",
             "bcr_excluding_emissions",
             "bcr_excluding_emissions_and_risk",
@@ -1584,7 +1578,6 @@ def main():
         bcr_columns = [
             "bcr_system",
             "bcr_capital",
-            "bcr_haircut",
             "bcr_excluding_risk",
             "bcr_excluding_emissions",
             "bcr_excluding_emissions_and_risk",

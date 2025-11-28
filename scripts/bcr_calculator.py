@@ -267,8 +267,8 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
         Dictionary with BCR metrics (both nominal and PV)
     """
     # Present value metrics
-    total_benefits_pv = benefits["total_benefits_pv"]
-    total_benefits_haircut = benefits["total_benefits_haircut_pv"]
+    # Use conservative (haircut) benefits for all BCR calculations
+    total_benefits_pv = benefits["total_benefits_haircut_pv"]
     total_costs_pv = costs["total_costs_pv"]
     capital_costs_pv = costs["capital_costs_pv"]
     risk_costs_pv = costs["risk_costs_pv"]  # Wildfire + Outage + Wildfire Liability
@@ -306,9 +306,9 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
     total_costs_excluding_emissions_only_and_risk_pv = total_costs_pv - emissions_pv - risk_costs_pv
 
     # Prevent division by zero
+    # All BCRs use conservative (haircut) benefits
     bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
     bcr_capital = total_benefits_pv / capital_costs_pv if capital_costs_pv > 0 else 0
-    bcr_haircut = total_benefits_haircut / total_costs_pv if total_costs_pv > 0 else 0
     bcr_excluding_risk = (
         total_benefits_pv / total_costs_excluding_risk_pv
         if total_costs_excluding_risk_pv > 0
@@ -325,7 +325,7 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
         else 0
     )
 
-    # Net benefits
+    # Net benefits (using conservative benefits)
     net_benefit_pv = total_benefits_pv - total_costs_pv
     net_benefit_nominal = total_benefits_nominal - total_costs_nominal
     net_benefit_excluding_risk_pv = total_benefits_pv - total_costs_excluding_risk_pv
@@ -346,7 +346,6 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
     result = {
         "bcr_system": bcr_system,
         "bcr_capital": bcr_capital,
-        "bcr_haircut": bcr_haircut,
         "bcr_excluding_risk": bcr_excluding_risk,
         "bcr_excluding_emissions": bcr_excluding_emissions,
         "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
@@ -522,9 +521,8 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     )
 
     print(
-        f"  System BCR (full):           {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
+        f"  System BCR (conservative):    {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
     )
-    print(f"  System BCR (haircut):        {bcr_metrics['bcr_haircut']:>6.3f}")
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
 
     # BCR excluding risk costs

@@ -8,7 +8,7 @@
 \usepackage{booktabs}
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
-
+\usepackage{comment}
 \usepackage[backend=biber,style=authoryear]{biblatex}
 \addbibresource{references.bib}
 
@@ -107,8 +107,479 @@ In summary, existing transmission costing methods are fragmented and insufficien
 
 
 
-
+\begin{comment}
 % Section 3: Methods
+\section{Methods}
+% 3--5 pages. Detail CTCC architecture:
+% - Input validation and parameter derivation.
+% - Cost modules: Build, ROW, delay, O&M, soft, emissions, avoided costs.
+% - Nominal-to-real conversion (discounting).
+% - Aggregation and side-by-side scenario analysis.
+% - User-adjustable constants and transparency.
+% Include equations where relevant (e.g., net present cost calculation).
+
+
+The CTCC combines hard, soft, and avoided costs in one place. It allows for a near-infinite amount of scenarios to be tested side by side to facilitate quick and efficient planning and comparison of projects and project alternatives. The CTCC transparently and consistently facilitates the estimation of:
+
+\begin{itemize}
+  \item Different asset lifetimes, permitting, and construction timelines;
+  \item Various construction and technology types;
+  \item Construction costs;
+  \item Right-of-way (ROW) costs;
+  \item Terrain-specific costs;
+  \item Congestion and curtailment reduction benefits;
+  \item Avoided wildfire and outage costs;
+  \item Delay costs;
+  \item Insurance costs;
+  \item Permitting and regulatory costs;
+  \item Allowance for Funds Used During Construction (AFUDC);
+  \item Social emissions costs associated with line losses.
+\end{itemize}
+
+By incorporating these components, the CTCC can provide both the total and net lifetime costs of transmission projects, presented in nominal and real terms. The following subsections detail the methodology used by the CTCC, outline the calculations for individual cost categories, describe nominal-to-real cost conversions, and discuss user-adjustable  parameters. A comprehensive overview of the methodology is provided in the appendix.
+
+\subsection{Cost Aggregation and Categories}
+
+The CTCC aggregates costs into clearly defined categories for straightforward analysis
+
+
+
+The following will describe the method behind each. First: 
+
+Define
+\begin{description}
+  \item[$Y$] permitting years
+  \item[$T_{\mathrm{constr}}$] construction years
+  \item[$N$] project lifetime years (post-construction)
+\end{description}
+
+
+\textbf{Delay Costs (DC)}:
+Delay costs represent the per–delay‐year expenses chosen by the user for legal processes ($C_{L}$), administrative overhead ($C_{Adm}$), contractor and labor ($C_{CL}$), material and equipment ($C_{ME}$), permitting and regulatory compliance ($C_{PR}$), public relations ($C_{PRg}$), project management ($C_{PM}$), environmental studies ($C_{ES}$), and miscellaneous expenses ($C_{Misc}$). Let 
+\begin{align}
+S_{\mathrm{del}} &= \{L,\,Adm,\,CL,\,ME,\,PR,\,PRg, \notag \\
+                 &\quad PM,\,ES,\,Misc\} \label{eq:s_del}
+\end{align}
+
+
+\paragraph{Nominal Delay Cost}  
+The total (nominal) delay cost is
+
+\begin{subequations}
+\label{eq:delay_nominal}
+\begin{align}
+DC &= \sum_{j \in S} C_{j} \\[0.5ex]
+DC_{\mathrm{nom}} &= Y \,\times\, DC
+\end{align}
+\end{subequations}
+
+\paragraph{Present‐Value Delay Cost}  
+Discounting at rate $r_{\mathrm{disc}}$ (WACC)
+
+\begin{subequations}
+\label{eq:delay_real}
+\begin{align}
+DC_{\mathrm{PV}} &= \sum_{t=1}^{Y}
+  \frac{DC}{\bigl(1 + r_{\mathrm{disc}}\bigr)^{t}}
+\end{align}
+\end{subequations}
+
+\textbf{Environmental Reporting and Compliance (ERC)}: 
+
+Environmental Reporting and Compliance comprises one‐time fees for impact statements/reports and per‐mile impact mitigation. Let  
+\begin{equation}
+S_{\mathrm{ERC}} = \{R,\,EIM\}
+\end{equation}
+where \(R\) is the aggregated reporting cost (EIS, EIR, NHPA, etc.) and \(EIM\) is the environmental impact mitigation cost.
+
+\paragraph{Nominal ERC}  
+\begin{subequations}
+\label{eq:erc_nominal}
+\begin{align}
+ERC &= \sum_{j\in S_{\mathrm{ERC}}} C_{j} \\[0.5ex]
+ERC_{\mathrm{nom}} &= ERC
+\end{align}
+\end{subequations}
+
+\paragraph{Present‐Value ERC}  
+We model ERC costs as being incurred as a one‐time payment at project inception, so
+\begin{subequations}
+\label{eq:erc_pv}
+\begin{align}
+ERC_{\mathrm{PV}} &= ERC
+\end{align}
+\end{subequations}
+
+
+\textbf{Right‐of‐Way (ROW)}:
+
+Right‐of‐Way costs comprise a one‐time land acquisition fee, plus recurring rental and holding fees. Let  
+\begin{align}
+S_{\mathrm{ROW}} &= \{C_{\mathrm{Acq}},\, C_{\mathrm{Rent}},\, C_{\mathrm{Hold}}\} \notag \\
+C_{\mathrm{Hold}} &= \phi\, C_{\mathrm{Rent}} \notag
+\end{align}
+where \(C_{\mathrm{Acq}}\) is the acquisition cost (\$), \(C_{\mathrm{Rent}}\) is the annual rent cost (\$/year), \(C_{\mathrm{Hold}}\) is the annual holding cost (\$/year),
+and \(\phi\) is the user-defined holding‐to‐rent ratio.
+
+\paragraph{Nominal ROW Cost}  
+\begin{subequations}
+\label{eq:row_nominal2}
+\begin{align}
+ROW_{\mathrm{acq}}      &= C_{\mathrm{Acq}} \\[0.4ex]
+ROW_{\mathrm{rent,nom}} &= C_{\mathrm{Rent}} (N + T_{\mathrm{constr}}) \\[0.4ex]
+ROW_{\mathrm{hold,nom}} &= C_{\mathrm{Hold}} Y \\[0.4ex]
+ROW_{\mathrm{nom}}      &= ROW_{\mathrm{acq}} + ROW_{\mathrm{rent,nom}} \notag \\
+                        &\quad + ROW_{\mathrm{hold,nom}} \label{eq:row_nom_sum}
+\end{align}
+\end{subequations}
+
+
+\paragraph{Present‐Value ROW Cost}  
+\begin{subequations}
+\label{eq:row_pv2}
+\begin{align}
+ROW_{\mathrm{PV,acq}}   &= C_{\mathrm{Acq}} \\[0.4ex]
+ROW_{\mathrm{PV,rent}}  &= \sum_{t=1}^{N + T_{\mathrm{constr}}}
+  \frac{C_{\mathrm{Rent}}}{\left(1 + r_{\mathrm{disc}}\right)^{t}} \\[0.4ex]
+ROW_{\mathrm{PV,hold}}  &= \sum_{t=1}^{Y}
+  \frac{C_{\mathrm{Hold}}}{\left(1 + r_{\mathrm{disc}}\right)^{t}} \\[0.4ex]
+ROW_{\mathrm{PV}}       &= ROW_{\mathrm{PV,acq}} + ROW_{\mathrm{PV,rent}} \notag \\
+                        &\quad + ROW_{\mathrm{PV,hold}} \label{eq:row_pv_total}
+\end{align}
+\end{subequations}
+
+
+
+\textbf{Build Costs}:
+\begin{equation}
+\text{Build} = C_{Con} + C_{Struc} + C_{Conv}
+\end{equation}
+Conductor costs ($C_{Con}$), structure costs ($C_{Struc}$), and converter costs if applicable ($C_{Conv}$). The real costs are discounted by the weighted cost of capital.
+
+\textbf{Build Costs (Build)}:
+
+Build costs comprise per‐mile conductor and structure costs—contingent on AC/DC and construction type times line length, plus converter costs for DC projects. Each cost is finally multiplied by a terrain multiplier. Let  
+\begin{align}
+S_{\mathrm{Build}} &= \{\mathrm{Con},\,\mathrm{Struc},\,\mathrm{Conv}\} \notag \\[1ex]
+\delta_{\mathrm{struc}} &=
+\begin{cases}
+1, & \text{if Overhead or Underground Tunnel} \\
+0, & \text{if else\footnotemark}
+\end{cases} \notag \\[1ex]
+\xi_{\mathrm{conv}} &=
+\begin{cases}
+1, & \text{if DC project (converter chosen)} \\
+0, & \text{if AC project}
+\end{cases} \notag
+\end{align}
+\footnotetext{“Else” includes Reconductoring, Underground Direct-Buried, and Subsea construction types.}
+where \(C_{\mathrm{Con,unit}}\) and \(C_{\mathrm{Struc,unit}}\) are unit costs (\$/mile), \(M\) is line length (miles), \(\mu_{\mathrm{terrain}}\) is the terrain multiplier (see Appendix), and \(C_{\mathrm{Conv}}\) is the converter station cost (if DC).
+
+\paragraph{Nominal Build Cost}  
+\begin{subequations}
+\label{eq:build_nominal_updated}
+\begin{align}
+C_{\mathrm{Con}}     &= C_{\mathrm{Con,unit}}\,M\,\mu_{\mathrm{terrain}} \\[0.5ex]
+C_{\mathrm{Struc}}   &= \delta_{\mathrm{struc}}\,C_{\mathrm{Struc,unit}}\,M\,\mu_{\mathrm{terrain}} \\[0.5ex]
+C_{\mathrm{Conv}}    &= \xi_{\mathrm{conv}}\,C_{\mathrm{Conv}} \\[0.5ex]
+Build_{\mathrm{nom}} &= C_{\mathrm{Con}} + C_{\mathrm{Struc}} + C_{\mathrm{Conv}}
+\end{align}
+\end{subequations}
+
+\paragraph{Present‐Value Build Cost}  
+Since all build costs are incurred up‐front during construction,  
+\begin{subequations}
+\label{eq:build_pv}
+\begin{align}
+Build_{\mathrm{PV}} &= Build_{\mathrm{nom}}
+\end{align}
+\end{subequations}
+
+
+
+\textbf{Operation \& Maintenance (O\&M)}  
+Operation \& Maintenance costs comprise per–mile maintenance and vegetation management, plus fixed annual converter station O\&M for DC projects. Let  
+\begin{align}
+S_{\mathrm{OM}} &= \{\mathrm{Maint},\,\mathrm{VEGM},\,\mathrm{Conv}\}, \notag \\
+\xi_{\mathrm{conv}} &= 
+\begin{cases}
+1, & \text{if DC project} \\
+0, & \text{if AC project}
+\end{cases}. \notag
+\end{align}
+
+\paragraph{Nominal O\&M Cost}
+\begin{subequations}
+\label{eq:om_nominal_final}
+\begin{align}
+C_{\mathrm{Maint}} &= C_{\mathrm{Maint}} M \label{eq:om_maint} \\
+C_{\mathrm{VEGM}}  &= C_{\mathrm{VEGM}} M \label{eq:om_vegm} \\
+C_{\mathrm{Conv}}  &= \xi_{\mathrm{conv}} C_{\mathrm{Conv}} \label{eq:om_conv} \\
+OM_{\mathrm{nom}}  &= N(C_{\mathrm{Maint}} + C_{\mathrm{VEGM}}) + C_{\mathrm{Conv}} \label{eq:om_nom}
+\end{align}
+\end{subequations}
+
+
+
+\paragraph{Present‐Value O\&M Cost}  
+\begin{subequations}
+\label{eq:om_pv_final}
+\begin{align}
+OM_{\mathrm{PV,Maint}} &= \sum_{t=1}^{N} \frac{C_{\mathrm{Maint}}}{\left(1 + r_{\mathrm{disc}}\right)^{t}} \\[0.5ex]
+OM_{\mathrm{PV,VEGM}}  &= \sum_{t=1}^{N} \frac{C_{\mathrm{VEGM}}}{\left(1 + r_{\mathrm{disc}}\right)^{t}} \\[0.5ex]
+OM_{\mathrm{PV,Conv}}  &= \sum_{t=1}^{N} \frac{C_{\mathrm{Conv}}}{\left(1 + r_{\mathrm{disc}}\right)^{t}} \\[0.5ex]
+OM_{\mathrm{PV}}       &= OM_{\mathrm{PV,Maint}} + OM_{\mathrm{PV,VEGM}} \notag \\
+                       &\quad + OM_{\mathrm{PV,Conv}} \label{eq:om_pv_total}
+\end{align}
+\end{subequations}
+
+
+
+
+\textbf{Insurance Costs (Insur)}  
+Insurance premiums are paid on line and converter assets. Let  
+\begin{align}
+S_{\mathrm{Ins}} &= \{\mathrm{Cond},\,\mathrm{Struc},\,\mathrm{Conv}\} \notag \\
+\xi_{\mathrm{conv}} &=
+\begin{cases}
+1, & \text{if DC project} \\
+0, & \text{if AC project}
+\end{cases} \notag
+\end{align}
+
+
+where \(C_{\mathrm{Con}}\) and \(C_{\mathrm{Struc}}\) are the conductor and structure capital costs (\$/mile), \(C_{\mathrm{Conv}}\) is the converter capital cost (\$), \(r_{\mathrm{prem}}\) is the annual premium rate (decimal), \(L\) is line length (miles), and \(r_{\mathrm{disc}}\) is the discount rate.
+
+\paragraph{Nominal Insurance Cost}  
+\begin{subequations}
+\label{eq:ins_nominal_updated}
+\begin{align}
+C_{\mathrm{ins,line}} &= \bigl(C_{\mathrm{Con}} + C_{\mathrm{Struc}}\bigr)\,r_{\mathrm{prem}} \\[0.5ex]
+C_{\mathrm{ins,conv}} &= \xi_{\mathrm{conv}}\,C_{\mathrm{Conv}}\,r_{\mathrm{prem}} \\[0.5ex]
+I_{\mathrm{yr}}       &= C_{\mathrm{ins,line}}\,L \;+\; C_{\mathrm{ins,conv}} \\[0.5ex]
+I_{\mathrm{nom}}      &= N\,I_{\mathrm{yr}}
+\end{align}
+\end{subequations}
+
+\paragraph{Present‐Value Insurance Cost}  
+\begin{subequations}
+\label{eq:ins_pv_updated}
+\begin{align}
+I_{\mathrm{PV}} &= \sum_{t=1}^{N}
+  \frac{I_{\mathrm{yr}}}{\bigl(1 + r_{\mathrm{disc}}\bigr)^{t}}
+\end{align}
+\end{subequations}
+
+
+\textbf{Capitalization Costs (Cap)}:
+
+Capitalization costs comprise the Allowance for Funds Used During Construction (AFUDC) and contingency funds. A contingency percentage \(\phi_{\mathrm{cont}}\) is applied to the terrain‐adjusted build cost to cover overruns and uncertainty. Let
+\begin{align}
+S_{\mathrm{Cap}} &= \{\mathrm{AFUDC},\,\mathrm{Cont}\}, \notag \\
+\phi_{\mathrm{cont}} &= \text{contingency rate (decimal)} \notag
+\end{align}
+
+where \(Build_{\mathrm{nom}}\) is the terrain‐adjusted build cost (from Eq.~\ref{eq:build_nominal_updated}), \(r_{\mathrm{AFUDC}}\) is the weighted cost of capital, \(T_{\mathrm{constr}}\) is the construction duration, and
+\[
+C_{\mathrm{Cont}} = \phi_{\mathrm{cont}}\, Build_{\mathrm{nom}}.
+\]
+
+
+\paragraph{Nominal Capitalization Cost}  
+\begin{subequations}
+\label{eq:cap_nominal_updated}
+\begin{align}
+C_{\mathrm{AFUDC}} &= Build_{\mathrm{nom}}\Bigl((1 + r_{\mathrm{AFUDC}})^{T_{\mathrm{constr}}} - 1\Bigr) \\[0.5ex]
+C_{\mathrm{Cont}}  &= \phi_{\mathrm{cont}}\;Build_{\mathrm{nom}} \\[0.5ex]
+Cap_{\mathrm{nom}}  &= C_{\mathrm{AFUDC}} + C_{\mathrm{Cont}}
+\end{align}
+\end{subequations}
+
+\paragraph{Present‐Value Capitalization Cost}  
+Since both AFUDC and contingency are capitalized up‐front,  
+\begin{subequations}
+\label{eq:cap_pv_updated}
+\begin{align}
+Cap_{\mathrm{PV}} &= Cap_{\mathrm{nom}}
+\end{align}
+\end{subequations}
+
+\textbf{Emissions Costs of Line Loss Compensation (Emis)}  
+These capture the societal cost of additional generation needed to compensate line‐losses, in the form of CO\(_2\), SO\(_x\) and NO\(_x\).  Define:
+
+\begin{description}
+  \item[\(\alpha\)] fraction of line losses compensated  
+  \item[\(P_{\mathrm{line}}\)] line capacity (MW)  
+  \item[\(H\)] operating hours per year  
+  \item[\(TEC = \alpha\,P_{\mathrm{line}}\,H\)] total energy compensated (MWh/yr)  
+  \item[\(p_j\)] share of generation from source \(j\) (unitless)  
+  \item[\(I_{j,k}\)] emission intensity of pollutant \(k\) from source \(j\) (kg/MWh)  
+  \item[\(c_k\)] societal cost of pollutant \(k\) (\$/kg)  
+  \item[\(r_{\mathrm{rf}}\)] risk‐free discount rate  
+\end{description}
+
+For each pollutant \(k\in\{\mathrm{CO_2},\mathrm{SO_x},\mathrm{NO_x}\}\):
+
+\begin{subequations}
+\label{eq:emis_calc}
+\begin{align}
+E_k &= TEC \;\sum_j p_j \,I_{j,k}
+\label{eq:emis_energy}\\[0.5ex]
+C_k &= E_k \;c_k
+\label{eq:emis_cost}
+\end{align}
+\end{subequations}
+
+\paragraph{Nominal Emissions Cost}  
+Assuming the annual emissions cost \(C_k\) is constant over the project lifetime \(N\),  
+\begin{equation}
+Emis_{\mathrm{nom}}
+= N \;\sum_{k\in\{\mathrm{CO_2},\mathrm{SO_x},\mathrm{NO_x}\}} C_k
+\label{eq:emis_nom}
+\end{equation}
+
+\paragraph{Present‐Value Emissions Cost}  
+\begin{equation}
+Emis_{\mathrm{PV}}
+= \sum_{t=1}^{N} \frac{\displaystyle\sum_{k\in\{\mathrm{CO_2},\mathrm{SO_x},\mathrm{NO_x}\}} C_k}
+{\bigl(1 + r_{\mathrm{rf}}\bigr)^{t}}
+\label{eq:emis_pv}
+\end{equation}
+
+
+\paragraph{Avoided Outage Cost (AC\textsubscript{AO})}  
+For each construction type \(k\) in the set of possible designs, let  
+\[
+p_{\mathrm{out},k},\;H_{\mathrm{out},k},\;M,\;\mathrm{Cap},\;C_{\mathrm{out}}
+\]
+denote the outage probability per mile, outage hours per year, project miles, project capacity (MW), and cost of lost load (\$/MWh).  Then:
+
+\begin{subequations}
+\label{eq:ac_ao_calc}
+\begin{align}
+POO_k   &= \min\{1,\;p_{\mathrm{out},k}\,M\} \\[0.5ex]
+COO_k   &= \mathrm{Cap}\;\times\;C_{\mathrm{out}}\;\times\;H_{\mathrm{out},k} \\[0.5ex]
+AECO_k  &= PO_k \;\times\; CO_k
+\end{align}
+\end{subequations}
+
+Let \(k_{\mathrm{ref}}\) be the baseline (e.g.\ worst‐case) design and \(k^*\) be the chosen design.  The annual avoided outage cost is  
+\begin{equation}
+AC_{\mathrm{AO}} = AECO_{k_{\mathrm{ref}}} - AECO_{k^*}
+\end{equation}
+
+\paragraph{Nominal Avoided Outage Cost}  
+
+
+\paragraph{Avoided Wildfire Costs (AC\textsubscript{AW})}  
+Yearly avoided wildfire cost is the reduction in expected annual wildfire expense when switching from a baseline construction type (the worst‐case \(k_{\mathrm{ref}}\)) to the chosen design \(k^*\).  Let:
+- \(C\) be the set of all construction types.
+- \(p_{\mathrm{wf},k}\) = probability of wildfire per year for type \(k\).
+- \(C_{\mathrm{wf},k}\) = cost of a wildfire event for type \(k\).
+
+\begin{equation}
+ECWF_k = p_{\mathrm{wf},k}\;C_{\mathrm{wf},k}
+\label{eq:ecwf}
+\end{equation}
+
+\begin{equation}
+YAWFC = \max_{k\in C}\{ECWF_k\}\;-\;ECWF_{k^*}
+\label{eq:yawfc}
+\end{equation}
+
+\paragraph{Nominal Lifetime Avoided Wildfire Cost}  
+\begin{equation}
+LAWFC = N \;\times\; YAWFC
+\label{eq:lawfc}
+\end{equation}
+
+\paragraph{Present‐Value Lifetime Avoided Wildfire Cost}  
+\begin{equation}
+RLAWFC = \sum_{t=1}^{N} \frac{YAWFC}{\bigl(1 + r_{\mathrm{rf}}\bigr)^{t}}
+\label{eq:rlawfc}
+\end{equation}
+
+
+
+\textbf{Avoided Costs (AC)}:
+\begin{equation}
+\text{AC} = C_{AO} + C_{AW}
+\end{equation}
+representing avoided outage costs ($C_{AO}$) and avoided wildfire costs ($C_{AW}$). 
+
+
+\paragraph{Congestion Reduction Benefits (B\textsubscript{C})}  
+Congestion reduction delivers a yearly benefit by avoiding high-cost transmission bottlenecks.  Define:
+\begin{description}
+  \item[$\Delta Q$] annual congestion reduction (MWh/yr)
+  \item[$C_{\mathrm{c}}$] cost per MWh of congestion (\$/MWh)
+
+\end{description}
+
+\begin{equation}
+B_{\mathrm{C,yr}} = \Delta Q \;\times\; C_{\mathrm{c}}
+\label{eq:cong_annual}
+\end{equation}
+
+\paragraph{Nominal Lifetime Congestion Benefit}  
+\begin{equation}
+B_{\mathrm{C,nom}} = N \;\times\; B_{\mathrm{C,yr}}
+\label{eq:cong_nom}
+\end{equation}
+
+\paragraph{Present-Value Congestion Benefit}  
+\begin{equation}
+B_{\mathrm{C,PV}} = \sum_{t=1}^{N} \frac{B_{\mathrm{C,yr}}}{\bigl(1 + r_{\mathrm{rf}}\bigr)^{t}}
+\label{eq:cong_pv}
+\end{equation}
+
+\paragraph{Curtailment Reduction Benefits (B\textsubscript{Curt})}  
+Curtailment reduction delivers a yearly benefit by avoiding energy curtailment.  Define:
+\begin{description}
+  \item[$\Delta Q_{\mathrm{curt}}$] annual curtailment reduction (MWh/yr)
+  \item[$C_{\mathrm{curt}}$] cost per MWh of curtailed energy (\$/MWh)
+
+\end{description}
+
+\begin{equation}
+B_{\mathrm{Curt,yr}} \;=\; \Delta Q_{\mathrm{curt}} \;\times\; C_{\mathrm{curt}}
+\label{eq:curt_annual}
+\end{equation}
+
+\paragraph{Nominal Lifetime Curtailment Benefit}  
+\begin{equation}
+B_{\mathrm{Curt,nom}} \;=\; N \;\times\; B_{\mathrm{Curt,yr}}
+\label{eq:curt_nom}
+\end{equation}
+
+\paragraph{Present‐Value Curtailment Benefit}  
+\begin{equation}
+B_{\mathrm{Curt,PV}} \;=\; \sum_{t=1}^{N}
+  \frac{B_{\mathrm{Curt,yr}}}{\bigl(1 + r_{\mathrm{rf}}\bigr)^{t}}
+\label{eq:curt_pv}
+\end{equation}
+
+
+\textbf{Total Benefits (B)}:
+\begin{equation}
+\text{B} = -C_{R} - C_{C}
+\end{equation}
+representing congestion reduction value ($C_{R}$) and curtailment reduction value ($C_{R}$). The real costs are discounted by the risk free rate.
+
+\textbf{Total Lifetime Costs (TLC)}:
+\begin{align}
+\text{TLC} &= DC + ERC + ROW + Build   \notag \\
+           &\phantom{=} + OM + Insur + Cap + Emis \label{eq:TLC}
+\end{align}
+
+
+\textbf{Net Lifetime Costs (NLC)}:
+\begin{equation}
+\text{NLC} = \text{TLC} - \text{AC} + \text{B}
+\end{equation}
+
+\end{comment}
+
 \section{Methods}
 % 3--5 pages. Detail CTCC architecture:
 % - Input validation and parameter derivation.
@@ -209,29 +680,29 @@ Congestion reduction benefits capture the value of avoided transmission bottlene
 
 Curtailment reduction benefits capture the value of avoided renewable energy curtailment. Annual curtailment benefits are calculated as the product of curtailment reduction (MWh/year) and average curtailment price (\$/MWh). The framework includes saturation factors to account for diminishing marginal benefits as more capacity is added. See Appendix A.14 for detailed formulations.
 
-\subsubsection{Avoided Costs}
+\subsubsection{Revenue Requirements}
 
-Avoided costs represent the reduction in expected costs when choosing one construction type over another. These include:
-
-\textbf{Avoided Outage Costs:} The reduction in expected outage costs when switching from a baseline construction type (typically the worst-case option) to the chosen design. Avoided outage costs are calculated as the difference in expected annual outage costs between the baseline and chosen designs. See Appendix A.15 for detailed formulations.
-
-\textbf{Avoided Wildfire Costs:} The reduction in expected wildfire costs when switching from a baseline construction type to the chosen design. Avoided wildfire costs are calculated as the difference in expected annual wildfire costs between the worst-case construction type and the chosen design. See Appendix A.16 for detailed formulations.
+For rate-regulated utilities, the framework can calculate revenue requirements from a firm perspective. When rate-based revenue is enabled, the framework calculates annual revenue requirements as the product of the capital cost rate base and an allowed return rate. This represents the revenue stream needed to recover capital investments over the project lifetime. Revenue requirements are calculated in present value terms and are subtracted from total system costs when evaluating projects from a firm perspective. See Appendix A.17 for detailed formulations.
 
 \subsection{Cost Aggregation}
 
 The CTCC aggregates all cost categories into total lifetime costs and net lifetime costs. Total lifetime costs (TLC) represent the sum of all costs:
 \begin{equation}
-\text{TLC} = \text{DC} + \text{ERC} + \text{ROW} + \text{Build} + \text{OM} + \text{Insur} + \text{Cap} + \text{Emis} + \text{Risk}
+\begin{split}
+\text{TLC} = \text{DC} + \text{ENM} + \text{ROW} + \text{Build} \\
++ \text{OM}            + \text{Insur} + \text{Cap} + \text{Emis} + \text{Risk}
+\end{split}
 \label{eq:TLC}
 \end{equation}
-where DC represents delay costs, ERC represents environmental reporting and compliance costs, and Risk represents the sum of wildfire, outage, and wildfire liability insurance costs.
 
-Net lifetime costs (NLC) subtract avoided costs and benefits:
+where DC represents delay costs, ENM represents environmental mitigation costs, and Risk represents the sum of wildfire, outage, and wildfire liability insurance costs.
+
+Net lifetime costs (NLC) subtract benefits:
 \begin{equation}
-\text{NLC} = \text{TLC} - \text{AC} - \text{B}
+\text{NLC} = \text{TLC}  - \text{B}
 \label{eq:NLC}
 \end{equation}
-where AC represents avoided costs (avoided outage and avoided wildfire costs) and B represents benefits (congestion and curtailment reduction benefits).
+where B represents the benefits of congestion and curtailment reduction, as well as revenue to the firm.
 
 All costs and benefits are calculated in both nominal terms and present value. Present value calculations use the weighted average cost of capital (WACC) for financial costs and the social discount rate for societal costs (emissions). The framework allows users to specify different discount rates for different cost categories, providing flexibility for different analytical perspectives.
 
@@ -251,141 +722,40 @@ Conditional logic throughout the framework ensures that costs are calculated app
 % - Discussion of trade-offs observed.
 
 % Do something like figure 1 from Josh's paper:  https://www.sciencedirect.com/science/article/pii/S0301421516306875
-We applied the CTCC's method to 3 scenarios to show how it can be used. 
 
-\subsection{Scenario 1: New Overhead AC Line}
+\subsection{Analytical Framework}
 
-A new overhead 657MW, 230 kV overhead AC transmisison line is being considered to integrate wind power. The lines proposed route is 100 miles long through mixed flat and rolling hills terrain. It is estimated to require 18 months of permitting, 12 months of construction time, and would last for 50 years. The total nominal cost over the lifetime would be \$229M, and the broad components of this total are shown below in table blah. The total real cost over the lifetime would be \$193M.
+To evaluate transmission project scenarios, we employ multiple analytical approaches that provide complementary perspectives on project economics and risk. This subsection outlines the benefit-cost ratio (BCR) metrics, sensitivity analysis methodology, and one-at-a-time (OAT) analysis approach used throughout this analysis.
 
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value} \\
-\hline
-\textbf{Delay} & \$4.5M & \$4.2M\\
-\hline
-\textbf{ROW} & \$23M & \$21M\\
-\hline
-\textbf{Construction} & \$102M & \$102\\
-\hline
-\textbf{Capitalization} & \$13M & \$13M\\
-\hline
-\textbf{Env Rep \& Comp} & \$15M & \$15M\\
-\hline
-\textbf{Insurance} & \$7M  & \$2.4M\\
-\hline
+\subsubsection{Benefit-Cost Ratio Metrics}
 
-\end{tabular}
-\caption{Broad Costs of Scenario 1}
-\end{table}
+We calculate and present multiple BCR metrics to capture different analytical perspectives and decision-making contexts:
 
-The route provides minimal congestion reductions of 50,000 MWh valued at \$20 per MWh a year, but significant curtailment reductions of 250,000 MWh valued at \$25 per MWh a year. The lifetime benefits of these reductions are shown below in table blah
+\textbf{BCR\textsubscript{system}:} The primary system-level metric, calculated as total benefits divided by total costs (both in present value). This comprehensive metric includes all costs (capital, operational, energy/emissions, risk, and delay) and all benefits (congestion reduction, curtailment reduction, revenue requirements, and line loss benefits for reconductoring projects).
 
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value}\\
-\hline
-\textbf{Congestion} & \$(50)M & \$(20)M\\
-\hline
-\textbf{Curtailment} & \$(313)M & \$(126)M\\
-\hline
+\textbf{BCR\textsubscript{capital}:} Benefits divided by capital costs only, providing an investor-focused perspective that isolates the return on upfront investment.
 
-\end{tabular}
-\caption{Benefits of Scenario 1}
-\end{table}
+\textbf{BCR\textsubscript{excluding risk}:} Benefits divided by costs excluding risk components (wildfire, outage, and wildfire liability insurance). This metric focuses on core economic viability by removing low-probability, high-impact risk events that may be subject to different risk management strategies.
 
-There are no avoided wildfire or outage costs because the project is an overhead line - where expected costs are highest. The net lifetime cost of the project - the sum of the total cost and benefits - is \$(133)M. If an advanced conductor was used (instead of the standard aluminum conductor) the build costs would increase \$5M from \$102M to \$107M, but could reduce cost of emissions associated with transmission losses by \$4M. In real terms, the net lifetime cost is \$47M.
+\textbf{BCR\textsubscript{excluding emissions}:} Benefits divided by costs excluding energy and emissions costs (line losses and emissions compensation). This metric isolates the direct project economics from environmental externalities.
 
-\subsection{Scenario 2: Reconductored Overhead AC Line}
+All BCR metrics use conservative benefit estimates, with benefit values adjusted by saturation factors to account for diminishing marginal returns as transmission capacity is added. This provides a more conservative assessment of project benefits across all metrics.
 
-Total lifetime cost of \$323M. Real total lifetime cost of \$203M
+All BCR metrics are calculated using present value terms, with benefits and costs discounted using appropriate rates (WACC for financial costs, social discount rate for emissions).
 
-\begin{table}[h!]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value}\\
-\hline
-\textbf{Delay} & \$1.3M & \$1.3M\\
-\hline
-\textbf{ROW} & \$1M & \$.4M\\
-\hline
-\textbf{Construction} & \$11M  & \$11M\\
-\hline
-\textbf{Capitalization} & \$1M & \$1M\\
-\hline
-\textbf{Env Rep \& Comp} & \$12.3M & \$12M\\
-\hline
-\textbf{Insurance} & \$.6M & \$.3M\\
-\hline
+\subsubsection{Sensitivity Analysis Methodology}
 
-\end{tabular}
-\caption{Broad Costs of Scenario 2}
-\end{table}
+To identify which parameters most significantly influence project economics, we employ Latin Hypercube Sampling (LHS) for systematic parameter variation. LHS ensures efficient coverage of the parameter space while maintaining statistical properties that enable robust sensitivity analysis.
 
-\begin{table}[h!]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value}\\
-\hline
-\textbf{Congestion} & \$(184)M &\$(93)M\\
-\hline
-\textbf{Curtailment} & \$(29)M & \$(15)M\\
-\hline
+For each scenario, we generate $N$ parameter samples using LHS, where each sample represents a complete set of parameter values drawn from their specified distributions. The CTCC is then evaluated for each sample, producing distributions of BCR metrics and cost/benefit components.
 
-\end{tabular}
-\caption{Benefits of Scenario 2}
-\end{table}
+To quantify parameter importance, we calculate Partial Rank Correlation Coefficients (PRCC) between each input parameter and each output metric. PRCC measures the monotonic relationship between a parameter and an output while controlling for the effects of all other parameters, making it well-suited for non-linear models with correlated inputs. Parameters with high absolute PRCC values (typically $|\text{PRCC}| > 0.3$) are considered influential and warrant further investigation through OAT analysis.
 
-Net lifetime cost of \$110. Real net lifetime cost of \$96M
+\subsubsection{One-at-a-Time Analysis}
 
-\subsection{Scenario 3: Underground Direct Buried AC Line}
+For the most influential parameters identified through sensitivity analysis, we conduct one-at-a-time (OAT) parameter sweeps. For each top parameter (typically the top 6 parameters per BCR metric, ranked by absolute PRCC), we systematically vary that parameter across a range of multiplier values while holding all other parameters at their baseline values.
 
-Total lifetime cost of \$1.4B. Real total lifetime cost of \$1.3B.
-
-\begin{table}[h!]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value}\\
-\hline
-\textbf{Delay} & \$29M & \$24M\\
-\hline
-\textbf{ROW} & \$15M & \$6M\\
-\hline
-\textbf{Construction} & \$847M  & \$847M\\
-\hline
-\textbf{Capitalization} & \$386M & \$386M\\
-\hline
-\textbf{Env Rep \& Comp} & \$10M & \$10.3M\\
-\hline
-\textbf{Insurance} & \$58M & \$18M\\
-\hline
-
-\end{tabular}
-\caption{Broad Costs of Scenario 3}
-\end{table}
-
-\begin{table}[h!]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Cost Category} & \textbf{Nominal Value} & \textbf{Real Value}\\
-\hline
-\textbf{Congestion} & \$(325)M & \$(131)M\\
-\hline
-\textbf{Curtailment} & \$(40)M & \$(16)M\\
-\hline
-
-\end{tabular}
-\caption{Benefits of Scenario 3}
-\end{table}
-
-Net lifetime cost of \$(1.4)B. Real net lifetime cost of \$205M.
+This approach produces response curves showing how each BCR metric changes as a function of the parameter of interest. OAT analysis provides intuitive visualization of parameter impacts and helps identify critical thresholds or non-linear relationships that may not be apparent from PRCC values alone. The results are presented as plots showing BCR response curves for each influential parameter, enabling stakeholders to understand which parameters drive project economics and where uncertainty reduction efforts would be most valuable.
 
 
 % Section 5: Discussion
