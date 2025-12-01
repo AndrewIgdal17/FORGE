@@ -303,10 +303,19 @@ def calculate_bcr_metrics(
         total_costs_pv - emissions_pv - risk_costs_pv
     )
 
+    # Calculate capital + delay costs
+    delay_costs_pv = costs.get("delay_costs_pv", 0) or 0
+    capital_and_delay_costs_pv = capital_costs_pv + delay_costs_pv
+
     # Prevent division by zero
     # All BCRs use conservative (haircut) benefits
     bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
     bcr_capital = total_benefits_pv / capital_costs_pv if capital_costs_pv > 0 else 0
+    bcr_capital_and_delay = (
+        total_benefits_pv / capital_and_delay_costs_pv
+        if capital_and_delay_costs_pv > 0
+        else 0
+    )
     bcr_excluding_risk = (
         total_benefits_pv / total_costs_excluding_risk_pv
         if total_costs_excluding_risk_pv > 0
@@ -342,6 +351,7 @@ def calculate_bcr_metrics(
         total_benefits_pv - total_costs_excluding_linelosses_only_pv
     )
     net_benefit_capital_only_pv = total_benefits_pv - capital_costs_pv
+    net_benefit_capital_and_delay_pv = total_benefits_pv - capital_and_delay_costs_pv
     net_benefit_excluding_linelosses_and_risk_pv = (
         total_benefits_pv - total_costs_excluding_linelosses_and_risk_pv
     )
@@ -352,6 +362,7 @@ def calculate_bcr_metrics(
     result = {
         "bcr_system": bcr_system,
         "bcr_capital": bcr_capital,
+        "bcr_capital_and_delay": bcr_capital_and_delay,
         "bcr_excluding_risk": bcr_excluding_risk,
         "bcr_excluding_emissions": bcr_excluding_emissions,
         "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
@@ -367,6 +378,7 @@ def calculate_bcr_metrics(
         "net_benefit_excluding_emissions_only_pv": net_benefit_excluding_emissions_only_pv,
         "net_benefit_excluding_linelosses_only_pv": net_benefit_excluding_linelosses_only_pv,
         "net_benefit_capital_only_pv": net_benefit_capital_only_pv,
+        "net_benefit_capital_and_delay_pv": net_benefit_capital_and_delay_pv,
         "net_benefit_excluding_linelosses_and_risk_pv": net_benefit_excluding_linelosses_and_risk_pv,
         "net_benefit_excluding_emissions_only_and_risk_pv": net_benefit_excluding_emissions_only_and_risk_pv,
     }
@@ -535,6 +547,7 @@ def print_bcr_summary(
         f"  System BCR (conservative):    {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
     )
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
+    print(f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}")
 
     # BCR excluding risk costs
     bcr_excluding_risk = bcr_metrics["bcr_excluding_risk"]
