@@ -248,9 +248,8 @@ _Benefits = Congestion + Curtailment + Line Loss (if reconductoring)_
 
 ### BCR Metrics
 
-84. **bcr_system** - Total Benefits / Total Costs (primary metric for project viability)
-85. **bcr_capital** - Total Benefits / Capital Costs (investor perspective)
-86. **bcr_haircut** - Conservative Benefits / Total Costs (risk-adjusted)
+84. **bcr_system** - Conservative Benefits / Total Costs (primary metric for project viability, uses saturation-adjusted benefits)
+85. **bcr_capital** - Conservative Benefits / Capital Costs (investor perspective, uses saturation-adjusted benefits)
 
 ### Net Benefit/Cost
 

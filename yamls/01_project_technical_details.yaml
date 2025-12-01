@@ -2,12 +2,12 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S1_Rural_Overhead_AC_500MW"
+  name: "S1_Rural_Overhead_AC_460MW"
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
-  capacity_mw: 460 # MW
-  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  capacity_mw: 657 # MW
+  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   converter_type: "LCC Converter" # LCC Converter or VSC Converter
 
   line_utilization: .70 # % [0,1]
@@ -16,8 +16,12 @@ project:
 
   reconductoring: False # True or False
   old_capacity_mw: 140 # MW
-  old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor
+  old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   old_ac_dc: "AC" # AC or DC
+
+  # Greenfield capacity comparison (only used when reconductoring: False)
+  greenfield_comparison_capacity_mw: 460 # Optional: Capacity in MW for comparison configuration
+  greenfield_comparison_conductor_type: "Standard Aluminum Conductor" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
 
 timeline:
   construction_years: 1
