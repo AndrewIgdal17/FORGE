@@ -390,20 +390,20 @@ def map_samples_to_ranges(samples_df, param_definitions):
 def create_baseline_sample(param_definitions, yaml_files):
     """
     Create a baseline sample dictionary with all parameters at their baseline values.
-    
+
     Args:
         param_definitions: Dictionary of parameter definitions
         yaml_files: Dictionary of loaded YAML data
-        
+
     Returns:
         Dictionary with parameter_name: baseline_value pairs
     """
     baseline_sample = {}
-    
+
     for param_name, param_def in param_definitions.items():
         # Check if this is a multiplier parameter
         is_multiplier = param_name.endswith("_mult")
-        
+
         if is_multiplier:
             # For multipliers, baseline value is always 1.0
             baseline_sample[param_name] = 1.0
@@ -430,7 +430,7 @@ def create_baseline_sample(param_definitions, yaml_files):
                     baseline_sample[param_name] = int((min_val + max_val) / 2)
                 else:
                     baseline_sample[param_name] = (min_val + max_val) / 2
-    
+
     return baseline_sample
 
 
@@ -801,8 +801,17 @@ def calculate_bcr_fallback(data):
         else:
             bcr_capital = 0
 
+        if capital_costs_pv + delay_costs_pv > 0:
+            bcr_capital_and_delay = total_benefits_haircut_pv / (
+                capital_costs_pv + delay_costs_pv
+            )
+        else:
+            bcr_capital_and_delay = 0
+
         if total_costs_excluding_risk_pv > 0:
-            bcr_excluding_risk = total_benefits_haircut_pv / total_costs_excluding_risk_pv
+            bcr_excluding_risk = (
+                total_benefits_haircut_pv / total_costs_excluding_risk_pv
+            )
         else:
             bcr_excluding_risk = 0
 
@@ -823,6 +832,7 @@ def calculate_bcr_fallback(data):
         return {
             "bcr_system": bcr_system,
             "bcr_capital": bcr_capital,
+            "bcr_capital_and_delay": bcr_capital_and_delay,
             "bcr_excluding_risk": bcr_excluding_risk,
             "bcr_excluding_emissions": bcr_excluding_emissions,
             "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
@@ -970,6 +980,7 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
         bcr_columns = [
             "bcr_system",
             "bcr_capital",
+            "bcr_capital_and_delay",
             "bcr_excluding_risk",
             "bcr_excluding_emissions",
             "bcr_excluding_emissions_and_risk",
@@ -986,8 +997,8 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
                 is_empty = (
                     val is None
                     or pd.isna(val)
-                    or val == '' 
-                    or (isinstance(val, str) and val.strip() == '')
+                    or val == ""
+                    or (isinstance(val, str) and val.strip() == "")
                 )
                 if is_empty:
                     missing_bcr.append(col)
@@ -1476,7 +1487,9 @@ def main():
     print()
 
     # Step 3: Run CTCC for each sample
-    print(f"Running CTCC for each sample (1 baseline + {args.n_samples} LHS samples)...")
+    print(
+        f"Running CTCC for each sample (1 baseline + {args.n_samples} LHS samples)..."
+    )
     print("-" * 80)
 
     results_list = []
@@ -1511,7 +1524,9 @@ def main():
             save_yamls_to_temp(yaml_files_copy, temp_yaml_dir)
 
             # Run CTCC
-            result_dict, error = run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id)
+            result_dict, error = run_ctcc_with_temp_yamls(
+                temp_yaml_dir, base_dir, scenario_id
+            )
 
             if result_dict:
                 # Combine inputs and outputs
@@ -1544,9 +1559,7 @@ def main():
                     print(f"  Checkpoint saved: {checkpoint_path}")
             else:
                 failed_samples.append((sample_id, error))
-                print(
-                    f"[{sample_idx + 1}/{total_runs}] {sample_id} FAILED: {error}"
-                )
+                print(f"[{sample_idx + 1}/{total_runs}] {sample_id} FAILED: {error}")
 
         except Exception as e:
             failed_samples.append((sample_id, str(e)))
@@ -1578,6 +1591,7 @@ def main():
         bcr_columns = [
             "bcr_system",
             "bcr_capital",
+            "bcr_capital_and_delay",
             "bcr_excluding_risk",
             "bcr_excluding_emissions",
             "bcr_excluding_emissions_and_risk",
@@ -1664,7 +1678,9 @@ def main():
                 f.write("LHS Sensitivity Analysis Summary\n")
                 f.write("=" * 80 + "\n")
                 f.write(f"Scenario: {args.scenario}\n")
-                f.write(f"Total runs: {total_runs} (1 baseline + {args.n_samples} LHS samples)\n")
+                f.write(
+                    f"Total runs: {total_runs} (1 baseline + {args.n_samples} LHS samples)\n"
+                )
                 f.write(f"Successful runs: {len(results_list)}\n")
                 f.write(f"Failed runs: {len(failed_samples)}\n")
                 f.write("\n")

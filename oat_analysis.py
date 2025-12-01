@@ -130,7 +130,7 @@ def generate_parameter_values(param_name, param_def, n_values=20):
 
     # Check if this is a multiplier parameter
     is_multiplier = param_name.endswith("_mult")
-    
+
     # Get parameter type (default to "linear" if not specified)
     param_type = param_def.get("type", "linear")
 
@@ -229,6 +229,7 @@ def run_single_parameter_sweep(
                 bcr_columns = [
                     "bcr_system",
                     "bcr_capital",
+                    "bcr_capital_and_delay",
                     "bcr_excluding_risk",
                     "bcr_excluding_emissions",
                     "bcr_excluding_emissions_and_risk",
@@ -252,16 +253,22 @@ def run_single_parameter_sweep(
                 results.append(result_row)
             else:
                 # Log error but continue
-                value_str = f"{param_value:.3f}" if isinstance(param_value, float) else str(param_value)
+                value_str = (
+                    f"{param_value:.3f}"
+                    if isinstance(param_value, float)
+                    else str(param_value)
+                )
                 print(
                     f"  Warning: CTCC failed for {param_name} at value {value_str}: {error}"
                 )
 
         except Exception as e:
-            value_str = f"{param_value:.3f}" if isinstance(param_value, float) else str(param_value)
-            print(
-                f"  Error processing {param_name} at value {value_str}: {str(e)}"
+            value_str = (
+                f"{param_value:.3f}"
+                if isinstance(param_value, float)
+                else str(param_value)
             )
+            print(f"  Error processing {param_name} at value {value_str}: {str(e)}")
         finally:
             # Clean up temp directory
             if temp_yaml_dir.exists():
@@ -284,7 +291,7 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
     """
     base_dir = Path(base_dir)  # Ensure it's a Path object
     temp_yaml_dir = Path(temp_yaml_dir)  # Ensure it's a Path object
-    
+
     yamls_dir = base_dir / "yamls"
     yamls_backup = base_dir / "yamls_backup"
 
@@ -334,6 +341,7 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
                 bcr_columns = [
                     "bcr_system",
                     "bcr_capital",
+                    "bcr_capital_and_delay",
                     "bcr_excluding_risk",
                     "bcr_excluding_emissions",
                     "bcr_excluding_emissions_and_risk",
@@ -350,8 +358,8 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
                         is_empty = (
                             val is None
                             or pd.isna(val)
-                            or val == '' 
-                            or (isinstance(val, str) and val.strip() == '')
+                            or val == ""
+                            or (isinstance(val, str) and val.strip() == "")
                         )
                         if is_empty:
                             missing_bcr.append(col)
@@ -386,7 +394,6 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
                 shutil.move(str(yamls_backup), str(yamls_dir))
             except Exception:
                 pass
-
 
 
 # ============================================================================
@@ -450,16 +457,25 @@ def generate_oat_plots(results_df, bcr_metric, top_params, prcc_values, output_p
                         baseline_value = None
                 else:
                     baseline_value = None
-            
+
             if baseline_value is not None:
-                ax.axvline(x=baseline_value, color="r", linestyle="--", linewidth=1, alpha=0.7, label="Baseline")
+                ax.axvline(
+                    x=baseline_value,
+                    color="r",
+                    linestyle="--",
+                    linewidth=1,
+                    alpha=0.7,
+                    label="Baseline",
+                )
 
             # Get PRCC value for this parameter
             prcc_val = prcc_values.get(param_name, 0)
             prcc_sign = "+" if prcc_val >= 0 else ""
 
             # Set title with parameter name and PRCC
-            param_desc = PARAM_DEFINITIONS.get(param_name, {}).get("description", param_name)
+            param_desc = PARAM_DEFINITIONS.get(param_name, {}).get(
+                "description", param_name
+            )
             ax.set_title(
                 f"{param_desc}\nPRCC: {prcc_sign}{prcc_val:.3f}",
                 fontsize=10,
@@ -533,14 +549,18 @@ def main():
 
     # Determine sensitivity results directory
     scenario_id = args.scenario
-    sensitivity_results_dir = base_dir / "sensitivity_results" / f"scenario_{scenario_id}"
+    sensitivity_results_dir = (
+        base_dir / "sensitivity_results" / f"scenario_{scenario_id}"
+    )
 
     if not sensitivity_results_dir.exists():
         # Try as direct path
         if Path(scenario_id).exists():
             sensitivity_results_dir = Path(scenario_id)
         else:
-            print(f"Error: Sensitivity results directory not found: {sensitivity_results_dir}")
+            print(
+                f"Error: Sensitivity results directory not found: {sensitivity_results_dir}"
+            )
             sys.exit(1)
 
     # Determine output directory
@@ -565,7 +585,9 @@ def main():
     print("Loading PRCC results...")
     try:
         prcc_df = load_prcc_results(sensitivity_results_dir)
-        print(f"  Loaded PRCC results: {len(prcc_df)} parameters, {len(prcc_df.columns)} BCR metrics")
+        print(
+            f"  Loaded PRCC results: {len(prcc_df)} parameters, {len(prcc_df.columns)} BCR metrics"
+        )
     except FileNotFoundError as e:
         print(f"Error: {e}")
         sys.exit(1)
@@ -604,7 +626,7 @@ def main():
                 continue
 
             param_def = PARAM_DEFINITIONS[param_name]
-            
+
             # Check if parameter has a range (required for OAT analysis)
             if "range" not in param_def:
                 print(f"  Warning: Skipping {param_name} (no range defined)")
@@ -616,7 +638,9 @@ def main():
                 )
                 all_sweeps.append((bcr_metric, param_name, parameter_values))
             except Exception as e:
-                print(f"  Warning: Skipping {param_name} (error generating values: {str(e)})")
+                print(
+                    f"  Warning: Skipping {param_name} (error generating values: {str(e)})"
+                )
                 continue
 
     total_runs = sum(len(param_vals) for _, _, param_vals in all_sweeps)
@@ -660,6 +684,7 @@ def main():
     bcr_columns = [
         "bcr_system",
         "bcr_capital",
+        "bcr_capital_and_delay",
         "bcr_excluding_risk",
         "bcr_excluding_emissions",
         "bcr_excluding_emissions_and_risk",
@@ -679,7 +704,9 @@ def main():
             # Generate plot
             plot_path = output_dir / f"oat_{bcr_metric}_plot1.png"
             prcc_series = prcc_df[bcr_metric]
-            generate_oat_plots(bcr_results, bcr_metric, top_params, prcc_series, plot_path)
+            generate_oat_plots(
+                bcr_results, bcr_metric, top_params, prcc_series, plot_path
+            )
             print(f"  Saved {plot_path}")
 
     # Save combined summary
@@ -695,4 +722,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

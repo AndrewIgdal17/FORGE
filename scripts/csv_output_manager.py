@@ -983,6 +983,7 @@ class CTCCOutputManager:
                 - capital_costs_pv
                 - bcr_system (uses conservative/haircut benefits)
                 - bcr_capital (uses conservative/haircut benefits)
+                - bcr_capital_and_delay (uses conservative/haircut benefits)
                 - bcr_excluding_risk (uses conservative/haircut benefits)
                 - bcr_excluding_emissions (uses conservative/haircut benefits)
                 - bcr_excluding_emissions_and_risk (uses conservative/haircut benefits)
