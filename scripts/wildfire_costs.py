@@ -87,12 +87,14 @@ def calculate_wildfire_costs(
     ignition_rate_multiplier = cfg["ignition_rate_multiplier"]
 
     # Map construction type to YAML keys
-    ct_map = {
-        "overhead": "overhead",
-        "underground": "underground",
-        "subsea": "subsea",
-    }
-    yaml_ct = ct_map.get(construction_type.lower(), "overhead")
+    # Handle full names like "Underground direct-buried", "Underground Tunnel", etc.
+    construction_type_lower = construction_type.lower()
+    if "underground" in construction_type_lower:
+        yaml_ct = "underground"
+    elif "subsea" in construction_type_lower:
+        yaml_ct = "subsea"
+    else:
+        yaml_ct = "overhead"  # Default to overhead
 
     # Get construction type multiplier
     construction_multiplier = ignition_rate_multiplier.get(yaml_ct, 1.0)

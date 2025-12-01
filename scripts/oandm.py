@@ -136,6 +136,10 @@ def load_structure_om_costs(
     Returns:
         tuple: (variable_structure_cost_per_mile_year, variable_structure_cost_per_year, structure_dict)
     """
+
+    # Initialize vegetation
+    total_vegetation_management_cost_per_year = 0
+
     with open("../yamls/14_category_om_structures.yaml", "r") as file:
         structure_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
             "project_categories_om_structures"
@@ -349,13 +353,22 @@ def main():
     # O&M costs start at first year of operation (COD)
     oandm_start_year = delay_years + construction_years + 1
     pv_conductor = calculate_present_value(
-        total_conductor_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
+        total_conductor_cost_per_year,
+        wacc_real,
+        project_lifetime,
+        start_year=oandm_start_year,
     )
     pv_converter = calculate_present_value(
-        total_converter_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
+        total_converter_cost_per_year,
+        wacc_real,
+        project_lifetime,
+        start_year=oandm_start_year,
     )
     pv_structure = calculate_present_value(
-        variable_structure_cost_per_year, wacc_real, project_lifetime, start_year=oandm_start_year
+        variable_structure_cost_per_year,
+        wacc_real,
+        project_lifetime,
+        start_year=oandm_start_year,
     )
     pv_vegetation_management = calculate_present_value(
         total_vegetation_management_cost_per_year,
@@ -440,10 +453,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Calculate total annual cost
     total_annual = (
         total_conductor_cost_per_year
@@ -451,7 +464,7 @@ def main():
         + variable_structure_cost_per_year
         + total_vegetation_management_cost_per_year
     )
-    
+
     # Calculate total nominal cost
     total_nominal = (
         total_conductor_cost_lifetime
@@ -459,7 +472,7 @@ def main():
         + total_structure_cost_lifetime
         + total_vegetation_management_cost_lifetime
     )
-    
+
     # Prepare results dictionary
     results = {
         "total_annual": total_annual,
@@ -478,7 +491,7 @@ def main():
         "vegetation_nominal": total_vegetation_management_cost_lifetime,
         "vegetation_pv": pv_vegetation_management,
     }
-    
+
     # Write to CSV
     csv_manager.add_oandm_costs(results)
     csv_manager.write_batch_summary()

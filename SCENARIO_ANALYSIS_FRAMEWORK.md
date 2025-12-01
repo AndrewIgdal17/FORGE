@@ -9,10 +9,23 @@
 This document outlines a comprehensive scenario analysis framework for the CTCC that includes:
 
 - **5 baseline scenarios** representing different transmission project types
-- **6 sensitivity parameters** to be varied for each scenario
-- **~31 runs per scenario** (1 baseline + 300 sensitivity runs)
+- **Two-phase sensitivity analysis approach:**
+  - **Phase 1 (LHS):** Latin Hypercube Sampling across **35 parameters** (300 samples per scenario)
+  - **Phase 2 (OAT):** One-at-a-time analysis on **top 6 parameters** (selected by PRCC ranking)
+- **~301 runs per scenario** (1 baseline + 300 LHS sensitivity runs)
+- **Additional OAT runs:** ~120 runs per scenario (20 values × 6 top parameters)
 
 The goal is to understand how transmission project economics vary with key technical and financial parameters, and to identify the primary cost and benefit drivers for different project types.
+
+### Sensitivity Analysis Workflow
+
+1. **LHS Sensitivity Analysis:** Run Latin Hypercube Sampling (LHS) to systematically vary all 35 parameters simultaneously across 300 samples. This provides efficient coverage of the parameter space while maintaining statistical properties.
+
+2. **PRCC Calculation:** Calculate Partial Rank Correlation Coefficients (PRCC) for all 35 parameters against each BCR metric. PRCC measures the monotonic relationship between parameters and outputs while controlling for the effects of all other parameters.
+
+3. **Top Parameter Selection:** Identify the top 6 parameters (by absolute PRCC value) for each BCR metric. Parameters with high absolute PRCC values (typically |PRCC| > 0.3) are considered influential.
+
+4. **OAT Analysis:** Perform one-at-a-time parameter sweeps on the top 6 parameters. Each parameter is systematically varied across a range of values (typically 20 values) while holding all other parameters at baseline. This produces response curves showing how each BCR metric changes as a function of the parameter of interest.
 
 ---
 
@@ -227,9 +240,68 @@ terrain:
 
 ---
 
-## 🔬 Sensitivity Analysis Parameters
+## 🔬 Sensitivity Analysis Methodology
 
-For **each baseline scenario**, the following parameters will be varied one-at-a-time (holding all others at baseline):
+### Phase 1: LHS Sensitivity Analysis (35 Parameters)
+
+The first phase uses Latin Hypercube Sampling (LHS) to systematically explore the parameter space across **35 parameters** simultaneously. This approach is more efficient than one-at-a-time analysis because it:
+
+- Captures parameter interactions and correlations
+- Provides better coverage of the parameter space with fewer samples
+- Enables robust statistical analysis (PRCC calculation)
+
+#### Parameter Categories
+
+The 35 parameters are organized into the following categories:
+
+1. **Core Economic/Technical (18 parameters):**
+   - `real_wacc_mult`, `wacc_nominal_mult`, `social_discount_rate_mult`, `inflation_rate_mult`
+   - `delay_years`, `construction_years`, `project_lifetime`
+   - `line_utilization_mult`, `electricity_price_mult`
+   - `wildfire_ignition_rate_mult`
+   - `congestion_price_mult`, `congestion_flow_factor_mult`, `congestion_binding_hours_mult`
+   - `congestion_average_exceedance_mult`, `congestion_near_binding_hours_mult`
+   - `congestion_near_binding_relief_factor_mult`, `congestion_saturation_factor_mult`
+   - `environmental_mitigation_cost_mult`
+
+2. **ROW Cost Multipliers (3 parameters):**
+   - `row_acquisition_cost_mult`, `row_rent_cost_mult`, `row_hold_cost_mult`
+
+3. **Terrain Multipliers (9 parameters):**
+   - `terrain_mult_forested`, `terrain_mult_scrubbed_flat`, `terrain_mult_wetland`
+   - `terrain_mult_farmland`, `terrain_mult_desert_barren`, `terrain_mult_urban`
+   - `terrain_mult_rolling_hills`, `terrain_mult_mountain`, `terrain_mult_subsea`
+
+4. **Operational/Risk (5 parameters):**
+   - `outage_rate_mult`, `outage_growth_rate_mult`
+   - `veg_om_per_mile_mult`
+   - `labor_cost_mult`, `materials_cost_mult`
+
+#### LHS Sampling Details
+
+- **Samples per scenario:** 300 LHS samples
+- **Total runs per scenario:** 301 (1 baseline + 300 LHS)
+- **Parameter ranges:** Each parameter has a defined range (see `sensitivity_analysis.py` for details)
+- **Sampling strategy:** Latin Hypercube ensures efficient coverage while maintaining statistical properties
+
+### Phase 2: OAT Analysis (Top 6 Parameters)
+
+After PRCC calculation identifies the most influential parameters, one-at-a-time (OAT) analysis is performed on the **top 6 parameters** (by absolute PRCC) for each BCR metric. This provides:
+
+- Intuitive visualization of parameter impacts
+- Identification of critical thresholds or non-linear relationships
+- Response curves showing BCR sensitivity to each parameter
+
+#### OAT Analysis Details
+
+- **Parameters analyzed:** Top 6 per BCR metric (selected by PRCC ranking)
+- **Values per parameter:** Typically 20 values across the parameter's range
+- **Total OAT runs per scenario:** ~120 runs (20 values × 6 parameters)
+- **Output:** Response curves showing BCR vs. parameter value
+
+### Example: Traditional OAT Parameters (Historical Reference)
+
+The following parameters were historically considered for one-at-a-time analysis. In the current implementation, the top parameters are selected dynamically based on PRCC results, but these remain important parameters that often appear in the top rankings:
 
 ### 1. Capacity Sensitivity
 
@@ -393,27 +465,77 @@ For **each baseline scenario**, the following parameters will be varied one-at-a
 
 ### Runs per Scenario
 
+**Phase 1: LHS Sensitivity Analysis**
 - **1 baseline run**
-- **5 values** × **6 parameters** = **30 sensitivity runs**
-- **Total: 31 runs per scenario**
+- **300 LHS samples** (all 35 parameters varied simultaneously)
+- **Total Phase 1: 301 runs per scenario**
+
+**Phase 2: OAT Analysis (Top 6 Parameters)**
+- **~120 OAT runs** (20 values × 6 top parameters, per BCR metric)
+- Note: OAT runs are performed after PRCC identifies top parameters
 
 ### Total Analysis
 
-- **5 scenarios** × **31 runs** = **155 total runs**
+- **5 scenarios** × **301 LHS runs** = **1,505 total LHS runs**
+- **5 scenarios** × **~120 OAT runs** = **~600 total OAT runs**
+- **Grand total: ~2,105 runs** (including baseline runs)
 
 ### Data Output
 
-All 155 runs will be captured in a single `batch_summary.csv` file with:
+**LHS Results:**
+- `results.csv`: All LHS runs with input parameters and output metrics
+- `prcc_values.csv`: PRCC coefficients for all 35 parameters across all BCR metrics
+- `prcc_heatmap.png`: Visualization of PRCC values
+- `tornado_*.png`: Tornado diagrams for each BCR metric
+- `scatter_top6_*.png`: Scatter plots for top 6 parameters
 
-- **18 technical parameters** identifying each configuration
+**OAT Results:**
+- `oat_results_*.csv`: OAT sweep results for each BCR metric
+- `oat_*_plot1.png`: Response curves for top 6 parameters per BCR metric
+- `oat_summary.csv`: Combined OAT results
+
+All runs include:
+- **35 input parameters** (from LHS sampling)
 - **scenario_id** and **timestamp** for tracking
 - **~55 financial metrics** (costs, benefits, NPV values)
+- **5 BCR metrics** (bcr_system, bcr_capital, bcr_excluding_risk, bcr_excluding_emissions, bcr_excluding_emissions_and_risk)
 
 ---
 
 ## 📈 Expected Analyses and Visualizations
 
-### 1. Baseline Scenario Comparison
+### 1. PRCC Sensitivity Analysis Results
+
+**Analysis:** Identify which parameters most significantly influence project economics
+
+**Visualizations:**
+- **PRCC Heatmap:** Shows PRCC values for all 35 parameters across all BCR metrics
+- **Tornado Diagrams:** Bar charts ranking parameters by absolute PRCC for each BCR metric
+- **Scatter Plots:** Parameter vs. BCR relationships for top 6 parameters
+- **Parallel Coordinates Plot:** Multi-dimensional visualization of parameter combinations and BCR outcomes
+
+**Key Questions:**
+- Which parameters have the highest PRCC values (most influential)?
+- Are there parameters with consistently high PRCC across all BCR metrics?
+- Which parameters have low PRCC (can be fixed at baseline values)?
+- Are there parameter interactions visible in the parallel coordinates plot?
+
+### 2. OAT Response Curves
+
+**Analysis:** Detailed one-at-a-time sensitivity analysis for top 6 parameters
+
+**Visualizations:**
+- **OAT Response Curves:** BCR vs. parameter value plots for each top parameter
+- **Baseline Reference Lines:** Vertical lines showing baseline parameter values
+- **Non-linearity Detection:** Identify thresholds, breakpoints, or non-linear relationships
+
+**Key Questions:**
+- How does BCR change as each parameter varies?
+- Are there critical thresholds where BCR changes dramatically?
+- Which parameters show non-linear relationships?
+- What is the sensitivity (slope) of BCR to each parameter?
+
+### 3. Baseline Scenario Comparison
 
 **Analysis:** Compare all 5 baseline scenarios side-by-side
 
@@ -639,28 +761,29 @@ For each scenario and sensitivity run, calculate:
 
 ```
 outputs/
-├── batch_summary.csv              # All 155 runs
-├── scenarios/
-│   ├── s1_baseline/              # S1 baseline run detailed CSVs
-│   ├── s1_capacity_250mw/        # S1 capacity sensitivity runs
-│   ├── s1_capacity_375mw/
-│   ├── ...
-│   ├── s2_baseline/              # S2 runs
-│   └── ...
-├── analysis/
-│   ├── baseline_comparison.csv
-│   ├── capacity_sensitivity.csv
-│   ├── utilization_sensitivity.csv
-│   └── ...
-└── plots/
-    ├── baseline_comparison.png
-    ├── capacity_sensitivity.png
-    └── ...
+├── batch_summary.csv              # All LHS runs (301 per scenario)
+
+sensitivity_results/
+├── scenario_<scenario_id>/
+│   ├── lhs_samples.csv           # LHS parameter samples
+│   ├── results.csv                # All LHS run results
+│   ├── prcc_values.csv           # PRCC coefficients for all parameters
+│   ├── prcc_heatmap.png          # PRCC visualization
+│   ├── tornado_*.png              # Tornado diagrams per BCR metric
+│   ├── scatter_top6_*.png        # Scatter plots for top 6 parameters
+│   ├── parallel_coordinates_bcr_system.png
+│   └── summary_stats.txt          # Summary statistics
+
+oat_results/
+├── scenario_<scenario_id>/
+│   ├── oat_results_*.csv         # OAT results per BCR metric
+│   ├── oat_*_plot1.png           # OAT response curves per BCR metric
+│   └── oat_summary.csv           # Combined OAT results
 
 scripts/
-├── run_scenarios.py              # Automation script
-├── analyze_results.py            # Analysis script
-└── scenario_definitions.yaml     # All scenario configs
+├── sensitivity_analysis.py       # LHS sensitivity analysis script
+├── oat_analysis.py               # OAT analysis script
+└── ctcc.py                       # Main CTCC calculator
 ```
 
 ---
@@ -669,12 +792,20 @@ scripts/
 
 ### Validation Checks
 
-- [ ] All 155 runs complete successfully
+**LHS Analysis:**
+- [ ] All 301 LHS runs complete successfully (1 baseline + 300 samples)
 - [ ] Each scenario has unique scenario_id
-- [ ] Technical parameters correctly recorded
-- [ ] No missing data in batch_summary.csv
+- [ ] All 35 parameters correctly sampled across their ranges
+- [ ] No missing data in results.csv
+- [ ] PRCC values calculated for all parameters and BCR metrics
 - [ ] Results are physically reasonable (no negative costs, etc.)
-- [ ] Sensitivity trends are monotonic where expected
+
+**OAT Analysis:**
+- [ ] Top 6 parameters identified from PRCC results
+- [ ] All OAT sweeps complete (~120 runs per scenario)
+- [ ] Response curves show expected trends
+- [ ] Baseline values correctly marked on OAT plots
+- [ ] No missing data in OAT results files
 
 ### Documentation
 

@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1764078819.13434 "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" "Generalized_CTCC_Equation.pdf" "Generalized_CTCC_Equation" 1764078819.73034 0
-  "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" 1764078817.98438 29820 4d62b35d6429aa1c9a0592637858c712 ""
+["pdflatex"] 1764536530.84021 "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" "Generalized_CTCC_Equation.pdf" "Generalized_CTCC_Equation" 1764536531.48844 0
+  "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" 1764536530.64229 31109 8780c8ac4404ff99abc642f0535667db ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
@@ -33,6 +33,8 @@
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmsy8.tfm" 1136768653 1120 8b7d695260f3cff42e636090a8002094 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmsy9.tfm" 1136768653 1116 25a7bf822c58caf309a702ef79f4afbb ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmti10.tfm" 1136768653 1480 aa8e34af0eb6a2941b776984cf1dfdc4 ""
+  "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmti7.tfm" 1136768653 1492 86331993fe614793f5e7e755835c31c5 ""
+  "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmti8.tfm" 1136768653 1504 1747189e0441d1c18f3ea56fafc1c480 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmti9.tfm" 1136768653 1476 cccc6cc4935c18ec3d5623b77ecb8b74 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm" 1136768653 768 1321e9409b4137d6fb428ac9dc956269 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1248133631 34811 78b52f49e893bcba91bd7581cdc144c0 ""
@@ -146,9 +148,9 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1744383296 5467155 19efa205003f9ecad95fbbaa6ff24da1 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1741450574 3345740 46b66fdb0378f7bf5921b5eabf1762b8 ""
   "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
-  "Generalized_CTCC_Equation.aux" 1764078819.66071 3282 141a113f51d9b7d6028945c11051d950 "pdflatex"
-  "Generalized_CTCC_Equation.out" 1764078819.66133 4467 c344cde2815e8ce78729e43a4b72fb2a "pdflatex"
-  "Generalized_CTCC_Equation.tex" 1764078817.98438 29820 4d62b35d6429aa1c9a0592637858c712 ""
+  "Generalized_CTCC_Equation.aux" 1764536531.41346 3284 06440889fff832ebdd901666bb99daee "pdflatex"
+  "Generalized_CTCC_Equation.out" 1764536531.41426 4467 c344cde2815e8ce78729e43a4b72fb2a "pdflatex"
+  "Generalized_CTCC_Equation.tex" 1764536530.64229 31109 8780c8ac4404ff99abc642f0535667db ""
   (generated)
   "Generalized_CTCC_Equation.aux"
   "Generalized_CTCC_Equation.log"

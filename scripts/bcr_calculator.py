@@ -45,12 +45,13 @@ def calculate_benefits(data):
     """
     Calculate total benefits from scenario data.
 
-    For most projects, benefits are:
+    Benefits are:
       - Congestion reduction savings
       - Curtailment reduction savings
+      - Revenue (rate-based revenue requirement)
 
-    For reconductoring projects, also includes:
-      - Line loss reduction (if line_loss_cost is negative)
+    Note: Line losses are now always treated as costs, not benefits, for both
+    greenfield and reconductoring projects.
 
     Args:
         data: Dictionary with scenario data
@@ -61,47 +62,36 @@ def calculate_benefits(data):
     # Present value benefits
     congestion_benefit_pv = data.get("congestion_benefit_pv", 0) or 0
     curtailment_benefit_pv = data.get("curtailment_benefit_pv", 0) or 0
-    line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
 
     # Nominal benefits
     congestion_benefit_nominal = data.get("congestion_benefit_nominal", 0) or 0
     curtailment_benefit_nominal = data.get("curtailment_benefit_nominal", 0) or 0
-    line_loss_nominal = data.get("line_loss_cost_nominal", 0) or 0
 
-    # For reconductoring, line losses are typically negative (benefit)
-    # For greenfield, line losses are positive (cost)
-    line_loss_benefit_pv = 0
-    line_loss_benefit_nominal = 0
-    if line_loss_pv < 0:
-        line_loss_benefit_pv = abs(line_loss_pv)
-        line_loss_benefit_nominal = abs(line_loss_nominal)
+    # Line losses are now always costs, never benefits
+    # (Both greenfield and reconductoring report absolute losses as positive costs)
 
     # Add revenue (rate-based revenue requirement)
     revenue_pv = data.get("revenue_pv", 0) or 0
     revenue_nominal = data.get("revenue_nominal", 0) or 0
 
-    total_benefits_pv = (
-        congestion_benefit_pv + curtailment_benefit_pv + line_loss_benefit_pv + revenue_pv
-    )
+    total_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
     total_benefits_nominal = (
-        congestion_benefit_nominal
-        + curtailment_benefit_nominal
-        + line_loss_benefit_nominal
-        + revenue_nominal
+        congestion_benefit_nominal + curtailment_benefit_nominal + revenue_nominal
     )
 
     # Also calculate haircut benefits (conservative estimate)
-    # Note: Revenue is NOT included in haircut (firm revenue requirement is certain)
+    # Haircut applies conservative multipliers to uncertain benefits (congestion/curtailment)
+    # Revenue is certain (rate-based requirement) so it's included at full value
     congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
     curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
     total_benefits_haircut_pv = (
-        congestion_benefit_haircut + curtailment_benefit_haircut + line_loss_benefit_pv
+        congestion_benefit_haircut + curtailment_benefit_haircut + revenue_pv
     )
 
     return {
         "congestion_benefit_pv": congestion_benefit_pv,
         "curtailment_benefit_pv": curtailment_benefit_pv,
-        "line_loss_benefit_pv": line_loss_benefit_pv,
+        "line_loss_benefit_pv": 0,  # Line losses are always costs, never benefits
         "revenue_pv": revenue_pv,
         "total_benefits_pv": total_benefits_pv,
         "total_benefits_nominal": total_benefits_nominal,
@@ -252,7 +242,9 @@ def calculate_costs(data):
     }
 
 
-def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=False, capital_only=False):
+def calculate_bcr_metrics(
+    benefits, costs, no_emissions=False, no_linelosses=False, capital_only=False
+):
     """
     Calculate benefit-cost ratios and net benefits.
 
@@ -272,8 +264,10 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
     total_costs_pv = costs["total_costs_pv"]
     capital_costs_pv = costs["capital_costs_pv"]
     risk_costs_pv = costs["risk_costs_pv"]  # Wildfire + Outage + Wildfire Liability
-    energy_emissions_costs_pv = costs["energy_emissions_costs_pv"]  # Line Losses + Emissions
-    
+    energy_emissions_costs_pv = costs[
+        "energy_emissions_costs_pv"
+    ]  # Line Losses + Emissions
+
     # Separate emissions and line losses for individual calculations
     emissions_pv = costs.get("emissions_cost_pv", 0) or 0
     line_loss_cost_pv = costs.get("line_loss_cost_pv", 0) or 0
@@ -292,18 +286,22 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
     total_costs_excluding_emissions_and_risk_pv = (
         total_costs_pv - energy_emissions_costs_pv - risk_costs_pv
     )
-    
+
     # Calculate costs excluding only emissions (keep line losses)
     total_costs_excluding_emissions_only_pv = total_costs_pv - emissions_pv
-    
+
     # Calculate costs excluding only line losses (keep emissions)
     total_costs_excluding_linelosses_only_pv = total_costs_pv - line_loss_cost_pv
-    
+
     # Calculate costs excluding line losses and risk
-    total_costs_excluding_linelosses_and_risk_pv = total_costs_pv - line_loss_cost_pv - risk_costs_pv
-    
+    total_costs_excluding_linelosses_and_risk_pv = (
+        total_costs_pv - line_loss_cost_pv - risk_costs_pv
+    )
+
     # Calculate costs excluding emissions and risk (keep line losses)
-    total_costs_excluding_emissions_only_and_risk_pv = total_costs_pv - emissions_pv - risk_costs_pv
+    total_costs_excluding_emissions_only_and_risk_pv = (
+        total_costs_pv - emissions_pv - risk_costs_pv
+    )
 
     # Prevent division by zero
     # All BCRs use conservative (haircut) benefits
@@ -335,13 +333,21 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
     net_benefit_excluding_emissions_and_risk_pv = (
         total_benefits_pv - total_costs_excluding_emissions_and_risk_pv
     )
-    
+
     # New net benefit calculations
-    net_benefit_excluding_emissions_only_pv = total_benefits_pv - total_costs_excluding_emissions_only_pv
-    net_benefit_excluding_linelosses_only_pv = total_benefits_pv - total_costs_excluding_linelosses_only_pv
+    net_benefit_excluding_emissions_only_pv = (
+        total_benefits_pv - total_costs_excluding_emissions_only_pv
+    )
+    net_benefit_excluding_linelosses_only_pv = (
+        total_benefits_pv - total_costs_excluding_linelosses_only_pv
+    )
     net_benefit_capital_only_pv = total_benefits_pv - capital_costs_pv
-    net_benefit_excluding_linelosses_and_risk_pv = total_benefits_pv - total_costs_excluding_linelosses_and_risk_pv
-    net_benefit_excluding_emissions_only_and_risk_pv = total_benefits_pv - total_costs_excluding_emissions_only_and_risk_pv
+    net_benefit_excluding_linelosses_and_risk_pv = (
+        total_benefits_pv - total_costs_excluding_linelosses_and_risk_pv
+    )
+    net_benefit_excluding_emissions_only_and_risk_pv = (
+        total_benefits_pv - total_costs_excluding_emissions_only_and_risk_pv
+    )
 
     result = {
         "bcr_system": bcr_system,
@@ -364,7 +370,7 @@ def calculate_bcr_metrics(benefits, costs, no_emissions=False, no_linelosses=Fal
         "net_benefit_excluding_linelosses_and_risk_pv": net_benefit_excluding_linelosses_and_risk_pv,
         "net_benefit_excluding_emissions_only_and_risk_pv": net_benefit_excluding_emissions_only_and_risk_pv,
     }
-    
+
     return result
 
 
@@ -417,7 +423,15 @@ def calculate_and_display_bcr(
     return results
 
 
-def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no_linelosses=False, capital_only=False):
+def print_bcr_summary(
+    benefits,
+    costs,
+    bcr_metrics,
+    data,
+    no_emissions=False,
+    no_linelosses=False,
+    capital_only=False,
+):
     """
     Print formatted BCR summary to terminal.
 
@@ -446,22 +460,17 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     )
 
     line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
-    is_reconductoring = data.get("reconductoring", False)
-    if line_loss_pv < 0:
-        print(
-            f"  Line Loss Benefit:           ${benefits['line_loss_benefit_pv']:>15,.0f}  (reconductoring)"
-        )
-    else:
-        print(
-            f"  Line Loss Impact:            ${-line_loss_pv:>15,.0f}  (cost - see below)"
-        )
+    # Line losses are always costs (positive) for both greenfield and reconductoring
+    # Don't display in benefits section - they're shown in costs section below
+    # if line_loss_pv > 0:
+    #     print(
+    #         f"  Line Loss Cost:              ${line_loss_pv:>15,.0f}  (cost - see below)"
+    #     )
 
     # Add revenue display
     revenue_pv = benefits.get("revenue_pv", 0) or 0
     if revenue_pv > 0:
-        print(
-            f"  Revenue (Rate-Based):        ${revenue_pv:>15,.0f}"
-        )
+        print(f"  Revenue (Rate-Based):        ${revenue_pv:>15,.0f}")
 
     print("  " + "-" * 78)
     print(f"  Total Benefits:              ${benefits['total_benefits_pv']:>15,.0f}")
@@ -483,7 +492,9 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     print("  Energy & Emissions Costs:")
     print(f"    Line Losses:               ${costs['line_loss_cost_pv']:>15,.0f}")
     print(f"    Emissions:                 ${costs['emissions_cost_pv']:>15,.0f}")
-    print(f"    Subtotal:                  ${costs['energy_emissions_costs_pv']:>15,.0f}")
+    print(
+        f"    Subtotal:                  ${costs['energy_emissions_costs_pv']:>15,.0f}"
+    )
     print()
     print("  Risk Costs:")
     print(f"    Wildfire:                  ${costs['wildfire_pv']:>15,.0f}")
@@ -554,7 +565,9 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     print(
         f"  System BCR (excl. emissions): {bcr_excluding_emissions:>6.3f}  {viable_symbol_noemissions} ({viable_text_noemissions})"
     )
-    print(f"    (Excludes ${energy_emissions_costs_pv:>15,.0f} in line losses/emissions costs)")
+    print(
+        f"    (Excludes ${energy_emissions_costs_pv:>15,.0f} in line losses/emissions costs)"
+    )
     print()
 
     # BCR excluding emissions and risk
@@ -572,53 +585,39 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
     print(
         f"  System BCR (excl. both):     {bcr_excluding_emissions_and_risk:>6.3f}  {viable_symbol_noemissions_norisk} ({viable_text_noemissions_norisk})"
     )
-    print(
-        f"    (Excludes ${excluded_costs_total:>15,.0f} in emissions/risk costs)"
-    )
+    print(f"    (Excludes ${excluded_costs_total:>15,.0f} in emissions/risk costs)")
     print()
 
     # Net Benefits section
     print("NET BENEFITS:")
-    
+
     # Always show base net benefit
     net_benefit_pv = bcr_metrics["net_benefit_pv"]
     net_benefit_nominal = bcr_metrics["net_benefit_nominal"]
-    
-    net_symbol_pv = "✅" if net_benefit_pv >= 0 else "❌"
-    net_text_pv = (
-        "positive: benefits exceed costs"
-        if net_benefit_pv >= 0
-        else "negative: costs exceed benefits"
-    )
 
+    # Show Nominal first (simpler to understand)
     net_symbol_nominal = "✅" if net_benefit_nominal >= 0 else "❌"
     net_text_nominal = (
         "positive: benefits exceed costs"
         if net_benefit_nominal >= 0
         else "negative: costs exceed benefits"
     )
-
-    print(
-        f"  Net Benefit (PV):            ${net_benefit_pv:>15,.0f}  {net_symbol_pv} ({net_text_pv})"
-    )
     print(
         f"  Net Benefit (Nominal):       ${net_benefit_nominal:>15,.0f}  {net_symbol_nominal} ({net_text_nominal})"
     )
-    
-    # Show capital-only net benefit if capital_only flag is set
-    if capital_only:
-        net_benefit_capital_only_pv = bcr_metrics.get("net_benefit_capital_only_pv", 0)
-        net_symbol_capital = "✅" if net_benefit_capital_only_pv >= 0 else "❌"
-        net_text_capital = (
-            "positive: benefits exceed costs"
-            if net_benefit_capital_only_pv >= 0
-            else "negative: costs exceed benefits"
-        )
-        print(
-            f"  Net Benefit (capital only):  ${net_benefit_capital_only_pv:>15,.0f}  {net_symbol_capital} ({net_text_capital})"
-        )
-    
-    # Show net benefit excluding risk (always shown for context)
+
+    # Then show PV
+    net_symbol_pv = "✅" if net_benefit_pv >= 0 else "❌"
+    net_text_pv = (
+        "positive: benefits exceed costs"
+        if net_benefit_pv >= 0
+        else "negative: costs exceed benefits"
+    )
+    print(
+        f"  Net Benefit (PV):            ${net_benefit_pv:>15,.0f}  {net_symbol_pv} ({net_text_pv})"
+    )
+
+    # Show net benefit excluding risk (always shown for context) - clearly labeled as PV
     net_benefit_excluding_risk_pv = bcr_metrics["net_benefit_excluding_risk_pv"]
     net_symbol_norisk = "✅" if net_benefit_excluding_risk_pv >= 0 else "❌"
     net_text_norisk = (
@@ -627,71 +626,93 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
         else "negative: costs exceed benefits"
     )
     print(
-        f"  Net Benefit (excl. risk):    ${net_benefit_excluding_risk_pv:>15,.0f}  {net_symbol_norisk} ({net_text_norisk})"
+        f"  Net Benefit (PV, excl. risk):    ${net_benefit_excluding_risk_pv:>15,.0f}  {net_symbol_norisk} ({net_text_norisk})"
     )
-    
+
     # Show net benefit excluding emissions only if --no_emissions flag is set
     if no_emissions:
-        net_benefit_excluding_emissions_only_pv = bcr_metrics.get("net_benefit_excluding_emissions_only_pv", 0)
-        net_symbol_emissions_only = "✅" if net_benefit_excluding_emissions_only_pv >= 0 else "❌"
+        net_benefit_excluding_emissions_only_pv = bcr_metrics.get(
+            "net_benefit_excluding_emissions_only_pv", 0
+        )
+        net_symbol_emissions_only = (
+            "✅" if net_benefit_excluding_emissions_only_pv >= 0 else "❌"
+        )
         net_text_emissions_only = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_emissions_only_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions only): ${net_benefit_excluding_emissions_only_pv:>15,.0f}  {net_symbol_emissions_only} ({net_text_emissions_only})"
+            f"  Net Benefit (PV, excl. emissions only): ${net_benefit_excluding_emissions_only_pv:>15,.0f}  {net_symbol_emissions_only} ({net_text_emissions_only})"
         )
         # Also show combination with risk if relevant
-        net_benefit_excluding_emissions_only_and_risk_pv = bcr_metrics.get("net_benefit_excluding_emissions_only_and_risk_pv", 0)
-        net_symbol_emissions_only_risk = "✅" if net_benefit_excluding_emissions_only_and_risk_pv >= 0 else "❌"
+        net_benefit_excluding_emissions_only_and_risk_pv = bcr_metrics.get(
+            "net_benefit_excluding_emissions_only_and_risk_pv", 0
+        )
+        net_symbol_emissions_only_risk = (
+            "✅" if net_benefit_excluding_emissions_only_and_risk_pv >= 0 else "❌"
+        )
         net_text_emissions_only_risk = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_emissions_only_and_risk_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions only + risk): ${net_benefit_excluding_emissions_only_and_risk_pv:>15,.0f}  {net_symbol_emissions_only_risk} ({net_text_emissions_only_risk})"
+            f"  Net Benefit (PV, excl. emissions only + risk): ${net_benefit_excluding_emissions_only_and_risk_pv:>15,.0f}  {net_symbol_emissions_only_risk} ({net_text_emissions_only_risk})"
         )
-    
+
     # Show net benefit excluding line losses only if --no_linelosses flag is set
     if no_linelosses:
-        net_benefit_excluding_linelosses_only_pv = bcr_metrics.get("net_benefit_excluding_linelosses_only_pv", 0)
-        net_symbol_linelosses_only = "✅" if net_benefit_excluding_linelosses_only_pv >= 0 else "❌"
+        net_benefit_excluding_linelosses_only_pv = bcr_metrics.get(
+            "net_benefit_excluding_linelosses_only_pv", 0
+        )
+        net_symbol_linelosses_only = (
+            "✅" if net_benefit_excluding_linelosses_only_pv >= 0 else "❌"
+        )
         net_text_linelosses_only = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_linelosses_only_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. line losses only): ${net_benefit_excluding_linelosses_only_pv:>15,.0f}  {net_symbol_linelosses_only} ({net_text_linelosses_only})"
+            f"  Net Benefit (PV, excl. line losses only): ${net_benefit_excluding_linelosses_only_pv:>15,.0f}  {net_symbol_linelosses_only} ({net_text_linelosses_only})"
         )
         # Also show combination with risk if relevant
-        net_benefit_excluding_linelosses_and_risk_pv = bcr_metrics.get("net_benefit_excluding_linelosses_and_risk_pv", 0)
-        net_symbol_linelosses_risk = "✅" if net_benefit_excluding_linelosses_and_risk_pv >= 0 else "❌"
+        net_benefit_excluding_linelosses_and_risk_pv = bcr_metrics.get(
+            "net_benefit_excluding_linelosses_and_risk_pv", 0
+        )
+        net_symbol_linelosses_risk = (
+            "✅" if net_benefit_excluding_linelosses_and_risk_pv >= 0 else "❌"
+        )
         net_text_linelosses_risk = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_linelosses_and_risk_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. line losses only + risk): ${net_benefit_excluding_linelosses_and_risk_pv:>15,.0f}  {net_symbol_linelosses_risk} ({net_text_linelosses_risk})"
+            f"  Net Benefit (PV, excl. line losses only + risk): ${net_benefit_excluding_linelosses_and_risk_pv:>15,.0f}  {net_symbol_linelosses_risk} ({net_text_linelosses_risk})"
         )
-    
+
     # Show net benefit excluding both emissions and line losses (if both flags are set)
     if no_emissions and no_linelosses:
-        net_benefit_excluding_emissions_pv = bcr_metrics["net_benefit_excluding_emissions_pv"]
-        net_symbol_noemissions = "✅" if net_benefit_excluding_emissions_pv >= 0 else "❌"
+        net_benefit_excluding_emissions_pv = bcr_metrics[
+            "net_benefit_excluding_emissions_pv"
+        ]
+        net_symbol_noemissions = (
+            "✅" if net_benefit_excluding_emissions_pv >= 0 else "❌"
+        )
         net_text_noemissions = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_emissions_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions & line losses): ${net_benefit_excluding_emissions_pv:>15,.0f}  {net_symbol_noemissions} ({net_text_noemissions})"
+            f"  Net Benefit (PV, excl. emissions & line losses): ${net_benefit_excluding_emissions_pv:>15,.0f}  {net_symbol_noemissions} ({net_text_noemissions})"
         )
         # Also show combination with risk
-        net_benefit_excluding_emissions_and_risk_pv = bcr_metrics.get("net_benefit_excluding_emissions_and_risk_pv", 0)
+        net_benefit_excluding_emissions_and_risk_pv = bcr_metrics.get(
+            "net_benefit_excluding_emissions_and_risk_pv", 0
+        )
         net_symbol_noemissions_norisk = (
             "✅" if net_benefit_excluding_emissions_and_risk_pv >= 0 else "❌"
         )
@@ -701,21 +722,27 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions & line losses + risk): ${net_benefit_excluding_emissions_and_risk_pv:>15,.0f}  {net_symbol_noemissions_norisk} ({net_text_noemissions_norisk})"
+            f"  Net Benefit (PV, excl. emissions & line losses + risk): ${net_benefit_excluding_emissions_and_risk_pv:>15,.0f}  {net_symbol_noemissions_norisk} ({net_text_noemissions_norisk})"
         )
     elif not no_emissions and not no_linelosses:
         # Show the standard "excl. emissions" (which actually excludes both) if no flags are set
-        net_benefit_excluding_emissions_pv = bcr_metrics["net_benefit_excluding_emissions_pv"]
-        net_symbol_noemissions = "✅" if net_benefit_excluding_emissions_pv >= 0 else "❌"
+        net_benefit_excluding_emissions_pv = bcr_metrics[
+            "net_benefit_excluding_emissions_pv"
+        ]
+        net_symbol_noemissions = (
+            "✅" if net_benefit_excluding_emissions_pv >= 0 else "❌"
+        )
         net_text_noemissions = (
             "positive: benefits exceed costs"
             if net_benefit_excluding_emissions_pv >= 0
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions & line losses): ${net_benefit_excluding_emissions_pv:>15,.0f}  {net_symbol_noemissions} ({net_text_noemissions})"
+            f"  Net Benefit (PV, excl. emissions & line losses): ${net_benefit_excluding_emissions_pv:>15,.0f}  {net_symbol_noemissions} ({net_text_noemissions})"
         )
-        net_benefit_excluding_emissions_and_risk_pv = bcr_metrics.get("net_benefit_excluding_emissions_and_risk_pv", 0)
+        net_benefit_excluding_emissions_and_risk_pv = bcr_metrics.get(
+            "net_benefit_excluding_emissions_and_risk_pv", 0
+        )
         net_symbol_noemissions_norisk = (
             "✅" if net_benefit_excluding_emissions_and_risk_pv >= 0 else "❌"
         )
@@ -725,7 +752,7 @@ def print_bcr_summary(benefits, costs, bcr_metrics, data, no_emissions=False, no
             else "negative: costs exceed benefits"
         )
         print(
-            f"  Net Benefit (excl. emissions & line losses + risk): ${net_benefit_excluding_emissions_and_risk_pv:>15,.0f}  {net_symbol_noemissions_norisk} ({net_text_noemissions_norisk})"
+            f"  Net Benefit (PV, excl. emissions & line losses + risk): ${net_benefit_excluding_emissions_and_risk_pv:>15,.0f}  {net_symbol_noemissions_norisk} ({net_text_noemissions_norisk})"
         )
     print()
     print("=" * 80)

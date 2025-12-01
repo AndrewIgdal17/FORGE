@@ -58,6 +58,14 @@ def load_project_details():
     else:
         number_of_converters = 0
 
+    # Get greenfield comparison fields (optional, only for greenfield projects)
+    greenfield_comparison_capacity_mw = project_details["project"].get(
+        "greenfield_comparison_capacity_mw", None
+    )
+    greenfield_comparison_conductor_type = project_details["project"].get(
+        "greenfield_comparison_conductor_type", None
+    )
+
     return (
         construction_type,
         ac_dc,
@@ -72,6 +80,8 @@ def load_project_details():
         project_lifetime,
         delay_years,
         construction_years,
+        greenfield_comparison_capacity_mw,
+        greenfield_comparison_conductor_type,
     )
 
 
@@ -83,6 +93,7 @@ def calculate_configuration_losses(
     converter_type,
     line_utilization_percent,
     project_lifetime,
+    voltage_kv_override=None,
 ):
     """
     Calculate line losses for a given configuration.
@@ -95,6 +106,7 @@ def calculate_configuration_losses(
         converter_type: Converter type (for DC) or "NA" for AC
         line_utilization_percent: Line utilization as decimal (0-1)
         project_lifetime: Project lifetime in years
+        voltage_kv_override: Optional voltage override (if None, looks up from category)
 
     Returns:
         tuple: (losses_mwh_per_year, lifetime_losses_mwh)
@@ -109,13 +121,16 @@ def calculate_configuration_losses(
 
     # Load circuit and resistance details
     (
-        voltage_kv,
+        voltage_kv_lookup,
         conductors_per_phase,
         number_of_phases,
         number_of_circuits_poles,
         AC_75_resistance,
         DC_20_resistance,
     ) = load_circuit_and_resistance_details(category)
+
+    # Use override voltage if provided, otherwise use lookup voltage
+    voltage_kv = voltage_kv_override if voltage_kv_override is not None else voltage_kv_lookup
 
     # Convert capacity_mw to string for calculate_phase_current
     capacity_mw_str = f"{capacity_mw}MW"
@@ -200,6 +215,8 @@ def main():
         project_lifetime,
         delay_years,
         construction_years,
+        greenfield_comparison_capacity_mw,
+        greenfield_comparison_conductor_type,
     ) = load_project_details()
 
     print("=" * 70)
@@ -211,6 +228,267 @@ def main():
         print("Greenfield project detected - calculating line loss costs.")
         print()
 
+        # Check if comparison capacity is provided
+        if greenfield_comparison_capacity_mw is not None:
+            # Greenfield with comparison - implement three comparison methods
+            print("Comparison capacity detected - comparing two configurations.")
+            print()
+
+            print("PROJECT CONFIGURATION")
+            print("-" * 70)
+            print(f"Construction Type: {construction_type}")
+            print(f"Line Utilization: {line_utilization_percent * 100:.1f}%")
+            print(f"Project Lifetime: {project_lifetime} years")
+            print(f"Electricity Price: ${baseline_electricity_price:.2f}/MWh")
+            print()
+
+            print("PRIMARY CONFIGURATION")
+            print("-" * 70)
+            print(f"Capacity: {capacity_mw} MW")
+            print(f"AC/DC: {ac_dc}")
+            print(f"Conductor Type: {conductor_type}")
+            print()
+
+            # Calculate primary configuration losses
+            primary_losses_mwh_per_year, primary_lifetime_losses_mwh = (
+                calculate_configuration_losses(
+                    construction_type,
+                    ac_dc,
+                    capacity_mw,
+                    conductor_type,
+                    converter_type,
+                    line_utilization_percent,
+                    project_lifetime,
+                )
+            )
+
+            print("COMPARISON CONFIGURATION")
+            print("-" * 70)
+            print(f"Capacity: {greenfield_comparison_capacity_mw} MW")
+            print(f"AC/DC: {ac_dc}")
+            print(f"Conductor Type: {greenfield_comparison_conductor_type}")
+            print()
+
+            # Calculate comparison configuration losses
+            comparison_losses_mwh_per_year, comparison_lifetime_losses_mwh = (
+                calculate_configuration_losses(
+                    construction_type,
+                    ac_dc,
+                    greenfield_comparison_capacity_mw,
+                    greenfield_comparison_conductor_type,
+                    converter_type,
+                    line_utilization_percent,
+                    project_lifetime,
+                )
+            )
+
+            # Calculate counterfactual: primary conductor at comparison capacity
+            counterfactual_primary_losses_mwh_per_year, _ = (
+                calculate_configuration_losses(
+                    construction_type,
+                    ac_dc,
+                    greenfield_comparison_capacity_mw,  # Use comparison capacity
+                    conductor_type,  # Use primary conductor
+                    converter_type,
+                    line_utilization_percent,
+                    project_lifetime,
+                )
+            )
+
+            # Calculate delivered energy for each configuration
+            primary_delivered_mwh = capacity_mw * line_utilization_percent * 8760
+            comparison_delivered_mwh = (
+                greenfield_comparison_capacity_mw * line_utilization_percent * 8760
+            )
+
+            # Calculate loss percentages
+            primary_loss_percent = (
+                primary_losses_mwh_per_year / primary_delivered_mwh
+            ) * 100
+            comparison_loss_percent = (
+                comparison_losses_mwh_per_year / comparison_delivered_mwh
+            ) * 100
+
+            # METHOD 1: Direct Comparison - Compare absolute losses
+            direct_loss_difference_mwh = (
+                primary_losses_mwh_per_year - comparison_losses_mwh_per_year
+            )
+            direct_annual_cost_difference = (
+                direct_loss_difference_mwh * baseline_electricity_price
+            )
+            direct_lifetime_cost_difference = (
+                direct_annual_cost_difference * project_lifetime
+            )
+
+            # METHOD 2: Counterfactual Comparison - Compare primary vs comparison conductor at comparison capacity
+            counterfactual_loss_difference_mwh = (
+                counterfactual_primary_losses_mwh_per_year
+                - comparison_losses_mwh_per_year
+            )
+            counterfactual_annual_cost_difference = (
+                counterfactual_loss_difference_mwh * baseline_electricity_price
+            )
+            counterfactual_lifetime_cost_difference = (
+                counterfactual_annual_cost_difference * project_lifetime
+            )
+
+            # METHOD 3: Normalized (Per MWh) Comparison
+            # Apply the difference in loss percentages to the comparison delivered energy
+            normalized_loss_difference_mwh = (
+                (primary_loss_percent - comparison_loss_percent) / 100
+                * comparison_delivered_mwh
+            )
+            normalized_annual_cost_difference = (
+                normalized_loss_difference_mwh * baseline_electricity_price
+            )
+            normalized_lifetime_cost_difference = (
+                normalized_annual_cost_difference * project_lifetime
+            )
+
+            # Line losses start at first year of operation (COD)
+            start_year = delay_years + construction_years + 1
+
+            # Calculate NPVs for all three methods
+            direct_npv = calculate_present_value(
+                direct_annual_cost_difference,
+                social_discount_rate,
+                project_lifetime,
+                start_year,
+            )
+            counterfactual_npv = calculate_present_value(
+                counterfactual_annual_cost_difference,
+                social_discount_rate,
+                project_lifetime,
+                start_year,
+            )
+            normalized_npv = calculate_present_value(
+                normalized_annual_cost_difference,
+                social_discount_rate,
+                project_lifetime,
+                start_year,
+            )
+
+            # Print results
+            print("=" * 70)
+            print("GREENFIELD LINE LOSS COST COMPARISON RESULTS")
+            print("=" * 70)
+            print()
+
+            print("LOSS COMPARISON:")
+            print("-" * 70)
+            print(
+                f"Primary Configuration: {primary_losses_mwh_per_year:,.2f} MWh/year"
+            )
+            print(
+                f"  Capacity: {capacity_mw} MW | Loss Rate: {primary_loss_percent:.2f}%"
+            )
+            print()
+            print(
+                f"Comparison Configuration: {comparison_losses_mwh_per_year:,.2f} MWh/year"
+            )
+            print(
+                f"  Capacity: {greenfield_comparison_capacity_mw} MW | Loss Rate: {comparison_loss_percent:.2f}%"
+            )
+            print()
+            print(
+                f"Counterfactual (Primary Conductor @ Comparison Capacity): {counterfactual_primary_losses_mwh_per_year:,.2f} MWh/year"
+            )
+            print()
+
+            print("=" * 70)
+            print("METHOD 1: DIRECT COMPARISON")
+            print("=" * 70)
+            print(
+                "Compares: Primary losses @ primary capacity vs. Comparison losses @ comparison capacity"
+            )
+            print()
+            print("NOMINAL VALUES:")
+            print(
+                f"  Loss Difference: {direct_loss_difference_mwh:,.2f} MWh/year "
+                f"({'Primary higher' if direct_loss_difference_mwh > 0 else 'Comparison higher'})"
+            )
+            print(
+                f"  Annual Cost Difference: ${direct_annual_cost_difference:,.2f}/year "
+                f"({'Primary more expensive' if direct_annual_cost_difference > 0 else 'Comparison more expensive'})"
+            )
+            print(f"  Lifetime Cost Difference: ${direct_lifetime_cost_difference:,.2f}")
+            print()
+            print("DISCOUNTED VALUES (NPV):")
+            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Start Year: {start_year:.1f} years")
+            print(f"  Net Present Value: ${direct_npv:,.2f}")
+            print()
+
+            print("=" * 70)
+            print("METHOD 2: COUNTERFACTUAL COMPARISON")
+            print("=" * 70)
+            print(
+                "Compares: Primary conductor @ comparison capacity vs. Comparison conductor @ comparison capacity"
+            )
+            print()
+            print("NOMINAL VALUES:")
+            print(
+                f"  Loss Difference: {counterfactual_loss_difference_mwh:,.2f} MWh/year "
+                f"({'Primary conductor higher' if counterfactual_loss_difference_mwh > 0 else 'Comparison conductor higher'})"
+            )
+            print(
+                f"  Annual Cost Difference: ${counterfactual_annual_cost_difference:,.2f}/year "
+                f"({'Primary conductor more expensive' if counterfactual_annual_cost_difference > 0 else 'Comparison conductor more expensive'})"
+            )
+            print(
+                f"  Lifetime Cost Difference: ${counterfactual_lifetime_cost_difference:,.2f}"
+            )
+            print()
+            print("DISCOUNTED VALUES (NPV):")
+            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Start Year: {start_year:.1f} years")
+            print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
+            print()
+
+            print("=" * 70)
+            print("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
+            print("=" * 70)
+            print("Compares: Loss percentages weighted by delivered energy")
+            print()
+            print("NOMINAL VALUES:")
+            print(
+                f"  Loss Difference: {normalized_loss_difference_mwh:,.2f} MWh/year "
+                f"({'Primary higher' if normalized_loss_difference_mwh > 0 else 'Comparison higher'})"
+            )
+            print(
+                f"  Annual Cost Difference: ${normalized_annual_cost_difference:,.2f}/year "
+                f"({'Primary more expensive' if normalized_annual_cost_difference > 0 else 'Comparison more expensive'})"
+            )
+            print(f"  Lifetime Cost Difference: ${normalized_lifetime_cost_difference:,.2f}")
+            print()
+            print("DISCOUNTED VALUES (NPV):")
+            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Start Year: {start_year:.1f} years")
+            print(f"  Net Present Value: ${normalized_npv:,.2f}")
+            print()
+
+            print("=" * 70)
+
+            # Write to CSV using PRIMARY configuration's absolute losses (not comparison difference)
+            # Comparison methods are informational only - BCR uses absolute losses
+            primary_annual_loss_cost = primary_losses_mwh_per_year * baseline_electricity_price
+            primary_lifetime_nominal_cost = primary_annual_loss_cost * project_lifetime
+            primary_pv_loss_cost = calculate_present_value(
+                primary_annual_loss_cost, social_discount_rate, project_lifetime, start_year
+            )
+
+            csv_manager = CTCCOutputManager()
+            results = {
+                "annual_cost": primary_annual_loss_cost,  # Absolute cost of primary config
+                "total_nominal": primary_lifetime_nominal_cost,
+                "total_afudc": 0,  # Line loss costs are not AFUDC-eligible
+                "total_pv": primary_pv_loss_cost,
+            }
+            csv_manager.add_line_loss_costs(results)
+            csv_manager.write_batch_summary()
+            return
+
+        # No comparison - single configuration (existing behavior)
         # Calculate losses for the greenfield configuration
         losses_mwh_per_year, lifetime_losses_mwh = calculate_configuration_losses(
             construction_type,
@@ -317,6 +595,12 @@ def main():
     print(f"Conductor Type: {conductor_type}")
     print()
 
+    # Look up voltage for new configuration first (for counterfactual comparison)
+    new_category = (
+        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+    )
+    voltage_kv_new, _, _, _, _, _ = load_circuit_and_resistance_details(new_category)
+
     # Calculate new configuration losses
     new_losses_mwh_per_year, new_lifetime_losses_mwh = calculate_configuration_losses(
         construction_type,
@@ -328,7 +612,8 @@ def main():
         project_lifetime,
     )
 
-    # Calculate counterfactual baseline losses (old conductor at new capacity)
+    # Calculate counterfactual baseline losses (old conductor at new capacity @ new voltage)
+    # This ensures both use the same voltage for fair comparison (informational only)
     (
         counterfactual_baseline_losses_mwh_per_year,
         counterfactual_baseline_lifetime_losses_mwh,
@@ -340,6 +625,7 @@ def main():
         old_converter_type,
         line_utilization_percent,
         project_lifetime,
+        voltage_kv_override=voltage_kv_new,  # Use new voltage for fair comparison
     )
 
     # Calculate delivered energy for each configuration
@@ -469,12 +755,20 @@ def main():
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
 
+    # Write to CSV using NEW configuration's absolute losses (not difference/benefit)
+    # Comparison methods are informational only - BCR uses absolute losses
+    new_annual_loss_cost = new_losses_mwh_per_year * baseline_electricity_price
+    new_lifetime_nominal_cost = new_annual_loss_cost * project_lifetime
+    new_pv_loss_cost = calculate_present_value(
+        new_annual_loss_cost, social_discount_rate, project_lifetime, start_year
+    )
+
     # Prepare results dictionary
     results = {
-        "annual_cost": normalized_annual_benefit,  # For reconductoring, this is a benefit (negative cost)
-        "total_nominal": normalized_lifetime_benefit,
-        "total_afudc": 0,  # Line loss benefits are not AFUDC-eligible
-        "total_pv": normalized_npv,
+        "annual_cost": new_annual_loss_cost,  # Absolute cost of new configuration
+        "total_nominal": new_lifetime_nominal_cost,
+        "total_afudc": 0,  # Line loss costs are not AFUDC-eligible
+        "total_pv": new_pv_loss_cost,
     }
 
     # Write to CSV
