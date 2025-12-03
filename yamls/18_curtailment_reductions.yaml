@@ -8,17 +8,17 @@ curtailment_reductions:
   # Number of hours per year when renewable energy curtailment occurs
   # Curtailment happens when renewable generators must reduce output because
   # transmission capacity is insufficient to deliver power to demand centers
-  curtailment_hours_total: 300 # hrs/yr (set 0 if not applicable)
+  curtailment_hours_total: 1000 # hrs/yr (set 0 if not applicable)
 
   # Average MW of renewable energy that is curtailed during curtailment hours
   # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)
   # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW
   # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief
-  average_curtailment_mw: 250 # MW
+  average_curtailment_mw: 500 # MW
 
   # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)
   # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price
-  average_curtailment_price: 25 # $/MWh (PPA proxy / avoided cost)
+  average_curtailment_price: 30 # $/MWh (PPA proxy / avoided cost)
 
   # Saturation factor [0,1] to account for diminishing returns
   # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)

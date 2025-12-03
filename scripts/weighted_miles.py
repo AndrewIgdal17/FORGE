@@ -35,6 +35,8 @@ def calculate_weighted_miles():
     for terrain_type, terrain_miles in project_physical_details_df["terrain"][
         "terrain_miles"
     ].items():
+        if terrain_miles is None:  # Handle None values
+            terrain_miles = 0
         weighted_miles += (
             terrain_miles
             * project_physical_details_df["terrain"]["terrain_multipliers"][

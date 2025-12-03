@@ -41,6 +41,7 @@ try:
         remove_baseline_markers,
         calculate_bcr_fallback,
         read_results_by_scenario_id,
+        get_nested_value,  # Add this line
     )
 except ImportError:
     # If import fails, we'll need to define these locally
@@ -401,7 +402,9 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
 # ============================================================================
 
 
-def generate_oat_plots(results_df, bcr_metric, top_params, prcc_values, output_path):
+def generate_oat_plots(
+    results_df, bcr_metric, top_params, prcc_values, output_path, baseline_yamls
+):
     """
     Generate OAT plots for a BCR metric.
 
@@ -411,6 +414,7 @@ def generate_oat_plots(results_df, bcr_metric, top_params, prcc_values, output_p
         top_params: List of top parameter names (up to 6)
         prcc_values: Series of PRCC values for this BCR metric
         output_path: Path to save the plot
+        baseline_yamls: Dictionary of baseline YAML files
     """
     n_params = len(top_params)
     if n_params == 0:
@@ -442,21 +446,26 @@ def generate_oat_plots(results_df, bcr_metric, top_params, prcc_values, output_p
 
             # Add baseline reference line
             # For multipliers: baseline is 1.0
-            # For direct values: get baseline from PARAM_DEFINITIONS or midpoint of range
+            # For direct values: get actual baseline from YAML files
             is_multiplier = param_name.endswith("_mult")
             if is_multiplier:
                 baseline_value = 1.0
             else:
-                # For direct values, use midpoint of range as baseline reference
+                # For direct values, read actual baseline value from YAML files
+                baseline_value = None
                 if param_name in PARAM_DEFINITIONS:
                     param_def = PARAM_DEFINITIONS[param_name]
-                    if "range" in param_def:
+                    yaml_file_name = param_def.get("yaml_file")
+                    if yaml_file_name and yaml_file_name in baseline_yamls:
+                        baseline_value = get_nested_value(
+                            baseline_yamls[yaml_file_name],
+                            param_def.get("yaml_path", []),
+                        )
+
+                    # Fallback to midpoint of range if value not found
+                    if baseline_value is None and "range" in param_def:
                         min_val, max_val = param_def["range"]
                         baseline_value = (min_val + max_val) / 2
-                    else:
-                        baseline_value = None
-                else:
-                    baseline_value = None
 
             if baseline_value is not None:
                 ax.axvline(
@@ -705,7 +714,12 @@ def main():
             plot_path = output_dir / f"oat_{bcr_metric}_plot1.png"
             prcc_series = prcc_df[bcr_metric]
             generate_oat_plots(
-                bcr_results, bcr_metric, top_params, prcc_series, plot_path
+                bcr_results,
+                bcr_metric,
+                top_params,
+                prcc_series,
+                plot_path,
+                baseline_yamls,
             )
             print(f"  Saved {plot_path}")
 

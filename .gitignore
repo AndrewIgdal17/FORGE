@@ -54,7 +54,9 @@ ENV/
 .venv
 
 # Output directories (if they contain generated files)
-outputs/*.csv
+outputs/
+oat_results/
+sensitivity_results/
 
 # Jupyter Notebook
 .ipynb_checkpoints

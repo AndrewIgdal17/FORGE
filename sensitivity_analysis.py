@@ -728,19 +728,27 @@ def calculate_bcr_fallback(data):
         curtailment_benefit_pv = data.get("curtailment_benefit_pv", 0) or 0
         line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
 
+        # Add revenue (rate-based revenue requirement)
+        revenue_pv = data.get("revenue_pv", 0) or 0
+
         # For reconductoring, line losses are negative (benefit)
         line_loss_benefit_pv = abs(line_loss_pv) if line_loss_pv < 0 else 0
         total_benefits_pv = (
-            congestion_benefit_pv + curtailment_benefit_pv + line_loss_benefit_pv
+            congestion_benefit_pv
+            + curtailment_benefit_pv
+            + line_loss_benefit_pv
+            + revenue_pv
         )
 
         # Haircut benefits (conservative)
         congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
         curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
+        # Revenue is certain (rate-based requirement) so it's included at full value
         total_benefits_haircut_pv = (
             congestion_benefit_haircut
             + curtailment_benefit_haircut
             + line_loss_benefit_pv
+            + revenue_pv
         )
 
         # Calculate costs (present value)

@@ -44,9 +44,9 @@ def load_project_technical_details():
 def load_physical_details():
     """Load physical project details - return total miles only."""
     with open("../yamls/02_project_physical_details.yaml", "r") as file:
-        return sum(
-            yaml.load(file, Loader=yaml.FullLoader)["terrain"]["terrain_miles"].values()
-        )
+        terrain_miles = yaml.load(file, Loader=yaml.FullLoader)["terrain"]["terrain_miles"]
+        # Handle None values by treating them as 0
+        return sum(v if v is not None else 0 for v in terrain_miles.values())
 
 
 def load_circuit_and_resistance_details(category):
@@ -144,17 +144,19 @@ def load_physical_details_detailed():
     with open("../yamls/02_project_physical_details.yaml", "r") as file:
         physical_details = yaml.load(file, Loader=yaml.FullLoader)
     terrain = physical_details["terrain"]["terrain_miles"]
+    # Handle None values
+    safe_get = lambda k: terrain.get(k, 0) if terrain.get(k) is not None else 0
     return (
-        sum(terrain.values()),  # total_miles
-        terrain.get("forested", 0),
-        terrain.get("scrubbed_flat", 0),
-        terrain.get("wetland", 0),
-        terrain.get("farmland", 0),
-        terrain.get("desert_barren", 0),
-        terrain.get("urban", 0),
-        terrain.get("rolling_hills", 0),
-        terrain.get("mountain", 0),
-        terrain.get("subsea", 0),
+        sum(v if v is not None else 0 for v in terrain.values()),  # total_miles
+        safe_get("forested"),
+        safe_get("scrubbed_flat"),
+        safe_get("wetland"),
+        safe_get("farmland"),
+        safe_get("desert_barren"),
+        safe_get("urban"),
+        safe_get("rolling_hills"),
+        safe_get("mountain"),
+        safe_get("subsea"),
     )
 
 
