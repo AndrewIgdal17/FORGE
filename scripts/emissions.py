@@ -10,7 +10,13 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
 from energy_losses import (
@@ -22,7 +28,7 @@ from energy_losses import (
     calculate_line_losses,
     calculate_converter_losses,
 )
-from yaml_loaders import load_emissions_details, load_financing_social_discount_rate
+from smart_loaders import load_emissions_details, load_financing_social_discount_rate
 from financial_utils import calculate_present_value
 
 
@@ -56,8 +62,7 @@ def calculate_total_energy_losses():
     if ac_dc == "DC":
         import yaml
 
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
+        pd = _data_source.get_data("01_project_technical_details")
         number_of_converters = pd["project"]["number_of_converters"]
     else:
         number_of_converters = 0
@@ -452,8 +457,7 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
+        pd = _data_source.get_data("01_project_technical_details")
         number_of_converters = pd["project"]["number_of_converters"]
     else:
         number_of_converters = 0

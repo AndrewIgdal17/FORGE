@@ -1,0 +1,15 @@
+{
+  "insurance": {
+    "premium_rate": 0.002,
+    "insurable_components": {
+      "conductors": true,
+      "structures": true,
+      "converters": true
+    },
+    "premium_by_construction_type": {
+      "overhead": 0.002,
+      "underground": 0.0015,
+      "subsea": 0.0025
+    }
+  }
+}

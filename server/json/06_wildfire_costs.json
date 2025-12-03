@@ -1,0 +1,24 @@
+{
+  "wildfire": {
+    "severity_per_event": 5000000000,
+    "risk_growth_rate": 0.02,
+    "discount_rate_source": "social",
+    "discount_rate_custom": 0.03,
+    "ignition_rates_by_terrain": {
+      "forested": 0.0001,
+      "scrubbed_flat": 5e-05,
+      "wetland": 1e-05,
+      "farmland": 3e-05,
+      "desert_barren": 8e-05,
+      "urban": 2e-05,
+      "rolling_hills": 6e-05,
+      "mountain": 0.0001,
+      "subsea": 0.0
+    },
+    "ignition_rate_multiplier": {
+      "overhead": 1.0,
+      "underground": 0.02,
+      "subsea": 0.0
+    }
+  }
+}

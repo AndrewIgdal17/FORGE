@@ -3,6 +3,48 @@
 # Description: Centralized YAML loading utilities for transmission cost calculator.
 
 import yaml
+from typing import Dict, Any
+
+
+class YAMLDataSource:
+    """
+    Data source for YAML-based configuration.
+    Provides compatible API with JSONDataSource for scripts that need direct data access.
+    """
+    def get_data(self, key: str) -> Dict[str, Any]:
+        """Get data for a specific key by loading the corresponding YAML file."""
+        yaml_file_map = {
+            "01_project_technical_details": "../yamls/01_project_technical_details.yaml",
+            "02_project_physical_details": "../yamls/02_project_physical_details.yaml",
+            "03_financing": "../yamls/03_financing.yaml",
+            "04_insurance": "../yamls/04_insurance.yaml",
+            "05_delays": "../yamls/05_delays.yaml",
+            "06_wildfire_costs": "../yamls/06_wildfire_costs.yaml",
+            "07_outage_costs": "../yamls/07_outage_costs.yaml",
+            "09_environmental_mitigation": "../yamls/09_environmental_mitigation.yaml",
+            "10_project_category_build_costs": "../yamls/10_project_category_build_costs.yaml",
+            "11_project_row_details": "../yamls/11_project_row_details.yaml",
+            "12_project_om_vegetation_management": "../yamls/12_project_om_vegetation_management.yaml",
+            "13_category_om_conductors": "../yamls/13_category_om_conductors.yaml",
+            "14_category_om_structures": "../yamls/14_category_om_structures.yaml",
+            "15_category_om_converters": "../yamls/15_category_om_converters.yaml",
+            "16_emissions_reductions": "../yamls/16_emissions_reductions.yaml",
+            "17_congestion_reductions": "../yamls/17_congestion_reductions.yaml",
+            "18_curtailment_reductions": "../yamls/18_curtailment_reductions.yaml",
+            "19_cost_timing_patterns": "../yamls/19_cost_timing_patterns.yaml",
+            "20_project_category_row_widths": "../yamls/20_project_category_row_widths.yaml",
+            "21_project_category_circuit_and_resistance_detail": "../yamls/21_project_category_circuit_and_resistance_detail.yaml",
+        }
+
+        if key not in yaml_file_map:
+            raise KeyError(f"Key '{key}' not found in YAML file map.")
+
+        with open(yaml_file_map[key], "r") as file:
+            return yaml.load(file, Loader=yaml.FullLoader)
+
+
+# Global instance for compatibility with scripts that use _data_source
+_data_source = YAMLDataSource()
 
 
 def load_financing_details():
@@ -199,3 +241,10 @@ def load_outage_costs():
     """Load outage cost parameters from YAML."""
     with open("../yamls/07_outage_costs.yaml", "r") as file:
         return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def load_terrain_data():
+    """Load terrain data including terrain miles and multipliers from YAML."""
+    with open("../yamls/02_project_physical_details.yaml", "r") as file:
+        physical_details = yaml.load(file, Loader=yaml.FullLoader)
+        return physical_details["terrain"]

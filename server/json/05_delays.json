@@ -1,0 +1,12 @@
+{
+  "annual_delay_costs": {
+    "legal": 200000,
+    "admin": 100000,
+    "labor": 1000000,
+    "material_and_equipment": 800000,
+    "regulatory": 300000,
+    "public_relations": 50000,
+    "project_management": 400000,
+    "miscellaneous": 100000
+  }
+}

@@ -1,9 +1,30 @@
+# Logs directory
+server/logs/
+
 # Python cache files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # LaTeX build artifacts
 *.aux
@@ -37,6 +58,12 @@ __pycache__/
 
 # macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 .AppleDouble
 .LSOverride
 
@@ -52,6 +79,10 @@ venv/
 env/
 ENV/
 .venv
+env.bak/
+venv.bak/
+.env
+.env.local
 
 # Output directories (if they contain generated files)
 outputs/
@@ -64,7 +95,11 @@ sensitivity_results/
 # pyenv
 .python-version
 
-# Environment variables
-.env
-.env.local
+# Temporary files
+*.tmp
+*.temp
 
+# Generated data files
+combined_data.json
+outputs/ctcc_results_*.json
+outputs/json_output_*.json

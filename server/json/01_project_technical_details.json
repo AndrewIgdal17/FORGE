@@ -1,0 +1,23 @@
+{
+  "project": {
+    "name": "",
+    "construction_type": "Overhead",
+    "ac_dc": "AC",
+    "number_of_converters": 2,
+    "capacity_mw": 394,
+    "conductor_type": "Advanced Aluminum Conductor",
+    "converter_type": "LCC Converter",
+    "line_utilization": 0.7,
+    "baseline_electricity_price_per_mwh": 50.0,
+    "social_discount_rate": 0.03,
+    "reconductoring": true,
+    "old_capacity_mw": 140,
+    "old_conductor_type": "Standard Aluminum Conductor",
+    "old_ac_dc": "AC"
+  },
+  "timeline": {
+    "construction_years": 1,
+    "delay_years": 1.5,
+    "project_lifetime": 50
+  }
+}

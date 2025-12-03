@@ -11,10 +11,16 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_financing_details,
@@ -181,16 +187,14 @@ def main():
     )
 
     # Load terrain details
-    with open("../yamls/02_project_physical_details.yaml", "r") as file:
-        physical_details = yaml.load(file, Loader=yaml.FullLoader)
+    physical_details = _data_source.get_data("02_project_physical_details")
     terrain_miles = physical_details["terrain"]["terrain_miles"]
 
     # Load wildfire parameters
     wildfire_yaml = load_wildfire_costs()
 
     # Load financing YAML for discount rate
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    financing_yaml = _data_source.get_data("03_financing")
 
     # Get discount rate
     discount_rate, discount_source = get_discount_rate(wildfire_yaml, financing_yaml)

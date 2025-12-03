@@ -10,10 +10,7 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
-
-# Standard library imports
-import yaml
+from smart_output import CTCCOutputManager
 
 # Local utility imports
 from energy_losses import (
@@ -24,37 +21,43 @@ from energy_losses import (
     calculate_line_losses,
 )
 from financial_utils import calculate_present_value
-from yaml_loaders import load_financing_social_discount_rate
-
+from smart_loaders import load_project_technical_details, load_financing_social_discount_rate
 
 def load_project_details():
     """Load project technical details with line_loss_costs specific fields."""
-    import yaml
+    # Load core technical details using smart_loaders
+    (
+        construction_type,
+        ac_dc,
+        capacity_mw,
+        conductor_type,
+        converter_type,
+        line_utilization_percent,
+        reconductoring,
+        delay_years,
+        construction_years,
+        project_lifetime,
+    ) = load_project_technical_details()
 
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
+    # Import _data_source from the appropriate loader based on input mode
+    import os
+    if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+        from json_loaders import _data_source
+    else:
+        from yaml_loaders import _data_source
 
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
-    converter_type = (
-        project_details["project"]["converter_type"] if ac_dc != "AC" else "NA"
-    )
-    line_utilization_percent = project_details["project"]["line_utilization"]
-    baseline_electricity_price = project_details["project"][
-        "baseline_electricity_price_per_mwh"
-    ]
+    # Load additional fields from data source
+    tech_data = _data_source.get_data("01_project_technical_details")
+    baseline_electricity_price = tech_data["project"]["baseline_electricity_price_per_mwh"]
     social_discount_rate = load_financing_social_discount_rate()
-    reconductoring = project_details["project"]["reconductoring"]
 
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
+    # Get social_discount_rate from financing data
+    financing_data = _data_source.get_data("03_financing")
+    social_discount_rate = financing_data["financial"]["social_discount_rate"]
 
     # Get number_of_converters if DC
     if ac_dc == "DC":
-        number_of_converters = project_details["project"]["number_of_converters"]
+        number_of_converters = tech_data["project"]["number_of_converters"]
     else:
         number_of_converters = 0
 
@@ -544,10 +547,14 @@ def main():
         csv_manager.write_batch_summary()
         return
 
-    # Load baseline configuration details
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
+    # Load baseline configuration details for reconductoring
+    import os
+    if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+        from json_loaders import _data_source
+    else:
+        from yaml_loaders import _data_source
 
+    project_details = _data_source.get_data("01_project_technical_details")
     old_capacity_mw = project_details["project"]["old_capacity_mw"]
     old_conductor_type = project_details["project"]["old_conductor_type"]
     old_ac_dc = project_details["project"]["old_ac_dc"]

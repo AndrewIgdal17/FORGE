@@ -10,10 +10,16 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
+
+# Import data source based on input mode
+if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
+    from json_loaders import _data_source
+else:
+    from yaml_loaders import _data_source
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_financing_details,
     load_project_technical_details,
     load_physical_details_detailed,
@@ -32,10 +38,8 @@ def load_vegetation_management_om_costs(construction_type):
     Returns:
         float: Variable vegetation management cost per mile per year
     """
-    with open("../yamls/12_project_om_vegetation_management.yaml", "r") as file:
-        vegetation_management_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "vegetation_management_om_costs"
-        ]
+    vegetation_management_data = _data_source.get_data("12_project_om_vegetation_management")
+    vegetation_management_om_costs = vegetation_management_data["vegetation_management_om_costs"]
 
     return vegetation_management_om_costs[construction_type]
 
@@ -56,10 +60,8 @@ def load_conductor_om_costs(
     Returns:
         float: Variable conductor cost per mile per year
     """
-    with open("../yamls/13_category_om_conductors.yaml", "r") as file:
-        conductor_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_conductors"
-        ]
+    conductor_om_data = _data_source.get_data("13_category_om_conductors")
+    conductor_om_costs = conductor_om_data["project_categories_om_conductors"]
 
     category = (
         f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
@@ -88,10 +90,8 @@ def load_converter_om_costs(
     Returns:
         float: Variable converter cost per mile per year (0 for AC projects)
     """
-    with open("../yamls/15_category_om_converters.yaml", "r") as file:
-        converter_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_converters"
-        ]
+    converter_om_data = _data_source.get_data("15_category_om_converters")
+    converter_om_costs = converter_om_data["project_categories_om_converters"]
 
     if ac_dc == "AC":
         print("AC Project detected. No converter O&M costs needed.")
@@ -140,10 +140,8 @@ def load_structure_om_costs(
     # Initialize vegetation
     total_vegetation_management_cost_per_year = 0
 
-    with open("../yamls/14_category_om_structures.yaml", "r") as file:
-        structure_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_structures"
-        ]
+    structure_om_data = _data_source.get_data("14_category_om_structures")
+    structure_om_costs = structure_om_data["project_categories_om_structures"]
 
     category = construction_type
     structure_dict = {}
