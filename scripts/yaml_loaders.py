@@ -44,7 +44,9 @@ def load_project_technical_details():
 def load_physical_details():
     """Load physical project details - return total miles only."""
     with open("../yamls/02_project_physical_details.yaml", "r") as file:
-        terrain_miles = yaml.load(file, Loader=yaml.FullLoader)["terrain"]["terrain_miles"]
+        terrain_miles = yaml.load(file, Loader=yaml.FullLoader)["terrain"][
+            "terrain_miles"
+        ]
         # Handle None values by treating them as 0
         return sum(v if v is not None else 0 for v in terrain_miles.values())
 

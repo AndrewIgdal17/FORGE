@@ -41,7 +41,12 @@ try:
         remove_baseline_markers,
         calculate_bcr_fallback,
         read_results_by_scenario_id,
-        get_nested_value,  # Add this line
+        get_nested_value,
+    )
+    from scripts.sensitivity_utils import (
+        BCR_COLUMNS,
+        run_ctcc_with_temp_yamls as _run_ctcc_with_temp_yamls_utils,
+        deep_copy_yamls,
     )
 except ImportError:
     # If import fails, we'll need to define these locally
@@ -204,12 +209,7 @@ def run_single_parameter_sweep(
 
         try:
             # Copy baseline YAMLs
-            yaml_files_copy = {}
-            for yaml_name, yaml_data in baseline_yamls.items():
-                # Deep copy
-                yaml_files_copy[yaml_name] = yaml.load(
-                    yaml.dump(yaml_data), Loader=yaml.FullLoader
-                )
+            yaml_files_copy = deep_copy_yamls(baseline_yamls)
 
             # Apply parameter value
             apply_sample_to_yamls(
@@ -227,17 +227,8 @@ def run_single_parameter_sweep(
 
             if result_dict and error is None:
                 # Extract BCR values
-                bcr_columns = [
-                    "bcr_system",
-                    "bcr_capital",
-                    "bcr_capital_and_delay",
-                    "bcr_excluding_risk",
-                    "bcr_excluding_emissions",
-                    "bcr_excluding_emissions_and_risk",
-                ]
-
                 # Check if BCR columns exist, use fallback if needed
-                missing_bcr = [col for col in bcr_columns if col not in result_dict]
+                missing_bcr = [col for col in BCR_COLUMNS if col not in result_dict]
                 if missing_bcr:
                     fallback_bcr = calculate_bcr_fallback(result_dict)
                     if fallback_bcr:
@@ -248,7 +239,7 @@ def run_single_parameter_sweep(
                     "parameter_value": param_value,
                 }
 
-                for bcr_col in bcr_columns:
+                for bcr_col in BCR_COLUMNS:
                     result_row[bcr_col] = result_dict.get(bcr_col, None)
 
                 results.append(result_row)
@@ -278,123 +269,22 @@ def run_single_parameter_sweep(
     return results
 
 
+# run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
+# Create a wrapper that matches the original function signature for oat_analysis
 def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
     """
-    Run CTCC with temporary YAML directory.
-
-    Args:
-        temp_yaml_dir: Path to temporary YAML directory (str)
-        base_dir: Base directory of the project (str or Path)
-        scenario_id: Unique scenario ID for this run
-
-    Returns:
-        Tuple of (result_dict, error_message)
+    Wrapper for run_ctcc_with_temp_yamls that provides the function signature
+    expected by oat_analysis.py.
     """
-    base_dir = Path(base_dir)  # Ensure it's a Path object
-    temp_yaml_dir = Path(temp_yaml_dir)  # Ensure it's a Path object
-
-    yamls_dir = base_dir / "yamls"
-    yamls_backup = base_dir / "yamls_backup"
-
-    try:
-        # Backup original yamls directory
-        if yamls_dir.exists():
-            if yamls_backup.exists():
-                shutil.rmtree(yamls_backup)
-            shutil.move(str(yamls_dir), str(yamls_backup))
-
-        # Move temp to yamls
-        shutil.move(str(temp_yaml_dir), str(yamls_dir))
-
-        # Set scenario ID in environment
-        os.environ["CTCC_SCENARIO_ID"] = scenario_id
-
-        # Run CTCC
-        result = subprocess.run(
-            [sys.executable, "ctcc.py", "--simple"],
-            cwd=str(base_dir),
-            capture_output=True,
-            text=True,
-            timeout=300,  # 5 minute timeout per run
-        )
-
-        # Check for errors
-        if result.returncode != 0:
-            error_msg = f"CTCC failed with return code {result.returncode}"
-            if result.stderr:
-                error_msg += f"\nStderr: {result.stderr[-500:]}"
-            if result.stdout:
-                error_msg += f"\nStdout (last 500 chars): {result.stdout[-500:]}"
-            return None, error_msg
-
-        # Extract results from batch_summary.csv
-        batch_summary_path = Path(base_dir) / "outputs" / "batch_summary.csv"
-        if batch_summary_path.exists():
-            df = pd.read_csv(batch_summary_path)
-            if len(df) > 0:
-                # Try to find by scenario_id first
-                results = read_results_by_scenario_id(batch_summary_path, scenario_id)
-                if results is None:
-                    # Fallback to last row
-                    results = df.iloc[-1].to_dict()
-
-                # Check if BCR columns are missing or empty/NaN and attempt fallback calculation
-                bcr_columns = [
-                    "bcr_system",
-                    "bcr_capital",
-                    "bcr_capital_and_delay",
-                    "bcr_excluding_risk",
-                    "bcr_excluding_emissions",
-                    "bcr_excluding_emissions_and_risk",
-                ]
-                # Check for missing columns OR empty/NaN values
-                missing_bcr = []
-                for col in bcr_columns:
-                    if col not in results:
-                        missing_bcr.append(col)
-                    else:
-                        # Check if value is empty, None, NaN, or empty string
-                        val = results.get(col)
-                        # Use pandas.isna for proper NaN/None/empty checking
-                        is_empty = (
-                            val is None
-                            or pd.isna(val)
-                            or val == ""
-                            or (isinstance(val, str) and val.strip() == "")
-                        )
-                        if is_empty:
-                            missing_bcr.append(col)
-
-                if missing_bcr:
-                    fallback_bcr = calculate_bcr_fallback(results)
-                    if fallback_bcr:
-                        results.update(fallback_bcr)
-                    else:
-                        error_info = f"BCR columns missing or empty: {missing_bcr}. Fallback calculation failed."
-                        return results, error_info
-
-                return results, None
-            else:
-                return None, "batch_summary.csv is empty"
-        else:
-            return None, "batch_summary.csv not found"
-
-    except subprocess.TimeoutExpired:
-        return None, "CTCC run timed out"
-    except Exception as e:
-        return None, str(e)
-    finally:
-        # Restore original yamls directory
-        if yamls_dir.exists():
-            try:
-                shutil.rmtree(yamls_dir)
-            except Exception:
-                pass
-        if yamls_backup.exists():
-            try:
-                shutil.move(str(yamls_backup), str(yamls_dir))
-            except Exception:
-                pass
+    return _run_ctcc_with_temp_yamls_utils(
+        temp_yaml_dir,
+        base_dir,
+        scenario_id,
+        ctcc_args=["--simple"],
+        use_env_dict=False,
+        read_results_by_scenario_id_func=read_results_by_scenario_id,
+        calculate_bcr_fallback_func=calculate_bcr_fallback,
+    )
 
 
 # ============================================================================
@@ -690,14 +580,6 @@ def main():
 
     # Save results per BCR
     print("\nSaving results...")
-    bcr_columns = [
-        "bcr_system",
-        "bcr_capital",
-        "bcr_capital_and_delay",
-        "bcr_excluding_risk",
-        "bcr_excluding_emissions",
-        "bcr_excluding_emissions_and_risk",
-    ]
 
     for bcr_metric in prcc_df.columns:
         # Filter results for parameters relevant to this BCR

@@ -26,6 +26,13 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from scripts.sensitivity_utils import (
+    BCR_COLUMNS,
+    run_ctcc_with_temp_yamls as _run_ctcc_with_temp_yamls_utils,
+    deep_copy_yamls,
+    validate_and_fix_bcr_results,
+)
+
 
 # ============================================================================
 # PARAMETER DEFINITIONS
@@ -588,6 +595,30 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
         baselines: Dictionary of baseline values for multiplier parameters
     """
 
+    def apply_bounds_check(param_name, value):
+        """
+        Apply bounds checking for parameters with logical constraints.
+
+        Args:
+            param_name: Name of the parameter
+            value: The calculated value to check
+
+        Returns:
+            Clamped value if bounds exist, otherwise original value
+        """
+        # Parameters that must be in [0, 1]
+        zero_one_params = {
+            "line_utilization_mult",
+            "congestion_flow_factor_mult",
+            "congestion_near_binding_relief_factor_mult",
+        }
+
+        # Check if this parameter has [0, 1] bounds
+        if param_name in zero_one_params:
+            return max(0.0, min(1.0, value))
+
+        return value
+
     # Apply values
     for param_name, param_value in sample_dict.items():
         if param_name not in param_definitions:
@@ -638,19 +669,29 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
                                             ).get(field_name)
                                             if baseline_field_value is not None:
                                                 zone_dict[field_name] = (
-                                                    baseline_field_value * param_value
+                                                    apply_bounds_check(
+                                                        param_name,
+                                                        baseline_field_value
+                                                        * param_value,
+                                                    )
                                                 )
                     else:
                         # For nested dicts, multiply all values recursively (original behavior)
-                        def multiply_nested_dict(base_dict, mult, target_dict):
+                        def multiply_nested_dict(
+                            base_dict, mult, target_dict, param_name
+                        ):
                             """Multiply all numeric values in nested dict structure."""
                             for key, value in base_dict.items():
                                 if isinstance(value, dict):
                                     if key not in target_dict:
                                         target_dict[key] = {}
-                                    multiply_nested_dict(value, mult, target_dict[key])
+                                    multiply_nested_dict(
+                                        value, mult, target_dict[key], param_name
+                                    )
                                 elif isinstance(value, (int, float)):
-                                    target_dict[key] = value * mult
+                                    target_dict[key] = apply_bounds_check(
+                                        param_name, value * mult
+                                    )
 
                         # Get target dict
                         current = yaml_files[yaml_file_name]
@@ -662,10 +703,14 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
                                 break
 
                         if current is not None:
-                            multiply_nested_dict(baseline_value, param_value, current)
+                            multiply_nested_dict(
+                                baseline_value, param_value, current, param_name
+                            )
                 else:
                     # Simple numeric value
-                    new_value = baseline_value * param_value
+                    new_value = apply_bounds_check(
+                        param_name, baseline_value * param_value
+                    )
                     set_nested_value(
                         yaml_files[yaml_file_name], param_def["yaml_path"], new_value
                     )
@@ -879,163 +924,22 @@ def read_results_by_scenario_id(batch_summary_path, scenario_id):
         return None
 
 
+# run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
+# Create a wrapper that matches the original function signature
 def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
     """
-    Run CTCC with temporary YAML directory.
-
-    Args:
-        temp_yaml_dir: Path to temporary YAML directory
-        base_dir: Base directory of the project
-        scenario_id: Unique scenario ID for this sample
-
-    Returns:
-        Tuple of (result_dict, error_message)
+    Wrapper for run_ctcc_with_temp_yamls that provides the function signature
+    expected by sensitivity_analysis.py.
     """
-    yamls_dir = base_dir / "yamls"
-    yamls_backup = base_dir / "yamls_backup"
-
-    try:
-        # Backup original yamls directory if it exists
-        if yamls_dir.exists():
-            if yamls_backup.exists():
-                shutil.rmtree(yamls_backup)
-            shutil.move(str(yamls_dir), str(yamls_backup))
-
-        # Move temp to main yamls location
-        shutil.move(str(temp_yaml_dir), str(yamls_dir))
-
-        # Set environment variable for scenario ID
-        env = os.environ.copy()
-        env["CTCC_SCENARIO_ID"] = scenario_id
-
-        # Run CTCC
-        result = subprocess.run(
-            [sys.executable, "ctcc.py"],
-            cwd=base_dir,
-            capture_output=True,
-            text=True,
-            timeout=300,  # 5 minute timeout per run
-            env=env,
-        )
-
-        # Check for errors
-        if result.returncode != 0:
-            error_msg = f"CTCC failed with return code {result.returncode}"
-            if result.stderr:
-                error_msg += f"\nStderr: {result.stderr[-500:]}"
-            if result.stdout:
-                error_msg += f"\nStdout (last 500 chars): {result.stdout[-500:]}"
-            return None, error_msg
-
-        # Extract actual scenario_id from CTCC output (it prints it)
-        actual_scenario_id = scenario_id
-        if result.stdout:
-            for line in result.stdout.split("\n"):
-                if "Scenario ID:" in line:
-                    parts = line.split("Scenario ID:")
-                    if len(parts) > 1:
-                        actual_scenario_id = parts[1].strip()
-                        break
-
-        # Check for BCR calculation issues in stdout
-        bcr_warning_detected = False
-        if result.stdout:
-            if (
-                "BCR calculation failed" in result.stdout
-                or "no results returned" in result.stdout
-            ):
-                bcr_warning_detected = True
-
-        # Extract results from batch_summary.csv by scenario_id
-        batch_summary_path = Path(base_dir) / "outputs" / "batch_summary.csv"
-        results = read_results_by_scenario_id(batch_summary_path, actual_scenario_id)
-
-        if results is None:
-            # Fallback: try to read the last row (in case scenario_id format changed)
-            if batch_summary_path.exists():
-                df = pd.read_csv(batch_summary_path)
-                if len(df) > 0:
-                    # Try to find a row with scenario_id that contains our sample index
-                    sample_idx_str = (
-                        scenario_id.split("_")[1] if "_" in scenario_id else None
-                    )
-                    if sample_idx_str:
-                        matching = df[
-                            df["scenario_id"]
-                            .astype(str)
-                            .str.contains(sample_idx_str, na=False)
-                        ]
-                        if len(matching) > 0:
-                            results = matching.iloc[-1].to_dict()
-                            actual_scenario_id = results.get(
-                                "scenario_id", actual_scenario_id
-                            )
-
-                    # Last resort: use the last row
-                    if results is None:
-                        results = df.iloc[-1].to_dict()
-                        actual_scenario_id = results.get(
-                            "scenario_id", actual_scenario_id
-                        )
-
-            if results is None:
-                return (
-                    None,
-                    f"Results not found for scenario_id: {scenario_id} (tried: {actual_scenario_id})",
-                )
-
-        # Check if BCR columns are missing or empty/NaN and attempt fallback calculation
-        bcr_columns = [
-            "bcr_system",
-            "bcr_capital",
-            "bcr_capital_and_delay",
-            "bcr_excluding_risk",
-            "bcr_excluding_emissions",
-            "bcr_excluding_emissions_and_risk",
-        ]
-        # Check for missing columns OR empty/NaN values
-        missing_bcr = []
-        for col in bcr_columns:
-            if col not in results:
-                missing_bcr.append(col)
-            else:
-                # Check if value is empty, None, NaN, or empty string
-                val = results.get(col)
-                # Use pandas.isna for proper NaN/None/empty checking
-                is_empty = (
-                    val is None
-                    or pd.isna(val)
-                    or val == ""
-                    or (isinstance(val, str) and val.strip() == "")
-                )
-                if is_empty:
-                    missing_bcr.append(col)
-
-        if missing_bcr:
-            # Attempt fallback BCR calculation
-            fallback_bcr = calculate_bcr_fallback(results)
-            if fallback_bcr:
-                # Add fallback BCR metrics to results
-                results.update(fallback_bcr)
-            else:
-                error_info = f"BCR columns missing or empty: {missing_bcr}. "
-                if bcr_warning_detected:
-                    error_info += "CTCC stdout indicates BCR calculation issue. "
-                error_info += "Fallback BCR calculation also failed."
-                return results, error_info
-
-        return results, None
-
-    except subprocess.TimeoutExpired:
-        return None, "CTCC run timed out"
-    except Exception as e:
-        return None, str(e)
-    finally:
-        # Restore original yamls directory
-        if yamls_dir.exists():
-            shutil.rmtree(yamls_dir)
-        if yamls_backup.exists():
-            shutil.move(str(yamls_backup), str(yamls_dir))
+    return _run_ctcc_with_temp_yamls_utils(
+        temp_yaml_dir,
+        base_dir,
+        scenario_id,
+        ctcc_args=None,
+        use_env_dict=True,
+        read_results_by_scenario_id_func=read_results_by_scenario_id,
+        calculate_bcr_fallback_func=calculate_bcr_fallback,
+    )
 
 
 # ============================================================================
@@ -1082,11 +986,7 @@ def process_single_sample(args_tuple):
             shutil.rmtree(temp_yaml_dir)
 
         # Deep copy baseline YAMLs
-        yaml_files_copy = {}
-        for yaml_name, yaml_data in baseline_yamls.items():
-            yaml_files_copy[yaml_name] = yaml.load(
-                yaml.dump(yaml_data), Loader=yaml.FullLoader
-            )  # Deep copy
+        yaml_files_copy = deep_copy_yamls(baseline_yamls)
 
         # Apply sample to YAMLs
         apply_sample_to_yamls(
@@ -1517,11 +1417,7 @@ def main():
                 shutil.rmtree(temp_yaml_dir)
 
             # Copy baseline YAMLs
-            yaml_files_copy = {}
-            for yaml_name, yaml_data in baseline_yamls.items():
-                yaml_files_copy[yaml_name] = yaml.load(
-                    yaml.dump(yaml_data), Loader=yaml.FullLoader
-                )  # Deep copy
+            yaml_files_copy = deep_copy_yamls(baseline_yamls)
 
             # Apply sample to YAMLs
             apply_sample_to_yamls(
@@ -1596,16 +1492,8 @@ def main():
         print()
 
         # Step 5: Calculate PRCC and generate plots for all BCR metrics
-        bcr_columns = [
-            "bcr_system",
-            "bcr_capital",
-            "bcr_capital_and_delay",
-            "bcr_excluding_risk",
-            "bcr_excluding_emissions",
-            "bcr_excluding_emissions_and_risk",
-        ]
         available_bcr_columns = [
-            col for col in bcr_columns if col in results_df.columns
+            col for col in BCR_COLUMNS if col in results_df.columns
         ]
 
         if available_bcr_columns:
