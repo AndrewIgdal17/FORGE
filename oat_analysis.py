@@ -39,7 +39,6 @@ try:
         store_baseline_values,
         save_yamls_to_temp,
         remove_baseline_markers,
-        calculate_bcr_fallback,
         read_results_by_scenario_id,
         get_nested_value,
     )
@@ -227,12 +226,11 @@ def run_single_parameter_sweep(
 
             if result_dict and error is None:
                 # Extract BCR values
-                # Check if BCR columns exist, use fallback if needed
+                # Check if BCR columns exist (BCR calculator should have written them)
                 missing_bcr = [col for col in BCR_COLUMNS if col not in result_dict]
                 if missing_bcr:
-                    fallback_bcr = calculate_bcr_fallback(result_dict)
-                    if fallback_bcr:
-                        result_dict.update(fallback_bcr)
+                    # Log warning but continue - BCR calculator should have written these
+                    print(f"  Warning: BCR columns missing for {param_name} at {param_value}: {missing_bcr}")
 
                 result_row = {
                     "parameter_name": param_name,
@@ -283,7 +281,6 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
         ctcc_args=["--simple"],
         use_env_dict=False,
         read_results_by_scenario_id_func=read_results_by_scenario_id,
-        calculate_bcr_fallback_func=calculate_bcr_fallback,
     )
 
 

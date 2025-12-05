@@ -30,7 +30,7 @@ from scripts.sensitivity_utils import (
     BCR_COLUMNS,
     run_ctcc_with_temp_yamls as _run_ctcc_with_temp_yamls_utils,
     deep_copy_yamls,
-    validate_and_fix_bcr_results,
+    validate_bcr_results,
 )
 
 
@@ -756,145 +756,6 @@ def remove_baseline_markers(data):
 # ============================================================================
 
 
-def calculate_bcr_fallback(data):
-    """
-    Fallback BCR calculation when BCR columns are missing from batch_summary.csv.
-    Uses the same logic as bcr_calculator.py but works directly with data dict.
-
-    Args:
-        data: Dictionary with scenario data from batch_summary.csv
-
-    Returns:
-        Dictionary with BCR metrics, or None if calculation fails
-    """
-    try:
-        # Calculate benefits (present value)
-        congestion_benefit_pv = data.get("congestion_benefit_pv", 0) or 0
-        curtailment_benefit_pv = data.get("curtailment_benefit_pv", 0) or 0
-        line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
-
-        # Add revenue (rate-based revenue requirement)
-        revenue_pv = data.get("revenue_pv", 0) or 0
-
-        # For reconductoring, line losses are negative (benefit)
-        line_loss_benefit_pv = abs(line_loss_pv) if line_loss_pv < 0 else 0
-        total_benefits_pv = (
-            congestion_benefit_pv
-            + curtailment_benefit_pv
-            + line_loss_benefit_pv
-            + revenue_pv
-        )
-
-        # Haircut benefits (conservative)
-        congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
-        curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
-        # Revenue is certain (rate-based requirement) so it's included at full value
-        total_benefits_haircut_pv = (
-            congestion_benefit_haircut
-            + curtailment_benefit_haircut
-            + line_loss_benefit_pv
-            + revenue_pv
-        )
-
-        # Calculate costs (present value)
-        build_cost_pv = data.get("build_cost_pv", 0) or 0
-        row_cost_pv = data.get("row_cost_pv", 0) or 0
-        env_mitigation_pv = data.get("env_mitigation_pv", 0) or 0
-        capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
-
-        # Operational costs (PV) - O&M and operational insurance only
-        oandm_pv = data.get("oandm_pv", 0) or 0
-        insurance_pv = data.get("insurance_pv", 0) or 0
-        operational_costs_pv = oandm_pv + insurance_pv
-
-        # Energy & Emissions costs (PV) - Line losses and emissions
-        emissions_pv = data.get("emissions_cost_pv", 0) or 0
-        line_loss_cost_pv = max(0, line_loss_pv)  # Only count as cost if positive
-        energy_emissions_costs_pv = line_loss_cost_pv + emissions_pv
-
-        # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
-        wildfire_pv = data.get("wildfire_pv", 0) or 0
-        outage_pv = data.get("outage_pv", 0) or 0
-        wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
-        risk_costs_pv = wildfire_pv + outage_pv + wildfire_liability_pv
-
-        delay_cost_pv = data.get("delay_cost_pv", 0) or 0
-        congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
-        curtailment_delay_pv = data.get("curtailment_delay_cost_pv", 0) or 0
-        residual_congestion_pv = data.get("residual_congestion_pv", 0) or 0
-        delay_costs_pv = (
-            delay_cost_pv
-            + congestion_delay_pv
-            + curtailment_delay_pv
-            + residual_congestion_pv
-        )
-
-        total_costs_pv = (
-            capital_costs_pv
-            + operational_costs_pv
-            + energy_emissions_costs_pv
-            + risk_costs_pv
-            + delay_costs_pv
-        )
-        total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
-        total_costs_excluding_emissions_pv = total_costs_pv - energy_emissions_costs_pv
-        total_costs_excluding_emissions_and_risk_pv = (
-            total_costs_pv - energy_emissions_costs_pv - risk_costs_pv
-        )
-
-        # Calculate BCR metrics
-        # Use conservative (haircut) benefits for all BCR calculations
-        if total_costs_pv > 0:
-            bcr_system = total_benefits_haircut_pv / total_costs_pv
-        else:
-            bcr_system = 0
-
-        if capital_costs_pv > 0:
-            bcr_capital = total_benefits_haircut_pv / capital_costs_pv
-        else:
-            bcr_capital = 0
-
-        if capital_costs_pv + delay_costs_pv > 0:
-            bcr_capital_and_delay = total_benefits_haircut_pv / (
-                capital_costs_pv + delay_costs_pv
-            )
-        else:
-            bcr_capital_and_delay = 0
-
-        if total_costs_excluding_risk_pv > 0:
-            bcr_excluding_risk = (
-                total_benefits_haircut_pv / total_costs_excluding_risk_pv
-            )
-        else:
-            bcr_excluding_risk = 0
-
-        if total_costs_excluding_emissions_pv > 0:
-            bcr_excluding_emissions = (
-                total_benefits_haircut_pv / total_costs_excluding_emissions_pv
-            )
-        else:
-            bcr_excluding_emissions = 0
-
-        if total_costs_excluding_emissions_and_risk_pv > 0:
-            bcr_excluding_emissions_and_risk = (
-                total_benefits_haircut_pv / total_costs_excluding_emissions_and_risk_pv
-            )
-        else:
-            bcr_excluding_emissions_and_risk = 0
-
-        return {
-            "bcr_system": bcr_system,
-            "bcr_capital": bcr_capital,
-            "bcr_capital_and_delay": bcr_capital_and_delay,
-            "bcr_excluding_risk": bcr_excluding_risk,
-            "bcr_excluding_emissions": bcr_excluding_emissions,
-            "bcr_excluding_emissions_and_risk": bcr_excluding_emissions_and_risk,
-        }
-    except Exception as e:
-        # If calculation fails, return None
-        return None
-
-
 def read_results_by_scenario_id(batch_summary_path, scenario_id):
     """
     Read results from batch_summary.csv by matching scenario_id.
@@ -938,7 +799,6 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
         ctcc_args=None,
         use_env_dict=True,
         read_results_by_scenario_id_func=read_results_by_scenario_id,
-        calculate_bcr_fallback_func=calculate_bcr_fallback,
     )
 
 

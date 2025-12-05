@@ -172,12 +172,15 @@ def main():
 
     successful_runs = 0
     total_runs = len(scripts)
+    failed_scripts = []
 
     for script in scripts:
         if not args.simple:
             print(f"\n🔄 Running {script}...")
         if run_script(script, quiet=args.simple):
             successful_runs += 1
+        else:
+            failed_scripts.append(script)
         if not args.simple:
             print("-" * 60)
 
@@ -215,15 +218,20 @@ def main():
                 )
                 csv_manager.add_bcr_metrics(bcr_results)
                 csv_manager.write_batch_summary()
+                
                 if not args.simple:
                     print("✅ BCR metrics added to batch_summary.csv")
+                else:
+                    # In simple mode, still confirm BCR columns were written
+                    print("✅ BCR metrics written to batch_summary.csv")
             else:
-                if not args.simple:
-                    print("⚠️  BCR calculation completed but no results returned")
-                    print(f"   Scenario ID: {scenario_id}")
-                    print(
-                        "   This may indicate missing required columns in batch_summary.csv"
-                    )
+                # Always show this warning, even in simple mode
+                print("⚠️  BCR calculation completed but no results returned")
+                print(f"   Scenario ID: {scenario_id}")
+                print(
+                    "   This may indicate missing required columns in batch_summary.csv"
+                )
+                print("   BCR columns will not be available in batch_summary.csv")
 
         except Exception as e:
             import traceback

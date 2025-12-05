@@ -2,7 +2,7 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S4_Reconductoring_Overhead_AC_140to394MW_TEST2"
+  name: "S4_Reconductoring_Overhead_AC_140to394MW_TEST5"
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2

@@ -165,7 +165,9 @@ def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
     energy_mix_by_year = []
     current_mix = initial_mix.copy()
 
-    for year in range(1, project_lifetime + 1):
+    # Convert project_lifetime to int for range() (it may be a float)
+    project_lifetime_int = int(project_lifetime)
+    for year in range(1, project_lifetime_int + 1):
         # Apply growth/decay rates
         next_mix = {}
         for source in sources:
