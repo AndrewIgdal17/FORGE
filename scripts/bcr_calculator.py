@@ -41,7 +41,7 @@ def load_scenario_data(scenario_id, output_dir="../outputs"):
     with open(batch_path, "r", newline="") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
-        
+
         if len(rows) == 0:
             print(f"Warning: batch_summary.csv is empty")
             return None
@@ -57,21 +57,29 @@ def load_scenario_data(scenario_id, output_dir="../outputs"):
         for row in rows:
             row_scenario_id = str(row.get("scenario_id", ""))
             if scenario_id in row_scenario_id or row_scenario_id in scenario_id:
-                print(f"Info: Using partial match for scenario_id '{scenario_id}' (found '{row_scenario_id}')")
+                print(
+                    f"Info: Using partial match for scenario_id '{scenario_id}' (found '{row_scenario_id}')"
+                )
                 return convert_row_to_numeric(row)
 
         # Strategy 3: Try prefix match (for sensitivity analysis runs)
         # Extract prefix (e.g., "sample_0" from "sample_0_1234567890")
-        scenario_prefix = scenario_id.split("_")[0] if "_" in scenario_id else scenario_id
+        scenario_prefix = (
+            scenario_id.split("_")[0] if "_" in scenario_id else scenario_id
+        )
         for row in rows:
             row_scenario_id = str(row.get("scenario_id", ""))
             if row_scenario_id.startswith(scenario_prefix + "_"):
-                print(f"Info: Using prefix match for scenario_id '{scenario_id}' (found '{row_scenario_id}')")
+                print(
+                    f"Info: Using prefix match for scenario_id '{scenario_id}' (found '{row_scenario_id}')"
+                )
                 return convert_row_to_numeric(row)
 
         # Strategy 4: Fallback to last row (for batch sensitivity runs where exact ID may differ)
         print(f"Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
-        print(f"Info: Using last row as fallback (this is normal for batch sensitivity analysis)")
+        print(
+            f"Info: Using last row as fallback (this is normal for batch sensitivity analysis)"
+        )
         return convert_row_to_numeric(rows[-1])
 
 
@@ -452,6 +460,7 @@ def calculate_and_display_bcr(
         benefits = calculate_benefits(data)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         print(f"Warning: Error calculating benefits: {e}")
         # Return partial results with zero benefits
@@ -468,6 +477,7 @@ def calculate_and_display_bcr(
         costs = calculate_costs(data)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         print(f"Warning: Error calculating costs: {e}")
         # Return partial results with zero costs
@@ -487,6 +497,7 @@ def calculate_and_display_bcr(
         )
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         print(f"Warning: Error calculating BCR metrics: {e}")
         # Return zero BCR metrics if calculation fails
@@ -511,7 +522,13 @@ def calculate_and_display_bcr(
     # Display results (only if not in simple mode - check via environment or suppress)
     try:
         print_bcr_summary(
-            benefits, costs, bcr_metrics, data, no_emissions, no_linelosses, capital_only
+            benefits,
+            costs,
+            bcr_metrics,
+            data,
+            no_emissions,
+            no_linelosses,
+            capital_only,
         )
     except Exception as e:
         # Don't fail if printing fails, but log it
@@ -632,7 +649,9 @@ def print_bcr_summary(
         f"  System BCR (conservative):    {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
     )
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
-    print(f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}")
+    print(
+        f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}"
+    )
 
     # BCR excluding risk costs
     bcr_excluding_risk = bcr_metrics["bcr_excluding_risk"]

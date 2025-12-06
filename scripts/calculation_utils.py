@@ -127,6 +127,7 @@ def calculate_converter_losses(
     line_utilization_percent,
     capacity_mw_numeric,
     ac_dc,
+    converter_loss_percentage=None,
 ):
     """
     Calculate converter losses based on number of converters.
@@ -137,12 +138,15 @@ def calculate_converter_losses(
         line_utilization_percent: Line utilization as decimal (0-1)
         capacity_mw_numeric: Capacity in MW as numeric value
         ac_dc: "AC" or "DC" string
+        converter_loss_percentage: Optional converter loss percentage. If None, defaults to
+            0.0075 for LCC converters or 0.01 for VSC converters.
 
     Returns:
         tuple: (total_converter_losses_mw, total_converter_losses_mwh, converter_loss_percent)
     """
     if ac_dc == "DC":
-        converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
+        if converter_loss_percentage is None:
+            converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
         converter_losses_mw = (
             converter_loss_percentage * line_utilization_percent * capacity_mw_numeric
         )

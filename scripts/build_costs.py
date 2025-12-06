@@ -125,6 +125,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -195,7 +196,9 @@ def main():
         )
     else:
         # If construction_years is 0, treat as one-time cost at construction_start_year
-        build_cost_pv = total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
+        build_cost_pv = (
+            total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
+        )
 
     # Format and display results
     print("=" * 80)
@@ -247,7 +250,9 @@ def main():
         print(
             f"  Annual Cost (over {construction_years} year(s) construction): ${annual_build_cost:,.2f}"
         )
-        print(f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}")
+        print(
+            f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}"
+        )
     else:
         print(f"  One-time cost at Year {construction_start_year}")
     print(f"  Build Cost PV: ${build_cost_pv:,.2f}")
@@ -256,10 +261,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": total_cost_with_contingencies,
@@ -272,7 +277,7 @@ def main():
         "structure_afudc": 0,
         "converter_afudc": 0,
     }
-    
+
     # Write to CSV
     csv_manager.add_build_costs(results)
     csv_manager.write_batch_summary()

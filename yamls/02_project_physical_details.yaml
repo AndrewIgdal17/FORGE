@@ -3,13 +3,13 @@
 
 terrain:
   terrain_miles: # miles by terrain type
-    forested: 30
-    scrubbed_flat: 50
-    wetland: 10
-    farmland: 40
+    forested: 80
+    scrubbed_flat: 100
+    wetland: 0
+    farmland: 80
     desert_barren: 0
     urban: 0
-    rolling_hills: 20
+    rolling_hills: 30
     mountain: 10
     subsea: 0
 

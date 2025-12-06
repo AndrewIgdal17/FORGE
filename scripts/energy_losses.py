@@ -98,6 +98,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category locally
@@ -171,6 +172,7 @@ def main():
         line_utilization_percent,
         capacity_mw_numeric,
         ac_dc,
+        converter_loss_percentage,
     )
 
     # Print all results in organized sections

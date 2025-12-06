@@ -173,6 +173,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier

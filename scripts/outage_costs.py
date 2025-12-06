@@ -220,6 +220,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -314,10 +315,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Write to CSV (results dict already has all needed values)
     csv_manager.add_outage_costs(results)
     csv_manager.write_batch_summary()

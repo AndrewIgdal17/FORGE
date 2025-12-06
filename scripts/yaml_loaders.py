@@ -27,6 +27,9 @@ def load_project_technical_details():
     capacity_mw = pd["capacity_mw"]
     conductor_type = pd["conductor_type"]
     converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
+    converter_loss_percentage = (
+        None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
+    )
     return (
         construction_type,
         ac_dc,
@@ -38,6 +41,7 @@ def load_project_technical_details():
         tl["delay_years"],
         tl["construction_years"],
         tl["project_lifetime"],
+        converter_loss_percentage,
     )
 
 

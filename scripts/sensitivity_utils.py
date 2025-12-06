@@ -222,24 +222,46 @@ def run_ctcc_with_temp_yamls(
             return None, error_msg
 
         # DEBUG: Print subprocess output to see BCR debug messages
-        print(f"[DEBUG SENS] CTCC subprocess completed with return code {result.returncode}")
+        print(
+            f"[DEBUG SENS] CTCC subprocess completed with return code {result.returncode}"
+        )
         if result.stdout:
             # Extract and print BCR-related debug messages
-            debug_lines = [line for line in result.stdout.split("\n") if "[DEBUG" in line]
+            debug_lines = [
+                line for line in result.stdout.split("\n") if "[DEBUG" in line
+            ]
             if debug_lines:
-                print(f"[DEBUG SENS] Found {len(debug_lines)} debug lines in CTCC stdout:")
+                print(
+                    f"[DEBUG SENS] Found {len(debug_lines)} debug lines in CTCC stdout:"
+                )
                 for line in debug_lines[:30]:  # Print first 30 debug lines
                     print(f"  {line}")
             # Also check for BCR-related warnings/errors
-            bcr_lines = [line for line in result.stdout.split("\n") 
-                        if any(x in line.lower() for x in ["bcr", "calculate_and_display_bcr", "load_scenario_data", "add_bcr_metrics", "write_batch_summary"])]
+            bcr_lines = [
+                line
+                for line in result.stdout.split("\n")
+                if any(
+                    x in line.lower()
+                    for x in [
+                        "bcr",
+                        "calculate_and_display_bcr",
+                        "load_scenario_data",
+                        "add_bcr_metrics",
+                        "write_batch_summary",
+                    ]
+                )
+            ]
             if bcr_lines:
-                print(f"[DEBUG SENS] Found {len(bcr_lines)} BCR-related lines in CTCC stdout:")
+                print(
+                    f"[DEBUG SENS] Found {len(bcr_lines)} BCR-related lines in CTCC stdout:"
+                )
                 for line in bcr_lines[:30]:
                     print(f"  {line}")
-            
+
             # Specifically check for CTCC debug messages about script execution and BCR
-            ctcc_debug_lines = [line for line in result.stdout.split("\n") if "[DEBUG CTCC]" in line]
+            ctcc_debug_lines = [
+                line for line in result.stdout.split("\n") if "[DEBUG CTCC]" in line
+            ]
             if ctcc_debug_lines:
                 print(f"[DEBUG SENS] Found {len(ctcc_debug_lines)} CTCC debug lines:")
                 for line in ctcc_debug_lines:
@@ -333,12 +355,16 @@ def run_ctcc_with_temp_yamls(
                     )
 
         # Validate BCR results (just check if they exist, no fallback)
-        print(f"[DEBUG SENS] Validating BCR results for scenario_id='{actual_scenario_id}'")
+        print(
+            f"[DEBUG SENS] Validating BCR results for scenario_id='{actual_scenario_id}'"
+        )
         print(f"[DEBUG SENS] Results dict has {len(results)} keys")
-        bcr_keys_in_results = [k for k in results.keys() if k.startswith('bcr_')]
+        bcr_keys_in_results = [k for k in results.keys() if k.startswith("bcr_")]
         print(f"[DEBUG SENS] BCR keys in results: {bcr_keys_in_results}")
-        
-        results, error = validate_bcr_results(results, bcr_warning_detected=bcr_warning_detected)
+
+        results, error = validate_bcr_results(
+            results, bcr_warning_detected=bcr_warning_detected
+        )
         if error:
             # Log warning but don't fail - BCR calculator should have written them
             # This is a warning, not a fatal error

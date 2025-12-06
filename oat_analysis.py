@@ -230,7 +230,9 @@ def run_single_parameter_sweep(
                 missing_bcr = [col for col in BCR_COLUMNS if col not in result_dict]
                 if missing_bcr:
                     # Log warning but continue - BCR calculator should have written these
-                    print(f"  Warning: BCR columns missing for {param_name} at {param_value}: {missing_bcr}")
+                    print(
+                        f"  Warning: BCR columns missing for {param_name} at {param_value}: {missing_bcr}"
+                    )
 
                 result_row = {
                     "parameter_name": param_name,

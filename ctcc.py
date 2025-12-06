@@ -218,7 +218,7 @@ def main():
                 )
                 csv_manager.add_bcr_metrics(bcr_results)
                 csv_manager.write_batch_summary()
-                
+
                 if not args.simple:
                     print("✅ BCR metrics added to batch_summary.csv")
                 else:

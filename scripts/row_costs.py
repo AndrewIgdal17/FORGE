@@ -64,6 +64,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -211,20 +212,24 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": total_nominal_cost,
-        "total_afudc": acquisition_capitalized + total_holding_cost + total_rent_cost if (apply_afudc and not reconductoring) else 0,
+        "total_afudc": (
+            acquisition_capitalized + total_holding_cost + total_rent_cost
+            if (apply_afudc and not reconductoring)
+            else 0
+        ),
         "total_pv": total_pv_cost,
         "acquisition_nominal": acquisition_cost,
         "holding_nominal": total_holding_cost,
         "rent_nominal": total_rent_cost,
     }
-    
+
     # Write to CSV
     csv_manager.add_row_costs(results)
     csv_manager.write_batch_summary()

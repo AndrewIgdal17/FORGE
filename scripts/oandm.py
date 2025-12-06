@@ -298,6 +298,7 @@ def main():
         delay_years,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
     (
         total_miles,

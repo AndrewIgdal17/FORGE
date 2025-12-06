@@ -45,6 +45,7 @@ def calculate_total_energy_losses():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category locally
@@ -120,6 +121,7 @@ def calculate_total_energy_losses():
         line_utilization_percent,
         capacity_mw_numeric,
         ac_dc,
+        converter_loss_percentage,
     )
 
     # Total energy losses is the sum of line and converter losses
@@ -448,6 +450,7 @@ def main():
         delay_years,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Get number_of_converters if DC
