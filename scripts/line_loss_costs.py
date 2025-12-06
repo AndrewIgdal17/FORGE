@@ -25,13 +25,14 @@ from energy_losses import (
 )
 from financial_utils import calculate_present_value
 from yaml_loaders import load_financing_social_discount_rate
+from path_config import YAMLS_DIR
 
 
 def load_project_details():
     """Load project technical details with line_loss_costs specific fields."""
     import yaml
 
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
 
     construction_type = project_details["project"]["construction_type"]
@@ -545,7 +546,7 @@ def main():
         return
 
     # Load baseline configuration details
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
 
     old_capacity_mw = project_details["project"]["old_capacity_mw"]

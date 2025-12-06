@@ -15,13 +15,14 @@ from csv_output_manager import CTCCOutputManager
 # Local utility imports
 from yaml_loaders import load_delay_costs, load_financing_details
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR
 
 
 def load_project_technical_details():
     """
     Load project technical details and construct category identifier.
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
     delay_year = project_details["timeline"]["delay_years"]
     return delay_year

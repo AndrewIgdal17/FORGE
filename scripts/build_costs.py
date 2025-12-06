@@ -30,6 +30,7 @@ from financial_utils import (
     calculate_afudc_capitalized_cost,
 )
 from weighted_miles import calculate_weighted_miles
+from path_config import YAMLS_DIR
 
 
 def load_costs(
@@ -50,7 +51,7 @@ def load_costs(
                 converter_cost, conductor_cost_with_contingencies, structure_cost_with_contingencies,
                 converter_cost_with_contingencies, weighted_miles, average_terrain_multiplier)
     """
-    with open("../yamls/10_project_category_build_costs.yaml", "r") as file:
+    with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
         costs = yaml.load(file, Loader=yaml.FullLoader)[
             "project_categories_build_costs"
         ]
@@ -136,7 +137,7 @@ def main():
     # Determine number of converters
     if ac_dc == "DC":
         # Load from YAML to get number_of_converters
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
             pd = yaml.load(file, Loader=yaml.FullLoader)
         number_of_converters = pd["project"]["number_of_converters"]
     else:
@@ -166,7 +167,7 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 

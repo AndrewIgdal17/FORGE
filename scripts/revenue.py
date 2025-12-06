@@ -17,6 +17,7 @@ from csv_output_manager import CTCCOutputManager
 # Local utility imports
 from yaml_loaders import load_financing_details
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR, OUTPUTS_DIR
 
 
 def load_rate_based_revenue_parameters():
@@ -26,7 +27,7 @@ def load_rate_based_revenue_parameters():
     Returns:
         tuple: (enabled, allowed_return_rate)
     """
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_data = yaml.load(file, Loader=yaml.FullLoader)
     
     revenue_config = financing_data.get("financial", {}).get("revenue", {})
@@ -45,7 +46,7 @@ def load_project_technical_details():
     Returns:
         tuple: (delay_years, construction_years, project_lifetime)
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
     
     delay_years = project_details["timeline"]["delay_years"]
@@ -64,7 +65,7 @@ def get_capital_costs_pv():
     Returns:
         float: Capital costs PV, or 0 if not found
     """
-    batch_summary_path = "../outputs/batch_summary.csv"
+    batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
     
     if not os.path.exists(batch_summary_path):
         return 0

@@ -15,6 +15,7 @@ from calculation_utils import (
     calculate_line_losses,
     calculate_converter_losses,
 )
+from path_config import YAMLS_DIR
 
 
 def print_results(
@@ -110,7 +111,7 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
             pd = yaml.load(file, Loader=yaml.FullLoader)
         number_of_converters = pd["project"]["number_of_converters"]
     else:

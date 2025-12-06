@@ -5,9 +5,10 @@
 
 import csv
 import os
+from path_config import OUTPUTS_DIR
 
 
-def load_scenario_data(scenario_id, output_dir="../outputs"):
+def load_scenario_data(scenario_id, output_dir=str(OUTPUTS_DIR)):
     """
     Load scenario data from batch_summary.csv for the given scenario_id.
     Uses robust lookup: exact match, then partial match, then last row fallback.
@@ -430,7 +431,7 @@ def calculate_bcr_metrics(
 
 def calculate_and_display_bcr(
     scenario_id,
-    output_dir="../outputs",
+    output_dir=str(OUTPUTS_DIR),
     no_emissions=False,
     no_linelosses=False,
     capital_only=False,
@@ -884,7 +885,7 @@ if __name__ == "__main__":
         scenario_id = sys.argv[1]
     else:
         # Try to get the most recent scenario_id from batch_summary.csv
-        batch_path = "../outputs/batch_summary.csv"
+        batch_path = OUTPUTS_DIR / "batch_summary.csv"
         if os.path.exists(batch_path):
             with open(batch_path, "r") as f:
                 reader = csv.DictReader(f)

@@ -6,6 +6,7 @@ import pandas as pd
 import yaml
 import numpy as np
 import argparse
+from path_config import YAMLS_DIR
 
 
 def calculate_weighted_miles():
@@ -21,7 +22,7 @@ def calculate_weighted_miles():
     """
     # From yaml 02_project_physical_details.yaml, get the miles of the transmission line in each terrain type
     with open(
-        "../yamls/02_project_physical_details.yaml", "r"
+        YAMLS_DIR / "02_project_physical_details.yaml", "r"
     ) as project_physical_details_file:
         project_physical_details_df = yaml.load(
             project_physical_details_file, Loader=yaml.FullLoader

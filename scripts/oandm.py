@@ -20,6 +20,7 @@ from yaml_loaders import (
     load_circuit_and_resistance_details,
 )
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR
 
 
 def load_vegetation_management_om_costs(construction_type):
@@ -32,7 +33,7 @@ def load_vegetation_management_om_costs(construction_type):
     Returns:
         float: Variable vegetation management cost per mile per year
     """
-    with open("../yamls/12_project_om_vegetation_management.yaml", "r") as file:
+    with open(YAMLS_DIR / "12_project_om_vegetation_management.yaml", "r") as file:
         vegetation_management_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
             "vegetation_management_om_costs"
         ]
@@ -56,7 +57,7 @@ def load_conductor_om_costs(
     Returns:
         float: Variable conductor cost per mile per year
     """
-    with open("../yamls/13_category_om_conductors.yaml", "r") as file:
+    with open(YAMLS_DIR / "13_category_om_conductors.yaml", "r") as file:
         conductor_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
             "project_categories_om_conductors"
         ]
@@ -88,7 +89,7 @@ def load_converter_om_costs(
     Returns:
         float: Variable converter cost per mile per year (0 for AC projects)
     """
-    with open("../yamls/15_category_om_converters.yaml", "r") as file:
+    with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
         converter_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
             "project_categories_om_converters"
         ]
@@ -140,7 +141,7 @@ def load_structure_om_costs(
     # Initialize vegetation
     total_vegetation_management_cost_per_year = 0
 
-    with open("../yamls/14_category_om_structures.yaml", "r") as file:
+    with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
         structure_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
             "project_categories_om_structures"
         ]

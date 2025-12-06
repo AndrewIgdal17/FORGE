@@ -6,12 +6,13 @@ import csv
 import os
 import yaml
 from datetime import datetime
+from path_config import OUTPUTS_DIR
 
 
 class CTCCOutputManager:
     """Manages CSV outputs for CTCC batch analysis."""
 
-    def __init__(self, output_dir="../outputs", scenario_id=None):
+    def __init__(self, output_dir=str(OUTPUTS_DIR), scenario_id=None):
         """
         Initialize output manager.
 

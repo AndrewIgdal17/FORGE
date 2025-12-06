@@ -28,6 +28,7 @@ from financial_utils import (
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
 )
+from path_config import YAMLS_DIR
 
 
 def calculate_zone_costs(row_width_feet):
@@ -91,7 +92,7 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 

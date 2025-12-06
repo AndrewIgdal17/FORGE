@@ -14,9 +14,10 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from csv_output_manager import CTCCOutputManager
+from path_config import YAMLS_DIR
 
 # Get info from project technical details
-with open("../yamls/01_project_technical_details.yaml", "r") as file:
+with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
     project_details = yaml.load(file, Loader=yaml.FullLoader)
     construction_type = project_details["project"]["construction_type"]
     ac_dc = project_details["project"]["ac_dc"]
@@ -46,7 +47,7 @@ def load_project_technical_details():
     Returns:
         tuple: (category, delay_year, construction_years, project_lifetime, reconductoring)
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
         project_details = yaml.load(file, Loader=yaml.FullLoader)
 
     # Extract project specifications
@@ -84,7 +85,7 @@ def load_congestion_reductions():
                near_average_exceedance, near_binding_relief_factor, saturation_factor,
                average_congestion_price)
     """
-    with open("../yamls/17_congestion_reductions.yaml", "r") as file:
+    with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
         congestion_reductions = yaml.load(file, Loader=yaml.FullLoader)
         flow_factor = congestion_reductions["greenfield_congestion_reductions"][
             "constraints"
@@ -126,7 +127,7 @@ def load_congestion_reductions():
 
 
 def load_curtailment_reductions():
-    with open("../yamls/18_curtailment_reductions.yaml", "r") as f:
+    with open(YAMLS_DIR / "18_curtailment_reductions.yaml", "r") as f:
         y = yaml.load(f, Loader=yaml.FullLoader)["curtailment_reductions"]
 
     Hc_tot = float(y.get("curtailment_hours_total", 0))
@@ -143,7 +144,7 @@ def load_financing_details():
     Returns:
         tuple: (inflation_rate, base_year, wacc_nominal, wacc_real)
     """
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_data = yaml.load(file, Loader=yaml.FullLoader)
 
     inflation_rate = financing_data["financial"]["inflation_rate"]

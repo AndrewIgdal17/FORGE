@@ -24,6 +24,7 @@ from yaml_loaders import (
 from financial_utils import calculate_present_value
 from build_costs import load_costs
 from weighted_miles import calculate_weighted_miles
+from path_config import YAMLS_DIR
 
 
 def calculate_insurance_costs(
@@ -152,7 +153,7 @@ def main():
 
     # Determine number of converters
     if ac_dc == "DC":
-        with open("../yamls/01_project_technical_details.yaml", "r") as file:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
             pd = yaml.load(file, Loader=yaml.FullLoader)
         number_of_converters = pd["project"]["number_of_converters"]
     else:

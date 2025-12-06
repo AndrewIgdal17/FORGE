@@ -20,6 +20,7 @@ from yaml_loaders import (
     load_financing_details,
     load_outage_costs,
 )
+from path_config import YAMLS_DIR
 
 
 def get_discount_rate(outage_yaml, financing_yaml):
@@ -229,7 +230,7 @@ def main():
     )
 
     # Load terrain details
-    with open("../yamls/02_project_physical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
         physical_details = yaml.load(file, Loader=yaml.FullLoader)
     terrain_miles = physical_details["terrain"]["terrain_miles"]
 
@@ -237,7 +238,7 @@ def main():
     outage_yaml = load_outage_costs()
 
     # Load financing YAML for discount rate
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
 
     # Get discount rate

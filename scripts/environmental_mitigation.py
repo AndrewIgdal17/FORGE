@@ -28,6 +28,7 @@ from financial_utils import (
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
 )
+from path_config import YAMLS_DIR
 
 
 def calculate_environmental_mitigation_costs(
@@ -145,7 +146,7 @@ def main():
     row_width_feet = load_row_widths(category)
 
     # Load terrain details
-    with open("../yamls/02_project_physical_details.yaml", "r") as file:
+    with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
         physical_details = yaml.load(file, Loader=yaml.FullLoader)
     terrain_miles = physical_details["terrain"]["terrain_miles"]
 
@@ -165,7 +166,7 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open("../yamls/03_financing.yaml", "r") as file:
+    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
         financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 

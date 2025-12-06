@@ -2,7 +2,7 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S3_Interregional_Overhead_DC_1500MW_TEST1"
+  name: "S3_Interregional_Overhead_DC_1500MW_TEST2"
   construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
   ac_dc: "DC" # AC or DC
   number_of_converters: 2 # 1 or 2
