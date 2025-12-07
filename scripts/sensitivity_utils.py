@@ -91,13 +91,13 @@ def check_missing_bcr(
             missing_bcr.append(col)
             is_empty_dict[col] = True
         else:
-            val = results.get(col)
+            column_value = results.get(col)
             # Use pandas.isna for proper NaN/None/empty checking
             is_empty = (
-                val is None
-                or pd.isna(val)
-                or val == ""
-                or (isinstance(val, str) and val.strip() == "")
+                column_value is None
+                or pd.isna(column_value)
+                or column_value == ""
+                or (isinstance(column_value, str) and column_value.strip() == "")
             )
             if is_empty:
                 missing_bcr.append(col)

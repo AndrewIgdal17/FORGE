@@ -173,20 +173,22 @@ def main() -> None:
         # Load from YAML to get number_of_converters
         try:
             with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                pd = yaml.safe_load(file)
-            if not pd:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
                 raise ValueError(
                     "Project technical details YAML file is empty or invalid"
                 )
-            if "project" not in pd:
+            if "project" not in project_details_data:
                 raise KeyError(
                     "Missing 'project' key in project technical details YAML file"
                 )
-            if "number_of_converters" not in pd["project"]:
+            if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
                     "Missing 'number_of_converters' key in project section of technical details YAML"
                 )
-            number_of_converters = pd["project"]["number_of_converters"]
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"

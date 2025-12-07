@@ -106,24 +106,24 @@ def calculate_wildfire_costs(
             f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
         )
 
-    cfg = wildfire_yaml["wildfire"]
-    severity = cfg["severity_per_event"]
-    growth_rate = cfg["risk_growth_rate"]
-    ignition_rates_by_terrain = cfg["ignition_rates_by_terrain"]
-    ignition_rate_multiplier = cfg["ignition_rate_multiplier"]
+    wildfire_config = wildfire_yaml["wildfire"]
+    severity = wildfire_config["severity_per_event"]
+    growth_rate = wildfire_config["risk_growth_rate"]
+    ignition_rates_by_terrain = wildfire_config["ignition_rates_by_terrain"]
+    ignition_rate_multiplier = wildfire_config["ignition_rate_multiplier"]
 
     # Map construction type to YAML keys
     # Handle full names like "Underground direct-buried", "Underground Tunnel", etc.
     construction_type_lower = construction_type.lower()
     if "underground" in construction_type_lower:
-        yaml_ct = "underground"
+        yaml_construction_type = "underground"
     elif "subsea" in construction_type_lower:
-        yaml_ct = "subsea"
+        yaml_construction_type = "subsea"
     else:
-        yaml_ct = "overhead"  # Default to overhead
+        yaml_construction_type = "overhead"  # Default to overhead
 
     # Get construction type multiplier
-    construction_multiplier = ignition_rate_multiplier.get(yaml_ct, 1.0)
+    construction_multiplier = ignition_rate_multiplier.get(yaml_construction_type, 1.0)
 
     # Step 1 & 2: Calculate segment-specific and total event rates
     # Using multiplicative model: effective_rate = base_rate × construction_multiplier

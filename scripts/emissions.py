@@ -63,20 +63,22 @@ def calculate_total_energy_losses() -> Tuple[float, int]:
 
         try:
             with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                pd = yaml.safe_load(file)
-            if not pd:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
                 raise ValueError(
                     "Project technical details YAML file is empty or invalid"
                 )
-            if "project" not in pd:
+            if "project" not in project_details_data:
                 raise KeyError(
                     "Missing 'project' key in project technical details YAML file"
                 )
-            if "number_of_converters" not in pd["project"]:
+            if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
                     "Missing 'number_of_converters' key in project section of technical details YAML"
                 )
-            number_of_converters = pd["project"]["number_of_converters"]
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
@@ -218,7 +220,7 @@ def calculate_energy_mix_by_year(
 
 
 def calculate_emissions_by_year(
-    tec: float,
+    total_energy_compensated_mwh: float,
     energy_mix: Dict[str, float],
     emission_intensities: Dict[str, Any],
 ) -> Dict[str, float]:
@@ -226,7 +228,7 @@ def calculate_emissions_by_year(
     Calculate emissions for a single year.
 
     Args:
-        tec: Total energy compensated in MWh
+        total_energy_compensated_mwh: Total energy compensated in MWh
         energy_mix: Dictionary of energy source percentages for the year
         emission_intensities: Dictionary of emission intensities by pollutant and source
 
@@ -262,7 +264,7 @@ def calculate_emissions_by_year(
         for source in sources:
             p_j = energy_mix.get(source, 0.0)
             I_jk = intensity_dict.get(source, 0.0)
-            emissions[pollutant] += tec * p_j * I_jk
+            emissions[pollutant] += total_energy_compensated_mwh * p_j * I_jk
 
     return emissions
 
@@ -300,7 +302,7 @@ def calculate_lifetime_emissions(
     start_year = int(delay_years) + int(construction_years) + 1
 
     # Calculate TEC (Total Energy Compensated)
-    tec = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
 
     # Calculate energy mix for each year
     energy_mix_by_year = calculate_energy_mix_by_year(
@@ -318,7 +320,9 @@ def calculate_lifetime_emissions(
     lifetime_cost_pv = 0.0
 
     for year, energy_mix in enumerate(energy_mix_by_year, 1):
-        emissions = calculate_emissions_by_year(tec, energy_mix, emission_intensities)
+        emissions = calculate_emissions_by_year(
+            total_energy_compensated_mwh, energy_mix, emission_intensities
+        )
         yearly_emissions.append(emissions)
 
         # Calculate costs for this year: C_k = E_k × c_k
@@ -384,7 +388,7 @@ def print_emissions_results(
     lifetime_cost_pv: float,
     total_costs_by_pollutant_pv: Dict[str, float],
     total_losses_mwh_per_year: float,
-    tec: float,
+    total_energy_compensated_mwh: float,
 ) -> None:
     """Print organized emissions results."""
     # Compensation Configuration
@@ -393,7 +397,7 @@ def print_emissions_results(
     print("=" * 60)
     print(f"Compensation percentage (α): {compensation_percent:.1%}")
     print(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
-    print(f"Total energy compensated (TEC): {tec:,.2f} MWh/yr")
+    print(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
     print()
 
     # Energy Source Mix - Initial
@@ -502,20 +506,22 @@ def main() -> None:
 
         try:
             with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                pd = yaml.safe_load(file)
-            if not pd:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
                 raise ValueError(
                     "Project technical details YAML file is empty or invalid"
                 )
-            if "project" not in pd:
+            if "project" not in project_details_data:
                 raise KeyError(
                     "Missing 'project' key in project technical details YAML file"
                 )
-            if "number_of_converters" not in pd["project"]:
+            if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
                     "Missing 'number_of_converters' key in project section of technical details YAML"
                 )
-            number_of_converters = pd["project"]["number_of_converters"]
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
@@ -558,7 +564,7 @@ def main() -> None:
     )
 
     # Calculate TEC for display
-    tec = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
 
     # Print results
     print_emissions_results(
@@ -574,7 +580,7 @@ def main() -> None:
         lifetime_cost_pv,
         total_costs_by_pollutant_pv,
         total_losses_mwh_per_year,
-        tec,
+        total_energy_compensated_mwh,
     )
 
     # ========================================================================

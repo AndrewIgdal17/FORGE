@@ -66,8 +66,8 @@ def load_project_technical_details() -> (
             raise KeyError(
                 "Missing 'timeline' key in project technical details YAML file"
             )
-        pd = project_details["project"]
-        tl = project_details["timeline"]
+        project_data = project_details["project"]
+        timeline_data = project_details["timeline"]
         required_project_keys = [
             "construction_type",
             "ac_dc",
@@ -77,7 +77,7 @@ def load_project_technical_details() -> (
             "reconductoring",
         ]
         for key in required_project_keys:
-            if key not in pd:
+            if key not in project_data:
                 raise KeyError(
                     f"Missing '{key}' key in project section of technical details YAML"
                 )
@@ -87,17 +87,19 @@ def load_project_technical_details() -> (
             "project_lifetime",
         ]
         for key in required_timeline_keys:
-            if key not in tl:
+            if key not in timeline_data:
                 raise KeyError(
                     f"Missing '{key}' key in timeline section of technical details YAML"
                 )
-        construction_type = pd["construction_type"]
-        ac_dc = pd["ac_dc"]
-        capacity_mw = pd["capacity_mw"]
-        conductor_type = pd["conductor_type"]
-        converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
+        construction_type = project_data["construction_type"]
+        ac_dc = project_data["ac_dc"]
+        capacity_mw = project_data["capacity_mw"]
+        conductor_type = project_data["conductor_type"]
+        converter_type = "NA" if ac_dc == "AC" else project_data["converter_type"]
         converter_loss_percentage = (
-            None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
+            None
+            if ac_dc == "AC"
+            else project_data.get("converter_loss_percentage", None)
         )
         return (
             construction_type,
@@ -105,11 +107,11 @@ def load_project_technical_details() -> (
             capacity_mw,
             conductor_type,
             converter_type,
-            pd["line_utilization"],
-            pd["reconductoring"],
-            tl["delay_years"],
-            tl["construction_years"],
-            tl["project_lifetime"],
+            project_data["line_utilization"],
+            project_data["reconductoring"],
+            timeline_data["delay_years"],
+            timeline_data["construction_years"],
+            timeline_data["project_lifetime"],
             converter_loss_percentage,
         )
     except FileNotFoundError:
@@ -165,8 +167,10 @@ def load_circuit_and_resistance_details(
             raise KeyError(
                 "Missing 'project_categories_circuit_and_resistance_details' key in YAML file"
             )
-        crd = data["project_categories_circuit_and_resistance_details"]
-        if category not in crd:
+        circuit_resistance_details = data[
+            "project_categories_circuit_and_resistance_details"
+        ]
+        if category not in circuit_resistance_details:
             raise KeyError(
                 f"Category '{category}' not found in circuit and resistance details YAML"
             )
@@ -179,17 +183,17 @@ def load_circuit_and_resistance_details(
             "DC_20_resistance",
         ]
         for key in required_keys:
-            if key not in crd[category]:
+            if key not in circuit_resistance_details[category]:
                 raise KeyError(
                     f"Missing '{key}' key for category '{category}' in circuit and resistance details YAML"
                 )
         return (
-            crd[category]["voltage_kv"],
-            crd[category]["conductors_per_phase"],
-            crd[category]["number_of_phases"],
-            crd[category]["number_of_circuits_poles"],
-            crd[category]["AC_75_resistance"],
-            crd[category]["DC_20_resistance"],
+            circuit_resistance_details[category]["voltage_kv"],
+            circuit_resistance_details[category]["conductors_per_phase"],
+            circuit_resistance_details[category]["number_of_phases"],
+            circuit_resistance_details[category]["number_of_circuits_poles"],
+            circuit_resistance_details[category]["AC_75_resistance"],
+            circuit_resistance_details[category]["DC_20_resistance"],
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -277,7 +281,7 @@ def load_emissions_details() -> (
             raise ValueError("Emissions reductions YAML file is empty or invalid")
         if "emissions_reductions" not in data:
             raise KeyError("Missing 'emissions_reductions' key in YAML file")
-        erd = data["emissions_reductions"]
+        emissions_reductions_data = data["emissions_reductions"]
         required_keys = [
             "compensation_percent",
             "energy_source_mix",
@@ -285,15 +289,15 @@ def load_emissions_details() -> (
             "societal_costs_per_kg",
         ]
         for key in required_keys:
-            if key not in erd:
+            if key not in emissions_reductions_data:
                 raise KeyError(
                     f"Missing '{key}' key in emissions_reductions section of YAML"
                 )
         return (
-            erd["compensation_percent"],
-            erd["energy_source_mix"],
-            erd["emission_intensities"],
-            erd["societal_costs_per_kg"],
+            emissions_reductions_data["compensation_percent"],
+            emissions_reductions_data["energy_source_mix"],
+            emissions_reductions_data["emission_intensities"],
+            emissions_reductions_data["societal_costs_per_kg"],
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -318,17 +322,17 @@ def load_congestion_reductions() -> (
             raise KeyError(
                 "Missing 'greenfield_congestion_reductions' key in YAML file"
             )
-        cr = data["greenfield_congestion_reductions"]
-        if "constraints" not in cr:
+        congestion_reductions_data = data["greenfield_congestion_reductions"]
+        if "constraints" not in congestion_reductions_data:
             raise KeyError(
                 "Missing 'constraints' key in greenfield_congestion_reductions section"
             )
-        if "costs" not in cr:
+        if "costs" not in congestion_reductions_data:
             raise KeyError(
                 "Missing 'costs' key in greenfield_congestion_reductions section"
             )
-        constraints = cr["constraints"]
-        costs = cr["costs"]
+        constraints = congestion_reductions_data["constraints"]
+        costs = congestion_reductions_data["costs"]
         required_constraint_keys = [
             "flow_factor",
             "binding_hours",
@@ -376,12 +380,12 @@ def load_curtailment_reductions() -> Tuple[float, float, float, float]:
             raise ValueError("Curtailment reductions YAML file is empty or invalid")
         if "curtailment_reductions" not in data:
             raise KeyError("Missing 'curtailment_reductions' key in YAML file")
-        y = data["curtailment_reductions"]
+        curtailment_reductions_data = data["curtailment_reductions"]
         return (
-            float(y.get("curtailment_hours_total", 0)),
-            float(y.get("average_curtailment_mw", 0)),
-            float(y.get("average_curtailment_price", 0)),
-            float(y.get("curtailment_saturation_factor", 0)),
+            float(curtailment_reductions_data.get("curtailment_hours_total", 0)),
+            float(curtailment_reductions_data.get("average_curtailment_mw", 0)),
+            float(curtailment_reductions_data.get("average_curtailment_price", 0)),
+            float(curtailment_reductions_data.get("curtailment_saturation_factor", 0)),
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -519,12 +523,12 @@ def load_afudc_config() -> Tuple[bool, bool]:
     """Load AFUDC configuration from financing YAML."""
     try:
         with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            fin = yaml.safe_load(file)
-        if not fin:
+            financing_data = yaml.safe_load(file)
+        if not financing_data:
             raise ValueError("Financing YAML file is empty or invalid")
-        if "financial" not in fin:
+        if "financial" not in financing_data:
             raise KeyError("Missing 'financial' key in financing YAML file")
-        afudc_cfg = fin["financial"].get("afudc", {})
+        afudc_cfg = financing_data["financial"].get("afudc", {})
         return (
             afudc_cfg.get("apply_afudc", False),
             afudc_cfg.get("delay_period_active_work", False),

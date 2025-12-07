@@ -136,21 +136,23 @@ def calculate_outage_costs(
             f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
         )
 
-    cfg = outage_yaml["outage"]
-    growth_rate = cfg["risk_growth_rate"]
-    capacity_at_risk = cfg["capacity_at_risk_factor"]
-    voll_tiers = cfg["value_of_lost_load"]["tiers"]
-    duration_by_terrain = cfg["outage_duration_by_terrain"]
-    duration_multiplier = cfg["outage_duration_multiplier"]
-    outage_rates = cfg["outage_rates"]
+    outage_config = outage_yaml["outage"]
+    growth_rate = outage_config["risk_growth_rate"]
+    capacity_at_risk = outage_config["capacity_at_risk_factor"]
+    voll_tiers = outage_config["value_of_lost_load"]["tiers"]
+    duration_by_terrain = outage_config["outage_duration_by_terrain"]
+    duration_multiplier = outage_config["outage_duration_multiplier"]
+    outage_rates = outage_config["outage_rates"]
 
     # Map construction type to YAML keys
-    ct_map = {
+    construction_type_map = {
         "overhead": "overhead",
         "underground": "underground",
         "subsea": "subsea",
     }
-    yaml_ct = ct_map.get(construction_type.lower(), "overhead")
+    yaml_construction_type = construction_type_map.get(
+        construction_type.lower(), "overhead"
+    )
 
     # Calculate outages and costs by terrain
     outage_by_terrain = {}
@@ -160,12 +162,12 @@ def calculate_outage_costs(
     for terrain, miles in terrain_miles.items():
         if miles > 0:
             # Step 1: Outages per year for this terrain
-            outage_rate = outage_rates[yaml_ct].get(terrain, 0.0)
+            outage_rate = outage_rates[yaml_construction_type].get(terrain, 0.0)
             lambda_segment = miles * outage_rate
 
             # Step 2: Effective duration (multiplicative model)
             H_base = duration_by_terrain.get(terrain, 0)
-            duration_mult = duration_multiplier.get(yaml_ct, 1.0)
+            duration_mult = duration_multiplier.get(yaml_construction_type, 1.0)
             H_eff = H_base * duration_mult
 
             # Step 3: MW lost per event

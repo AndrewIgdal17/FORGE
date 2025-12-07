@@ -199,12 +199,18 @@ def load_curtailment_reductions() -> Tuple[float, float, float, float]:
             raise ValueError("Curtailment reductions YAML file is empty or invalid")
         if "curtailment_reductions" not in data:
             raise KeyError("Missing 'curtailment_reductions' key in YAML file")
-        y = data["curtailment_reductions"]
+        curtailment_reductions_data = data["curtailment_reductions"]
 
-        Hc_tot = float(y.get("curtailment_hours_total", 0))
-        avg_curt_mw = float(y.get("average_curtailment_mw", 0))
-        avg_curt_price = float(y.get("average_curtailment_price", 0))
-        curtailment_saturation_factor = float(y.get("curtailment_saturation_factor", 0))
+        Hc_tot = float(curtailment_reductions_data.get("curtailment_hours_total", 0))
+        avg_curt_mw = float(
+            curtailment_reductions_data.get("average_curtailment_mw", 0)
+        )
+        avg_curt_price = float(
+            curtailment_reductions_data.get("average_curtailment_price", 0)
+        )
+        curtailment_saturation_factor = float(
+            curtailment_reductions_data.get("curtailment_saturation_factor", 0)
+        )
         return Hc_tot, avg_curt_mw, avg_curt_price, curtailment_saturation_factor
     except FileNotFoundError:
         raise FileNotFoundError(

@@ -55,22 +55,22 @@ def calculate_environmental_mitigation_costs(
         dict: Contains base_cost, wetlands_credits, habitat_credits,
               total, uplift_factor_applied, total_acres, effective_acres
     """
-    cfg = em_yaml["environmental_mitigation"]
-    base_costs = cfg["base_mitigation_cost_per_acre"]
-    credits = cfg.get("credit_cost_per_acre", {})
-    ratios = cfg.get("credit_ratios", {})
-    uplift_factor = cfg.get("mitigation_uplift_factor", 1.0)
+    mitigation_config = em_yaml["environmental_mitigation"]
+    base_costs = mitigation_config["base_mitigation_cost_per_acre"]
+    credits = mitigation_config.get("credit_cost_per_acre", {})
+    ratios = mitigation_config.get("credit_ratios", {})
+    uplift_factor = mitigation_config.get("mitigation_uplift_factor", 1.0)
 
     # Determine construction type from category
     construction_type = category.split("/")[0]  # e.g., "overhead", "underground"
 
     # Map construction_type to YAML keys
-    ct_map = {
+    construction_type_map = {
         "overhead": "overhead",
         "underground": "underground_direct_buried",  # default to direct_buried
         "subsea": "subsea",
     }
-    yaml_ct = ct_map.get(construction_type, "overhead")
+    yaml_construction_type = construction_type_map.get(construction_type, "overhead")
 
     # Calculate base acreage by terrain (before uplift)
     total_base_acres = 0.0
@@ -88,7 +88,7 @@ def calculate_environmental_mitigation_costs(
             effective_acres = terrain_acres * uplift_factor
 
             # Get cost per acre for this construction type and terrain
-            cost_per_acre = base_costs.get(yaml_ct, {}).get(terrain, 0.0)
+            cost_per_acre = base_costs.get(yaml_construction_type, {}).get(terrain, 0.0)
             base_cost += cost_per_acre * effective_acres
 
     # Calculate total effective acres (with uplift)
