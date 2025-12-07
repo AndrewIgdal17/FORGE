@@ -48,7 +48,44 @@ def load_project_details() -> Tuple[
     Optional[int],
     Optional[str],
 ]:
-    """Load project technical details with line_loss_costs specific fields."""
+    """
+    Load project technical details with line_loss_costs specific fields.
+
+    This function loads comprehensive project details from the technical details YAML file,
+    including both standard project specifications and optional fields used for line loss
+    cost calculations (such as greenfield comparison parameters).
+
+    Args:
+        None (reads from YAML file)
+
+    Returns:
+        tuple: A 15-element tuple containing:
+            - construction_type: Type of construction (e.g., "Overhead", "Subsea")
+            - ac_dc: "AC" or "DC" designation
+            - capacity_mw: Line capacity in MW
+            - conductor_type: Type of conductor used
+            - number_of_converters: Number of converter stations (DC projects only, else 0)
+            - converter_type: Converter type (for DC projects) or "NA" for AC
+            - line_utilization_percent: Line utilization as decimal (0-1)
+            - baseline_electricity_price: Baseline electricity price in $/MWh
+            - social_discount_rate: Social discount rate for present value calculations
+            - reconductoring: True if reconductoring project, False for greenfield
+            - delay_years: Number of years of project delay
+            - construction_years: Number of years of construction
+            - project_lifetime: Project operational lifetime in years
+            - greenfield_comparison_capacity_mw: Optional comparison capacity for greenfield projects
+            - greenfield_comparison_conductor_type: Optional comparison conductor type for greenfield projects
+
+    Raises:
+        FileNotFoundError: When project technical details YAML is not found
+        ValueError: When YAML file is empty or invalid
+        KeyError: When required keys are missing from the YAML structure
+
+    Note:
+        The last two tuple elements (greenfield_comparison_*) are optional and may be None
+        if not specified in the YAML file. These are used for comparing different greenfield
+        configurations in line loss cost calculations.
+    """
     import yaml
 
     try:
@@ -116,9 +153,9 @@ def load_project_details() -> Tuple[
         baseline_electricity_price,
         social_discount_rate,
         reconductoring,
-        project_lifetime,
         delay_years,
         construction_years,
+        project_lifetime,
         greenfield_comparison_capacity_mw,
         greenfield_comparison_conductor_type,
     )

@@ -36,7 +36,32 @@ from path_config import YAMLS_DIR
 
 
 def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, float]:
-    """Calculate ROW costs for each zone where the transmission line passes."""
+    """
+    Calculate right-of-way (ROW) costs aggregated across all zones.
+
+    This function calculates ROW costs by iterating through all zones defined in the
+    ROW details YAML file. For each zone where the transmission line passes (miles > 0),
+    it calculates the zone area in acres and multiplies by zone-specific cost rates
+    for acquisition, annual rent, and annual holding costs.
+
+    Zones represent different geographic or regulatory areas (e.g., urban, rural, protected)
+    that may have different ROW cost structures. The function aggregates costs across
+    all zones to get total project ROW costs.
+
+    Args:
+        row_width_feet: Width of the right-of-way in feet (used to calculate zone area)
+
+    Returns:
+        tuple: A 4-element tuple containing:
+            - yearly_holding_cost: Total annual holding cost across all zones ($/yr)
+            - acquisition_cost: Total one-time acquisition cost across all zones ($)
+            - yearly_rent_cost: Total annual rental cost across all zones ($/yr)
+            - total_acres: Total ROW area in acres across all zones
+
+    Note:
+        Zone area is calculated as: (miles * 5280 * row_width_feet) / 43560
+        Only zones with miles > 0 are included in the calculation.
+    """
     row_details = load_row_details()
     yearly_holding_cost = acquisition_cost = yearly_rent_cost = 0
 

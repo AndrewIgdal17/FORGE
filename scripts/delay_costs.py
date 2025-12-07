@@ -22,7 +22,22 @@ from path_config import YAMLS_DIR
 
 def load_project_technical_details() -> float:
     """
-    Load project technical details and construct category identifier.
+    Load delay years from project technical details YAML file.
+
+    This is a simplified loader that extracts only the delay_years value from the
+    project technical details YAML file, as this is the only field needed for
+    delay cost calculations.
+
+    Args:
+        None (reads from YAML file)
+
+    Returns:
+        float: Number of years of project delay before construction begins
+
+    Raises:
+        FileNotFoundError: When project technical details YAML is not found
+        ValueError: When YAML file is empty or invalid
+        KeyError: When required keys ("timeline", "delay_years") are missing
     """
     try:
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
