@@ -2,17 +2,22 @@
 # Date: 2025-10-29
 # Description: CSV output manager for CTCC batch analysis, sensitivity studies, and Monte Carlo simulations.
 
+from __future__ import annotations
+
 import csv
 import os
 import yaml
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 from path_config import OUTPUTS_DIR
 
 
 class CTCCOutputManager:
     """Manages CSV outputs for CTCC batch analysis."""
 
-    def __init__(self, output_dir=str(OUTPUTS_DIR), scenario_id=None):
+    def __init__(
+        self, output_dir: str = str(OUTPUTS_DIR), scenario_id: Optional[str] = None
+    ) -> None:
         """
         Initialize output manager.
 
@@ -43,11 +48,11 @@ class CTCCOutputManager:
             "timestamp": self.timestamp,
         }
 
-    def ensure_output_dirs(self):
+    def ensure_output_dirs(self) -> None:
         """Create output directory if it doesn't exist."""
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def load_technical_details(self):
+    def load_technical_details(self) -> Dict[str, Any]:
         """
         Load technical parameters from YAML files to include in CSV outputs.
 
@@ -62,18 +67,47 @@ class CTCCOutputManager:
 
             # Load project technical details
             tech_yaml_path = os.path.join(yaml_dir, "01_project_technical_details.yaml")
-            with open(tech_yaml_path, "r") as file:
-                tech_data = yaml.load(file, Loader=yaml.FullLoader)
+            try:
+                with open(tech_yaml_path, "r") as file:
+                    tech_data = yaml.safe_load(file)
+                if not tech_data:
+                    raise ValueError(
+                        "Project technical details YAML file is empty or invalid"
+                    )
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Project technical details YAML not found at {tech_yaml_path}"
+                )
+            except yaml.YAMLError as e:
+                raise ValueError(f"Error parsing project technical details YAML: {e}")
 
             # Load physical details for total line length
             phys_yaml_path = os.path.join(yaml_dir, "02_project_physical_details.yaml")
-            with open(phys_yaml_path, "r") as file:
-                physical_data = yaml.load(file, Loader=yaml.FullLoader)
+            try:
+                with open(phys_yaml_path, "r") as file:
+                    physical_data = yaml.safe_load(file)
+                if not physical_data:
+                    raise ValueError("Physical details YAML file is empty or invalid")
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Physical details YAML not found at {phys_yaml_path}"
+                )
+            except yaml.YAMLError as e:
+                raise ValueError(f"Error parsing physical details YAML: {e}")
 
             # Load financing details for social discount rate
             financing_yaml_path = os.path.join(yaml_dir, "03_financing.yaml")
-            with open(financing_yaml_path, "r") as file:
-                financing_data = yaml.load(file, Loader=yaml.FullLoader)
+            try:
+                with open(financing_yaml_path, "r") as file:
+                    financing_data = yaml.safe_load(file)
+                if not financing_data:
+                    raise ValueError("Financing YAML file is empty or invalid")
+            except FileNotFoundError:
+                raise FileNotFoundError(
+                    f"Financing YAML not found at {financing_yaml_path}"
+                )
+            except yaml.YAMLError as e:
+                raise ValueError(f"Error parsing financing YAML: {e}")
 
             # Calculate total line length
             terrain_miles = physical_data.get("terrain", {}).get("terrain_miles", {})
@@ -136,7 +170,7 @@ class CTCCOutputManager:
             print(f"Warning: Could not load technical details: {e}")
             return {}
 
-    def append_to_batch_summary(self, data_dict):
+    def append_to_batch_summary(self, data_dict: Dict[str, Any]) -> None:
         """
         Add data to the batch summary dictionary.
 
@@ -145,7 +179,7 @@ class CTCCOutputManager:
         """
         self.batch_summary_data.update(data_dict)
 
-    def write_batch_summary(self):
+    def write_batch_summary(self) -> None:
         """Write or update the batch summary to CSV."""
         batch_path = os.path.join(self.output_dir, "batch_summary.csv")
         file_exists = os.path.exists(batch_path)
@@ -196,8 +230,12 @@ class CTCCOutputManager:
         print(f"\n✅ Batch summary updated: {batch_path}")
 
     def write_module_csv(
-        self, module_name, detail_rows=None, summary_row=None, append=True
-    ):
+        self,
+        module_name: str,
+        detail_rows: Optional[List[Dict[str, Any]]] = None,
+        summary_row: Optional[Dict[str, Any]] = None,
+        append: bool = True,
+    ) -> None:
         """
         Write module-specific CSV with optional detail and summary rows.
         Technical parameters are automatically added to each row.
@@ -275,18 +313,18 @@ class CTCCOutputManager:
 
     def add_project_params(
         self,
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        total_miles,
-        weighted_miles,
-        terrain_multiplier,
-        delay_years,
-        construction_years,
-        project_lifetime,
-    ):
+        construction_type: str,
+        ac_dc: str,
+        capacity_mw: int,
+        conductor_type: str,
+        converter_type: str,
+        total_miles: float,
+        weighted_miles: float,
+        terrain_multiplier: float,
+        delay_years: float,
+        construction_years: int,
+        project_lifetime: int,
+    ) -> None:
         """Add project parameters to batch summary."""
         self.append_to_batch_summary(
             {
@@ -305,8 +343,13 @@ class CTCCOutputManager:
         )
 
     def add_financial_params(
-        self, wacc_nominal, wacc_real, social_discount_rate, inflation_rate, afudc_rate
-    ):
+        self,
+        wacc_nominal: float,
+        wacc_real: float,
+        social_discount_rate: float,
+        inflation_rate: float,
+        afudc_rate: float,
+    ) -> None:
         """Add financial parameters to batch summary."""
         self.append_to_batch_summary(
             {
@@ -318,7 +361,7 @@ class CTCCOutputManager:
             }
         )
 
-    def add_build_costs(self, results):
+    def add_build_costs(self, results: Dict[str, float]) -> None:
         """Add build cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -347,7 +390,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("build_costs", summary_row=summary_row)
 
-    def add_row_costs(self, results):
+    def add_row_costs(self, results: Dict[str, float]) -> None:
         """Add ROW cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -373,7 +416,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("row_costs", summary_row=summary_row)
 
-    def add_environmental_mitigation(self, results):
+    def add_environmental_mitigation(self, results: Dict[str, float]) -> None:
         """Add environmental mitigation results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -397,7 +440,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("environmental_mitigation", summary_row=summary_row)
 
-    def add_delay_costs(self, results):
+    def add_delay_costs(self, results: Dict[str, float]) -> None:
         """Add delay cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -417,7 +460,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
-    def add_revenue(self, results):
+    def add_revenue(self, results: Dict[str, float]) -> None:
         """Add revenue calculation results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -441,7 +484,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("revenue", summary_row=summary_row)
 
-    def add_insurance_costs(self, results):
+    def add_insurance_costs(self, results: Dict[str, float]) -> None:
         """Add operational insurance cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -463,7 +506,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("insurance_costs", summary_row=summary_row)
 
-    def add_wildfire_liability_costs(self, results):
+    def add_wildfire_liability_costs(self, results: Dict[str, float]) -> None:
         """Add wildfire liability insurance cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -485,7 +528,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("insurance_costs", summary_row=summary_row)
 
-    def add_wildfire_costs(self, results):
+    def add_wildfire_costs(self, results: Dict[str, Any]) -> None:
         """Add wildfire cost results to batch summary and detail CSV."""
         self.append_to_batch_summary(
             {
@@ -536,7 +579,7 @@ class CTCCOutputManager:
             "wildfire_costs", detail_rows=detail_rows, summary_row=summary_row
         )
 
-    def add_outage_costs(self, results):
+    def add_outage_costs(self, results: Dict[str, Any]) -> None:
         """Add outage cost results to batch summary and detail CSV."""
         self.append_to_batch_summary(
             {
@@ -589,7 +632,7 @@ class CTCCOutputManager:
             "outage_costs", detail_rows=detail_rows, summary_row=summary_row
         )
 
-    def add_oandm_costs(self, results):
+    def add_oandm_costs(self, results: Dict[str, float]) -> None:
         """Add O&M cost results to batch summary and detail CSV."""
         self.append_to_batch_summary(
             {
@@ -627,7 +670,7 @@ class CTCCOutputManager:
             "oandm_costs", detail_rows=detail_rows, summary_row=summary_row
         )
 
-    def add_emissions_costs(self, results):
+    def add_emissions_costs(self, results: Dict[str, float]) -> None:
         """Add emissions cost results to batch summary and detail CSV."""
         self.append_to_batch_summary(
             {
@@ -665,7 +708,7 @@ class CTCCOutputManager:
             "emissions_costs", detail_rows=detail_rows, summary_row=summary_row
         )
 
-    def add_line_loss_costs(self, results):
+    def add_line_loss_costs(self, results: Dict[str, float]) -> None:
         """Add line loss cost results to batch summary."""
         self.append_to_batch_summary(
             {
@@ -685,7 +728,7 @@ class CTCCOutputManager:
         }
         self.write_module_csv("line_loss_costs", summary_row=summary_row)
 
-    def add_congestion_curtailment(self, results):
+    def add_congestion_curtailment(self, results: Dict[str, float]) -> None:
         """
         Add congestion and curtailment benefits and costs to batch summary.
 
@@ -863,7 +906,7 @@ class CTCCOutputManager:
             summary_row=summary_row,
         )
 
-    def calculate_grand_totals(self):
+    def calculate_grand_totals(self) -> None:
         """Calculate grand totals and add to batch summary."""
         # Capital costs (have AFUDC)
         capital_nominal = sum(
@@ -972,7 +1015,7 @@ class CTCCOutputManager:
             }
         )
 
-    def add_bcr_metrics(self, bcr_results):
+    def add_bcr_metrics(self, bcr_results: Dict[str, float]) -> None:
         """
         Add benefit-cost ratio metrics to batch summary.
 

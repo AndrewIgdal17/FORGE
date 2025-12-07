@@ -4,9 +4,12 @@
 # 1. Delays and long construction times slowing the deployment of new renewable energy capacity
 # 2. Line losses being compensated for by generators (i.e. they have to burn more fuel to make up for losses)
 
+from __future__ import annotations
+
 # Standard library imports
 import sys
 import os
+from typing import Dict, Any, List, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +30,7 @@ from financial_utils import calculate_present_value
 from path_config import YAMLS_DIR
 
 
-def calculate_total_energy_losses():
+def calculate_total_energy_losses() -> Tuple[float, int]:
     """
     Calculate total energy losses by reusing energy_losses functions.
 
@@ -58,9 +61,32 @@ def calculate_total_energy_losses():
     if ac_dc == "DC":
         import yaml
 
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                pd = yaml.safe_load(file)
+            if not pd:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in pd:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in pd["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = pd["project"]["number_of_converters"]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -131,7 +157,9 @@ def calculate_total_energy_losses():
     return total_losses_mwh_per_year, project_lifetime
 
 
-def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
+def calculate_energy_mix_by_year(
+    energy_source_mix_details: Dict[str, Any], project_lifetime: int
+) -> List[Dict[str, float]]:
     """
     Calculate energy mix for each year with growth/decay rates.
 
@@ -189,7 +217,11 @@ def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
     return energy_mix_by_year
 
 
-def calculate_emissions_by_year(tec, energy_mix, emission_intensities):
+def calculate_emissions_by_year(
+    tec: float,
+    energy_mix: Dict[str, float],
+    emission_intensities: Dict[str, Any],
+) -> Dict[str, float]:
     """
     Calculate emissions for a single year.
 
@@ -236,16 +268,26 @@ def calculate_emissions_by_year(tec, energy_mix, emission_intensities):
 
 
 def calculate_lifetime_emissions(
-    total_losses_mwh_per_year,
-    compensation_percent,
-    energy_source_mix_details,
-    emission_intensities,
-    societal_costs,
-    project_lifetime,
-    social_discount_rate,
-    delay_years,
-    construction_years,
-):
+    total_losses_mwh_per_year: float,
+    compensation_percent: float,
+    energy_source_mix_details: Dict[str, Any],
+    emission_intensities: Dict[str, Any],
+    societal_costs: Dict[str, float],
+    project_lifetime: int,
+    social_discount_rate: float,
+    delay_years: float,
+    construction_years: int,
+) -> Tuple[
+    List[Dict[str, float]],
+    Dict[str, float],
+    Dict[str, float],
+    float,
+    Dict[str, float],
+    Dict[str, float],
+    float,
+    float,
+    Dict[str, float],
+]:
     """
     Calculate emissions across project lifetime.
 
@@ -330,20 +372,20 @@ def calculate_lifetime_emissions(
 
 
 def print_emissions_results(
-    compensation_percent,
-    energy_source_mix_details,
-    avg_annual_emissions,
-    societal_costs,
-    avg_annual_costs,
-    avg_annual_costs_by_pollutant,
-    total_emissions,
-    total_costs_by_pollutant,
-    lifetime_cost,
-    lifetime_cost_pv,
-    total_costs_by_pollutant_pv,
-    total_losses_mwh_per_year,
-    tec,
-):
+    compensation_percent: float,
+    energy_source_mix_details: Dict[str, Any],
+    avg_annual_emissions: Dict[str, float],
+    societal_costs: Dict[str, float],
+    avg_annual_costs: float,
+    avg_annual_costs_by_pollutant: Dict[str, float],
+    total_emissions: Dict[str, float],
+    total_costs_by_pollutant: Dict[str, float],
+    lifetime_cost: float,
+    lifetime_cost_pv: float,
+    total_costs_by_pollutant_pv: Dict[str, float],
+    total_losses_mwh_per_year: float,
+    tec: float,
+) -> None:
     """Print organized emissions results."""
     # Compensation Configuration
     print("=" * 60)
@@ -427,7 +469,7 @@ def print_emissions_results(
     print()
 
 
-def main():
+def main() -> None:
     # Load emissions details
     (
         compensation_percent,
@@ -458,9 +500,32 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                pd = yaml.safe_load(file)
+            if not pd:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in pd:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in pd["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = pd["project"]["number_of_converters"]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -515,10 +580,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": lifetime_cost,
@@ -534,7 +599,7 @@ def main():
         "nox_cost_nominal": total_costs_by_pollutant["nox"],
         "nox_cost_pv": total_costs_by_pollutant_pv["nox"],
     }
-    
+
     # Write to CSV
     csv_manager.add_emissions_costs(results)
     csv_manager.write_batch_summary()

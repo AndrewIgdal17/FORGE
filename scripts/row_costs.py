@@ -4,10 +4,13 @@
 #              It computes acquisition, holding, and rental costs for transmission line ROW
 #              across different zones and terrain types, then calculates present values.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,11 +30,12 @@ from financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    validate_discount_rate,
 )
 from path_config import YAMLS_DIR
 
 
-def calculate_zone_costs(row_width_feet):
+def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, float]:
     """Calculate ROW costs for each zone where the transmission line passes."""
     row_details = load_row_details()
     yearly_holding_cost = acquisition_cost = yearly_rent_cost = 0
@@ -51,7 +55,7 @@ def calculate_zone_costs(row_width_feet):
     return yearly_holding_cost, acquisition_cost, yearly_rent_cost, total_acres
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display ROW costs."""
     # Load project specifications and timeline
     (
@@ -92,8 +96,17 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # Define timing parameters
@@ -145,6 +158,9 @@ def main():
             acquisition_afudc = 0
 
         # ===== SOCIETAL PERSPECTIVE: Present Values =====
+        # Validate wacc_real before direct use to prevent division by zero
+        validate_discount_rate(wacc_real, "wacc_real")
+
         # Holding costs: incurred annually during delay period
         total_holding_cost_pv = calculate_present_value(
             yearly_holding_cost, wacc_real, int(delay_year)

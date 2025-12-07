@@ -4,10 +4,13 @@
 #              reliability approach with direct outage rates, multiplicative duration model,
 #              and piecewise value of lost load (VoLL).
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Dict, Any, Tuple, List
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,7 +26,9 @@ from yaml_loaders import (
 from path_config import YAMLS_DIR
 
 
-def get_discount_rate(outage_yaml, financing_yaml):
+def get_discount_rate(
+    outage_yaml: Dict[str, Any], financing_yaml: Dict[str, Any]
+) -> Tuple[float, str]:
     """
     Get discount rate based on configuration source.
 
@@ -42,6 +47,15 @@ def get_discount_rate(outage_yaml, financing_yaml):
     elif rate_type == "wacc_real":
         wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
         inflation = financing_yaml["financial"]["inflation_rate"]
+
+        # Validate inflation_rate to prevent division by zero in Fisher equation
+        if inflation <= -1:
+            raise ValueError(
+                f"Invalid inflation_rate: {inflation}. "
+                f"Value must be > -1 to prevent division by zero in Fisher equation calculation. "
+                f"An inflation_rate of {inflation} would cause (1 + inflation_rate) to be <= 0."
+            )
+
         rate = (1 + wacc_nominal) / (1 + inflation) - 1
         desc = "real WACC"
     else:
@@ -50,7 +64,9 @@ def get_discount_rate(outage_yaml, financing_yaml):
     return rate, desc
 
 
-def calculate_voll_cost_piecewise(duration_hours, mw_lost, tiers):
+def calculate_voll_cost_piecewise(
+    duration_hours: float, mw_lost: float, tiers: List[Dict[str, Any]]
+) -> float:
     """
     Calculate total cost using piecewise VoLL.
     Hours 0-4 at tier 1, hours 4-24 at tier 2, hours 24+ at tier 3.
@@ -84,15 +100,15 @@ def calculate_voll_cost_piecewise(duration_hours, mw_lost, tiers):
 
 
 def calculate_outage_costs(
-    outage_yaml,
-    construction_type,
-    terrain_miles,
-    capacity_mw,
-    project_lifetime,
-    discount_rate,
-    delay_years=0,
-    construction_years=0,
-):
+    outage_yaml: Dict[str, Any],
+    construction_type: str,
+    terrain_miles: Dict[str, float],
+    capacity_mw: int,
+    project_lifetime: int,
+    discount_rate: float,
+    delay_years: float = 0,
+    construction_years: float = 0,
+) -> Dict[str, Any]:
     """
     Calculate expected outage costs using simplified outage rate model.
 
@@ -108,7 +124,18 @@ def calculate_outage_costs(
 
     Returns:
         dict: Contains EAC, outage_by_terrain, nominal_cost, pv_cost
+
+    Raises:
+        ValueError: If discount_rate <= -0.99 (would cause division by zero)
     """
+    # Validate discount_rate to prevent division by zero
+    if discount_rate <= -0.99:
+        raise ValueError(
+            f"Invalid discount_rate: {discount_rate}. "
+            f"Value must be > -0.99 to prevent division by zero in financial calculations. "
+            f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
+        )
+
     cfg = outage_yaml["outage"]
     growth_rate = cfg["risk_growth_rate"]
     capacity_at_risk = cfg["capacity_at_risk_factor"]
@@ -207,7 +234,7 @@ def calculate_outage_costs(
     }
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display outage costs."""
     # Load project specifications
     (
@@ -230,16 +257,42 @@ def main():
     )
 
     # Load terrain details
-    with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
-        physical_details = yaml.load(file, Loader=yaml.FullLoader)
-    terrain_miles = physical_details["terrain"]["terrain_miles"]
+    try:
+        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
+            physical_details = yaml.safe_load(file)
+        if not physical_details:
+            raise ValueError("Physical details YAML file is empty or invalid")
+        if "terrain" not in physical_details:
+            raise KeyError("Missing 'terrain' key in physical details YAML file")
+        if "terrain_miles" not in physical_details["terrain"]:
+            raise KeyError(
+                "Missing 'terrain_miles' key in terrain section of physical details YAML"
+            )
+        terrain_miles = physical_details["terrain"]["terrain_miles"]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing physical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in physical details YAML: {e}")
 
     # Load outage parameters
     outage_yaml = load_outage_costs()
 
     # Load financing YAML for discount rate
-    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
 
     # Get discount rate
     discount_rate, discount_source = get_discount_rate(outage_yaml, financing_yaml)

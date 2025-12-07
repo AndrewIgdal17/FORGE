@@ -12,6 +12,8 @@ Usage:
     python oat_analysis.py --scenario "S1_Rural_Overhead_AC_460MW_Advanced_Conductor" --n_values 20 --top_n 6
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import sys
@@ -25,6 +27,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any, List, Tuple, Optional
 
 # Import functions from sensitivity_analysis.py
 # We'll need to import these or define them locally
@@ -59,7 +62,7 @@ except ImportError:
 # ============================================================================
 
 
-def load_prcc_results(sensitivity_results_dir):
+def load_prcc_results(sensitivity_results_dir: Path | str) -> pd.DataFrame:
     """
     Load PRCC results from sensitivity analysis output directory.
 
@@ -81,7 +84,9 @@ def load_prcc_results(sensitivity_results_dir):
     return prcc_df
 
 
-def get_top_parameters_per_bcr(prcc_df, top_n=6):
+def get_top_parameters_per_bcr(
+    prcc_df: pd.DataFrame, top_n: int = 6
+) -> Dict[str, List[str]]:
     """
     Get top N parameters for each BCR metric by absolute PRCC value.
 
@@ -108,7 +113,9 @@ def get_top_parameters_per_bcr(prcc_df, top_n=6):
 # ============================================================================
 
 
-def generate_parameter_values(param_name, param_def, n_values=20):
+def generate_parameter_values(
+    param_name: str, param_def: Dict[str, Any], n_values: int = 20
+) -> List[float | int]:
     """
     Generate parameter values for a parameter based on its range and type.
 
@@ -173,8 +180,12 @@ def generate_parameter_values(param_name, param_def, n_values=20):
 
 
 def run_single_parameter_sweep(
-    param_name, parameter_values, base_dir, baseline_yamls, baselines
-):
+    param_name: str,
+    parameter_values: List[float | int],
+    base_dir: Path | str,
+    baseline_yamls: Dict[str, Any],
+    baselines: Dict[str, Any],
+) -> List[Dict[str, Any]]:
     """
     Run parameter sweep for a single parameter.
 
@@ -271,7 +282,9 @@ def run_single_parameter_sweep(
 
 # run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
 # Create a wrapper that matches the original function signature for oat_analysis
-def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
+def run_ctcc_with_temp_yamls(
+    temp_yaml_dir: Path | str, base_dir: Path | str, scenario_id: str
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
     Wrapper for run_ctcc_with_temp_yamls that provides the function signature
     expected by oat_analysis.py.
@@ -292,8 +305,13 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
 
 
 def generate_oat_plots(
-    results_df, bcr_metric, top_params, prcc_values, output_path, baseline_yamls
-):
+    results_df: pd.DataFrame,
+    bcr_metric: str,
+    top_params: List[str],
+    prcc_values: pd.Series,
+    output_path: Path | str,
+    baseline_yamls: Dict[str, Any],
+) -> None:
     """
     Generate OAT plots for a BCR metric.
 
@@ -411,7 +429,7 @@ def generate_oat_plots(
 # ============================================================================
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="One-at-a-Time (OAT) Parameter Sweep Analysis for CTCC"
     )

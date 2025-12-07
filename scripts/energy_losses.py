@@ -2,6 +2,7 @@
 # Date: 2025-10-27
 # Descriptions: This script calculates transmission line losses
 
+from __future__ import annotations
 
 # Local utility imports
 from yaml_loaders import (
@@ -19,26 +20,26 @@ from path_config import YAMLS_DIR
 
 
 def print_results(
-    voltage_kv,
-    conductors_per_phase,
-    number_of_phases,
-    number_of_circuits_poles,
-    line_utilization_percent,
-    line_length,
-    phase_current,
-    resistance_per_mile,
-    full_load_adj,
-    losses_mw_per_mile,
-    line_loss_per_mile_percent,
-    total_line_loss_mw,
-    total_line_loss_percent,
-    total_converter_losses_mw,
-    converter_loss_percent,
-    total_converter_losses_mwh,
-    losses_mwh_per_year,
-    lifetime_losses_mwh,
-    project_lifetime,
-):
+    voltage_kv: float,
+    conductors_per_phase: int,
+    number_of_phases: int,
+    number_of_circuits_poles: int,
+    line_utilization_percent: float,
+    line_length: float,
+    phase_current: float,
+    resistance_per_mile: float,
+    full_load_adj: float,
+    losses_mw_per_mile: float,
+    line_loss_per_mile_percent: float,
+    total_line_loss_mw: float,
+    total_line_loss_percent: float,
+    total_converter_losses_mw: float,
+    converter_loss_percent: float,
+    total_converter_losses_mwh: float,
+    losses_mwh_per_year: float,
+    lifetime_losses_mwh: float,
+    project_lifetime: int,
+) -> None:
     """Print organized results in sections."""
     # System Configuration
     print("=" * 60)
@@ -87,7 +88,7 @@ def print_results(
     )
 
 
-def main():
+def main() -> None:
     (
         construction_type,
         ac_dc,
@@ -111,9 +112,32 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            pd = yaml.load(file, Loader=yaml.FullLoader)
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                pd = yaml.safe_load(file)
+            if not pd:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in pd:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in pd["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = pd["project"]["number_of_converters"]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 

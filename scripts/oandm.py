@@ -3,10 +3,13 @@
 # Description: This script calculates the O&M costs for a transmission line project.
 #              It calculates O&M costs for conductors, converters, and structures.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Dict, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,7 +26,7 @@ from financial_utils import calculate_present_value
 from path_config import YAMLS_DIR
 
 
-def load_vegetation_management_om_costs(construction_type):
+def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, float]:
     """
     Load vegetation management O&M costs from YAML file.
 
@@ -33,17 +36,36 @@ def load_vegetation_management_om_costs(construction_type):
     Returns:
         float: Variable vegetation management cost per mile per year
     """
-    with open(YAMLS_DIR / "12_project_om_vegetation_management.yaml", "r") as file:
-        vegetation_management_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "vegetation_management_om_costs"
-        ]
-
-    return vegetation_management_om_costs[construction_type]
+    try:
+        with open(YAMLS_DIR / "12_project_om_vegetation_management.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        if not data:
+            raise ValueError("Vegetation management O&M YAML file is empty or invalid")
+        if "vegetation_management_om_costs" not in data:
+            raise KeyError("Missing 'vegetation_management_om_costs' key in YAML file")
+        vegetation_management_om_costs = data["vegetation_management_om_costs"]
+        if construction_type not in vegetation_management_om_costs:
+            raise KeyError(
+                f"Construction type '{construction_type}' not found in vegetation management O&M YAML"
+            )
+        return vegetation_management_om_costs[construction_type]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Vegetation management O&M YAML not found at {YAMLS_DIR / '12_project_om_vegetation_management.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing vegetation management O&M YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in vegetation management O&M YAML: {e}")
 
 
 def load_conductor_om_costs(
-    construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-):
+    construction_type: str,
+    ac_dc: str,
+    capacity_mw: int,
+    conductor_type: str,
+    converter_type: str,
+) -> float:
     """
     Load conductor O&M costs from YAML file.
 
@@ -57,25 +79,48 @@ def load_conductor_om_costs(
     Returns:
         float: Variable conductor cost per mile per year
     """
-    with open(YAMLS_DIR / "13_category_om_conductors.yaml", "r") as file:
-        conductor_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_conductors"
+    try:
+        with open(YAMLS_DIR / "13_category_om_conductors.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        if not data:
+            raise ValueError("Conductor O&M YAML file is empty or invalid")
+        if "project_categories_om_conductors" not in data:
+            raise KeyError(
+                "Missing 'project_categories_om_conductors' key in YAML file"
+            )
+        conductor_om_costs = data["project_categories_om_conductors"]
+
+        category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+
+        if category not in conductor_om_costs:
+            raise KeyError(f"Category '{category}' not found in conductor O&M YAML")
+        if "variable_cost_per_mile_year" not in conductor_om_costs[category]:
+            raise KeyError(
+                f"Missing 'variable_cost_per_mile_year' key for category '{category}' in conductor O&M YAML"
+            )
+
+        variable_conductor_cost_per_mile_year = conductor_om_costs[category][
+            "variable_cost_per_mile_year"
         ]
 
-    category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
-    )
-
-    variable_conductor_cost_per_mile_year = conductor_om_costs[category][
-        "variable_cost_per_mile_year"
-    ]
-
-    return variable_conductor_cost_per_mile_year
+        return variable_conductor_cost_per_mile_year
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Conductor O&M YAML not found at {YAMLS_DIR / '13_category_om_conductors.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing conductor O&M YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in conductor O&M YAML: {e}")
 
 
 def load_converter_om_costs(
-    construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-):
+    construction_type: str,
+    ac_dc: str,
+    capacity_mw: int,
+    conductor_type: str,
+    converter_type: str,
+) -> float:
     """
     Load converter O&M costs from YAML file.
 
@@ -89,36 +134,57 @@ def load_converter_om_costs(
     Returns:
         float: Variable converter cost per mile per year (0 for AC projects)
     """
-    with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
-        converter_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_converters"
-        ]
+    try:
+        with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        if not data:
+            raise ValueError("Converter O&M YAML file is empty or invalid")
+        if "project_categories_om_converters" not in data:
+            raise KeyError(
+                "Missing 'project_categories_om_converters' key in YAML file"
+            )
+        converter_om_costs = data["project_categories_om_converters"]
 
-    if ac_dc == "AC":
-        print("AC Project detected. No converter O&M costs needed.")
-        return 0
-    else:
-        category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        if ac_dc == "AC":
+            print("AC Project detected. No converter O&M costs needed.")
+            return 0
+        else:
+            category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
 
-        variable_converter_cost_per_mile_year = converter_om_costs[category][
-            "converter_om_cost_per_mile_year"
-        ]
+            if category not in converter_om_costs:
+                raise KeyError(f"Category '{category}' not found in converter O&M YAML")
+            if "converter_om_cost_per_mile_year" not in converter_om_costs[category]:
+                raise KeyError(
+                    f"Missing 'converter_om_cost_per_mile_year' key for category '{category}' in converter O&M YAML"
+                )
 
-        return variable_converter_cost_per_mile_year
+            variable_converter_cost_per_mile_year = converter_om_costs[category][
+                "converter_om_cost_per_mile_year"
+            ]
+
+            return variable_converter_cost_per_mile_year
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Converter O&M YAML not found at {YAMLS_DIR / '15_category_om_converters.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing converter O&M YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in converter O&M YAML: {e}")
 
 
 def load_structure_om_costs(
-    construction_type,
-    forested_miles,
-    scrubbed_flat_miles,
-    wetland_miles,
-    farmland_miles,
-    desert_barren_miles,
-    urban_miles,
-    rolling_hills_miles,
-    mountain_miles,
-    subsea_miles,
-):
+    construction_type: str,
+    forested_miles: float,
+    scrubbed_flat_miles: float,
+    wetland_miles: float,
+    farmland_miles: float,
+    desert_barren_miles: float,
+    urban_miles: float,
+    rolling_hills_miles: float,
+    mountain_miles: float,
+    subsea_miles: float,
+) -> Tuple[float, float, Dict[str, int], float]:
     """
     Load structure O&M costs from YAML file and calculate total costs.
 
@@ -141,12 +207,32 @@ def load_structure_om_costs(
     # Initialize vegetation
     total_vegetation_management_cost_per_year = 0
 
-    with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
-        structure_om_costs = yaml.load(file, Loader=yaml.FullLoader)[
-            "project_categories_om_structures"
-        ]
+    try:
+        with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        if not data:
+            raise ValueError("Structure O&M YAML file is empty or invalid")
+        if "project_categories_om_structures" not in data:
+            raise KeyError(
+                "Missing 'project_categories_om_structures' key in YAML file"
+            )
+        structure_om_costs = data["project_categories_om_structures"]
 
-    category = construction_type
+        category = construction_type
+        if category not in structure_om_costs:
+            raise KeyError(
+                f"Construction type '{category}' not found in structure O&M YAML"
+            )
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Structure O&M YAML not found at {YAMLS_DIR / '14_category_om_structures.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing structure O&M YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in structure O&M YAML: {e}")
+
+    # Continue with rest of function using structure_om_costs
     structure_dict = {}
 
     if construction_type == "Overhead":
@@ -287,7 +373,7 @@ def load_structure_om_costs(
     )
 
 
-def main():
+def main() -> None:
     (
         construction_type,
         ac_dc,

@@ -9,6 +9,8 @@ Usage:
     python sensitivity_analysis.py --scenario "1.1_rural_overhead" --n_samples 300 --seed 42
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import sys
@@ -25,6 +27,7 @@ import seaborn as sns
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any, List, Tuple, Optional, Callable
 
 from scripts.sensitivity_utils import (
     BCR_COLUMNS,
@@ -332,7 +335,9 @@ PARAM_DEFINITIONS = {
 # ============================================================================
 
 
-def generate_lhs_samples(n_samples, param_definitions, seed=42):
+def generate_lhs_samples(
+    n_samples: int, param_definitions: Dict[str, Any], seed: int = 42
+) -> pd.DataFrame:
     """
     Generate Latin Hypercube samples for all parameters.
 
@@ -356,7 +361,9 @@ def generate_lhs_samples(n_samples, param_definitions, seed=42):
     return df
 
 
-def map_samples_to_ranges(samples_df, param_definitions):
+def map_samples_to_ranges(
+    samples_df: pd.DataFrame, param_definitions: Dict[str, Any]
+) -> pd.DataFrame:
     """
     Map LHS samples from [0,1] to actual parameter ranges.
 
@@ -394,7 +401,9 @@ def map_samples_to_ranges(samples_df, param_definitions):
     return mapped_df
 
 
-def create_baseline_sample(param_definitions, yaml_files):
+def create_baseline_sample(
+    param_definitions: Dict[str, Any], yaml_files: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Create a baseline sample dictionary with all parameters at their baseline values.
 
@@ -446,19 +455,29 @@ def create_baseline_sample(param_definitions, yaml_files):
 # ============================================================================
 
 
-def load_baseline_yamls(yaml_dir):
+def load_baseline_yamls(yaml_dir: Path | str) -> Dict[str, Any]:
     """Load all baseline YAML files."""
     yaml_files = {}
     yaml_path = Path(yaml_dir)
 
     for yaml_file in yaml_path.glob("*.yaml"):
-        with open(yaml_file, "r") as f:
-            yaml_files[yaml_file.name] = yaml.load(f, Loader=yaml.FullLoader)
+        try:
+            with open(yaml_file, "r") as f:
+                data = yaml.safe_load(f)
+            if data is None:
+                raise ValueError(f"YAML file {yaml_file.name} is empty or invalid")
+            yaml_files[yaml_file.name] = data
+        except FileNotFoundError:
+            raise FileNotFoundError(f"YAML file not found: {yaml_file}")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing YAML file {yaml_file.name}: {e}")
 
     return yaml_files
 
 
-def apply_multiplier_to_nested_dict(data, path, multiplier, is_baseline=False):
+def apply_multiplier_to_nested_dict(
+    data: Dict[str, Any], path: List[str], multiplier: float, is_baseline: bool = False
+) -> None:
     """
     Apply multiplier to a nested dictionary value.
 
@@ -514,7 +533,7 @@ def apply_multiplier_to_nested_dict(data, path, multiplier, is_baseline=False):
         current[final_key] = base_val * multiplier
 
 
-def get_nested_value(data, path):
+def get_nested_value(data: Dict[str, Any], path: List[str]) -> Any:
     """Get value from nested dictionary using path."""
     current = data
     for key in path:
@@ -525,7 +544,7 @@ def get_nested_value(data, path):
     return current
 
 
-def set_nested_value(data, path, value):
+def set_nested_value(data: Dict[str, Any], path: List[str], value: Any) -> None:
     """Set value in nested dictionary using path."""
     current = data
     for key in path[:-1]:
@@ -535,7 +554,9 @@ def set_nested_value(data, path, value):
     current[path[-1]] = value
 
 
-def store_baseline_values(yaml_files, param_definitions):
+def store_baseline_values(
+    yaml_files: Dict[str, Any], param_definitions: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Store baseline values for all multiplier parameters.
     This should be called once before applying any samples.
@@ -575,16 +596,29 @@ def store_baseline_values(yaml_files, param_definitions):
                     baselines[param_name] = baseline_dict
                 else:
                     # For nested dicts, store the entire structure
-                    baselines[param_name] = yaml.load(
-                        yaml.dump(current_value), Loader=yaml.FullLoader
-                    )  # Deep copy
+                    try:
+                        dumped = yaml.dump(current_value)
+                        if not dumped:
+                            raise ValueError(
+                                f"Failed to dump YAML data for {param_name}"
+                            )
+                        baselines[param_name] = yaml.safe_load(dumped)  # Deep copy
+                    except yaml.YAMLError as e:
+                        raise ValueError(
+                            f"Error processing YAML data for {param_name}: {e}"
+                        )
             else:
                 baselines[param_name] = current_value
 
     return baselines
 
 
-def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines):
+def apply_sample_to_yamls(
+    yaml_files: Dict[str, Any],
+    sample_dict: Dict[str, Any],
+    param_definitions: Dict[str, Any],
+    baselines: Dict[str, Any],
+) -> None:
     """
     Apply a sample's parameter values to YAML files.
 
@@ -595,7 +629,7 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
         baselines: Dictionary of baseline values for multiplier parameters
     """
 
-    def apply_bounds_check(param_name, value):
+    def apply_bounds_check(param_name: str, value: float) -> float:
         """
         Apply bounds checking for parameters with logical constraints.
 
@@ -678,8 +712,11 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
                     else:
                         # For nested dicts, multiply all values recursively (original behavior)
                         def multiply_nested_dict(
-                            base_dict, mult, target_dict, param_name
-                        ):
+                            base_dict: Dict[str, Any],
+                            mult: float,
+                            target_dict: Dict[str, Any],
+                            param_name: str,
+                        ) -> None:
                             """Multiply all numeric values in nested dict structure."""
                             for key, value in base_dict.items():
                                 if isinstance(value, dict):
@@ -723,7 +760,7 @@ def apply_sample_to_yamls(yaml_files, sample_dict, param_definitions, baselines)
             )
 
 
-def save_yamls_to_temp(yaml_files, temp_dir):
+def save_yamls_to_temp(yaml_files: Dict[str, Any], temp_dir: Path | str) -> None:
     """Save modified YAML files to temporary directory."""
     temp_path = Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
@@ -737,7 +774,7 @@ def save_yamls_to_temp(yaml_files, temp_dir):
             yaml.dump(cleaned_data, f, default_flow_style=False, sort_keys=False)
 
 
-def remove_baseline_markers(data):
+def remove_baseline_markers(data: Any) -> Any:
     """Recursively remove baseline marker keys from dictionary."""
     if isinstance(data, dict):
         cleaned = {}
@@ -756,7 +793,9 @@ def remove_baseline_markers(data):
 # ============================================================================
 
 
-def read_results_by_scenario_id(batch_summary_path, scenario_id):
+def read_results_by_scenario_id(
+    batch_summary_path: Path, scenario_id: str
+) -> Optional[Dict[str, Any]]:
     """
     Read results from batch_summary.csv by matching scenario_id.
 
@@ -787,7 +826,9 @@ def read_results_by_scenario_id(batch_summary_path, scenario_id):
 
 # run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
 # Create a wrapper that matches the original function signature
-def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
+def run_ctcc_with_temp_yamls(
+    temp_yaml_dir: Path | str, base_dir: Path | str, scenario_id: str
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
     Wrapper for run_ctcc_with_temp_yamls that provides the function signature
     expected by sensitivity_analysis.py.
@@ -807,7 +848,11 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
 # ============================================================================
 
 
-def process_single_sample(args_tuple):
+def process_single_sample(
+    args_tuple: Tuple[
+        int, Dict[str, Any], str, Dict[str, Any], Dict[str, Any], Dict[str, Any]
+    ],
+) -> Tuple[str, Optional[Dict[str, Any]], Optional[str]]:
     """
     Process a single sample.
 
@@ -886,7 +931,7 @@ def process_single_sample(args_tuple):
 # ============================================================================
 
 
-def calculate_prcc(inputs_df, outputs_series):
+def calculate_prcc(inputs_df: pd.DataFrame, outputs_series: pd.Series) -> pd.Series:
     """
     Calculate Partial Rank Correlation Coefficients (PRCC).
 
@@ -944,7 +989,11 @@ def calculate_prcc(inputs_df, outputs_series):
 # ============================================================================
 
 
-def generate_tornado_plot(prcc_values, output_path, bcr_metric_name=None):
+def generate_tornado_plot(
+    prcc_values: pd.Series,
+    output_path: Path | str,
+    bcr_metric_name: Optional[str] = None,
+) -> None:
     """Generate tornado diagram showing PRCC values.
 
     Args:
@@ -980,7 +1029,12 @@ def generate_tornado_plot(prcc_values, output_path, bcr_metric_name=None):
     plt.close()
 
 
-def generate_scatter_plots(results_df, top_params, bcr_col, output_path):
+def generate_scatter_plots(
+    results_df: pd.DataFrame,
+    top_params: List[str],
+    bcr_col: str,
+    output_path: Path | str,
+) -> None:
     """Generate scatter plots for top N parameters vs a specific BCR metric.
 
     Args:
@@ -1013,7 +1067,9 @@ def generate_scatter_plots(results_df, top_params, bcr_col, output_path):
     plt.close()
 
 
-def generate_prcc_heatmap(prcc_all, output_path, top_n=20):
+def generate_prcc_heatmap(
+    prcc_all: pd.DataFrame, output_path: Path | str, top_n: int = 20
+) -> None:
     """
     Generate heatmap showing PRCC values across all BCR metrics.
 
@@ -1068,8 +1124,12 @@ def generate_prcc_heatmap(prcc_all, output_path, top_n=20):
 
 
 def generate_parallel_coordinates_plot(
-    results_df, top_params, bcr_col, output_path, n_samples_to_plot=300
-):
+    results_df: pd.DataFrame,
+    top_params: List[str],
+    bcr_col: str,
+    output_path: Path | str,
+    n_samples_to_plot: int = 300,
+) -> None:
     """
     Generate parallel coordinates plot showing parameter combinations and BCR outcomes.
 
@@ -1178,7 +1238,7 @@ def generate_parallel_coordinates_plot(
 # ============================================================================
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="LHS Sensitivity Analysis for CTCC",
         formatter_class=argparse.RawDescriptionHelpFormatter,

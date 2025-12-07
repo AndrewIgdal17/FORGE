@@ -6,6 +6,8 @@ This module contains common functions and constants used by both
 sensitivity_analysis.py and oat_analysis.py to avoid code duplication.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import shutil
@@ -13,6 +15,7 @@ import subprocess
 import yaml
 import pandas as pd
 from pathlib import Path
+from typing import Dict, Any, List, Tuple, Optional, Callable
 
 
 # ============================================================================
@@ -34,7 +37,7 @@ BCR_COLUMNS = [
 # ============================================================================
 
 
-def deep_copy_yamls(baseline_yamls):
+def deep_copy_yamls(baseline_yamls: Dict[str, Any]) -> Dict[str, Any]:
     """
     Deep copy YAML files dictionary.
 
@@ -46,9 +49,14 @@ def deep_copy_yamls(baseline_yamls):
     """
     yaml_files_copy = {}
     for yaml_name, yaml_data in baseline_yamls.items():
-        yaml_files_copy[yaml_name] = yaml.load(
-            yaml.dump(yaml_data), Loader=yaml.FullLoader
-        )  # Deep copy
+        try:
+            # Deep copy using yaml dump/load
+            dumped = yaml.dump(yaml_data)
+            if not dumped:
+                raise ValueError(f"Failed to dump YAML data for {yaml_name}")
+            yaml_files_copy[yaml_name] = yaml.safe_load(dumped)  # Deep copy
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error processing YAML data for {yaml_name}: {e}")
     return yaml_files_copy
 
 
@@ -57,7 +65,9 @@ def deep_copy_yamls(baseline_yamls):
 # ============================================================================
 
 
-def check_missing_bcr(results, bcr_columns=None):
+def check_missing_bcr(
+    results: Dict[str, Any], bcr_columns: Optional[List[str]] = None
+) -> Tuple[List[str], Dict[str, bool]]:
     """
     Check for missing or empty BCR columns.
 
@@ -96,7 +106,9 @@ def check_missing_bcr(results, bcr_columns=None):
     return missing_bcr, is_empty_dict
 
 
-def validate_bcr_results(results, bcr_warning_detected=False):
+def validate_bcr_results(
+    results: Dict[str, Any], bcr_warning_detected: bool = False
+) -> Tuple[Dict[str, Any], Optional[str]]:
     """
     Validate that BCR results are present in the results dictionary.
 
@@ -126,7 +138,7 @@ def validate_bcr_results(results, bcr_warning_detected=False):
 # ============================================================================
 
 
-def format_ctcc_error(result):
+def format_ctcc_error(result: subprocess.CompletedProcess[str]) -> str:
     """
     Format CTCC subprocess error message.
 
@@ -145,13 +157,15 @@ def format_ctcc_error(result):
 
 
 def run_ctcc_with_temp_yamls(
-    temp_yaml_dir,
-    base_dir,
-    scenario_id,
-    ctcc_args=None,
-    use_env_dict=True,
-    read_results_by_scenario_id_func=None,
-):
+    temp_yaml_dir: Path | str,
+    base_dir: Path | str,
+    scenario_id: str,
+    ctcc_args: Optional[List[str]] = None,
+    use_env_dict: bool = True,
+    read_results_by_scenario_id_func: Optional[
+        Callable[[Path, str], Optional[Dict[str, Any]]]
+    ] = None,
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
     Run CTCC with temporary YAML directory.
 

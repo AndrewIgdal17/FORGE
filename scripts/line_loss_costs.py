@@ -5,8 +5,11 @@
 # lossbenefit = (Lbase(t) - L reconductoring(t)) * price_per_mwh
 #
 
+from __future__ import annotations
+
 import sys
 import os
+from typing import Tuple, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,20 +31,55 @@ from yaml_loaders import load_financing_social_discount_rate
 from path_config import YAMLS_DIR
 
 
-def load_project_details():
+def load_project_details() -> Tuple[
+    str,
+    str,
+    int,
+    str,
+    int,
+    str,
+    float,
+    float,
+    float,
+    bool,
+    int,
+    float,
+    int,
+    Optional[int],
+    Optional[str],
+]:
     """Load project technical details with line_loss_costs specific fields."""
     import yaml
 
-    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
-
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
-    converter_type = (
-        project_details["project"]["converter_type"] if ac_dc != "AC" else "NA"
-    )
+    try:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+            project_details = yaml.safe_load(file)
+        if not project_details:
+            raise ValueError("Project technical details YAML file is empty or invalid")
+        if "project" not in project_details:
+            raise KeyError(
+                "Missing 'project' key in project technical details YAML file"
+            )
+        project = project_details["project"]
+        required_keys = ["construction_type", "ac_dc", "capacity_mw", "conductor_type"]
+        for key in required_keys:
+            if key not in project:
+                raise KeyError(
+                    f"Missing '{key}' key in project section of technical details YAML"
+                )
+        construction_type = project["construction_type"]
+        ac_dc = project["ac_dc"]
+        capacity_mw = project["capacity_mw"]
+        conductor_type = project["conductor_type"]
+        converter_type = project["converter_type"] if ac_dc != "AC" else "NA"
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing project technical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in project technical details YAML: {e}")
     line_utilization_percent = project_details["project"]["line_utilization"]
     baseline_electricity_price = project_details["project"][
         "baseline_electricity_price_per_mwh"
@@ -87,15 +125,15 @@ def load_project_details():
 
 
 def calculate_configuration_losses(
-    construction_type,
-    ac_dc,
-    capacity_mw,
-    conductor_type,
-    converter_type,
-    line_utilization_percent,
-    project_lifetime,
-    voltage_kv_override=None,
-):
+    construction_type: str,
+    ac_dc: str,
+    capacity_mw: int,
+    conductor_type: str,
+    converter_type: str,
+    line_utilization_percent: float,
+    project_lifetime: int,
+    voltage_kv_override: Optional[float] = None,
+) -> Tuple[float, float]:
     """
     Calculate line losses for a given configuration.
 
@@ -131,7 +169,9 @@ def calculate_configuration_losses(
     ) = load_circuit_and_resistance_details(category)
 
     # Use override voltage if provided, otherwise use lookup voltage
-    voltage_kv = voltage_kv_override if voltage_kv_override is not None else voltage_kv_lookup
+    voltage_kv = (
+        voltage_kv_override if voltage_kv_override is not None else voltage_kv_lookup
+    )
 
     # Convert capacity_mw to string for calculate_phase_current
     capacity_mw_str = f"{capacity_mw}MW"
@@ -169,7 +209,9 @@ def calculate_configuration_losses(
     return losses_mwh_per_year, lifetime_losses_mwh
 
 
-def calculate_present_value(annual_cost, discount_rate, total_years, start_year=1):
+def calculate_present_value(
+    annual_cost: float, discount_rate: float, total_years: float, start_year: int = 1
+) -> float:
     """
     Calculate present value of annual payments.
 
@@ -199,7 +241,7 @@ def calculate_present_value(annual_cost, discount_rate, total_years, start_year=
     return total_pv
 
 
-def main():
+def main() -> None:
     """Main function to calculate line loss costs for reconductoring projects."""
 
     (
@@ -336,7 +378,8 @@ def main():
             # METHOD 3: Normalized (Per MWh) Comparison
             # Apply the difference in loss percentages to the comparison delivered energy
             normalized_loss_difference_mwh = (
-                (primary_loss_percent - comparison_loss_percent) / 100
+                (primary_loss_percent - comparison_loss_percent)
+                / 100
                 * comparison_delivered_mwh
             )
             normalized_annual_cost_difference = (
@@ -377,9 +420,7 @@ def main():
 
             print("LOSS COMPARISON:")
             print("-" * 70)
-            print(
-                f"Primary Configuration: {primary_losses_mwh_per_year:,.2f} MWh/year"
-            )
+            print(f"Primary Configuration: {primary_losses_mwh_per_year:,.2f} MWh/year")
             print(
                 f"  Capacity: {capacity_mw} MW | Loss Rate: {primary_loss_percent:.2f}%"
             )
@@ -412,7 +453,9 @@ def main():
                 f"  Annual Cost Difference: ${direct_annual_cost_difference:,.2f}/year "
                 f"({'Primary more expensive' if direct_annual_cost_difference > 0 else 'Comparison more expensive'})"
             )
-            print(f"  Lifetime Cost Difference: ${direct_lifetime_cost_difference:,.2f}")
+            print(
+                f"  Lifetime Cost Difference: ${direct_lifetime_cost_difference:,.2f}"
+            )
             print()
             print("DISCOUNTED VALUES (NPV):")
             print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
@@ -460,7 +503,9 @@ def main():
                 f"  Annual Cost Difference: ${normalized_annual_cost_difference:,.2f}/year "
                 f"({'Primary more expensive' if normalized_annual_cost_difference > 0 else 'Comparison more expensive'})"
             )
-            print(f"  Lifetime Cost Difference: ${normalized_lifetime_cost_difference:,.2f}")
+            print(
+                f"  Lifetime Cost Difference: ${normalized_lifetime_cost_difference:,.2f}"
+            )
             print()
             print("DISCOUNTED VALUES (NPV):")
             print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
@@ -472,10 +517,15 @@ def main():
 
             # Write to CSV using PRIMARY configuration's absolute losses (not comparison difference)
             # Comparison methods are informational only - BCR uses absolute losses
-            primary_annual_loss_cost = primary_losses_mwh_per_year * baseline_electricity_price
+            primary_annual_loss_cost = (
+                primary_losses_mwh_per_year * baseline_electricity_price
+            )
             primary_lifetime_nominal_cost = primary_annual_loss_cost * project_lifetime
             primary_pv_loss_cost = calculate_present_value(
-                primary_annual_loss_cost, social_discount_rate, project_lifetime, start_year
+                primary_annual_loss_cost,
+                social_discount_rate,
+                project_lifetime,
+                start_year,
             )
 
             csv_manager = CTCCOutputManager()
@@ -546,12 +596,33 @@ def main():
         return
 
     # Load baseline configuration details
-    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
-
-    old_capacity_mw = project_details["project"]["old_capacity_mw"]
-    old_conductor_type = project_details["project"]["old_conductor_type"]
-    old_ac_dc = project_details["project"]["old_ac_dc"]
+    try:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+            project_details = yaml.safe_load(file)
+        if not project_details:
+            raise ValueError("Project technical details YAML file is empty or invalid")
+        if "project" not in project_details:
+            raise KeyError(
+                "Missing 'project' key in project technical details YAML file"
+            )
+        project = project_details["project"]
+        required_keys = ["old_capacity_mw", "old_conductor_type", "old_ac_dc"]
+        for key in required_keys:
+            if key not in project:
+                raise KeyError(
+                    f"Missing '{key}' key in project section of technical details YAML"
+                )
+        old_capacity_mw = project["old_capacity_mw"]
+        old_conductor_type = project["old_conductor_type"]
+        old_ac_dc = project["old_ac_dc"]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing project technical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in project technical details YAML: {e}")
 
     # For DC to DC, keep the same converter type
     if ac_dc == "DC" and old_ac_dc == "DC":

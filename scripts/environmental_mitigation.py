@@ -4,10 +4,13 @@
 #              It computes base construction/restoration costs and wetland/habitat credit purchases
 #              across different construction types and terrain types.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Dict, Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,13 +30,17 @@ from financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    validate_discount_rate,
 )
 from path_config import YAMLS_DIR
 
 
 def calculate_environmental_mitigation_costs(
-    em_yaml, category, terrain_miles_dict, row_width_feet
-):
+    em_yaml: Dict[str, Any],
+    category: str,
+    terrain_miles_dict: Dict[str, float],
+    row_width_feet: float,
+) -> Dict[str, float]:
     """
     Calculate environmental mitigation costs including base mitigation
     and wetland/habitat credit purchases.
@@ -120,7 +127,7 @@ def calculate_environmental_mitigation_costs(
     }
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display environmental mitigation costs."""
     # Load project specifications
     (
@@ -146,9 +153,26 @@ def main():
     row_width_feet = load_row_widths(category)
 
     # Load terrain details
-    with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
-        physical_details = yaml.load(file, Loader=yaml.FullLoader)
-    terrain_miles = physical_details["terrain"]["terrain_miles"]
+    try:
+        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
+            physical_details = yaml.safe_load(file)
+        if not physical_details:
+            raise ValueError("Physical details YAML file is empty or invalid")
+        if "terrain" not in physical_details:
+            raise KeyError("Missing 'terrain' key in physical details YAML file")
+        if "terrain_miles" not in physical_details["terrain"]:
+            raise KeyError(
+                "Missing 'terrain_miles' key in terrain section of physical details YAML"
+            )
+        terrain_miles = physical_details["terrain"]["terrain_miles"]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing physical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in physical details YAML: {e}")
 
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
@@ -166,8 +190,17 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-        financing_yaml = yaml.load(file, Loader=yaml.FullLoader)
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
@@ -196,6 +229,9 @@ def main():
         total_afudc = base_afudc + credits_afudc
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
+    # Validate wacc_real before direct use to prevent division by zero
+    validate_discount_rate(wacc_real, "wacc_real")
+
     # Credit purchases: occur upfront at start of construction (end of delay period)
     # Discount as one-time payment at delay_year + 1
     credit_start_year = delay_year + 1
@@ -277,10 +313,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     csv_results = {
         "total_nominal": results["total"],
@@ -289,7 +325,7 @@ def main():
         "base_cost_nominal": results["base_cost"],
         "credits_nominal": results["total_credits"],
     }
-    
+
     # Write to CSV
     csv_manager.add_environmental_mitigation(csv_results)
     csv_manager.write_batch_summary()

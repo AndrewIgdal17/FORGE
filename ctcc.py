@@ -3,6 +3,8 @@
 # Description: Comprehensive Transmission Cost Calculator (CTCC) - Main Script
 #              Orchestrates all individual cost calculation modules
 
+from __future__ import annotations
+
 import subprocess
 import sys
 import os
@@ -15,7 +17,7 @@ from bcr_calculator import calculate_and_display_bcr
 from csv_output_manager import CTCCOutputManager
 
 
-def run_script(script_name, quiet=False):
+def run_script(script_name: str, quiet: bool = False) -> bool:
     """
     Run a Python script and capture its output.
 
@@ -46,7 +48,7 @@ def run_script(script_name, quiet=False):
         return False
 
 
-def main():
+def main() -> None:
     """
     Main function to run all cost calculation scripts.
     """

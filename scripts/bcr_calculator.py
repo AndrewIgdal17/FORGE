@@ -3,12 +3,17 @@
 # Description: Calculate benefit-cost ratios (BCR) for transmission projects.
 #              Compares congestion/curtailment benefits against all project costs.
 
+from __future__ import annotations
+
 import csv
 import os
+from typing import Dict, Any, Optional
 from path_config import OUTPUTS_DIR
 
 
-def load_scenario_data(scenario_id, output_dir=str(OUTPUTS_DIR)):
+def load_scenario_data(
+    scenario_id: str, output_dir: str = str(OUTPUTS_DIR)
+) -> Optional[Dict[str, Any]]:
     """
     Load scenario data from batch_summary.csv for the given scenario_id.
     Uses robust lookup: exact match, then partial match, then last row fallback.
@@ -26,7 +31,7 @@ def load_scenario_data(scenario_id, output_dir=str(OUTPUTS_DIR)):
         print(f"Warning: batch_summary.csv not found at {batch_path}")
         return None
 
-    def convert_row_to_numeric(row):
+    def convert_row_to_numeric(row: Dict[str, str]) -> Dict[str, Any]:
         """Convert numeric strings to floats in a row."""
         converted = {}
         for key, value in row.items():
@@ -84,7 +89,7 @@ def load_scenario_data(scenario_id, output_dir=str(OUTPUTS_DIR)):
         return convert_row_to_numeric(rows[-1])
 
 
-def calculate_benefits(data):
+def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
 
@@ -142,7 +147,7 @@ def calculate_benefits(data):
     }
 
 
-def calculate_costs(data):
+def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total costs from scenario data.
 
@@ -286,8 +291,12 @@ def calculate_costs(data):
 
 
 def calculate_bcr_metrics(
-    benefits, costs, no_emissions=False, no_linelosses=False, capital_only=False
-):
+    benefits: Dict[str, float],
+    costs: Dict[str, float],
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> Dict[str, float]:
     """
     Calculate benefit-cost ratios and net benefits.
 
@@ -430,12 +439,12 @@ def calculate_bcr_metrics(
 
 
 def calculate_and_display_bcr(
-    scenario_id,
-    output_dir=str(OUTPUTS_DIR),
-    no_emissions=False,
-    no_linelosses=False,
-    capital_only=False,
-):
+    scenario_id: str,
+    output_dir: str = str(OUTPUTS_DIR),
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> Optional[Dict[str, Any]]:
     """
     Main function to calculate and display BCR analysis.
     Always attempts to return results even if some calculations fail.
@@ -539,14 +548,14 @@ def calculate_and_display_bcr(
 
 
 def print_bcr_summary(
-    benefits,
-    costs,
-    bcr_metrics,
-    data,
-    no_emissions=False,
-    no_linelosses=False,
-    capital_only=False,
-):
+    benefits: Dict[str, float],
+    costs: Dict[str, float],
+    bcr_metrics: Dict[str, float],
+    data: Dict[str, Any],
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> None:
     """
     Print formatted BCR summary to terminal.
 
