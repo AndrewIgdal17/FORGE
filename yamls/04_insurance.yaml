@@ -2,7 +2,7 @@
 # Operational insurance costs for transmission line assets
 
 insurance:
-  premium_rate: 0.002 # Annual premium rate (0.2% = 0.002)
+  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)
 
   # Insurable components (which assets are insured)
   insurable_components:
@@ -13,12 +13,12 @@ insurance:
   # Premium rate can vary by construction type (optional)
   # If not specified, uses premium_rate above
   premium_by_construction_type:
-    overhead: 0.002 # 0.2%
-    underground: 0.0015 # 0.15% (typically lower risk)
-    subsea: 0.0025 # 0.25% (typically higher risk)
+    overhead: 0.002 # 0.2% [0,1]
+    underground: 0.0015 # 0.15% [0,1] (typically lower risk)
+    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)
 
   # Wildfire liability insurance (optional)
   wildfire_liability:
     enabled: false # Set to false to disable
-    liability_limit: 1000000000 # $1B liability limit
-    rate_on_line: 0.6 # 80% ROL (annual premium = 0.80 × $100M = $80M/year)
+    liability_limit: 1000000000 # $1B liability limit (>= 0)
+    rate_on_line: 0.6 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)

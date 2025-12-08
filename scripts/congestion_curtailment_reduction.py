@@ -58,14 +58,14 @@ except KeyError as e:
 def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
     """
     Load project technical details from YAML configuration file.
-    
+
     Reads project specifications and timeline information from the project technical
     details YAML file. This function is a local version specific to congestion/curtailment
     calculations, returning only the fields needed for those calculations.
-    
+
     Args:
         None (reads from YAML file)
-    
+
     Returns:
         tuple: A 6-element tuple containing:
             - delay_years: Number of years of project delay before construction
@@ -74,7 +74,7 @@ def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
             - reconductoring: True if this is a reconductoring project, False for greenfield
             - capacity_mw: New line capacity in MW
             - old_capacity_mw: Original capacity in MW (for reconductoring projects)
-    
+
     Raises:
         FileNotFoundError: When project technical details YAML is not found
         ValueError: When YAML file is empty or invalid
@@ -133,14 +133,14 @@ def load_congestion_reductions() -> (
 ):
     """
     Load congestion reduction parameters from YAML configuration file.
-    
+
     Reads congestion reduction parameters from the congestion_reductions.yaml file,
     which contains data on transmission constraint binding hours, exceedance levels,
     and congestion pricing information.
-    
+
     Args:
         None (reads from YAML file)
-    
+
     Returns:
         tuple: An 8-element tuple containing:
             - flow_factor: Fraction of capacity that effectively relieves constraints (0-1)
@@ -151,7 +151,7 @@ def load_congestion_reductions() -> (
             - near_binding_relief_factor: Fraction of capacity relief applied to near-binding hours (0-1)
             - saturation_factor: Conservative multiplier for congestion benefits (0-1, where 1 = no haircut)
             - average_congestion_price: Average price of congestion in $/MWh
-    
+
     Raises:
         FileNotFoundError: When congestion_reductions.yaml is not found
         ValueError: When YAML file is empty or invalid
@@ -227,18 +227,18 @@ def load_congestion_reductions() -> (
 def load_curtailment_reductions() -> Tuple[float, float, float, float]:
     """
     Load curtailment reduction parameters from YAML configuration file.
-    
+
     Reads curtailment reduction parameters from the curtailment_reductions.yaml file,
     which contains data on renewable energy curtailment events that the transmission
     project may help reduce.
-    
+
     Returns:
         tuple: A 4-element tuple containing:
             - curtailment_hours_total: Total hours per year with curtailment events
             - average_curtailment_mw: Average MW curtailed per curtailment event
             - average_curtailment_price: Average price of curtailment in $/MWh
             - curtailment_saturation_factor: Conservative multiplier for curtailment benefits (0-1)
-    
+
     Raises:
         FileNotFoundError: When curtailment_reductions.yaml is not found
         ValueError: When YAML file is empty, invalid, or values cannot be converted to float
@@ -279,28 +279,28 @@ def load_curtailment_reductions() -> Tuple[float, float, float, float]:
 def load_financing_details() -> Tuple[float, int, float, float]:
     """
     Load financing parameters and calculate real WACC using Fisher equation.
-    
+
     This is a local version of the financing details loader, duplicated in this module
     to avoid circular dependencies. It reads financing parameters from the financing YAML
     file and calculates the real WACC using the Fisher equation to account for inflation.
-    
+
     The Fisher equation: wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-    
+
     Args:
         None (reads from YAML file)
-    
+
     Returns:
         tuple: A 4-element tuple containing:
             - inflation_rate: Annual inflation rate (decimal, e.g., 0.02 for 2%)
             - base_year: Base year for financial calculations
             - wacc_nominal: Nominal weighted average cost of capital (decimal)
             - wacc_real: Real weighted average cost of capital (decimal, inflation-adjusted)
-    
+
     Raises:
         FileNotFoundError: When financing YAML is not found
         ValueError: When YAML file is empty, invalid, or inflation_rate <= -1 (would cause division by zero)
         KeyError: When required keys are missing from the YAML structure
-    
+
     Note:
         This function duplicates functionality from yaml_loaders.load_financing_details()
         to avoid import dependencies. Both functions should return identical results.
@@ -404,19 +404,19 @@ def allocate_curtailment_then_congestion(
 ) -> Dict[str, float]:
     """
     Allocate effective capacity relief between curtailment and congestion to avoid double-counting.
-    
+
     This function prevents double-counting of benefits when the same capacity relief addresses
     both curtailment and congestion constraints. It first allocates capacity to curtailment relief,
     then allocates remaining capacity to congestion relief, accounting for temporal overlap
     between binding hours (congestion) and curtailment hours.
-    
+
     Algorithm:
     1. Calculate curtailment relief energy and benefit using available capacity
     2. Determine temporal overlap (theta) between binding and curtailment hours
     3. Split binding hours into overlap (H_bc) and non-overlap (H_bnon) periods
     4. Calculate capacity consumed by curtailment in overlap hours
     5. Return remaining capacity for congestion relief allocation
-    
+
     Args:
         ΔC_eff_mw: Effective capacity relief in MW (available to address constraints)
         binding_hours_total: Total hours per year when transmission constraints are binding
@@ -424,7 +424,7 @@ def allocate_curtailment_then_congestion(
         curtailment_hours_total: Total hours per year with curtailment events
         average_curtailment_mw: Average MW curtailed per curtailment event
         average_curtailment_price: Average price of curtailment in $/MWh
-    
+
     Returns:
         dict: Allocation results with the following keys:
             - "E_curt_mwh_yr": Curtailment relief energy in MWh per year
@@ -501,12 +501,12 @@ def calculate_congestion_reduction_costs(
 ) -> Dict[str, float]:
     """
     Calculate congestion and curtailment reduction benefits and costs for a transmission project.
-    
+
     This function computes the economic benefits from reducing transmission constraints (congestion
     and curtailment) and the costs of residual constraints. It handles both greenfield and
     reconductoring projects, allocates capacity relief between curtailment and congestion to
     avoid double-counting, and calculates both full-value and conservative (haircut) estimates.
-    
+
     The algorithm:
     1. Calculates effective capacity relief (greenfield: flow_factor * capacity; reconductoring: capacity - old_capacity)
     2. Allocates capacity relief between curtailment and congestion using allocate_curtailment_then_congestion()
@@ -514,7 +514,7 @@ def calculate_congestion_reduction_costs(
     4. Applies saturation factors to monetized values (conservative estimates)
     5. Calculates present values using real WACC, starting after construction completion
     6. Calculates opportunity costs during delay/construction periods
-    
+
     Args:
         reconductoring: True if this is a reconductoring project, False for greenfield
         capacity_mw: New line capacity in MW (for greenfield) or upgraded capacity (for reconductoring)
@@ -535,7 +535,7 @@ def calculate_congestion_reduction_costs(
         average_curtailment_mw: Average MW curtailed per curtailment event
         average_curtailment_price: Average price of curtailment in $/MWh
         curtailment_saturation_factor: Conservative multiplier for curtailment benefits (0-1)
-    
+
     Returns:
         tuple: A 25-element tuple containing:
             - lifetime_congestion_reduction_cost: Nominal lifetime congestion reduction benefit ($)

@@ -1050,13 +1050,54 @@ def generate_scatter_plots(
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
     axes = axes.flatten() if n_params > 1 else [axes]
 
+    # Identify baseline row (first row or sample_0001)
+    if "sample_id" in results_df.columns:
+        baseline_mask = results_df["sample_id"] == "sample_0001"
+    else:
+        # Fallback: assume first row is baseline
+        baseline_mask = pd.Series(
+            [True] + [False] * (len(results_df) - 1), index=results_df.index
+        )
+
+    baseline_df = results_df[baseline_mask]
+    other_df = results_df[~baseline_mask]
+
     for idx, param in enumerate(top_params):
         ax = axes[idx]
-        ax.scatter(results_df[param], results_df[bcr_col], alpha=0.5, s=20)
+
+        # Plot non-baseline points first (blue dots, as before)
+        if len(other_df) > 0:
+            ax.scatter(
+                other_df[param],
+                other_df[bcr_col],
+                alpha=0.5,
+                s=20,
+                color="blue",
+                label="LHS samples" if idx == 0 else "",
+            )
+
+        # Plot baseline point with red star marker
+        if len(baseline_df) > 0:
+            ax.scatter(
+                baseline_df[param],
+                baseline_df[bcr_col],
+                color="red",
+                marker="*",
+                s=200,
+                edgecolors="darkred",
+                linewidths=1.5,
+                zorder=5,
+                label="Baseline" if idx == 0 else "",
+            )
+
         ax.set_xlabel(param, fontsize=9)
         ax.set_ylabel(bcr_col, fontsize=9)
         ax.grid(alpha=0.3)
         ax.set_title(f"{param} vs {bcr_col}", fontsize=10)
+
+        # Add legend only to first subplot
+        if idx == 0:
+            ax.legend(loc="best", fontsize=8)
 
     # Hide unused subplots
     for idx in range(n_params, len(axes)):
@@ -1238,6 +1279,132 @@ def generate_parallel_coordinates_plot(
 # ============================================================================
 
 
+def generate_all_plots(
+    results_df: pd.DataFrame,
+    output_dir: Path | str,
+    scenario: str,
+    total_runs: Optional[int] = None,
+    successful_runs: Optional[int] = None,
+    failed_runs: Optional[int] = None,
+    n_samples: Optional[int] = None,
+) -> None:
+    """
+    Generate all plots and analysis outputs from results DataFrame.
+
+    Args:
+        results_df: DataFrame with all results
+        output_dir: Output directory path
+        scenario: Scenario name
+        total_runs: Total number of runs (for summary)
+        successful_runs: Number of successful runs (for summary)
+        failed_runs: Number of failed runs (for summary)
+        n_samples: Number of LHS samples (for summary)
+    """
+    output_dir = Path(output_dir)
+
+    # Step 5: Calculate PRCC and generate plots for all BCR metrics
+    available_bcr_columns = [col for col in BCR_COLUMNS if col in results_df.columns]
+
+    if available_bcr_columns:
+        print("Calculating PRCC values for all BCR metrics...")
+        inputs_df = results_df[
+            [p for p in PARAM_DEFINITIONS.keys() if p in results_df.columns]
+        ]
+
+        # Calculate PRCC for each BCR metric
+        prcc_all = pd.DataFrame(index=inputs_df.columns)
+
+        for bcr_col in available_bcr_columns:
+            outputs_series = results_df[bcr_col]
+            prcc_values = calculate_prcc(inputs_df, outputs_series)
+            prcc_all[bcr_col] = prcc_values
+
+        # Save PRCC values (all BCRs in one file)
+        prcc_path = output_dir / "prcc_values.csv"
+        prcc_all.to_csv(prcc_path)
+        print(f"Saved PRCC values to {prcc_path}")
+        print(f"  Columns: {', '.join(available_bcr_columns)}")
+        print()
+
+        # Generate PRCC heatmap
+        print("Generating PRCC heatmap...")
+        heatmap_path = output_dir / "prcc_heatmap.png"
+        generate_prcc_heatmap(prcc_all, heatmap_path, top_n=25)
+        print(f"  Saved PRCC heatmap: {heatmap_path}")
+        print()
+
+        # Generate tornado plots for each BCR metric
+        print("Generating tornado diagrams...")
+        for bcr_col in available_bcr_columns:
+            prcc_values = prcc_all[bcr_col]
+            tornado_path = output_dir / f"tornado_{bcr_col}.png"
+            generate_tornado_plot(prcc_values, tornado_path, bcr_metric_name=bcr_col)
+            print(f"  Saved tornado diagram: {tornado_path}")
+        print()
+
+        # Generate scatter plots for each BCR metric
+        print("Generating scatter plots...")
+        for bcr_col in available_bcr_columns:
+            prcc_values = prcc_all[bcr_col]
+            top_6_params = prcc_values.abs().nlargest(6).index.tolist()
+            scatter_path = output_dir / f"scatter_top6_{bcr_col}.png"
+            generate_scatter_plots(results_df, top_6_params, bcr_col, scatter_path)
+            print(f"  Saved scatter plots: {scatter_path}")
+        print()
+
+        # Generate parallel coordinates plot using bcr_system (most important one)
+        if "bcr_system" in available_bcr_columns:
+            print("Generating parallel coordinates plot...")
+            prcc_values_system = prcc_all["bcr_system"]
+            top_8_params = prcc_values_system.abs().nlargest(8).index.tolist()
+            parallel_path = output_dir / "parallel_coordinates_bcr_system.png"
+            generate_parallel_coordinates_plot(
+                results_df, top_8_params, "bcr_system", parallel_path
+            )
+            print(f"  Saved parallel coordinates plot: {parallel_path}")
+            print()
+
+        # Summary statistics for all BCR metrics
+        print("Summary Statistics:")
+        print("-" * 80)
+        for bcr_col in available_bcr_columns:
+            print(f"{bcr_col}:")
+            print(f"  Mean: {results_df[bcr_col].mean():.4f}")
+            print(f"  Median (P50): {results_df[bcr_col].median():.4f}")
+            print(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}")
+            print(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}")
+            print()
+
+        # Save summary
+        summary_path = output_dir / "summary_stats.txt"
+        with open(summary_path, "w") as f:
+            f.write("LHS Sensitivity Analysis Summary\n")
+            f.write("=" * 80 + "\n")
+            f.write(f"Scenario: {scenario}\n")
+            if total_runs is not None and n_samples is not None:
+                f.write(
+                    f"Total runs: {total_runs} (1 baseline + {n_samples} LHS samples)\n"
+                )
+            if successful_runs is not None:
+                f.write(f"Successful runs: {successful_runs}\n")
+            if failed_runs is not None:
+                f.write(f"Failed runs: {failed_runs}\n")
+            f.write("\n")
+
+            for bcr_col in available_bcr_columns:
+                f.write(f"{bcr_col} Statistics:\n")
+                f.write(f"  Mean: {results_df[bcr_col].mean():.4f}\n")
+                f.write(f"  Median (P50): {results_df[bcr_col].median():.4f}\n")
+                f.write(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}\n")
+                f.write(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}\n")
+                f.write(f"  Std: {results_df[bcr_col].std():.4f}\n")
+                f.write("\n")
+
+        print(f"Saved summary to {summary_path}")
+    else:
+        print("Warning: No BCR columns found in results")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="LHS Sensitivity Analysis for CTCC",
@@ -1261,6 +1428,11 @@ def main() -> None:
         default=50,
         help="Save checkpoint every N runs",
     )
+    parser.add_argument(
+        "--plot_only",
+        action="store_true",
+        help="Only regenerate plots from existing results.csv (skip analysis)",
+    )
 
     args = parser.parse_args()
 
@@ -1270,6 +1442,60 @@ def main() -> None:
     output_dir = base_dir / args.output_dir / f"scenario_{args.scenario}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Handle --plot_only mode
+    if args.plot_only:
+        print("=" * 80)
+        print("PLOT-ONLY MODE: Regenerating plots from existing results.csv")
+        print("=" * 80)
+        print(f"Scenario: {args.scenario}")
+        print(f"Output: {output_dir}")
+        print("=" * 80)
+        print()
+
+        # Verify results.csv exists
+        results_path = output_dir / "results.csv"
+        if not results_path.exists():
+            print(f"ERROR: results.csv not found at {results_path}")
+            print(
+                "Please run the full sensitivity analysis first (without --plot_only)"
+            )
+            sys.exit(1)
+
+        # Load results
+        print(f"Loading results from {results_path}...")
+        try:
+            results_df = pd.read_csv(results_path)
+            print(f"Loaded {len(results_df)} rows from results.csv")
+            print()
+
+            # Validate required columns
+            required_params = [
+                p for p in PARAM_DEFINITIONS.keys() if p in results_df.columns
+            ]
+            if len(required_params) == 0:
+                print(
+                    "ERROR: results.csv does not contain any expected parameter columns"
+                )
+                sys.exit(1)
+
+            # Generate plots
+            generate_all_plots(
+                results_df=results_df,
+                output_dir=output_dir,
+                scenario=args.scenario,
+            )
+
+            print()
+            print("=" * 80)
+            print("✅ Plot regeneration complete!")
+            print("=" * 80)
+            return
+
+        except Exception as e:
+            print(f"ERROR: Failed to load or process results.csv: {e}")
+            sys.exit(1)
+
+    # Normal mode: Run full analysis
     print("=" * 80)
     print("LHS SENSITIVITY ANALYSIS FOR CTCC")
     print("=" * 80)
@@ -1412,107 +1638,15 @@ def main() -> None:
         print()
 
         # Step 5: Calculate PRCC and generate plots for all BCR metrics
-        available_bcr_columns = [
-            col for col in BCR_COLUMNS if col in results_df.columns
-        ]
-
-        if available_bcr_columns:
-            print("Calculating PRCC values for all BCR metrics...")
-            inputs_df = results_df[
-                [p for p in PARAM_DEFINITIONS.keys() if p in results_df.columns]
-            ]
-
-            # Calculate PRCC for each BCR metric
-            prcc_all = pd.DataFrame(index=inputs_df.columns)
-
-            for bcr_col in available_bcr_columns:
-                outputs_series = results_df[bcr_col]
-                prcc_values = calculate_prcc(inputs_df, outputs_series)
-                prcc_all[bcr_col] = prcc_values
-
-            # Save PRCC values (all BCRs in one file)
-            prcc_path = output_dir / "prcc_values.csv"
-            prcc_all.to_csv(prcc_path)
-            print(f"Saved PRCC values to {prcc_path}")
-            print(f"  Columns: {', '.join(available_bcr_columns)}")
-            print()
-
-            # Generate PRCC heatmap
-            print("Generating PRCC heatmap...")
-            heatmap_path = output_dir / "prcc_heatmap.png"
-            generate_prcc_heatmap(prcc_all, heatmap_path, top_n=25)
-            print(f"  Saved PRCC heatmap: {heatmap_path}")
-            print()
-
-            # Generate tornado plots for each BCR metric
-            print("Generating tornado diagrams...")
-            for bcr_col in available_bcr_columns:
-                prcc_values = prcc_all[bcr_col]
-                tornado_path = output_dir / f"tornado_{bcr_col}.png"
-                generate_tornado_plot(
-                    prcc_values, tornado_path, bcr_metric_name=bcr_col
-                )
-                print(f"  Saved tornado diagram: {tornado_path}")
-            print()
-
-            # Generate scatter plots for each BCR metric
-            print("Generating scatter plots...")
-            for bcr_col in available_bcr_columns:
-                prcc_values = prcc_all[bcr_col]
-                top_6_params = prcc_values.abs().nlargest(6).index.tolist()
-                scatter_path = output_dir / f"scatter_top6_{bcr_col}.png"
-                generate_scatter_plots(results_df, top_6_params, bcr_col, scatter_path)
-                print(f"  Saved scatter plots: {scatter_path}")
-            print()
-
-            # Generate parallel coordinates plot using bcr_system (most important one)
-            if "bcr_system" in available_bcr_columns:
-                print("Generating parallel coordinates plot...")
-                prcc_values_system = prcc_all["bcr_system"]
-                top_8_params = prcc_values_system.abs().nlargest(8).index.tolist()
-                parallel_path = output_dir / "parallel_coordinates_bcr_system.png"
-                generate_parallel_coordinates_plot(
-                    results_df, top_8_params, "bcr_system", parallel_path
-                )
-                print(f"  Saved parallel coordinates plot: {parallel_path}")
-                print()
-
-            # Summary statistics for all BCR metrics
-            print("Summary Statistics:")
-            print("-" * 80)
-            for bcr_col in available_bcr_columns:
-                print(f"{bcr_col}:")
-                print(f"  Mean: {results_df[bcr_col].mean():.4f}")
-                print(f"  Median (P50): {results_df[bcr_col].median():.4f}")
-                print(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}")
-                print(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}")
-                print()
-
-            # Save summary
-            summary_path = output_dir / "summary_stats.txt"
-            with open(summary_path, "w") as f:
-                f.write("LHS Sensitivity Analysis Summary\n")
-                f.write("=" * 80 + "\n")
-                f.write(f"Scenario: {args.scenario}\n")
-                f.write(
-                    f"Total runs: {total_runs} (1 baseline + {args.n_samples} LHS samples)\n"
-                )
-                f.write(f"Successful runs: {len(results_list)}\n")
-                f.write(f"Failed runs: {len(failed_samples)}\n")
-                f.write("\n")
-
-                for bcr_col in available_bcr_columns:
-                    f.write(f"{bcr_col} Statistics:\n")
-                    f.write(f"  Mean: {results_df[bcr_col].mean():.4f}\n")
-                    f.write(f"  Median (P50): {results_df[bcr_col].median():.4f}\n")
-                    f.write(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}\n")
-                    f.write(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}\n")
-                    f.write(f"  Std: {results_df[bcr_col].std():.4f}\n")
-                    f.write("\n")
-
-            print(f"Saved summary to {summary_path}")
-        else:
-            print("Warning: No BCR columns found in results")
+        generate_all_plots(
+            results_df=results_df,
+            output_dir=output_dir,
+            scenario=args.scenario,
+            total_runs=total_runs,
+            successful_runs=len(results_list),
+            failed_runs=len(failed_samples),
+            n_samples=args.n_samples,
+        )
     else:
         print("Error: No successful runs!")
         sys.exit(1)

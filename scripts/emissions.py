@@ -476,7 +476,7 @@ def print_emissions_results(
 def main() -> None:
     """
     Main function to calculate and display emissions costs from transmission line losses.
-    
+
     This script calculates the societal costs of emissions (CO2, SOx, NOx) associated with
     compensating for transmission line energy losses. The calculation accounts for:
     - Total energy losses from the transmission line (line losses + converter losses)
@@ -484,11 +484,11 @@ def main() -> None:
     - Energy source mix for compensation (with growth/decay rates over project lifetime)
     - Emission intensities for each energy source
     - Societal costs per kg of each pollutant
-    
+
     The script calculates annual and lifetime emissions, monetizes them using societal costs,
     and calculates present values using the social discount rate. Results are printed to console
     and written to CSV outputs via CTCCOutputManager.
-    
+
     Outputs:
         - Prints detailed emissions results by pollutant (CO2, SOx, NOx)
         - Writes to emissions_costs.csv and batch_summary.csv

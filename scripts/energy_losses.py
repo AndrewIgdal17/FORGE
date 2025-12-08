@@ -91,21 +91,21 @@ def print_results(
 def main() -> None:
     """
     Main function to calculate and display transmission line energy losses.
-    
+
     This script calculates electrical losses (I²R losses) for transmission lines, including:
     - Line losses: Resistive losses in conductors based on phase current, resistance, and line length
     - Converter losses: Losses in DC converter stations (for DC projects only)
-    
+
     The calculation uses project technical details (voltage, capacity, conductor type, etc.) and
     physical details (line length, terrain) to determine:
     - Phase current based on capacity and voltage
     - Full load adjustment factor based on line utilization
     - Annual and lifetime energy losses in MWh
     - Loss percentages (per mile and total)
-    
+
     Results are printed to console in organized sections showing system configuration,
     line loss results, converter loss results, and summary totals.
-    
+
     Outputs:
         - Prints system configuration (voltage, conductors, phases, etc.)
         - Prints line loss results (MW, MWh/yr, percentages)
