@@ -73,6 +73,10 @@ PARAM_DEFINITIONS = {
         "yaml_file": "01_project_technical_details.yaml",
         "yaml_path": ["project", "line_utilization"],
         "description": "Line utilization multiplier",
+        "final_value_bounds": (
+            0.0,
+            1.0,
+        ),  # Physical constraint: utilization must be [0, 1]
     },
     "wildfire_ignition_rate_mult": {
         "type": "log",
@@ -102,6 +106,10 @@ PARAM_DEFINITIONS = {
             "flow_factor",
         ],
         "description": "Flow factor multiplier (affects effective capacity relief)",
+        "final_value_bounds": (
+            0.0,
+            1.0,
+        ),  # Physical constraint: flow factor must be [0, 1]
     },
     "congestion_binding_hours_mult": {
         "type": "linear",
@@ -146,6 +154,10 @@ PARAM_DEFINITIONS = {
             "near_binding_relief_factor",
         ],
         "description": "Near binding relief factor multiplier [0,1]",
+        "final_value_bounds": (
+            0.0,
+            1.0,
+        ),  # Physical constraint: relief factor must be [0, 1]
     },
     "congestion_saturation_factor_mult": {
         "type": "linear",
@@ -455,6 +467,77 @@ def create_baseline_sample(
 # ============================================================================
 
 
+def resample_multiplier_within_bounds(
+    baseline_value: float,
+    original_multiplier: float,
+    multiplier_range: Tuple[float, float],
+    final_value_bounds: Tuple[float, float],
+    param_type: str,
+    max_attempts: int = 5,
+    random_state: Optional[np.random.RandomState] = None,
+) -> Tuple[float, bool]:
+    """
+    Attempt to resample a multiplier that keeps final value within bounds.
+
+    Args:
+        baseline_value: Baseline parameter value
+        original_multiplier: Original multiplier from LHS sample
+        multiplier_range: Allowed range for multipliers (min, max)
+        final_value_bounds: Required bounds for final value (min, max)
+        param_type: Parameter type ("linear", "log", "integer")
+        max_attempts: Maximum number of resampling attempts
+        random_state: Optional random state for reproducibility
+
+    Returns:
+        (new_multiplier, success): success=True if valid multiplier found
+    """
+    # Handle edge case: baseline is zero or very small
+    if abs(baseline_value) < 1e-10:
+        return (original_multiplier, False)
+
+    # Calculate required multiplier range to keep final value within bounds
+    v_min, v_max = final_value_bounds
+    m_min_required = v_min / baseline_value
+    m_max_required = v_max / baseline_value
+
+    # Ensure min < max (handle negative baselines if any)
+    if m_min_required > m_max_required:
+        m_min_required, m_max_required = m_max_required, m_min_required
+
+    # Intersect with original multiplier range
+    m_min_orig, m_max_orig = multiplier_range
+    valid_min = max(m_min_orig, m_min_required)
+    valid_max = min(m_max_orig, m_max_required)
+
+    # If intersection is empty, cannot resample
+    if valid_min >= valid_max:
+        return (original_multiplier, False)
+
+    # Initialize random state if not provided
+    if random_state is None:
+        random_state = np.random.RandomState()
+
+    # Resample from valid range
+    for attempt in range(max_attempts):
+        if param_type == "log":
+            # Log scale sampling
+            log_min = np.log10(max(valid_min, 1e-10))
+            log_max = np.log10(valid_max)
+            log_value = log_min + random_state.random() * (log_max - log_min)
+            new_multiplier = 10**log_value
+        else:
+            # Linear sampling
+            new_multiplier = valid_min + random_state.random() * (valid_max - valid_min)
+
+        # Verify the resampled multiplier produces a valid final value
+        final_value = baseline_value * new_multiplier
+        if v_min <= final_value <= v_max:
+            return (new_multiplier, True)
+
+    # All attempts failed
+    return (original_multiplier, False)
+
+
 def load_baseline_yamls(yaml_dir: Path | str) -> Dict[str, Any]:
     """Load all baseline YAML files."""
     yaml_files = {}
@@ -629,9 +712,73 @@ def apply_sample_to_yamls(
         baselines: Dictionary of baseline values for multiplier parameters
     """
 
+    def validate_and_adjust_multiplier(
+        param_name: str,
+        baseline_value: float,
+        multiplier: float,
+        param_def: Dict[str, Any],
+        original_multiplier: float,
+    ) -> Tuple[float, bool, bool]:
+        """
+        Validate multiplier and adjust if needed to keep final value within bounds.
+
+        Args:
+            param_name: Name of the parameter
+            baseline_value: Baseline parameter value
+            multiplier: Current multiplier to check
+            param_def: Parameter definition dictionary
+            original_multiplier: Original multiplier from LHS sample
+
+        Returns:
+            (adjusted_multiplier_or_value, was_resampled, was_clamped)
+        """
+        # Check if parameter has final_value_bounds
+        final_value_bounds = param_def.get("final_value_bounds")
+        if final_value_bounds is None:
+            # No bounds constraint, return as-is
+            return (multiplier, False, False)
+
+        v_min, v_max = final_value_bounds
+        final_value = baseline_value * multiplier
+
+        # Check if final value is within bounds
+        if v_min <= final_value <= v_max:
+            return (multiplier, False, False)
+
+        # Out of bounds - try to resample multiplier
+        multiplier_range = param_def["range"]
+        param_type = param_def.get("type", "linear")
+
+        new_multiplier, resampled = resample_multiplier_within_bounds(
+            baseline_value=baseline_value,
+            original_multiplier=original_multiplier,
+            multiplier_range=multiplier_range,
+            final_value_bounds=final_value_bounds,
+            param_type=param_type,
+            max_attempts=5,
+        )
+
+        if resampled:
+            # Resampling succeeded - use new multiplier
+            print(
+                f"Warning: Resampled {param_name} multiplier from {original_multiplier:.4f} to {new_multiplier:.4f} "
+                f"to keep final value within bounds [{(baseline_value * original_multiplier):.4f} -> {(baseline_value * new_multiplier):.4f}]"
+            )
+            return (new_multiplier, True, False)
+
+        # Resampling failed - clamp final value
+        clamped_value = max(v_min, min(v_max, final_value))
+        print(
+            f"Warning: Clamped {param_name} final value from {final_value:.4f} to {clamped_value:.4f} "
+            f"(bounds: [{v_min}, {v_max}], baseline: {baseline_value:.4f}, multiplier: {multiplier:.4f})"
+        )
+        # Return the clamped final value (not multiplier) - caller will use this directly
+        return (clamped_value, False, True)
+
     def apply_bounds_check(param_name: str, value: float) -> float:
         """
         Apply bounds checking for parameters with logical constraints.
+        Legacy function for backward compatibility - now just clamps.
 
         Args:
             param_name: Name of the parameter
@@ -702,20 +849,76 @@ def apply_sample_to_yamls(
                                                 zone_key, {}
                                             ).get(field_name)
                                             if baseline_field_value is not None:
-                                                zone_dict[field_name] = (
-                                                    apply_bounds_check(
-                                                        param_name,
-                                                        baseline_field_value
-                                                        * param_value,
-                                                    )
+                                                # Validate and potentially resample/clamp multiplier
+                                                (
+                                                    adjusted_value,
+                                                    was_resampled,
+                                                    was_clamped,
+                                                ) = validate_and_adjust_multiplier(
+                                                    param_name=param_name,
+                                                    baseline_value=baseline_field_value,
+                                                    multiplier=param_value,
+                                                    param_def=param_def,
+                                                    original_multiplier=param_value,
                                                 )
+
+                                                if was_clamped:
+                                                    # Clamped value is the final value, use it directly
+                                                    zone_dict[field_name] = (
+                                                        adjusted_value
+                                                    )
+                                                else:
+                                                    # Use adjusted multiplier (might be resampled or original)
+                                                    zone_dict[field_name] = (
+                                                        baseline_field_value
+                                                        * adjusted_value
+                                                    )
                     else:
                         # For nested dicts, multiply all values recursively (original behavior)
+                        # First, validate multiplier once (use first baseline value found)
+                        # We'll use the same multiplier for all nested values
+                        first_baseline = None
+                        if isinstance(baseline_value, dict):
+
+                            def find_first_numeric(
+                                d: Dict[str, Any],
+                            ) -> Optional[float]:
+                                """Find first numeric value in nested dict."""
+                                for v in d.values():
+                                    if isinstance(v, (int, float)):
+                                        return float(v)
+                                    elif isinstance(v, dict):
+                                        result = find_first_numeric(v)
+                                        if result is not None:
+                                            return result
+                                return None
+
+                            first_baseline = find_first_numeric(baseline_value)
+
+                        # Validate multiplier if we have a baseline and bounds
+                        validated_multiplier = param_value
+                        if (
+                            first_baseline is not None
+                            and param_def.get("final_value_bounds") is not None
+                        ):
+                            adjusted_value, was_resampled, was_clamped = (
+                                validate_and_adjust_multiplier(
+                                    param_name=param_name,
+                                    baseline_value=first_baseline,
+                                    multiplier=param_value,
+                                    param_def=param_def,
+                                    original_multiplier=param_value,
+                                )
+                            )
+                            if not was_clamped:
+                                validated_multiplier = adjusted_value
+
                         def multiply_nested_dict(
                             base_dict: Dict[str, Any],
                             mult: float,
                             target_dict: Dict[str, Any],
                             param_name: str,
+                            param_def: Dict[str, Any],
                         ) -> None:
                             """Multiply all numeric values in nested dict structure."""
                             for key, value in base_dict.items():
@@ -723,12 +926,30 @@ def apply_sample_to_yamls(
                                     if key not in target_dict:
                                         target_dict[key] = {}
                                     multiply_nested_dict(
-                                        value, mult, target_dict[key], param_name
+                                        value,
+                                        mult,
+                                        target_dict[key],
+                                        param_name,
+                                        param_def,
                                     )
                                 elif isinstance(value, (int, float)):
-                                    target_dict[key] = apply_bounds_check(
-                                        param_name, value * mult
+                                    # For nested dicts, we validate once and use the same multiplier
+                                    # But still need to check final value bounds for each
+                                    final_value = value * mult
+                                    final_value_bounds = param_def.get(
+                                        "final_value_bounds"
                                     )
+                                    if final_value_bounds is not None:
+                                        v_min, v_max = final_value_bounds
+                                        if not (v_min <= final_value <= v_max):
+                                            # Clamp if out of bounds
+                                            target_dict[key] = max(
+                                                v_min, min(v_max, final_value)
+                                            )
+                                        else:
+                                            target_dict[key] = final_value
+                                    else:
+                                        target_dict[key] = final_value
 
                         # Get target dict
                         current = yaml_files[yaml_file_name]
@@ -741,13 +962,32 @@ def apply_sample_to_yamls(
 
                         if current is not None:
                             multiply_nested_dict(
-                                baseline_value, param_value, current, param_name
+                                baseline_value,
+                                validated_multiplier,
+                                current,
+                                param_name,
+                                param_def,
                             )
                 else:
                     # Simple numeric value
-                    new_value = apply_bounds_check(
-                        param_name, baseline_value * param_value
+                    # Validate and potentially resample/clamp multiplier
+                    adjusted_value, was_resampled, was_clamped = (
+                        validate_and_adjust_multiplier(
+                            param_name=param_name,
+                            baseline_value=baseline_value,
+                            multiplier=param_value,
+                            param_def=param_def,
+                            original_multiplier=param_value,
+                        )
                     )
+
+                    if was_clamped:
+                        # Clamped value is the final value, use it directly
+                        new_value = adjusted_value
+                    else:
+                        # Use adjusted multiplier (might be resampled or original)
+                        new_value = baseline_value * adjusted_value
+
                     set_nested_value(
                         yaml_files[yaml_file_name], param_def["yaml_path"], new_value
                     )

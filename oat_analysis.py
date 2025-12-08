@@ -113,6 +113,42 @@ def get_top_parameters_per_bcr(
 # ============================================================================
 
 
+def validate_and_clamp_parameter_value(
+    param_name: str, param_value: float | int, param_def: Dict[str, Any]
+) -> float | int:
+    """
+    Validate and clamp parameter value to ensure it's within physical bounds.
+
+    For OAT analysis, parameters are generated directly (not as multipliers).
+    This function validates that the final value is within bounds and clamps if needed.
+
+    Args:
+        param_name: Name of the parameter
+        param_value: Parameter value to validate
+        param_def: Parameter definition from PARAM_DEFINITIONS
+
+    Returns:
+        Clamped value if out of bounds, otherwise original value
+    """
+    # Check if parameter has final_value_bounds
+    final_value_bounds = param_def.get("final_value_bounds")
+    if final_value_bounds is None:
+        # No bounds constraint, return as-is
+        return param_value
+
+    v_min, v_max = final_value_bounds
+    if v_min <= param_value <= v_max:
+        return param_value
+
+    # Out of bounds - clamp
+    clamped_value = max(v_min, min(v_max, float(param_value)))
+    print(
+        f"Warning: Clamped {param_name} value from {param_value:.4f} to {clamped_value:.4f} "
+        f"(bounds: [{v_min}, {v_max}])"
+    )
+    return clamped_value
+
+
 def generate_parameter_values(
     param_name: str, param_def: Dict[str, Any], n_values: int = 20
 ) -> List[float | int]:
@@ -203,6 +239,15 @@ def run_single_parameter_sweep(
     base_dir = Path(base_dir)  # Ensure it's a Path object
 
     for param_value in parameter_values:
+        # Validate and clamp parameter value if needed (for direct values, not multipliers)
+        # Multipliers are validated in apply_sample_to_yamls
+        is_multiplier = param_name.endswith("_mult")
+        if not is_multiplier and param_name in PARAM_DEFINITIONS:
+            param_def = PARAM_DEFINITIONS[param_name]
+            param_value = validate_and_clamp_parameter_value(
+                param_name, param_value, param_def
+            )
+
         # Create sample dictionary with only this parameter varied
         sample_dict = {param_name: param_value}
 
@@ -457,6 +502,11 @@ def main() -> None:
         default=None,
         help="Output directory for results (default: oat_results/scenario_<ID>)",
     )
+    parser.add_argument(
+        "--plot_only",
+        action="store_true",
+        help="Only regenerate plots from existing OAT results CSV files (skip analysis)",
+    )
 
     args = parser.parse_args()
 
@@ -486,6 +536,86 @@ def main() -> None:
         output_dir = base_dir / "oat_results" / f"scenario_{scenario_id}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Handle --plot_only mode
+    if args.plot_only:
+        print("=" * 80)
+        print("PLOT-ONLY MODE: Regenerating plots from existing OAT results")
+        print("=" * 80)
+        print(f"Scenario: {scenario_id}")
+        print(f"Output: {output_dir}")
+        print("=" * 80)
+        print()
+
+        # Verify oat_summary.csv exists
+        summary_path = output_dir / "oat_summary.csv"
+        if not summary_path.exists():
+            print(f"ERROR: oat_summary.csv not found at {summary_path}")
+            print("Please run the full OAT analysis first (without --plot_only)")
+            sys.exit(1)
+
+        # Load PRCC results (needed for plotting)
+        print("Loading PRCC results...")
+        try:
+            prcc_df = load_prcc_results(sensitivity_results_dir)
+            print(
+                f"  Loaded PRCC results: {len(prcc_df)} parameters, {len(prcc_df.columns)} BCR metrics"
+            )
+        except FileNotFoundError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+        # Load OAT results
+        print(f"Loading OAT results from {summary_path}...")
+        try:
+            results_df = pd.read_csv(summary_path)
+            print(f"  Loaded {len(results_df)} rows from oat_summary.csv")
+            print()
+        except Exception as e:
+            print(f"ERROR: Failed to load oat_summary.csv: {e}")
+            sys.exit(1)
+
+        # Load baseline YAMLs (needed for plotting)
+        print("Loading baseline YAML files...")
+        yaml_dir = base_dir / "yamls"
+        if not yaml_dir.exists():
+            print(f"Error: YAML directory not found: {yaml_dir}")
+            sys.exit(1)
+        baseline_yamls = load_baseline_yamls(yaml_dir)
+        print(f"  Loaded {len(baseline_yamls)} YAML files")
+        print()
+
+        # Get top parameters per BCR (from PRCC)
+        top_params_per_bcr = get_top_parameters_per_bcr(prcc_df, top_n=args.top_n)
+
+        # Regenerate plots for each BCR metric
+        print("Regenerating plots...")
+        for bcr_metric in prcc_df.columns:
+            top_params = top_params_per_bcr[bcr_metric]
+            bcr_results = results_df[
+                results_df["parameter_name"].isin(top_params)
+            ].copy()
+
+            if len(bcr_results) > 0:
+                plot_path = output_dir / f"oat_{bcr_metric}_plot1.png"
+                prcc_series = prcc_df[bcr_metric]
+                generate_oat_plots(
+                    bcr_results,
+                    bcr_metric,
+                    top_params,
+                    prcc_series,
+                    plot_path,
+                    baseline_yamls,
+                )
+                print(f"  Regenerated {plot_path}")
+            else:
+                print(f"  Warning: No results found for {bcr_metric}")
+
+        print()
+        print("=" * 80)
+        print("Plot regeneration complete!")
+        print("=" * 80)
+        return
 
     print("=" * 80)
     print("ONE-AT-A-TIME (OAT) PARAMETER SWEEP ANALYSIS")
