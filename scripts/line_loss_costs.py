@@ -62,10 +62,10 @@ def load_project_details():
         number_of_converters = 0
 
     # Get greenfield comparison fields (optional, only for greenfield projects)
-    greenfield_comparison_capacity_mw = project_details["project"].get(
+    greenfield_comparison_capacity_mw = tech_data["project"].get(
         "greenfield_comparison_capacity_mw", None
     )
-    greenfield_comparison_conductor_type = project_details["project"].get(
+    greenfield_comparison_conductor_type = tech_data["project"].get(
         "greenfield_comparison_conductor_type", None
     )
 
