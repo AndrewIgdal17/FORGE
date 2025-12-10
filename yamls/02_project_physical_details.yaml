@@ -2,16 +2,16 @@
 # Physical characteristics and terrain information
 
 terrain:
-  terrain_miles: # miles by terrain type
-    forested: 30
-    scrubbed_flat: 50
-    wetland: 10
-    farmland: 40
-    desert_barren: 0
-    urban: 0
-    rolling_hills: 20
-    mountain: 10
-    subsea: 0
+  terrain_miles: # miles by terrain type (>= 0)
+    forested: 20 # miles (>= 0)
+    scrubbed_flat: 40 # miles (>= 0)
+    wetland: 5 # miles (>= 0)
+    farmland: 25 # miles (>= 0)
+    desert_barren: 0 # miles (>= 0)
+    urban: 0 # miles (>= 0)
+    rolling_hills: 10 # miles (>= 0)
+    mountain: 0 # miles (>= 0)
+    subsea: 0 # miles (>= 0)
 
   terrain_multipliers: # terrain multipliers
     forested: 2.25

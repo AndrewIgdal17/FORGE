@@ -3,10 +3,41 @@
 # Description: Shared financial utility functions for present value calculations and amortization.
 #              This module consolidates duplicated financial calculation functions from across scripts.
 
+from __future__ import annotations
+
 import math
+from typing import Dict, Any, Tuple
 
 
-def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
+def validate_discount_rate(
+    rate: float, rate_name: str = "discount_rate", min_value: float = -0.99
+) -> float:
+    """
+    Validate that a discount rate is not <= -1 (which would cause division by zero).
+
+    Args:
+        rate: The discount rate to validate
+        rate_name: Name of the rate for error messages
+        min_value: Minimum allowed value (default -0.99 to allow extreme deflation scenarios)
+
+    Returns:
+        float: The validated rate
+
+    Raises:
+        ValueError: If rate <= min_value
+    """
+    if rate <= min_value:
+        raise ValueError(
+            f"Invalid {rate_name}: {rate}. "
+            f"Value must be > {min_value} to prevent division by zero in financial calculations. "
+            f"A rate of {rate} would cause (1 + rate) to be <= 0, leading to invalid calculations."
+        )
+    return rate
+
+
+def calculate_present_value(
+    annual_cost: float, wacc_real: float, total_years: float, start_year: int = 1
+) -> float:
     """
     Calculate the present value of annual payments over a given time period.
 
@@ -21,7 +52,11 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
 
     Returns:
         float: Present value of the payment stream
+
+    Raises:
+        ValueError: If wacc_real <= -0.99 (would cause division by zero)
     """
+    validate_discount_rate(wacc_real, "wacc_real")
     n_full_years = math.floor(total_years)
     frac = total_years - n_full_years
     total_pv = 0
@@ -36,7 +71,9 @@ def calculate_present_value(annual_cost, wacc_real, total_years, start_year=1):
     return total_pv
 
 
-def calculate_amortized_cost(principal, wacc_real, project_lifetime):
+def calculate_amortized_cost(
+    principal: float, wacc_real: float, project_lifetime: int
+) -> float:
     """
     Calculate annual amortized cost using standard amortization formula.
 
@@ -50,7 +87,11 @@ def calculate_amortized_cost(principal, wacc_real, project_lifetime):
 
     Returns:
         float: Annual amortized payment
+
+    Raises:
+        ValueError: If wacc_real <= -0.99 (would cause division by zero)
     """
+    validate_discount_rate(wacc_real, "wacc_real")
     if wacc_real == 0:
         return principal / project_lifetime
 
@@ -61,7 +102,7 @@ def calculate_amortized_cost(principal, wacc_real, project_lifetime):
     return principal * numerator / denominator
 
 
-def calculate_afudc_rate(financing_yaml):
+def calculate_afudc_rate(financing_yaml: Dict[str, Any]) -> Tuple[float, str]:
     """
     Calculate AFUDC rate from capital structure or fall back to WACC.
 
@@ -87,7 +128,7 @@ def calculate_afudc_rate(financing_yaml):
         cost_of_debt = cap_struct["cost_of_debt"]
         equity_percent = cap_struct["equity_percent"]
         debt_percent = cap_struct["debt_percent"]
-        
+
         # Check if both costs are zero (invalid)
         if cost_of_equity == 0 and cost_of_debt == 0:
             # Fallback to WACC nominal
@@ -111,13 +152,13 @@ def calculate_afudc_rate(financing_yaml):
 
 
 def calculate_afudc_capitalized_cost(
-    nominal_cost,
-    timing_pattern,
-    delay_years,
-    construction_years,
-    afudc_rate,
-    delay_has_active_work=False,
-):
+    nominal_cost: float,
+    timing_pattern: Dict[str, Any],
+    delay_years: float,
+    construction_years: float,
+    afudc_rate: float,
+    delay_has_active_work: bool = False,
+) -> Tuple[float, float]:
     """
     Capitalize a cost using AFUDC (compound forward to COD).
 
@@ -141,7 +182,11 @@ def calculate_afudc_capitalized_cost(
 
     Returns:
         tuple: (capitalized_cost, afudc_amount)
+
+    Raises:
+        ValueError: If afudc_rate <= -0.99 (would cause division by zero)
     """
+    validate_discount_rate(afudc_rate, "afudc_rate")
     # Check if cost is AFUDC-eligible
     if not timing_pattern.get("afudc_eligible", False):
         # Not eligible: return nominal cost with zero AFUDC

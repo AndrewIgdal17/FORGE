@@ -4,23 +4,20 @@
 #              Insurance premiums are based on insurable asset value (conductors, structures, converters)
 #              and paid annually over the project lifetime.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Dict, Any, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
-from smart_loaders import (
+from yaml_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_contingencies,
@@ -30,16 +27,17 @@ from smart_loaders import (
 from financial_utils import calculate_present_value
 from build_costs import load_costs
 from weighted_miles import calculate_weighted_miles
+from path_config import YAMLS_DIR
 
 
 def calculate_insurance_costs(
-    insurance_yaml,
-    conductor_cost_with_contingencies,
-    structure_cost_with_contingencies,
-    converter_cost_with_contingencies,
-    construction_type,
-    project_lifetime,
-):
+    insurance_yaml: Dict[str, Any],
+    conductor_cost_with_contingencies: float,
+    structure_cost_with_contingencies: float,
+    converter_cost_with_contingencies: float,
+    construction_type: str,
+    project_lifetime: int,
+) -> Dict[str, float]:
     """
     Calculate operational insurance costs based on insurable asset value.
 
@@ -88,44 +86,44 @@ def calculate_insurance_costs(
 
 
 def calculate_wildfire_liability_premium(
-    insurance_yaml,
-    project_lifetime,
-):
+    insurance_yaml: Dict[str, Any],
+    project_lifetime: int,
+) -> Optional[Dict[str, float]]:
     """
     Calculate wildfire liability insurance premium using rate-on-line (ROL).
-    
+
     ROL is the annual premium as a fraction of the liability limit.
     Premium = ROL × Liability Limit (annual)
-    
+
     Args:
         insurance_yaml: Loaded insurance YAML data
         project_lifetime: Project lifetime in years
-    
+
     Returns:
         dict: Contains liability_limit, rate_on_line, annual_premium, nominal_lifetime_cost
               Returns None if disabled or not configured
     """
     insurance = insurance_yaml.get("insurance", {})
     wildfire_liability = insurance.get("wildfire_liability", {})
-    
+
     # Check if enabled
     if not wildfire_liability.get("enabled", False):
         return None
-    
+
     # Get parameters
     liability_limit = wildfire_liability.get("liability_limit", 0)
     rate_on_line = wildfire_liability.get("rate_on_line", 0)
-    
+
     # Validate parameters
     if liability_limit <= 0 or rate_on_line <= 0:
         return None
-    
+
     # Calculate annual premium
     annual_premium = rate_on_line * liability_limit
-    
+
     # Calculate lifetime cost (annual premium × project lifetime)
     nominal_lifetime_cost = annual_premium * project_lifetime
-    
+
     return {
         "liability_limit": liability_limit,
         "rate_on_line": rate_on_line,
@@ -134,7 +132,7 @@ def calculate_wildfire_liability_premium(
     }
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display insurance costs."""
     # Load project specifications
     (
@@ -148,6 +146,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -157,8 +156,34 @@ def main():
 
     # Determine number of converters
     if ac_dc == "DC":
-        pd = _data_source.get_data("01_project_technical_details")
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in project_details_data:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in project_details_data["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -276,7 +301,9 @@ def main():
         print(f"  Annual Premium: ${wildfire_liability_results['annual_premium']:,.2f}")
         print(f"  Project Lifetime: {project_lifetime} years")
         print(f"  ---")
-        print(f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}")
+        print(
+            f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}"
+        )
         print()
         print("[SOCIETAL PERSPECTIVE - Present Value]")
         print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
@@ -285,16 +312,18 @@ def main():
         print(f"  ---")
         print(f"  TOTAL PRESENT VALUE: ${wildfire_liability_pv:,.2f}")
         print()
-        print("NOTE: Wildfire liability insurance is not AFUDC-eligible (operating expense).")
+        print(
+            "NOTE: Wildfire liability insurance is not AFUDC-eligible (operating expense)."
+        )
         print("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare operational insurance results dictionary for CSV
     csv_results = {
         "annual_premium": results["annual_premium"],
@@ -304,18 +333,20 @@ def main():
         "premium_rate": results["premium_rate"],
     }
     csv_manager.add_insurance_costs(csv_results)
-    
+
     # Add wildfire liability if enabled
     if wildfire_liability_results:
         wildfire_csv_results = {
             "annual_premium": wildfire_liability_results["annual_premium"],
-            "nominal_lifetime_cost": wildfire_liability_results["nominal_lifetime_cost"],
+            "nominal_lifetime_cost": wildfire_liability_results[
+                "nominal_lifetime_cost"
+            ],
             "pv_total": wildfire_liability_pv,
             "liability_limit": wildfire_liability_results["liability_limit"],
             "rate_on_line": wildfire_liability_results["rate_on_line"],
         }
         csv_manager.add_wildfire_liability_costs(wildfire_csv_results)
-    
+
     csv_manager.write_batch_summary()
 
 

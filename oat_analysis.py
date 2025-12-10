@@ -12,6 +12,8 @@ Usage:
     python oat_analysis.py --scenario "S1_Rural_Overhead_AC_460MW_Advanced_Conductor" --n_values 20 --top_n 6
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import sys
@@ -25,6 +27,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any, List, Tuple, Optional
 
 # Import functions from sensitivity_analysis.py
 # We'll need to import these or define them locally
@@ -39,9 +42,13 @@ try:
         store_baseline_values,
         save_yamls_to_temp,
         remove_baseline_markers,
-        calculate_bcr_fallback,
         read_results_by_scenario_id,
-        get_nested_value,  # Add this line
+        get_nested_value,
+    )
+    from scripts.sensitivity_utils import (
+        BCR_COLUMNS,
+        run_ctcc_with_temp_yamls as _run_ctcc_with_temp_yamls_utils,
+        deep_copy_yamls,
     )
 except ImportError:
     # If import fails, we'll need to define these locally
@@ -55,7 +62,7 @@ except ImportError:
 # ============================================================================
 
 
-def load_prcc_results(sensitivity_results_dir):
+def load_prcc_results(sensitivity_results_dir: Path | str) -> pd.DataFrame:
     """
     Load PRCC results from sensitivity analysis output directory.
 
@@ -77,7 +84,9 @@ def load_prcc_results(sensitivity_results_dir):
     return prcc_df
 
 
-def get_top_parameters_per_bcr(prcc_df, top_n=6):
+def get_top_parameters_per_bcr(
+    prcc_df: pd.DataFrame, top_n: int = 6
+) -> Dict[str, List[str]]:
     """
     Get top N parameters for each BCR metric by absolute PRCC value.
 
@@ -104,7 +113,45 @@ def get_top_parameters_per_bcr(prcc_df, top_n=6):
 # ============================================================================
 
 
-def generate_parameter_values(param_name, param_def, n_values=20):
+def validate_and_clamp_parameter_value(
+    param_name: str, param_value: float | int, param_def: Dict[str, Any]
+) -> float | int:
+    """
+    Validate and clamp parameter value to ensure it's within physical bounds.
+
+    For OAT analysis, parameters are generated directly (not as multipliers).
+    This function validates that the final value is within bounds and clamps if needed.
+
+    Args:
+        param_name: Name of the parameter
+        param_value: Parameter value to validate
+        param_def: Parameter definition from PARAM_DEFINITIONS
+
+    Returns:
+        Clamped value if out of bounds, otherwise original value
+    """
+    # Check if parameter has final_value_bounds
+    final_value_bounds = param_def.get("final_value_bounds")
+    if final_value_bounds is None:
+        # No bounds constraint, return as-is
+        return param_value
+
+    v_min, v_max = final_value_bounds
+    if v_min <= param_value <= v_max:
+        return param_value
+
+    # Out of bounds - clamp
+    clamped_value = max(v_min, min(v_max, float(param_value)))
+    print(
+        f"Warning: Clamped {param_name} value from {param_value:.4f} to {clamped_value:.4f} "
+        f"(bounds: [{v_min}, {v_max}])"
+    )
+    return clamped_value
+
+
+def generate_parameter_values(
+    param_name: str, param_def: Dict[str, Any], n_values: int = 20
+) -> List[float | int]:
     """
     Generate parameter values for a parameter based on its range and type.
 
@@ -169,8 +216,12 @@ def generate_parameter_values(param_name, param_def, n_values=20):
 
 
 def run_single_parameter_sweep(
-    param_name, parameter_values, base_dir, baseline_yamls, baselines
-):
+    param_name: str,
+    parameter_values: List[float | int],
+    base_dir: Path | str,
+    baseline_yamls: Dict[str, Any],
+    baselines: Dict[str, Any],
+) -> List[Dict[str, Any]]:
     """
     Run parameter sweep for a single parameter.
 
@@ -188,6 +239,15 @@ def run_single_parameter_sweep(
     base_dir = Path(base_dir)  # Ensure it's a Path object
 
     for param_value in parameter_values:
+        # Validate and clamp parameter value if needed (for direct values, not multipliers)
+        # Multipliers are validated in apply_sample_to_yamls
+        is_multiplier = param_name.endswith("_mult")
+        if not is_multiplier and param_name in PARAM_DEFINITIONS:
+            param_def = PARAM_DEFINITIONS[param_name]
+            param_value = validate_and_clamp_parameter_value(
+                param_name, param_value, param_def
+            )
+
         # Create sample dictionary with only this parameter varied
         sample_dict = {param_name: param_value}
 
@@ -204,12 +264,7 @@ def run_single_parameter_sweep(
 
         try:
             # Copy baseline YAMLs
-            yaml_files_copy = {}
-            for yaml_name, yaml_data in baseline_yamls.items():
-                # Deep copy
-                yaml_files_copy[yaml_name] = yaml.load(
-                    yaml.dump(yaml_data), Loader=yaml.FullLoader
-                )
+            yaml_files_copy = deep_copy_yamls(baseline_yamls)
 
             # Apply parameter value
             apply_sample_to_yamls(
@@ -227,28 +282,20 @@ def run_single_parameter_sweep(
 
             if result_dict and error is None:
                 # Extract BCR values
-                bcr_columns = [
-                    "bcr_system",
-                    "bcr_capital",
-                    "bcr_capital_and_delay",
-                    "bcr_excluding_risk",
-                    "bcr_excluding_emissions",
-                    "bcr_excluding_emissions_and_risk",
-                ]
-
-                # Check if BCR columns exist, use fallback if needed
-                missing_bcr = [col for col in bcr_columns if col not in result_dict]
+                # Check if BCR columns exist (BCR calculator should have written them)
+                missing_bcr = [col for col in BCR_COLUMNS if col not in result_dict]
                 if missing_bcr:
-                    fallback_bcr = calculate_bcr_fallback(result_dict)
-                    if fallback_bcr:
-                        result_dict.update(fallback_bcr)
+                    # Log warning but continue - BCR calculator should have written these
+                    print(
+                        f"  Warning: BCR columns missing for {param_name} at {param_value}: {missing_bcr}"
+                    )
 
                 result_row = {
                     "parameter_name": param_name,
                     "parameter_value": param_value,
                 }
 
-                for bcr_col in bcr_columns:
+                for bcr_col in BCR_COLUMNS:
                     result_row[bcr_col] = result_dict.get(bcr_col, None)
 
                 results.append(result_row)
@@ -278,123 +325,23 @@ def run_single_parameter_sweep(
     return results
 
 
-def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
+# run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
+# Create a wrapper that matches the original function signature for oat_analysis
+def run_ctcc_with_temp_yamls(
+    temp_yaml_dir: Path | str, base_dir: Path | str, scenario_id: str
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
-    Run CTCC with temporary YAML directory.
-
-    Args:
-        temp_yaml_dir: Path to temporary YAML directory (str)
-        base_dir: Base directory of the project (str or Path)
-        scenario_id: Unique scenario ID for this run
-
-    Returns:
-        Tuple of (result_dict, error_message)
+    Wrapper for run_ctcc_with_temp_yamls that provides the function signature
+    expected by oat_analysis.py.
     """
-    base_dir = Path(base_dir)  # Ensure it's a Path object
-    temp_yaml_dir = Path(temp_yaml_dir)  # Ensure it's a Path object
-
-    yamls_dir = base_dir / "yamls"
-    yamls_backup = base_dir / "yamls_backup"
-
-    try:
-        # Backup original yamls directory
-        if yamls_dir.exists():
-            if yamls_backup.exists():
-                shutil.rmtree(yamls_backup)
-            shutil.move(str(yamls_dir), str(yamls_backup))
-
-        # Move temp to yamls
-        shutil.move(str(temp_yaml_dir), str(yamls_dir))
-
-        # Set scenario ID in environment
-        os.environ["CTCC_SCENARIO_ID"] = scenario_id
-
-        # Run CTCC
-        result = subprocess.run(
-            [sys.executable, "ctcc.py", "--simple"],
-            cwd=str(base_dir),
-            capture_output=True,
-            text=True,
-            timeout=300,  # 5 minute timeout per run
-        )
-
-        # Check for errors
-        if result.returncode != 0:
-            error_msg = f"CTCC failed with return code {result.returncode}"
-            if result.stderr:
-                error_msg += f"\nStderr: {result.stderr[-500:]}"
-            if result.stdout:
-                error_msg += f"\nStdout (last 500 chars): {result.stdout[-500:]}"
-            return None, error_msg
-
-        # Extract results from batch_summary.csv
-        batch_summary_path = Path(base_dir) / "outputs" / "batch_summary.csv"
-        if batch_summary_path.exists():
-            df = pd.read_csv(batch_summary_path)
-            if len(df) > 0:
-                # Try to find by scenario_id first
-                results = read_results_by_scenario_id(batch_summary_path, scenario_id)
-                if results is None:
-                    # Fallback to last row
-                    results = df.iloc[-1].to_dict()
-
-                # Check if BCR columns are missing or empty/NaN and attempt fallback calculation
-                bcr_columns = [
-                    "bcr_system",
-                    "bcr_capital",
-                    "bcr_capital_and_delay",
-                    "bcr_excluding_risk",
-                    "bcr_excluding_emissions",
-                    "bcr_excluding_emissions_and_risk",
-                ]
-                # Check for missing columns OR empty/NaN values
-                missing_bcr = []
-                for col in bcr_columns:
-                    if col not in results:
-                        missing_bcr.append(col)
-                    else:
-                        # Check if value is empty, None, NaN, or empty string
-                        val = results.get(col)
-                        # Use pandas.isna for proper NaN/None/empty checking
-                        is_empty = (
-                            val is None
-                            or pd.isna(val)
-                            or val == ""
-                            or (isinstance(val, str) and val.strip() == "")
-                        )
-                        if is_empty:
-                            missing_bcr.append(col)
-
-                if missing_bcr:
-                    fallback_bcr = calculate_bcr_fallback(results)
-                    if fallback_bcr:
-                        results.update(fallback_bcr)
-                    else:
-                        error_info = f"BCR columns missing or empty: {missing_bcr}. Fallback calculation failed."
-                        return results, error_info
-
-                return results, None
-            else:
-                return None, "batch_summary.csv is empty"
-        else:
-            return None, "batch_summary.csv not found"
-
-    except subprocess.TimeoutExpired:
-        return None, "CTCC run timed out"
-    except Exception as e:
-        return None, str(e)
-    finally:
-        # Restore original yamls directory
-        if yamls_dir.exists():
-            try:
-                shutil.rmtree(yamls_dir)
-            except Exception:
-                pass
-        if yamls_backup.exists():
-            try:
-                shutil.move(str(yamls_backup), str(yamls_dir))
-            except Exception:
-                pass
+    return _run_ctcc_with_temp_yamls_utils(
+        temp_yaml_dir,
+        base_dir,
+        scenario_id,
+        ctcc_args=["--simple"],
+        use_env_dict=False,
+        read_results_by_scenario_id_func=read_results_by_scenario_id,
+    )
 
 
 # ============================================================================
@@ -403,8 +350,13 @@ def run_ctcc_with_temp_yamls(temp_yaml_dir, base_dir, scenario_id):
 
 
 def generate_oat_plots(
-    results_df, bcr_metric, top_params, prcc_values, output_path, baseline_yamls
-):
+    results_df: pd.DataFrame,
+    bcr_metric: str,
+    top_params: List[str],
+    prcc_values: pd.Series,
+    output_path: Path | str,
+    baseline_yamls: Dict[str, Any],
+) -> None:
     """
     Generate OAT plots for a BCR metric.
 
@@ -522,7 +474,7 @@ def generate_oat_plots(
 # ============================================================================
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="One-at-a-Time (OAT) Parameter Sweep Analysis for CTCC"
     )
@@ -549,6 +501,11 @@ def main():
         type=str,
         default=None,
         help="Output directory for results (default: oat_results/scenario_<ID>)",
+    )
+    parser.add_argument(
+        "--plot_only",
+        action="store_true",
+        help="Only regenerate plots from existing OAT results CSV files (skip analysis)",
     )
 
     args = parser.parse_args()
@@ -579,6 +536,86 @@ def main():
         output_dir = base_dir / "oat_results" / f"scenario_{scenario_id}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Handle --plot_only mode
+    if args.plot_only:
+        print("=" * 80)
+        print("PLOT-ONLY MODE: Regenerating plots from existing OAT results")
+        print("=" * 80)
+        print(f"Scenario: {scenario_id}")
+        print(f"Output: {output_dir}")
+        print("=" * 80)
+        print()
+
+        # Verify oat_summary.csv exists
+        summary_path = output_dir / "oat_summary.csv"
+        if not summary_path.exists():
+            print(f"ERROR: oat_summary.csv not found at {summary_path}")
+            print("Please run the full OAT analysis first (without --plot_only)")
+            sys.exit(1)
+
+        # Load PRCC results (needed for plotting)
+        print("Loading PRCC results...")
+        try:
+            prcc_df = load_prcc_results(sensitivity_results_dir)
+            print(
+                f"  Loaded PRCC results: {len(prcc_df)} parameters, {len(prcc_df.columns)} BCR metrics"
+            )
+        except FileNotFoundError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+        # Load OAT results
+        print(f"Loading OAT results from {summary_path}...")
+        try:
+            results_df = pd.read_csv(summary_path)
+            print(f"  Loaded {len(results_df)} rows from oat_summary.csv")
+            print()
+        except Exception as e:
+            print(f"ERROR: Failed to load oat_summary.csv: {e}")
+            sys.exit(1)
+
+        # Load baseline YAMLs (needed for plotting)
+        print("Loading baseline YAML files...")
+        yaml_dir = base_dir / "yamls"
+        if not yaml_dir.exists():
+            print(f"Error: YAML directory not found: {yaml_dir}")
+            sys.exit(1)
+        baseline_yamls = load_baseline_yamls(yaml_dir)
+        print(f"  Loaded {len(baseline_yamls)} YAML files")
+        print()
+
+        # Get top parameters per BCR (from PRCC)
+        top_params_per_bcr = get_top_parameters_per_bcr(prcc_df, top_n=args.top_n)
+
+        # Regenerate plots for each BCR metric
+        print("Regenerating plots...")
+        for bcr_metric in prcc_df.columns:
+            top_params = top_params_per_bcr[bcr_metric]
+            bcr_results = results_df[
+                results_df["parameter_name"].isin(top_params)
+            ].copy()
+
+            if len(bcr_results) > 0:
+                plot_path = output_dir / f"oat_{bcr_metric}_plot1.png"
+                prcc_series = prcc_df[bcr_metric]
+                generate_oat_plots(
+                    bcr_results,
+                    bcr_metric,
+                    top_params,
+                    prcc_series,
+                    plot_path,
+                    baseline_yamls,
+                )
+                print(f"  Regenerated {plot_path}")
+            else:
+                print(f"  Warning: No results found for {bcr_metric}")
+
+        print()
+        print("=" * 80)
+        print("Plot regeneration complete!")
+        print("=" * 80)
+        return
 
     print("=" * 80)
     print("ONE-AT-A-TIME (OAT) PARAMETER SWEEP ANALYSIS")
@@ -690,14 +727,6 @@ def main():
 
     # Save results per BCR
     print("\nSaving results...")
-    bcr_columns = [
-        "bcr_system",
-        "bcr_capital",
-        "bcr_capital_and_delay",
-        "bcr_excluding_risk",
-        "bcr_excluding_emissions",
-        "bcr_excluding_emissions_and_risk",
-    ]
 
     for bcr_metric in prcc_df.columns:
         # Filter results for parameters relevant to this BCR

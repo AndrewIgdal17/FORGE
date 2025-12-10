@@ -1,6 +1,7 @@
 # Project Right-of-Way Details
 # ROW acquisition and management costs
 # ALL FROM BLM: https://www.blm.gov/sites/default/files/policies/IM2021-005_att2.pdf
+# All values: miles (>= 0), costs (>= 0)
 
 right_of_way:
   zone_1:

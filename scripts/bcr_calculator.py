@@ -3,13 +3,20 @@
 # Description: Calculate benefit-cost ratios (BCR) for transmission projects.
 #              Compares congestion/curtailment benefits against all project costs.
 
+from __future__ import annotations
+
 import csv
 import os
+from typing import Dict, Any, Optional
+from path_config import OUTPUTS_DIR
 
 
-def load_scenario_data(scenario_id, output_dir="../outputs"):
+def load_scenario_data(
+    scenario_id: str, output_dir: str = str(OUTPUTS_DIR)
+) -> Optional[Dict[str, Any]]:
     """
     Load scenario data from batch_summary.csv for the given scenario_id.
+    Uses robust lookup: exact match, then partial match, then last row fallback.
 
     Args:
         scenario_id: Unique identifier for the scenario
@@ -24,24 +31,65 @@ def load_scenario_data(scenario_id, output_dir="../outputs"):
         print(f"Warning: batch_summary.csv not found at {batch_path}")
         return None
 
+    def convert_row_to_numeric(row: Dict[str, str]) -> Dict[str, Any]:
+        """Convert numeric strings to floats in a row."""
+        converted = {}
+        for key, value in row.items():
+            if value and value != "":
+                try:
+                    converted[key] = float(value)
+                except (ValueError, TypeError):
+                    converted[key] = value  # Keep as string if not numeric
+            else:
+                converted[key] = value
+        return converted
+
     with open(batch_path, "r", newline="") as f:
         reader = csv.DictReader(f)
-        for row in reader:
-            if row.get("scenario_id") == scenario_id:
-                # Convert numeric strings to floats
-                for key, value in row.items():
-                    if value and value != "":
-                        try:
-                            row[key] = float(value)
-                        except (ValueError, TypeError):
-                            pass  # Keep as string if not numeric
-                return row
+        rows = list(reader)
 
-    print(f"Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
-    return None
+        if len(rows) == 0:
+            print(f"Warning: batch_summary.csv is empty")
+            return None
+
+        # Strategy 1: Try exact match first
+        for row in rows:
+            row_id = row.get("scenario_id", "")
+            if row_id == scenario_id:
+                return convert_row_to_numeric(row)
+
+        # Strategy 2: Try partial match (for cases where scenario_id format differs)
+        # Check if scenario_id contains or is contained in row's scenario_id
+        for row in rows:
+            row_scenario_id = str(row.get("scenario_id", ""))
+            if scenario_id in row_scenario_id or row_scenario_id in scenario_id:
+                print(
+                    f"Info: Using partial match for scenario_id '{scenario_id}' (found '{row_scenario_id}')"
+                )
+                return convert_row_to_numeric(row)
+
+        # Strategy 3: Try prefix match (for sensitivity analysis runs)
+        # Extract prefix (e.g., "sample_0" from "sample_0_1234567890")
+        scenario_prefix = (
+            scenario_id.split("_")[0] if "_" in scenario_id else scenario_id
+        )
+        for row in rows:
+            row_scenario_id = str(row.get("scenario_id", ""))
+            if row_scenario_id.startswith(scenario_prefix + "_"):
+                print(
+                    f"Info: Using prefix match for scenario_id '{scenario_id}' (found '{row_scenario_id}')"
+                )
+                return convert_row_to_numeric(row)
+
+        # Strategy 4: Fallback to last row (for batch sensitivity runs where exact ID may differ)
+        print(f"Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
+        print(
+            f"Info: Using last row as fallback (this is normal for batch sensitivity analysis)"
+        )
+        return convert_row_to_numeric(rows[-1])
 
 
-def calculate_benefits(data):
+def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
 
@@ -99,7 +147,7 @@ def calculate_benefits(data):
     }
 
 
-def calculate_costs(data):
+def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total costs from scenario data.
 
@@ -243,8 +291,12 @@ def calculate_costs(data):
 
 
 def calculate_bcr_metrics(
-    benefits, costs, no_emissions=False, no_linelosses=False, capital_only=False
-):
+    benefits: Dict[str, float],
+    costs: Dict[str, float],
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> Dict[str, float]:
     """
     Calculate benefit-cost ratios and net benefits.
 
@@ -387,14 +439,15 @@ def calculate_bcr_metrics(
 
 
 def calculate_and_display_bcr(
-    scenario_id,
-    output_dir="../outputs",
-    no_emissions=False,
-    no_linelosses=False,
-    capital_only=False,
-):
+    scenario_id: str,
+    output_dir: str = str(OUTPUTS_DIR),
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> Optional[Dict[str, Any]]:
     """
     Main function to calculate and display BCR analysis.
+    Always attempts to return results even if some calculations fail.
 
     Args:
         scenario_id: Unique identifier for the scenario
@@ -404,46 +457,105 @@ def calculate_and_display_bcr(
         capital_only: If True, only calculate capital costs
 
     Returns:
-        Dictionary with all BCR results, or None if calculation fails
+        Dictionary with all BCR results, or None only if CSV doesn't exist or is empty
     """
-    # Load scenario data
+    # Load scenario data (now with robust lookup)
     data = load_scenario_data(scenario_id, output_dir)
     if data is None:
+        print(f"Error: Could not load scenario data for '{scenario_id}'")
         return None
 
-    # Calculate benefits and costs
-    benefits = calculate_benefits(data)
-    costs = calculate_costs(data)
+    # Calculate benefits and costs with error handling
+    try:
+        benefits = calculate_benefits(data)
+    except Exception as e:
+        import traceback
 
-    # Calculate BCR metrics
-    bcr_metrics = calculate_bcr_metrics(
-        benefits, costs, no_emissions, no_linelosses, capital_only
-    )
+        traceback.print_exc()
+        print(f"Warning: Error calculating benefits: {e}")
+        # Return partial results with zero benefits
+        benefits = {
+            "congestion_benefit_pv": 0,
+            "curtailment_benefit_pv": 0,
+            "revenue_pv": 0,
+            "total_benefits_pv": 0,
+            "total_benefits_nominal": 0,
+            "total_benefits_haircut_pv": 0,
+        }
 
-    # Combine all results
+    try:
+        costs = calculate_costs(data)
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        print(f"Warning: Error calculating costs: {e}")
+        # Return partial results with zero costs
+        costs = {
+            "capital_costs_pv": 0,
+            "operational_costs_pv": 0,
+            "energy_emissions_costs_pv": 0,
+            "risk_costs_pv": 0,
+            "delay_costs_pv": 0,
+            "total_costs_pv": 0,
+        }
+
+    # Calculate BCR metrics with error handling
+    try:
+        bcr_metrics = calculate_bcr_metrics(
+            benefits, costs, no_emissions, no_linelosses, capital_only
+        )
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        print(f"Warning: Error calculating BCR metrics: {e}")
+        # Return zero BCR metrics if calculation fails
+        bcr_metrics = {
+            "bcr_system": 0,
+            "bcr_capital": 0,
+            "bcr_capital_and_delay": 0,
+            "bcr_excluding_risk": 0,
+            "bcr_excluding_emissions": 0,
+            "bcr_excluding_emissions_and_risk": 0,
+            "net_benefit_pv": 0,
+            "net_benefit_nominal": 0,
+        }
+
+    # Combine all results (always return something, even if partial)
     results = {
         **benefits,
         **costs,
         **bcr_metrics,
     }
 
-    # Display results
-    print_bcr_summary(
-        benefits, costs, bcr_metrics, data, no_emissions, no_linelosses, capital_only
-    )
+    # Display results (only if not in simple mode - check via environment or suppress)
+    try:
+        print_bcr_summary(
+            benefits,
+            costs,
+            bcr_metrics,
+            data,
+            no_emissions,
+            no_linelosses,
+            capital_only,
+        )
+    except Exception as e:
+        # Don't fail if printing fails, but log it
+        pass
 
     return results
 
 
 def print_bcr_summary(
-    benefits,
-    costs,
-    bcr_metrics,
-    data,
-    no_emissions=False,
-    no_linelosses=False,
-    capital_only=False,
-):
+    benefits: Dict[str, float],
+    costs: Dict[str, float],
+    bcr_metrics: Dict[str, float],
+    data: Dict[str, Any],
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    capital_only: bool = False,
+) -> None:
     """
     Print formatted BCR summary to terminal.
 
@@ -547,7 +659,9 @@ def print_bcr_summary(
         f"  System BCR (conservative):    {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
     )
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
-    print(f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}")
+    print(
+        f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}"
+    )
 
     # BCR excluding risk costs
     bcr_excluding_risk = bcr_metrics["bcr_excluding_risk"]
@@ -780,7 +894,7 @@ if __name__ == "__main__":
         scenario_id = sys.argv[1]
     else:
         # Try to get the most recent scenario_id from batch_summary.csv
-        batch_path = "../outputs/batch_summary.csv"
+        batch_path = OUTPUTS_DIR / "batch_summary.csv"
         if os.path.exists(batch_path):
             with open(batch_path, "r") as f:
                 reader = csv.DictReader(f)

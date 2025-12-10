@@ -2,21 +2,10 @@
 # Date: 2025-10-27
 # Descriptions: This script calculates transmission line losses
 
-# Standard library imports
-import sys
-import os
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from __future__ import annotations
 
 # Local utility imports
-from smart_loaders import (
+from yaml_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_circuit_and_resistance_details,
@@ -27,29 +16,30 @@ from calculation_utils import (
     calculate_line_losses,
     calculate_converter_losses,
 )
+from path_config import YAMLS_DIR
 
 
 def print_results(
-    voltage_kv,
-    conductors_per_phase,
-    number_of_phases,
-    number_of_circuits_poles,
-    line_utilization_percent,
-    line_length,
-    phase_current,
-    resistance_per_mile,
-    full_load_adj,
-    losses_mw_per_mile,
-    line_loss_per_mile_percent,
-    total_line_loss_mw,
-    total_line_loss_percent,
-    total_converter_losses_mw,
-    converter_loss_percent,
-    total_converter_losses_mwh,
-    losses_mwh_per_year,
-    lifetime_losses_mwh,
-    project_lifetime,
-):
+    voltage_kv: float,
+    conductors_per_phase: int,
+    number_of_phases: int,
+    number_of_circuits_poles: int,
+    line_utilization_percent: float,
+    line_length: float,
+    phase_current: float,
+    resistance_per_mile: float,
+    full_load_adj: float,
+    losses_mw_per_mile: float,
+    line_loss_per_mile_percent: float,
+    total_line_loss_mw: float,
+    total_line_loss_percent: float,
+    total_converter_losses_mw: float,
+    converter_loss_percent: float,
+    total_converter_losses_mwh: float,
+    losses_mwh_per_year: float,
+    lifetime_losses_mwh: float,
+    project_lifetime: int,
+) -> None:
     """Print organized results in sections."""
     # System Configuration
     print("=" * 60)
@@ -98,7 +88,30 @@ def print_results(
     )
 
 
-def main():
+def main() -> None:
+    """
+    Main function to calculate and display transmission line energy losses.
+
+    This script calculates electrical losses (I²R losses) for transmission lines, including:
+    - Line losses: Resistive losses in conductors based on phase current, resistance, and line length
+    - Converter losses: Losses in DC converter stations (for DC projects only)
+
+    The calculation uses project technical details (voltage, capacity, conductor type, etc.) and
+    physical details (line length, terrain) to determine:
+    - Phase current based on capacity and voltage
+    - Full load adjustment factor based on line utilization
+    - Annual and lifetime energy losses in MWh
+    - Loss percentages (per mile and total)
+
+    Results are printed to console in organized sections showing system configuration,
+    line loss results, converter loss results, and summary totals.
+
+    Outputs:
+        - Prints system configuration (voltage, conductors, phases, etc.)
+        - Prints line loss results (MW, MWh/yr, percentages)
+        - Prints converter loss results (for DC projects)
+        - Prints summary totals (combined losses)
+    """
     (
         construction_type,
         ac_dc,
@@ -110,6 +123,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category locally
@@ -121,8 +135,34 @@ def main():
     if ac_dc == "DC":
         import yaml
 
-        pd = _data_source.get_data("01_project_technical_details")
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in project_details_data:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in project_details_data["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -182,6 +222,7 @@ def main():
         line_utilization_percent,
         capacity_mw_numeric,
         ac_dc,
+        converter_loss_percentage,
     )
 
     # Print all results in organized sections

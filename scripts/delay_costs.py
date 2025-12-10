@@ -3,6 +3,8 @@
 # Description: This script calculates the delay costs for a transmission line.
 #              It computes the delay costs for a transmission line over the delay period.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
@@ -10,29 +12,59 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
-from smart_loaders import load_delay_costs, load_financing_details
+from yaml_loaders import load_delay_costs, load_financing_details
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR
 
 
-def load_project_technical_details():
+def load_project_technical_details() -> float:
     """
-    Load project technical details and construct category identifier.
+    Load delay years from project technical details YAML file.
+
+    This is a simplified loader that extracts only the delay_years value from the
+    project technical details YAML file, as this is the only field needed for
+    delay cost calculations.
+
+    Args:
+        None (reads from YAML file)
+
+    Returns:
+        float: Number of years of project delay before construction begins
+
+    Raises:
+        FileNotFoundError: When project technical details YAML is not found
+        ValueError: When YAML file is empty or invalid
+        KeyError: When required keys ("timeline", "delay_years") are missing
     """
-    project_details = _data_source.get_data("01_project_technical_details")
-    delay_year = project_details["timeline"]["delay_years"]
-    return delay_year
+    try:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+            project_details = yaml.safe_load(file)
+        if not project_details:
+            raise ValueError("Project technical details YAML file is empty or invalid")
+        if "timeline" not in project_details:
+            raise KeyError(
+                "Missing 'timeline' key in project technical details YAML file"
+            )
+        if "delay_years" not in project_details["timeline"]:
+            raise KeyError(
+                "Missing 'delay_years' key in timeline section of technical details YAML"
+            )
+        delay_year = project_details["timeline"]["delay_years"]
+        return delay_year
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing project technical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in project technical details YAML: {e}")
 
 
-def main():
+def main() -> None:
     """
 
     Main function to calculate and display delay costs.
@@ -91,17 +123,17 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": total_delay_cost,
         "total_afudc": 0,  # Delay costs are not AFUDC-eligible
         "total_pv": total_delay_cost_pv,
     }
-    
+
     # Write to CSV
     csv_manager.add_delay_costs(results)
     csv_manager.write_batch_summary()

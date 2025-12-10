@@ -2,12 +2,19 @@
 # Date: 2025-01-XX
 # Description: Shared calculation utility functions for transmission line calculations.
 
+from __future__ import annotations
+
 import math
+from typing import Union, Tuple
 
 
 def calculate_phase_current(
-    capacity_mw, voltage_kv, number_of_phases, number_of_circuits_poles, ac_dc
-):
+    capacity_mw: Union[int, str],
+    voltage_kv: float,
+    number_of_phases: int,
+    number_of_circuits_poles: int,
+    ac_dc: str,
+) -> float:
     """
     Calculate phase current based on AC or DC transmission type.
 
@@ -37,7 +44,7 @@ def calculate_phase_current(
     return numerator / denominator
 
 
-def full_load_adjusted(line_utilization_percent):
+def full_load_adjusted(line_utilization_percent: float) -> float:
     """
     Calculate full load adjustment based on line utilization.
 
@@ -51,19 +58,19 @@ def full_load_adjusted(line_utilization_percent):
 
 
 def calculate_line_losses(
-    phase_current,
-    full_load_adj,
-    AC_75_resistance,
-    DC_20_resistance,
-    ac_dc,
-    number_of_circuits_poles,
-    conductors_per_phase,
-    number_of_phases,
-    line_length,
-    project_lifetime,
-    capacity_mw_numeric,
-    line_utilization_percent,
-):
+    phase_current: float,
+    full_load_adj: float,
+    AC_75_resistance: float,
+    DC_20_resistance: float,
+    ac_dc: str,
+    number_of_circuits_poles: int,
+    conductors_per_phase: int,
+    number_of_phases: int,
+    line_length: float,
+    project_lifetime: int,
+    capacity_mw_numeric: int,
+    line_utilization_percent: float,
+) -> Tuple[float, float, float, float, float, float, float]:
     """
     Calculate line losses for transmission lines.
 
@@ -122,12 +129,13 @@ def calculate_line_losses(
 
 
 def calculate_converter_losses(
-    number_of_converters,
-    converter_type,
-    line_utilization_percent,
-    capacity_mw_numeric,
-    ac_dc,
-):
+    number_of_converters: int,
+    converter_type: str,
+    line_utilization_percent: float,
+    capacity_mw_numeric: int,
+    ac_dc: str,
+    converter_loss_percentage: float | None = None,
+) -> Tuple[float, float, float]:
     """
     Calculate converter losses based on number of converters.
 
@@ -137,12 +145,15 @@ def calculate_converter_losses(
         line_utilization_percent: Line utilization as decimal (0-1)
         capacity_mw_numeric: Capacity in MW as numeric value
         ac_dc: "AC" or "DC" string
+        converter_loss_percentage: Optional converter loss percentage. If None, defaults to
+            0.0075 for LCC converters or 0.01 for VSC converters.
 
     Returns:
         tuple: (total_converter_losses_mw, total_converter_losses_mwh, converter_loss_percent)
     """
     if ac_dc == "DC":
-        converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
+        if converter_loss_percentage is None:
+            converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
         converter_losses_mw = (
             converter_loss_percentage * line_utilization_percent * capacity_mw_numeric
         )

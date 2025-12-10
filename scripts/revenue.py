@@ -4,11 +4,14 @@
 #              Revenue = Capital Costs PV × Allowed Return Rate, calculated annually
 #              over project lifetime and discounted to present value.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
 import csv
+from typing import Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -17,61 +20,91 @@ from csv_output_manager import CTCCOutputManager
 # Local utility imports
 from yaml_loaders import load_financing_details
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR, OUTPUTS_DIR
 
 
-def load_rate_based_revenue_parameters():
+def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
     """
     Load rate-based revenue parameters from financing YAML.
-    
+
     Returns:
         tuple: (enabled, allowed_return_rate)
     """
-    with open("../yamls/03_financing.yaml", "r") as file:
-        financing_data = yaml.load(file, Loader=yaml.FullLoader)
-    
-    revenue_config = financing_data.get("financial", {}).get("revenue", {})
-    rate_based_config = revenue_config.get("rate_based", {})
-    
-    enabled = rate_based_config.get("enabled", False)
-    allowed_return_rate = rate_based_config.get("allowed_return_rate", 0.10)
-    
-    return enabled, allowed_return_rate
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_data = yaml.safe_load(file)
+        if not financing_data:
+            raise ValueError("Financing YAML file is empty or invalid")
+        revenue_config = financing_data.get("financial", {}).get("revenue", {})
+        rate_based_config = revenue_config.get("rate_based", {})
+
+        enabled = rate_based_config.get("enabled", False)
+        allowed_return_rate = rate_based_config.get("allowed_return_rate", 0.10)
+
+        return enabled, allowed_return_rate
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
 
 
-def load_project_technical_details():
+def load_project_technical_details() -> Tuple[float, int, int]:
     """
     Load project technical details for timeline information.
-    
+
     Returns:
         tuple: (delay_years, construction_years, project_lifetime)
     """
-    with open("../yamls/01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.load(file, Loader=yaml.FullLoader)
-    
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
-    
+    try:
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+            project_details = yaml.safe_load(file)
+        if not project_details:
+            raise ValueError("Project technical details YAML file is empty or invalid")
+        if "timeline" not in project_details:
+            raise KeyError(
+                "Missing 'timeline' key in project technical details YAML file"
+            )
+        timeline = project_details["timeline"]
+        required_keys = ["delay_years", "construction_years", "project_lifetime"]
+        for key in required_keys:
+            if key not in timeline:
+                raise KeyError(
+                    f"Missing '{key}' key in timeline section of technical details YAML"
+                )
+        delay_years = timeline["delay_years"]
+        construction_years = timeline["construction_years"]
+        project_lifetime = timeline["project_lifetime"]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing project technical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in project technical details YAML: {e}")
+
     return delay_years, construction_years, project_lifetime
 
 
-def get_capital_costs_pv():
+def get_capital_costs_pv() -> float:
     """
     Get capital costs PV from batch_summary.csv for the current scenario.
-    
+
     Capital costs = build_cost_pv + row_cost_pv + env_mitigation_pv
-    
+
     Returns:
         float: Capital costs PV, or 0 if not found
     """
-    batch_summary_path = "../outputs/batch_summary.csv"
-    
+    batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
+
     if not os.path.exists(batch_summary_path):
         return 0
-    
+
     # Get current scenario_id from environment variable
     scenario_id = os.environ.get("CTCC_SCENARIO_ID")
-    
+
     if not scenario_id:
         print("⚠️  Warning: CTCC_SCENARIO_ID not set. Cannot filter by scenario_id.")
         print("   Falling back to last row (may be incorrect if multiple runs exist).")
@@ -87,9 +120,11 @@ def get_capital_costs_pv():
                     env_pv = float(latest_row.get("env_mitigation_pv", 0) or 0)
                     return build_pv + row_pv + env_pv
         except (ValueError, KeyError, IOError) as e:
-            print(f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}")
+            print(
+                f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}"
+            )
         return 0
-    
+
     try:
         with open(batch_summary_path, "r", newline="") as f:
             reader = csv.DictReader(f)
@@ -100,22 +135,24 @@ def get_capital_costs_pv():
                     row_pv = float(row.get("row_cost_pv", 0) or 0)
                     env_pv = float(row.get("env_mitigation_pv", 0) or 0)
                     return build_pv + row_pv + env_pv
-            
+
             # If scenario_id not found, warn and return 0
-            print(f"⚠️  Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
+            print(
+                f"⚠️  Warning: scenario_id '{scenario_id}' not found in batch_summary.csv"
+            )
             return 0
     except (ValueError, KeyError, IOError) as e:
         print(f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}")
         return 0
 
 
-def main():
+def main() -> None:
     """
     Main function to calculate and display rate-based revenue requirement.
     """
     # Check if rate-based revenue is enabled
     enabled, allowed_return_rate = load_rate_based_revenue_parameters()
-    
+
     if not enabled:
         print("=" * 60)
         print("RATE-BASED REVENUE CALCULATION SKIPPED")
@@ -133,36 +170,38 @@ def main():
         csv_manager.add_revenue(results)
         csv_manager.write_batch_summary()
         return
-    
+
     # Load project details
     delay_years, construction_years, project_lifetime = load_project_technical_details()
-    
+
     # Load financing details
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
-    
+
     # Get capital costs PV from batch_summary.csv
     capital_costs_pv = get_capital_costs_pv()
-    
+
     if capital_costs_pv == 0:
         print("⚠️  Warning: Capital costs PV is zero. Revenue will be zero.")
-        print("   Make sure build_costs.py, row_costs.py, and environmental_mitigation.py")
+        print(
+            "   Make sure build_costs.py, row_costs.py, and environmental_mitigation.py"
+        )
         print("   have run before revenue.py")
-    
+
     # Calculate annual revenue requirement
     # Rate Base = Capital Costs PV
     # Annual Revenue = Rate Base × Allowed Return Rate
     annual_revenue = capital_costs_pv * allowed_return_rate
-    
+
     total_revenue_nominal = annual_revenue * project_lifetime
-    
+
     # Calculate present value (revenue starts after construction)
     revenue_pv = calculate_present_value(
         annual_revenue,
         wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years + 1
+        start_year=delay_years + construction_years + 1,
     )
-    
+
     print("=" * 60)
     print("RATE-BASED REVENUE REQUIREMENT CALCULATION")
     print("=" * 60)
@@ -176,7 +215,7 @@ def main():
     )
     print(f"TOTAL PRESENT VALUE REVENUE: ${revenue_pv:,.2f}")
     print("=" * 60)
-    
+
     # CSV Output
     csv_manager = CTCCOutputManager()
     results = {
@@ -192,4 +231,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

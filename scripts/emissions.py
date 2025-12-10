@@ -4,19 +4,16 @@
 # 1. Delays and long construction times slowing the deployment of new renewable energy capacity
 # 2. Line losses being compensated for by generators (i.e. they have to burn more fuel to make up for losses)
 
+from __future__ import annotations
+
 # Standard library imports
 import sys
 import os
+from typing import Dict, Any, List, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
 from energy_losses import (
@@ -28,11 +25,12 @@ from energy_losses import (
     calculate_line_losses,
     calculate_converter_losses,
 )
-from smart_loaders import load_emissions_details, load_financing_social_discount_rate
+from yaml_loaders import load_emissions_details, load_financing_social_discount_rate
 from financial_utils import calculate_present_value
+from path_config import YAMLS_DIR
 
 
-def calculate_total_energy_losses():
+def calculate_total_energy_losses() -> Tuple[float, int]:
     """
     Calculate total energy losses by reusing energy_losses functions.
 
@@ -51,6 +49,7 @@ def calculate_total_energy_losses():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category locally
@@ -62,8 +61,34 @@ def calculate_total_energy_losses():
     if ac_dc == "DC":
         import yaml
 
-        pd = _data_source.get_data("01_project_technical_details")
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in project_details_data:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in project_details_data["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -125,6 +150,7 @@ def calculate_total_energy_losses():
         line_utilization_percent,
         capacity_mw_numeric,
         ac_dc,
+        converter_loss_percentage,
     )
 
     # Total energy losses is the sum of line and converter losses
@@ -133,7 +159,9 @@ def calculate_total_energy_losses():
     return total_losses_mwh_per_year, project_lifetime
 
 
-def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
+def calculate_energy_mix_by_year(
+    energy_source_mix_details: Dict[str, Any], project_lifetime: int
+) -> List[Dict[str, float]]:
     """
     Calculate energy mix for each year with growth/decay rates.
 
@@ -170,7 +198,9 @@ def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
     energy_mix_by_year = []
     current_mix = initial_mix.copy()
 
-    for year in range(1, project_lifetime + 1):
+    # Convert project_lifetime to int for range() (it may be a float)
+    project_lifetime_int = int(project_lifetime)
+    for year in range(1, project_lifetime_int + 1):
         # Apply growth/decay rates
         next_mix = {}
         for source in sources:
@@ -189,12 +219,16 @@ def calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime):
     return energy_mix_by_year
 
 
-def calculate_emissions_by_year(tec, energy_mix, emission_intensities):
+def calculate_emissions_by_year(
+    total_energy_compensated_mwh: float,
+    energy_mix: Dict[str, float],
+    emission_intensities: Dict[str, Any],
+) -> Dict[str, float]:
     """
     Calculate emissions for a single year.
 
     Args:
-        tec: Total energy compensated in MWh
+        total_energy_compensated_mwh: Total energy compensated in MWh
         energy_mix: Dictionary of energy source percentages for the year
         emission_intensities: Dictionary of emission intensities by pollutant and source
 
@@ -230,22 +264,32 @@ def calculate_emissions_by_year(tec, energy_mix, emission_intensities):
         for source in sources:
             p_j = energy_mix.get(source, 0.0)
             I_jk = intensity_dict.get(source, 0.0)
-            emissions[pollutant] += tec * p_j * I_jk
+            emissions[pollutant] += total_energy_compensated_mwh * p_j * I_jk
 
     return emissions
 
 
 def calculate_lifetime_emissions(
-    total_losses_mwh_per_year,
-    compensation_percent,
-    energy_source_mix_details,
-    emission_intensities,
-    societal_costs,
-    project_lifetime,
-    social_discount_rate,
-    delay_years,
-    construction_years,
-):
+    total_losses_mwh_per_year: float,
+    compensation_percent: float,
+    energy_source_mix_details: Dict[str, Any],
+    emission_intensities: Dict[str, Any],
+    societal_costs: Dict[str, float],
+    project_lifetime: int,
+    social_discount_rate: float,
+    delay_years: float,
+    construction_years: int,
+) -> Tuple[
+    List[Dict[str, float]],
+    Dict[str, float],
+    Dict[str, float],
+    float,
+    Dict[str, float],
+    Dict[str, float],
+    float,
+    float,
+    Dict[str, float],
+]:
     """
     Calculate emissions across project lifetime.
 
@@ -258,7 +302,7 @@ def calculate_lifetime_emissions(
     start_year = int(delay_years) + int(construction_years) + 1
 
     # Calculate TEC (Total Energy Compensated)
-    tec = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
 
     # Calculate energy mix for each year
     energy_mix_by_year = calculate_energy_mix_by_year(
@@ -276,7 +320,9 @@ def calculate_lifetime_emissions(
     lifetime_cost_pv = 0.0
 
     for year, energy_mix in enumerate(energy_mix_by_year, 1):
-        emissions = calculate_emissions_by_year(tec, energy_mix, emission_intensities)
+        emissions = calculate_emissions_by_year(
+            total_energy_compensated_mwh, energy_mix, emission_intensities
+        )
         yearly_emissions.append(emissions)
 
         # Calculate costs for this year: C_k = E_k × c_k
@@ -330,20 +376,20 @@ def calculate_lifetime_emissions(
 
 
 def print_emissions_results(
-    compensation_percent,
-    energy_source_mix_details,
-    avg_annual_emissions,
-    societal_costs,
-    avg_annual_costs,
-    avg_annual_costs_by_pollutant,
-    total_emissions,
-    total_costs_by_pollutant,
-    lifetime_cost,
-    lifetime_cost_pv,
-    total_costs_by_pollutant_pv,
-    total_losses_mwh_per_year,
-    tec,
-):
+    compensation_percent: float,
+    energy_source_mix_details: Dict[str, Any],
+    avg_annual_emissions: Dict[str, float],
+    societal_costs: Dict[str, float],
+    avg_annual_costs: float,
+    avg_annual_costs_by_pollutant: Dict[str, float],
+    total_emissions: Dict[str, float],
+    total_costs_by_pollutant: Dict[str, float],
+    lifetime_cost: float,
+    lifetime_cost_pv: float,
+    total_costs_by_pollutant_pv: Dict[str, float],
+    total_losses_mwh_per_year: float,
+    total_energy_compensated_mwh: float,
+) -> None:
     """Print organized emissions results."""
     # Compensation Configuration
     print("=" * 60)
@@ -351,7 +397,7 @@ def print_emissions_results(
     print("=" * 60)
     print(f"Compensation percentage (α): {compensation_percent:.1%}")
     print(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
-    print(f"Total energy compensated (TEC): {tec:,.2f} MWh/yr")
+    print(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
     print()
 
     # Energy Source Mix - Initial
@@ -427,7 +473,27 @@ def print_emissions_results(
     print()
 
 
-def main():
+def main() -> None:
+    """
+    Main function to calculate and display emissions costs from transmission line losses.
+
+    This script calculates the societal costs of emissions (CO2, SOx, NOx) associated with
+    compensating for transmission line energy losses. The calculation accounts for:
+    - Total energy losses from the transmission line (line losses + converter losses)
+    - Compensation percentage (fraction of losses that require additional generation)
+    - Energy source mix for compensation (with growth/decay rates over project lifetime)
+    - Emission intensities for each energy source
+    - Societal costs per kg of each pollutant
+
+    The script calculates annual and lifetime emissions, monetizes them using societal costs,
+    and calculates present values using the social discount rate. Results are printed to console
+    and written to CSV outputs via CTCCOutputManager.
+
+    Outputs:
+        - Prints detailed emissions results by pollutant (CO2, SOx, NOx)
+        - Writes to emissions_costs.csv and batch_summary.csv
+        - Calculates both nominal and present value costs
+    """
     # Load emissions details
     (
         compensation_percent,
@@ -451,14 +517,41 @@ def main():
         delay_years,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Get number_of_converters if DC
     if ac_dc == "DC":
         import yaml
 
-        pd = _data_source.get_data("01_project_technical_details")
-        number_of_converters = pd["project"]["number_of_converters"]
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in project_details_data:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in project_details_data["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -491,7 +584,7 @@ def main():
     )
 
     # Calculate TEC for display
-    tec = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
 
     # Print results
     print_emissions_results(
@@ -507,16 +600,16 @@ def main():
         lifetime_cost_pv,
         total_costs_by_pollutant_pv,
         total_losses_mwh_per_year,
-        tec,
+        total_energy_compensated_mwh,
     )
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": lifetime_cost,
@@ -532,7 +625,7 @@ def main():
         "nox_cost_nominal": total_costs_by_pollutant["nox"],
         "nox_cost_pv": total_costs_by_pollutant_pv["nox"],
     }
-    
+
     # Write to CSV
     csv_manager.add_emissions_costs(results)
     csv_manager.write_batch_summary()

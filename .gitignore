@@ -89,6 +89,9 @@ outputs/
 oat_results/
 sensitivity_results/
 
+# Papers directory
+papers/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

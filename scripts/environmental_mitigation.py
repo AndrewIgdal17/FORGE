@@ -4,23 +4,20 @@
 #              It computes base construction/restoration costs and wetland/habitat credit purchases
 #              across different construction types and terrain types.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Dict, Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
-from smart_loaders import (
+from yaml_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_row_widths,
@@ -33,12 +30,17 @@ from financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    validate_discount_rate,
 )
+from path_config import YAMLS_DIR
 
 
 def calculate_environmental_mitigation_costs(
-    em_yaml, category, terrain_miles_dict, row_width_feet
-):
+    em_yaml: Dict[str, Any],
+    category: str,
+    terrain_miles_dict: Dict[str, float],
+    row_width_feet: float,
+) -> Dict[str, float]:
     """
     Calculate environmental mitigation costs including base mitigation
     and wetland/habitat credit purchases.
@@ -53,22 +55,22 @@ def calculate_environmental_mitigation_costs(
         dict: Contains base_cost, wetlands_credits, habitat_credits,
               total, uplift_factor_applied, total_acres, effective_acres
     """
-    cfg = em_yaml["environmental_mitigation"]
-    base_costs = cfg["base_mitigation_cost_per_acre"]
-    credits = cfg.get("credit_cost_per_acre", {})
-    ratios = cfg.get("credit_ratios", {})
-    uplift_factor = cfg.get("mitigation_uplift_factor", 1.0)
+    mitigation_config = em_yaml["environmental_mitigation"]
+    base_costs = mitigation_config["base_mitigation_cost_per_acre"]
+    credits = mitigation_config.get("credit_cost_per_acre", {})
+    ratios = mitigation_config.get("credit_ratios", {})
+    uplift_factor = mitigation_config.get("mitigation_uplift_factor", 1.0)
 
     # Determine construction type from category
     construction_type = category.split("/")[0]  # e.g., "overhead", "underground"
 
     # Map construction_type to YAML keys
-    ct_map = {
+    construction_type_map = {
         "overhead": "overhead",
         "underground": "underground_direct_buried",  # default to direct_buried
         "subsea": "subsea",
     }
-    yaml_ct = ct_map.get(construction_type, "overhead")
+    yaml_construction_type = construction_type_map.get(construction_type, "overhead")
 
     # Calculate base acreage by terrain (before uplift)
     total_base_acres = 0.0
@@ -86,7 +88,7 @@ def calculate_environmental_mitigation_costs(
             effective_acres = terrain_acres * uplift_factor
 
             # Get cost per acre for this construction type and terrain
-            cost_per_acre = base_costs.get(yaml_ct, {}).get(terrain, 0.0)
+            cost_per_acre = base_costs.get(yaml_construction_type, {}).get(terrain, 0.0)
             base_cost += cost_per_acre * effective_acres
 
     # Calculate total effective acres (with uplift)
@@ -125,7 +127,7 @@ def calculate_environmental_mitigation_costs(
     }
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display environmental mitigation costs."""
     # Load project specifications
     (
@@ -139,6 +141,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -150,8 +153,26 @@ def main():
     row_width_feet = load_row_widths(category)
 
     # Load terrain details
-    physical_details = _data_source.get_data("02_project_physical_details")
-    terrain_miles = physical_details["terrain"]["terrain_miles"]
+    try:
+        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
+            physical_details = yaml.safe_load(file)
+        if not physical_details:
+            raise ValueError("Physical details YAML file is empty or invalid")
+        if "terrain" not in physical_details:
+            raise KeyError("Missing 'terrain' key in physical details YAML file")
+        if "terrain_miles" not in physical_details["terrain"]:
+            raise KeyError(
+                "Missing 'terrain_miles' key in terrain section of physical details YAML"
+            )
+        terrain_miles = physical_details["terrain"]["terrain_miles"]
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing physical details YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in physical details YAML: {e}")
 
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
@@ -169,7 +190,17 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    financing_yaml = _data_source.get_data("03_financing")
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
@@ -198,6 +229,9 @@ def main():
         total_afudc = base_afudc + credits_afudc
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
+    # Validate wacc_real before direct use to prevent division by zero
+    validate_discount_rate(wacc_real, "wacc_real")
+
     # Credit purchases: occur upfront at start of construction (end of delay period)
     # Discount as one-time payment at delay_year + 1
     credit_start_year = delay_year + 1
@@ -279,10 +313,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     csv_results = {
         "total_nominal": results["total"],
@@ -291,7 +325,7 @@ def main():
         "base_cost_nominal": results["base_cost"],
         "credits_nominal": results["total_credits"],
     }
-    
+
     # Write to CSV
     csv_manager.add_environmental_mitigation(csv_results)
     csv_manager.write_batch_summary()

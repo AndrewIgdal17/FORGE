@@ -3,25 +3,21 @@
 # Description: This calculates the build costs for a transmission line project. Then adjusts it to terrian adjustment
 # via the weighted_miles.py script
 
+from __future__ import annotations
 
 # Standard library imports
 import math
 import yaml
 import sys
 import os
+from typing import Dict, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
-from smart_loaders import (
+from yaml_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_contingencies,
@@ -34,13 +30,19 @@ from financial_utils import (
     calculate_amortized_cost,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    validate_discount_rate,
 )
 from weighted_miles import calculate_weighted_miles
+from path_config import YAMLS_DIR
 
 
 def load_costs(
-    category, total_miles, number_of_converters, contingencies, reconductoring
-):
+    category: str,
+    total_miles: float,
+    number_of_converters: int,
+    contingencies: Dict[str, float],
+    reconductoring: bool,
+) -> Tuple[float, float, float, float, float, float, float, float, float, float]:
     """
     Load the costs for the comprehensive transmission cost calculator.
 
@@ -56,8 +58,37 @@ def load_costs(
                 converter_cost, conductor_cost_with_contingencies, structure_cost_with_contingencies,
                 converter_cost_with_contingencies, weighted_miles, average_terrain_multiplier)
     """
-    build_costs_data = _data_source.get_data("10_project_category_build_costs")
-    costs = build_costs_data["project_categories_build_costs"]
+    try:
+        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        if not data:
+            raise ValueError("Build costs YAML file is empty or invalid")
+        if "project_categories_build_costs" not in data:
+            raise KeyError(
+                "Missing 'project_categories_build_costs' key in build costs YAML file"
+            )
+        costs = data["project_categories_build_costs"]
+        if category not in costs:
+            raise KeyError(f"Category '{category}' not found in build costs YAML")
+        required_keys = [
+            "variable_conductor_cost_per_mile",
+            "fixed_conductor_cost",
+            "variable_structure_cost_per_mile",
+            "fixed_converter_cost",
+        ]
+        for key in required_keys:
+            if key not in costs[category]:
+                raise KeyError(
+                    f"Missing '{key}' key for category '{category}' in build costs YAML"
+                )
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Build costs YAML not found at {YAMLS_DIR / '10_project_category_build_costs.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing build costs YAML: {e}")
+    except KeyError as e:
+        raise KeyError(f"Missing required key in build costs YAML: {e}")
 
     weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
 
@@ -114,7 +145,7 @@ def load_costs(
     )
 
 
-def main():
+def main() -> None:
     """
     Main function to calculate and display build costs.
     """
@@ -129,6 +160,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -138,9 +170,35 @@ def main():
 
     # Determine number of converters
     if ac_dc == "DC":
-        # Load technical details to get number_of_converters
-        pd = _data_source.get_data("01_project_technical_details")
-        number_of_converters = pd["project"]["number_of_converters"]
+        # Load from YAML to get number_of_converters
+        try:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                project_details_data = yaml.safe_load(file)
+            if not project_details_data:
+                raise ValueError(
+                    "Project technical details YAML file is empty or invalid"
+                )
+            if "project" not in project_details_data:
+                raise KeyError(
+                    "Missing 'project' key in project technical details YAML file"
+                )
+            if "number_of_converters" not in project_details_data["project"]:
+                raise KeyError(
+                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                )
+            number_of_converters = project_details_data["project"][
+                "number_of_converters"
+            ]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            )
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing project technical details YAML: {e}")
+        except KeyError as e:
+            raise KeyError(
+                f"Missing required key in project technical details YAML: {e}"
+            )
     else:
         number_of_converters = 0
 
@@ -168,7 +226,17 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    financing_yaml = _data_source.get_data("03_financing")
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
@@ -196,8 +264,12 @@ def main():
             annual_build_cost, wacc_real, construction_years, construction_start_year
         )
     else:
+        # Validate wacc_real before direct use to prevent division by zero
+        validate_discount_rate(wacc_real, "wacc_real")
         # If construction_years is 0, treat as one-time cost at construction_start_year
-        build_cost_pv = total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
+        build_cost_pv = (
+            total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
+        )
 
     # Format and display results
     print("=" * 80)
@@ -249,7 +321,9 @@ def main():
         print(
             f"  Annual Cost (over {construction_years} year(s) construction): ${annual_build_cost:,.2f}"
         )
-        print(f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}")
+        print(
+            f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}"
+        )
     else:
         print(f"  One-time cost at Year {construction_start_year}")
     print(f"  Build Cost PV: ${build_cost_pv:,.2f}")
@@ -258,10 +332,10 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": total_cost_with_contingencies,
@@ -274,7 +348,7 @@ def main():
         "structure_afudc": 0,
         "converter_afudc": 0,
     }
-    
+
     # Write to CSV
     csv_manager.add_build_costs(results)
     csv_manager.write_batch_summary()

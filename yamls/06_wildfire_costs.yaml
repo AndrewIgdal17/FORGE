@@ -3,31 +3,32 @@
 
 wildfire:
   # Event severity (consequence)
-  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event)
+  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event) (>= 0)
 
   # Risk growth (optional - wildfire risk increases over time)
-  risk_growth_rate: 0.01 # Annual increase in ignition probability (2%)
+  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)
 
   # Discount rate configuration
   discount_rate_source: "social" # Options: "social" | "wacc_real" | "custom"
   discount_rate_custom: 0.03 # Used only if discount_rate_source = "custom"
 
   # Base ignition rates by terrain (for overhead baseline)
-  # Units: events per mile per year
+  # Units: events per mile per year (>= 0)
   ignition_rates_by_terrain:
-    forested: 0.002 # Higher risk in forested areas
-    scrubbed_flat: 0.001
-    wetland: 0.0001 # Lower risk in wet areas
-    farmland: 0.0002
-    desert_barren: 0.0001
-    urban: 0.0001
-    rolling_hills: 0.001
-    mountain: 0.0001
-    subsea: 0.0 # No wildfire risk subsea
+    forested: 0.002 # Higher risk in forested areas (>= 0)
+    scrubbed_flat: 0.001 # (>= 0)
+    wetland: 0.0001 # Lower risk in wet areas (>= 0)
+    farmland: 0.0002 # (>= 0)
+    desert_barren: 0.0001 # (>= 0)
+    urban: 0.0001 # (>= 0)
+    rolling_hills: 0.001 # (>= 0)
+    mountain: 0.0001 # (>= 0)
+    subsea: 0.0 # No wildfire risk subsea (>= 0)
 
   # Ignition rate multiplier by construction type
   # Effective rate = ignition_rates_by_terrain × multiplier
+  # All multipliers (>= 0)
   ignition_rate_multiplier:
-    overhead: 1.0 # Baseline (100% of overhead risk)
-    underground: 0.02 # 98% reduction (2% of overhead risk)
-    subsea: 0.0 # No wildfire risk
+    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)
+    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)
+    subsea: 0.0 # No wildfire risk (>= 0)

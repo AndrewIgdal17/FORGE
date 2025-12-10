@@ -4,23 +4,20 @@
 #              It computes acquisition, holding, and rental costs for transmission line ROW
 #              across different zones and terrain types, then calculates present values.
 
+from __future__ import annotations
+
 # Standard library imports
 import yaml
 import sys
 import os
+from typing import Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
-
-# Import data source based on input mode
-if os.environ.get('CTCC_INPUT_MODE', 'yaml').lower() == 'json':
-    from json_loaders import _data_source
-else:
-    from yaml_loaders import _data_source
+from csv_output_manager import CTCCOutputManager
 
 # Local utility imports
-from smart_loaders import (
+from yaml_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_row_widths,
@@ -33,11 +30,38 @@ from financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    validate_discount_rate,
 )
+from path_config import YAMLS_DIR
 
 
-def calculate_zone_costs(row_width_feet):
-    """Calculate ROW costs for each zone where the transmission line passes."""
+def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, float]:
+    """
+    Calculate right-of-way (ROW) costs aggregated across all zones.
+
+    This function calculates ROW costs by iterating through all zones defined in the
+    ROW details YAML file. For each zone where the transmission line passes (miles > 0),
+    it calculates the zone area in acres and multiplies by zone-specific cost rates
+    for acquisition, annual rent, and annual holding costs.
+
+    Zones represent different geographic or regulatory areas (e.g., urban, rural, protected)
+    that may have different ROW cost structures. The function aggregates costs across
+    all zones to get total project ROW costs.
+
+    Args:
+        row_width_feet: Width of the right-of-way in feet (used to calculate zone area)
+
+    Returns:
+        tuple: A 4-element tuple containing:
+            - yearly_holding_cost: Total annual holding cost across all zones ($/yr)
+            - acquisition_cost: Total one-time acquisition cost across all zones ($)
+            - yearly_rent_cost: Total annual rental cost across all zones ($/yr)
+            - total_acres: Total ROW area in acres across all zones
+
+    Note:
+        Zone area is calculated as: (miles * 5280 * row_width_feet) / 43560
+        Only zones with miles > 0 are included in the calculation.
+    """
     row_details = load_row_details()
     yearly_holding_cost = acquisition_cost = yearly_rent_cost = 0
 
@@ -56,7 +80,7 @@ def calculate_zone_costs(row_width_feet):
     return yearly_holding_cost, acquisition_cost, yearly_rent_cost, total_acres
 
 
-def main():
+def main() -> None:
     """Main function to calculate and display ROW costs."""
     # Load project specifications and timeline
     (
@@ -70,6 +94,7 @@ def main():
         delay_year,
         construction_years,
         project_lifetime,
+        converter_loss_percentage,
     ) = load_project_technical_details()
 
     # Construct category identifier
@@ -96,7 +121,17 @@ def main():
     apply_afudc, delay_active = load_afudc_config()
 
     # Load full financing YAML for AFUDC rate calculation
-    financing_yaml = _data_source.get_data("03_financing")
+    try:
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            financing_yaml = yaml.safe_load(file)
+        if not financing_yaml:
+            raise ValueError("Financing YAML file is empty or invalid")
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+        )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing financing YAML: {e}")
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # Define timing parameters
@@ -148,6 +183,9 @@ def main():
             acquisition_afudc = 0
 
         # ===== SOCIETAL PERSPECTIVE: Present Values =====
+        # Validate wacc_real before direct use to prevent division by zero
+        validate_discount_rate(wacc_real, "wacc_real")
+
         # Holding costs: incurred annually during delay period
         total_holding_cost_pv = calculate_present_value(
             yearly_holding_cost, wacc_real, int(delay_year)
@@ -216,20 +254,24 @@ def main():
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
-    
+
     # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-    
+
     # Prepare results dictionary
     results = {
         "total_nominal": total_nominal_cost,
-        "total_afudc": acquisition_capitalized + total_holding_cost + total_rent_cost if (apply_afudc and not reconductoring) else 0,
+        "total_afudc": (
+            acquisition_capitalized + total_holding_cost + total_rent_cost
+            if (apply_afudc and not reconductoring)
+            else 0
+        ),
         "total_pv": total_pv_cost,
         "acquisition_nominal": acquisition_cost,
         "holding_nominal": total_holding_cost,
         "rent_nominal": total_rent_cost,
     }
-    
+
     # Write to CSV
     csv_manager.add_row_costs(results)
     csv_manager.write_batch_summary()
