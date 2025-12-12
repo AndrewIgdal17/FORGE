@@ -12,7 +12,7 @@ import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
 
 # Local utility imports
 from yaml_loaders import load_delay_costs, load_financing_details

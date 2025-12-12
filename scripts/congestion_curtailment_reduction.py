@@ -16,7 +16,7 @@ from typing import Dict, Any, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csv_output_manager import CTCCOutputManager
+from smart_output import CTCCOutputManager
 from path_config import YAMLS_DIR
 
 # Get info from project technical details

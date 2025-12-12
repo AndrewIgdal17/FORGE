@@ -9,12 +9,14 @@ import subprocess
 import sys
 import os
 import argparse
+import glob
+import json
 from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from bcr_calculator import calculate_and_display_bcr
-from csv_output_manager import CTCCOutputManager
+from csv_output_manager import CTCCOutputManager as CSVOutputManager
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -46,6 +48,68 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         if not quiet:
             print(f"❌ Error running {script_name}: {e}")
         return False
+
+
+def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dict:
+    """
+    Aggregate all JSON output files from individual calculation scripts.
+
+    Args:
+        scenario_id: The scenario ID to match output files
+        output_dir: Directory containing the output files
+
+    Returns:
+        Aggregated results dictionary
+    """
+    from json_output_manager import JSONOutputManager
+
+    # Create a new manager to aggregate results
+    aggregator = JSONOutputManager(scenario_id=scenario_id)
+
+    # Find all JSON output files for this scenario
+    pattern = os.path.join(output_dir, f"json_output_{scenario_id}_*.json")
+    json_files = glob.glob(pattern)
+
+    # Load and merge each file
+    for json_file in json_files:
+        aggregator.load_from_file(json_file)
+        # Clean up the intermediate file
+        try:
+            os.unlink(json_file)
+        except Exception:
+            pass
+
+    return aggregator
+
+
+def write_final_json_output(aggregator, bcr_results: dict, scenario_id: str, output_dir: str = "outputs"):
+    """
+    Write the final aggregated JSON output file.
+
+    Args:
+        aggregator: JSONOutputManager with aggregated results
+        bcr_results: BCR calculation results
+        scenario_id: The scenario ID
+        output_dir: Directory to write the output file
+    """
+    # Add BCR results if available
+    if bcr_results:
+        aggregator.add_bcr_metrics(bcr_results)
+
+    # Calculate summary
+    aggregator.calculate_summary()
+
+    # Get the final results
+    results = aggregator.get_json_results()
+
+    # Write to final output file
+    output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
+    os.makedirs(output_dir, exist_ok=True)
+
+    with open(output_file, "w") as f:
+        json.dump(results, f, indent=2)
+
+    return output_file
 
 
 def main() -> None:
@@ -191,6 +255,9 @@ def main() -> None:
             f"\n📊 SUMMARY: {successful_runs}/{total_runs} scripts completed successfully"
         )
 
+    # Check output mode from environment variable
+    output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
+
     if successful_runs == total_runs:
         if not args.simple:
             print("🎉 All calculations completed successfully!")
@@ -204,6 +271,7 @@ def main() -> None:
             # In simple mode, just print the BCR analysis header
             print("=" * 80)
 
+        bcr_results = None
         try:
             bcr_results = calculate_and_display_bcr(
                 scenario_id,
@@ -212,10 +280,44 @@ def main() -> None:
                 no_linelosses=args.no_linelosses,
                 capital_only=args.capital_only,
             )
+        except Exception as e:
+            import traceback
 
+            if not args.simple:
+                print(f"⚠️  BCR calculation failed: {e}")
+                print(f"   Scenario ID: {scenario_id}")
+                print("   Full error traceback:")
+                traceback.print_exc()
+                print(
+                    "   This does not affect the validity of the cost calculations above."
+                )
+            else:
+                # In simple mode, still show errors
+                print(f"⚠️  BCR calculation failed: {e}")
+
+        # Handle output based on mode
+        if output_mode == "json":
+            # JSON output mode: aggregate results and write final JSON
+            try:
+                aggregator = aggregate_json_outputs(scenario_id, output_dir="outputs")
+                output_file = write_final_json_output(
+                    aggregator, bcr_results, scenario_id, output_dir="outputs"
+                )
+                if not args.simple:
+                    print(f"✅ JSON results written to {output_file}")
+            except Exception as e:
+                import traceback
+
+                if not args.simple:
+                    print(f"⚠️  JSON output aggregation failed: {e}")
+                    traceback.print_exc()
+                else:
+                    print(f"⚠️  JSON output aggregation failed: {e}")
+        else:
+            # CSV output mode (default)
             if bcr_results:
                 # Update batch_summary.csv with BCR metrics
-                csv_manager = CTCCOutputManager(
+                csv_manager = CSVOutputManager(
                     output_dir="outputs", scenario_id=scenario_id
                 )
                 csv_manager.add_bcr_metrics(bcr_results)
@@ -234,21 +336,6 @@ def main() -> None:
                     "   This may indicate missing required columns in batch_summary.csv"
                 )
                 print("   BCR columns will not be available in batch_summary.csv")
-
-        except Exception as e:
-            import traceback
-
-            if not args.simple:
-                print(f"⚠️  BCR calculation failed: {e}")
-                print(f"   Scenario ID: {scenario_id}")
-                print("   Full error traceback:")
-                traceback.print_exc()
-                print(
-                    "   This does not affect the validity of the cost calculations above."
-                )
-            else:
-                # In simple mode, still show errors
-                print(f"⚠️  BCR calculation failed: {e}")
     else:
         if not args.simple:
             print("⚠️  Some calculations failed. Check the output above.")

@@ -149,6 +149,18 @@ class JSONOutputManager:
         """Add congestion and curtailment reduction benefits."""
         self.benefits["congestion_curtailment"] = results
 
+    def add_revenue(self, results: Dict[str, Any]):
+        """Add revenue results."""
+        self.benefits["revenue"] = results
+
+    def add_project_params(self, **kwargs):
+        """Add project parameters (stored in technical_parameters)."""
+        self.technical_details.update(kwargs)
+
+    def add_financial_params(self, **kwargs):
+        """Add financial parameters (stored in technical_parameters)."""
+        self.technical_details.update(kwargs)
+
     def add_bcr_metrics(self, bcr_results: Dict[str, Any]):
         """Add benefit-cost ratio metrics."""
         self.bcr = bcr_results

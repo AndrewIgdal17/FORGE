@@ -54,7 +54,12 @@
       "Bash(/tmp/test_api_flags.sh)",
       "Bash(./run_calc_server.command)",
       "Bash(/usr/libexec/ApplicationFirewall/socketfilterfw:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(CTCC_INPUT_MODE=json CTCC_OUTPUT_MODE=json CTCC_SCENARIO_ID=test_single2 CTCC_JSON_DATA_FILE=../server/json/final_combined.json ../venv/bin/python3:*)",
+      "Bash(ls:*)",
+      "Bash(CTCC_INPUT_MODE=json CTCC_OUTPUT_MODE=json CTCC_SCENARIO_ID=test_single3 CTCC_JSON_DATA_FILE=/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/server/json/final_combined.json /Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/venv/bin/python3:*)",
+      "Bash(CTCC_INPUT_MODE=json CTCC_OUTPUT_MODE=json CTCC_SCENARIO_ID=test_single3 CTCC_JSON_DATA_FILE=/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/server/json/final_combined.json venv/bin/python3:*)",
+      "Bash(CTCC_INPUT_MODE=json CTCC_OUTPUT_MODE=json CTCC_SCENARIO_ID=test_debug CTCC_JSON_DATA_FILE=/Users/danemcfarlane/Work/UT-TransmissionCalc/CTCC/server/json/final_combined.json venv/bin/python3:*)"
     ],
     "deny": [],
     "ask": []
