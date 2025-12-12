@@ -1,5 +1,6 @@
-# Server directory
-server/
+# Server logs and generated JSON files
+server/logs/
+server/json/
 
 # Python cache files
 __pycache__/
