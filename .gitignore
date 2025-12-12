@@ -1,5 +1,5 @@
-# Logs directory
-server/logs/
+# Server directory
+server/
 
 # Python cache files
 __pycache__/
