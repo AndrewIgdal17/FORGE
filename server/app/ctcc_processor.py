@@ -17,6 +17,81 @@ sys.path.insert(0, str(CTCC_ROOT))
 sys.path.insert(0, str(CTCC_ROOT / "scripts"))
 
 
+def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge simplified user input data with the full CTCC template structure.
+    
+    Args:
+        user_data: Simplified data from web interface
+        template: Full CTCC template with all required sections
+        
+    Returns:
+        Merged data ready for CTCC processing
+    """
+    # Start with the full template
+    merged = template.copy()
+    
+    # Extract common mappings from user data
+    if "scenario" in user_data:
+        scenario = user_data["scenario"]
+        if "scenario_name" in scenario:
+            merged["01_project_technical_details"]["project"]["name"] = scenario["scenario_name"]
+    
+    if "project" in user_data:
+        project = user_data["project"]
+        
+        # Map project details to 01_project_technical_details
+        project_tech = merged["01_project_technical_details"]["project"]
+        if "project_name" in project:
+            project_tech["name"] = project["project_name"]
+        if "line_miles" in project:
+            # Update terrain miles in 02_project_physical_details to match total line miles
+            total_miles = project["line_miles"]
+            terrain = merged["02_project_physical_details"]["terrain"]["terrain_miles"]
+            # Simple approach: distribute evenly across existing terrain types
+            if total_miles:
+                existing_total = sum(terrain.values())
+                if existing_total > 0:
+                    scale_factor = total_miles / existing_total
+                    for terrain_type in terrain:
+                        terrain[terrain_type] = terrain[terrain_type] * scale_factor
+        if "voltage_kv" in project:
+            # Map to appropriate voltage category in build costs
+            voltage = project["voltage_kv"]
+            if voltage >= 500:
+                merged["10_project_category_build_costs"]["category"] = "Above_500kV"
+            elif voltage >= 345:
+                merged["10_project_category_build_costs"]["category"] = "300_to_500kV"
+            elif voltage >= 138:
+                merged["10_project_category_build_costs"]["category"] = "138_to_300kV"
+            else:
+                merged["10_project_category_build_costs"]["category"] = "Below_138kV"
+        if "capacity_mw" in project:
+            project_tech["capacity_mw"] = project["capacity_mw"]
+        if "project_type" in project:
+            if project["project_type"] == "reconductoring":
+                project_tech["reconductoring"] = True
+            else:
+                project_tech["reconductoring"] = False
+    
+    if "project_costs" in user_data:
+        costs = user_data["project_costs"]
+        if "build_costs_per_mile" in costs:
+            # Update build costs - simplified approach
+            merged["10_project_category_build_costs"]["costs"]["structures_per_mile"] = costs["build_costs_per_mile"] * 0.6
+            merged["10_project_category_build_costs"]["costs"]["conductor_per_mile"] = costs["build_costs_per_mile"] * 0.4
+    
+    if "financial" in user_data:
+        financial = user_data["financial"]
+        if "discount_rate" in financial:
+            merged["01_project_technical_details"]["project"]["social_discount_rate"] = financial["discount_rate"]
+            merged["03_financing"]["wacc"]["real_wacc"] = financial["discount_rate"]
+        if "analysis_period_years" in financial:
+            merged["01_project_technical_details"]["timeline"]["project_lifetime"] = financial["analysis_period_years"]
+    
+    return merged
+
+
 def ensure_cli_venv() -> str:
     """
     Ensure CLI virtual environment exists and has dependencies installed.
@@ -25,7 +100,6 @@ def ensure_cli_venv() -> str:
     import subprocess
 
     venv_dir = CTCC_ROOT / "venv"
-    venv_python = venv_dir / "bin" / "python3"
     requirements_file = CTCC_ROOT / "requirements.txt"
 
     # If venv doesn't exist, create it
@@ -37,9 +111,44 @@ def ensure_cli_venv() -> str:
             cwd=str(CTCC_ROOT)
         )
 
-    # Verify venv Python exists
-    if not venv_python.exists():
-        raise RuntimeError(f"Virtual environment creation failed: {venv_python} not found")
+    # Find the Python executable in the venv (try common names)
+    possible_pythons = [
+        venv_dir / "bin" / "python3",
+        venv_dir / "bin" / "python",
+        venv_dir / "Scripts" / "python.exe",  # Windows
+        venv_dir / "Scripts" / "python3.exe"  # Windows
+    ]
+    
+    venv_python = None
+    for python_path in possible_pythons:
+        if python_path.exists():
+            venv_python = python_path
+            break
+    
+    if venv_python is None:
+        # If no venv python found, remove and recreate the venv
+        print(f"Virtual environment at {venv_dir} appears broken, recreating...")
+        import shutil
+        shutil.rmtree(venv_dir)
+        subprocess.run(
+            [sys.executable, "-m", "venv", str(venv_dir)],
+            check=True,
+            cwd=str(CTCC_ROOT)
+        )
+        # Try again to find python
+        for python_path in possible_pythons:
+            if python_path.exists():
+                venv_python = python_path
+                break
+        
+        if venv_python is None:
+            raise RuntimeError(f"Virtual environment creation failed: no Python executable found in {venv_dir}")
+
+    # Test if the Python executable actually works
+    try:
+        subprocess.run([str(venv_python), "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        raise RuntimeError(f"Virtual environment Python executable is not working: {venv_python}")
 
     # Install/update dependencies if requirements.txt exists
     if requirements_file.exists():
@@ -91,16 +200,28 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
         combined_data = payload.get("combined_data")
 
-        # For JSON input mode, write combined_data to temp file
+        # For JSON input mode, we need to merge user input with the full template
         temp_json_file = None
         if input_mode == "json" and combined_data:
+            # Load the full template from server/json/final_combined.json
+            template_file = Path(__file__).parent.parent / "json" / "final_combined.json"
+            if template_file.exists():
+                with open(template_file, 'r') as f:
+                    full_template = json.load(f)
+                
+                # Merge user data with template
+                merged_data = merge_user_data_with_template(combined_data, full_template)
+            else:
+                # Fallback to user data if template not found
+                merged_data = combined_data
+            
             temp_json_file = tempfile.NamedTemporaryFile(
                 mode='w',
                 suffix='.json',
                 prefix=f'ctcc_api_{scenario_id}_',
                 delete=False
             )
-            json.dump(combined_data, temp_json_file)
+            json.dump(merged_data, temp_json_file)
             temp_json_file.close()
 
         try:
@@ -110,30 +231,26 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             # Ensure CLI venv exists and has dependencies
             python_exe = ensure_cli_venv()
 
-            # Build command with flags
+            # Build command - ctcc.py uses environment variables for mode configuration
             cmd = [python_exe, "ctcc.py"]
 
-            # Add input mode flag
-            if input_mode == "json":
-                cmd.append("--json")
-
-            # Add output mode flag
-            if output_mode == "json":
-                cmd.append("--json-out")
-
-            # Add scenario ID
-            cmd.extend(["--id", scenario_id])
+            # Set up environment variables for the subprocess
+            env = os.environ.copy()
+            env["CTCC_INPUT_MODE"] = input_mode
+            env["CTCC_OUTPUT_MODE"] = output_mode
+            env["CTCC_SCENARIO_ID"] = scenario_id
 
             # Add JSON file path if available
             if temp_json_file:
-                cmd.extend(["--json-file", temp_json_file.name])
+                env["CTCC_JSON_DATA_FILE"] = temp_json_file.name
 
-            # Run ctcc.py as subprocess with command-line flags
+            # Run ctcc.py as subprocess with environment variables
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 cwd=str(CTCC_ROOT),
+                env=env,
                 timeout=600  # 10 minute timeout
             )
 
