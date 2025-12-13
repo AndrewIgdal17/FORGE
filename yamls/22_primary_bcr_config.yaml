@@ -1,0 +1,114 @@
+# ============================================================================
+# Primary BCR Configuration
+# ============================================================================
+#
+# PURPOSE:
+# This file controls which cost and benefit modules are included in the
+# Primary BCR calculation. The Primary BCR is a customizable benefit-cost
+# ratio that allows you to selectively include/exclude modules based on your
+# analysis needs.
+#
+# HOW IT WORKS:
+# - Setting a module to 'false' excludes it from the Primary BCR calculation
+# - Setting a module to 'true' includes it in the Primary BCR calculation
+# - If this file doesn't exist, all modules default to enabled
+#   (Primary BCR = Capital+Delay BCR)
+# - YAML configuration overrides command-line flags (--no_* flags)
+#
+# PRIMARY BCR FORMULA:
+#   Primary BCR = (Included Benefits) / (Included Costs)
+#
+#   Included Benefits = Revenue (always) + checked benefit modules
+#   Included Costs = Capital (always) + Delay (always) + checked cost modules
+#
+# ============================================================================
+# COMMON BCR CONFIGURATIONS
+# ============================================================================
+#
+# 1. CAPITAL+DELAY BCR (Default):
+#    - All modules: true
+#    - This is the default Primary BCR when no customization is done
+#    - Formula: All Benefits / (Capital Costs + Delay Costs)
+#
+# 2. SYSTEM BCR (All-inclusive):
+#    - All modules: true
+#    - Note: System BCR is always calculated separately and includes everything
+#    - Primary BCR matches System BCR when all modules are enabled
+#
+# 3. CAPITAL-ONLY BCR:
+#    - All modules: false
+#    - Only capital costs included (build, ROW, environmental)
+#    - Formula: All Benefits / Capital Costs
+#
+# 4. EXCLUDE RISK COSTS:
+#    - risk.wildfire: false
+#    - risk.outages: false
+#    - All others: true
+#    - Formula: All Benefits / (All Costs - Risk Costs)
+#
+# 5. EXCLUDE EMISSIONS:
+#    - energy.emissions: false
+#    - All others: true
+#    - Formula: All Benefits / (All Costs - Emissions)
+#
+# 6. EXCLUDE OPERATIONAL COSTS:
+#    - operational.oandm: false
+#    - operational.insurance: false
+#    - All others: true
+#    - Formula: All Benefits / (Capital + Delay + Risk + Energy)
+#
+# ============================================================================
+# MODULE DESCRIPTIONS
+# ============================================================================
+#
+# OPERATIONAL COSTS:
+#   - oandm: Operations and maintenance costs (vegetation management, etc.)
+#   - insurance: General operational insurance (conductors, structures, converters)
+#   - delay_costs: Construction delay costs (legal, admin, regulatory, etc.)
+#     NOTE: Delay costs are ALWAYS included in Primary BCR if calculated,
+#           even if set to false here (the flag controls calculation, not inclusion)
+#
+# RISK COSTS:
+#   - wildfire: Expected wildfire costs + wildfire liability insurance
+#   - outages: Expected outage costs based on reliability parameters
+#
+# ENERGY COSTS:
+#   - line_losses: Economic cost of energy losses (I²R and converter losses)
+#   - emissions: Carbon and other emissions costs from line losses
+#
+# BENEFITS:
+#   - congestion: Benefits from reduced transmission congestion
+#   - curtailment: Benefits from reduced renewable energy curtailment
+#   - revenue: Rate-based revenue requirement (ALWAYS included, not configurable)
+#
+# ALWAYS INCLUDED (Not configurable):
+#   - Capital Costs: Build, ROW, Environmental Mitigation
+#   - Delay Costs: Always included in Primary BCR if calculated
+#   - Revenue: Rate-based revenue requirement
+#
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
+primary_bcr_config:
+  # Operational costs that can be included/excluded from Primary BCR
+  operational:
+    oandm: true # Operations and maintenance costs
+    insurance: true # General operational insurance
+    delay_costs: true # Delay costs (always in Primary BCR if calculated)
+
+  # Risk costs that can be included/excluded from Primary BCR
+  risk:
+    wildfire: true # Wildfire expected costs + liability insurance
+    outages: true # Outage expected costs
+
+  # Energy-related costs that can be included/excluded from Primary BCR
+  energy:
+    line_losses: true # Economic cost of energy losses
+    emissions: true # Emissions costs from line losses
+
+  # Benefits that can be included/excluded from Primary BCR
+  benefits:
+    congestion: true # Congestion reduction benefits
+    curtailment: true # Curtailment reduction benefits
+    # Note: Revenue is always included and not configurable here

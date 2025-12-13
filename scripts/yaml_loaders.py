@@ -589,3 +589,87 @@ def load_outage_costs() -> Dict[str, Any]:
         )
     except yaml.YAMLError as e:
         raise ValueError(f"Error parsing outage costs YAML: {e}")
+
+
+def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
+    """
+    Load Primary BCR configuration from YAML file.
+    
+    Returns:
+        Dictionary with module enable/disable flags grouped by category.
+        If file doesn't exist, returns default (all enabled).
+        
+    Structure:
+        {
+            "operational": {"oandm": True, "insurance": True, "delay_costs": True},
+            "risk": {"wildfire": True, "outages": True},
+            "energy": {"line_losses": True, "emissions": True},
+            "benefits": {"congestion": True, "curtailment": True}
+        }
+    """
+    # Default configuration (all modules enabled)
+    default_config = {
+        "operational": {
+            "oandm": True,
+            "insurance": True,
+            "delay_costs": True,
+        },
+        "risk": {
+            "wildfire": True,
+            "outages": True,
+        },
+        "energy": {
+            "line_losses": True,
+            "emissions": True,
+        },
+        "benefits": {
+            "congestion": True,
+            "curtailment": True,
+        },
+    }
+    
+    config_path = YAMLS_DIR / "22_primary_bcr_config.yaml"
+    
+    # If file doesn't exist, return default
+    if not config_path.exists():
+        return default_config
+    
+    try:
+        with open(config_path, "r") as file:
+            config_data = yaml.safe_load(file)
+        
+        if not config_data:
+            # Empty file, return default
+            return default_config
+        
+        if "primary_bcr_config" not in config_data:
+            # Missing top-level key, return default
+            return default_config
+        
+        config = config_data["primary_bcr_config"]
+        
+        # Merge with defaults to handle missing keys
+        result = {}
+        for category in ["operational", "risk", "energy", "benefits"]:
+            result[category] = {}
+            category_config = config.get(category, {})
+            # Use defaults for each module if not specified
+            for module, default_value in default_config[category].items():
+                result[category][module] = category_config.get(module, default_value)
+        
+        return result
+        
+    except yaml.YAMLError as e:
+        # Invalid YAML, return default with warning
+        import warnings
+        warnings.warn(
+            f"Error parsing Primary BCR config YAML: {e}. Using default (all modules enabled)."
+        )
+        return default_config
+    except Exception as e:
+        # Any other error, return default with warning
+        import warnings
+        warnings.warn(
+            f"Error loading Primary BCR config: {e}. Using default (all modules enabled)."
+        )
+        return default_config
