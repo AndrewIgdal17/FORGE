@@ -6,7 +6,7 @@ greenfield_congestion_reductions:
     # We need the capacity from project technical details
     flow_factor: .6 # flow factor is deliverability to the targeted constrained [0,1]
     # delta C_eff = S * capacity
-    binding_hours: 2500 # binding hours is the number of hours per year that the line is binding (>= 0)
+    binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)
     average_exceedance: 500 # MW exceedance during binding hours (>= 0)
     # baseline congestion energy = H_b * X mwh/yr
     near_binding_hours: 1500 # near binding hours is the number of hours per year that the line is near binding (>= 0)

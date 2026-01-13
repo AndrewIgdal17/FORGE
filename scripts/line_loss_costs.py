@@ -292,9 +292,9 @@ def main() -> None:
         baseline_electricity_price,
         social_discount_rate,
         reconductoring,
-        project_lifetime,
         delay_years,
         construction_years,
+        project_lifetime,
         greenfield_comparison_capacity_mw,
         greenfield_comparison_conductor_type,
     ) = load_project_details()
