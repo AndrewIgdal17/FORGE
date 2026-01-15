@@ -658,9 +658,10 @@ def calculate_congestion_reduction_costs(
         start_year=delay_years + construction_years + 1,
     )
 
-    annual_congestion_during_delay_and_construction = binding_hours * average_exceedance
+    # Delay/construction opportunity costs should mirror allocated relief
+    # to avoid double-counting when congestion and curtailment overlap.
     annual_congestion_during_delay_and_construction_cost = (
-        annual_congestion_during_delay_and_construction * average_congestion_price
+        annual_congestion_reduction_cost_raw
     )
 
     lifetime_congestion_during_delay_and_construction_cost = (
@@ -693,13 +694,8 @@ def calculate_congestion_reduction_costs(
         start_year=delay_years + construction_years + 1,
     )
 
-    # Curtailment costs during delay period
-    annual_curtailment_during_delay_and_construction = (
-        curtailment_hours_total * average_curtailment_mw
-    )
-    annual_curtailment_during_delay_and_construction_cost = (
-        annual_curtailment_during_delay_and_construction * average_curtailment_price
-    )
+    # Curtailment costs during delay period (allocated, curtailment-first)
+    annual_curtailment_during_delay_and_construction_cost = annual_curtailment_benefit
 
     lifetime_curtailment_during_delay_and_construction_cost = (
         annual_curtailment_during_delay_and_construction_cost

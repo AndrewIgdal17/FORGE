@@ -87,7 +87,7 @@ where the energy is split between overlap hours (with curtailment) and non-overl
 
 \textbf{Residual Congestion Costs:}
 \begin{align}
-E_{residual} &= H_b \times \max(0, X - \Delta C_{eff}) \\
+E_{residual} &= H_{bc} \times \max(0, X - \Delta C_{remain,bc}) + H_{bnon} \times \max(0, X - \Delta C_{eff}) \\
 \text{Cost}_{residual} &= E_{residual} \times \lambda_{cong}
 \end{align}
 
@@ -106,7 +106,7 @@ E_{residual} &= H_b \times \max(0, X - \Delta C_{eff}) \\
     \item Annual and lifetime congestion benefits (raw and haircut)
     \item Annual and lifetime curtailment benefits (raw and haircut)
     \item Residual congestion costs
-    \item Congestion costs during delay/construction
+    \item Congestion and curtailment costs during delay/construction (allocated, no double count)
     \item Present values of all metrics
 \end{itemize}
 
@@ -121,13 +121,13 @@ This script integrates with:
 
 \section{Key Functions}
 
-\subsection{\texttt{allocate\_curtailment\_then\_congestion(\Delta C\_eff\_mw, ...)}}
+\subsection{\texttt{allocate\_curtailment\_then\_congestion(DC\_eff\_mw, ...)}}
 
 Allocates effective capacity relief between curtailment and congestion to avoid double-counting.
 
 \textbf{Parameters:}
 \begin{itemize}
-    \item \texttt{ΔC\_eff\_mw} (float): Effective capacity relief in MW
+    \item \texttt{DC\_eff\_mw} (float): Effective capacity relief in MW
     \item \texttt{binding\_hours\_total} (float): Total binding constraint hours
     \item \texttt{average\_exceedance\_mw} (float): Average exceedance in MW
     \item \texttt{curtailment\_hours\_total} (float): Total curtailment hours
@@ -143,8 +143,8 @@ Allocates effective capacity relief between curtailment and congestion to avoid 
 \textbf{Key Logic:}
 \begin{lstlisting}
 # Curtailment relief (MWh/yr)
-E_curt = Hc * min(ΔC, Cc)
-curt_benefit = E_curt * λc
+E_curt = Hc * min(DC, Cc)
+curt_benefit = E_curt * lambda_c
 
 # Overlap proxy between binding and curtailment time
 theta = min(1.0, Hc / Hb) if Hc > 0 else 0.0
@@ -152,8 +152,8 @@ H_bc = theta * Hb  # Overlap hours
 H_bnon = (1.0 - theta) * Hb  # Non-overlap hours
 
 # Capacity used by curtailment in overlap
-ΔC_used_bc = min(ΔC, Cc)
-ΔC_remain_bc = max(0.0, ΔC - ΔC_used_bc)
+DC_used_bc = min(DC, Cc)
+DC_remain_bc = max(0.0, DC - DC_used_bc)
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_congestion\_reduction\_costs(...)}}
@@ -182,7 +182,7 @@ else:
 alloc = allocate_curtailment_then_congestion(...)
 
 # Congestion relief energy
-E_cong_bc = H_bc * min(ΔC_remain, average_exceedance)
+E_cong_bc = H_bc * min(DC_remain, average_exceedance)
 E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
 E_near = k * near_binding_hours * effective_capacity_relief
 energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
@@ -192,7 +192,7 @@ annual_congestion_benefit_raw = energy_congestion_reduction * congestion_price
 annual_congestion_benefit_haircut = (1 - saturation_factor) * annual_congestion_benefit_raw
 
 # Residual congestion
-energy_congestion_residual = H_bc * max(0, average_exceedance - ΔC_remain) 
+energy_congestion_residual = H_bc * max(0, average_exceedance - DC_remain) 
                             + H_bnon * max(0, average_exceedance - effective_capacity_relief)
 annual_congestion_residual_cost = energy_congestion_residual * congestion_price
 \end{lstlisting}
@@ -231,7 +231,7 @@ The following example demonstrates a typical usage:
 #     Overlap theta = min(1.0, 1500/2000) = 0.75
 #     H_bc = 0.75 * 2000 = 1500 hours
 #     H_bnon = 0.25 * 2000 = 500 hours
-#     ΔC_remain = 350 - 200 = 150 MW
+#     DC_remain = 350 - 200 = 150 MW
 #     E_cong_bc = 1500 * min(150, 300) = 225,000 MWh/year
 #     E_cong_non = 500 * min(350, 300) = 150,000 MWh/year
 #     E_cong = 375,000 MWh/year
@@ -271,7 +271,7 @@ csv_manager.write_batch_summary()
 
 \subsection{Double-Counting Avoidance}
 
-The script prevents double-counting by allocating capacity relief first to curtailment, then to congestion. The overlap factor (theta) accounts for hours when both curtailment and congestion occur.
+The script prevents double-counting by allocating capacity relief first to curtailment, then to congestion. The overlap factor (theta) accounts for hours when both curtailment and congestion occur. This same allocation is used for delay-period opportunity costs.
 
 \subsection{Saturation Factors}
 
@@ -291,7 +291,7 @@ The script includes near-binding hours with a relief factor to capture benefits 
 
 \subsection{Delay and Construction Period Costs}
 
-The script calculates congestion and curtailment costs during the delay and construction periods, representing the cost of not having the project operational yet.
+The script calculates delay-period opportunity costs using the same curtailment-first allocation as operations, so overlapping hours are not double counted. This represents the value of forgone relief while the project is delayed.
 
 \end{document}
 

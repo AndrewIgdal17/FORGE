@@ -100,9 +100,7 @@ def main() -> None:
     total_delay_cost_pv = calculate_present_value(
         total_yearly_delay_cost,
         wacc_real,
-        int(
-            round(delay_year)
-        ),  # Move rounding to the actual function, outside of main to prevent headaches
+        delay_year,
     )
 
     print("=" * 60)

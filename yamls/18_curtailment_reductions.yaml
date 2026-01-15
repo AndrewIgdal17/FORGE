@@ -14,7 +14,7 @@ curtailment_reductions:
   # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)
   # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW
   # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief
-  average_curtailment_mw: 500 # MW (>= 0)
+  average_curtailment_mw: 560 # MW (>= 0)
 
   # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)
   # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price

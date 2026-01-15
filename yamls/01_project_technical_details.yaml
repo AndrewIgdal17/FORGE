@@ -3,7 +3,7 @@
 
 project:
   name: "S1_Rural_Overhead_AC_657MW"
-  construction_type: "Overhead" # Overhead, Underground Direct-Buried, Underground Tunnel, Subsea
+  construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 2 # 1 or 2
   capacity_mw: 657 # MW
@@ -22,7 +22,7 @@ project:
 
   # Greenfield capacity comparison (only used when reconductoring: False)
   greenfield_comparison_capacity_mw: 657 # Optional: Capacity in MW for comparison configuration
-  greenfield_comparison_conductor_type: "Advanced Aluminum Conductor" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
+  greenfield_comparison_conductor_type: "Standard Aluminum Conductor" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
 
 timeline:
   construction_years: 1 # years (> 0)
