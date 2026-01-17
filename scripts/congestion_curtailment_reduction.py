@@ -17,54 +17,40 @@ from typing import Dict, Any, Tuple
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
+from smart_loaders import (
+    load_congestion_reductions,
+    load_project_technical_details as load_project_technical_details_centralized,
+    load_curtailment_reductions,
+    load_financing_details,
+    get_input_mode,
+)
 from path_config import YAMLS_DIR
 
-# Get info from project technical details
-try:
-    with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-        project_details = yaml.safe_load(file)
-    if not project_details:
-        raise ValueError("Project technical details YAML file is empty or invalid")
-    if "project" not in project_details:
-        raise KeyError("Missing 'project' key in project technical details YAML file")
-    if "timeline" not in project_details:
-        raise KeyError("Missing 'timeline' key in project technical details YAML file")
-    construction_type = project_details["project"]["construction_type"]
-    ac_dc = project_details["project"]["ac_dc"]
-    capacity_mw = project_details["project"]["capacity_mw"]
-    conductor_type = project_details["project"]["conductor_type"]
 
-    if ac_dc == "AC":
-        converter_type = "NA"
+def _get_old_capacity_mw() -> int:
+    """
+    Helper function to get old_capacity_mw from project technical details.
+    This is needed because the centralized loader doesn't return this field.
+    """
+    input_mode = get_input_mode()
+    if input_mode == "json":
+        from json_loaders import _data_source
+
+        project_data = _data_source.get_data("01_project_technical_details")
+        return project_data["project"].get("old_capacity_mw", 0)
     else:
-        converter_type = project_details["project"]["converter_type"]
-
-    line_utilization = project_details["project"]["line_utilization"]
-    reconductoring = project_details["project"]["reconductoring"]
-
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
-except FileNotFoundError:
-    raise FileNotFoundError(
-        f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-    )
-except yaml.YAMLError as e:
-    raise ValueError(f"Error parsing project technical details YAML: {e}")
-except KeyError as e:
-    raise KeyError(f"Missing required key in project technical details YAML: {e}")
+        # YAML mode
+        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+            project_details = yaml.safe_load(file)
+        return project_details["project"].get("old_capacity_mw", 0)
 
 
 def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
     """
-    Load project technical details from YAML configuration file.
+    Load project technical details using centralized loaders.
 
-    Reads project specifications and timeline information from the project technical
-    details YAML file. This function is a local version specific to congestion/curtailment
-    calculations, returning only the fields needed for those calculations.
-
-    Args:
-        None (reads from YAML file)
+    This function wraps the centralized loader and extracts only the fields
+    needed for congestion/curtailment calculations.
 
     Returns:
         tuple: A 6-element tuple containing:
@@ -74,282 +60,42 @@ def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
             - reconductoring: True if this is a reconductoring project, False for greenfield
             - capacity_mw: New line capacity in MW
             - old_capacity_mw: Original capacity in MW (for reconductoring projects)
-
-    Raises:
-        FileNotFoundError: When project technical details YAML is not found
-        ValueError: When YAML file is empty or invalid
-        KeyError: When required keys are missing from the YAML structure
     """
-    try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
-        if not project_details:
-            raise ValueError("Project technical details YAML file is empty or invalid")
-        if "project" not in project_details:
-            raise KeyError(
-                "Missing 'project' key in project technical details YAML file"
-            )
-        if "timeline" not in project_details:
-            raise KeyError(
-                "Missing 'timeline' key in project technical details YAML file"
-            )
+    # Load from centralized loader (returns 11 values)
+    # Indices: 0=construction_type, 1=ac_dc, 2=capacity_mw, 3=conductor_type,
+    #          4=converter_type, 5=line_utilization, 6=reconductoring,
+    #          7=delay_years, 8=construction_years, 9=project_lifetime, 10=converter_loss_percentage
+    (
+        _construction_type,
+        _ac_dc,
+        capacity_mw,
+        _conductor_type,
+        _converter_type,
+        _line_utilization,
+        reconductoring,
+        delay_years,
+        construction_years,
+        project_lifetime,
+        _converter_loss_percentage,
+    ) = load_project_technical_details_centralized()
 
-        # Extract project specifications
-        construction_type = project_details["project"]["construction_type"]
-        ac_dc = project_details["project"]["ac_dc"]
-        capacity_mw = project_details["project"]["capacity_mw"]
-        conductor_type = project_details["project"]["conductor_type"]
-        converter_type = project_details["project"]["converter_type"]
+    # Get old_capacity_mw separately (not in centralized loader return)
+    old_capacity_mw = _get_old_capacity_mw()
 
-        reconductoring = project_details["project"]["reconductoring"]
-
-        old_capacity_mw = project_details["project"]["old_capacity_mw"]
-
-        # Extract timeline information
-        delay_years = project_details["timeline"]["delay_years"]
-        construction_years = project_details["timeline"]["construction_years"]
-        project_lifetime = project_details["timeline"]["project_lifetime"]
-
-        return (
-            delay_years,
-            construction_years,
-            project_lifetime,
-            reconductoring,
-            capacity_mw,
-            old_capacity_mw,
-        )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details YAML: {e}")
+    return (
+        delay_years,
+        construction_years,
+        project_lifetime,
+        reconductoring,
+        capacity_mw,
+        old_capacity_mw,
+    )
 
 
-def load_congestion_reductions() -> (
-    Tuple[float, float, float, float, float, float, float, float]
-):
-    """
-    Load congestion reduction parameters from YAML configuration file.
-
-    Reads congestion reduction parameters from the congestion_reductions.yaml file,
-    which contains data on transmission constraint binding hours, exceedance levels,
-    and congestion pricing information.
-
-    Args:
-        None (reads from YAML file)
-
-    Returns:
-        tuple: An 8-element tuple containing:
-            - flow_factor: Fraction of capacity that effectively relieves constraints (0-1)
-            - binding_hours: Number of hours per year when transmission constraints are binding
-            - average_exceedance: Average MW by which constraints are exceeded during binding hours
-            - near_binding_hours: Number of hours per year when constraints are near-binding
-            - near_average_exceedance: Average MW exceedance during near-binding hours
-            - near_binding_relief_factor: Fraction of capacity relief applied to near-binding hours (0-1)
-            - saturation_factor: Conservative multiplier for congestion benefits (0-1, where 1 = no haircut)
-            - average_congestion_price: Average price of congestion in $/MWh
-
-    Raises:
-        FileNotFoundError: When congestion_reductions.yaml is not found
-        ValueError: When YAML file is empty or invalid
-        KeyError: When required keys are missing from the YAML structure
-    """
-    try:
-        with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
-            congestion_reductions = yaml.safe_load(file)
-        if not congestion_reductions:
-            raise ValueError("Congestion reductions YAML file is empty or invalid")
-        if "greenfield_congestion_reductions" not in congestion_reductions:
-            raise KeyError(
-                "Missing 'greenfield_congestion_reductions' key in YAML file"
-            )
-        if (
-            "constraints"
-            not in congestion_reductions["greenfield_congestion_reductions"]
-        ):
-            raise KeyError(
-                "Missing 'constraints' key in greenfield_congestion_reductions section"
-            )
-        if "costs" not in congestion_reductions["greenfield_congestion_reductions"]:
-            raise KeyError(
-                "Missing 'costs' key in greenfield_congestion_reductions section"
-            )
-        flow_factor = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["flow_factor"]
-        binding_hours = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["binding_hours"]
-        average_exceedance = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["average_exceedance"]
-        near_binding_hours = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["near_binding_hours"]
-        near_average_exceedance = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["constraints"]["near_average_exceedance"]
-        near_binding_relief_factor = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["constraints"]["near_binding_relief_factor"]
-        saturation_factor = congestion_reductions["greenfield_congestion_reductions"][
-            "constraints"
-        ]["saturation_factor"]
-
-        # costs
-        average_congestion_price = congestion_reductions[
-            "greenfield_congestion_reductions"
-        ]["costs"]["average_congestion_price"]
-
-        return (
-            flow_factor,
-            binding_hours,
-            average_exceedance,
-            near_binding_hours,
-            near_average_exceedance,
-            near_binding_relief_factor,
-            saturation_factor,
-            average_congestion_price,
-        )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Congestion reductions YAML not found at {YAMLS_DIR / '17_congestion_reductions.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing congestion reductions YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in congestion reductions YAML: {e}")
+# load_curtailment_reductions is now imported from smart_loaders
 
 
-def load_curtailment_reductions() -> Tuple[float, float, float, float]:
-    """
-    Load curtailment reduction parameters from YAML configuration file.
-
-    Reads curtailment reduction parameters from the curtailment_reductions.yaml file,
-    which contains data on renewable energy curtailment events that the transmission
-    project may help reduce.
-
-    Returns:
-        tuple: A 4-element tuple containing:
-            - curtailment_hours_total: Total hours per year with curtailment events
-            - average_curtailment_mw: Average MW curtailed per curtailment event
-            - average_curtailment_price: Average price of curtailment in $/MWh
-            - curtailment_saturation_factor: Conservative multiplier for curtailment benefits (0-1)
-
-    Raises:
-        FileNotFoundError: When curtailment_reductions.yaml is not found
-        ValueError: When YAML file is empty, invalid, or values cannot be converted to float
-        KeyError: When required keys are missing from the YAML structure
-    """
-    try:
-        with open(YAMLS_DIR / "18_curtailment_reductions.yaml", "r") as f:
-            data = yaml.safe_load(f)
-        if not data:
-            raise ValueError("Curtailment reductions YAML file is empty or invalid")
-        if "curtailment_reductions" not in data:
-            raise KeyError("Missing 'curtailment_reductions' key in YAML file")
-        curtailment_reductions_data = data["curtailment_reductions"]
-
-        Hc_tot = float(curtailment_reductions_data.get("curtailment_hours_total", 0))
-        avg_curt_mw = float(
-            curtailment_reductions_data.get("average_curtailment_mw", 0)
-        )
-        avg_curt_price = float(
-            curtailment_reductions_data.get("average_curtailment_price", 0)
-        )
-        curtailment_saturation_factor = float(
-            curtailment_reductions_data.get("curtailment_saturation_factor", 0)
-        )
-        return Hc_tot, avg_curt_mw, avg_curt_price, curtailment_saturation_factor
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Curtailment reductions YAML not found at {YAMLS_DIR / '18_curtailment_reductions.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing curtailment reductions YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in curtailment reductions YAML: {e}")
-    except (ValueError, TypeError) as e:
-        raise ValueError(f"Error converting curtailment reduction values to float: {e}")
-
-
-def load_financing_details() -> Tuple[float, int, float, float]:
-    """
-    Load financing parameters and calculate real WACC using Fisher equation.
-
-    This is a local version of the financing details loader, duplicated in this module
-    to avoid circular dependencies. It reads financing parameters from the financing YAML
-    file and calculates the real WACC using the Fisher equation to account for inflation.
-
-    The Fisher equation: wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-
-    Args:
-        None (reads from YAML file)
-
-    Returns:
-        tuple: A 4-element tuple containing:
-            - inflation_rate: Annual inflation rate (decimal, e.g., 0.02 for 2%)
-            - base_year: Base year for financial calculations
-            - wacc_nominal: Nominal weighted average cost of capital (decimal)
-            - wacc_real: Real weighted average cost of capital (decimal, inflation-adjusted)
-
-    Raises:
-        FileNotFoundError: When financing YAML is not found
-        ValueError: When YAML file is empty, invalid, or inflation_rate <= -1 (would cause division by zero)
-        KeyError: When required keys are missing from the YAML structure
-
-    Note:
-        This function duplicates functionality from yaml_loaders.load_financing_details()
-        to avoid import dependencies. Both functions should return identical results.
-    """
-    try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
-        if not financing_data:
-            raise ValueError("Financing YAML file is empty or invalid")
-        if "financial" not in financing_data:
-            raise KeyError("Missing 'financial' key in financing YAML file")
-        financial = financing_data["financial"]
-        if "inflation_rate" not in financial:
-            raise KeyError(
-                "Missing 'inflation_rate' key in financial section of financing YAML"
-            )
-        if "base_year" not in financial:
-            raise KeyError(
-                "Missing 'base_year' key in financial section of financing YAML"
-            )
-        if "wacc_nominal" not in financial:
-            raise KeyError(
-                "Missing 'wacc_nominal' key in financial section of financing YAML"
-            )
-
-        inflation_rate = financial["inflation_rate"]
-        base_year = financial["base_year"]
-        wacc_nominal = financial["wacc_nominal"]
-
-        # Validate inflation_rate to prevent division by zero in Fisher equation
-        if inflation_rate <= -1:
-            raise ValueError(
-                f"Invalid inflation_rate: {inflation_rate}. "
-                f"Value must be > -1 to prevent division by zero in Fisher equation calculation. "
-                f"An inflation_rate of {inflation_rate} would cause (1 + inflation_rate) to be <= 0."
-            )
-
-        # Use Fisher equation to convert nominal WACC to real WACC
-        wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
-
-        return inflation_rate, base_year, wacc_nominal, wacc_real
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in financing YAML: {e}")
+# load_financing_details is now imported from smart_loaders
 
 
 def calculate_present_value(
@@ -566,10 +312,66 @@ def calculate_congestion_reduction_costs(
             - H_bnon: Binding hours that don't overlap with curtailment hours
             - ΔC_rem: Remaining capacity relief after curtailment allocation (MW)
     """
+    # #region agent log
+    import json, os
+
+    try:
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_calc_entry",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "congestion_curtailment_reduction.py:569",
+                        "message": "calculate_congestion_reduction_costs entry",
+                        "data": {
+                            "reconductoring": reconductoring,
+                            "capacity_mw": capacity_mw,
+                            "old_capacity_mw": old_capacity_mw,
+                            "binding_hours": binding_hours,
+                            "average_exceedance": average_exceedance,
+                        },
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "D",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
+    # #endregion
     if reconductoring == False:
         effective_capacity_relief = max(0, flow_factor * capacity_mw)
     else:
         effective_capacity_relief = max(0, capacity_mw - old_capacity_mw)
+    # #region agent log
+    try:
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_effective_capacity",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "congestion_curtailment_reduction.py:572",
+                        "message": "effective_capacity_relief calculated",
+                        "data": {
+                            "effective_capacity_relief": effective_capacity_relief
+                        },
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "D",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
+    # #endregion
 
     # Allocate capacity relief between curtailment and congestion
     alloc = allocate_curtailment_then_congestion(
@@ -601,6 +403,39 @@ def calculate_congestion_reduction_costs(
 
     # Total congestion energy
     energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
+    # #region agent log
+    import json, os
+
+    try:
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_energy_calc",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "congestion_curtailment_reduction.py:603",
+                        "message": "energy congestion reduction calculated",
+                        "data": {
+                            "E_cong_bc": E_cong_bc,
+                            "E_cong_non": E_cong_non,
+                            "E_near": E_near,
+                            "energy_congestion_reduction": energy_congestion_reduction,
+                            "H_bc": H_bc,
+                            "H_bnon": H_bnon,
+                            "deltaC_rem": ΔC_rem,
+                        },
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
+    # #endregion
 
     # Monetize congestion ($/yr) — apply saturation haircut to $ only
     annual_congestion_reduction_cost_raw = (

@@ -27,7 +27,11 @@ from energy_losses import (
     calculate_line_losses,
 )
 from financial_utils import calculate_present_value
-from yaml_loaders import load_financing_social_discount_rate
+from smart_loaders import (
+    load_financing_social_discount_rate,
+    load_project_technical_details as load_project_technical_details_centralized,
+    get_input_mode,
+)
 from path_config import YAMLS_DIR
 
 
@@ -88,59 +92,71 @@ def load_project_details() -> Tuple[
     """
     import yaml
 
+    def _get_project_data():
+        """Helper to get raw project data in both YAML and JSON modes."""
+        input_mode = get_input_mode()
+        if input_mode == "json":
+            from json_loaders import _data_source
+            return _data_source.get_data("01_project_technical_details")
+        else:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                return yaml.safe_load(file)
+
     try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
+        # Load from centralized loader
+        # Returns: (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
+        #           line_utilization, reconductoring, delay_years, construction_years,
+        #           project_lifetime, converter_loss_percentage)
+        (
+            construction_type,
+            ac_dc,
+            capacity_mw,
+            conductor_type,
+            converter_type,
+            line_utilization_percent,
+            reconductoring,
+            delay_years,
+            construction_years,
+            project_lifetime,
+            _converter_loss_percentage,
+        ) = load_project_technical_details_centralized()
+
+        # Get additional fields not in centralized loader
+        project_details = _get_project_data()
         if not project_details:
-            raise ValueError("Project technical details YAML file is empty or invalid")
+            raise ValueError("Project technical details file is empty or invalid")
         if "project" not in project_details:
             raise KeyError(
-                "Missing 'project' key in project technical details YAML file"
+                "Missing 'project' key in project technical details"
             )
         project = project_details["project"]
-        required_keys = ["construction_type", "ac_dc", "capacity_mw", "conductor_type"]
-        for key in required_keys:
-            if key not in project:
-                raise KeyError(
-                    f"Missing '{key}' key in project section of technical details YAML"
-                )
-        construction_type = project["construction_type"]
-        ac_dc = project["ac_dc"]
-        capacity_mw = project["capacity_mw"]
-        conductor_type = project["conductor_type"]
-        converter_type = project["converter_type"] if ac_dc != "AC" else "NA"
+
+        baseline_electricity_price = project.get(
+            "baseline_electricity_price_per_mwh", 0
+        )
+        social_discount_rate = load_financing_social_discount_rate()
+
+        # Get number_of_converters if DC
+        if ac_dc == "DC":
+            number_of_converters = project.get("number_of_converters", 0)
+        else:
+            number_of_converters = 0
+
+        # Get greenfield comparison fields (optional, only for greenfield projects)
+        greenfield_comparison_capacity_mw = project.get(
+            "greenfield_comparison_capacity_mw", None
+        )
+        greenfield_comparison_conductor_type = project.get(
+            "greenfield_comparison_conductor_type", None
+        )
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            f"Project technical details not found"
         )
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
+        raise ValueError(f"Error parsing project technical details: {e}")
     except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details YAML: {e}")
-    line_utilization_percent = project_details["project"]["line_utilization"]
-    baseline_electricity_price = project_details["project"][
-        "baseline_electricity_price_per_mwh"
-    ]
-    social_discount_rate = load_financing_social_discount_rate()
-    reconductoring = project_details["project"]["reconductoring"]
-
-    delay_years = project_details["timeline"]["delay_years"]
-    construction_years = project_details["timeline"]["construction_years"]
-    project_lifetime = project_details["timeline"]["project_lifetime"]
-
-    # Get number_of_converters if DC
-    if ac_dc == "DC":
-        number_of_converters = project_details["project"]["number_of_converters"]
-    else:
-        number_of_converters = 0
-
-    # Get greenfield comparison fields (optional, only for greenfield projects)
-    greenfield_comparison_capacity_mw = project_details["project"].get(
-        "greenfield_comparison_capacity_mw", None
-    )
-    greenfield_comparison_conductor_type = project_details["project"].get(
-        "greenfield_comparison_conductor_type", None
-    )
+        raise KeyError(f"Missing required key in project technical details: {e}")
 
     return (
         construction_type,
@@ -632,34 +648,43 @@ def main() -> None:
         csv_manager.write_batch_summary()
         return
 
-    # Load baseline configuration details
+    # Load baseline configuration details using helper
+    def _get_project_data():
+        """Helper to get raw project data in both YAML and JSON modes."""
+        input_mode = get_input_mode()
+        if input_mode == "json":
+            from json_loaders import _data_source
+            return _data_source.get_data("01_project_technical_details")
+        else:
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                return yaml.safe_load(file)
+
     try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
+        project_details = _get_project_data()
         if not project_details:
-            raise ValueError("Project technical details YAML file is empty or invalid")
+            raise ValueError("Project technical details file is empty or invalid")
         if "project" not in project_details:
             raise KeyError(
-                "Missing 'project' key in project technical details YAML file"
+                "Missing 'project' key in project technical details"
             )
         project = project_details["project"]
         required_keys = ["old_capacity_mw", "old_conductor_type", "old_ac_dc"]
         for key in required_keys:
             if key not in project:
                 raise KeyError(
-                    f"Missing '{key}' key in project section of technical details YAML"
+                    f"Missing '{key}' key in project section of technical details"
                 )
         old_capacity_mw = project["old_capacity_mw"]
         old_conductor_type = project["old_conductor_type"]
         old_ac_dc = project["old_ac_dc"]
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
+            f"Project technical details not found"
         )
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
+        raise ValueError(f"Error parsing project technical details: {e}")
     except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details YAML: {e}")
+        raise KeyError(f"Missing required key in project technical details: {e}")
 
     # For DC to DC, keep the same converter type
     if ac_dc == "DC" and old_ac_dc == "DC":

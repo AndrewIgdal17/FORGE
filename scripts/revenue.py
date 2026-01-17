@@ -11,30 +11,52 @@ import yaml
 import sys
 import os
 import csv
-from typing import Tuple
+from typing import Tuple, Dict, Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from yaml_loaders import load_financing_details
+from smart_loaders import (
+    load_financing_details,
+    load_project_technical_details as load_project_technical_details_centralized,
+    get_input_mode,
+)
 from financial_utils import calculate_present_value
 from path_config import YAMLS_DIR, OUTPUTS_DIR
 
 
+def _get_financing_data() -> Dict[str, Any]:
+    """
+    Helper function to get raw financing data.
+    Works in both YAML and JSON modes.
+    
+    Returns:
+        Dictionary with financing data structure
+    """
+    input_mode = get_input_mode()
+    if input_mode == "json":
+        from json_loaders import _data_source
+        return _data_source.get_data("03_financing")
+    else:
+        # YAML mode
+        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
+            return yaml.safe_load(file)
+
+
 def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
     """
-    Load rate-based revenue parameters from financing YAML.
+    Load rate-based revenue parameters from financing data.
+    Supports both YAML and JSON input modes.
 
     Returns:
         tuple: (enabled, allowed_return_rate)
     """
     try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
+        financing_data = _get_financing_data()
         if not financing_data:
-            raise ValueError("Financing YAML file is empty or invalid")
+            raise ValueError("Financing data is empty or invalid")
         revenue_config = financing_data.get("financial", {}).get("revenue", {})
         rate_based_config = revenue_config.get("rate_based", {})
 
@@ -44,47 +66,26 @@ def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
         return enabled, allowed_return_rate
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
+            f"Financing data not found"
         )
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
+        raise ValueError(f"Error parsing financing data: {e}")
 
 
 def load_project_technical_details() -> Tuple[float, int, int]:
     """
-    Load project technical details for timeline information.
+    Load project technical details for timeline information using centralized loader.
 
     Returns:
         tuple: (delay_years, construction_years, project_lifetime)
     """
-    try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
-        if not project_details:
-            raise ValueError("Project technical details YAML file is empty or invalid")
-        if "timeline" not in project_details:
-            raise KeyError(
-                "Missing 'timeline' key in project technical details YAML file"
-            )
-        timeline = project_details["timeline"]
-        required_keys = ["delay_years", "construction_years", "project_lifetime"]
-        for key in required_keys:
-            if key not in timeline:
-                raise KeyError(
-                    f"Missing '{key}' key in timeline section of technical details YAML"
-                )
-        delay_years = timeline["delay_years"]
-        construction_years = timeline["construction_years"]
-        project_lifetime = timeline["project_lifetime"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details YAML: {e}")
-
+    # load_project_technical_details_centralized returns:
+    # (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
+    #  line_utilization, reconductoring, delay_years, construction_years,
+    #  project_lifetime, converter_loss_percentage)
+    _, _, _, _, _, _, _, delay_years, construction_years, project_lifetime, _ = (
+        load_project_technical_details_centralized()
+    )
     return delay_years, construction_years, project_lifetime
 
 

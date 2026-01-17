@@ -15,53 +15,30 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from yaml_loaders import load_delay_costs, load_financing_details
+from smart_loaders import (
+    load_delay_costs,
+    load_financing_details,
+    load_project_technical_details as load_project_technical_details_centralized,
+)
 from financial_utils import calculate_present_value
-from path_config import YAMLS_DIR
 
 
 def load_project_technical_details() -> float:
     """
-    Load delay years from project technical details YAML file.
+    Load delay years from project technical details using centralized loader.
 
-    This is a simplified loader that extracts only the delay_years value from the
-    project technical details YAML file, as this is the only field needed for
-    delay cost calculations.
-
-    Args:
-        None (reads from YAML file)
+    This wrapper extracts only the delay_years value from the centralized loader,
+    as this is the only field needed for delay cost calculations.
 
     Returns:
         float: Number of years of project delay before construction begins
-
-    Raises:
-        FileNotFoundError: When project technical details YAML is not found
-        ValueError: When YAML file is empty or invalid
-        KeyError: When required keys ("timeline", "delay_years") are missing
     """
-    try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
-        if not project_details:
-            raise ValueError("Project technical details YAML file is empty or invalid")
-        if "timeline" not in project_details:
-            raise KeyError(
-                "Missing 'timeline' key in project technical details YAML file"
-            )
-        if "delay_years" not in project_details["timeline"]:
-            raise KeyError(
-                "Missing 'delay_years' key in timeline section of technical details YAML"
-            )
-        delay_year = project_details["timeline"]["delay_years"]
-        return delay_year
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details YAML: {e}")
+    # load_project_technical_details_centralized returns:
+    # (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
+    #  line_utilization, reconductoring, delay_years, construction_years,
+    #  project_lifetime, converter_loss_percentage)
+    _, _, _, _, _, _, _, delay_years, _, _, _ = load_project_technical_details_centralized()
+    return delay_years
 
 
 def main() -> None:

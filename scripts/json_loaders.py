@@ -157,10 +157,49 @@ def load_emissions_details():
 
 def load_congestion_reductions():
     """Load congestion reduction parameters from JSON."""
+    # #region agent log
+    import json, os
+    try:
+        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a') as f:
+            f.write(json.dumps({"id":"log_load_congestion_entry","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:158","message":"load_congestion_reductions entry","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
+    except Exception as e: pass
+    # #endregion
     data = _data_source.get_data("17_congestion_reductions")
-    cr = data["greenfield_congestion_reductions"]
-    return (
-        cr["constraints"]["flow_factor"],
+    
+    # Check if this is a reconductoring project
+    project_data = _data_source.get_data("01_project_technical_details")
+    reconductoring = project_data.get("reconductoring", False)
+    
+    # #region agent log
+    try:
+        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a') as f:
+            f.write(json.dumps({"id":"log_reconductoring_flag","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:164","message":"reconductoring flag check","data":{"reconductoring":reconductoring,"type":str(type(reconductoring)),"project_data_keys":list(project_data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
+    except Exception as e: pass
+    # #endregion
+    
+    # Load from appropriate section
+    if reconductoring:
+        # #region agent log
+        try:
+            log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({"id":"log_reconductoring_branch","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:167","message":"entering reconductoring branch","data":{"data_keys":list(data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}) + '\n')
+        except Exception as e: pass
+        # #endregion
+        cr = data["reconductoring_congestion_reductions"]
+        # flow_factor is not used for reconductoring (capacity relief = capacity - old_capacity)
+        flow_factor = 0.0
+    else:
+        cr = data["greenfield_congestion_reductions"]
+        flow_factor = cr["constraints"]["flow_factor"]
+    
+    result = (
+        flow_factor,
         cr["constraints"]["binding_hours"],
         cr["constraints"]["average_exceedance"],
         cr["constraints"]["near_binding_hours"],
@@ -169,6 +208,15 @@ def load_congestion_reductions():
         cr["constraints"]["saturation_factor"],
         cr["costs"]["average_congestion_price"],
     )
+    # #region agent log
+    try:
+        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a') as f:
+            f.write(json.dumps({"id":"log_load_congestion_exit","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:184","message":"load_congestion_reductions exit","data":{"flow_factor":result[0],"binding_hours":result[1],"average_exceedance":result[2],"saturation_factor":result[6],"congestion_price":result[7]},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}) + '\n')
+    except Exception as e: pass
+    # #endregion
+    return result
 
 
 def load_curtailment_reductions():

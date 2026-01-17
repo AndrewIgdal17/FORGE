@@ -9,7 +9,13 @@ import os
 import yaml
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from path_config import OUTPUTS_DIR
+from path_config import OUTPUTS_DIR, YAMLS_DIR
+from smart_loaders import (
+    load_project_technical_details,
+    load_physical_details,
+    load_financing_social_discount_rate,
+    get_input_mode,
+)
 
 
 class CTCCOutputManager:
@@ -52,116 +58,104 @@ class CTCCOutputManager:
         """Create output directory if it doesn't exist."""
         os.makedirs(self.output_dir, exist_ok=True)
 
+    def _get_project_data(self) -> Dict[str, Any]:
+        """
+        Helper function to get raw project technical details data.
+        Works in both YAML and JSON modes.
+        
+        Returns:
+            Dictionary with 'project' and 'timeline' keys
+        """
+        input_mode = get_input_mode()
+        if input_mode == "json":
+            from json_loaders import _data_source
+            return _data_source.get_data("01_project_technical_details")
+        else:
+            # YAML mode
+            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
+                return yaml.safe_load(file)
+
     def load_technical_details(self) -> Dict[str, Any]:
         """
-        Load technical parameters from YAML files to include in CSV outputs.
+        Load technical parameters using centralized loaders to include in CSV outputs.
+        Supports both YAML and JSON input modes.
 
         Returns:
             Dictionary of technical parameters
         """
         try:
-            # Get the directory where this script is located
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            # Build path to yamls directory (parent of scripts/)
-            yaml_dir = os.path.join(os.path.dirname(script_dir), "yamls")
+            # Load from centralized loaders
+            # load_project_technical_details returns:
+            # (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
+            #  line_utilization, reconductoring, delay_years, construction_years,
+            #  project_lifetime, converter_loss_percentage)
+            (
+                construction_type,
+                ac_dc,
+                capacity_mw,
+                conductor_type,
+                converter_type,
+                line_utilization,
+                reconductoring,
+                delay_years,
+                construction_years,
+                project_lifetime,
+                _converter_loss_percentage,
+            ) = load_project_technical_details()
 
-            # Load project technical details
-            tech_yaml_path = os.path.join(yaml_dir, "01_project_technical_details.yaml")
-            try:
-                with open(tech_yaml_path, "r") as file:
-                    tech_data = yaml.safe_load(file)
-                if not tech_data:
-                    raise ValueError(
-                        "Project technical details YAML file is empty or invalid"
-                    )
-            except FileNotFoundError:
-                raise FileNotFoundError(
-                    f"Project technical details YAML not found at {tech_yaml_path}"
-                )
-            except yaml.YAMLError as e:
-                raise ValueError(f"Error parsing project technical details YAML: {e}")
+            # Get total line length from centralized loader
+            total_line_length = load_physical_details()
 
-            # Load physical details for total line length
-            phys_yaml_path = os.path.join(yaml_dir, "02_project_physical_details.yaml")
-            try:
-                with open(phys_yaml_path, "r") as file:
-                    physical_data = yaml.safe_load(file)
-                if not physical_data:
-                    raise ValueError("Physical details YAML file is empty or invalid")
-            except FileNotFoundError:
-                raise FileNotFoundError(
-                    f"Physical details YAML not found at {phys_yaml_path}"
-                )
-            except yaml.YAMLError as e:
-                raise ValueError(f"Error parsing physical details YAML: {e}")
+            # Get social discount rate from centralized loader
+            social_discount_rate = load_financing_social_discount_rate()
 
-            # Load financing details for social discount rate
-            financing_yaml_path = os.path.join(yaml_dir, "03_financing.yaml")
-            try:
-                with open(financing_yaml_path, "r") as file:
-                    financing_data = yaml.safe_load(file)
-                if not financing_data:
-                    raise ValueError("Financing YAML file is empty or invalid")
-            except FileNotFoundError:
-                raise FileNotFoundError(
-                    f"Financing YAML not found at {financing_yaml_path}"
-                )
-            except yaml.YAMLError as e:
-                raise ValueError(f"Error parsing financing YAML: {e}")
-
-            # Calculate total line length
-            terrain_miles = physical_data.get("terrain", {}).get("terrain_miles", {})
-            total_line_length = sum(terrain_miles.values())
-
-            # Extract key technical parameters
-            project = tech_data.get("project", {})
-            timeline = tech_data.get("timeline", {})
+            # Get additional fields not in centralized loader return
+            project_data = self._get_project_data()
+            project = project_data.get("project", {})
 
             technical_details = {
                 # Project identification
                 "project_name": project.get("name", ""),
-                # Core technical specs
-                "construction_type": project.get("construction_type", ""),
-                "ac_dc": project.get("ac_dc", ""),
-                "capacity_mw": project.get("capacity_mw", 0),
-                "conductor_type": project.get("conductor_type", ""),
+                # Core technical specs (from centralized loader)
+                "construction_type": construction_type,
+                "ac_dc": ac_dc,
+                "capacity_mw": capacity_mw,
+                "conductor_type": conductor_type,
                 "line_length_miles": total_line_length,
-                "line_utilization": project.get("line_utilization", 0),
+                "line_utilization": line_utilization,
                 # Converter details (for DC projects)
-                "converter_type": project.get("converter_type", "NA"),
+                "converter_type": converter_type,
                 "number_of_converters": (
                     project.get("number_of_converters", 0)
-                    if project.get("ac_dc") == "DC"
+                    if ac_dc == "DC"
                     else 0
                 ),
                 # Reconductoring details
-                "reconductoring": project.get("reconductoring", False),
+                "reconductoring": reconductoring,
                 "old_capacity_mw": (
                     project.get("old_capacity_mw", 0)
-                    if project.get("reconductoring")
+                    if reconductoring
                     else 0
                 ),
                 "old_conductor_type": (
                     project.get("old_conductor_type", "")
-                    if project.get("reconductoring")
+                    if reconductoring
                     else ""
                 ),
                 "old_ac_dc": (
                     project.get("old_ac_dc", "")
-                    if project.get("reconductoring")
+                    if reconductoring
                     else ""
                 ),
                 # Financial parameters
                 "baseline_electricity_price_per_mwh": project.get(
                     "baseline_electricity_price_per_mwh", 0
                 ),
-                "social_discount_rate": financing_data.get("financial", {}).get(
-                    "social_discount_rate", 0
-                ),
-                # Timeline
-                "construction_years": timeline.get("construction_years", 0),
-                "delay_years": timeline.get("delay_years", 0),
-                "project_lifetime_years": timeline.get("project_lifetime", 0),
+                "social_discount_rate": social_discount_rate,
+                # Timeline (from centralized loader)
+                "construction_years": construction_years,
+                "delay_years": delay_years,
+                "project_lifetime_years": project_lifetime,
             }
 
             return technical_details
