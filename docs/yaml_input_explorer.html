@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CTCC YAML Input Explorer</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
       :root {
         --bg-primary: #ffffff;
@@ -176,6 +177,49 @@
         border-color: var(--accent-blue);
       }
 
+      .tabs-container {
+        margin-bottom: 2rem;
+      }
+
+      .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 1.5rem;
+      }
+
+      .tab-button {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: -2px;
+      }
+
+      .tab-button:hover {
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+      }
+
+      .tab-button.active {
+        color: var(--accent-blue);
+        border-bottom-color: var(--accent-blue);
+        font-weight: 600;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
       .main-content {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -194,6 +238,24 @@
       .diagram-section h2 {
         margin-bottom: 1rem;
         color: var(--text-primary);
+      }
+
+      .mermaid-diagram {
+        background: var(--bg-primary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        overflow-x: auto;
+        min-height: 400px;
+      }
+
+      .mermaid-diagram svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      [data-theme="dark"] .mermaid-diagram {
+        background: var(--bg-tertiary);
       }
 
       #d3-diagram {
@@ -516,23 +578,196 @@
         </div>
       </div>
 
-      <div class="main-content">
-        <div class="diagram-section">
-          <h2>📊 System Overview</h2>
-          <div id="d3-diagram">
-            <svg id="d3-svg"></svg>
-            <div id="zoom-controls">
-              <button id="zoom-in">+</button>
-              <button id="zoom-out">-</button>
-              <button id="reset-zoom">⌂</button>
+      <div class="tabs-container">
+        <div class="tabs-nav">
+          <button class="tab-button active" data-tab="input-structure">
+            📊 Input Structure
+          </button>
+          <button class="tab-button" data-tab="execution-workflow">
+            ⚙️ Execution Workflow
+          </button>
+          <button class="tab-button" data-tab="web-app-workflow">
+            🌐 Web App Workflow
+          </button>
+        </div>
+
+        <div class="tab-content active" id="tab-input-structure">
+          <div class="main-content">
+            <div class="diagram-section">
+              <h2>📊 System Overview</h2>
+              <div id="d3-diagram">
+                <svg id="d3-svg"></svg>
+                <div id="zoom-controls">
+                  <button id="zoom-in">+</button>
+                  <button id="zoom-out">-</button>
+                  <button id="reset-zoom">⌂</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-section">
+              <h2>🔍 Field Explorer</h2>
+              <div class="yaml-tree" id="yaml-tree">
+                <!-- YAML tree will be populated here -->
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="details-section">
-          <h2>🔍 Field Explorer</h2>
-          <div class="yaml-tree" id="yaml-tree">
-            <!-- YAML tree will be populated here -->
+        <div class="tab-content" id="tab-execution-workflow">
+          <div class="diagram-section" style="max-width: 100%">
+            <h2>⚙️ Execution Workflow</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+              Visual representation of what happens when you run
+              <code>python ctcc.py</code>
+            </p>
+            <div class="mermaid-diagram">
+              <div id="execution-workflow"></div>
+              <script type="text/mermaid" id="execution-workflow-code">
+                flowchart TD
+                    Start["python ctcc.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
+
+                    ParseArgs --> LoadYAML{"Load YAML Config<br/>Primary BCR Settings"}
+                    LoadYAML -->|"Config exists"| MergeFlags["Merge YAML config with CLI flags<br/>YAML overrides CLI"]
+                    LoadYAML -->|"No config"| SetEnvVars
+                    MergeFlags --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE, CTCC_OUTPUT_MODE<br/>CTCC_JSON_DATA_FILE, CTCC_SCENARIO_ID<br/>CTCC_NO_WILDFIRE, etc."]
+
+                    SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
+
+                    GenScenarioID --> CheckCapitalOnly{"--capital_only flag?"}
+
+                    CheckCapitalOnly -->|"Yes"| CapitalScripts["Build Capital-Only Script List"]
+                    CheckCapitalOnly -->|"No"| FullScripts["Build Full Script List"]
+
+                    CapitalScripts --> ScriptList1["Scripts: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py"]
+
+                    FullScripts --> ScriptList2["Always: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py<br/>revenue.py"]
+
+                    ScriptList2 --> Conditional1{"--no_insurance?"}
+                    Conditional1 -->|"No"| AddInsurance["Add: insurance_costs.py"]
+                    Conditional1 -->|"Yes"| Conditional2
+                    AddInsurance --> Conditional2{"--no_delay_costs?"}
+                    Conditional2 -->|"No"| AddDelay["Add: delay_costs.py"]
+                    Conditional2 -->|"Yes"| Conditional3
+                    AddDelay --> Conditional3{"--no_wildfire?"}
+                    Conditional3 -->|"No"| AddWildfire["Add: wildfire_costs.py"]
+                    Conditional3 -->|"Yes"| Conditional4
+                    AddWildfire --> Conditional4{"--no_outages?"}
+                    Conditional4 -->|"No"| AddOutage["Add: outage_costs.py"]
+                    Conditional4 -->|"Yes"| AlwaysBenefits
+                    AddOutage --> AlwaysBenefits["Always: congestion_curtailment_reduction.py"]
+
+                    AlwaysBenefits --> AlwaysEnergy["Always: energy_losses.py"]
+
+                    AlwaysEnergy --> Conditional5{"--no_oandm?"}
+                    Conditional5 -->|"No"| AddOandM["Add: oandm.py"]
+                    Conditional5 -->|"Yes"| Conditional6
+                    AddOandM --> Conditional6{"--no_emissions?"}
+                    Conditional6 -->|"No"| AddEmissions["Add: emissions.py"]
+                    Conditional6 -->|"Yes"| Conditional7
+                    AddEmissions --> Conditional7{"--no_linelosses?"}
+                    Conditional7 -->|"No"| AddLineLosses["Add: line_loss_costs.py"]
+                    Conditional7 -->|"Yes"| ExecuteLoop
+
+                    ScriptList1 --> ExecuteLoop["Execute Scripts Sequentially"]
+
+                    ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
+
+                    RunScript --> Subprocess["Run as subprocess<br/>cwd=scripts/<br/>env=os.environ.copy()"]
+
+                    Subprocess --> ScriptLoad["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+
+                    ScriptLoad --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
+
+                    ScriptCalc --> ScriptOutput["Script: Write Output<br/>via smart_output<br/>(CSV or JSON)"]
+
+                    ScriptOutput --> MoreScripts{"More scripts?"}
+                    MoreScripts -->|"Yes"| RunScript
+                    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
+
+                    CheckSuccess -->|"No"| EndError["End: Show error message"]
+                    CheckSuccess -->|"Yes"| CheckOutputMode{"Check CTCC_OUTPUT_MODE"}
+
+                    CheckOutputMode -->|"csv"| CSVMode["CSV Output Mode"]
+                    CheckOutputMode -->|"json"| JSONMode["JSON Output Mode"]
+
+                    CSVMode --> CalcBCR_CSV["Calculate BCR from<br/>batch_summary.csv"]
+                    CalcBCR_CSV --> UpdateCSV["Update batch_summary.csv<br/>with BCR metrics"]
+                    UpdateCSV --> EndCSV["End: CSV files in outputs/"]
+
+                    JSONMode --> AggregateJSON["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
+                    AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
+                    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>ctcc_results_{id}.json"]
+                    WriteFinalJSON --> CleanupJSON["Clean up intermediate<br/>JSON files"]
+                    CleanupJSON --> EndJSON["End: JSON file in outputs/"]
+
+                    EndCSV --> End
+                    EndJSON --> End
+                    EndError --> End["Complete"]
+              </script>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-web-app-workflow">
+          <div class="diagram-section" style="max-width: 100%">
+            <h2>🌐 Web App Workflow</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+              Visual representation of what happens when you use the web
+              application (JSON→JSON mode only)
+            </p>
+            <div class="mermaid-diagram">
+              <div id="web-app-workflow"></div>
+              <script type="text/mermaid" id="web-app-workflow-code">
+                flowchart TD
+                    Start["User opens Web UI<br/>index.html"] --> LoadConfig["Load JSON Config<br/>GET /api/final_combined"]
+                    LoadConfig --> EditConfig["User edits JSON<br/>configuration in UI"]
+                    EditConfig --> ClickCalculate["User clicks<br/>Calculate button"]
+
+                    ClickCalculate --> CollectData["Frontend: Collect<br/>edited JSON data"]
+                    CollectData --> SendRequest["Frontend: POST request<br/>/api/ctcc/calculate<br/>with combined_data"]
+
+                    SendRequest --> APIEndpoint["FastAPI: calculate_ctcc<br/>endpoint receives request"]
+                    APIEndpoint --> CallProcessor["Call run_ctcc_calculation<br/>ctcc_processor.py"]
+
+                    CallProcessor --> CheckFormat{"Check data format<br/>Full CTCC format?"}
+                    CheckFormat -->|"Yes"| UseDirect["Use combined_data<br/>directly"]
+                    CheckFormat -->|"No"| MergeTemplate["Merge with template<br/>final_combined.json"]
+                    UseDirect --> WriteTemp["Write temp JSON file<br/>ctcc_api_{id}_*.json"]
+                    MergeTemplate --> WriteTemp
+
+                    WriteTemp --> EnsureVenv["Ensure CLI venv exists<br/>and has dependencies"]
+                    EnsureVenv --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE=json<br/>CTCC_OUTPUT_MODE=json<br/>CTCC_JSON_DATA_FILE=temp_file<br/>CTCC_SCENARIO_ID={id}"]
+
+                    SetEnvVars --> CallCtcc["Call ctcc.py as subprocess<br/>venv/bin/python3 ctcc.py"]
+
+                    CallCtcc --> CtccInit["ctcc.py: Initialize<br/>Generate scenario ID<br/>Set env vars"]
+                    CtccInit --> BuildScripts["ctcc.py: Build script list<br/>Based on flags/config"]
+                    BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>weighted_miles.py, build_costs.py, etc."]
+
+                    ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
+                    RunScript --> ScriptSubprocess["Script: Run as subprocess<br/>cwd=scripts/"]
+                    ScriptSubprocess --> ScriptLoadJSON["Script: Load Data<br/>via json_loaders<br/>from CTCC_JSON_DATA_FILE"]
+                    ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations"]
+                    ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via json_output_manager<br/>json_output_{id}_*.json"]
+                    ScriptOutputJSON --> MoreScripts{"More scripts?"}
+                    MoreScripts -->|"Yes"| RunScript
+                    MoreScripts -->|"No"| AggregateJSON
+
+                    AggregateJSON --> AggregateOutputs["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
+                    AggregateJSON --> CalcBCR["Calculate BCR from<br/>aggregated JSON data"]
+                    CalcBCR --> WriteFinal["Write final output<br/>ctcc_results_{id}.json"]
+
+                    WriteFinal --> ProcessorRead["Processor: Read<br/>ctcc_results_{id}.json"]
+                    ProcessorRead --> CleanupFiles["Processor: Cleanup<br/>Delete temp input file<br/>Delete output file"]
+                    CleanupFiles --> ReturnResponse["Processor: Return<br/>JSON response dict"]
+
+                    ReturnResponse --> FastAPIResponse["FastAPI: Return<br/>JSONResponse to frontend"]
+                    FastAPIResponse --> FrontendReceive["Frontend: Receive<br/>JSON response"]
+                    FrontendReceive --> RenderResults["Frontend: Render results<br/>Structured display in UI"]
+                    RenderResults --> End["Complete"]
+              </script>
+            </div>
           </div>
         </div>
       </div>
@@ -565,13 +800,33 @@
       // Initialize the application
       async function init() {
         try {
+          // Wait for Mermaid to be loaded
+          if (typeof mermaid === "undefined") {
+            console.warn("Mermaid not loaded yet, waiting...");
+            await new Promise((resolve) => {
+              const checkMermaid = setInterval(() => {
+                if (typeof mermaid !== "undefined") {
+                  clearInterval(checkMermaid);
+                  resolve();
+                }
+              }, 100);
+            });
+          }
+
           // Load YAML data
           const response = await fetch("yaml_structure.json");
-          yamlData = await response.json();
+          const jsonText = await response.text();
+          // Fix Infinity values in JSON (replace with null or large number)
+          const fixedJsonText = jsonText.replace(
+            /:\s*Infinity\s*([,}])/g,
+            ": null$1"
+          );
+          yamlData = JSON.parse(fixedJsonText);
 
           // Initialize UI
           initializeStats();
           initializeD3Diagram();
+          await initializeMermaidDiagram();
           initializeYamlTree();
           initializeConfigurations();
           initializeEventListeners();
@@ -990,6 +1245,83 @@
         return root;
       }
 
+      async function renderMermaidDiagram(
+        elementId,
+        codeElementId,
+        renderIdPrefix
+      ) {
+        const workflowElement = document.getElementById(elementId);
+        const codeElement = document.getElementById(codeElementId);
+
+        if (!workflowElement || !codeElement) {
+          return; // Silently skip if elements don't exist
+        }
+
+        try {
+          // Clear any previously rendered content
+          workflowElement.innerHTML = "";
+
+          // Get the mermaid code from the script tag
+          const mermaidCode = codeElement.textContent.trim();
+
+          if (!mermaidCode.startsWith("flowchart")) {
+            console.error(
+              `Mermaid code doesn't start with 'flowchart' for ${elementId}`,
+              mermaidCode.substring(0, 50)
+            );
+            return;
+          }
+
+          // Generate unique ID for this render
+          const renderId = `${renderIdPrefix}-${Date.now()}`;
+
+          // Render using mermaid.render
+          const { svg } = await mermaid.render(renderId, mermaidCode);
+          workflowElement.innerHTML = svg;
+        } catch (err) {
+          console.error(`Error rendering Mermaid diagram ${elementId}:`, err);
+          workflowElement.innerHTML =
+            "<div style='color: var(--text-secondary); padding: 2rem; text-align: center;'>" +
+            "<p><strong>Error rendering diagram</strong></p>" +
+            "<p style='font-size: 0.9em; margin-top: 0.5rem;'>" +
+            err.message +
+            "</p>" +
+            "<p style='font-size: 0.8em; margin-top: 0.5rem; color: var(--text-muted);'>Please check the browser console for details.</p>" +
+            "</div>";
+        }
+      }
+
+      async function initializeMermaidDiagram() {
+        // Wait for Mermaid to be available
+        if (typeof mermaid === "undefined") {
+          console.error("Mermaid library not loaded");
+          return;
+        }
+
+        // Initialize Mermaid with theme
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: currentTheme === "dark" ? "dark" : "default",
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: "basis",
+          },
+        });
+
+        // Render both diagrams
+        await renderMermaidDiagram(
+          "execution-workflow",
+          "execution-workflow-code",
+          "execution-workflow"
+        );
+        await renderMermaidDiagram(
+          "web-app-workflow",
+          "web-app-workflow-code",
+          "web-app-workflow"
+        );
+      }
+
       function initializeYamlTree() {
         if (!yamlData) {
           console.log("No yamlData available");
@@ -1203,6 +1535,28 @@
       }
 
       function initializeEventListeners() {
+        // Tab switching
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const targetTab = button.getAttribute("data-tab");
+
+            // Remove active class from all buttons and contents
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabContents.forEach((content) =>
+              content.classList.remove("active")
+            );
+
+            // Add active class to clicked button and corresponding content
+            button.classList.add("active");
+            const targetContent = document.getElementById(`tab-${targetTab}`);
+            if (targetContent) {
+              targetContent.classList.add("active");
+            }
+          });
+        });
         // Theme toggle
         document
           .getElementById("theme-toggle")
@@ -1242,6 +1596,9 @@
 
         // Re-render D3 diagram with new theme
         initializeD3Diagram();
+
+        // Re-render Mermaid diagram with new theme
+        initializeMermaidDiagram();
 
         // Save preference
         localStorage.setItem("theme", currentTheme);

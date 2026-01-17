@@ -209,6 +209,17 @@ class YAMLParser:
     
     def generate_mermaid_diagram(self) -> str:
         """Generate Mermaid diagram code for the visualization."""
+        # Map category names to node IDs
+        category_to_node = {
+            "Technical": "Tech",
+            "Physical": "Phys",
+            "Financial": "Fin",
+            "Operations": "Ops",
+            "Environmental": "Env",
+            "Benefits": "Benefits",
+            "Configurations": "Configs"
+        }
+        
         mermaid = """graph TD
     Root["CTCC Input Parameters<br/>📊 {total_yamls} YAMLs<br/>🔢 {total_fields} Fields<br/>⚙️ {total_configs} Configs"]
     
@@ -235,11 +246,14 @@ class YAMLParser:
         # Add YAML files to each category
         for category, files in self.data["categories"].items():
             if files:
+                # Get the node ID for this category
+                node_id = category_to_node.get(category, category)
                 for filename in files:
                     yaml_data = self.data["yamls"][filename]
                     field_count = yaml_data["field_count"]
                     clean_name = filename.replace('.yaml', '').replace('_', ' ').title()
-                    mermaid += f'\n    {category} --> {filename.replace(".", "_").replace("-", "_")}["{clean_name}<br/>📄 {field_count} fields"]'
+                    file_node_id = filename.replace(".", "_").replace("-", "_").replace("(", "").replace(")", "").replace(" ", "_")
+                    mermaid += f'\n    {node_id} --> {file_node_id}["{clean_name}<br/>📄 {field_count} fields"]'
         
         return mermaid
     
