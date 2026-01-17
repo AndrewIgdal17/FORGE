@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_row_widths,
@@ -25,6 +25,8 @@ from yaml_loaders import (
     load_financing_details,
     load_cost_timing_patterns,
     load_afudc_config,
+    get_physical_data_raw,
+    get_financing_data_raw,
 )
 from financial_utils import (
     calculate_present_value,
@@ -154,25 +156,16 @@ def main() -> None:
 
     # Load terrain details
     try:
-        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
-            physical_details = yaml.safe_load(file)
-        if not physical_details:
-            raise ValueError("Physical details YAML file is empty or invalid")
+        physical_details = get_physical_data_raw()
         if "terrain" not in physical_details:
-            raise KeyError("Missing 'terrain' key in physical details YAML file")
+            raise KeyError("Missing 'terrain' key in physical details")
         if "terrain_miles" not in physical_details["terrain"]:
             raise KeyError(
-                "Missing 'terrain_miles' key in terrain section of physical details YAML"
+                "Missing 'terrain_miles' key in terrain section of physical details"
             )
         terrain_miles = physical_details["terrain"]["terrain_miles"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing physical details YAML: {e}")
     except KeyError as e:
-        raise KeyError(f"Missing required key in physical details YAML: {e}")
+        raise KeyError(f"Missing required key in physical details: {e}")
 
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
@@ -189,18 +182,8 @@ def main() -> None:
     timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
     apply_afudc, delay_active = load_afudc_config()
 
-    # Load full financing YAML for AFUDC rate calculation
-    try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_yaml = yaml.safe_load(file)
-        if not financing_yaml:
-            raise ValueError("Financing YAML file is empty or invalid")
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
+    # Load full financing data for AFUDC rate calculation
+    financing_yaml = get_financing_data_raw()
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====

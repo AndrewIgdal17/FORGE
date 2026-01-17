@@ -93,6 +93,11 @@ def load_project_technical_details():
     capacity_mw = pd["capacity_mw"]
     conductor_type = pd["conductor_type"]
     converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
+    converter_loss_percentage = (
+        None
+        if ac_dc == "AC"
+        else pd.get("converter_loss_percentage", None)
+    )
     return (
         construction_type,
         ac_dc,
@@ -104,6 +109,7 @@ def load_project_technical_details():
         tl["delay_years"],
         tl["construction_years"],
         tl["project_lifetime"],
+        converter_loss_percentage,
     )
 
 
@@ -170,7 +176,7 @@ def load_congestion_reductions():
     
     # Check if this is a reconductoring project
     project_data = _data_source.get_data("01_project_technical_details")
-    reconductoring = project_data.get("reconductoring", False)
+    reconductoring = project_data["project"].get("reconductoring", False)
     
     # #region agent log
     try:
@@ -198,6 +204,13 @@ def load_congestion_reductions():
         cr = data["greenfield_congestion_reductions"]
         flow_factor = cr["constraints"]["flow_factor"]
     
+    # Get average_congestion_price - handle missing costs key in reconductoring section
+    if "costs" in cr:
+        average_congestion_price = cr["costs"]["average_congestion_price"]
+    else:
+        # Fallback: try to get from greenfield section or use default
+        average_congestion_price = data.get("greenfield_congestion_reductions", {}).get("costs", {}).get("average_congestion_price", 30)
+    
     result = (
         flow_factor,
         cr["constraints"]["binding_hours"],
@@ -206,7 +219,7 @@ def load_congestion_reductions():
         cr["constraints"]["near_average_exceedance"],
         cr["constraints"]["near_binding_relief_factor"],
         cr["constraints"]["saturation_factor"],
-        cr["costs"]["average_congestion_price"],
+        average_congestion_price,
     )
     # #region agent log
     try:

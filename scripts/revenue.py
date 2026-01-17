@@ -21,28 +21,10 @@ from smart_output import CTCCOutputManager
 from smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
-    get_input_mode,
+    get_financing_data_raw,
 )
 from financial_utils import calculate_present_value
-from path_config import YAMLS_DIR, OUTPUTS_DIR
-
-
-def _get_financing_data() -> Dict[str, Any]:
-    """
-    Helper function to get raw financing data.
-    Works in both YAML and JSON modes.
-    
-    Returns:
-        Dictionary with financing data structure
-    """
-    input_mode = get_input_mode()
-    if input_mode == "json":
-        from json_loaders import _data_source
-        return _data_source.get_data("03_financing")
-    else:
-        # YAML mode
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            return yaml.safe_load(file)
+from path_config import OUTPUTS_DIR
 
 
 def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
@@ -54,7 +36,7 @@ def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
         tuple: (enabled, allowed_return_rate)
     """
     try:
-        financing_data = _get_financing_data()
+        financing_data = get_financing_data_raw()
         if not financing_data:
             raise ValueError("Financing data is empty or invalid")
         revenue_config = financing_data.get("financial", {}).get("revenue", {})
@@ -91,20 +73,59 @@ def load_project_technical_details() -> Tuple[float, int, int]:
 
 def get_capital_costs_pv() -> float:
     """
-    Get capital costs PV from batch_summary.csv for the current scenario.
+    Get capital costs PV from batch_summary.csv (CSV mode) or JSON output files (JSON mode).
 
     Capital costs = build_cost_pv + row_cost_pv + env_mitigation_pv
 
     Returns:
         float: Capital costs PV, or 0 if not found
     """
+    # Check output mode
+    output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
+    scenario_id = os.environ.get("CTCC_SCENARIO_ID")
+    
+    if output_mode == "json" and scenario_id:
+        # JSON mode: Read from individual JSON output files
+        try:
+            import json as json_lib
+            build_pv = 0
+            row_pv = 0
+            env_pv = 0
+            
+            # Read build costs
+            build_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_build_costs.json"
+            if build_json_path.exists():
+                with open(build_json_path, "r") as f:
+                    build_data = json_lib.load(f)
+                    build_pv = float(build_data.get("costs", {}).get("build", {}).get("total_pv", 0) or 0)
+            
+            # Read ROW costs
+            row_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_row_costs.json"
+            if row_json_path.exists():
+                with open(row_json_path, "r") as f:
+                    row_data = json_lib.load(f)
+                    row_pv = float(row_data.get("costs", {}).get("row", {}).get("total_pv", 0) or 0)
+            
+            # Read environmental mitigation costs
+            env_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_environmental_mitigation.json"
+            if env_json_path.exists():
+                with open(env_json_path, "r") as f:
+                    env_data = json_lib.load(f)
+                    env_pv = float(env_data.get("costs", {}).get("environmental", {}).get("total_pv", 0) or 0)
+            
+            total = build_pv + row_pv + env_pv
+            if total > 0:
+                return total
+        except Exception as e:
+            print(f"⚠️  Warning: Error reading capital costs from JSON files: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # CSV mode: Read from batch_summary.csv
     batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
 
     if not os.path.exists(batch_summary_path):
         return 0
-
-    # Get current scenario_id from environment variable
-    scenario_id = os.environ.get("CTCC_SCENARIO_ID")
 
     if not scenario_id:
         print("⚠️  Warning: CTCC_SCENARIO_ID not set. Cannot filter by scenario_id.")

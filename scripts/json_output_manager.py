@@ -46,7 +46,7 @@ class JSONOutputManager:
             # Use json_loaders to get data
             (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
              line_utilization, reconductoring, delay_years, construction_years,
-             project_lifetime) = json_loaders.load_project_technical_details()
+             project_lifetime, converter_loss_percentage) = json_loaders.load_project_technical_details()
 
             total_line_length = json_loaders.load_physical_details()
 
@@ -209,14 +209,14 @@ class JSONOutputManager:
             "total_operational_nominal": (
                 insurance.get("nominal_lifetime_cost", 0) +
                 oandm.get("total_nominal", 0) +
-                line_loss.get("lifetime_cost_nominal", 0) +
-                emissions.get("lifetime_cost_nominal", 0)
+                line_loss.get("total_nominal", 0) +  # Fixed: was lifetime_cost_nominal
+                emissions.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
             ),
             "total_operational_pv": (
                 insurance.get("pv_total", 0) +
                 oandm.get("total_pv", 0) +
-                line_loss.get("lifetime_cost_pv", 0) +
-                emissions.get("lifetime_cost_pv", 0)
+                line_loss.get("total_pv", 0) +  # Fixed: was lifetime_cost_pv
+                emissions.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
             ),
 
             # Risk costs
@@ -235,12 +235,21 @@ class JSONOutputManager:
             "grand_total_cost_pv": 0,  # Calculated below
         }
 
+        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
+        congestion_curtailment = self.benefits.get("congestion_curtailment", {})
+        congestion_delay_nominal = congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
+        curtailment_delay_nominal = congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
+        residual_congestion_nominal = congestion_curtailment.get("residual_congestion_nominal", 0) or 0
+        
         # Calculate grand totals
         self.summary["grand_total_cost_nominal"] = (
             self.summary["total_capital_nominal"] +
             self.summary["total_operational_nominal"] +
             self.summary["total_risk_nominal"] +
-            delay.get("total_nominal", 0)
+            delay.get("total_nominal", 0) +
+            congestion_delay_nominal +
+            curtailment_delay_nominal +
+            residual_congestion_nominal
         )
 
         self.summary["grand_total_cost_afudc"] = (
@@ -248,11 +257,20 @@ class JSONOutputManager:
             delay.get("total_afudc", 0)
         )
 
+        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
+        congestion_curtailment = self.benefits.get("congestion_curtailment", {})
+        congestion_delay_pv = congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
+        curtailment_delay_pv = congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
+        residual_congestion_pv = congestion_curtailment.get("residual_congestion_pv", 0) or 0
+        
         self.summary["grand_total_cost_pv"] = (
             self.summary["total_capital_pv"] +
             self.summary["total_operational_pv"] +
             self.summary["total_risk_pv"] +
-            delay.get("total_pv", 0)
+            delay.get("total_pv", 0) +
+            congestion_delay_pv +
+            curtailment_delay_pv +
+            residual_congestion_pv
         )
 
     def get_json_results(self) -> Dict[str, Any]:

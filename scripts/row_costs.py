@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_row_widths,
@@ -25,6 +25,7 @@ from yaml_loaders import (
     load_financing_details,
     load_cost_timing_patterns,
     load_afudc_config,
+    get_financing_data_raw,
 )
 from financial_utils import (
     calculate_present_value,
@@ -120,18 +121,8 @@ def main() -> None:
     timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
     apply_afudc, delay_active = load_afudc_config()
 
-    # Load full financing YAML for AFUDC rate calculation
-    try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_yaml = yaml.safe_load(file)
-        if not financing_yaml:
-            raise ValueError("Financing YAML file is empty or invalid")
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
+    # Load full financing data for AFUDC rate calculation
+    financing_yaml = get_financing_data_raw()
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # Define timing parameters

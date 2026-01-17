@@ -203,17 +203,25 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         # For JSON input mode, we need to merge user input with the full template
         temp_json_file = None
         if input_mode == "json" and combined_data:
-            # Load the full template from server/json/final_combined.json
-            template_file = Path(__file__).parent.parent / "json" / "final_combined.json"
-            if template_file.exists():
-                with open(template_file, 'r') as f:
-                    full_template = json.load(f)
-                
-                # Merge user data with template
-                merged_data = merge_user_data_with_template(combined_data, full_template)
-            else:
-                # Fallback to user data if template not found
+            # Check if combined_data is already in full CTCC format (has numbered keys like "01_project_technical_details")
+            # The web app sends the full structure, so we should use it directly
+            is_full_format = any(key.startswith(('0', '1')) and '_' in key for key in combined_data.keys())
+            
+            if is_full_format:
+                # Already in full CTCC format - use directly
                 merged_data = combined_data
+            else:
+                # Simplified format - merge with template
+                template_file = Path(__file__).parent.parent / "json" / "final_combined.json"
+                if template_file.exists():
+                    with open(template_file, 'r') as f:
+                        full_template = json.load(f)
+                    
+                    # Merge user data with template
+                    merged_data = merge_user_data_with_template(combined_data, full_template)
+                else:
+                    # Fallback to user data if template not found
+                    merged_data = combined_data
             
             temp_json_file = tempfile.NamedTemporaryFile(
                 mode='w',
@@ -240,9 +248,11 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             env["CTCC_OUTPUT_MODE"] = output_mode
             env["CTCC_SCENARIO_ID"] = scenario_id
 
-            # Add JSON file path if available
+            # Add JSON file path if available (use absolute path for subprocess scripts)
             if temp_json_file:
-                env["CTCC_JSON_DATA_FILE"] = temp_json_file.name
+                # Convert to absolute path so subprocess scripts can find it regardless of working directory
+                json_file_path = os.path.abspath(temp_json_file.name)
+                env["CTCC_JSON_DATA_FILE"] = json_file_path
 
             # Run ctcc.py as subprocess with environment variables
             result = subprocess.run(
@@ -258,7 +268,7 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             if output_mode == "json":
                 # Read the JSON output file
                 json_output_file = CTCC_ROOT / "outputs" / f"ctcc_results_{scenario_id}.json"
-
+                
                 if json_output_file.exists():
                     with open(json_output_file, 'r') as f:
                         results = json.load(f)

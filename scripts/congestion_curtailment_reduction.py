@@ -22,9 +22,8 @@ from smart_loaders import (
     load_project_technical_details as load_project_technical_details_centralized,
     load_curtailment_reductions,
     load_financing_details,
-    get_input_mode,
+    get_project_data_raw,
 )
-from path_config import YAMLS_DIR
 
 
 def _get_old_capacity_mw() -> int:
@@ -32,17 +31,8 @@ def _get_old_capacity_mw() -> int:
     Helper function to get old_capacity_mw from project technical details.
     This is needed because the centralized loader doesn't return this field.
     """
-    input_mode = get_input_mode()
-    if input_mode == "json":
-        from json_loaders import _data_source
-
-        project_data = _data_source.get_data("01_project_technical_details")
-        return project_data["project"].get("old_capacity_mw", 0)
-    else:
-        # YAML mode
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
-        return project_details["project"].get("old_capacity_mw", 0)
+    project_data = get_project_data_raw()
+    return project_data["project"].get("old_capacity_mw", 0)
 
 
 def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
@@ -312,66 +302,10 @@ def calculate_congestion_reduction_costs(
             - H_bnon: Binding hours that don't overlap with curtailment hours
             - ΔC_rem: Remaining capacity relief after curtailment allocation (MW)
     """
-    # #region agent log
-    import json, os
-
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_calc_entry",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "congestion_curtailment_reduction.py:569",
-                        "message": "calculate_congestion_reduction_costs entry",
-                        "data": {
-                            "reconductoring": reconductoring,
-                            "capacity_mw": capacity_mw,
-                            "old_capacity_mw": old_capacity_mw,
-                            "binding_hours": binding_hours,
-                            "average_exceedance": average_exceedance,
-                        },
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "D",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
     if reconductoring == False:
         effective_capacity_relief = max(0, flow_factor * capacity_mw)
     else:
         effective_capacity_relief = max(0, capacity_mw - old_capacity_mw)
-    # #region agent log
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_effective_capacity",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "congestion_curtailment_reduction.py:572",
-                        "message": "effective_capacity_relief calculated",
-                        "data": {
-                            "effective_capacity_relief": effective_capacity_relief
-                        },
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "D",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
 
     # Allocate capacity relief between curtailment and congestion
     alloc = allocate_curtailment_then_congestion(
@@ -403,39 +337,6 @@ def calculate_congestion_reduction_costs(
 
     # Total congestion energy
     energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
-    # #region agent log
-    import json, os
-
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_energy_calc",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "congestion_curtailment_reduction.py:603",
-                        "message": "energy congestion reduction calculated",
-                        "data": {
-                            "E_cong_bc": E_cong_bc,
-                            "E_cong_non": E_cong_non,
-                            "E_near": E_near,
-                            "energy_congestion_reduction": energy_congestion_reduction,
-                            "H_bc": H_bc,
-                            "H_bnon": H_bnon,
-                            "deltaC_rem": ΔC_rem,
-                        },
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "E",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
 
     # Monetize congestion ($/yr) — apply saturation haircut to $ only
     annual_congestion_reduction_cost_raw = (
@@ -803,10 +704,13 @@ def main() -> None:
         "remaining_capacity_mw": ΔC_rem,
     }
 
-    # Write to CSV
+    # Write to CSV/JSON
     csv_manager.add_congestion_curtailment(results)
     csv_manager.write_batch_summary()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        raise

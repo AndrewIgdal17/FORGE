@@ -49,7 +49,27 @@ class SmartOutputManager:
                 script_path = sys.argv[0] if sys.argv else 'unknown'
                 module_name = os.path.splitext(os.path.basename(script_path))[0]
 
-            return self._manager.save_to_file(module_name=module_name)
+            # #region agent log
+            log_data = {
+                "sessionId": "debug-session",
+                "runId": "pre-fix",
+                "hypothesisId": "F",
+                "location": "smart_output.py:52",
+                "message": "Saving JSON file",
+                "data": {
+                    "module_name": module_name,
+                    "scenario_id": os.environ.get("CTCC_SCENARIO_ID")
+                },
+                "timestamp": int(__import__("time").time() * 1000)
+            }
+            try:
+                with open(log_path, "a") as log_file:
+                    log_file.write(json_lib.dumps(log_data) + "\n")
+            except: pass
+            # #endregion
+
+            result = self._manager.save_to_file(module_name=module_name)
+            return result
         else:
             # CSV mode: Write to batch_summary.csv
             return self._manager.write_batch_summary()

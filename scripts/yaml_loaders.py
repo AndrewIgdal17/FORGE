@@ -313,29 +313,11 @@ def load_congestion_reductions() -> (
     Tuple[float, float, float, float, float, float, float, float]
 ):
     """Load congestion reduction parameters from YAML."""
-    # #region agent log
-    import json, os
-    try:
-        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_yaml_load_entry","timestamp":int(__import__('time').time()*1000),"location":"yaml_loaders.py:315","message":"load_congestion_reductions entry (YAML)","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
-    except Exception as e: pass
-    # #endregion
     try:
         # Check if this is a reconductoring project
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
             project_data = yaml.safe_load(project_file)
         reconductoring = project_data.get("project", {}).get("reconductoring", False) if project_data else False
-        
-        # #region agent log
-        try:
-            log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a') as f:
-                f.write(json.dumps({"id":"log_yaml_reconductoring_flag","timestamp":int(__import__('time').time()*1000),"location":"yaml_loaders.py:320","message":"reconductoring flag check (YAML)","data":{"reconductoring":reconductoring,"type":str(type(reconductoring)),"project_keys":list(project_data.keys()) if project_data else []},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
-        except Exception as e: pass
-        # #endregion
         
         with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
             data = yaml.safe_load(file)
@@ -344,14 +326,6 @@ def load_congestion_reductions() -> (
         
         # Load from appropriate section
         if reconductoring:
-            # #region agent log
-            try:
-                log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
-                os.makedirs(os.path.dirname(log_path), exist_ok=True)
-                with open(log_path, 'a') as f:
-                    f.write(json.dumps({"id":"log_yaml_reconductoring_branch","timestamp":int(__import__('time').time()*1000),"location":"yaml_loaders.py:328","message":"entering reconductoring branch (YAML)","data":{"data_keys":list(data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}) + '\n')
-            except Exception as e: pass
-            # #endregion
             if "reconductoring_congestion_reductions" not in data:
                 raise KeyError(
                     "Missing 'reconductoring_congestion_reductions' key in YAML file"
@@ -403,14 +377,6 @@ def load_congestion_reductions() -> (
             constraints["saturation_factor"],
             costs["average_congestion_price"],
         )
-        # #region agent log
-        try:
-            log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a') as f:
-                f.write(json.dumps({"id":"log_yaml_load_exit","timestamp":int(__import__('time').time()*1000),"location":"yaml_loaders.py:370","message":"load_congestion_reductions exit (YAML)","data":{"flow_factor":result[0],"binding_hours":result[1],"average_exceedance":result[2],"saturation_factor":result[6],"congestion_price":result[7]},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}) + '\n')
-        except Exception as e: pass
-        # #endregion
         return result
     except FileNotFoundError:
         raise FileNotFoundError(

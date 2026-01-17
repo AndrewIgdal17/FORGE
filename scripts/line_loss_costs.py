@@ -30,9 +30,8 @@ from financial_utils import calculate_present_value
 from smart_loaders import (
     load_financing_social_discount_rate,
     load_project_technical_details as load_project_technical_details_centralized,
-    get_input_mode,
+    get_project_data_raw,
 )
-from path_config import YAMLS_DIR
 
 
 def load_project_details() -> Tuple[
@@ -90,18 +89,6 @@ def load_project_details() -> Tuple[
         if not specified in the YAML file. These are used for comparing different greenfield
         configurations in line loss cost calculations.
     """
-    import yaml
-
-    def _get_project_data():
-        """Helper to get raw project data in both YAML and JSON modes."""
-        input_mode = get_input_mode()
-        if input_mode == "json":
-            from json_loaders import _data_source
-            return _data_source.get_data("01_project_technical_details")
-        else:
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                return yaml.safe_load(file)
-
     try:
         # Load from centralized loader
         # Returns: (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
@@ -122,7 +109,7 @@ def load_project_details() -> Tuple[
         ) = load_project_technical_details_centralized()
 
         # Get additional fields not in centralized loader
-        project_details = _get_project_data()
+        project_details = get_project_data_raw()
         if not project_details:
             raise ValueError("Project technical details file is empty or invalid")
         if "project" not in project_details:
@@ -649,18 +636,8 @@ def main() -> None:
         return
 
     # Load baseline configuration details using helper
-    def _get_project_data():
-        """Helper to get raw project data in both YAML and JSON modes."""
-        input_mode = get_input_mode()
-        if input_mode == "json":
-            from json_loaders import _data_source
-            return _data_source.get_data("01_project_technical_details")
-        else:
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                return yaml.safe_load(file)
-
     try:
-        project_details = _get_project_data()
+        project_details = get_project_data_raw()
         if not project_details:
             raise ValueError("Project technical details file is empty or invalid")
         if "project" not in project_details:

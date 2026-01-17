@@ -31,8 +31,10 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         bool: True if successful, False if error
     """
     try:
+        # Pass environment variables explicitly to ensure subprocess scripts can access them
+        env = os.environ.copy()
         result = subprocess.run(
-            [sys.executable, script_name], capture_output=True, text=True, cwd="scripts"
+            [sys.executable, script_name], capture_output=True, text=True, cwd="scripts", env=env
         )
         if result.returncode == 0:
             if not quiet:
@@ -399,9 +401,11 @@ def main() -> None:
     # Check output mode from environment variable
     output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
 
-    if successful_runs == total_runs:
-        if not args.simple:
-            print("🎉 All calculations completed successfully!")
+    # Calculate and display BCR metrics (even if some scripts failed)
+    if successful_runs > 0:
+        if successful_runs == total_runs:
+            if not args.simple:
+                print("🎉 All calculations completed successfully!")
 
         # Calculate and display BCR metrics
         if not args.simple:
@@ -412,45 +416,126 @@ def main() -> None:
             # In simple mode, just print the BCR analysis header
             print("=" * 80)
 
+        # Calculate BCR for CSV mode (before JSON aggregation)
         bcr_results = None
-        try:
-            bcr_results = calculate_and_display_bcr(
-                scenario_id,
-                output_dir="outputs",
-                no_emissions=args.no_emissions,
-                no_linelosses=args.no_linelosses,
-                capital_only=args.capital_only,
-                no_wildfire=args.no_wildfire,
-                no_outages=args.no_outages,
-                no_oandm=args.no_oandm,
-                no_insurance=args.no_insurance,
-                no_delay_costs=args.no_delay_costs,
-                no_congestion=args.no_congestion,
-                no_curtailment=args.no_curtailment,
-            )
-        except Exception as e:
-            import traceback
-
+        if output_mode == "csv":
+            # CSV mode: Calculate BCR from batch_summary.csv
             if not args.simple:
-                print(f"⚠️  BCR calculation failed: {e}")
-                print(f"   Scenario ID: {scenario_id}")
-                print("   Full error traceback:")
-                traceback.print_exc()
-                print(
-                    "   This does not affect the validity of the cost calculations above."
+                print()
+                print("CALCULATING BENEFIT-COST RATIOS...")
+                print("=" * 80)
+            try:
+                bcr_results = calculate_and_display_bcr(
+                    scenario_id,
+                    output_dir="outputs",
+                    no_emissions=args.no_emissions,
+                    no_linelosses=args.no_linelosses,
+                    capital_only=args.capital_only,
+                    no_wildfire=args.no_wildfire,
+                    no_outages=args.no_outages,
+                    no_oandm=args.no_oandm,
+                    no_insurance=args.no_insurance,
+                    no_delay_costs=args.no_delay_costs,
+                    no_congestion=args.no_congestion,
+                    no_curtailment=args.no_curtailment,
                 )
-            else:
-                # In simple mode, still show errors
-                print(f"⚠️  BCR calculation failed: {e}")
+            except Exception as e:
+                import traceback
+                if not args.simple:
+                    print(f"⚠️  BCR calculation failed: {e}")
+                    print(f"   Scenario ID: {scenario_id}")
+                    print("   Full error traceback:")
+                    traceback.print_exc()
+                    print("   This does not affect the validity of the cost calculations above.")
+                else:
+                    print(f"⚠️  BCR calculation failed: {e}")
+                bcr_results = None
 
         # Handle output based on mode
+        # For JSON mode, aggregate results even if some scripts failed (partial results)
         if output_mode == "json":
             # JSON output mode: aggregate results and write final JSON
             try:
                 aggregator = aggregate_json_outputs(scenario_id, output_dir="outputs")
+                
+                # Calculate BCR from JSON aggregator data (not CSV)
+                bcr_results = None
+                try:
+                    # Extract data from aggregator in format BCR calculator expects
+                    aggregator.calculate_summary()  # Ensure summary is calculated
+                    json_results = aggregator.get_json_results()
+                    
+                    # Convert JSON structure to flat dict for BCR calculator
+                    bcr_data = {}
+                    # Extract benefits
+                    congestion_curtailment = json_results.get("benefits", {}).get("congestion_curtailment", {})
+                    bcr_data["congestion_benefit_pv"] = congestion_curtailment.get("congestion_benefit_pv", 0) or 0
+                    bcr_data["curtailment_benefit_pv"] = congestion_curtailment.get("curtailment_benefit_pv", 0) or 0
+                    bcr_data["congestion_benefit_nominal"] = congestion_curtailment.get("congestion_benefit_nominal", 0) or 0
+                    bcr_data["curtailment_benefit_nominal"] = congestion_curtailment.get("curtailment_benefit_nominal", 0) or 0
+                    bcr_data["congestion_benefit_haircut_pv"] = congestion_curtailment.get("congestion_benefit_haircut_pv", 0) or 0
+                    bcr_data["curtailment_benefit_haircut_pv"] = congestion_curtailment.get("curtailment_benefit_haircut_pv", 0) or 0
+                    
+                    revenue = json_results.get("benefits", {}).get("revenue", {})
+                    bcr_data["revenue_pv"] = revenue.get("revenue_pv", 0) or 0
+                    bcr_data["revenue_nominal"] = revenue.get("revenue_nominal", 0) or 0
+                    
+                    # Extract costs from summary
+                    summary = json_results.get("summary", {})
+                    bcr_data["build_cost_pv"] = json_results.get("costs", {}).get("build", {}).get("total_pv", 0) or 0
+                    bcr_data["row_cost_pv"] = json_results.get("costs", {}).get("row", {}).get("total_pv", 0) or 0
+                    bcr_data["env_mitigation_pv"] = json_results.get("costs", {}).get("environmental", {}).get("total_pv", 0) or 0
+                    bcr_data["capital_costs_pv"] = summary.get("total_capital_pv", 0) or 0
+                    bcr_data["oandm_pv"] = json_results.get("costs", {}).get("oandm", {}).get("total_pv", 0) or 0
+                    bcr_data["insurance_pv"] = json_results.get("costs", {}).get("insurance", {}).get("pv_total", 0) or 0
+                    bcr_data["operational_costs_pv"] = summary.get("total_operational_pv", 0) or 0
+                    bcr_data["line_loss_cost_pv"] = json_results.get("costs", {}).get("line_loss", {}).get("total_pv", 0) or 0
+                    bcr_data["emissions_cost_pv"] = json_results.get("costs", {}).get("emissions", {}).get("total_pv", 0) or 0
+                    bcr_data["energy_emissions_costs_pv"] = summary.get("total_operational_pv", 0) or 0  # Approximate
+                    bcr_data["wildfire_pv"] = json_results.get("costs", {}).get("wildfire", {}).get("pv_cost", 0) or 0
+                    bcr_data["outage_pv"] = json_results.get("costs", {}).get("outage", {}).get("pv_cost", 0) or 0
+                    bcr_data["risk_costs_pv"] = summary.get("total_risk_pv", 0) or 0
+                    bcr_data["delay_cost_pv"] = json_results.get("costs", {}).get("delay", {}).get("total_pv", 0) or 0
+                    bcr_data["delay_cost_nominal"] = json_results.get("costs", {}).get("delay", {}).get("total_nominal", 0) or 0
+                    # Extract congestion/curtailment delay costs from congestion_curtailment benefits section
+                    congestion_curtailment = json_results.get("benefits", {}).get("congestion_curtailment", {})
+                    bcr_data["congestion_delay_cost_pv"] = congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
+                    bcr_data["congestion_delay_cost_nominal"] = congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
+                    bcr_data["curtailment_delay_cost_pv"] = congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
+                    bcr_data["curtailment_delay_cost_nominal"] = congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
+                    bcr_data["residual_congestion_pv"] = congestion_curtailment.get("residual_congestion_pv", 0) or 0
+                    bcr_data["residual_congestion_nominal"] = congestion_curtailment.get("residual_congestion_nominal", 0) or 0
+                    bcr_data["total_costs_pv"] = summary.get("grand_total_cost_pv", 0) or 0
+                    
+                    # Calculate BCR using the helper functions
+                    from bcr_calculator import calculate_benefits, calculate_costs, calculate_bcr_metrics
+                    benefits = calculate_benefits(bcr_data)
+                    costs = calculate_costs(bcr_data)
+                    bcr_metrics = calculate_bcr_metrics(
+                        benefits, costs,
+                        no_emissions=args.no_emissions,
+                        no_linelosses=args.no_linelosses,
+                        capital_only=args.capital_only,
+                        no_wildfire=args.no_wildfire,
+                        no_outages=args.no_outages,
+                        no_oandm=args.no_oandm,
+                        no_insurance=args.no_insurance,
+                        no_delay_costs=args.no_delay_costs,
+                        no_congestion=args.no_congestion,
+                        no_curtailment=args.no_curtailment,
+                    )
+                    bcr_results = {**benefits, **costs, **bcr_metrics}
+                except Exception as e:
+                    import traceback
+                    if not args.simple:
+                        print(f"⚠️  BCR calculation failed: {e}")
+                        traceback.print_exc()
+                    bcr_results = None
+                
                 output_file = write_final_json_output(
                     aggregator, bcr_results, scenario_id, output_dir="outputs"
                 )
+                
                 if not args.simple:
                     print(f"✅ JSON results written to {output_file}")
             except Exception as e:

@@ -25,9 +25,12 @@ from energy_losses import (
     calculate_line_losses,
     calculate_converter_losses,
 )
-from yaml_loaders import load_emissions_details, load_financing_social_discount_rate
+from smart_loaders import (
+    load_emissions_details,
+    load_financing_social_discount_rate,
+    get_project_data_raw,
+)
 from financial_utils import calculate_present_value
-from path_config import YAMLS_DIR
 
 
 def calculate_total_energy_losses() -> Tuple[float, int]:
@@ -59,35 +62,22 @@ def calculate_total_energy_losses() -> Tuple[float, int]:
 
     # Get number of converters if DC
     if ac_dc == "DC":
-        import yaml
-
         try:
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                project_details_data = yaml.safe_load(file)
-            if not project_details_data:
-                raise ValueError(
-                    "Project technical details YAML file is empty or invalid"
-                )
+            project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
                 raise KeyError(
-                    "Missing 'project' key in project technical details YAML file"
+                    "Missing 'project' key in project technical details"
                 )
             if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                    "Missing 'number_of_converters' key in project section of technical details"
                 )
             number_of_converters = project_details_data["project"][
                 "number_of_converters"
             ]
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-            )
-        except yaml.YAMLError as e:
-            raise ValueError(f"Error parsing project technical details YAML: {e}")
         except KeyError as e:
             raise KeyError(
-                f"Missing required key in project technical details YAML: {e}"
+                f"Missing required key in project technical details: {e}"
             )
     else:
         number_of_converters = 0
@@ -522,35 +512,22 @@ def main() -> None:
 
     # Get number_of_converters if DC
     if ac_dc == "DC":
-        import yaml
-
         try:
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                project_details_data = yaml.safe_load(file)
-            if not project_details_data:
-                raise ValueError(
-                    "Project technical details YAML file is empty or invalid"
-                )
+            project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
                 raise KeyError(
-                    "Missing 'project' key in project technical details YAML file"
+                    "Missing 'project' key in project technical details"
                 )
             if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                    "Missing 'number_of_converters' key in project section of technical details"
                 )
             number_of_converters = project_details_data["project"][
                 "number_of_converters"
             ]
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-            )
-        except yaml.YAMLError as e:
-            raise ValueError(f"Error parsing project technical details YAML: {e}")
         except KeyError as e:
             raise KeyError(
-                f"Missing required key in project technical details YAML: {e}"
+                f"Missing required key in project technical details: {e}"
             )
     else:
         number_of_converters = 0

@@ -14,7 +14,7 @@ from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_financing_social_discount_rate,
-    get_input_mode,
+    get_project_data_raw,
 )
 
 
@@ -58,23 +58,6 @@ class CTCCOutputManager:
         """Create output directory if it doesn't exist."""
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def _get_project_data(self) -> Dict[str, Any]:
-        """
-        Helper function to get raw project technical details data.
-        Works in both YAML and JSON modes.
-        
-        Returns:
-            Dictionary with 'project' and 'timeline' keys
-        """
-        input_mode = get_input_mode()
-        if input_mode == "json":
-            from json_loaders import _data_source
-            return _data_source.get_data("01_project_technical_details")
-        else:
-            # YAML mode
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                return yaml.safe_load(file)
-
     def load_technical_details(self) -> Dict[str, Any]:
         """
         Load technical parameters using centralized loaders to include in CSV outputs.
@@ -110,7 +93,7 @@ class CTCCOutputManager:
             social_discount_rate = load_financing_social_discount_rate()
 
             # Get additional fields not in centralized loader return
-            project_data = self._get_project_data()
+            project_data = get_project_data_raw()
             project = project_data.get("project", {})
 
             technical_details = {

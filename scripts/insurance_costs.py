@@ -17,12 +17,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from yaml_loaders import (
+from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
     load_contingencies,
     load_financing_details,
     load_insurance_details,
+    get_project_data_raw,
 )
 from financial_utils import calculate_present_value
 from build_costs import load_costs
@@ -157,32 +158,21 @@ def main() -> None:
     # Determine number of converters
     if ac_dc == "DC":
         try:
-            with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-                project_details_data = yaml.safe_load(file)
-            if not project_details_data:
-                raise ValueError(
-                    "Project technical details YAML file is empty or invalid"
-                )
+            project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
                 raise KeyError(
-                    "Missing 'project' key in project technical details YAML file"
+                    "Missing 'project' key in project technical details"
                 )
             if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details YAML"
+                    "Missing 'number_of_converters' key in project section of technical details"
                 )
             number_of_converters = project_details_data["project"][
                 "number_of_converters"
             ]
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-            )
-        except yaml.YAMLError as e:
-            raise ValueError(f"Error parsing project technical details YAML: {e}")
         except KeyError as e:
             raise KeyError(
-                f"Missing required key in project technical details YAML: {e}"
+                f"Missing required key in project technical details: {e}"
             )
     else:
         number_of_converters = 0
