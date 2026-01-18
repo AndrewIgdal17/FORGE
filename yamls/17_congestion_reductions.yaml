@@ -4,16 +4,16 @@
 greenfield_congestion_reductions:
   constraints:
     # We need the capacity from project technical details
-    flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]
+    flow_factor: 0.0 # flow factor is deliverability to the targeted constrained [0,1]
     # delta C_eff = S * capacity
-    binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)
-    average_exceedance: 560 # MW exceedance during binding hours (>= 0)
+    binding_hours: 0 # binding hours is the number of hours per year that the line is binding (>= 0)
+    average_exceedance: 0 # MW exceedance during binding hours (>= 0)
     # baseline congestion energy = H_b * X mwh/yr
     near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
     near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
     # near baseline congestion energy = H_n * X mwh/yr
     near_binding_relief_factor: 0.25 # [0,1]
-    saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
+    saturation_factor: 0 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
 
   costs:
     average_congestion_price: 30 # $/mwh (>= 0)
@@ -23,14 +23,14 @@ greenfield_congestion_reductions:
 reconductoring_congestion_reductions:
   constraints:
     # delta C_eff = delta C_eff_new - delta C_eff_old
-    binding_hours: 0 # binding hours is the number of hours per year that the line is binding (>= 0)
-    average_exceedance: 0 # MW exceedance during binding hours (>= 0)
+    binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)
+    average_exceedance: 328 # MW exceedance during binding hours (>= 0)
     # baseline congestion energy = H_b * X mwh/yr
     near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
     near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
     # near baseline congestion energy = H_n * X mwh/yr
     near_binding_relief_factor: 0.25 # [0,1]
-    saturation_factor: 0 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
+    saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
 
     hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT
   # energy loss info is in project_category_circuit_detail.yaml

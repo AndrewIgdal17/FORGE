@@ -2,12 +2,12 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S1_Rural_Overhead_AC_657MW"
+  name: "S4_Reconductoring_329to657MW"
   construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 0 # 1 or 2
   capacity_mw: 657 # MW
-  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
+  conductor_type: "Advanced Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   converter_type: "NA" # LCC Converter or VSC Converter
   converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)
 
@@ -15,16 +15,16 @@ project:
 
   baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)
 
-  reconductoring: False # True or False
-  old_capacity_mw: 0 # MW
+  reconductoring: True # True or False
+  old_capacity_mw: 329 # MW
   old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   old_ac_dc: "AC" # AC or DC
 
   # Greenfield capacity comparison (only used when reconductoring: False)
-  greenfield_comparison_capacity_mw: 657 # Optional: Capacity in MW for comparison configuration
+  greenfield_comparison_capacity_mw: 0 # Optional: Capacity in MW for comparison configuration
   greenfield_comparison_conductor_type: "Standard Aluminum Conductor" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
 
 timeline:
   construction_years: 1 # years (> 0)
-  delay_years: 4 # years (>= 0)
+  delay_years: 0.5 # years (>= 0)
   project_lifetime: 50 # years (> 0)
