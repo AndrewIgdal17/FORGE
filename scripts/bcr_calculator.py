@@ -879,22 +879,8 @@ def print_bcr_summary(
     # Net Benefits section
     print("NET BENEFITS:")
 
-    # Always show base net benefit
+    # Show PV net benefit (primary metric for analysis)
     net_benefit_pv = bcr_metrics["net_benefit_pv"]
-    net_benefit_nominal = bcr_metrics["net_benefit_nominal"]
-
-    # Show Nominal first (simpler to understand)
-    net_symbol_nominal = "✅" if net_benefit_nominal >= 0 else "❌"
-    net_text_nominal = (
-        "positive: benefits exceed costs"
-        if net_benefit_nominal >= 0
-        else "negative: costs exceed benefits"
-    )
-    print(
-        f"  Net Benefit (Nominal):       ${net_benefit_nominal:>15,.0f}  {net_symbol_nominal} ({net_text_nominal})"
-    )
-
-    # Then show PV
     net_symbol_pv = "✅" if net_benefit_pv >= 0 else "❌"
     net_text_pv = (
         "positive: benefits exceed costs"

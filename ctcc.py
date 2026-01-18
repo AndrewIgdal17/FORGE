@@ -554,6 +554,8 @@ def main() -> None:
                     output_dir="outputs", scenario_id=scenario_id
                 )
                 csv_manager.add_bcr_metrics(bcr_results)
+                # Calculate grand totals (capital AFUDC, grand total AFUDC, etc.)
+                csv_manager.calculate_grand_totals()
                 csv_manager.write_batch_summary()
 
                 if not args.simple:

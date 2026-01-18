@@ -307,6 +307,7 @@ def main() -> None:
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
         "credits_nominal": results["total_credits"],
+        "credits_pv": total_credits_pv,
     }
 
     # Write to CSV

@@ -157,24 +157,87 @@ class CTCCOutputManager:
         self.batch_summary_data.update(data_dict)
 
     def write_batch_summary(self) -> None:
-        """Write or update the batch summary to CSV."""
+        """
+        Write or update the batch summary to CSV.
+        High-level summary with PV values grouped by cost category.
+        """
         batch_path = os.path.join(self.output_dir, "batch_summary.csv")
         file_exists = os.path.exists(batch_path)
 
-        # Get all keys in a consistent order
-        fieldnames = list(self.batch_summary_data.keys())
+        # Define organized column order: identification, key params, costs (PV), benefits (PV), AFUDC total, BCR, net benefits
+        organized_fieldnames = [
+            # 1. Identification
+            "project_name",
+            "scenario_id",
+            "timestamp",
+            # 2. Key Parameters
+            "capacity_mw",
+            "line_length_miles",
+            "construction_type",
+            "ac_dc",
+            "social_discount_rate",
+            # 3. Capital Costs PV (with breakdown)
+            "build_cost_pv",
+            "row_cost_pv",
+            "env_mitigation_pv",
+            "capital_costs_pv",
+            # 4. Operational Costs PV (with breakdown)
+            "insurance_pv",
+            "oandm_pv",
+            "operational_costs_pv",
+            # 5. Risk Costs PV (with breakdown)
+            "wildfire_pv",
+            "outage_pv",
+            "risk_costs_pv",
+            # 6. Delay Costs PV
+            "delay_cost_pv",
+            "congestion_delay_cost_pv",
+            "curtailment_delay_cost_pv",
+            "residual_congestion_pv",
+            "delay_costs_pv",
+            # 7. Energy/Emissions Costs PV (with breakdown)
+            "emissions_cost_pv",
+            "line_loss_cost_pv",
+            "energy_emissions_costs_pv",
+            # 8. Total Costs PV
+            "total_costs_pv",
+            # 9. Benefits PV (with breakdown)
+            "congestion_benefit_pv",
+            "curtailment_benefit_pv",
+            "revenue_pv",
+            "congestion_benefit_haircut_pv",
+            "curtailment_benefit_haircut_pv",
+            "total_benefits_pv",
+            "total_benefits_haircut_pv",
+            # 10. AFUDC Total (regulatory perspective)
+            "grand_total_cost_afudc",
+            # 11. BCR Metrics
+            "bcr_system",
+            "bcr_capital",
+            "bcr_capital_and_delay",
+            "bcr_primary",
+            "bcr_excluding_risk",
+            "bcr_excluding_emissions",
+            "bcr_excluding_emissions_and_risk",
+            # 12. Net Benefits PV
+            "net_benefit_pv",
+            "net_benefit_primary_pv",
+            "net_benefit_excluding_risk_pv",
+            "net_benefit_excluding_emissions_pv",
+            "net_benefit_excluding_emissions_and_risk_pv",
+        ]
+
+        # Build summary row with only organized fields (use 0 for missing values)
+        summary_row = {}
+        for field in organized_fieldnames:
+            value = self.batch_summary_data.get(field)
+            summary_row[field] = value if value is not None else 0
 
         # If file exists, read all existing data and merge
         if file_exists:
             with open(batch_path, "r", newline="") as f:
                 reader = csv.DictReader(f)
-                existing_fields = reader.fieldnames
-                # Merge: existing fields first, then any new ones
-                fieldnames = list(existing_fields) + [
-                    f for f in fieldnames if f not in existing_fields
-                ]
-
-                # Read all existing rows
+                existing_fields = list(reader.fieldnames)
                 existing_rows = list(reader)
 
             # Check if this scenario_id already exists
@@ -186,11 +249,30 @@ class CTCCOutputManager:
 
             # Update existing row or append new one
             if scenario_row_idx is not None:
-                # Merge new data into existing row
-                existing_rows[scenario_row_idx].update(self.batch_summary_data)
+                # Merge new data into existing row - preserve existing values, only update with new non-zero values
+                # This preserves data from previous script runs that may not be in current batch_summary_data
+                existing_row = existing_rows[scenario_row_idx]
+                for field, value in summary_row.items():
+                    # Only update if:
+                    # 1. The new value is non-zero (we have real data to add), OR
+                    # 2. The field doesn't exist in existing row yet (new field), OR
+                    # 3. The existing value is zero/empty (nothing to preserve)
+                    existing_value = existing_row.get(field, 0)
+                    try:
+                        existing_value_float = float(existing_value) if existing_value else 0
+                    except (ValueError, TypeError):
+                        existing_value_float = 0
+                    
+                    if value != 0 or field not in existing_row or existing_value_float == 0:
+                        existing_row[field] = value
             else:
                 # Add as new row
-                existing_rows.append(self.batch_summary_data)
+                existing_rows.append(summary_row)
+
+            # Merge fieldnames: existing first, then any new organized fields
+            fieldnames = list(existing_fields) + [
+                f for f in organized_fieldnames if f not in existing_fields
+            ]
 
             # Write all rows back
             with open(batch_path, "w", newline="") as f:
@@ -198,13 +280,187 @@ class CTCCOutputManager:
                 writer.writeheader()
                 writer.writerows(existing_rows)
         else:
-            # First time writing - create new file
+            # First time writing - create new file with organized structure
             with open(batch_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer = csv.DictWriter(f, fieldnames=organized_fieldnames)
                 writer.writeheader()
-                writer.writerow(self.batch_summary_data)
+                writer.writerow(summary_row)
+
+        # Also write project_details.csv (idempotent - updates if exists)
+        self.write_project_details()
+        
+        # Also write AFUDC.csv (idempotent - updates if exists)
+        self.write_afudc_csv()
 
         print(f"\n✅ Batch summary updated: {batch_path}")
+
+    def write_project_details(self) -> None:
+        """
+        Write project_details.csv with all project metadata.
+        This file contains all technical parameters that are shared across modules.
+        """
+        csv_path = os.path.join(self.output_dir, "project_details.csv")
+
+        # Extract all project metadata (excluding calculated values)
+        project_detail_keys = [
+            "project_name",
+            "construction_type",
+            "ac_dc",
+            "capacity_mw",
+            "conductor_type",
+            "line_length_miles",
+            "line_utilization",
+            "converter_type",
+            "number_of_converters",
+            "reconductoring",
+            "old_capacity_mw",
+            "old_conductor_type",
+            "old_ac_dc",
+            "baseline_electricity_price_per_mwh",
+            "social_discount_rate",
+            "construction_years",
+            "delay_years",
+            "project_lifetime_years",
+            "scenario_id",
+            "timestamp",
+        ]
+
+        # Build project details dict
+        project_details = {
+            k: self.batch_summary_data.get(k, "") for k in project_detail_keys
+        }
+
+        # Check if file exists
+        file_exists = os.path.exists(csv_path)
+
+        if file_exists:
+            # Read existing data
+            with open(csv_path, "r", newline="") as f:
+                reader = csv.DictReader(f)
+                existing_fields = list(reader.fieldnames)
+                existing_rows = list(reader)
+
+            # Check if this scenario_id already exists
+            scenario_row_idx = None
+            for idx, row in enumerate(existing_rows):
+                if row.get("scenario_id") == self.scenario_id:
+                    scenario_row_idx = idx
+                    break
+
+            # Update existing row or append new one
+            if scenario_row_idx is not None:
+                existing_rows[scenario_row_idx].update(project_details)
+            else:
+                existing_rows.append(project_details)
+
+            # Merge fieldnames
+            fieldnames = list(existing_fields) + [
+                f for f in project_detail_keys if f not in existing_fields
+            ]
+
+            # Write all rows back
+            with open(csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(existing_rows)
+        else:
+            # First time writing - create new file
+            with open(csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=project_detail_keys)
+                writer.writeheader()
+                writer.writerow(project_details)
+
+        print(f"  Project details written: {csv_path}")
+
+    def write_afudc_csv(self) -> None:
+        """
+        Write AFUDC.csv with all AFUDC (regulatory) values.
+        This file contains all AFUDC-related cost calculations.
+        """
+        csv_path = os.path.join(self.output_dir, "AFUDC.csv")
+
+        # Extract all AFUDC-related columns from batch_summary_data
+        # Ordered: individual components first, then totals
+        afudc_keys = [
+            "build_cost_afudc",
+            "row_cost_afudc",
+            "env_mitigation_afudc",
+            "delay_cost_afudc",
+            "total_capital_afudc",
+            "grand_total_cost_afudc",
+        ]
+
+        # Build AFUDC data dict - include project identification
+        afudc_data = {
+            "project_name": self.batch_summary_data.get("project_name", ""),
+            "scenario_id": self.scenario_id,
+            "timestamp": self.timestamp,
+        }
+        
+        # Add all AFUDC values that exist (use 0 if not present, to ensure consistent columns)
+        for key in afudc_keys:
+            value = self.batch_summary_data.get(key, 0)
+            afudc_data[key] = value
+
+        # Define fieldnames in order: identification, then AFUDC values
+        all_fields = ["project_name", "scenario_id", "timestamp"] + afudc_keys
+
+        # Check if file exists
+        file_exists = os.path.exists(csv_path)
+
+        if file_exists:
+            # Read existing data
+            with open(csv_path, "r", newline="") as f:
+                reader = csv.DictReader(f)
+                existing_fields = list(reader.fieldnames)
+                existing_rows = list(reader)
+
+            # Check if this scenario_id already exists
+            scenario_row_idx = None
+            for idx, row in enumerate(existing_rows):
+                if row.get("scenario_id") == self.scenario_id:
+                    scenario_row_idx = idx
+                    break
+
+            # Update existing row or append new one
+            if scenario_row_idx is not None:
+                # Merge new data into existing row - preserve existing values, only update with new non-zero values
+                # This preserves data from previous script runs that may not be in current batch_summary_data
+                existing_row = existing_rows[scenario_row_idx]
+                for field, value in afudc_data.items():
+                    # Only update if:
+                    # 1. The new value is non-zero (we have real data to add), OR
+                    # 2. The field doesn't exist in existing row yet (new field), OR
+                    # 3. The existing value is zero/empty (nothing to preserve)
+                    existing_value = existing_row.get(field, 0)
+                    try:
+                        existing_value_float = float(existing_value) if existing_value else 0
+                    except (ValueError, TypeError):
+                        existing_value_float = 0
+                    
+                    if value != 0 or field not in existing_row or existing_value_float == 0:
+                        existing_row[field] = value
+            else:
+                existing_rows.append(afudc_data)
+
+            # Merge fieldnames: existing first, then any new ones
+            fieldnames = list(existing_fields) + [
+                f for f in all_fields if f not in existing_fields
+            ]
+
+            # Write all rows back
+            with open(csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(existing_rows)
+        else:
+            # First time writing - create new file
+            with open(csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=all_fields)
+                writer.writeheader()
+                writer.writerow(afudc_data)
+
+        print(f"  AFUDC values written: {csv_path}")
 
     def write_module_csv(
         self,
@@ -215,7 +471,7 @@ class CTCCOutputManager:
     ) -> None:
         """
         Write module-specific CSV with optional detail and summary rows.
-        Technical parameters are automatically added to each row.
+        Only includes project_name, scenario_id, and timestamp (not full project metadata).
 
         Args:
             module_name: Name of the module (e.g., 'wildfire_costs', 'build_costs')
@@ -235,44 +491,22 @@ class CTCCOutputManager:
         if not all_rows:
             return
 
-        # Extract technical parameters to prepend to each row
-        tech_param_keys = [
-            "project_name",
-            "construction_type",
-            "ac_dc",
-            "capacity_mw",
-            "conductor_type",
-            "line_length_miles",
-            "line_utilization",
-            "converter_type",
-            "number_of_converters",
-            "reconductoring",
-            "old_capacity_mw",
-            "old_conductor_type",
-            "old_ac_dc",
-            "baseline_electricity_price_per_mwh",
-            "social_discount_rate",
-            "construction_years",
-            "delay_years",
-            "project_lifetime_years",
-        ]
+        # Only include minimal project identification (not full metadata)
+        minimal_params = {
+            "project_name": self.batch_summary_data.get("project_name", ""),
+            "scenario_id": self.scenario_id,
+            "timestamp": self.timestamp,
+        }
 
-        # Build technical params dict from batch_summary_data
-        tech_params = {k: self.batch_summary_data.get(k, "") for k in tech_param_keys}
-
-        # Add scenario_id and timestamp
-        tech_params["scenario_id"] = self.scenario_id
-        tech_params["timestamp"] = self.timestamp
-
-        # Prepend technical parameters to each row
+        # Prepend minimal params to each row
         enriched_rows = []
         for row in all_rows:
-            enriched_row = {**tech_params, **row}  # Tech params first, then row data
+            enriched_row = {**minimal_params, **row}  # Minimal params first, then row data
             enriched_rows.append(enriched_row)
 
-        # Determine fieldnames: tech params first, then the rest
-        first_row_other_keys = [k for k in all_rows[0].keys() if k not in tech_params]
-        fieldnames = list(tech_params.keys()) + first_row_other_keys
+        # Determine fieldnames: minimal params first, then the rest
+        first_row_other_keys = [k for k in all_rows[0].keys() if k not in minimal_params]
+        fieldnames = list(minimal_params.keys()) + first_row_other_keys
 
         # Check if file exists and we're appending
         file_exists = os.path.exists(csv_path) and append
@@ -351,19 +585,14 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV (summary only)
+        # Write module CSV - columns ordered: row_type, PV values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
-            "total_nominal": results.get("total_nominal", 0),
-            "total_afudc": results.get("total_afudc", 0),
             "total_pv": results.get("total_pv", 0),
+            "total_nominal": results.get("total_nominal", 0),
             "conductor_nominal": results.get("conductor_nominal", 0),
             "structure_nominal": results.get("structure_nominal", 0),
             "converter_nominal": results.get("converter_nominal", 0),
-            "conductor_afudc": results.get("conductor_afudc", 0),
-            "structure_afudc": results.get("structure_afudc", 0),
-            "converter_afudc": results.get("converter_afudc", 0),
         }
         self.write_module_csv("build_costs", summary_row=summary_row)
 
@@ -380,13 +609,11 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
-            "total_nominal": results.get("total_nominal", 0),
-            "total_afudc": results.get("total_afudc", 0),
             "total_pv": results.get("total_pv", 0),
+            "total_nominal": results.get("total_nominal", 0),
             "acquisition_nominal": results.get("acquisition_nominal", 0),
             "holding_nominal": results.get("holding_nominal", 0),
             "rent_nominal": results.get("rent_nominal", 0),
@@ -402,16 +629,16 @@ class CTCCOutputManager:
                 "env_mitigation_pv": results.get("total_pv", 0),
                 "env_base_cost": results.get("base_cost_nominal", 0),
                 "env_credits_cost": results.get("credits_nominal", 0),
+                "env_credits_pv": results.get("credits_pv", 0),
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
-            "total_nominal": results.get("total_nominal", 0),
-            "total_afudc": results.get("total_afudc", 0),
             "total_pv": results.get("total_pv", 0),
+            "credits_pv": results.get("credits_pv", 0),
+            "total_nominal": results.get("total_nominal", 0),
             "base_cost_nominal": results.get("base_cost_nominal", 0),
             "credits_nominal": results.get("credits_nominal", 0),
         }
@@ -427,13 +654,11 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, nominal values
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
-            "total_nominal": results.get("total_nominal", 0),
-            "total_afudc": results.get("total_afudc", 0),
             "total_pv": results.get("total_pv", 0),
+            "total_nominal": results.get("total_nominal", 0),
         }
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
@@ -449,14 +674,13 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "rate_based",
-            "annual_revenue": results.get("annual_revenue", 0),
-            "nominal_total": results.get("revenue_nominal", 0),
             "pv_total": results.get("revenue_pv", 0),
             "rate_base_pv": results.get("rate_base_pv", 0),
+            "annual_revenue": results.get("annual_revenue", 0),
+            "nominal_total": results.get("revenue_nominal", 0),
             "allowed_return_rate": results.get("allowed_return_rate", 0),
         }
         self.write_module_csv("revenue", summary_row=summary_row)
@@ -471,13 +695,12 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "operational",
+            "pv_total": results.get("pv_total", 0),
             "annual_premium": results.get("annual_premium", 0),
             "nominal_total": results.get("nominal_lifetime_cost", 0),
-            "pv_total": results.get("pv_total", 0),
             "insurable_value": results.get("insurable_value", 0),
             "premium_rate": results.get("premium_rate", 0),
         }
@@ -493,13 +716,12 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "wildfire_liability",
+            "pv_total": results.get("pv_total", 0),
             "annual_premium": results.get("annual_premium", 0),
             "nominal_total": results.get("nominal_lifetime_cost", 0),
-            "pv_total": results.get("pv_total", 0),
             "liability_limit": results.get("liability_limit", 0),
             "rate_on_line": results.get("rate_on_line", 0),
         }
@@ -516,38 +738,33 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows
+        # Write detail rows - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         detail_rows = []
         for terrain, data in results.get("lambda_by_terrain", {}).items():
             detail_rows.append(
                 {
-                    "scenario_id": self.scenario_id,
                     "row_type": "detail",
                     "terrain": terrain,
+                    "annual_cost": data["events_per_year"] * results.get("severity", 0),
                     "miles": data["miles"],
                     "base_ignition_rate": data["base_rate"],
                     "construction_multiplier": data["construction_multiplier"],
                     "effective_rate": data["rate_per_mile"],
                     "events_per_year": data["events_per_year"],
                     "severity_per_event": results.get("severity", 0),
-                    "annual_cost": data["events_per_year"] * results.get("severity", 0),
                     "growth_rate": results.get("growth_rate", 0),
                     "discount_rate": results.get("discount_rate", 0),
                 }
             )
 
-        # Summary row
+        # Summary row - columns ordered: row_type, PV values, annual values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
             "terrain": "all",
+            "annual_cost": results.get("EAL", 0),
             "miles": sum(d["miles"] for d in detail_rows),
-            "base_ignition_rate": None,
-            "construction_multiplier": None,
-            "effective_rate": None,
             "events_per_year": results.get("lambda_total", 0),
             "severity_per_event": results.get("severity", 0),
-            "annual_cost": results.get("EAL", 0),
             "growth_rate": results.get("growth_rate", 0),
             "discount_rate": results.get("discount_rate", 0),
         }
@@ -567,14 +784,14 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows
+        # Write detail rows - columns ordered: row_type, annual values, module-specific
         detail_rows = []
         for terrain, data in results.get("outage_by_terrain", {}).items():
             detail_rows.append(
                 {
-                    "scenario_id": self.scenario_id,
                     "row_type": "detail",
                     "terrain": terrain,
+                    "annual_cost": data["annual_cost"],
                     "miles": data["miles"],
                     "outage_rate": data["outage_rate"],
                     "outages_per_year": data["outages_per_year"],
@@ -583,25 +800,17 @@ class CTCCOutputManager:
                     "duration_effective": data["duration_effective"],
                     "unserved_mwh_per_event": data["unserved_mwh_per_event"],
                     "cost_per_event": data["cost_per_event"],
-                    "annual_cost": data["annual_cost"],
                     "capacity_at_risk": results.get("capacity_at_risk", 1.0),
                 }
             )
 
-        # Summary row
+        # Summary row - columns ordered: row_type, annual values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
             "terrain": "all",
-            "miles": sum(d["miles"] for d in detail_rows),
-            "outage_rate": None,
-            "outages_per_year": results.get("lambda_total", 0),
-            "duration_base": None,
-            "duration_multiplier": None,
-            "duration_effective": None,
-            "unserved_mwh_per_event": None,
-            "cost_per_event": None,
             "annual_cost": results.get("EAC", 0),
+            "miles": sum(d["miles"] for d in detail_rows),
+            "outages_per_year": results.get("lambda_total", 0),
             "capacity_at_risk": results.get("capacity_at_risk", 1.0),
         }
 
@@ -619,28 +828,26 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows by component
+        # Write detail rows by component - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         detail_rows = []
         for component in ["conductor", "converter", "structure", "vegetation"]:
             detail_rows.append(
                 {
-                    "scenario_id": self.scenario_id,
                     "row_type": "detail",
                     "component": component,
+                    "pv_total": results.get(f"{component}_pv", 0),
                     "annual_cost": results.get(f"{component}_annual", 0),
                     "nominal_total": results.get(f"{component}_nominal", 0),
-                    "pv_total": results.get(f"{component}_pv", 0),
                 }
             )
 
-        # Summary row
+        # Summary row - columns ordered: row_type, PV values, annual values, nominal values
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
             "component": "all",
+            "pv_total": results.get("total_pv", 0),
             "annual_cost": results.get("total_annual", 0),
             "nominal_total": results.get("total_nominal", 0),
-            "pv_total": results.get("total_pv", 0),
         }
 
         self.write_module_csv(
@@ -657,28 +864,25 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows by pollutant
+        # Write detail rows by pollutant - columns ordered: row_type, PV values, nominal values, module-specific
         detail_rows = []
         for pollutant in ["co2", "sox", "nox"]:
             detail_rows.append(
                 {
-                    "scenario_id": self.scenario_id,
                     "row_type": "detail",
                     "pollutant": pollutant,
-                    "emissions_kg": results.get(f"{pollutant}_emissions_kg", 0),
-                    "cost_nominal": results.get(f"{pollutant}_cost_nominal", 0),
                     "cost_pv": results.get(f"{pollutant}_cost_pv", 0),
+                    "cost_nominal": results.get(f"{pollutant}_cost_nominal", 0),
+                    "emissions_kg": results.get(f"{pollutant}_emissions_kg", 0),
                 }
             )
 
-        # Summary row
+        # Summary row - columns ordered: row_type, PV values, nominal values
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
             "pollutant": "all",
-            "emissions_kg": None,
-            "cost_nominal": results.get("total_nominal", 0),
             "cost_pv": results.get("total_pv", 0),
+            "cost_nominal": results.get("total_nominal", 0),
         }
 
         self.write_module_csv(
@@ -695,13 +899,12 @@ class CTCCOutputManager:
             }
         )
 
-        # Write module CSV
+        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
+            "pv_total": results.get("total_pv", 0),
             "annual_cost": results.get("annual_cost", 0),
             "nominal_total": results.get("total_nominal", 0),
-            "pv_total": results.get("total_pv", 0),
         }
         self.write_module_csv("line_loss_costs", summary_row=summary_row)
 
@@ -764,83 +967,75 @@ class CTCCOutputManager:
         )
 
         # Build detail rows distinguishing benefits from costs
+        # Columns ordered: row_type, PV values, annual values, nominal values, module-specific
         detail_rows = [
             # BENEFITS - Congestion reduction (full value)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "benefit",
                 "constraint_type": "congestion",
                 "value_type": "full",
+                "pv": results.get("congestion_benefit_pv", 0),
                 "annual": results.get("congestion_benefit_annual", 0),
                 "nominal": results.get("congestion_benefit_nominal", 0),
-                "pv": results.get("congestion_benefit_pv", 0),
             },
             # BENEFITS - Congestion reduction (haircut/conservative)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "benefit",
                 "constraint_type": "congestion",
                 "value_type": "haircut",
+                "pv": results.get("congestion_benefit_haircut_pv", 0),
                 "annual": results.get("congestion_benefit_haircut_annual", 0),
                 "nominal": results.get("congestion_benefit_haircut_nominal", 0),
-                "pv": results.get("congestion_benefit_haircut_pv", 0),
             },
             # BENEFITS - Curtailment reduction (full value)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "benefit",
                 "constraint_type": "curtailment",
                 "value_type": "full",
+                "pv": results.get("curtailment_benefit_pv", 0),
                 "annual": results.get("curtailment_benefit_annual", 0),
                 "nominal": results.get("curtailment_benefit_nominal", 0),
-                "pv": results.get("curtailment_benefit_pv", 0),
             },
             # BENEFITS - Curtailment reduction (haircut/conservative)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "benefit",
                 "constraint_type": "curtailment",
                 "value_type": "haircut",
+                "pv": results.get("curtailment_benefit_haircut_pv", 0),
                 "annual": results.get("curtailment_benefit_haircut_annual", 0),
                 "nominal": results.get("curtailment_benefit_haircut_nominal", 0),
-                "pv": results.get("curtailment_benefit_haircut_pv", 0),
             },
             # COSTS - Congestion during delay/construction (opportunity cost)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "cost",
                 "constraint_type": "congestion_delay",
                 "value_type": "NA",
-                "annual": None,
-                "nominal": results.get("congestion_delay_cost_nominal", 0),
                 "pv": results.get("congestion_delay_cost_pv", 0),
+                "nominal": results.get("congestion_delay_cost_nominal", 0),
             },
             # COSTS - Curtailment during delay/construction (opportunity cost)
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "cost",
                 "constraint_type": "curtailment_delay",
                 "value_type": "NA",
-                "annual": None,
-                "nominal": results.get("curtailment_delay_cost_nominal", 0),
                 "pv": results.get("curtailment_delay_cost_pv", 0),
+                "nominal": results.get("curtailment_delay_cost_nominal", 0),
             },
             # COSTS - Residual unrelieved congestion
             {
-                "scenario_id": self.scenario_id,
                 "row_type": "detail",
                 "benefit_or_cost": "cost",
                 "constraint_type": "residual_congestion",
                 "value_type": "NA",
+                "pv": results.get("residual_congestion_pv", 0),
                 "annual": results.get("residual_congestion_annual", 0),
                 "nominal": results.get("residual_congestion_nominal", 0),
-                "pv": results.get("residual_congestion_pv", 0),
             },
         ]
 
@@ -866,15 +1061,15 @@ class CTCCOutputManager:
             + results.get("residual_congestion_pv", 0)
         )
 
+        # Summary row - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {
-            "scenario_id": self.scenario_id,
             "row_type": "summary",
             "benefit_or_cost": "net",
             "constraint_type": "all",
             "value_type": "summary",
+            "pv": total_benefits_pv - total_costs_pv,
             "annual": total_benefits_annual,
             "nominal": total_benefits_nominal - total_costs_nominal,
-            "pv": total_benefits_pv - total_costs_pv,
         }
 
         self.write_module_csv(
@@ -883,8 +1078,32 @@ class CTCCOutputManager:
             summary_row=summary_row,
         )
 
+    def load_existing_afudc_values(self) -> None:
+        """Load existing AFUDC values from AFUDC.csv if they exist."""
+        afudc_csv_path = os.path.join(self.output_dir, "AFUDC.csv")
+        if os.path.exists(afudc_csv_path):
+            try:
+                with open(afudc_csv_path, "r", newline="") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if row.get("scenario_id") == self.scenario_id:
+                            # Load AFUDC values from CSV
+                            for key in ["build_cost_afudc", "row_cost_afudc", "env_mitigation_afudc", "delay_cost_afudc"]:
+                                value_str = row.get(key, "0")
+                                try:
+                                    value = float(value_str) if value_str else 0
+                                    if value != 0:  # Only update if non-zero (preserve existing data)
+                                        self.batch_summary_data[key] = value
+                                except (ValueError, TypeError):
+                                    pass
+                            break
+            except Exception:
+                pass  # If file read fails, continue without loading
+
     def calculate_grand_totals(self) -> None:
         """Calculate grand totals and add to batch summary."""
+        # Load existing AFUDC values from CSV if not already in batch_summary_data
+        self.load_existing_afudc_values()
         # Capital costs (have AFUDC)
         capital_nominal = sum(
             [
@@ -977,20 +1196,19 @@ class CTCCOutputManager:
             + line_loss_pv
         )
 
-        self.append_to_batch_summary(
-            {
-                "total_capital_nominal": capital_nominal,
-                "total_capital_afudc": capital_afudc,
-                "total_capital_pv": capital_pv,
-                "total_operational_nominal": operational_nominal,
-                "total_operational_pv": operational_pv,
-                "total_risk_nominal": risk_nominal,
-                "total_risk_pv": risk_pv,
-                "grand_total_cost_nominal": grand_total_nominal,
-                "grand_total_cost_afudc": grand_total_afudc,
-                "grand_total_cost_pv": grand_total_pv,
-            }
-        )
+        totals_dict = {
+            "total_capital_nominal": capital_nominal,
+            "total_capital_afudc": capital_afudc,
+            "total_capital_pv": capital_pv,
+            "total_operational_nominal": operational_nominal,
+            "total_operational_pv": operational_pv,
+            "total_risk_nominal": risk_nominal,
+            "total_risk_pv": risk_pv,
+            "grand_total_cost_nominal": grand_total_nominal,
+            "grand_total_cost_afudc": grand_total_afudc,
+            "grand_total_cost_pv": grand_total_pv,
+        }
+        self.append_to_batch_summary(totals_dict)
 
     def add_bcr_metrics(self, bcr_results: Dict[str, float]) -> None:
         """
