@@ -11,7 +11,7 @@ project:
   converter_type: "NA" # LCC Converter or VSC Converter
   converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)
 
-  line_utilization: .70 # % [0,1]
+  line_utilization: 0.70 # % [0,1]
 
   baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)
 
