@@ -218,13 +218,25 @@ class CTCCOutputManager:
             "bcr_primary",
             "bcr_excluding_risk",
             "bcr_excluding_emissions",
+            "bcr_excluding_linelosses",
+            "bcr_excluding_emissions_and_linelosses",
             "bcr_excluding_emissions_and_risk",
+            "bcr_excluding_linelosses_and_risk",
+            "bcr_excluding_emissions_and_linelosses_and_risk",
+            "bcr_utility",
+            "bcr_ratepayer",
             # 12. Net Benefits PV
             "net_benefit_pv",
             "net_benefit_primary_pv",
             "net_benefit_excluding_risk_pv",
             "net_benefit_excluding_emissions_pv",
+            "net_benefit_excluding_linelosses_pv",
+            "net_benefit_excluding_emissions_and_linelosses_pv",
             "net_benefit_excluding_emissions_and_risk_pv",
+            "net_benefit_excluding_linelosses_and_risk_pv",
+            "net_benefit_excluding_emissions_and_linelosses_and_risk_pv",
+            "net_benefit_utility_pv",
+            "net_benefit_ratepayer_pv",
         ]
 
         # Build summary row with only organized fields (use 0 for missing values)
