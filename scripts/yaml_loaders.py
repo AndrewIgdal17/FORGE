@@ -49,6 +49,26 @@ def load_financing_details() -> Tuple[float, int, float, float]:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
 
+def normalize_construction_type(construction_type: str) -> str:
+    """
+    Normalize construction_type to match YAML category key format.
+    Converts "Underground Direct-Buried" -> "Underground direct-buried"
+    and "Underground Tunnel" -> "Underground tunnel" to match YAML keys.
+    """
+    # Map common variations to YAML format
+    normalization_map = {
+        "Underground Direct-Buried": "Underground direct-buried",
+        "Underground Tunnel": "Underground tunnel",
+        "Underground direct-buried": "Underground direct-buried",  # Already correct
+        "Underground tunnel": "Underground tunnel",  # Already correct
+        "Overhead": "Overhead",  # Already correct
+        "Subsea": "Subsea",  # Already correct
+    }
+    
+    normalized = normalization_map.get(construction_type, construction_type)
+    return normalized
+
+
 def load_project_technical_details() -> (
     Tuple[str, str, int, str, str, float, bool, float, int, int, Optional[float]]
 ):
@@ -91,7 +111,7 @@ def load_project_technical_details() -> (
                 raise KeyError(
                     f"Missing '{key}' key in timeline section of technical details YAML"
                 )
-        construction_type = project_data["construction_type"]
+        construction_type = normalize_construction_type(project_data["construction_type"])
         ac_dc = project_data["ac_dc"]
         capacity_mw = project_data["capacity_mw"]
         conductor_type = project_data["conductor_type"]
