@@ -17,6 +17,78 @@ from smart_loaders import (
     get_project_data_raw,
 )
 
+BATCH_SUMMARY_FIELDS = [
+    # 1. Identification
+    "project_name",
+    "scenario_id",
+    "timestamp",
+    # 2. Key Parameters
+    "capacity_mw",
+    "line_length_miles",
+    "construction_type",
+    "ac_dc",
+    "social_discount_rate",
+    # 3. Capital Costs PV (with breakdown)
+    "build_cost_pv",
+    "row_cost_pv",
+    "env_mitigation_pv",
+    "capital_costs_pv",
+    # 4. Operational Costs PV (with breakdown)
+    "insurance_pv",
+    "oandm_pv",
+    "operational_costs_pv",
+    # 5. Risk Costs PV (with breakdown)
+    "wildfire_pv",
+    "outage_pv",
+    "risk_costs_pv",
+    # 6. Delay Costs PV
+    "delay_cost_pv",
+    "congestion_delay_cost_pv",
+    "curtailment_delay_cost_pv",
+    "residual_congestion_pv",
+    "delay_costs_pv",
+    # 7. Energy/Emissions Costs PV (with breakdown)
+    "emissions_cost_pv",
+    "line_loss_cost_pv",
+    "energy_emissions_costs_pv",
+    # 8. Total Costs PV
+    "total_costs_pv",
+    # 9. Benefits PV (with breakdown)
+    "congestion_benefit_pv",
+    "curtailment_benefit_pv",
+    "revenue_pv",
+    "congestion_benefit_haircut_pv",
+    "curtailment_benefit_haircut_pv",
+    "total_benefits_pv",
+    "total_benefits_haircut_pv",
+    # 10. BCR Metrics
+    "bcr_system",
+    "bcr_capital",
+    "bcr_capital_and_delay",
+    "bcr_primary",
+    "bcr_excluding_risk",
+    "bcr_excluding_emissions",
+    "bcr_excluding_linelosses",
+    "bcr_excluding_emissions_and_linelosses",
+    "bcr_excluding_emissions_and_risk",
+    "bcr_excluding_linelosses_and_risk",
+    "bcr_excluding_emissions_and_linelosses_and_risk",
+    "bcr_utility",
+    "bcr_ratepayer",
+    # 11. Net Benefits PV
+    "net_benefit_pv",
+    "net_benefit_primary_pv",
+    "net_benefit_excluding_risk_pv",
+    "net_benefit_excluding_emissions_pv",
+    "net_benefit_excluding_linelosses_pv",
+    "net_benefit_excluding_emissions_and_linelosses_pv",
+    "net_benefit_excluding_emissions_and_risk_pv",
+    "net_benefit_excluding_linelosses_and_risk_pv",
+    "net_benefit_excluding_emissions_and_linelosses_and_risk_pv",
+    "net_benefit_utility_pv",
+    "net_benefit_ratepayer_pv",
+]
+
 
 class CTCCOutputManager:
     """Manages CSV outputs for CTCC batch analysis."""
@@ -164,80 +236,8 @@ class CTCCOutputManager:
         batch_path = os.path.join(self.output_dir, "batch_summary.csv")
         file_exists = os.path.exists(batch_path)
 
-        # Define organized column order: identification, key params, costs (PV), benefits (PV), AFUDC total, BCR, net benefits
-        organized_fieldnames = [
-            # 1. Identification
-            "project_name",
-            "scenario_id",
-            "timestamp",
-            # 2. Key Parameters
-            "capacity_mw",
-            "line_length_miles",
-            "construction_type",
-            "ac_dc",
-            "social_discount_rate",
-            # 3. Capital Costs PV (with breakdown)
-            "build_cost_pv",
-            "row_cost_pv",
-            "env_mitigation_pv",
-            "capital_costs_pv",
-            # 4. Operational Costs PV (with breakdown)
-            "insurance_pv",
-            "oandm_pv",
-            "operational_costs_pv",
-            # 5. Risk Costs PV (with breakdown)
-            "wildfire_pv",
-            "outage_pv",
-            "risk_costs_pv",
-            # 6. Delay Costs PV
-            "delay_cost_pv",
-            "congestion_delay_cost_pv",
-            "curtailment_delay_cost_pv",
-            "residual_congestion_pv",
-            "delay_costs_pv",
-            # 7. Energy/Emissions Costs PV (with breakdown)
-            "emissions_cost_pv",
-            "line_loss_cost_pv",
-            "energy_emissions_costs_pv",
-            # 8. Total Costs PV
-            "total_costs_pv",
-            # 9. Benefits PV (with breakdown)
-            "congestion_benefit_pv",
-            "curtailment_benefit_pv",
-            "revenue_pv",
-            "congestion_benefit_haircut_pv",
-            "curtailment_benefit_haircut_pv",
-            "total_benefits_pv",
-            "total_benefits_haircut_pv",
-            # 10. AFUDC Total (regulatory perspective)
-            "grand_total_cost_afudc",
-            # 11. BCR Metrics
-            "bcr_system",
-            "bcr_capital",
-            "bcr_capital_and_delay",
-            "bcr_primary",
-            "bcr_excluding_risk",
-            "bcr_excluding_emissions",
-            "bcr_excluding_linelosses",
-            "bcr_excluding_emissions_and_linelosses",
-            "bcr_excluding_emissions_and_risk",
-            "bcr_excluding_linelosses_and_risk",
-            "bcr_excluding_emissions_and_linelosses_and_risk",
-            "bcr_utility",
-            "bcr_ratepayer",
-            # 12. Net Benefits PV
-            "net_benefit_pv",
-            "net_benefit_primary_pv",
-            "net_benefit_excluding_risk_pv",
-            "net_benefit_excluding_emissions_pv",
-            "net_benefit_excluding_linelosses_pv",
-            "net_benefit_excluding_emissions_and_linelosses_pv",
-            "net_benefit_excluding_emissions_and_risk_pv",
-            "net_benefit_excluding_linelosses_and_risk_pv",
-            "net_benefit_excluding_emissions_and_linelosses_and_risk_pv",
-            "net_benefit_utility_pv",
-            "net_benefit_ratepayer_pv",
-        ]
+        # Use shared batch summary schema to keep CSV/JSON aligned
+        organized_fieldnames = BATCH_SUMMARY_FIELDS
 
         # Build summary row with only organized fields (use 0 for missing values)
         summary_row = {}
@@ -399,7 +399,6 @@ class CTCCOutputManager:
             "env_mitigation_afudc",
             "delay_cost_afudc",
             "total_capital_afudc",
-            "grand_total_cost_afudc",
         ]
 
         # Build AFUDC data dict - include project identification
@@ -409,6 +408,16 @@ class CTCCOutputManager:
             "timestamp": self.timestamp,
         }
         
+        # Ensure total capital AFUDC is populated if missing
+        total_capital_afudc = self.batch_summary_data.get("total_capital_afudc")
+        if total_capital_afudc is None:
+            total_capital_afudc = (
+                self.batch_summary_data.get("build_cost_afudc", 0)
+                + self.batch_summary_data.get("row_cost_afudc", 0)
+                + self.batch_summary_data.get("env_mitigation_afudc", 0)
+            )
+            self.batch_summary_data["total_capital_afudc"] = total_capital_afudc
+
         # Add all AFUDC values that exist (use 0 if not present, to ensure consistent columns)
         for key in afudc_keys:
             value = self.batch_summary_data.get(key, 0)

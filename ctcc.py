@@ -16,7 +16,7 @@ from datetime import datetime
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from bcr_calculator import calculate_and_display_bcr
-from csv_output_manager import CTCCOutputManager as CSVOutputManager
+from csv_output_manager import CTCCOutputManager as CSVOutputManager, BATCH_SUMMARY_FIELDS
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -52,6 +52,136 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         return False
 
 
+def build_bcr_data_from_json(json_results: dict) -> dict:
+    """Build a flat dict for BCR calculations from JSON results."""
+    costs = json_results.get("costs", {}) or {}
+    benefits = json_results.get("benefits", {}) or {}
+
+    congestion = benefits.get("congestion_curtailment", {}) or {}
+    revenue = benefits.get("revenue", {}) or {}
+
+    build = costs.get("build", {}) or {}
+    row = costs.get("row", {}) or {}
+    environmental = costs.get("environmental", {}) or {}
+    oandm = costs.get("oandm", {}) or {}
+    insurance = costs.get("insurance", {}) or {}
+    wildfire = costs.get("wildfire", {}) or {}
+    outage = costs.get("outage", {}) or {}
+    wildfire_liability = costs.get("wildfire_liability", {}) or {}
+    delay = costs.get("delay", {}) or {}
+    emissions = costs.get("emissions", {}) or {}
+    line_loss = costs.get("line_loss", {}) or {}
+
+    return {
+        # Benefits (PV + nominal)
+        "congestion_benefit_pv": congestion.get("congestion_benefit_pv", 0) or 0,
+        "curtailment_benefit_pv": congestion.get("curtailment_benefit_pv", 0) or 0,
+        "congestion_benefit_nominal": congestion.get("congestion_benefit_nominal", 0)
+        or 0,
+        "curtailment_benefit_nominal": congestion.get("curtailment_benefit_nominal", 0)
+        or 0,
+        "congestion_benefit_haircut_pv": congestion.get(
+            "congestion_benefit_haircut_pv", 0
+        )
+        or 0,
+        "curtailment_benefit_haircut_pv": congestion.get(
+            "curtailment_benefit_haircut_pv", 0
+        )
+        or 0,
+        "revenue_pv": revenue.get("revenue_pv", 0) or 0,
+        "revenue_nominal": revenue.get("revenue_nominal", 0) or 0,
+        # Capital costs (PV + nominal)
+        "build_cost_pv": build.get("total_pv", 0) or 0,
+        "build_cost_nominal": build.get("total_nominal", 0) or 0,
+        "row_cost_pv": row.get("total_pv", 0) or 0,
+        "row_cost_nominal": row.get("total_nominal", 0) or 0,
+        "env_mitigation_pv": environmental.get("total_pv", 0) or 0,
+        "env_mitigation_nominal": environmental.get("total_nominal", 0) or 0,
+        # Operational costs (PV + nominal)
+        "oandm_pv": oandm.get("total_pv", 0) or 0,
+        "oandm_nominal": oandm.get("total_nominal", 0) or 0,
+        "insurance_pv": insurance.get("pv_total", 0) or 0,
+        "insurance_nominal": insurance.get("nominal_lifetime_cost", 0) or 0,
+        # Energy & emissions costs (PV + nominal)
+        "line_loss_cost_pv": line_loss.get("total_pv", 0) or 0,
+        "line_loss_cost_nominal": line_loss.get("total_nominal", 0) or 0,
+        "emissions_cost_pv": emissions.get("total_pv", 0) or 0,
+        "emissions_cost_nominal": emissions.get("total_nominal", 0) or 0,
+        # Risk costs (PV + nominal)
+        "wildfire_pv": wildfire.get("pv_cost", 0) or 0,
+        "wildfire_nominal": wildfire.get("nominal_total", 0) or 0,
+        "outage_pv": outage.get("pv_cost", 0) or 0,
+        "outage_nominal": outage.get("nominal_total", 0) or 0,
+        "wildfire_liability_pv": wildfire_liability.get("pv_total", 0) or 0,
+        "wildfire_liability_nominal": wildfire_liability.get(
+            "nominal_lifetime_cost", 0
+        )
+        or 0,
+        # Delay costs (PV + nominal)
+        "delay_cost_pv": delay.get("total_pv", 0) or 0,
+        "delay_cost_nominal": delay.get("total_nominal", 0) or 0,
+        "congestion_delay_cost_pv": congestion.get("congestion_delay_cost_pv", 0) or 0,
+        "congestion_delay_cost_nominal": congestion.get(
+            "congestion_delay_cost_nominal", 0
+        )
+        or 0,
+        "curtailment_delay_cost_pv": congestion.get("curtailment_delay_cost_pv", 0)
+        or 0,
+        "curtailment_delay_cost_nominal": congestion.get(
+            "curtailment_delay_cost_nominal", 0
+        )
+        or 0,
+        "residual_congestion_pv": congestion.get("residual_congestion_pv", 0) or 0,
+        "residual_congestion_nominal": congestion.get(
+            "residual_congestion_nominal", 0
+        )
+        or 0,
+    }
+
+
+def build_csv_equivalent(
+    json_results: dict, bcr_results: dict | None, bcr_data: dict | None
+) -> dict:
+    """Build a flat CSV-equivalent dict using current CSV schema."""
+    technical = json_results.get("technical_parameters", {}) or {}
+    base_fields = {
+        "project_name": technical.get("project_name", ""),
+        "scenario_id": json_results.get("scenario_id", ""),
+        "timestamp": json_results.get("timestamp", ""),
+        "capacity_mw": technical.get("capacity_mw", 0) or 0,
+        "line_length_miles": technical.get("line_length_miles", 0) or 0,
+        "construction_type": technical.get("construction_type", ""),
+        "ac_dc": technical.get("ac_dc", ""),
+        "social_discount_rate": technical.get("social_discount_rate", 0) or 0,
+    }
+
+    merged = {**base_fields}
+    if bcr_data:
+        merged.update(bcr_data)
+    if bcr_results:
+        merged.update(bcr_results)
+
+    return {field: merged.get(field, 0) for field in BATCH_SUMMARY_FIELDS}
+
+
+def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
+    """Create a minimal summary aligned with CSV/BCR totals."""
+    return {
+        "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
+        "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
+        "total_energy_emissions_pv": csv_equivalent.get(
+            "energy_emissions_costs_pv", 0
+        ),
+        "total_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
+        "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
+        "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
+        "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
+        "total_benefits_haircut_pv": csv_equivalent.get(
+            "total_benefits_haircut_pv", 0
+        ),
+    }
+
+
 def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dict:
     """
     Aggregate all JSON output files from individual calculation scripts.
@@ -85,7 +215,12 @@ def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dic
 
 
 def write_final_json_output(
-    aggregator, bcr_results: dict, scenario_id: str, output_dir: str = "outputs"
+    aggregator,
+    bcr_results: dict | None,
+    scenario_id: str,
+    output_dir: str = "outputs",
+    csv_equivalent: dict | None = None,
+    summary_override: dict | None = None,
 ):
     """
     Write the final aggregated JSON output file.
@@ -95,6 +230,8 @@ def write_final_json_output(
         bcr_results: BCR calculation results
         scenario_id: The scenario ID
         output_dir: Directory to write the output file
+        csv_equivalent: Flat dict aligned with CSV schema
+        summary_override: Summary aligned with CSV/BCR totals
     """
     # Add BCR results if available
     if bcr_results:
@@ -105,6 +242,10 @@ def write_final_json_output(
 
     # Get the final results
     results = aggregator.get_json_results()
+    if csv_equivalent is not None:
+        results["csv_equivalent"] = csv_equivalent
+    if summary_override is not None:
+        results["summary"] = summary_override
 
     # Write to final output file
     output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
@@ -460,59 +601,22 @@ def main() -> None:
                 
                 # Calculate BCR from JSON aggregator data (not CSV)
                 bcr_results = None
+                csv_equivalent = None
+                summary_override = None
+                json_results = aggregator.get_json_results()
+                bcr_data = build_bcr_data_from_json(json_results)
                 try:
-                    # Extract data from aggregator in format BCR calculator expects
-                    aggregator.calculate_summary()  # Ensure summary is calculated
-                    json_results = aggregator.get_json_results()
-                    
-                    # Convert JSON structure to flat dict for BCR calculator
-                    bcr_data = {}
-                    # Extract benefits
-                    congestion_curtailment = json_results.get("benefits", {}).get("congestion_curtailment", {})
-                    bcr_data["congestion_benefit_pv"] = congestion_curtailment.get("congestion_benefit_pv", 0) or 0
-                    bcr_data["curtailment_benefit_pv"] = congestion_curtailment.get("curtailment_benefit_pv", 0) or 0
-                    bcr_data["congestion_benefit_nominal"] = congestion_curtailment.get("congestion_benefit_nominal", 0) or 0
-                    bcr_data["curtailment_benefit_nominal"] = congestion_curtailment.get("curtailment_benefit_nominal", 0) or 0
-                    bcr_data["congestion_benefit_haircut_pv"] = congestion_curtailment.get("congestion_benefit_haircut_pv", 0) or 0
-                    bcr_data["curtailment_benefit_haircut_pv"] = congestion_curtailment.get("curtailment_benefit_haircut_pv", 0) or 0
-                    
-                    revenue = json_results.get("benefits", {}).get("revenue", {})
-                    bcr_data["revenue_pv"] = revenue.get("revenue_pv", 0) or 0
-                    bcr_data["revenue_nominal"] = revenue.get("revenue_nominal", 0) or 0
-                    
-                    # Extract costs from summary
-                    summary = json_results.get("summary", {})
-                    bcr_data["build_cost_pv"] = json_results.get("costs", {}).get("build", {}).get("total_pv", 0) or 0
-                    bcr_data["row_cost_pv"] = json_results.get("costs", {}).get("row", {}).get("total_pv", 0) or 0
-                    bcr_data["env_mitigation_pv"] = json_results.get("costs", {}).get("environmental", {}).get("total_pv", 0) or 0
-                    bcr_data["capital_costs_pv"] = summary.get("total_capital_pv", 0) or 0
-                    bcr_data["oandm_pv"] = json_results.get("costs", {}).get("oandm", {}).get("total_pv", 0) or 0
-                    bcr_data["insurance_pv"] = json_results.get("costs", {}).get("insurance", {}).get("pv_total", 0) or 0
-                    bcr_data["operational_costs_pv"] = summary.get("total_operational_pv", 0) or 0
-                    bcr_data["line_loss_cost_pv"] = json_results.get("costs", {}).get("line_loss", {}).get("total_pv", 0) or 0
-                    bcr_data["emissions_cost_pv"] = json_results.get("costs", {}).get("emissions", {}).get("total_pv", 0) or 0
-                    bcr_data["energy_emissions_costs_pv"] = summary.get("total_operational_pv", 0) or 0  # Approximate
-                    bcr_data["wildfire_pv"] = json_results.get("costs", {}).get("wildfire", {}).get("pv_cost", 0) or 0
-                    bcr_data["outage_pv"] = json_results.get("costs", {}).get("outage", {}).get("pv_cost", 0) or 0
-                    bcr_data["risk_costs_pv"] = summary.get("total_risk_pv", 0) or 0
-                    bcr_data["delay_cost_pv"] = json_results.get("costs", {}).get("delay", {}).get("total_pv", 0) or 0
-                    bcr_data["delay_cost_nominal"] = json_results.get("costs", {}).get("delay", {}).get("total_nominal", 0) or 0
-                    # Extract congestion/curtailment delay costs from congestion_curtailment benefits section
-                    congestion_curtailment = json_results.get("benefits", {}).get("congestion_curtailment", {})
-                    bcr_data["congestion_delay_cost_pv"] = congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
-                    bcr_data["congestion_delay_cost_nominal"] = congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
-                    bcr_data["curtailment_delay_cost_pv"] = congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
-                    bcr_data["curtailment_delay_cost_nominal"] = congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
-                    bcr_data["residual_congestion_pv"] = congestion_curtailment.get("residual_congestion_pv", 0) or 0
-                    bcr_data["residual_congestion_nominal"] = congestion_curtailment.get("residual_congestion_nominal", 0) or 0
-                    bcr_data["total_costs_pv"] = summary.get("grand_total_cost_pv", 0) or 0
-                    
-                    # Calculate BCR using the helper functions
-                    from bcr_calculator import calculate_benefits, calculate_costs, calculate_bcr_metrics
+                    from bcr_calculator import (
+                        calculate_benefits,
+                        calculate_costs,
+                        calculate_bcr_metrics,
+                    )
+
                     benefits = calculate_benefits(bcr_data)
                     costs = calculate_costs(bcr_data)
                     bcr_metrics = calculate_bcr_metrics(
-                        benefits, costs,
+                        benefits,
+                        costs,
                         no_emissions=args.no_emissions,
                         no_linelosses=args.no_linelosses,
                         capital_only=args.capital_only,
@@ -525,15 +629,31 @@ def main() -> None:
                         no_curtailment=args.no_curtailment,
                     )
                     bcr_results = {**benefits, **costs, **bcr_metrics}
+                    csv_equivalent = build_csv_equivalent(
+                        json_results, bcr_results, bcr_data
+                    )
+                    summary_override = build_summary_from_csv_equivalent(csv_equivalent)
                 except Exception as e:
                     import traceback
                     if not args.simple:
                         print(f"⚠️  BCR calculation failed: {e}")
                         traceback.print_exc()
+                    if bcr_data is not None:
+                        csv_equivalent = build_csv_equivalent(
+                            json_results, None, bcr_data
+                        )
+                        summary_override = build_summary_from_csv_equivalent(
+                            csv_equivalent
+                        )
                     bcr_results = None
-                
+
                 output_file = write_final_json_output(
-                    aggregator, bcr_results, scenario_id, output_dir="outputs"
+                    aggregator,
+                    bcr_results,
+                    scenario_id,
+                    output_dir="outputs",
+                    csv_equivalent=csv_equivalent,
+                    summary_override=summary_override,
                 )
                 
                 if not args.simple:
@@ -554,8 +674,6 @@ def main() -> None:
                     output_dir="outputs", scenario_id=scenario_id
                 )
                 csv_manager.add_bcr_metrics(bcr_results)
-                # Calculate grand totals (capital AFUDC, grand total AFUDC, etc.)
-                csv_manager.calculate_grand_totals()
                 csv_manager.write_batch_summary()
 
                 if not args.simple:
