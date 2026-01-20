@@ -101,7 +101,7 @@ This script integrates with:
 
 \section{Key Functions}
 
-\subsection{\texttt{calculate\_environmental\_mitigation\_costs(em\_yaml, category, terrain\_miles\_dict, row\_width\_feet)}}
+\subsection{\texttt{calculate\_environmental\_mitigation\_costs(em\_yaml, category, terrain\_miles\_dict, row\_width\_feet, reconductoring)}}
 
 Calculates environmental mitigation costs including base mitigation and credit purchases.
 
@@ -111,6 +111,7 @@ Calculates environmental mitigation costs including base mitigation and credit p
     \item \texttt{category} (str): Project category identifier
     \item \texttt{terrain\_miles\_dict} (dict): Dictionary mapping terrain type to miles
     \item \texttt{row\_width\_feet} (float): Right-of-way width in feet
+    \item \texttt{reconductoring} (bool): If True, sets wetland and habitat credits to zero. Reconductoring projects use existing ROW and structures, so they don't create new permanent environmental impacts requiring mitigation credits. Base mitigation costs still apply for temporary construction impacts.
 \end{itemize}
 
 \textbf{Returns:}
@@ -149,6 +150,11 @@ habitat_impacted_acres = sum(acres_by_terrain[t] for t in habitat_terrains)
                          * uplift_factor
 habitat_credits = (habitat_cost_per_acre * habitat_ratio 
                    * habitat_impacted_acres)
+
+# For reconductoring projects, set credits to zero
+if reconductoring:
+    wetlands_credits = 0.0
+    habitat_credits = 0.0
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -246,6 +252,17 @@ The script identifies habitat-impacted acres by summing natural terrain types: f
 \subsection{AFUDC Treatment}
 
 Base mitigation and credit costs are treated separately for AFUDC calculation, as they may have different timing patterns during construction.
+
+\subsection{Reconductoring Projects}
+
+For reconductoring projects, environmental mitigation credits (wetland and habitat credits) are set to zero. This reflects that reconductoring projects use existing ROW and structures, so they do not create new permanent environmental impacts requiring mitigation credits. However, base environmental mitigation costs still apply to account for temporary construction impacts such as:
+\begin{itemize}
+    \item Temporary access roads and staging areas
+    \item Erosion control and sediment management during construction
+    \item Temporary disturbance of existing ROW during conductor replacement
+\end{itemize}
+
+This treatment makes reconductoring economics more realistic by avoiding the large credit costs that would be inappropriate for projects that don't disturb new land.
 
 \end{document}
 

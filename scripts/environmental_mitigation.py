@@ -42,6 +42,7 @@ def calculate_environmental_mitigation_costs(
     category: str,
     terrain_miles_dict: Dict[str, float],
     row_width_feet: float,
+    reconductoring: bool = False,
 ) -> Dict[str, float]:
     """
     Calculate environmental mitigation costs including base mitigation
@@ -52,6 +53,9 @@ def calculate_environmental_mitigation_costs(
         category: Project category identifier
         terrain_miles_dict: Dictionary of terrain type to miles
         row_width_feet: ROW width in feet
+        reconductoring: If True, sets wetland and habitat credits to zero
+                       (reconductoring projects use existing ROW and don't create
+                       new permanent environmental impacts requiring credits)
 
     Returns:
         dict: Contains base_cost, wetlands_credits, habitat_credits,
@@ -115,6 +119,12 @@ def calculate_environmental_mitigation_costs(
     habitat_ratio = ratios.get("habitat", {}).get("default", 1.0)
     habitat_credits = habitat_cost_per_acre * habitat_ratio * habitat_impacted_acres
 
+    # For reconductoring projects, set credits to zero since they use existing ROW
+    # and don't create new permanent environmental impacts requiring mitigation credits
+    if reconductoring:
+        wetlands_credits = 0.0
+        habitat_credits = 0.0
+
     return {
         "base_cost": base_cost,
         "wetlands_credits": wetlands_credits,
@@ -172,7 +182,7 @@ def main() -> None:
 
     # Calculate environmental mitigation costs (nominal)
     results = calculate_environmental_mitigation_costs(
-        em_yaml, category, terrain_miles, row_width_feet
+        em_yaml, category, terrain_miles, row_width_feet, reconductoring
     )
 
     # Load financing parameters for discounting

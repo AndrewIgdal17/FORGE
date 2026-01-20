@@ -507,6 +507,7 @@ CTCC/
 │   ├── insurance_costs.py       # 3. Insurance
 │   ├── row_costs.py             # 4. Right-of-way
 │   ├── environmental_mitigation.py  # 5. Environmental
+│   │                                  # Note: Credits set to zero for reconductoring projects
 │   ├── delay_costs.py           # 6. Delays
 │   ├── wildfire_costs.py        # 7. Wildfire risk
 │   ├── outage_costs.py          # 8. Outage risk
@@ -672,6 +673,18 @@ tests/
 **Workaround:** Use JSON output mode for complete detailed results.
 
 **Fix Required:** Update each script to call `write_module_csv()` with module-specific data.
+
+### Issue 5: Reconductoring Environmental Mitigation Credits (RESOLVED)
+
+**Status:** ✅ Resolved
+
+**Problem:** Reconductoring projects were being charged full environmental mitigation credits (wetland and habitat credits), which is inappropriate since they use existing ROW and don't create new permanent environmental impacts.
+
+**Solution:** Modified `environmental_mitigation.py` to set credits to zero for reconductoring projects. Base environmental mitigation costs still apply for temporary construction impacts (access roads, staging areas, erosion control).
+
+**Implementation:** Added `reconductoring` parameter to `calculate_environmental_mitigation_costs()` function. When `reconductoring=True`, wetland and habitat credits are set to zero.
+
+**Impact:** This makes reconductoring economics more realistic. For example, S4's environmental mitigation costs reduced from $60.3M to ~$5.7M (90% reduction), making capital costs more accurate.
 
 ---
 

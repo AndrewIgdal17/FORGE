@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1764536530.84021 "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" "Generalized_CTCC_Equation.pdf" "Generalized_CTCC_Equation" 1764536531.48844 0
-  "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" 1764536530.64229 31109 8780c8ac4404ff99abc642f0535667db ""
+["pdflatex"] 1768872201.5544 "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" "Generalized_CTCC_Equation.pdf" "Generalized_CTCC_Equation" 1768872202.12481 0
+  "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/Generalized_CTCC_Equation.tex" 1768872199.74176 31584 5d9e141ab86c390e0a637f1fffef80de ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
@@ -148,9 +148,9 @@
   "/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1744383296 5467155 19efa205003f9ecad95fbbaa6ff24da1 ""
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1741450574 3345740 46b66fdb0378f7bf5921b5eabf1762b8 ""
   "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
-  "Generalized_CTCC_Equation.aux" 1764536531.41346 3284 06440889fff832ebdd901666bb99daee "pdflatex"
-  "Generalized_CTCC_Equation.out" 1764536531.41426 4467 c344cde2815e8ce78729e43a4b72fb2a "pdflatex"
-  "Generalized_CTCC_Equation.tex" 1764536530.64229 31109 8780c8ac4404ff99abc642f0535667db ""
+  "Generalized_CTCC_Equation.aux" 1768872202.05667 3285 647c0fa80edf82345ac8260434508a17 "pdflatex"
+  "Generalized_CTCC_Equation.out" 1768872202.05732 4467 c344cde2815e8ce78729e43a4b72fb2a "pdflatex"
+  "Generalized_CTCC_Equation.tex" 1768872199.74176 31584 5d9e141ab86c390e0a637f1fffef80de ""
   (generated)
   "Generalized_CTCC_Equation.aux"
   "Generalized_CTCC_Equation.log"
