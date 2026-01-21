@@ -561,10 +561,6 @@ def main() -> None:
         bcr_results = None
         if output_mode == "csv":
             # CSV mode: Calculate BCR from batch_summary.csv
-            if not args.simple:
-                print()
-                print("CALCULATING BENEFIT-COST RATIOS...")
-                print("=" * 80)
             try:
                 bcr_results = calculate_and_display_bcr(
                     scenario_id,

@@ -180,15 +180,17 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         build_cost_nominal + row_cost_nominal + env_mitigation_nominal
     )
 
-    # Operational costs (PV) - O&M and operational insurance only
+    # Operational costs (PV) - O&M, operational insurance, and residual exceedance
     oandm_pv = data.get("oandm_pv", 0) or 0
     insurance_pv = data.get("insurance_pv", 0) or 0
-    operational_costs_pv = oandm_pv + insurance_pv
+    residual_exceedance_pv = data.get("residual_exceedance_pv", 0) or 0
+    operational_costs_pv = oandm_pv + insurance_pv + residual_exceedance_pv
 
     # Operational costs (Nominal)
     oandm_nominal = data.get("oandm_nominal", 0) or 0
     insurance_nominal = data.get("insurance_nominal", 0) or 0
-    operational_costs_nominal = oandm_nominal + insurance_nominal
+    residual_exceedance_nominal = data.get("residual_exceedance_nominal", 0) or 0
+    operational_costs_nominal = oandm_nominal + insurance_nominal + residual_exceedance_nominal
 
     # Energy & Emissions costs (PV) - Line losses and emissions
     emissions_pv = data.get("emissions_cost_pv", 0) or 0
@@ -219,24 +221,20 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     delay_cost_pv = data.get("delay_cost_pv", 0) or 0
     congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
     curtailment_delay_pv = data.get("curtailment_delay_cost_pv", 0) or 0
-    residual_congestion_pv = data.get("residual_congestion_pv", 0) or 0
     delay_costs_pv = (
         delay_cost_pv
         + congestion_delay_pv
         + curtailment_delay_pv
-        + residual_congestion_pv
     )
 
     # Delay costs (Nominal)
     delay_cost_nominal = data.get("delay_cost_nominal", 0) or 0
     congestion_delay_nominal = data.get("congestion_delay_cost_nominal", 0) or 0
     curtailment_delay_nominal = data.get("curtailment_delay_cost_nominal", 0) or 0
-    residual_congestion_nominal = data.get("residual_congestion_nominal", 0) or 0
     delay_costs_nominal = (
         delay_cost_nominal
         + congestion_delay_nominal
         + curtailment_delay_nominal
-        + residual_congestion_nominal
     )
 
     # Totals
@@ -264,6 +262,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         # Operational (PV)
         "oandm_pv": oandm_pv,
         "insurance_pv": insurance_pv,
+        "residual_exceedance_pv": residual_exceedance_pv,
         "operational_costs_pv": operational_costs_pv,
         # Energy & Emissions (PV)
         "line_loss_cost_pv": line_loss_cost_pv,
@@ -278,7 +277,6 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         "delay_cost_pv": delay_cost_pv,
         "congestion_delay_cost_pv": congestion_delay_pv,
         "curtailment_delay_cost_pv": curtailment_delay_pv,
-        "residual_congestion_pv": residual_congestion_pv,
         "delay_costs_pv": delay_costs_pv,
         # Totals (PV)
         "total_costs_pv": total_costs_pv,
@@ -804,6 +802,7 @@ def print_bcr_summary(
     print("  Operational Costs:")
     print(f"    O&M:                       ${costs['oandm_pv']:>15,.0f}")
     print(f"    Insurance (operational):  ${costs['insurance_pv']:>15,.0f}")
+    print(f"    Residual Exceedance:       ${costs['residual_exceedance_pv']:>15,.0f}")
     print(f"    Subtotal:                  ${costs['operational_costs_pv']:>15,.0f}")
     print()
     print("  Energy & Emissions Costs:")
@@ -830,7 +829,6 @@ def print_bcr_summary(
     print(
         f"    Curtailment Delay:         ${costs['curtailment_delay_cost_pv']:>15,.0f}"
     )
-    print(f"    Residual Congestion:       ${costs['residual_congestion_pv']:>15,.0f}")
     print(f"    Subtotal:                  ${costs['delay_costs_pv']:>15,.0f}")
     print()
     print("  " + "-" * 78)
@@ -871,6 +869,31 @@ def print_bcr_summary(
     print(f"  Capital BCR:                 {bcr_metrics['bcr_capital']:>6.3f}")
     print(
         f"  Capital + Delay BCR:         {bcr_metrics['bcr_capital_and_delay']:>6.3f}"
+    )
+    print()
+
+    # Utility/TSP Perspective
+    bcr_utility = bcr_metrics.get("bcr_utility", 0)
+    utility_viable_symbol = "✅" if bcr_utility >= 1.0 else "❌"
+    utility_viable_text = (
+        ">= 1.0: economically viable"
+        if bcr_utility >= 1.0
+        else "< 1.0: not economically viable"
+    )
+    print(
+        f"  Utility/TSP BCR:            {bcr_utility:>6.3f}  {utility_viable_symbol} ({utility_viable_text})"
+    )
+
+    # Ratepayer Perspective
+    bcr_ratepayer = bcr_metrics.get("bcr_ratepayer", 0)
+    ratepayer_viable_symbol = "✅" if bcr_ratepayer >= 1.0 else "❌"
+    ratepayer_viable_text = (
+        ">= 1.0: economically viable"
+        if bcr_ratepayer >= 1.0
+        else "< 1.0: not economically viable"
+    )
+    print(
+        f"  Ratepayer BCR:               {bcr_ratepayer:>6.3f}  {ratepayer_viable_symbol} ({ratepayer_viable_text})"
     )
     print()
 
@@ -990,6 +1013,30 @@ def print_bcr_summary(
     )
     print(
         f"  Net Benefit (PV):            ${net_benefit_pv:>15,.0f}  {net_symbol_pv} ({net_text_pv})"
+    )
+
+    # Utility/TSP Net Benefit
+    net_benefit_utility_pv = bcr_metrics.get("net_benefit_utility_pv", 0)
+    utility_net_symbol = "✅" if net_benefit_utility_pv >= 0 else "❌"
+    utility_net_text = (
+        "positive: benefits exceed costs"
+        if net_benefit_utility_pv >= 0
+        else "negative: costs exceed benefits"
+    )
+    print(
+        f"  Net Benefit Utility (PV):     ${net_benefit_utility_pv:>15,.0f}  {utility_net_symbol} ({utility_net_text})"
+    )
+
+    # Ratepayer Net Benefit
+    net_benefit_ratepayer_pv = bcr_metrics.get("net_benefit_ratepayer_pv", 0)
+    ratepayer_net_symbol = "✅" if net_benefit_ratepayer_pv >= 0 else "❌"
+    ratepayer_net_text = (
+        "positive: benefits exceed costs"
+        if net_benefit_ratepayer_pv >= 0
+        else "negative: costs exceed benefits"
+    )
+    print(
+        f"  Net Benefit Ratepayer (PV):   ${net_benefit_ratepayer_pv:>15,.0f}  {ratepayer_net_symbol} ({ratepayer_net_text})"
     )
 
     # 2. Exclude risk only

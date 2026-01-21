@@ -329,47 +329,83 @@ def load_emissions_details() -> (
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 
 
-def load_congestion_reductions() -> (
-    Tuple[float, float, float, float, float, float, float, float]
+def load_congestion_curtailment_reductions() -> (
+    Tuple[float, float, float, float, float, float, float, float, Optional[float], float, float, float, float]
 ):
-    """Load congestion reduction parameters from YAML."""
+    """
+    Load congestion and curtailment reduction parameters from merged YAML file.
+    
+    Returns:
+        Tuple of 13 values:
+        - flow_factor (float, 0.0 for reconductoring)
+        - binding_hours (float)
+        - average_exceedance (float)
+        - near_binding_hours (float)
+        - near_average_exceedance (float)
+        - near_binding_relief_factor (float)
+        - saturation_factor (float)
+        - average_congestion_price (float)
+        - residual_exceedance_value (Optional[float], None if null in YAML)
+        - curtailment_hours_total (float)
+        - average_curtailment_mw (float)
+        - average_curtailment_price (float)
+        - curtailment_saturation_factor (float)
+    """
     try:
         # Check if this is a reconductoring project
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
             project_data = yaml.safe_load(project_file)
         reconductoring = project_data.get("project", {}).get("reconductoring", False) if project_data else False
         
-        with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
+        with open(YAMLS_DIR / "17_congestion_curtailment_reductions.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data:
-            raise ValueError("Congestion reductions YAML file is empty or invalid")
+            raise ValueError("Congestion/curtailment reductions YAML file is empty or invalid")
         
         # Load from appropriate section
         if reconductoring:
-            if "reconductoring_congestion_reductions" not in data:
+            if "reconductoring_congestion_curtailment_reductions" not in data:
                 raise KeyError(
-                    "Missing 'reconductoring_congestion_reductions' key in YAML file"
+                    "Missing 'reconductoring_congestion_curtailment_reductions' key in YAML file"
                 )
-            congestion_reductions_data = data["reconductoring_congestion_reductions"]
+            reductions_data = data["reconductoring_congestion_curtailment_reductions"]
             flow_factor = 0.0  # flow_factor not used for reconductoring
         else:
-            if "greenfield_congestion_reductions" not in data:
+            if "greenfield_congestion_curtailment_reductions" not in data:
                 raise KeyError(
-                    "Missing 'greenfield_congestion_reductions' key in YAML file"
+                    "Missing 'greenfield_congestion_curtailment_reductions' key in YAML file"
                 )
-            congestion_reductions_data = data["greenfield_congestion_reductions"]
-            flow_factor = congestion_reductions_data["constraints"]["flow_factor"]
+            reductions_data = data["greenfield_congestion_curtailment_reductions"]
+            if "congestion" not in reductions_data or "constraints" not in reductions_data["congestion"]:
+                raise KeyError("Missing 'congestion.constraints' section in YAML file")
+            flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
         
-        if "constraints" not in congestion_reductions_data:
+        # Validate structure
+        if "congestion" not in reductions_data:
             raise KeyError(
-                f"Missing 'constraints' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_reductions section"
+                f"Missing 'congestion' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_curtailment_reductions section"
             )
-        if "costs" not in congestion_reductions_data:
+        if "curtailment" not in reductions_data:
             raise KeyError(
-                f"Missing 'costs' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_reductions section"
+                f"Missing 'curtailment' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_curtailment_reductions section"
             )
-        constraints = congestion_reductions_data["constraints"]
-        costs = congestion_reductions_data["costs"]
+        
+        congestion_data = reductions_data["congestion"]
+        curtailment_data = reductions_data["curtailment"]
+        
+        if "constraints" not in congestion_data:
+            raise KeyError(
+                f"Missing 'constraints' key in congestion section"
+            )
+        if "costs" not in congestion_data:
+            raise KeyError(
+                f"Missing 'costs' key in congestion section"
+            )
+        
+        constraints = congestion_data["constraints"]
+        costs = congestion_data["costs"]
+        
+        # Validate required constraint keys
         required_constraint_keys = [
             "binding_hours",
             "average_exceedance",
@@ -387,53 +423,51 @@ def load_congestion_reductions() -> (
             raise KeyError(
                 "Missing 'average_congestion_price' key in costs section of congestion reductions YAML"
             )
+        
+        # Validate required curtailment keys
+        required_curtailment_keys = [
+            "curtailment_hours_total",
+            "average_curtailment_mw",
+            "average_curtailment_price",
+            "curtailment_saturation_factor",
+        ]
+        for key in required_curtailment_keys:
+            if key not in curtailment_data:
+                raise KeyError(
+                    f"Missing '{key}' key in curtailment section of YAML file"
+                )
+        
+        # Get residual_exceedance_value (can be None)
+        residual_exceedance_value = costs.get("residual_exceedance_value")
+        if residual_exceedance_value is not None:
+            residual_exceedance_value = float(residual_exceedance_value)
+        
         result = (
-            flow_factor,
-            constraints["binding_hours"],
-            constraints["average_exceedance"],
-            constraints["near_binding_hours"],
-            constraints["near_average_exceedance"],
-            constraints["near_binding_relief_factor"],
-            constraints["saturation_factor"],
-            costs["average_congestion_price"],
+            float(flow_factor),
+            float(constraints["binding_hours"]),
+            float(constraints["average_exceedance"]),
+            float(constraints["near_binding_hours"]),
+            float(constraints["near_average_exceedance"]),
+            float(constraints["near_binding_relief_factor"]),
+            float(constraints["saturation_factor"]),
+            float(costs["average_congestion_price"]),
+            residual_exceedance_value,
+            float(curtailment_data["curtailment_hours_total"]),
+            float(curtailment_data["average_curtailment_mw"]),
+            float(curtailment_data["average_curtailment_price"]),
+            float(curtailment_data["curtailment_saturation_factor"]),
         )
         return result
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Congestion reductions YAML not found at {YAMLS_DIR / '17_congestion_reductions.yaml'}"
+            f"Congestion/curtailment reductions YAML not found at {YAMLS_DIR / '17_congestion_curtailment_reductions.yaml'}"
         )
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing congestion reductions YAML: {e}")
+        raise ValueError(f"Error parsing congestion/curtailment reductions YAML: {e}")
     except KeyError as e:
-        raise KeyError(f"Missing required key in congestion reductions YAML: {e}")
-
-
-def load_curtailment_reductions() -> Tuple[float, float, float, float]:
-    """Load curtailment reductions parameters from YAML."""
-    try:
-        with open(YAMLS_DIR / "18_curtailment_reductions.yaml", "r") as f:
-            data = yaml.safe_load(f)
-        if not data:
-            raise ValueError("Curtailment reductions YAML file is empty or invalid")
-        if "curtailment_reductions" not in data:
-            raise KeyError("Missing 'curtailment_reductions' key in YAML file")
-        curtailment_reductions_data = data["curtailment_reductions"]
-        return (
-            float(curtailment_reductions_data.get("curtailment_hours_total", 0)),
-            float(curtailment_reductions_data.get("average_curtailment_mw", 0)),
-            float(curtailment_reductions_data.get("average_curtailment_price", 0)),
-            float(curtailment_reductions_data.get("curtailment_saturation_factor", 0)),
-        )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Curtailment reductions YAML not found at {YAMLS_DIR / '18_curtailment_reductions.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing curtailment reductions YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in curtailment reductions YAML: {e}")
+        raise KeyError(f"Missing required key in congestion/curtailment reductions YAML: {e}")
     except (ValueError, TypeError) as e:
-        raise ValueError(f"Error converting curtailment reduction values to float: {e}")
+        raise ValueError(f"Error converting congestion/curtailment reduction values to float: {e}")
 
 
 def load_contingencies() -> Dict[str, float]:

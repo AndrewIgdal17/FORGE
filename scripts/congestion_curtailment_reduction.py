@@ -18,9 +18,8 @@ from typing import Dict, Any, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 from smart_loaders import (
-    load_congestion_reductions,
+    load_congestion_curtailment_reductions,
     load_project_technical_details as load_project_technical_details_centralized,
-    load_curtailment_reductions,
     load_financing_details,
     get_project_data_raw,
 )
@@ -80,9 +79,6 @@ def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
         capacity_mw,
         old_capacity_mw,
     )
-
-
-# load_curtailment_reductions is now imported from smart_loaders
 
 
 # load_financing_details is now imported from smart_loaders
@@ -226,6 +222,7 @@ def calculate_congestion_reduction_costs(
     near_binding_relief_factor: float,
     saturation_factor: float,
     average_congestion_price: float,
+    residual_exceedance_value: float | None,
     project_lifetime: int,
     delay_years: int,
     construction_years: int,
@@ -263,6 +260,7 @@ def calculate_congestion_reduction_costs(
         near_binding_relief_factor: Fraction of capacity relief applied to near-binding hours (0-1)
         saturation_factor: Conservative multiplier for congestion benefits (0-1, where 1 = no haircut)
         average_congestion_price: Average price of congestion in $/MWh
+        residual_exceedance_value: Price per MWh for residual exceedance ($/MWh, None = use average_congestion_price)
         project_lifetime: Project operational lifetime in years
         delay_years: Number of years of project delay before construction
         construction_years: Number of years of construction
@@ -273,18 +271,18 @@ def calculate_congestion_reduction_costs(
         curtailment_saturation_factor: Conservative multiplier for curtailment benefits (0-1)
 
     Returns:
-        tuple: A 25-element tuple containing:
+        tuple: A 26-element tuple containing:
             - lifetime_congestion_reduction_cost: Nominal lifetime congestion reduction benefit ($)
             - lifetime_congestion_reduction_cost_haircut: Conservative lifetime congestion benefit ($)
-            - lifetime_congestion_residual_cost: Nominal lifetime residual congestion cost ($)
+            - lifetime_residual_exceedance_cost: Nominal lifetime residual exceedance cost ($)
             - lifetime_congestion_reduction_cost_pv: PV of congestion reduction benefit ($)
             - lifetime_congestion_reduction_cost_haircut_pv: PV of conservative congestion benefit ($)
-            - lifetime_congestion_residual_cost_pv: PV of residual congestion cost ($)
+            - lifetime_residual_exceedance_cost_pv: PV of residual exceedance cost ($)
             - annual_congestion_reduction_cost_raw: Annual congestion reduction benefit ($/yr)
-            - annual_congestion_residual_cost: Annual residual congestion cost ($/yr)
+            - annual_residual_exceedance_cost: Annual residual exceedance cost ($/yr)
             - effective_capacity_relief: Effective capacity relief in MW
             - energy_congestion_reduction: Total congestion reduction energy (MWh/yr)
-            - energy_congestion_residual: Residual congestion energy (MWh/yr)
+            - energy_residual_exceedance: Residual exceedance energy (MWh/yr)
             - E_near: Near-binding congestion reduction energy (MWh/yr)
             - lifetime_congestion_during_delay_and_construction_cost: Nominal congestion cost during delay/construction ($)
             - lifetime_congestion_during_delay_and_construction_pv: PV of congestion cost during delay/construction ($)
@@ -346,13 +344,15 @@ def calculate_congestion_reduction_costs(
         1 - saturation_factor
     ) * annual_congestion_reduction_cost_raw
 
-    # Residual congestion energy (MWh/yr) on binding hours
-    energy_congestion_residual = H_bc * max(
-        0.0, average_exceedance - ΔC_rem
-    ) + H_bnon * max(0.0, average_exceedance - effective_capacity_relief)
-    annual_congestion_residual_cost = (
-        energy_congestion_residual * average_congestion_price
-    )
+    # Residual exceedance energy (MWh/yr) on binding hours
+    # Residual uses physical capacity relief for ALL binding hours, regardless of allocation
+    total_binding_hours = H_bc + H_bnon
+    residual_exceedance_per_hour = max(0.0, average_exceedance - effective_capacity_relief)
+    energy_residual_exceedance = total_binding_hours * residual_exceedance_per_hour
+
+    # Use residual_exceedance_value (default to average_congestion_price if None)
+    residual_exceedance_value_used = residual_exceedance_value if residual_exceedance_value is not None else average_congestion_price
+    annual_residual_exceedance_cost = energy_residual_exceedance * residual_exceedance_value_used
 
     # Apply curtailment saturation factor
     annual_curtailment_benefit_haircut = (
@@ -384,11 +384,11 @@ def calculate_congestion_reduction_costs(
         start_year=delay_years + construction_years + 1,
     )
 
-    lifetime_congestion_residual_cost = (
-        annual_congestion_residual_cost * project_lifetime
+    lifetime_residual_exceedance_cost = (
+        annual_residual_exceedance_cost * project_lifetime
     )
-    lifetime_congestion_residual_cost_pv = calculate_present_value(
-        annual_congestion_residual_cost,
+    lifetime_residual_exceedance_cost_pv = calculate_present_value(
+        annual_residual_exceedance_cost,
         wacc_real,
         project_lifetime,
         start_year=delay_years + construction_years + 1,
@@ -447,15 +447,15 @@ def calculate_congestion_reduction_costs(
     return (
         lifetime_congestion_reduction_cost,
         lifetime_congestion_reduction_cost_haircut,
-        lifetime_congestion_residual_cost,
+        lifetime_residual_exceedance_cost,
         lifetime_congestion_reduction_cost_pv,
         lifetime_congestion_reduction_cost_haircut_pv,
-        lifetime_congestion_residual_cost_pv,
+        lifetime_residual_exceedance_cost_pv,
         annual_congestion_reduction_cost_raw,
-        annual_congestion_residual_cost,
+        annual_residual_exceedance_cost,
         effective_capacity_relief,
         energy_congestion_reduction,
-        energy_congestion_residual,
+        energy_residual_exceedance,
         E_near,
         lifetime_congestion_during_delay_and_construction_cost,
         lifetime_congestion_during_delay_and_construction_pv,
@@ -491,7 +491,10 @@ def main() -> None:
         old_capacity_mw,
     ) = load_project_technical_details()
 
-    # Load congestion reduction parameters
+    # Load financing details
+    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+
+    # Load congestion and curtailment reduction parameters (merged)
     (
         flow_factor,
         binding_hours,
@@ -501,32 +504,26 @@ def main() -> None:
         near_binding_relief_factor,
         saturation_factor,
         average_congestion_price,
-    ) = load_congestion_reductions()
-
-    # Load financing details
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
-
-    # Load curtailment reduction parameters
-    (
+        residual_exceedance_value,
         curtailment_hours_total,
         average_curtailment_mw,
         average_curtailment_price,
         curtailment_saturation_factor,
-    ) = load_curtailment_reductions()
+    ) = load_congestion_curtailment_reductions()
 
     # Calculate congestion reduction costs
     (
         lifetime_congestion_reduction_cost,
         lifetime_congestion_reduction_cost_haircut,
-        lifetime_congestion_residual_cost,
+        lifetime_residual_exceedance_cost,
         lifetime_congestion_reduction_cost_pv,
         lifetime_congestion_reduction_cost_haircut_pv,
-        lifetime_congestion_residual_cost_pv,
+        lifetime_residual_exceedance_cost_pv,
         annual_congestion_reduction_cost_raw,
-        annual_congestion_residual_cost,
+        annual_residual_exceedance_cost,
         effective_capacity_relief,
         energy_congestion_reduction,
-        energy_congestion_residual,
+        energy_residual_exceedance,
         E_near,
         lifetime_congestion_during_delay_and_construction_cost,
         lifetime_congestion_during_delay_and_construction_pv,
@@ -557,6 +554,7 @@ def main() -> None:
         near_binding_relief_factor,
         saturation_factor,
         average_congestion_price,
+        residual_exceedance_value,
         project_lifetime,
         delay_years,
         construction_years,
@@ -572,7 +570,7 @@ def main() -> None:
     print("=" * 60)
     print(f"Effective capacity relief: {effective_capacity_relief:,.2f} MW")
     print(f"Energy congestion reduction: {energy_congestion_reduction:,.2f} MWh/yr")
-    print(f"Energy congestion residual: {energy_congestion_residual:,.2f} MWh/yr")
+    print(f"Energy residual exceedance: {energy_residual_exceedance:,.2f} MWh/yr")
     print(f"E_near: {E_near:,.2f} MWh/yr")
 
     print()
@@ -641,7 +639,7 @@ def main() -> None:
         f"Lifetime congestion reduction cost haircut: ${lifetime_congestion_reduction_cost_haircut:,.2f}"
     )
     print(
-        f"Lifetime congestion residual cost: ${lifetime_congestion_residual_cost:,.2f}"
+        f"Lifetime residual exceedance cost: ${lifetime_residual_exceedance_cost:,.2f}"
     )
 
     print()
@@ -656,7 +654,7 @@ def main() -> None:
         f"Lifetime congestion reduction cost haircut PV: ${lifetime_congestion_reduction_cost_haircut_pv:,.2f}"
     )
     print(
-        f"Lifetime congestion residual cost PV: ${lifetime_congestion_residual_cost_pv:,.2f}"
+        f"Lifetime residual exceedance cost PV: ${lifetime_residual_exceedance_cost_pv:,.2f}"
     )
     print("=" * 60)
 
@@ -689,14 +687,14 @@ def main() -> None:
         "congestion_delay_cost_pv": lifetime_congestion_during_delay_and_construction_pv,
         "curtailment_delay_cost_nominal": lifetime_curtailment_during_delay_and_construction_cost,
         "curtailment_delay_cost_pv": lifetime_curtailment_during_delay_and_construction_pv,
-        # COSTS - Residual unrelieved congestion
-        "residual_congestion_annual": annual_congestion_residual_cost,
-        "residual_congestion_nominal": lifetime_congestion_residual_cost,
-        "residual_congestion_pv": lifetime_congestion_residual_cost_pv,
+        # COSTS - Residual unrelieved exceedance
+        "residual_exceedance_annual": annual_residual_exceedance_cost,
+        "residual_exceedance_nominal": lifetime_residual_exceedance_cost,
+        "residual_exceedance_pv": lifetime_residual_exceedance_cost_pv,
         # Physical metrics (for reference)
         "effective_capacity_relief_mw": effective_capacity_relief,
         "energy_congestion_reduction_mwh_yr": energy_congestion_reduction,
-        "energy_congestion_residual_mwh_yr": energy_congestion_residual,
+        "energy_residual_exceedance_mwh_yr": energy_residual_exceedance,
         "energy_curtailment_reduction_mwh_yr": E_curt,
         "theta_overlap": theta_overlap,
         "binding_hours_overlap": H_bc,

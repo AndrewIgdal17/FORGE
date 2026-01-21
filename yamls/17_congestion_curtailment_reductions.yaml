@@ -1,0 +1,90 @@
+# Congestion and Curtailment Reductions
+# Cost savings from reduced transmission congestion and renewable energy curtailment
+
+greenfield_congestion_curtailment_reductions:
+  congestion:
+    constraints:
+      # We need the capacity from project technical details
+      flow_factor: 0.65 # flow factor is deliverability to the targeted constrained [0,1]
+      # delta C_eff = S * capacity
+      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)
+      average_exceedance: 328 # MW exceedance during binding hours (>= 0)
+      # baseline congestion energy = H_b * X mwh/yr
+      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
+      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
+      # near baseline congestion energy = H_n * X mwh/yr
+      near_binding_relief_factor: 0.25 # [0,1]
+      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
+
+    costs:
+      average_congestion_price: 30 # $/mwh (>= 0)
+      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)
+      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease
+      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.
+
+  curtailment:
+    # Number of hours per year when renewable energy curtailment occurs
+    # Curtailment happens when renewable generators must reduce output because
+    # transmission capacity is insufficient to deliver power to demand centers
+    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)
+
+    # Average MW of renewable energy that is curtailed during curtailment hours
+    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)
+    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW
+    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief
+    # THis is already expressed as "constraint-equivalent MW" conceptually
+    average_curtailment_mw: 0 # MW (>= 0)
+
+    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)
+    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price
+    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)
+
+    # Saturation factor [0,1] to account for diminishing returns
+    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)
+    # Higher values mean more saturation (less benefit per MW of capacity added)
+    curtailment_saturation_factor: 0.1 # [0,1]
+
+reconductoring_congestion_curtailment_reductions:
+  congestion:
+    constraints:
+      # delta C_eff = delta C_eff_new - delta C_eff_old
+      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)
+      average_exceedance: 328 # MW exceedance during binding hours (>= 0)
+      # baseline congestion energy = H_b * X mwh/yr
+      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
+      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
+      # near baseline congestion energy = H_n * X mwh/yr
+      near_binding_relief_factor: 0.25 # [0,1]
+      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
+
+      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT
+    # energy loss info is in project_category_circuit_detail.yaml
+
+    costs:
+      average_congestion_price: 30 # $/mwh (>= 0)
+      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)
+      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease
+      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.
+
+  curtailment:
+    # Number of hours per year when renewable energy curtailment occurs
+    # Curtailment happens when renewable generators must reduce output because
+    # transmission capacity is insufficient to deliver power to demand centers
+    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)
+
+    # Average MW of renewable energy that is curtailed during curtailment hours
+    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)
+    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW
+    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief
+    # THis is already expressed as "constraint-equivalent MW" conceptually
+    average_curtailment_mw: 0 # MW (>= 0)
+
+    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)
+    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price
+    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)
+
+    # Saturation factor [0,1] to account for diminishing returns
+    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)
+    # Higher values mean more saturation (less benefit per MW of capacity added)
+    curtailment_saturation_factor: 0.1 # [0,1]
+

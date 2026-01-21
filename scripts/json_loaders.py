@@ -161,18 +161,36 @@ def load_emissions_details():
     )
 
 
-def load_congestion_reductions():
-    """Load congestion reduction parameters from JSON."""
+def load_congestion_curtailment_reductions():
+    """
+    Load congestion and curtailment reduction parameters from merged JSON.
+    
+    Returns:
+        Tuple of 13 values:
+        - flow_factor (float, 0.0 for reconductoring)
+        - binding_hours (float)
+        - average_exceedance (float)
+        - near_binding_hours (float)
+        - near_average_exceedance (float)
+        - near_binding_relief_factor (float)
+        - saturation_factor (float)
+        - average_congestion_price (float)
+        - residual_exceedance_value (float | None, None if null in JSON)
+        - curtailment_hours_total (float)
+        - average_curtailment_mw (float)
+        - average_curtailment_price (float)
+        - curtailment_saturation_factor (float)
+    """
     # #region agent log
     import json, os
     try:
         log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_load_congestion_entry","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:158","message":"load_congestion_reductions entry","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
+            f.write(json.dumps({"id":"log_load_congestion_curtailment_entry","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:164","message":"load_congestion_curtailment_reductions entry","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
     except Exception as e: pass
     # #endregion
-    data = _data_source.get_data("17_congestion_reductions")
+    data = _data_source.get_data("17_congestion_curtailment_reductions")
     
     # Check if this is a reconductoring project
     project_data = _data_source.get_data("01_project_technical_details")
@@ -197,51 +215,52 @@ def load_congestion_reductions():
                 f.write(json.dumps({"id":"log_reconductoring_branch","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:167","message":"entering reconductoring branch","data":{"data_keys":list(data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}) + '\n')
         except Exception as e: pass
         # #endregion
-        cr = data["reconductoring_congestion_reductions"]
+        reductions_data = data["reconductoring_congestion_curtailment_reductions"]
         # flow_factor is not used for reconductoring (capacity relief = capacity - old_capacity)
         flow_factor = 0.0
     else:
-        cr = data["greenfield_congestion_reductions"]
-        flow_factor = cr["constraints"]["flow_factor"]
+        reductions_data = data["greenfield_congestion_curtailment_reductions"]
+        flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
     
-    # Get average_congestion_price - handle missing costs key in reconductoring section
-    if "costs" in cr:
-        average_congestion_price = cr["costs"]["average_congestion_price"]
+    congestion_data = reductions_data["congestion"]
+    curtailment_data = reductions_data["curtailment"]
+    
+    # Get average_congestion_price - handle missing costs key
+    if "costs" in congestion_data:
+        average_congestion_price = congestion_data["costs"]["average_congestion_price"]
+        # Get residual_exceedance_value (can be None)
+        residual_exceedance_value = congestion_data["costs"].get("residual_exceedance_value")
+        if residual_exceedance_value is not None:
+            residual_exceedance_value = float(residual_exceedance_value)
     else:
         # Fallback: try to get from greenfield section or use default
-        average_congestion_price = data.get("greenfield_congestion_reductions", {}).get("costs", {}).get("average_congestion_price", 30)
+        average_congestion_price = data.get("greenfield_congestion_curtailment_reductions", {}).get("congestion", {}).get("costs", {}).get("average_congestion_price", 30)
+        residual_exceedance_value = None
     
     result = (
-        flow_factor,
-        cr["constraints"]["binding_hours"],
-        cr["constraints"]["average_exceedance"],
-        cr["constraints"]["near_binding_hours"],
-        cr["constraints"]["near_average_exceedance"],
-        cr["constraints"]["near_binding_relief_factor"],
-        cr["constraints"]["saturation_factor"],
-        average_congestion_price,
+        float(flow_factor),
+        float(congestion_data["constraints"]["binding_hours"]),
+        float(congestion_data["constraints"]["average_exceedance"]),
+        float(congestion_data["constraints"]["near_binding_hours"]),
+        float(congestion_data["constraints"]["near_average_exceedance"]),
+        float(congestion_data["constraints"]["near_binding_relief_factor"]),
+        float(congestion_data["constraints"]["saturation_factor"]),
+        float(average_congestion_price),
+        residual_exceedance_value,
+        float(curtailment_data.get("curtailment_hours_total", 0)),
+        float(curtailment_data.get("average_curtailment_mw", 0)),
+        float(curtailment_data.get("average_curtailment_price", 0)),
+        float(curtailment_data.get("curtailment_saturation_factor", 0)),
     )
     # #region agent log
     try:
         log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_load_congestion_exit","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:184","message":"load_congestion_reductions exit","data":{"flow_factor":result[0],"binding_hours":result[1],"average_exceedance":result[2],"saturation_factor":result[6],"congestion_price":result[7]},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}) + '\n')
+            f.write(json.dumps({"id":"log_load_congestion_curtailment_exit","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:184","message":"load_congestion_curtailment_reductions exit","data":{"flow_factor":result[0],"binding_hours":result[1],"average_exceedance":result[2],"saturation_factor":result[6],"congestion_price":result[7]},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}) + '\n')
     except Exception as e: pass
     # #endregion
     return result
-
-
-def load_curtailment_reductions():
-    """Load curtailment reductions parameters from JSON."""
-    data = _data_source.get_data("18_curtailment_reductions")
-    y = data["curtailment_reductions"]
-    return (
-        float(y.get("curtailment_hours_total", 0)),
-        float(y.get("average_curtailment_mw", 0)),
-        float(y.get("average_curtailment_price", 0)),
-        float(y.get("curtailment_saturation_factor", 0)),
-    )
 
 
 def load_contingencies():
