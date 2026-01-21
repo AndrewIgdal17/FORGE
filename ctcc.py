@@ -131,9 +131,9 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
             "curtailment_delay_cost_nominal", 0
         )
         or 0,
-        "residual_congestion_pv": congestion.get("residual_congestion_pv", 0) or 0,
-        "residual_congestion_nominal": congestion.get(
-            "residual_congestion_nominal", 0
+        "residual_exceedance_pv": congestion.get("residual_exceedance_pv", 0) or 0,
+        "residual_exceedance_nominal": congestion.get(
+            "residual_exceedance_nominal", 0
         )
         or 0,
     }
