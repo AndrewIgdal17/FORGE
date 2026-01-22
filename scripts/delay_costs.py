@@ -35,9 +35,9 @@ def load_project_technical_details() -> float:
     """
     # load_project_technical_details_centralized returns:
     # (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
-    #  line_utilization, reconductoring, delay_years, construction_years,
+    #  line_utilization, reconductoring, uses_existing_row, delay_years, construction_years,
     #  project_lifetime, converter_loss_percentage)
-    _, _, _, _, _, _, _, delay_years, _, _, _ = load_project_technical_details_centralized()
+    _, _, _, _, _, _, _, _, delay_years, _, _, _ = load_project_technical_details_centralized()
     return delay_years
 
 

@@ -50,10 +50,10 @@ def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
             - capacity_mw: New line capacity in MW
             - old_capacity_mw: Original capacity in MW (for reconductoring projects)
     """
-    # Load from centralized loader (returns 11 values)
+    # Load from centralized loader (returns 12 values)
     # Indices: 0=construction_type, 1=ac_dc, 2=capacity_mw, 3=conductor_type,
-    #          4=converter_type, 5=line_utilization, 6=reconductoring,
-    #          7=delay_years, 8=construction_years, 9=project_lifetime, 10=converter_loss_percentage
+    #          4=converter_type, 5=line_utilization, 6=reconductoring, 7=uses_existing_row,
+    #          8=delay_years, 9=construction_years, 10=project_lifetime, 11=converter_loss_percentage
     (
         _construction_type,
         _ac_dc,
@@ -62,6 +62,7 @@ def load_project_technical_details() -> Tuple[float, int, int, bool, int, int]:
         _converter_type,
         _line_utilization,
         reconductoring,
+        _uses_existing_row,
         delay_years,
         construction_years,
         project_lifetime,

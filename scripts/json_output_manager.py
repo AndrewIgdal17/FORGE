@@ -45,7 +45,7 @@ class JSONOutputManager:
         try:
             # Use json_loaders to get data
             (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
-             line_utilization, reconductoring, delay_years, construction_years,
+             line_utilization, reconductoring, uses_existing_row, delay_years, construction_years,
              project_lifetime, converter_loss_percentage) = json_loaders.load_project_technical_details()
 
             total_line_length = json_loaders.load_physical_details()

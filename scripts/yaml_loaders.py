@@ -64,7 +64,7 @@ def normalize_construction_type(construction_type: str) -> str:
         "Overhead": "Overhead",  # Already correct
         "Subsea": "Subsea",  # Already correct
     }
-    
+
     normalized = normalization_map.get(construction_type, construction_type)
     return normalized
 
@@ -111,7 +111,9 @@ def load_project_technical_details() -> (
                 raise KeyError(
                     f"Missing '{key}' key in timeline section of technical details YAML"
                 )
-        construction_type = normalize_construction_type(project_data["construction_type"])
+        construction_type = normalize_construction_type(
+            project_data["construction_type"]
+        )
         ac_dc = project_data["ac_dc"]
         capacity_mw = project_data["capacity_mw"]
         conductor_type = project_data["conductor_type"]
@@ -121,6 +123,7 @@ def load_project_technical_details() -> (
             if ac_dc == "AC"
             else project_data.get("converter_loss_percentage", None)
         )
+        uses_existing_row = project_data.get("uses_existing_row", False)
         return (
             construction_type,
             ac_dc,
@@ -129,6 +132,7 @@ def load_project_technical_details() -> (
             converter_type,
             project_data["line_utilization"],
             project_data["reconductoring"],
+            uses_existing_row,
             timeline_data["delay_years"],
             timeline_data["construction_years"],
             timeline_data["project_lifetime"],
@@ -329,12 +333,24 @@ def load_emissions_details() -> (
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 
 
-def load_congestion_curtailment_reductions() -> (
-    Tuple[float, float, float, float, float, float, float, float, Optional[float], float, float, float, float]
-):
+def load_congestion_curtailment_reductions() -> Tuple[
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    float,
+    Optional[float],
+    float,
+    float,
+    float,
+    float,
+]:
     """
     Load congestion and curtailment reduction parameters from merged YAML file.
-    
+
     Returns:
         Tuple of 13 values:
         - flow_factor (float, 0.0 for reconductoring)
@@ -355,13 +371,19 @@ def load_congestion_curtailment_reductions() -> (
         # Check if this is a reconductoring project
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
             project_data = yaml.safe_load(project_file)
-        reconductoring = project_data.get("project", {}).get("reconductoring", False) if project_data else False
-        
+        reconductoring = (
+            project_data.get("project", {}).get("reconductoring", False)
+            if project_data
+            else False
+        )
+
         with open(YAMLS_DIR / "17_congestion_curtailment_reductions.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data:
-            raise ValueError("Congestion/curtailment reductions YAML file is empty or invalid")
-        
+            raise ValueError(
+                "Congestion/curtailment reductions YAML file is empty or invalid"
+            )
+
         # Load from appropriate section
         if reconductoring:
             if "reconductoring_congestion_curtailment_reductions" not in data:
@@ -376,10 +398,13 @@ def load_congestion_curtailment_reductions() -> (
                     "Missing 'greenfield_congestion_curtailment_reductions' key in YAML file"
                 )
             reductions_data = data["greenfield_congestion_curtailment_reductions"]
-            if "congestion" not in reductions_data or "constraints" not in reductions_data["congestion"]:
+            if (
+                "congestion" not in reductions_data
+                or "constraints" not in reductions_data["congestion"]
+            ):
                 raise KeyError("Missing 'congestion.constraints' section in YAML file")
             flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
-        
+
         # Validate structure
         if "congestion" not in reductions_data:
             raise KeyError(
@@ -389,22 +414,18 @@ def load_congestion_curtailment_reductions() -> (
             raise KeyError(
                 f"Missing 'curtailment' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_curtailment_reductions section"
             )
-        
+
         congestion_data = reductions_data["congestion"]
         curtailment_data = reductions_data["curtailment"]
-        
+
         if "constraints" not in congestion_data:
-            raise KeyError(
-                f"Missing 'constraints' key in congestion section"
-            )
+            raise KeyError(f"Missing 'constraints' key in congestion section")
         if "costs" not in congestion_data:
-            raise KeyError(
-                f"Missing 'costs' key in congestion section"
-            )
-        
+            raise KeyError(f"Missing 'costs' key in congestion section")
+
         constraints = congestion_data["constraints"]
         costs = congestion_data["costs"]
-        
+
         # Validate required constraint keys
         required_constraint_keys = [
             "binding_hours",
@@ -423,7 +444,7 @@ def load_congestion_curtailment_reductions() -> (
             raise KeyError(
                 "Missing 'average_congestion_price' key in costs section of congestion reductions YAML"
             )
-        
+
         # Validate required curtailment keys
         required_curtailment_keys = [
             "curtailment_hours_total",
@@ -436,12 +457,12 @@ def load_congestion_curtailment_reductions() -> (
                 raise KeyError(
                     f"Missing '{key}' key in curtailment section of YAML file"
                 )
-        
+
         # Get residual_exceedance_value (can be None)
         residual_exceedance_value = costs.get("residual_exceedance_value")
         if residual_exceedance_value is not None:
             residual_exceedance_value = float(residual_exceedance_value)
-        
+
         result = (
             float(flow_factor),
             float(constraints["binding_hours"]),
@@ -465,9 +486,13 @@ def load_congestion_curtailment_reductions() -> (
     except yaml.YAMLError as e:
         raise ValueError(f"Error parsing congestion/curtailment reductions YAML: {e}")
     except KeyError as e:
-        raise KeyError(f"Missing required key in congestion/curtailment reductions YAML: {e}")
+        raise KeyError(
+            f"Missing required key in congestion/curtailment reductions YAML: {e}"
+        )
     except (ValueError, TypeError) as e:
-        raise ValueError(f"Error converting congestion/curtailment reduction values to float: {e}")
+        raise ValueError(
+            f"Error converting congestion/curtailment reduction values to float: {e}"
+        )
 
 
 def load_contingencies() -> Dict[str, float]:
@@ -665,11 +690,11 @@ def load_outage_costs() -> Dict[str, Any]:
 def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
     """
     Load Primary BCR configuration from YAML file.
-    
+
     Returns:
         Dictionary with module enable/disable flags grouped by category.
         If file doesn't exist, returns default (all enabled).
-        
+
     Structure:
         {
             "operational": {"oandm": True, "insurance": True, "delay_costs": True},
@@ -698,27 +723,27 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
             "curtailment": True,
         },
     }
-    
+
     config_path = YAMLS_DIR / "22_primary_bcr_config.yaml"
-    
+
     # If file doesn't exist, return default
     if not config_path.exists():
         return default_config
-    
+
     try:
         with open(config_path, "r") as file:
             config_data = yaml.safe_load(file)
-        
+
         if not config_data:
             # Empty file, return default
             return default_config
-        
+
         if "primary_bcr_config" not in config_data:
             # Missing top-level key, return default
             return default_config
-        
+
         config = config_data["primary_bcr_config"]
-        
+
         # Merge with defaults to handle missing keys
         result = {}
         for category in ["operational", "risk", "energy", "benefits"]:
@@ -727,12 +752,13 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
             # Use defaults for each module if not specified
             for module, default_value in default_config[category].items():
                 result[category][module] = category_config.get(module, default_value)
-        
+
         return result
-        
+
     except yaml.YAMLError as e:
         # Invalid YAML, return default with warning
         import warnings
+
         warnings.warn(
             f"Error parsing Primary BCR config YAML: {e}. Using default (all modules enabled)."
         )
@@ -740,6 +766,7 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
     except Exception as e:
         # Any other error, return default with warning
         import warnings
+
         warnings.warn(
             f"Error loading Primary BCR config: {e}. Using default (all modules enabled)."
         )

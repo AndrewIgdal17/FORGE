@@ -92,6 +92,7 @@ def main() -> None:
         converter_type,
         line_utilization,
         reconductoring,
+        uses_existing_row,
         delay_year,
         construction_years,
         project_lifetime,
@@ -126,17 +127,24 @@ def main() -> None:
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # Define timing parameters
-    rent_start_year = delay_year + 1
-    rent_total_years = project_lifetime + construction_years
+    if reconductoring or uses_existing_row:
+        # For existing ROW (reconductoring or uses_existing_row), rent starts from year 1
+        rent_start_year = 1
+        rent_total_years = delay_year + construction_years + project_lifetime
+    else:
+        # For new ROW, rent starts after delay period
+        rent_start_year = delay_year + 1
+        rent_total_years = project_lifetime + construction_years
 
-    if reconductoring:
+    if reconductoring or uses_existing_row:
         total_holding_cost = 0
         acquisition_cost = 0
-        total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+        # Rent includes delay + construction + lifetime for existing ROW
+        total_rent_cost = yearly_rent_cost * (delay_year + construction_years + project_lifetime)
         total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
 
         # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-        # No acquisition or holding costs for reconductoring
+        # No acquisition or holding costs for existing ROW
         # Rent is not AFUDC-eligible (operational expense)
         acquisition_capitalized = 0
         acquisition_afudc = 0

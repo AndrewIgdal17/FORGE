@@ -14,6 +14,7 @@ class JSONDataSource:
     Stores the combined JSON data in memory for all loader functions to access.
     Automatically loads from CTCC_JSON_DATA_FILE environment variable if set.
     """
+
     _instance = None
     _json_data: Optional[Dict[str, Any]] = None
 
@@ -33,20 +34,24 @@ class JSONDataSource:
             self._load_from_env_file()
 
         if self._json_data is None:
-            raise RuntimeError("JSON data not set. Call set_data() first or set CTCC_JSON_DATA_FILE environment variable.")
+            raise RuntimeError(
+                "JSON data not set. Call set_data() first or set CTCC_JSON_DATA_FILE environment variable."
+            )
         if key not in self._json_data:
             raise KeyError(f"Key '{key}' not found in JSON data.")
         return self._json_data[key]
 
     def _load_from_env_file(self):
         """Load JSON data from file specified in CTCC_JSON_DATA_FILE environment variable."""
-        json_file_path = os.environ.get('CTCC_JSON_DATA_FILE')
+        json_file_path = os.environ.get("CTCC_JSON_DATA_FILE")
         if json_file_path and os.path.exists(json_file_path):
             try:
-                with open(json_file_path, 'r') as f:
+                with open(json_file_path, "r") as f:
                     self._json_data = json.load(f)
             except Exception as e:
-                raise RuntimeError(f"Failed to load JSON data from {json_file_path}: {e}")
+                raise RuntimeError(
+                    f"Failed to load JSON data from {json_file_path}: {e}"
+                )
 
     def clear(self):
         """Clear the JSON data."""
@@ -94,10 +99,9 @@ def load_project_technical_details():
     conductor_type = pd["conductor_type"]
     converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
     converter_loss_percentage = (
-        None
-        if ac_dc == "AC"
-        else pd.get("converter_loss_percentage", None)
+        None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
     )
+    uses_existing_row = pd.get("uses_existing_row", False)
     return (
         construction_type,
         ac_dc,
@@ -106,6 +110,7 @@ def load_project_technical_details():
         converter_type,
         pd["line_utilization"],
         pd["reconductoring"],
+        uses_existing_row,
         tl["delay_years"],
         tl["construction_years"],
         tl["project_lifetime"],
@@ -164,7 +169,7 @@ def load_emissions_details():
 def load_congestion_curtailment_reductions():
     """
     Load congestion and curtailment reduction parameters from merged JSON.
-    
+
     Returns:
         Tuple of 13 values:
         - flow_factor (float, 0.0 for reconductoring)
@@ -183,37 +188,87 @@ def load_congestion_curtailment_reductions():
     """
     # #region agent log
     import json, os
+
     try:
-        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_load_congestion_curtailment_entry","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:164","message":"load_congestion_curtailment_reductions entry","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
-    except Exception as e: pass
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_load_congestion_curtailment_entry",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "json_loaders.py:164",
+                        "message": "load_congestion_curtailment_reductions entry",
+                        "data": {},
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
     # #endregion
     data = _data_source.get_data("17_congestion_curtailment_reductions")
-    
+
     # Check if this is a reconductoring project
     project_data = _data_source.get_data("01_project_technical_details")
     reconductoring = project_data["project"].get("reconductoring", False)
-    
+
     # #region agent log
     try:
-        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_reconductoring_flag","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:164","message":"reconductoring flag check","data":{"reconductoring":reconductoring,"type":str(type(reconductoring)),"project_data_keys":list(project_data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}) + '\n')
-    except Exception as e: pass
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_reconductoring_flag",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "json_loaders.py:164",
+                        "message": "reconductoring flag check",
+                        "data": {
+                            "reconductoring": reconductoring,
+                            "type": str(type(reconductoring)),
+                            "project_data_keys": list(project_data.keys()),
+                        },
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
     # #endregion
-    
+
     # Load from appropriate section
     if reconductoring:
         # #region agent log
         try:
-            log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+            log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
             os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a') as f:
-                f.write(json.dumps({"id":"log_reconductoring_branch","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:167","message":"entering reconductoring branch","data":{"data_keys":list(data.keys())},"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}) + '\n')
-        except Exception as e: pass
+            with open(log_path, "a") as f:
+                f.write(
+                    json.dumps(
+                        {
+                            "id": "log_reconductoring_branch",
+                            "timestamp": int(__import__("time").time() * 1000),
+                            "location": "json_loaders.py:167",
+                            "message": "entering reconductoring branch",
+                            "data": {"data_keys": list(data.keys())},
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "B",
+                        }
+                    )
+                    + "\n"
+                )
+        except Exception as e:
+            pass
         # #endregion
         reductions_data = data["reconductoring_congestion_curtailment_reductions"]
         # flow_factor is not used for reconductoring (capacity relief = capacity - old_capacity)
@@ -221,22 +276,29 @@ def load_congestion_curtailment_reductions():
     else:
         reductions_data = data["greenfield_congestion_curtailment_reductions"]
         flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
-    
+
     congestion_data = reductions_data["congestion"]
     curtailment_data = reductions_data["curtailment"]
-    
+
     # Get average_congestion_price - handle missing costs key
     if "costs" in congestion_data:
         average_congestion_price = congestion_data["costs"]["average_congestion_price"]
         # Get residual_exceedance_value (can be None)
-        residual_exceedance_value = congestion_data["costs"].get("residual_exceedance_value")
+        residual_exceedance_value = congestion_data["costs"].get(
+            "residual_exceedance_value"
+        )
         if residual_exceedance_value is not None:
             residual_exceedance_value = float(residual_exceedance_value)
     else:
         # Fallback: try to get from greenfield section or use default
-        average_congestion_price = data.get("greenfield_congestion_curtailment_reductions", {}).get("congestion", {}).get("costs", {}).get("average_congestion_price", 30)
+        average_congestion_price = (
+            data.get("greenfield_congestion_curtailment_reductions", {})
+            .get("congestion", {})
+            .get("costs", {})
+            .get("average_congestion_price", 30)
+        )
         residual_exceedance_value = None
-    
+
     result = (
         float(flow_factor),
         float(congestion_data["constraints"]["binding_hours"]),
@@ -254,11 +316,32 @@ def load_congestion_curtailment_reductions():
     )
     # #region agent log
     try:
-        log_path = '/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log'
+        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, 'a') as f:
-            f.write(json.dumps({"id":"log_load_congestion_curtailment_exit","timestamp":int(__import__('time').time()*1000),"location":"json_loaders.py:184","message":"load_congestion_curtailment_reductions exit","data":{"flow_factor":result[0],"binding_hours":result[1],"average_exceedance":result[2],"saturation_factor":result[6],"congestion_price":result[7]},"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}) + '\n')
-    except Exception as e: pass
+        with open(log_path, "a") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "id": "log_load_congestion_curtailment_exit",
+                        "timestamp": int(__import__("time").time() * 1000),
+                        "location": "json_loaders.py:184",
+                        "message": "load_congestion_curtailment_reductions exit",
+                        "data": {
+                            "flow_factor": result[0],
+                            "binding_hours": result[1],
+                            "average_exceedance": result[2],
+                            "saturation_factor": result[6],
+                            "congestion_price": result[7],
+                        },
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                    }
+                )
+                + "\n"
+            )
+    except Exception as e:
+        pass
     # #endregion
     return result
 

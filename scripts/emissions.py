@@ -49,6 +49,7 @@ def calculate_total_energy_losses() -> Tuple[float, int]:
         converter_type,
         line_utilization_percent,
         reconductoring,
+        uses_existing_row,
         delay_year,
         construction_years,
         project_lifetime,

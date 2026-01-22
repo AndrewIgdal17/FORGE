@@ -382,6 +382,7 @@ def main() -> None:
         converter_type,
         line_utilization,
         reconductoring,
+        uses_existing_row,
         delay_years,
         construction_years,
         project_lifetime,
