@@ -2,7 +2,7 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S5_Greenfield_657MW_StandardAC"
+  name: "S2_California_Highway_Route_AC_657MW"
   construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 0 # 1 or 2
@@ -16,10 +16,10 @@ project:
   baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)
 
   reconductoring: False # True or False
-  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
-  old_capacity_mw: 329 # MW
-  old_conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
-  old_ac_dc: "AC" # AC or DC
+  uses_existing_row: True # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
+  old_capacity_mw: null # MW
+  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
+  old_ac_dc: null # AC or DC
 
   # Greenfield capacity comparison (only used when reconductoring: False)
   greenfield_comparison_capacity_mw: null # Optional: Capacity in MW for comparison configuration
@@ -27,5 +27,5 @@ project:
 
 timeline:
   construction_years: 1 # years (> 0)
-  delay_years: 6 # years (>= 0)
+  delay_years: 4 # years (>= 0)
   project_lifetime: 50 # years (> 0)

@@ -90,12 +90,15 @@ def load_financing_details():
 
 def load_project_technical_details():
     """Load project technical details - returns all project specs."""
+    from calculation_utils import normalize_capacity_mw
+    
     project_details = _data_source.get_data("01_project_technical_details")
     pd = project_details["project"]
     tl = project_details["timeline"]
     construction_type = pd["construction_type"]
     ac_dc = pd["ac_dc"]
-    capacity_mw = pd["capacity_mw"]
+    capacity_mw_raw = pd["capacity_mw"]
+    capacity_mw = normalize_capacity_mw(capacity_mw_raw)
     conductor_type = pd["conductor_type"]
     converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
     converter_loss_percentage = (

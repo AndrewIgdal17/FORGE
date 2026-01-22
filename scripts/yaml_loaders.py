@@ -7,6 +7,7 @@ from __future__ import annotations
 import yaml
 from typing import Dict, Any, Tuple, Optional
 from path_config import YAMLS_DIR
+from calculation_utils import normalize_capacity_mw
 
 
 def load_financing_details() -> Tuple[float, int, float, float]:
@@ -115,7 +116,8 @@ def load_project_technical_details() -> (
             project_data["construction_type"]
         )
         ac_dc = project_data["ac_dc"]
-        capacity_mw = project_data["capacity_mw"]
+        capacity_mw_raw = project_data["capacity_mw"]
+        capacity_mw = normalize_capacity_mw(capacity_mw_raw)
         conductor_type = project_data["conductor_type"]
         converter_type = "NA" if ac_dc == "AC" else project_data["converter_type"]
         converter_loss_percentage = (

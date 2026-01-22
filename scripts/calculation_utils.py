@@ -8,6 +8,33 @@ import math
 from typing import Union, Tuple
 
 
+def normalize_capacity_mw(capacity_mw: Union[int, str]) -> int:
+    """
+    Normalize capacity_mw to always return an integer.
+
+    Handles:
+    - int: Returns as-is
+    - str with "MW" suffix: Strips "MW" and converts to int
+    - str numeric: Converts to int
+
+    Args:
+        capacity_mw: Capacity value (int or str)
+
+    Returns:
+        int: Normalized capacity in MW
+
+    Raises:
+        ValueError: If value cannot be converted to int
+    """
+    if isinstance(capacity_mw, int):
+        return capacity_mw
+    if isinstance(capacity_mw, str):
+        # Strip "MW" suffix if present (case-insensitive)
+        cleaned = capacity_mw.upper().replace("MW", "").strip()
+        return int(cleaned)
+    raise ValueError(f"Cannot convert capacity_mw to int: {capacity_mw}")
+
+
 def calculate_phase_current(
     capacity_mw: Union[int, str],
     voltage_kv: float,

@@ -951,10 +951,10 @@ def print_bcr_summary(
     # Benefits section
     print("BENEFITS (Present Value):")
     print(
-        f"  Congestion Reduction:        ${benefits['congestion_benefit_pv']:>15,.0f}"
+        f"  Congestion Reduction (haircut): ${benefits['congestion_benefit_haircut_pv']:>15,.0f}"
     )
     print(
-        f"  Curtailment Reduction:       ${benefits['curtailment_benefit_pv']:>15,.0f}"
+        f"  Curtailment Reduction (haircut): ${benefits['curtailment_benefit_haircut_pv']:>15,.0f}"
     )
 
     line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
@@ -971,7 +971,7 @@ def print_bcr_summary(
         print(f"  Revenue (Rate-Based):        ${revenue_pv:>15,.0f}")
 
     print("  " + "-" * 78)
-    print(f"  Total Benefits:              ${benefits['total_benefits_pv']:>15,.0f}")
+    print(f"  Total Benefits (haircut):    ${benefits['total_benefits_haircut_pv']:>15,.0f}")
     print()
 
     # Costs section
