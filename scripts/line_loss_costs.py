@@ -102,6 +102,7 @@ def load_project_details() -> Tuple[
             converter_type,
             line_utilization_percent,
             reconductoring,
+            uses_existing_row,  # Added: 12th value from updated loader
             delay_years,
             construction_years,
             project_lifetime,

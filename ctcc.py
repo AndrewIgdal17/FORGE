@@ -16,7 +16,10 @@ from datetime import datetime
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from bcr_calculator import calculate_and_display_bcr
-from csv_output_manager import CTCCOutputManager as CSVOutputManager, BATCH_SUMMARY_FIELDS
+from csv_output_manager import (
+    CTCCOutputManager as CSVOutputManager,
+    BATCH_SUMMARY_FIELDS,
+)
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -34,7 +37,11 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         # Pass environment variables explicitly to ensure subprocess scripts can access them
         env = os.environ.copy()
         result = subprocess.run(
-            [sys.executable, script_name], capture_output=True, text=True, cwd="scripts", env=env
+            [sys.executable, script_name],
+            capture_output=True,
+            text=True,
+            cwd="scripts",
+            env=env,
         )
         if result.returncode == 0:
             if not quiet:
@@ -113,9 +120,7 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         "outage_pv": outage.get("pv_cost", 0) or 0,
         "outage_nominal": outage.get("nominal_total", 0) or 0,
         "wildfire_liability_pv": wildfire_liability.get("pv_total", 0) or 0,
-        "wildfire_liability_nominal": wildfire_liability.get(
-            "nominal_lifetime_cost", 0
-        )
+        "wildfire_liability_nominal": wildfire_liability.get("nominal_lifetime_cost", 0)
         or 0,
         # Delay costs (PV + nominal)
         "delay_cost_pv": delay.get("total_pv", 0) or 0,
@@ -132,9 +137,7 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         )
         or 0,
         "residual_exceedance_pv": congestion.get("residual_exceedance_pv", 0) or 0,
-        "residual_exceedance_nominal": congestion.get(
-            "residual_exceedance_nominal", 0
-        )
+        "residual_exceedance_nominal": congestion.get("residual_exceedance_nominal", 0)
         or 0,
     }
 
@@ -169,16 +172,12 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
     return {
         "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
         "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
-        "total_energy_emissions_pv": csv_equivalent.get(
-            "energy_emissions_costs_pv", 0
-        ),
+        "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),
         "total_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
         "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
         "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
         "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
-        "total_benefits_haircut_pv": csv_equivalent.get(
-            "total_benefits_haircut_pv", 0
-        ),
+        "total_benefits_haircut_pv": csv_equivalent.get("total_benefits_haircut_pv", 0),
     }
 
 
@@ -578,12 +577,15 @@ def main() -> None:
                 )
             except Exception as e:
                 import traceback
+
                 if not args.simple:
                     print(f"⚠️  BCR calculation failed: {e}")
                     print(f"   Scenario ID: {scenario_id}")
                     print("   Full error traceback:")
                     traceback.print_exc()
-                    print("   This does not affect the validity of the cost calculations above.")
+                    print(
+                        "   This does not affect the validity of the cost calculations above."
+                    )
                 else:
                     print(f"⚠️  BCR calculation failed: {e}")
                 bcr_results = None
@@ -594,7 +596,7 @@ def main() -> None:
             # JSON output mode: aggregate results and write final JSON
             try:
                 aggregator = aggregate_json_outputs(scenario_id, output_dir="outputs")
-                
+
                 # Calculate BCR from JSON aggregator data (not CSV)
                 bcr_results = None
                 csv_equivalent = None
@@ -631,6 +633,7 @@ def main() -> None:
                     summary_override = build_summary_from_csv_equivalent(csv_equivalent)
                 except Exception as e:
                     import traceback
+
                     if not args.simple:
                         print(f"⚠️  BCR calculation failed: {e}")
                         traceback.print_exc()
@@ -651,7 +654,7 @@ def main() -> None:
                     csv_equivalent=csv_equivalent,
                     summary_override=summary_override,
                 )
-                
+
                 if not args.simple:
                     print(f"✅ JSON results written to {output_file}")
             except Exception as e:

@@ -70,7 +70,7 @@ def normalize_construction_type(construction_type: str) -> str:
 
 
 def load_project_technical_details() -> (
-    Tuple[str, str, int, str, str, float, bool, float, int, int, Optional[float]]
+    Tuple[str, str, int, str, str, float, bool, bool, float, int, int, Optional[float]]
 ):
     """Load project technical details - returns all project specs."""
     try:

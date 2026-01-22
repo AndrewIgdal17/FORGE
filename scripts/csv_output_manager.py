@@ -66,25 +66,53 @@ BATCH_SUMMARY_FIELDS = [
     "bcr_capital",
     "bcr_capital_and_delay",
     "bcr_primary",
-    "bcr_excluding_risk",
+    # Combined risk BCRs (renamed)
+    "bcr_excluding_wildfire_risk_and_outage_risk",
+    "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk",
+    "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk",
+    "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk",
+    # Emissions/linelosses BCRs (unchanged)
     "bcr_excluding_emissions",
     "bcr_excluding_linelosses",
     "bcr_excluding_emissions_and_linelosses",
-    "bcr_excluding_emissions_and_risk",
-    "bcr_excluding_linelosses_and_risk",
-    "bcr_excluding_emissions_and_linelosses_and_risk",
+    # Wildfire-only BCRs (new)
+    "bcr_excluding_wildfire_risk",
+    "bcr_excluding_emissions_and_wildfire_risk",
+    "bcr_excluding_linelosses_and_wildfire_risk",
+    "bcr_excluding_emissions_and_linelosses_and_wildfire_risk",
+    # Outage-only BCRs (new)
+    "bcr_excluding_outage_risk",
+    "bcr_excluding_emissions_and_outage_risk",
+    "bcr_excluding_linelosses_and_outage_risk",
+    "bcr_excluding_emissions_and_linelosses_and_outage_risk",
+    # Stakeholder perspectives
     "bcr_utility",
     "bcr_ratepayer",
     # 11. Net Benefits PV
     "net_benefit_pv",
     "net_benefit_primary_pv",
-    "net_benefit_excluding_risk_pv",
+    # Combined risk net benefits (renamed)
+    "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
+    "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv",
+    "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv",
+    "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv",
+    # Emissions/linelosses net benefits (unchanged)
     "net_benefit_excluding_emissions_pv",
     "net_benefit_excluding_linelosses_pv",
     "net_benefit_excluding_emissions_and_linelosses_pv",
-    "net_benefit_excluding_emissions_and_risk_pv",
-    "net_benefit_excluding_linelosses_and_risk_pv",
-    "net_benefit_excluding_emissions_and_linelosses_and_risk_pv",
+    # Wildfire-only net benefits (new)
+    "net_benefit_excluding_wildfire_risk_pv",
+    "net_benefit_excluding_emissions_and_wildfire_risk_pv",
+    "net_benefit_excluding_linelosses_and_wildfire_risk_pv",
+    "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv",
+    # Outage-only net benefits (new)
+    "net_benefit_excluding_outage_risk_pv",
+    "net_benefit_excluding_emissions_and_outage_risk_pv",
+    "net_benefit_excluding_linelosses_and_outage_risk_pv",
+    "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv",
+    # Capital and stakeholder net benefits
+    "net_benefit_capital_only_pv",
+    "net_benefit_capital_and_delay_pv",
     "net_benefit_utility_pv",
     "net_benefit_ratepayer_pv",
 ]
@@ -182,27 +210,17 @@ class CTCCOutputManager:
                 # Converter details (for DC projects)
                 "converter_type": converter_type,
                 "number_of_converters": (
-                    project.get("number_of_converters", 0)
-                    if ac_dc == "DC"
-                    else 0
+                    project.get("number_of_converters", 0) if ac_dc == "DC" else 0
                 ),
                 # Reconductoring details
                 "reconductoring": reconductoring,
                 "old_capacity_mw": (
-                    project.get("old_capacity_mw", 0)
-                    if reconductoring
-                    else 0
+                    project.get("old_capacity_mw", 0) if reconductoring else 0
                 ),
                 "old_conductor_type": (
-                    project.get("old_conductor_type", "")
-                    if reconductoring
-                    else ""
+                    project.get("old_conductor_type", "") if reconductoring else ""
                 ),
-                "old_ac_dc": (
-                    project.get("old_ac_dc", "")
-                    if reconductoring
-                    else ""
-                ),
+                "old_ac_dc": (project.get("old_ac_dc", "") if reconductoring else ""),
                 # Financial parameters
                 "baseline_electricity_price_per_mwh": project.get(
                     "baseline_electricity_price_per_mwh", 0
@@ -272,11 +290,17 @@ class CTCCOutputManager:
                     # 3. The existing value is zero/empty (nothing to preserve)
                     existing_value = existing_row.get(field, 0)
                     try:
-                        existing_value_float = float(existing_value) if existing_value else 0
+                        existing_value_float = (
+                            float(existing_value) if existing_value else 0
+                        )
                     except (ValueError, TypeError):
                         existing_value_float = 0
-                    
-                    if value != 0 or field not in existing_row or existing_value_float == 0:
+
+                    if (
+                        value != 0
+                        or field not in existing_row
+                        or existing_value_float == 0
+                    ):
                         existing_row[field] = value
             else:
                 # Add as new row
@@ -301,7 +325,7 @@ class CTCCOutputManager:
 
         # Also write project_details.csv (idempotent - updates if exists)
         self.write_project_details()
-        
+
         # Also write AFUDC.csv (idempotent - updates if exists)
         self.write_afudc_csv()
 
@@ -408,7 +432,7 @@ class CTCCOutputManager:
             "scenario_id": self.scenario_id,
             "timestamp": self.timestamp,
         }
-        
+
         # Ensure total capital AFUDC is populated if missing
         total_capital_afudc = self.batch_summary_data.get("total_capital_afudc")
         if total_capital_afudc is None:
@@ -456,11 +480,17 @@ class CTCCOutputManager:
                     # 3. The existing value is zero/empty (nothing to preserve)
                     existing_value = existing_row.get(field, 0)
                     try:
-                        existing_value_float = float(existing_value) if existing_value else 0
+                        existing_value_float = (
+                            float(existing_value) if existing_value else 0
+                        )
                     except (ValueError, TypeError):
                         existing_value_float = 0
-                    
-                    if value != 0 or field not in existing_row or existing_value_float == 0:
+
+                    if (
+                        value != 0
+                        or field not in existing_row
+                        or existing_value_float == 0
+                    ):
                         existing_row[field] = value
             else:
                 existing_rows.append(afudc_data)
@@ -523,11 +553,16 @@ class CTCCOutputManager:
         # Prepend minimal params to each row
         enriched_rows = []
         for row in all_rows:
-            enriched_row = {**minimal_params, **row}  # Minimal params first, then row data
+            enriched_row = {
+                **minimal_params,
+                **row,
+            }  # Minimal params first, then row data
             enriched_rows.append(enriched_row)
 
         # Determine fieldnames: minimal params first, then the rest
-        first_row_other_keys = [k for k in all_rows[0].keys() if k not in minimal_params]
+        first_row_other_keys = [
+            k for k in all_rows[0].keys() if k not in minimal_params
+        ]
         fieldnames = list(minimal_params.keys()) + first_row_other_keys
 
         # Check if file exists and we're appending
@@ -1113,11 +1148,18 @@ class CTCCOutputManager:
                     for row in reader:
                         if row.get("scenario_id") == self.scenario_id:
                             # Load AFUDC values from CSV
-                            for key in ["build_cost_afudc", "row_cost_afudc", "env_mitigation_afudc", "delay_cost_afudc"]:
+                            for key in [
+                                "build_cost_afudc",
+                                "row_cost_afudc",
+                                "env_mitigation_afudc",
+                                "delay_cost_afudc",
+                            ]:
                                 value_str = row.get(key, "0")
                                 try:
                                     value = float(value_str) if value_str else 0
-                                    if value != 0:  # Only update if non-zero (preserve existing data)
+                                    if (
+                                        value != 0
+                                    ):  # Only update if non-zero (preserve existing data)
                                         self.batch_summary_data[key] = value
                                 except (ValueError, TypeError):
                                     pass
@@ -1241,7 +1283,7 @@ class CTCCOutputManager:
 
         Args:
             bcr_results: Dictionary containing BCR metrics from bcr_calculator
-                Expected keys:
+                Expected keys include:
                 - total_benefits_pv
                 - total_benefits_haircut_pv
                 - total_costs_pv
@@ -1249,9 +1291,17 @@ class CTCCOutputManager:
                 - bcr_system (uses conservative/haircut benefits)
                 - bcr_capital (uses conservative/haircut benefits)
                 - bcr_capital_and_delay (uses conservative/haircut benefits)
-                - bcr_excluding_risk (uses conservative/haircut benefits)
+                - bcr_excluding_wildfire_risk_and_outage_risk (renamed from bcr_excluding_risk)
+                - bcr_excluding_wildfire_risk (new: excludes wildfire + liability only)
+                - bcr_excluding_outage_risk (new: excludes outage only)
                 - bcr_excluding_emissions (uses conservative/haircut benefits)
-                - bcr_excluding_emissions_and_risk (uses conservative/haircut benefits)
-                - net_benefit_pv
+                - bcr_excluding_linelosses (uses conservative/haircut benefits)
+                - bcr_excluding_emissions_and_linelosses (uses conservative/haircut benefits)
+                - bcr_excluding_emissions_and_wildfire_risk_and_outage_risk (renamed)
+                - bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk (renamed)
+                - bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk (renamed)
+                - Plus all combinations with emissions/linelosses for wildfire-only and outage-only
+                - bcr_utility, bcr_ratepayer
+                - net_benefit_pv and all net benefit variants (matching BCR naming)
         """
         self.append_to_batch_summary(bcr_results)
