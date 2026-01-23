@@ -49,6 +49,15 @@ def _refresh_final_combined() -> None:
     combined: Dict[str, Any] = {}
 
     yaml_files = sorted(list(YAMLS_DIR.glob("*.yaml")) + list(YAMLS_DIR.glob("*.yml")))
+    yaml_stems = {yaml_file.stem for yaml_file in yaml_files}
+
+    # Remove stale JSON files that no longer have YAML sources.
+    for json_file in JSON_DIR.glob("*.json"):
+        if json_file.name == FINAL_COMBINED_FILE.name:
+            continue
+        if json_file.stem not in yaml_stems:
+            json_file.unlink()
+
     for yaml_file in yaml_files:
         with yaml_file.open("r", encoding="utf-8") as handle:
             data = yaml.safe_load(handle)
@@ -168,6 +177,27 @@ async def calculate_ctcc(payload: CTCCInputPayload) -> JSONResponse:
     When output_mode='csv', writes CSV files to local folder and returns file list.
     """
     payload_dict = payload.model_dump()
+    if payload_dict.get("input_mode") == "json" and not payload_dict.get("combined_data"):
+        try:
+            _refresh_final_combined()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to regenerate final_combined.json: {exc}",
+            ) from exc
+
+        if not FINAL_COMBINED_FILE.exists():
+            raise HTTPException(status_code=404, detail="final_combined.json not found")
+
+        try:
+            payload_dict["combined_data"] = json.loads(
+                FINAL_COMBINED_FILE.read_text(encoding="utf-8")
+            )
+        except JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=500, detail="final_combined.json is invalid JSON"
+            ) from exc
+
     result = run_ctcc_calculation(payload_dict)
     return JSONResponse(result)
 
