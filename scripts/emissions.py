@@ -9,6 +9,7 @@ from __future__ import annotations
 # Standard library imports
 import sys
 import os
+from dataclasses import dataclass
 from typing import Dict, Any, List, Tuple
 
 # Add parent directory to path for imports
@@ -25,10 +26,22 @@ from smart_loaders import (
     load_financing_social_discount_rate,
     get_project_data_raw,
 )
-from financial_utils import calculate_present_value
+from financial_utils import calculate_present_value, calculate_cod_year
 from calculation_utils import from_percent
 
 
+@dataclass
+class LifetimeEmissionsResults:
+    """Results from lifetime emissions calculations."""
+    yearly_emissions: List[Dict[str, float]]
+    total_emissions: Dict[str, float]
+    avg_annual_emissions: Dict[str, float]
+    avg_annual_costs: float
+    avg_annual_costs_by_pollutant: Dict[str, float]
+    total_costs_by_pollutant: Dict[str, float]
+    lifetime_cost: float
+    lifetime_cost_pv: float
+    total_costs_by_pollutant_pv: Dict[str, float]
 
 
 def calculate_energy_mix_by_year(
@@ -151,17 +164,7 @@ def calculate_lifetime_emissions(
     social_discount_rate: float,
     delay_years: float,
     construction_years: int,
-) -> Tuple[
-    List[Dict[str, float]],
-    Dict[str, float],
-    Dict[str, float],
-    float,
-    Dict[str, float],
-    Dict[str, float],
-    float,
-    float,
-    Dict[str, float],
-]:
+) -> LifetimeEmissionsResults:
     """
     Calculate emissions across project lifetime.
 
@@ -171,7 +174,7 @@ def calculate_lifetime_emissions(
                 lifetime_cost_pv, total_costs_by_pollutant_pv)
     """
     # Calculate start year (when project becomes operational)
-    start_year = int(delay_years) + int(construction_years) + 1
+    start_year = calculate_cod_year(delay_years, construction_years)
 
     # Calculate TEC (Total Energy Compensated)
     total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
@@ -234,16 +237,16 @@ def calculate_lifetime_emissions(
         for pollutant in total_costs_by_pollutant
     }
 
-    return (
-        yearly_emissions,
-        total_emissions,
-        avg_annual_emissions,
-        avg_annual_costs,
-        avg_annual_costs_by_pollutant,
-        total_costs_by_pollutant,
-        lifetime_cost,
-        lifetime_cost_pv,
-        total_costs_by_pollutant_pv,
+    return LifetimeEmissionsResults(
+        yearly_emissions=yearly_emissions,
+        total_emissions=total_emissions,
+        avg_annual_emissions=avg_annual_emissions,
+        avg_annual_costs=avg_annual_costs,
+        avg_annual_costs_by_pollutant=avg_annual_costs_by_pollutant,
+        total_costs_by_pollutant=total_costs_by_pollutant,
+        lifetime_cost=lifetime_cost,
+        lifetime_cost_pv=lifetime_cost_pv,
+        total_costs_by_pollutant_pv=total_costs_by_pollutant_pv,
     )
 
 
@@ -408,17 +411,7 @@ def main() -> None:
     project_lifetime_from_losses = loss_data["project_lifetime"]
 
     # Calculate emissions across lifetime
-    (
-        yearly_emissions,
-        total_emissions,
-        avg_annual_emissions,
-        avg_annual_costs,
-        avg_annual_costs_by_pollutant,
-        total_costs_by_pollutant,
-        lifetime_cost,
-        lifetime_cost_pv,
-        total_costs_by_pollutant_pv,
-    ) = calculate_lifetime_emissions(
+    emissions_results = calculate_lifetime_emissions(
         total_losses_mwh_per_year,
         compensation_percent,
         energy_source_mix_details,
@@ -437,15 +430,15 @@ def main() -> None:
     print_emissions_results(
         compensation_percent,
         energy_source_mix_details,
-        avg_annual_emissions,
+        emissions_results.avg_annual_emissions,
         societal_costs_details,
-        avg_annual_costs,
-        avg_annual_costs_by_pollutant,
-        total_emissions,
-        total_costs_by_pollutant,
-        lifetime_cost,
-        lifetime_cost_pv,
-        total_costs_by_pollutant_pv,
+        emissions_results.avg_annual_costs,
+        emissions_results.avg_annual_costs_by_pollutant,
+        emissions_results.total_emissions,
+        emissions_results.total_costs_by_pollutant,
+        emissions_results.lifetime_cost,
+        emissions_results.lifetime_cost_pv,
+        emissions_results.total_costs_by_pollutant_pv,
         total_losses_mwh_per_year,
         total_energy_compensated_mwh,
     )
@@ -459,18 +452,18 @@ def main() -> None:
 
     # Prepare results dictionary
     results = {
-        "total_nominal": lifetime_cost,
-        "total_pv": lifetime_cost_pv,
-        "annual_cost": avg_annual_costs,
-        "co2_emissions_kg": total_emissions["co2"],
-        "co2_cost_nominal": total_costs_by_pollutant["co2"],
-        "co2_cost_pv": total_costs_by_pollutant_pv["co2"],
-        "sox_emissions_kg": total_emissions["sox"],
-        "sox_cost_nominal": total_costs_by_pollutant["sox"],
-        "sox_cost_pv": total_costs_by_pollutant_pv["sox"],
-        "nox_emissions_kg": total_emissions["nox"],
-        "nox_cost_nominal": total_costs_by_pollutant["nox"],
-        "nox_cost_pv": total_costs_by_pollutant_pv["nox"],
+        "total_nominal": emissions_results.lifetime_cost,
+        "total_pv": emissions_results.lifetime_cost_pv,
+        "annual_cost": emissions_results.avg_annual_costs,
+        "co2_emissions_kg": emissions_results.total_emissions["co2"],
+        "co2_cost_nominal": emissions_results.total_costs_by_pollutant["co2"],
+        "co2_cost_pv": emissions_results.total_costs_by_pollutant_pv["co2"],
+        "sox_emissions_kg": emissions_results.total_emissions["sox"],
+        "sox_cost_nominal": emissions_results.total_costs_by_pollutant["sox"],
+        "sox_cost_pv": emissions_results.total_costs_by_pollutant_pv["sox"],
+        "nox_emissions_kg": emissions_results.total_emissions["nox"],
+        "nox_cost_nominal": emissions_results.total_costs_by_pollutant["nox"],
+        "nox_cost_pv": emissions_results.total_costs_by_pollutant_pv["nox"],
     }
 
     # Write to CSV

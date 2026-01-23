@@ -69,11 +69,11 @@ def main() -> None:
     )
     total_delay_cost = total_yearly_delay_cost * delay_year
 
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
     total_delay_cost_pv = calculate_present_value(
         total_yearly_delay_cost,
-        wacc_real,
+        financing.wacc_real,
         delay_year,
     )
 
@@ -86,7 +86,7 @@ def main() -> None:
 
     print()
     print(
-        f"PRESENT VALUES (discounted to base year (2025) using real WACC ({wacc_real:.2%})):"
+        f"PRESENT VALUES (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
     )
 
     print(f"TOTAL PRESENT VALUE DELAY COST: ${total_delay_cost_pv:,.2f}")

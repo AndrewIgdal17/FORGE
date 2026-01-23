@@ -53,9 +53,8 @@ def get_total_energy_losses() -> dict:
     project_details = load_project_technical_details()
 
     # Construct new category for resistance lookup
-    new_category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    new_category = build_category_string(project_details=project_details)
 
     # Get number of converters if DC
     if project_details.ac_dc == "DC":
@@ -82,7 +81,7 @@ def get_total_energy_losses() -> dict:
     line_length = load_physical_details()
 
     # For reconductoring: use old voltage (towers unchanged), but new resistance (new conductors)
-    if reconductoring:
+    if project_details.reconductoring:
         # Build old category to get old voltage (towers unchanged)
         project_data = get_project_data_raw()
         if "project" not in project_data:
@@ -91,15 +90,30 @@ def get_total_energy_losses() -> dict:
         old_capacity = project["old_capacity_mw"]
         old_conductor = project["old_conductor_type"]
         old_ac_dc = project["old_ac_dc"]
-        old_converter = "NA" if old_ac_dc == "AC" else project_details.converter_type
+        from calculation_utils import get_converter_type
+        old_converter = get_converter_type(old_ac_dc, project_details.converter_type)
         
-        old_category = f"{project_details.construction_type}/{old_ac_dc}/{old_capacity}MW/{old_conductor}/{old_converter}"
-        voltage_kv, _, _, _, _, _ = load_circuit_and_resistance_details(old_category)
+        old_category = build_category_string(
+            project_details.construction_type, old_ac_dc, old_capacity, old_conductor, old_converter
+        )
+        old_circuit = load_circuit_and_resistance_details(old_category)
+        voltage_kv = old_circuit.voltage_kv
         # Still use NEW config's resistance values (new conductors)
-        _, conductors_per_phase, number_of_phases, number_of_circuits_poles, AC_75_resistance, DC_20_resistance = load_circuit_and_resistance_details(new_category)
+        new_circuit = load_circuit_and_resistance_details(new_category)
+        conductors_per_phase = new_circuit.conductors_per_phase
+        number_of_phases = new_circuit.number_of_phases
+        number_of_circuits_poles = new_circuit.number_of_circuits_poles
+        AC_75_resistance = new_circuit.AC_75_resistance
+        DC_20_resistance = new_circuit.DC_20_resistance
     else:
         # Greenfield: use new config's voltage
-        voltage_kv, conductors_per_phase, number_of_phases, number_of_circuits_poles, AC_75_resistance, DC_20_resistance = load_circuit_and_resistance_details(new_category)
+        circuit = load_circuit_and_resistance_details(new_category)
+        voltage_kv = circuit.voltage_kv
+        conductors_per_phase = circuit.conductors_per_phase
+        number_of_phases = circuit.number_of_phases
+        number_of_circuits_poles = circuit.number_of_circuits_poles
+        AC_75_resistance = circuit.AC_75_resistance
+        DC_20_resistance = circuit.DC_20_resistance
 
     # Convert capacity_mw to numeric (handle both int and string with MW suffix)
     if isinstance(project_details.capacity_mw, str):
@@ -144,7 +158,7 @@ def get_total_energy_losses() -> dict:
         converter_loss_percent,
     ) = calculate_converter_losses(
         number_of_converters,
-        converter_type,
+        project_details.converter_type,
         project_details.line_utilization,
         capacity_mw_numeric,
         project_details.ac_dc,
@@ -196,7 +210,7 @@ def print_results(
     total_converter_losses_mwh: float,
     losses_mwh_per_year: float,
     lifetime_losses_mwh: float,
-    project_lifetime: int,
+    project_details,
 ) -> None:
     """Print organized results in sections."""
     # System Configuration
@@ -274,11 +288,6 @@ def main() -> None:
     loss_data = get_total_energy_losses()
 
     # Load line utilization for printing
-    (
-        _,
-        _,
-        _,
-        _,
     project_details = load_project_technical_details()
 
     # Print all results in organized sections
@@ -301,7 +310,7 @@ def main() -> None:
         loss_data["total_converter_losses_mwh"],
         loss_data["losses_mwh_per_year"],
         loss_data["lifetime_losses_mwh"],
-        loss_data["project_lifetime"],
+        project_details,
     )
 
 

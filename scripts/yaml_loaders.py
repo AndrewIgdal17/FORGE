@@ -29,7 +29,60 @@ class ProjectTechnicalDetails:
     converter_loss_percentage: Optional[float]
 
 
-def load_financing_details() -> Tuple[float, int, float, float]:
+@dataclass
+class CongestionCurtailmentParams:
+    """Congestion and curtailment reduction parameters."""
+    flow_factor: float
+    binding_hours: float
+    average_exceedance: float
+    near_binding_hours: float
+    near_average_exceedance: float
+    near_binding_relief_factor: float
+    saturation_factor: float
+    average_congestion_price: float
+    residual_exceedance_value: Optional[float]
+    curtailment_hours_total: float
+    average_curtailment_mw: float
+    average_curtailment_price: float
+    curtailment_saturation_factor: float
+
+
+@dataclass
+class PhysicalDetailsDetailed:
+    """Detailed physical project details with terrain breakdown."""
+    total_miles: float
+    forested_miles: float
+    scrubbed_flat_miles: float
+    wetland_miles: float
+    farmland_miles: float
+    desert_barren_miles: float
+    urban_miles: float
+    rolling_hills_miles: float
+    mountain_miles: float
+    subsea_miles: float
+
+
+@dataclass
+class CircuitAndResistanceDetails:
+    """Circuit and resistance details for a project category."""
+    voltage_kv: float
+    conductors_per_phase: int
+    number_of_phases: int
+    number_of_circuits_poles: int
+    AC_75_resistance: float
+    DC_20_resistance: float
+
+
+@dataclass
+class FinancingDetails:
+    """Financing parameters and WACC calculations."""
+    inflation_rate: float
+    base_year: int
+    wacc_nominal: float
+    wacc_real: float
+
+
+def load_financing_details() -> FinancingDetails:
     """Load financing parameters and calculate real WACC using Fisher equation."""
     try:
         with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
@@ -50,7 +103,12 @@ def load_financing_details() -> Tuple[float, int, float, float]:
         wacc_nominal = financial["wacc_nominal"]
 
         wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
-        return inflation_rate, base_year, wacc_nominal, wacc_real
+        return FinancingDetails(
+            inflation_rate=inflation_rate,
+            base_year=base_year,
+            wacc_nominal=wacc_nominal,
+            wacc_real=wacc_real,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
@@ -128,7 +186,8 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
         capacity_mw_raw = project_data["capacity_mw"]
         capacity_mw = normalize_capacity_mw(capacity_mw_raw)
         conductor_type = project_data["conductor_type"]
-        converter_type = "NA" if ac_dc == "AC" else project_data["converter_type"]
+        from calculation_utils import get_converter_type
+        converter_type = get_converter_type(ac_dc, project_data["converter_type"])
         converter_loss_percentage = (
             None
             if ac_dc == "AC"
@@ -187,7 +246,7 @@ def load_physical_details() -> float:
 
 def load_circuit_and_resistance_details(
     category: str,
-) -> Tuple[float, int, int, int, float, float]:
+) -> CircuitAndResistanceDetails:
     """Load circuit and resistance details for specified category."""
     try:
         with open(
@@ -222,13 +281,13 @@ def load_circuit_and_resistance_details(
                 raise KeyError(
                     f"Missing '{key}' key for category '{category}' in circuit and resistance details YAML"
                 )
-        return (
-            circuit_resistance_details[category]["voltage_kv"],
-            circuit_resistance_details[category]["conductors_per_phase"],
-            circuit_resistance_details[category]["number_of_phases"],
-            circuit_resistance_details[category]["number_of_circuits_poles"],
-            circuit_resistance_details[category]["AC_75_resistance"],
-            circuit_resistance_details[category]["DC_20_resistance"],
+        return CircuitAndResistanceDetails(
+            voltage_kv=circuit_resistance_details[category]["voltage_kv"],
+            conductors_per_phase=circuit_resistance_details[category]["conductors_per_phase"],
+            number_of_phases=circuit_resistance_details[category]["number_of_phases"],
+            number_of_circuits_poles=circuit_resistance_details[category]["number_of_circuits_poles"],
+            AC_75_resistance=circuit_resistance_details[category]["AC_75_resistance"],
+            DC_20_resistance=circuit_resistance_details[category]["DC_20_resistance"],
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -344,39 +403,12 @@ def load_emissions_details() -> (
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 
 
-def load_congestion_curtailment_reductions() -> Tuple[
-    float,
-    float,
-    float,
-    float,
-    float,
-    float,
-    float,
-    float,
-    Optional[float],
-    float,
-    float,
-    float,
-    float,
-]:
+def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
     Load congestion and curtailment reduction parameters from merged YAML file.
 
     Returns:
-        Tuple of 13 values:
-        - flow_factor (float, 0.0 for reconductoring)
-        - binding_hours (float)
-        - average_exceedance (float)
-        - near_binding_hours (float)
-        - near_average_exceedance (float)
-        - near_binding_relief_factor (float)
-        - saturation_factor (float)
-        - average_congestion_price (float)
-        - residual_exceedance_value (Optional[float], None if null in YAML)
-        - curtailment_hours_total (float)
-        - average_curtailment_mw (float)
-        - average_curtailment_price (float)
-        - curtailment_saturation_factor (float)
+        CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
     """
     try:
         # Check if this is a reconductoring project
@@ -474,22 +506,21 @@ def load_congestion_curtailment_reductions() -> Tuple[
         if residual_exceedance_value is not None:
             residual_exceedance_value = float(residual_exceedance_value)
 
-        result = (
-            float(flow_factor),
-            float(constraints["binding_hours"]),
-            float(constraints["average_exceedance"]),
-            float(constraints["near_binding_hours"]),
-            float(constraints["near_average_exceedance"]),
-            float(constraints["near_binding_relief_factor"]),
-            float(constraints["saturation_factor"]),
-            float(costs["average_congestion_price"]),
-            residual_exceedance_value,
-            float(curtailment_data["curtailment_hours_total"]),
-            float(curtailment_data["average_curtailment_mw"]),
-            float(curtailment_data["average_curtailment_price"]),
-            float(curtailment_data["curtailment_saturation_factor"]),
+        return CongestionCurtailmentParams(
+            flow_factor=float(flow_factor),
+            binding_hours=float(constraints["binding_hours"]),
+            average_exceedance=float(constraints["average_exceedance"]),
+            near_binding_hours=float(constraints["near_binding_hours"]),
+            near_average_exceedance=float(constraints["near_average_exceedance"]),
+            near_binding_relief_factor=float(constraints["near_binding_relief_factor"]),
+            saturation_factor=float(constraints["saturation_factor"]),
+            average_congestion_price=float(costs["average_congestion_price"]),
+            residual_exceedance_value=residual_exceedance_value,
+            curtailment_hours_total=float(curtailment_data["curtailment_hours_total"]),
+            average_curtailment_mw=float(curtailment_data["average_curtailment_mw"]),
+            average_curtailment_price=float(curtailment_data["average_curtailment_price"]),
+            curtailment_saturation_factor=float(curtailment_data["curtailment_saturation_factor"]),
         )
-        return result
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Congestion/curtailment reductions YAML not found at {YAMLS_DIR / '17_congestion_curtailment_reductions.yaml'}"
@@ -554,9 +585,7 @@ def load_financing_social_discount_rate() -> float:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
 
-def load_physical_details_detailed() -> (
-    Tuple[float, float, float, float, float, float, float, float, float, float]
-):
+def load_physical_details_detailed() -> PhysicalDetailsDetailed:
     """Load physical project details - return detailed terrain breakdown."""
     try:
         with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
@@ -572,17 +601,17 @@ def load_physical_details_detailed() -> (
         terrain = physical_details["terrain"]["terrain_miles"]
         # Handle None values
         safe_get = lambda k: terrain.get(k, 0) if terrain.get(k) is not None else 0
-        return (
-            sum(v if v is not None else 0 for v in terrain.values()),  # total_miles
-            safe_get("forested"),
-            safe_get("scrubbed_flat"),
-            safe_get("wetland"),
-            safe_get("farmland"),
-            safe_get("desert_barren"),
-            safe_get("urban"),
-            safe_get("rolling_hills"),
-            safe_get("mountain"),
-            safe_get("subsea"),
+        return PhysicalDetailsDetailed(
+            total_miles=sum(v if v is not None else 0 for v in terrain.values()),
+            forested_miles=safe_get("forested"),
+            scrubbed_flat_miles=safe_get("scrubbed_flat"),
+            wetland_miles=safe_get("wetland"),
+            farmland_miles=safe_get("farmland"),
+            desert_barren_miles=safe_get("desert_barren"),
+            urban_miles=safe_get("urban"),
+            rolling_hills_miles=safe_get("rolling_hills"),
+            mountain_miles=safe_get("mountain"),
+            subsea_miles=safe_get("subsea"),
         )
     except FileNotFoundError:
         raise FileNotFoundError(

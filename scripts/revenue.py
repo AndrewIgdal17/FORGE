@@ -23,7 +23,7 @@ from smart_loaders import (
     load_project_technical_details as load_project_technical_details_centralized,
     get_financing_data_raw,
 )
-from financial_utils import calculate_present_value
+from financial_utils import calculate_present_value, calculate_cod_year
 from path_config import OUTPUTS_DIR
 
 
@@ -192,7 +192,7 @@ def main() -> None:
     delay_years, construction_years, project_lifetime = load_project_technical_details()
 
     # Load financing details
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
     # Get capital costs PV from batch_summary.csv
     capital_costs_pv = get_capital_costs_pv()
@@ -214,9 +214,9 @@ def main() -> None:
     # Calculate present value (revenue starts after construction)
     revenue_pv = calculate_present_value(
         annual_revenue,
-        wacc_real,
+        financing.wacc_real,
         project_lifetime,
-        start_year=delay_years + construction_years + 1,
+        start_year=calculate_cod_year(delay_years, construction_years),
     )
 
     print("=" * 60)
@@ -228,7 +228,7 @@ def main() -> None:
     print(f"Total Revenue (Nominal): ${total_revenue_nominal:,.2f}")
     print()
     print(
-        f"PRESENT VALUE (discounted to base year ({base_year}) using real WACC ({wacc_real:.2%})):"
+        f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
     )
     print(f"TOTAL PRESENT VALUE REVENUE: ${revenue_pv:,.2f}")
     print("=" * 60)

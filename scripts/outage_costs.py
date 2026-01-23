@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
+from constants import MIN_DISCOUNT_RATE
 from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
@@ -92,13 +93,13 @@ def calculate_outage_costs(
         dict: Contains EAC, outage_by_terrain, nominal_cost, pv_cost
 
     Raises:
-        ValueError: If discount_rate <= -0.99 (would cause division by zero)
+        ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     # Validate discount_rate to prevent division by zero
-    if discount_rate <= -0.99:
+    if discount_rate <= MIN_DISCOUNT_RATE:
         raise ValueError(
             f"Invalid discount_rate: {discount_rate}. "
-            f"Value must be > -0.99 to prevent division by zero in financial calculations. "
+            f"Value must be > {MIN_DISCOUNT_RATE} to prevent division by zero in financial calculations. "
             f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
         )
 
@@ -208,22 +209,12 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    category = build_category_string(project_details=project_details)
 
     # Load terrain details
-    try:
-        physical_details = get_physical_data_raw()
-        if "terrain" not in physical_details:
-            raise KeyError("Missing 'terrain' key in physical details")
-        if "terrain_miles" not in physical_details["terrain"]:
-            raise KeyError(
-                "Missing 'terrain_miles' key in terrain section of physical details"
-            )
-        terrain_miles = physical_details["terrain"]["terrain_miles"]
-    except KeyError as e:
-        raise KeyError(f"Missing required key in physical details: {e}")
+    from smart_loaders import load_terrain_miles
+    terrain_miles = load_terrain_miles()
 
     # Load outage parameters
     outage_yaml = load_outage_costs()

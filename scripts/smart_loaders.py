@@ -107,3 +107,28 @@ def get_physical_data_raw() -> Dict[str, Any]:
             if not data:
                 raise ValueError("Physical details YAML file is empty or invalid")
             return data
+
+
+def load_terrain_miles() -> Dict[str, float]:
+    """
+    Load terrain miles dictionary from physical details.
+    Works in both YAML and JSON input modes.
+    
+    Returns:
+        Dictionary mapping terrain types to miles (e.g., {"forested": 10.5, "urban": 2.3})
+    
+    Raises:
+        KeyError: If terrain structure is missing or invalid
+    """
+    try:
+        physical_details = get_physical_data_raw()
+        if "terrain" not in physical_details:
+            raise KeyError("Missing 'terrain' key in physical details")
+        if "terrain_miles" not in physical_details["terrain"]:
+            raise KeyError(
+                "Missing 'terrain_miles' key in terrain section of physical details"
+            )
+        terrain_miles = physical_details["terrain"]["terrain_miles"]
+        return terrain_miles
+    except KeyError as e:
+        raise KeyError(f"Missing required key in physical details: {e}")

@@ -25,7 +25,7 @@ from smart_loaders import (
     load_insurance_details,
     get_project_data_raw,
 )
-from financial_utils import calculate_present_value
+from financial_utils import calculate_present_value, calculate_cod_year
 from build_costs import load_costs
 from weighted_miles import calculate_weighted_miles
 from path_config import YAMLS_DIR
@@ -139,9 +139,8 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    category = build_category_string(project_details=project_details)
 
     # Determine number of converters
     if project_details.ac_dc == "DC":
@@ -169,18 +168,7 @@ def main() -> None:
     total_miles = load_physical_details()
     contingencies = load_contingencies()
 
-    (
-        total_cost,
-        total_cost_with_contingencies,
-        conductor_cost,
-        structure_cost,
-        converter_cost,
-        conductor_cost_with_contingencies,
-        structure_cost_with_contingencies,
-        converter_cost_with_contingencies,
-        weighted_miles,
-        average_terrain_multiplier,
-    ) = load_costs(
+    costs = load_costs(
         category, total_miles, number_of_converters, contingencies, project_details.reconductoring
     )
 
@@ -190,15 +178,15 @@ def main() -> None:
     # Calculate operational insurance costs
     results = calculate_insurance_costs(
         insurance_yaml,
-        conductor_cost_with_contingencies,
-        structure_cost_with_contingencies,
-        converter_cost_with_contingencies,
+        costs.conductor_cost_with_contingencies,
+        costs.structure_cost_with_contingencies,
+        costs.converter_cost_with_contingencies,
         project_details.construction_type,
         project_details.project_lifetime,
     )
 
     # Load financing parameters for present value calculation
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
     # Calculate wildfire liability insurance (skip if flag is set)
     wildfire_liability_results = None
@@ -210,11 +198,11 @@ def main() -> None:
 
     # Calculate Present Value for operational insurance
     # Insurance payments start at COD (after construction) and continue for project lifetime
-    insurance_start_year = delay_year + construction_years + 1
+    insurance_start_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
     insurance_pv = calculate_present_value(
         results["annual_premium"],
-        wacc_real,
-        project_lifetime,
+        financing.wacc_real,
+        project_details.project_lifetime,
         insurance_start_year,
     )
 
@@ -223,7 +211,7 @@ def main() -> None:
     if wildfire_liability_results:
         wildfire_liability_pv = calculate_present_value(
             wildfire_liability_results["annual_premium"],
-            wacc_real,
+            financing.wacc_real,
             project_details.project_lifetime,
             insurance_start_year,
         )
@@ -239,11 +227,11 @@ def main() -> None:
     print("INSURABLE ASSET VALUE:")
     ins_components = insurance_yaml["insurance"].get("insurable_components", {})
     if ins_components.get("conductors", True):
-        print(f"  Conductor Costs: ${conductor_cost_with_contingencies:,.2f}")
+        print(f"  Conductor Costs: ${costs.conductor_cost_with_contingencies:,.2f}")
     if ins_components.get("structures", True):
-        print(f"  Structure Costs: ${structure_cost_with_contingencies:,.2f}")
+        print(f"  Structure Costs: ${costs.structure_cost_with_contingencies:,.2f}")
     if ins_components.get("converters", True):
-        print(f"  Converter Costs: ${converter_cost_with_contingencies:,.2f}")
+        print(f"  Converter Costs: ${costs.converter_cost_with_contingencies:,.2f}")
     print(f"  ---")
     print(f"  Total Insurable Value: ${results['insurable_value']:,.2f}")
     print()
@@ -257,9 +245,9 @@ def main() -> None:
     print()
 
     print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {base_year}")
-    print(f"  Payment Start: Year {insurance_start_year} (at COD)")
+    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    print(f"  Base Year: {financing.base_year}")
+    print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
     print(f"  ---")
     print(f"  TOTAL PRESENT VALUE: ${insurance_pv:,.2f}")
     print()
@@ -286,7 +274,7 @@ def main() -> None:
         print("[SOCIETAL PERSPECTIVE - Present Value]")
         print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
         print(f"  Base Year: {base_year}")
-        print(f"  Payment Start: Year {insurance_start_year} (at COD)")
+        print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
         print(f"  ---")
         print(f"  TOTAL PRESENT VALUE: ${wildfire_liability_pv:,.2f}")
         print()

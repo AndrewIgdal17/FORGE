@@ -6,11 +6,13 @@
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from typing import Dict, Any, Tuple
+from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE
 
 
 def validate_discount_rate(
-    rate: float, rate_name: str = "discount_rate", min_value: float = -0.99
+    rate: float, rate_name: str = "discount_rate", min_value: float = MIN_DISCOUNT_RATE
 ) -> float:
     """
     Validate that a discount rate is not <= -1 (which would cause division by zero).
@@ -18,7 +20,7 @@ def validate_discount_rate(
     Args:
         rate: The discount rate to validate
         rate_name: Name of the rate for error messages
-        min_value: Minimum allowed value (default -0.99 to allow extreme deflation scenarios)
+        min_value: Minimum allowed value (default MIN_DISCOUNT_RATE to allow extreme deflation scenarios)
 
     Returns:
         float: The validated rate
@@ -56,7 +58,7 @@ def calculate_real_wacc(wacc_nominal: float, inflation_rate: float) -> float:
 
 
 def calculate_present_value(
-    annual_cost: float, wacc_real: float, total_years: float, start_year: int = 1
+    annual_cost: float, wacc_real: float, total_years: float, start_year: float = 1.0
 ) -> float:
     """
     Calculate the present value of annual payments over a given time period.
@@ -67,14 +69,15 @@ def calculate_present_value(
     Args:
         annual_cost (float): Annual cost amount
         wacc_real (float): Real weighted average cost of capital (discount rate)
-        total_years (int): Number of years over which payments occur
-        start_year (int): Year when payments begin (default: 1)
+        total_years (float): Number of years over which payments occur
+        start_year (float): Year when payments begin (can be fractional, default: 1.0)
+                          For example, 1.5 means payments start mid-way through year 1
 
     Returns:
         float: Present value of the payment stream
 
     Raises:
-        ValueError: If wacc_real <= -0.99 (would cause division by zero)
+        ValueError: If wacc_real <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     validate_discount_rate(wacc_real, "wacc_real")
     n_full_years = math.floor(total_years)
@@ -89,6 +92,40 @@ def calculate_present_value(
         total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
 
     return total_pv
+
+
+def calculate_cod_year(delay_years: float, construction_years: int) -> float:
+    """
+    Calculate Commercial Operation Date (COD) year.
+    
+    COD is when the project becomes operational, which is:
+    delay_years (delay period) + construction_years (construction) + 1
+    If delay is fractional (e.g., 0.5 years), COD will be fractional (e.g., 2.5).
+    
+    Args:
+        delay_years: Number of years of project delay before construction
+        construction_years: Number of years of construction
+        
+    Returns:
+        float: Year when project becomes operational (COD, can be fractional, e.g., 2.5)
+    """
+    return delay_years + construction_years + 1.0
+
+
+def calculate_construction_start_year(delay_years: float) -> float:
+    """
+    Calculate construction start year (end of delay period).
+    
+    Construction begins immediately after the delay period ends.
+    If delay is fractional (e.g., 0.5 years), construction starts mid-year.
+    
+    Args:
+        delay_years: Number of years of project delay before construction
+        
+    Returns:
+        float: Year when construction begins (can be fractional, e.g., 1.5)
+    """
+    return delay_years + 1.0
 
 
 def calculate_amortized_cost(
@@ -109,7 +146,7 @@ def calculate_amortized_cost(
         float: Annual amortized payment
 
     Raises:
-        ValueError: If wacc_real <= -0.99 (would cause division by zero)
+        ValueError: If wacc_real <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     validate_discount_rate(wacc_real, "wacc_real")
     if wacc_real == 0:
@@ -155,7 +192,7 @@ def calculate_afudc_rate(financing_yaml: Dict[str, Any]) -> Tuple[float, str]:
             rate = financial.get("wacc_nominal", 0.08)
             source = "WACC nominal (capital structure costs are zero)"
         # Check if percentages don't sum to 1.0 (within tolerance for floating point)
-        elif abs(equity_percent + debt_percent - 1.0) > 0.001:
+        elif abs(equity_percent + debt_percent - 1.0) > EQUITY_DEBT_TOLERANCE:
             # Fallback to WACC nominal
             rate = financial.get("wacc_nominal", 0.08)
             source = "WACC nominal (capital structure percentages don't sum to 1.0)"
@@ -204,7 +241,7 @@ def calculate_afudc_capitalized_cost(
         tuple: (capitalized_cost, afudc_amount)
 
     Raises:
-        ValueError: If afudc_rate <= -0.99 (would cause division by zero)
+        ValueError: If afudc_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     validate_discount_rate(afudc_rate, "afudc_rate")
     # Check if cost is AFUDC-eligible
@@ -304,3 +341,45 @@ def get_discount_rate_from_config(
         )
 
     return rate, desc
+
+
+@dataclass
+class AFUDCSetup:
+    """AFUDC configuration and parameters."""
+    timing_patterns: Dict[str, Any]
+    apply_afudc: bool
+    delay_active: bool
+    afudc_rate: float
+    afudc_source: str
+
+
+def load_afudc_setup() -> AFUDCSetup:
+    """
+    Load all AFUDC-related configuration and parameters.
+    
+    Returns:
+        AFUDCSetup dataclass containing:
+            - timing_patterns: Cost timing patterns dictionary
+            - apply_afudc: Whether to apply AFUDC
+            - delay_active: Whether delay period has active work
+            - afudc_rate: Calculated AFUDC rate
+            - afudc_source: Description of AFUDC rate source
+    """
+    from smart_loaders import (
+        load_cost_timing_patterns,
+        load_afudc_config,
+        get_financing_data_raw,
+    )
+    
+    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
+    apply_afudc, delay_active = load_afudc_config()
+    financing_yaml = get_financing_data_raw()
+    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
+    
+    return AFUDCSetup(
+        timing_patterns=timing_patterns,
+        apply_afudc=apply_afudc,
+        delay_active=delay_active,
+        afudc_rate=afudc_rate,
+        afudc_source=afudc_source,
+    )

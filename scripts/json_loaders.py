@@ -7,7 +7,13 @@ import os
 import json
 from typing import Dict, Any, Optional
 from financial_utils import calculate_real_wacc
-from yaml_loaders import ProjectTechnicalDetails
+from yaml_loaders import (
+    ProjectTechnicalDetails,
+    CongestionCurtailmentParams,
+    PhysicalDetailsDetailed,
+    CircuitAndResistanceDetails,
+    FinancingDetails,
+)
 
 
 class JSONDataSource:
@@ -80,14 +86,19 @@ def clear_json_data():
     _data_source.clear()
 
 
-def load_financing_details():
+def load_financing_details() -> FinancingDetails:
     """Load financing parameters and calculate real WACC using Fisher equation."""
     financing_data = _data_source.get_data("03_financing")
     inflation_rate = financing_data["financial"]["inflation_rate"]
     base_year = financing_data["financial"]["base_year"]
     wacc_nominal = financing_data["financial"]["wacc_nominal"]
     wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
-    return inflation_rate, base_year, wacc_nominal, wacc_real
+    return FinancingDetails(
+        inflation_rate=inflation_rate,
+        base_year=base_year,
+        wacc_nominal=wacc_nominal,
+        wacc_real=wacc_real,
+    )
 
 
 def load_project_technical_details() -> ProjectTechnicalDetails:
@@ -103,7 +114,8 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
     capacity_mw_raw = pd["capacity_mw"]
     capacity_mw = normalize_capacity_mw(capacity_mw_raw)
     conductor_type = pd["conductor_type"]
-    converter_type = "NA" if ac_dc == "AC" else pd["converter_type"]
+    from calculation_utils import get_converter_type
+    converter_type = get_converter_type(ac_dc, pd["converter_type"])
     converter_loss_percentage = (
         None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
     )
@@ -130,17 +142,17 @@ def load_physical_details():
     return sum(physical_details["terrain"]["terrain_miles"].values())
 
 
-def load_circuit_and_resistance_details(category):
+def load_circuit_and_resistance_details(category: str) -> CircuitAndResistanceDetails:
     """Load circuit and resistance details for specified category."""
     data = _data_source.get_data("21_project_category_circuit_and_resistance_detail")
     crd = data["project_categories_circuit_and_resistance_details"]
-    return (
-        crd[category]["voltage_kv"],
-        crd[category]["conductors_per_phase"],
-        crd[category]["number_of_phases"],
-        crd[category]["number_of_circuits_poles"],
-        crd[category]["AC_75_resistance"],
-        crd[category]["DC_20_resistance"],
+    return CircuitAndResistanceDetails(
+        voltage_kv=crd[category]["voltage_kv"],
+        conductors_per_phase=crd[category]["conductors_per_phase"],
+        number_of_phases=crd[category]["number_of_phases"],
+        number_of_circuits_poles=crd[category]["number_of_circuits_poles"],
+        AC_75_resistance=crd[category]["AC_75_resistance"],
+        DC_20_resistance=crd[category]["DC_20_resistance"],
     )
 
 
@@ -172,110 +184,21 @@ def load_emissions_details():
     )
 
 
-def load_congestion_curtailment_reductions():
+def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
     Load congestion and curtailment reduction parameters from merged JSON.
 
     Returns:
-        Tuple of 13 values:
-        - flow_factor (float, 0.0 for reconductoring)
-        - binding_hours (float)
-        - average_exceedance (float)
-        - near_binding_hours (float)
-        - near_average_exceedance (float)
-        - near_binding_relief_factor (float)
-        - saturation_factor (float)
-        - average_congestion_price (float)
-        - residual_exceedance_value (float | None, None if null in JSON)
-        - curtailment_hours_total (float)
-        - average_curtailment_mw (float)
-        - average_curtailment_price (float)
-        - curtailment_saturation_factor (float)
+        CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
     """
-    # #region agent log
-    import json, os
-
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_load_congestion_curtailment_entry",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "json_loaders.py:164",
-                        "message": "load_congestion_curtailment_reductions entry",
-                        "data": {},
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "A",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
     data = _data_source.get_data("17_congestion_curtailment_reductions")
 
     # Check if this is a reconductoring project
     project_data = _data_source.get_data("01_project_technical_details")
     reconductoring = project_data["project"].get("reconductoring", False)
 
-    # #region agent log
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_reconductoring_flag",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "json_loaders.py:164",
-                        "message": "reconductoring flag check",
-                        "data": {
-                            "reconductoring": reconductoring,
-                            "type": str(type(reconductoring)),
-                            "project_data_keys": list(project_data.keys()),
-                        },
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "A",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
-
     # Load from appropriate section
     if reconductoring:
-        # #region agent log
-        try:
-            log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a") as f:
-                f.write(
-                    json.dumps(
-                        {
-                            "id": "log_reconductoring_branch",
-                            "timestamp": int(__import__("time").time() * 1000),
-                            "location": "json_loaders.py:167",
-                            "message": "entering reconductoring branch",
-                            "data": {"data_keys": list(data.keys())},
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "B",
-                        }
-                    )
-                    + "\n"
-                )
-        except Exception as e:
-            pass
-        # #endregion
         reductions_data = data["reconductoring_congestion_curtailment_reductions"]
         # flow_factor is not used for reconductoring (capacity relief = capacity - old_capacity)
         flow_factor = 0.0
@@ -305,51 +228,21 @@ def load_congestion_curtailment_reductions():
         )
         residual_exceedance_value = None
 
-    result = (
-        float(flow_factor),
-        float(congestion_data["constraints"]["binding_hours"]),
-        float(congestion_data["constraints"]["average_exceedance"]),
-        float(congestion_data["constraints"]["near_binding_hours"]),
-        float(congestion_data["constraints"]["near_average_exceedance"]),
-        float(congestion_data["constraints"]["near_binding_relief_factor"]),
-        float(congestion_data["constraints"]["saturation_factor"]),
-        float(average_congestion_price),
-        residual_exceedance_value,
-        float(curtailment_data.get("curtailment_hours_total", 0)),
-        float(curtailment_data.get("average_curtailment_mw", 0)),
-        float(curtailment_data.get("average_curtailment_price", 0)),
-        float(curtailment_data.get("curtailment_saturation_factor", 0)),
+    return CongestionCurtailmentParams(
+        flow_factor=float(flow_factor),
+        binding_hours=float(congestion_data["constraints"]["binding_hours"]),
+        average_exceedance=float(congestion_data["constraints"]["average_exceedance"]),
+        near_binding_hours=float(congestion_data["constraints"]["near_binding_hours"]),
+        near_average_exceedance=float(congestion_data["constraints"]["near_average_exceedance"]),
+        near_binding_relief_factor=float(congestion_data["constraints"]["near_binding_relief_factor"]),
+        saturation_factor=float(congestion_data["constraints"]["saturation_factor"]),
+        average_congestion_price=float(average_congestion_price),
+        residual_exceedance_value=residual_exceedance_value,
+        curtailment_hours_total=float(curtailment_data.get("curtailment_hours_total", 0)),
+        average_curtailment_mw=float(curtailment_data.get("average_curtailment_mw", 0)),
+        average_curtailment_price=float(curtailment_data.get("average_curtailment_price", 0)),
+        curtailment_saturation_factor=float(curtailment_data.get("curtailment_saturation_factor", 0)),
     )
-    # #region agent log
-    try:
-        log_path = "/Users/ai17/Documents/UT Austin/Research/Webber Energy Group/Comprehensive Transmission Cost Calculator/Python Version/.cursor/debug.log"
-        os.makedirs(os.path.dirname(log_path), exist_ok=True)
-        with open(log_path, "a") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "id": "log_load_congestion_curtailment_exit",
-                        "timestamp": int(__import__("time").time() * 1000),
-                        "location": "json_loaders.py:184",
-                        "message": "load_congestion_curtailment_reductions exit",
-                        "data": {
-                            "flow_factor": result[0],
-                            "binding_hours": result[1],
-                            "average_exceedance": result[2],
-                            "saturation_factor": result[6],
-                            "congestion_price": result[7],
-                        },
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "C",
-                    }
-                )
-                + "\n"
-            )
-    except Exception as e:
-        pass
-    # #endregion
-    return result
 
 
 def load_contingencies():
@@ -364,21 +257,21 @@ def load_financing_social_discount_rate():
     return financing_data["financial"]["social_discount_rate"]
 
 
-def load_physical_details_detailed():
+def load_physical_details_detailed() -> PhysicalDetailsDetailed:
     """Load physical project details - return detailed terrain breakdown."""
     physical_details = _data_source.get_data("02_project_physical_details")
     terrain = physical_details["terrain"]["terrain_miles"]
-    return (
-        sum(terrain.values()),  # total_miles
-        terrain.get("forested", 0),
-        terrain.get("scrubbed_flat", 0),
-        terrain.get("wetland", 0),
-        terrain.get("farmland", 0),
-        terrain.get("desert_barren", 0),
-        terrain.get("urban", 0),
-        terrain.get("rolling_hills", 0),
-        terrain.get("mountain", 0),
-        terrain.get("subsea", 0),
+    return PhysicalDetailsDetailed(
+        total_miles=sum(terrain.values()),
+        forested_miles=terrain.get("forested", 0),
+        scrubbed_flat_miles=terrain.get("scrubbed_flat", 0),
+        wetland_miles=terrain.get("wetland", 0),
+        farmland_miles=terrain.get("farmland", 0),
+        desert_barren_miles=terrain.get("desert_barren", 0),
+        urban_miles=terrain.get("urban", 0),
+        rolling_hills_miles=terrain.get("rolling_hills", 0),
+        mountain_miles=terrain.get("mountain", 0),
+        subsea_miles=terrain.get("subsea", 0),
     )
 
 

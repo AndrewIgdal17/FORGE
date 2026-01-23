@@ -32,6 +32,7 @@ from financial_utils import (
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
+    calculate_construction_start_year,
 )
 from path_config import YAMLS_DIR
 
@@ -63,18 +64,20 @@ def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, fl
         Zone area is calculated as: (miles * 5280 * row_width_feet) / 43560
         Only zones with miles > 0 are included in the calculation.
     """
+    from calculation_utils import miles_to_acres
+    
     row_details = load_row_details()
     yearly_holding_cost = acquisition_cost = yearly_rent_cost = 0
 
     for zone_details in row_details["right_of_way"].values():
         if zone_details["miles"] > 0:
-            zone_acres = (zone_details["miles"] * 5280 * row_width_feet) / 43560
+            zone_acres = miles_to_acres(zone_details["miles"], row_width_feet)
             acquisition_cost += zone_acres * zone_details["acquisition_cost"]
             yearly_rent_cost += zone_acres * zone_details["rent_cost"]
             yearly_holding_cost += zone_acres * zone_details["hold_cost"]
 
     total_acres = sum(
-        (zd["miles"] * 5280 * row_width_feet) / 43560
+        miles_to_acres(zd["miles"], row_width_feet)
         for zd in row_details["right_of_way"].values()
         if zd["miles"] > 0
     )
@@ -87,9 +90,8 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    category = build_category_string(project_details=project_details)
 
     # Load row width for this project category
     row_width_feet = load_row_widths(category)
@@ -103,15 +105,11 @@ def main() -> None:
     )
 
     # Load financing parameters
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
     # Load AFUDC configuration and timing patterns
-    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
-    apply_afudc, delay_active = load_afudc_config()
-
-    # Load full financing data for AFUDC rate calculation
-    financing_yaml = get_financing_data_raw()
-    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
+    from financial_utils import load_afudc_setup
+    afudc_setup = load_afudc_setup()
 
     # Define timing parameters
     if project_details.reconductoring or project_details.uses_existing_row:
@@ -120,7 +118,7 @@ def main() -> None:
         rent_total_years = project_details.delay_years + project_details.construction_years + project_details.project_lifetime
     else:
         # For new ROW, rent starts after delay period
-        rent_start_year = project_details.delay_years + 1
+        rent_start_year = calculate_construction_start_year(project_details.delay_years)
         rent_total_years = project_details.project_lifetime + project_details.construction_years
 
     if project_details.reconductoring or project_details.uses_existing_row:
@@ -140,7 +138,7 @@ def main() -> None:
         total_holding_cost_pv = 0
         total_acquisition_cost_pv = 0
         total_rent_cost_pv = calculate_present_value(
-            yearly_rent_cost, wacc_real, int(rent_total_years), int(rent_start_year)
+            yearly_rent_cost, financing.wacc_real, int(rent_total_years), rent_start_year
         )
 
     else:
@@ -150,16 +148,16 @@ def main() -> None:
         total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
 
         # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-        if apply_afudc:
+        if afudc_setup.apply_afudc:
             # Acquisition costs: AFUDC-eligible (capitalized to plant cost)
             acquisition_capitalized, acquisition_afudc = (
                 calculate_afudc_capitalized_cost(
                     acquisition_cost,
-                    timing_patterns["row_acquisition"],
+                    afudc_setup.timing_patterns["row_acquisition"],
                     project_details.delay_years,
                     project_details.construction_years,
-                    afudc_rate,
-                    delay_active,
+                    afudc_setup.afudc_rate,
+                    afudc_setup.delay_active,
                 )
             )
             # Holding costs: NOT AFUDC-eligible (operating expense, not CWIP)
@@ -170,19 +168,19 @@ def main() -> None:
 
         # ===== SOCIETAL PERSPECTIVE: Present Values =====
         # Validate wacc_real before direct use to prevent division by zero
-        validate_discount_rate(wacc_real, "wacc_real")
+        validate_discount_rate(financing.wacc_real, "wacc_real")
 
         # Holding costs: incurred annually during delay period
         total_holding_cost_pv = calculate_present_value(
-            yearly_holding_cost, wacc_real, int(project_details.delay_years)
+            yearly_holding_cost, financing.wacc_real, int(project_details.delay_years)
         )
 
         # Acquisition costs: one-time payment at end of delay period
-        total_acquisition_cost_pv = acquisition_cost / (1 + wacc_real) ** project_details.delay_years
+        total_acquisition_cost_pv = acquisition_cost / (1 + financing.wacc_real) ** project_details.delay_years
 
         # Rent costs: incurred annually during operation period
         total_rent_cost_pv = calculate_present_value(
-            yearly_rent_cost, wacc_real, int(rent_total_years), int(rent_start_year)
+            yearly_rent_cost, financing.wacc_real, int(rent_total_years), rent_start_year
         )
 
     # Display results
@@ -197,7 +195,7 @@ def main() -> None:
 
     print("[NOMINAL VALUES]")
     print(f"  Holding Cost: ${total_holding_cost:,.2f}")
-    print(f"    (Annual: ${yearly_holding_cost:,.2f} over {delay_year} year(s))")
+    print(f"    (Annual: ${yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))")
     print(f"  Acquisition Cost: ${acquisition_cost:,.2f}")
     print(f"  Rent Cost: ${total_rent_cost:,.2f}")
     print(f"    (Annual: ${yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
@@ -205,10 +203,10 @@ def main() -> None:
     print(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
     print()
 
-    if apply_afudc and not project_details.reconductoring:
+    if afudc_setup.apply_afudc and not project_details.reconductoring:
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(f"  AFUDC Rate: {afudc_rate:.2%} ({afudc_source})")
-        print(f"  Delay Period Active Work: {'Yes' if delay_active else 'No'}")
+        print(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
+        print(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
         print()
         print(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
         print(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
@@ -223,8 +221,8 @@ def main() -> None:
         print()
 
     print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {base_year}")
+    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    print(f"  Base Year: {financing.base_year}")
     print()
     print(f"  Holding Cost PV: ${total_holding_cost_pv:,.2f}")
     print(f"  Acquisition Cost PV: ${total_acquisition_cost_pv:,.2f}")
@@ -249,7 +247,7 @@ def main() -> None:
         "total_nominal": total_nominal_cost,
         "total_afudc": (
             acquisition_capitalized + total_holding_cost + total_rent_cost
-            if (apply_afudc and not project_details.reconductoring)
+            if (afudc_setup.apply_afudc and not project_details.reconductoring)
             else 0
         ),
         "total_pv": total_pv_cost,

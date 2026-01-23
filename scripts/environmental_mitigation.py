@@ -33,6 +33,7 @@ from financial_utils import (
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
+    calculate_construction_start_year,
 )
 from path_config import YAMLS_DIR
 
@@ -85,8 +86,9 @@ def calculate_environmental_mitigation_costs(
 
     for terrain, miles in terrain_miles_dict.items():
         if miles > 0:
-            # Calculate acres: miles × 5280 ft/mile × row_width_feet / 43560 ft²/acre
-            terrain_acres = (miles * 5280 * row_width_feet) / 43560
+            # Calculate acres using utility function
+            from calculation_utils import miles_to_acres
+            terrain_acres = miles_to_acres(miles, row_width_feet)
             acres_by_terrain[terrain] = terrain_acres
             total_base_acres += terrain_acres
 
@@ -145,25 +147,15 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    category = build_category_string(project_details=project_details)
 
     # Load ROW width for this project category
     row_width_feet = load_row_widths(category)
 
     # Load terrain details
-    try:
-        physical_details = get_physical_data_raw()
-        if "terrain" not in physical_details:
-            raise KeyError("Missing 'terrain' key in physical details")
-        if "terrain_miles" not in physical_details["terrain"]:
-            raise KeyError(
-                "Missing 'terrain_miles' key in terrain section of physical details"
-            )
-        terrain_miles = physical_details["terrain"]["terrain_miles"]
-    except KeyError as e:
-        raise KeyError(f"Missing required key in physical details: {e}")
+    from smart_loaders import load_terrain_miles
+    terrain_miles = load_terrain_miles()
 
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
@@ -174,36 +166,32 @@ def main() -> None:
     )
 
     # Load financing parameters for discounting
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
     # Load AFUDC configuration and timing patterns
-    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
-    apply_afudc, delay_active = load_afudc_config()
-
-    # Load full financing data for AFUDC rate calculation
-    financing_yaml = get_financing_data_raw()
-    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
+    from financial_utils import load_afudc_setup
+    afudc_setup = load_afudc_setup()
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-    if apply_afudc:
+    if afudc_setup.apply_afudc:
         # Base mitigation costs
         base_cap, base_afudc = calculate_afudc_capitalized_cost(
             results["base_cost"],
-            timing_patterns["environmental_mitigation_base"],
+            afudc_setup.timing_patterns["environmental_mitigation_base"],
             project_details.delay_years,
             project_details.construction_years,
-            afudc_rate,
-            delay_active,
+            afudc_setup.afudc_rate,
+            afudc_setup.delay_active,
         )
 
         # Credit costs (wetlands + habitat combined)
         credits_cap, credits_afudc = calculate_afudc_capitalized_cost(
             results["total_credits"],
-            timing_patterns["environmental_mitigation_credits"],
+            afudc_setup.timing_patterns["environmental_mitigation_credits"],
             project_details.delay_years,
             project_details.construction_years,
-            afudc_rate,
-            delay_active,
+            afudc_setup.afudc_rate,
+            afudc_setup.delay_active,
         )
 
         total_capitalized = base_cap + credits_cap
@@ -211,17 +199,17 @@ def main() -> None:
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
     # Validate wacc_real before direct use to prevent division by zero
-    validate_discount_rate(wacc_real, "wacc_real")
+    validate_discount_rate(financing.wacc_real, "wacc_real")
 
     # Credit purchases: occur upfront at start of construction (end of delay period)
     # Discount as one-time payment at delay_year + 1
-    credit_start_year = project_details.delay_years + 1
-    total_credits_pv = results["total_credits"] / (1 + wacc_real) ** credit_start_year
+    credit_start_year = calculate_construction_start_year(project_details.delay_years)
+    total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** credit_start_year
     wetlands_credits_pv = (
-        results["wetlands_credits"] / (1 + wacc_real) ** credit_start_year
+        results["wetlands_credits"] / (1 + financing.wacc_real) ** credit_start_year
     )
     habitat_credits_pv = (
-        results["habitat_credits"] / (1 + wacc_real) ** credit_start_year
+        results["habitat_credits"] / (1 + financing.wacc_real) ** credit_start_year
     )
 
     # Base mitigation: spread evenly over construction period
@@ -229,11 +217,11 @@ def main() -> None:
     if project_details.construction_years > 0:
         annual_base_cost = results["base_cost"] / project_details.construction_years
         base_cost_pv = calculate_present_value(
-            annual_base_cost, wacc_real, project_details.construction_years, credit_start_year
+            annual_base_cost, financing.wacc_real, project_details.construction_years, credit_start_year
         )
     else:
         # If construction_years is 0, treat as one-time cost at credit_start_year
-        base_cost_pv = results["base_cost"] / (1 + wacc_real) ** credit_start_year
+        base_cost_pv = results["base_cost"] / (1 + financing.wacc_real) ** credit_start_year
 
     # Total PV
     total_pv = base_cost_pv + total_credits_pv
@@ -263,10 +251,10 @@ def main() -> None:
     print(f"  TOTAL NOMINAL COST: ${results['total']:,.2f}")
     print()
 
-    if apply_afudc:
+    if afudc_setup.apply_afudc:
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(f"  AFUDC Rate: {afudc_rate:.2%} ({afudc_source})")
-        print(f"  Delay Period Active Work: {'Yes' if delay_active else 'No'}")
+        print(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
+        print(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
         print()
         print(f"  Base Mitigation Capitalized: ${base_cap:,.2f}")
         print(f"    AFUDC on Base: ${base_afudc:,.2f}")
@@ -278,15 +266,15 @@ def main() -> None:
         print()
 
     print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {base_year}")
+    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    print(f"  Base Year: {financing.base_year}")
     print()
     print(f"  Base Mitigation/Restoration PV: ${base_cost_pv:,.2f}")
     print(f"    (Spread over {project_details.construction_years} year(s))")
     print(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
     print(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
     print(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")
-    print(f"    (Payments start at year {credit_start_year})")
+    print(f"    (Payments start at year {credit_start_year:.1f})")
     print(f"  ---")
     print(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
     print("=" * 80)
@@ -301,7 +289,7 @@ def main() -> None:
     # Prepare results dictionary
     csv_results = {
         "total_nominal": results["total"],
-        "total_afudc": total_capitalized if apply_afudc else 0,
+        "total_afudc": total_capitalized if afudc_setup.apply_afudc else 0,
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
         "credits_nominal": results["total_credits"],

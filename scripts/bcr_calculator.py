@@ -60,7 +60,9 @@ def load_scenario_data(
                 except (ValueError, TypeError):
                     converted[key] = value  # Keep as string if not numeric
             else:
-                converted[key] = value
+                # Empty string means key doesn't exist (don't add to dict)
+                # This ensures "key" in data works correctly
+                pass
         return converted
 
     with open(batch_path, "r", newline="") as f:
@@ -141,9 +143,23 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     revenue_pv = data.get("revenue_pv", 0) or 0
     revenue_nominal = data.get("revenue_nominal", 0) or 0
 
-    total_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
-    total_benefits_nominal = (
+    calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
+    total_benefits_pv = (
+        data["total_benefits_pv"]
+        if ("total_benefits_pv" in data 
+            and data["total_benefits_pv"] != "" 
+            and data["total_benefits_pv"] != 0.0)
+        else calculated_total_benefits
+    )
+    calculated_total_benefits_nominal = (
         congestion_benefit_nominal + curtailment_benefit_nominal + revenue_nominal
+    )
+    total_benefits_nominal = (
+        data["total_benefits_nominal"]
+        if ("total_benefits_nominal" in data 
+            and data["total_benefits_nominal"] != "" 
+            and data["total_benefits_nominal"] != 0.0)
+        else calculated_total_benefits_nominal
     )
 
     # Also calculate haircut benefits (conservative estimate)
@@ -151,8 +167,15 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     # Revenue is certain (rate-based requirement) so it's included at full value
     congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
     curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
-    total_benefits_haircut_pv = (
+    calculated_total_benefits_haircut = (
         congestion_benefit_haircut + curtailment_benefit_haircut + revenue_pv
+    )
+    total_benefits_haircut_pv = (
+        data["total_benefits_haircut_pv"]
+        if ("total_benefits_haircut_pv" in data 
+            and data["total_benefits_haircut_pv"] != "" 
+            and data["total_benefits_haircut_pv"] != 0.0)
+        else calculated_total_benefits_haircut
     )
 
     return {
@@ -189,28 +212,52 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     build_cost_pv = data.get("build_cost_pv", 0) or 0
     row_cost_pv = data.get("row_cost_pv", 0) or 0
     env_mitigation_pv = data.get("env_mitigation_pv", 0) or 0
-    capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
+    calculated_capital = build_cost_pv + row_cost_pv + env_mitigation_pv
+    capital_costs_pv = (
+        data["capital_costs_pv"] 
+        if ("capital_costs_pv" in data 
+            and data["capital_costs_pv"] != "" 
+            and data["capital_costs_pv"] != 0.0)
+        else calculated_capital
+    )
 
     # Capital costs (Nominal)
     build_cost_nominal = data.get("build_cost_nominal", 0) or 0
     row_cost_nominal = data.get("row_cost_nominal", 0) or 0
     env_mitigation_nominal = data.get("env_mitigation_nominal", 0) or 0
+    calculated_capital_nominal = build_cost_nominal + row_cost_nominal + env_mitigation_nominal
     capital_costs_nominal = (
-        build_cost_nominal + row_cost_nominal + env_mitigation_nominal
+        data["capital_costs_nominal"]
+        if ("capital_costs_nominal" in data 
+            and data["capital_costs_nominal"] != "" 
+            and data["capital_costs_nominal"] != 0.0)
+        else calculated_capital_nominal
     )
 
     # Operational costs (PV) - O&M, operational insurance, and residual exceedance
     oandm_pv = data.get("oandm_pv", 0) or 0
     insurance_pv = data.get("insurance_pv", 0) or 0
     residual_exceedance_pv = data.get("residual_exceedance_pv", 0) or 0
-    operational_costs_pv = oandm_pv + insurance_pv + residual_exceedance_pv
+    calculated_operational = oandm_pv + insurance_pv + residual_exceedance_pv
+    operational_costs_pv = (
+        data["operational_costs_pv"]
+        if ("operational_costs_pv" in data 
+            and data["operational_costs_pv"] != "" 
+            and data["operational_costs_pv"] != 0.0)
+        else calculated_operational
+    )
 
     # Operational costs (Nominal)
     oandm_nominal = data.get("oandm_nominal", 0) or 0
     insurance_nominal = data.get("insurance_nominal", 0) or 0
     residual_exceedance_nominal = data.get("residual_exceedance_nominal", 0) or 0
+    calculated_operational_nominal = oandm_nominal + insurance_nominal + residual_exceedance_nominal
     operational_costs_nominal = (
-        oandm_nominal + insurance_nominal + residual_exceedance_nominal
+        data["operational_costs_nominal"]
+        if ("operational_costs_nominal" in data 
+            and data["operational_costs_nominal"] != "" 
+            and data["operational_costs_nominal"] != 0.0)
+        else calculated_operational_nominal
     )
 
     # Energy & Emissions costs (PV) - Line losses and emissions
@@ -218,54 +265,108 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     # Line losses - only count as cost if positive (greenfield)
     line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
     line_loss_cost_pv = max(0, line_loss_pv)
-    energy_emissions_costs_pv = line_loss_cost_pv + emissions_pv
+    calculated_energy_emissions = line_loss_cost_pv + emissions_pv
+    energy_emissions_costs_pv = (
+        data["energy_emissions_costs_pv"]
+        if ("energy_emissions_costs_pv" in data 
+            and data["energy_emissions_costs_pv"] != "" 
+            and data["energy_emissions_costs_pv"] != 0.0)
+        else calculated_energy_emissions
+    )
 
     # Energy & Emissions costs (Nominal)
     emissions_nominal = data.get("emissions_cost_nominal", 0) or 0
     line_loss_nominal = data.get("line_loss_cost_nominal", 0) or 0
     line_loss_cost_nominal = max(0, line_loss_nominal)
-    energy_emissions_costs_nominal = line_loss_cost_nominal + emissions_nominal
+    calculated_energy_emissions_nominal = line_loss_cost_nominal + emissions_nominal
+    energy_emissions_costs_nominal = (
+        data["energy_emissions_costs_nominal"]
+        if ("energy_emissions_costs_nominal" in data 
+            and data["energy_emissions_costs_nominal"] != "" 
+            and data["energy_emissions_costs_nominal"] != 0.0)
+        else calculated_energy_emissions_nominal
+    )
 
     # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
     wildfire_pv = data.get("wildfire_pv", 0) or 0
     outage_pv = data.get("outage_pv", 0) or 0
     wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
-    risk_costs_pv = wildfire_pv + outage_pv + wildfire_liability_pv
+    calculated_risk = wildfire_pv + outage_pv + wildfire_liability_pv
+    risk_costs_pv = (
+        data["risk_costs_pv"]
+        if ("risk_costs_pv" in data 
+            and data["risk_costs_pv"] != "" 
+            and data["risk_costs_pv"] != 0.0)
+        else calculated_risk
+    )
 
     # Risk costs (Nominal)
     wildfire_nominal = data.get("wildfire_nominal", 0) or 0
     outage_nominal = data.get("outage_nominal", 0) or 0
     wildfire_liability_nominal = data.get("wildfire_liability_nominal", 0) or 0
-    risk_costs_nominal = wildfire_nominal + outage_nominal + wildfire_liability_nominal
+    calculated_risk_nominal = wildfire_nominal + outage_nominal + wildfire_liability_nominal
+    risk_costs_nominal = (
+        data["risk_costs_nominal"]
+        if ("risk_costs_nominal" in data 
+            and data["risk_costs_nominal"] != "" 
+            and data["risk_costs_nominal"] != 0.0)
+        else calculated_risk_nominal
+    )
 
     # Delay costs (PV)
     delay_cost_pv = data.get("delay_cost_pv", 0) or 0
     congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
     curtailment_delay_pv = data.get("curtailment_delay_cost_pv", 0) or 0
-    delay_costs_pv = delay_cost_pv + congestion_delay_pv + curtailment_delay_pv
+    calculated_delay = delay_cost_pv + congestion_delay_pv + curtailment_delay_pv
+    delay_costs_pv = (
+        data["delay_costs_pv"]
+        if ("delay_costs_pv" in data 
+            and data["delay_costs_pv"] != "" 
+            and data["delay_costs_pv"] != 0.0)
+        else calculated_delay
+    )
 
     # Delay costs (Nominal)
     delay_cost_nominal = data.get("delay_cost_nominal", 0) or 0
     congestion_delay_nominal = data.get("congestion_delay_cost_nominal", 0) or 0
     curtailment_delay_nominal = data.get("curtailment_delay_cost_nominal", 0) or 0
+    calculated_delay_nominal = delay_cost_nominal + congestion_delay_nominal + curtailment_delay_nominal
     delay_costs_nominal = (
-        delay_cost_nominal + congestion_delay_nominal + curtailment_delay_nominal
+        data["delay_costs_nominal"]
+        if ("delay_costs_nominal" in data 
+            and data["delay_costs_nominal"] != "" 
+            and data["delay_costs_nominal"] != 0.0)
+        else calculated_delay_nominal
     )
 
     # Totals
-    total_costs_pv = (
+    calculated_total = (
         capital_costs_pv
         + operational_costs_pv
         + energy_emissions_costs_pv
         + risk_costs_pv
         + delay_costs_pv
     )
-    total_costs_nominal = (
+    total_costs_pv = (
+        data["total_costs_pv"]
+        if ("total_costs_pv" in data 
+            and data["total_costs_pv"] != "" 
+            and data["total_costs_pv"] != 0.0)
+        else calculated_total
+    )
+    calculated_total_nominal = (
         capital_costs_nominal
         + operational_costs_nominal
         + energy_emissions_costs_nominal
         + risk_costs_nominal
         + delay_costs_nominal
+    )
+    total_costs_nominal = (
+        data["total_costs_nominal"]
+        if ("total_costs_nominal" in data 
+            and data["total_costs_nominal"] != "" 
+            and data["total_costs_nominal"] != 0.0)
+        else calculated_total_nominal
     )
 
     return {

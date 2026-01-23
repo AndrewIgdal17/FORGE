@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import math
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional, Any
+from constants import HOURS_PER_YEAR
 
 
 def to_percent(decimal: float) -> float:
@@ -167,7 +168,7 @@ def calculate_line_losses(
         total_line_loss_mw / (capacity_mw_numeric * line_utilization_percent)
     )
 
-    losses_mwh_per_year = total_line_loss_mw * 8760
+    losses_mwh_per_year = total_line_loss_mw * HOURS_PER_YEAR
     lifetime_losses_mwh = losses_mwh_per_year * project_lifetime
 
     return (
@@ -214,10 +215,106 @@ def calculate_converter_losses(
         converter_loss_percent = to_percent(
             total_converter_losses_mw / (capacity_mw_numeric * line_utilization_percent)
         )
-        total_converter_losses_mwh = total_converter_losses_mw * 8760
+        total_converter_losses_mwh = total_converter_losses_mw * HOURS_PER_YEAR
     else:
         total_converter_losses_mw = 0
         total_converter_losses_mwh = 0
         converter_loss_percent = 0
 
     return total_converter_losses_mw, total_converter_losses_mwh, converter_loss_percent
+
+
+def miles_to_acres(miles: float, row_width_feet: float) -> float:
+    """Convert miles of ROW to acres.
+
+    Args:
+        miles: Length in miles
+        row_width_feet: Width of right-of-way in feet
+
+    Returns:
+        Area in acres
+    """
+    from constants import FEET_PER_MILE, SQUARE_FEET_PER_ACRE
+
+    return (miles * FEET_PER_MILE * row_width_feet) / SQUARE_FEET_PER_ACRE
+
+
+def build_category_string(
+    construction_type: Optional[str] = None,
+    ac_dc: Optional[str] = None,
+    capacity_mw: Optional[Union[int, str]] = None,
+    conductor_type: Optional[str] = None,
+    converter_type: Optional[str] = None,
+    project_details: Optional[Any] = None,
+) -> str:
+    """
+    Build project category string for YAML/JSON lookups.
+
+    Category format: "{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+
+    Args:
+        construction_type: Construction type (Overhead, Underground, Subsea)
+        ac_dc: "AC" or "DC"
+        capacity_mw: Capacity in MW (int or str, with/without "MW" suffix)
+        conductor_type: Conductor type
+        converter_type: Converter type (or "NA" for AC)
+        project_details: Optional ProjectTechnicalDetails-like object with attributes:
+            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            If provided, individual parameters are ignored.
+
+    Returns:
+        Formatted category string
+
+    Examples:
+        >>> build_category_string("Overhead", "AC", 500, "ACSR", "NA")
+        "Overhead/AC/500MW/ACSR/NA"
+
+        >>> build_category_string(project_details=project_details)
+        "Overhead/AC/500MW/ACSR/NA"
+    """
+    # If project_details is provided, extract attributes from it
+    if project_details is not None:
+        construction_type = project_details.construction_type
+        ac_dc = project_details.ac_dc
+        capacity_mw = project_details.capacity_mw
+        conductor_type = project_details.conductor_type
+        converter_type = project_details.converter_type
+
+    # Validate required parameters
+    if (
+        construction_type is None
+        or ac_dc is None
+        or capacity_mw is None
+        or conductor_type is None
+        or converter_type is None
+    ):
+        raise ValueError(
+            "build_category_string requires construction_type, ac_dc, capacity_mw, "
+            "conductor_type, and converter_type (either as parameters or via project_details)"
+        )
+
+    # Normalize capacity_mw to int
+    capacity_mw_normalized = normalize_capacity_mw(capacity_mw)
+
+    # Build and return category string
+    return f"{construction_type}/{ac_dc}/{capacity_mw_normalized}MW/{conductor_type}/{converter_type}"
+
+
+def get_converter_type(ac_dc: str, converter_type: str) -> str:
+    """
+    Get converter type, returning "NA" for AC projects.
+
+    Args:
+        ac_dc: "AC" or "DC"
+        converter_type: Converter type (for DC projects) or any value (ignored for AC)
+
+    Returns:
+        "NA" if ac_dc == "AC", otherwise returns converter_type
+
+    Examples:
+        >>> get_converter_type("AC", "LCC")
+        "NA"
+        >>> get_converter_type("DC", "LCC")
+        "LCC"
+    """
+    return "NA" if ac_dc == "AC" else converter_type

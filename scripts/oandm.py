@@ -22,7 +22,8 @@ from yaml_loaders import (
     load_physical_details_detailed,
     load_circuit_and_resistance_details,
 )
-from financial_utils import calculate_present_value
+from financial_utils import calculate_present_value, calculate_cod_year
+from calculation_utils import build_category_string
 from path_config import YAMLS_DIR
 
 
@@ -90,7 +91,7 @@ def load_conductor_om_costs(
             )
         conductor_om_costs = data["project_categories_om_conductors"]
 
-        category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        category = build_category_string(construction_type, ac_dc, capacity_mw, conductor_type, converter_type)
 
         if category not in conductor_om_costs:
             raise KeyError(f"Category '{category}' not found in conductor O&M YAML")
@@ -149,7 +150,8 @@ def load_converter_om_costs(
             print("AC Project detected. No converter O&M costs needed.")
             return 0
         else:
-            category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+            from calculation_utils import build_category_string
+            category = build_category_string(construction_type, ac_dc, capacity_mw, conductor_type, converter_type)
 
             if category not in converter_om_costs:
                 raise KeyError(f"Category '{category}' not found in converter O&M YAML")
@@ -375,19 +377,8 @@ def load_structure_om_costs(
 
 def main() -> None:
     project_details = load_project_technical_details()
-    (
-        total_miles,
-        forested_miles,
-        scrubbed_flat_miles,
-        wetland_miles,
-        farmland_miles,
-        desert_barren_miles,
-        urban_miles,
-        rolling_hills_miles,
-        mountain_miles,
-        subsea_miles,
-    ) = load_physical_details_detailed()
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    physical_details = load_physical_details_detailed()
+    financing = load_financing_details()
     variable_conductor_cost_per_mile_year = load_conductor_om_costs(
         project_details.construction_type, project_details.ac_dc, project_details.capacity_mw, project_details.conductor_type, project_details.converter_type
     )
@@ -402,20 +393,20 @@ def main() -> None:
         total_vegetation_management_cost_per_year,
     ) = load_structure_om_costs(
         project_details.construction_type,
-        forested_miles,
-        scrubbed_flat_miles,
-        wetland_miles,
-        farmland_miles,
-        desert_barren_miles,
-        urban_miles,
-        rolling_hills_miles,
-        mountain_miles,
-        subsea_miles,
+        physical_details.forested_miles,
+        physical_details.scrubbed_flat_miles,
+        physical_details.wetland_miles,
+        physical_details.farmland_miles,
+        physical_details.desert_barren_miles,
+        physical_details.urban_miles,
+        physical_details.rolling_hills_miles,
+        physical_details.mountain_miles,
+        physical_details.subsea_miles,
     )
 
     # Calculate annual costs
-    total_conductor_cost_per_year = variable_conductor_cost_per_mile_year * total_miles
-    total_converter_cost_per_year = variable_converter_cost_per_mile_year * total_miles
+    total_conductor_cost_per_year = variable_conductor_cost_per_mile_year * physical_details.total_miles
+    total_converter_cost_per_year = variable_converter_cost_per_mile_year * physical_details.total_miles
 
     # Calculate lifetime costs (undiscounted)
     total_structure_cost_lifetime = variable_structure_cost_per_year * project_details.project_lifetime
@@ -427,29 +418,29 @@ def main() -> None:
 
     # Calculate present values
     # O&M costs start at first year of operation (COD)
-    oandm_start_year = delay_years + construction_years + 1
+    oandm_start_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
     pv_conductor = calculate_present_value(
         total_conductor_cost_per_year,
-        wacc_real,
-        project_lifetime,
+        financing.wacc_real,
+        project_details.project_lifetime,
         start_year=oandm_start_year,
     )
     pv_converter = calculate_present_value(
         total_converter_cost_per_year,
-        wacc_real,
-        project_lifetime,
+        financing.wacc_real,
+        project_details.project_lifetime,
         start_year=oandm_start_year,
     )
     pv_structure = calculate_present_value(
         variable_structure_cost_per_year,
-        wacc_real,
-        project_lifetime,
+        financing.wacc_real,
+        project_details.project_lifetime,
         start_year=oandm_start_year,
     )
     pv_vegetation_management = calculate_present_value(
         total_vegetation_management_cost_per_year,
-        wacc_real,
-        project_lifetime,
+        financing.wacc_real,
+        project_details.project_lifetime,
         start_year=oandm_start_year,
     )
     pv_total = pv_conductor + pv_converter + pv_structure + pv_vegetation_management
@@ -461,7 +452,7 @@ def main() -> None:
 
     print("\n--- Project Overview ---")
     print(f"Construction Type: {project_details.construction_type}")
-    print(f"Total Line Length: {total_miles:.2f} miles")
+    print(f"Total Line Length: {physical_details.total_miles:.2f} miles")
     print(f"Project Lifetime: {project_details.project_lifetime} years")
 
     # Print structure information for overhead projects
@@ -491,7 +482,7 @@ def main() -> None:
     print("\n--- Unit Costs (per mile per year) ---")
     print(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
     print(f"Converter:  ${variable_converter_cost_per_mile_year:,.2f}")
-    if construction_type == "Overhead":
+    if project_details.construction_type == "Overhead":
         print(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
     else:
         print(f"Structure:  ${variable_structure_cost_per_mile_year:,.2f}")
@@ -517,7 +508,7 @@ def main() -> None:
     )
 
     print("\n--- Present Value Calculations ---")
-    print(f"Real WACC: {wacc_real:.4f}")
+    print(f"Real WACC: {financing.wacc_real:.4f}")
     print(f"PV Conductor:  ${pv_conductor:,.2f}")
     print(f"PV Converter:  ${pv_converter:,.2f}")
     print(f"PV Structure:  ${pv_structure:,.2f}")

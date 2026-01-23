@@ -10,6 +10,7 @@ import math
 import yaml
 import sys
 import os
+from dataclasses import dataclass
 from typing import Dict, Tuple
 
 # Add parent directory to path for imports
@@ -33,9 +34,25 @@ from financial_utils import (
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
+    calculate_construction_start_year,
 )
 from weighted_miles import calculate_weighted_miles
 from path_config import YAMLS_DIR
+
+
+@dataclass
+class BuildCosts:
+    """Build cost calculation results."""
+    total_cost: float
+    total_cost_with_contingencies: float
+    conductor_cost: float
+    structure_cost: float
+    converter_cost: float
+    conductor_cost_with_contingencies: float
+    structure_cost_with_contingencies: float
+    converter_cost_with_contingencies: float
+    weighted_miles: float
+    average_terrain_multiplier: float
 
 
 def load_costs(
@@ -44,7 +61,7 @@ def load_costs(
     number_of_converters: int,
     contingencies: Dict[str, float],
     reconductoring: bool,
-) -> Tuple[float, float, float, float, float, float, float, float, float, float]:
+) -> BuildCosts:
     """
     Load the costs for the comprehensive transmission cost calculator.
 
@@ -133,17 +150,17 @@ def load_costs(
         + converter_cost_with_contingencies
     )
 
-    return (
-        total_cost,
-        total_cost_with_contingencies,
-        conductor_cost,
-        structure_cost,
-        converter_cost,
-        conductor_cost_with_contingencies,
-        structure_cost_with_contingencies,
-        converter_cost_with_contingencies,
-        weighted_miles,
-        average_terrain_multiplier,
+    return BuildCosts(
+        total_cost=total_cost,
+        total_cost_with_contingencies=total_cost_with_contingencies,
+        conductor_cost=conductor_cost,
+        structure_cost=structure_cost,
+        converter_cost=converter_cost,
+        conductor_cost_with_contingencies=conductor_cost_with_contingencies,
+        structure_cost_with_contingencies=structure_cost_with_contingencies,
+        converter_cost_with_contingencies=converter_cost_with_contingencies,
+        weighted_miles=weighted_miles,
+        average_terrain_multiplier=average_terrain_multiplier,
     )
 
 
@@ -154,9 +171,8 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    category = (
-        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
-    )
+    from calculation_utils import build_category_string
+    category = build_category_string(project_details=project_details)
 
     # Determine number of converters
     if project_details.ac_dc == "DC":
@@ -183,61 +199,46 @@ def main() -> None:
 
     total_miles = load_physical_details()
     contingencies = load_contingencies()
-    inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
+    financing = load_financing_details()
 
-    (
-        total_cost,
-        total_cost_with_contingencies,
-        conductor_cost,
-        structure_cost,
-        converter_cost,
-        conductor_cost_with_contingencies,
-        structure_cost_with_contingencies,
-        converter_cost_with_contingencies,
-        weighted_miles,
-        average_terrain_multiplier,
-    ) = load_costs(
+    costs = load_costs(
         category, total_miles, number_of_converters, contingencies, project_details.reconductoring
     )
 
     # Load AFUDC configuration and timing patterns
-    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
-    apply_afudc, delay_active = load_afudc_config()
-
-    # Load full financing data for AFUDC rate calculation
-    financing_yaml = get_financing_data_raw()
-    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
+    from financial_utils import load_afudc_setup
+    afudc_setup = load_afudc_setup()
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-    if apply_afudc:
+    if afudc_setup.apply_afudc:
         # Build costs are AFUDC-eligible and occur during construction
         (
             capitalized_cost_with_contingencies,
             afudc_amount,
         ) = calculate_afudc_capitalized_cost(
-            total_cost_with_contingencies,
-            timing_patterns["build_costs"],
+            costs.total_cost_with_contingencies,
+            afudc_setup.timing_patterns["build_costs"],
             project_details.delay_years,
             project_details.construction_years,
-            afudc_rate,
-            delay_active,
+            afudc_setup.afudc_rate,
+            afudc_setup.delay_active,
         )
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
     # Build costs: spread evenly over construction period
     # Annual cost during construction years
-    construction_start_year = project_details.delay_years + 1
+    construction_start_year = calculate_construction_start_year(project_details.delay_years)
     if project_details.construction_years > 0:
-        annual_build_cost = total_cost_with_contingencies / project_details.construction_years
+        annual_build_cost = costs.total_cost_with_contingencies / project_details.construction_years
         build_cost_pv = calculate_present_value(
-            annual_build_cost, wacc_real, project_details.construction_years, construction_start_year
+            annual_build_cost, financing.wacc_real, project_details.construction_years, construction_start_year
         )
     else:
         # Validate wacc_real before direct use to prevent division by zero
-        validate_discount_rate(wacc_real, "wacc_real")
+        validate_discount_rate(financing.wacc_real, "wacc_real")
         # If construction_years is 0, treat as one-time cost at construction_start_year
         build_cost_pv = (
-            total_cost_with_contingencies / (1 + wacc_real) ** construction_start_year
+            costs.total_cost_with_contingencies / (1 + financing.wacc_real) ** construction_start_year
         )
 
     # Format and display results
@@ -247,30 +248,30 @@ def main() -> None:
     print()
     print("Project Metrics:")
     print(f"  Total Miles:              {total_miles:,.2f} miles")
-    print(f"  Weighted Miles:           {weighted_miles:,.2f} miles")
-    print(f"  Terrain Multiplier:       {average_terrain_multiplier:.2f}")
+    print(f"  Weighted Miles:           {costs.weighted_miles:,.2f} miles")
+    print(f"  Terrain Multiplier:       {costs.average_terrain_multiplier:.2f}")
     print()
 
     print("[NOMINAL VALUES]")
     print("Base Build Costs:")
-    print(f"  Conductor Costs:          ${conductor_cost:,.2f}")
-    print(f"  Structure Costs:          ${structure_cost:,.2f}")
-    print(f"  Converter Costs:          ${converter_cost:,.2f}")
+    print(f"  Conductor Costs:          ${costs.conductor_cost:,.2f}")
+    print(f"  Structure Costs:          ${costs.structure_cost:,.2f}")
+    print(f"  Converter Costs:          ${costs.converter_cost:,.2f}")
     print("  " + "-" * 52)
-    print(f"  Total Base Cost:          ${total_cost:,.2f}")
+    print(f"  Total Base Cost:          ${costs.total_cost:,.2f}")
     print()
     print("Costs with Contingencies:")
-    print(f"  Conductor Costs:          ${conductor_cost_with_contingencies:,.2f}")
-    print(f"  Structure Costs:          ${structure_cost_with_contingencies:,.2f}")
-    print(f"  Converter Costs:          ${converter_cost_with_contingencies:,.2f}")
+    print(f"  Conductor Costs:          ${costs.conductor_cost_with_contingencies:,.2f}")
+    print(f"  Structure Costs:          ${costs.structure_cost_with_contingencies:,.2f}")
+    print(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
     print("  " + "-" * 52)
-    print(f"  TOTAL NOMINAL COST:       ${total_cost_with_contingencies:,.2f}")
+    print(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
     print()
 
-    if apply_afudc:
+    if afudc_setup.apply_afudc:
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(f"  AFUDC Rate: {afudc_rate:.2%} ({afudc_source})")
-        print(f"  Delay Period Active Work: {'Yes' if delay_active else 'No'}")
+        print(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
+        print(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
         print()
         print(
             f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
@@ -282,8 +283,8 @@ def main() -> None:
         print()
 
     print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {base_year}")
+    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    print(f"  Base Year: {financing.base_year}")
     print()
     print("Build costs incurred during construction period:")
     if project_details.construction_years > 0:
@@ -291,10 +292,10 @@ def main() -> None:
             f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
         )
         print(
-            f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + project_details.construction_years - 1}"
+            f"  Construction Period: Year {construction_start_year:.1f} to Year {construction_start_year + project_details.construction_years - 1:.1f}"
         )
     else:
-        print(f"  One-time cost at Year {construction_start_year}")
+        print(f"  One-time cost at Year {construction_start_year:.1f}")
     print(f"  Build Cost PV: ${build_cost_pv:,.2f}")
     print("=" * 80)
 
@@ -307,12 +308,12 @@ def main() -> None:
 
     # Prepare results dictionary
     results = {
-        "total_nominal": total_cost_with_contingencies,
-        "total_afudc": capitalized_cost_with_contingencies if apply_afudc else 0,
+        "total_nominal": costs.total_cost_with_contingencies,
+        "total_afudc": capitalized_cost_with_contingencies if afudc_setup.apply_afudc else 0,
         "total_pv": build_cost_pv,
-        "conductor_nominal": conductor_cost_with_contingencies,
-        "structure_nominal": structure_cost_with_contingencies,
-        "converter_nominal": converter_cost_with_contingencies,
+        "conductor_nominal": costs.conductor_cost_with_contingencies,
+        "structure_nominal": costs.structure_cost_with_contingencies,
+        "converter_nominal": costs.converter_cost_with_contingencies,
         "conductor_afudc": 0,  # Component-level AFUDC not calculated separately
         "structure_afudc": 0,
         "converter_afudc": 0,
