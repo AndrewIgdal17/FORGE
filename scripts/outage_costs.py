@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from constants import MIN_DISCOUNT_RATE
+from constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERANCE
 from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
@@ -167,7 +167,7 @@ def calculate_outage_costs(
             EAC += annual_cost
 
     # Calculate nominal total cost (sum of growing annual costs)
-    if abs(growth_rate) < 1e-9:  # No growth
+    if abs(growth_rate) < GROWTH_RATE_TOLERANCE:  # No growth
         nominal_total = EAC * project_lifetime
     else:
         nominal_total = EAC * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate

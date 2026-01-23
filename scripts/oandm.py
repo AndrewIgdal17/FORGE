@@ -25,6 +25,7 @@ from yaml_loaders import (
 from financial_utils import calculate_present_value, calculate_cod_year
 from calculation_utils import build_category_string
 from path_config import YAMLS_DIR
+from constants import CONSTRUCTION_TYPE_OVERHEAD
 
 
 def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, float]:
@@ -237,7 +238,7 @@ def load_structure_om_costs(
     # Continue with rest of function using structure_om_costs
     structure_dict = {}
 
-    if construction_type == "Overhead":
+    if construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         structures_per_mile_forested = structure_om_costs[category][
             "structures_per_mile_forested"
         ]
@@ -456,7 +457,7 @@ def main() -> None:
     print(f"Project Lifetime: {project_details.project_lifetime} years")
 
     # Print structure information for overhead projects
-    if project_details.construction_type == "Overhead" and structure_dict:
+    if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD and structure_dict:
         print("\n--- Structure Information ---")
         print(f"Total Structures: {int(structure_dict['total'])}")
         print("\nStructures by Terrain Type:")
@@ -482,7 +483,7 @@ def main() -> None:
     print("\n--- Unit Costs (per mile per year) ---")
     print(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
     print(f"Converter:  ${variable_converter_cost_per_mile_year:,.2f}")
-    if project_details.construction_type == "Overhead":
+    if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         print(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
     else:
         print(f"Structure:  ${variable_structure_cost_per_mile_year:,.2f}")

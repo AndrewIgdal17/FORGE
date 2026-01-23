@@ -6,7 +6,15 @@ from __future__ import annotations
 
 import math
 from typing import Union, Tuple, Optional, Any
-from constants import HOURS_PER_YEAR
+from constants import (
+    HOURS_PER_YEAR,
+    LCC_CONVERTER_LOSS,
+    VSC_CONVERTER_LOSS,
+    AC_POWER_FACTOR,
+    TRANSMISSION_TYPE_AC,
+    TRANSMISSION_TYPE_DC,
+    CONVERTER_TYPE_NA,
+)
 
 
 def to_percent(decimal: float) -> float:
@@ -86,9 +94,12 @@ def calculate_phase_current(
         capacity_mw = int(capacity_mw.replace("MW", ""))
     numerator = capacity_mw * 1000
 
-    if ac_dc == "AC":
+    if ac_dc == TRANSMISSION_TYPE_AC:
         denominator = (
-            0.95 * voltage_kv * math.sqrt(number_of_phases) * number_of_circuits_poles
+            AC_POWER_FACTOR
+            * voltage_kv
+            * math.sqrt(number_of_phases)
+            * number_of_circuits_poles
         )
     else:
         denominator = (
@@ -150,7 +161,9 @@ def calculate_line_losses(
     number_of_conductors = (
         conductors_per_phase * number_of_phases * number_of_circuits_poles
     )
-    resistance_per_mile = AC_75_resistance if ac_dc == "AC" else DC_20_resistance
+    resistance_per_mile = (
+        AC_75_resistance if ac_dc == TRANSMISSION_TYPE_AC else DC_20_resistance
+    )
 
     losses_mw_per_mile = (
         ((phase_current / conductors_per_phase) ** 2)
@@ -200,14 +213,16 @@ def calculate_converter_losses(
         capacity_mw_numeric: Capacity in MW as numeric value
         ac_dc: "AC" or "DC" string
         converter_loss_percentage: Optional converter loss percentage. If None, defaults to
-            0.0075 for LCC converters or 0.01 for VSC converters.
+            LCC_CONVERTER_LOSS for LCC converters or VSC_CONVERTER_LOSS for VSC converters.
 
     Returns:
         tuple: (total_converter_losses_mw, total_converter_losses_mwh, converter_loss_percent)
     """
-    if ac_dc == "DC":
+    if ac_dc == TRANSMISSION_TYPE_DC:
         if converter_loss_percentage is None:
-            converter_loss_percentage = 0.0075 if "LCC" in converter_type else 0.01
+            converter_loss_percentage = (
+                LCC_CONVERTER_LOSS if "LCC" in converter_type else VSC_CONVERTER_LOSS
+            )
         converter_losses_mw = (
             converter_loss_percentage * line_utilization_percent * capacity_mw_numeric
         )
@@ -317,4 +332,4 @@ def get_converter_type(ac_dc: str, converter_type: str) -> str:
         >>> get_converter_type("DC", "LCC")
         "LCC"
     """
-    return "NA" if ac_dc == "AC" else converter_type
+    return CONVERTER_TYPE_NA if ac_dc == TRANSMISSION_TYPE_AC else converter_type

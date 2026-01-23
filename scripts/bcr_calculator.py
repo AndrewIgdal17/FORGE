@@ -110,6 +110,25 @@ def load_scenario_data(
         return convert_row_to_numeric(rows[-1])
 
 
+def safe_get_numeric(data: Dict[str, Any], key: str, default: float = 0.0) -> float:
+    """
+    Safely get numeric value from dictionary, handling missing keys, empty strings, None, and 0.0.
+    
+    This is for individual component values only. Do NOT use for subtotals.
+    The subtotal logic (e.g., capital_costs_pv) uses explicit checks that reject 0.0 values
+    to avoid using incorrectly initialized CSV values.
+    
+    Args:
+        data: Dictionary to read from
+        key: Key to look up
+        default: Default value if key is missing (default: 0.0)
+    
+    Returns:
+        float: Numeric value (defaults to 0.0 for missing/invalid values)
+    """
+    return data.get(key, default) or default
+
+
 def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
@@ -129,19 +148,19 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
         Dictionary with benefit breakdown and total (both nominal and PV)
     """
     # Present value benefits
-    congestion_benefit_pv = data.get("congestion_benefit_pv", 0) or 0
-    curtailment_benefit_pv = data.get("curtailment_benefit_pv", 0) or 0
+    congestion_benefit_pv = safe_get_numeric(data, "congestion_benefit_pv")
+    curtailment_benefit_pv = safe_get_numeric(data, "curtailment_benefit_pv")
 
     # Nominal benefits
-    congestion_benefit_nominal = data.get("congestion_benefit_nominal", 0) or 0
-    curtailment_benefit_nominal = data.get("curtailment_benefit_nominal", 0) or 0
+    congestion_benefit_nominal = safe_get_numeric(data, "congestion_benefit_nominal")
+    curtailment_benefit_nominal = safe_get_numeric(data, "curtailment_benefit_nominal")
 
     # Line losses are now always costs, never benefits
     # (Both greenfield and reconductoring report absolute losses as positive costs)
 
     # Add revenue (rate-based revenue requirement)
-    revenue_pv = data.get("revenue_pv", 0) or 0
-    revenue_nominal = data.get("revenue_nominal", 0) or 0
+    revenue_pv = safe_get_numeric(data, "revenue_pv")
+    revenue_nominal = safe_get_numeric(data, "revenue_nominal")
 
     calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
     total_benefits_pv = (
@@ -165,8 +184,8 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     # Also calculate haircut benefits (conservative estimate)
     # Haircut applies conservative multipliers to uncertain benefits (congestion/curtailment)
     # Revenue is certain (rate-based requirement) so it's included at full value
-    congestion_benefit_haircut = data.get("congestion_benefit_haircut_pv", 0) or 0
-    curtailment_benefit_haircut = data.get("curtailment_benefit_haircut_pv", 0) or 0
+    congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
+    curtailment_benefit_haircut = safe_get_numeric(data, "curtailment_benefit_haircut_pv")
     calculated_total_benefits_haircut = (
         congestion_benefit_haircut + curtailment_benefit_haircut + revenue_pv
     )
@@ -209,9 +228,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         Dictionary with cost breakdown by category and total (both nominal and PV)
     """
     # Capital costs (PV)
-    build_cost_pv = data.get("build_cost_pv", 0) or 0
-    row_cost_pv = data.get("row_cost_pv", 0) or 0
-    env_mitigation_pv = data.get("env_mitigation_pv", 0) or 0
+    build_cost_pv = safe_get_numeric(data, "build_cost_pv")
+    row_cost_pv = safe_get_numeric(data, "row_cost_pv")
+    env_mitigation_pv = safe_get_numeric(data, "env_mitigation_pv")
     calculated_capital = build_cost_pv + row_cost_pv + env_mitigation_pv
     capital_costs_pv = (
         data["capital_costs_pv"] 
@@ -222,9 +241,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Capital costs (Nominal)
-    build_cost_nominal = data.get("build_cost_nominal", 0) or 0
-    row_cost_nominal = data.get("row_cost_nominal", 0) or 0
-    env_mitigation_nominal = data.get("env_mitigation_nominal", 0) or 0
+    build_cost_nominal = safe_get_numeric(data, "build_cost_nominal")
+    row_cost_nominal = safe_get_numeric(data, "row_cost_nominal")
+    env_mitigation_nominal = safe_get_numeric(data, "env_mitigation_nominal")
     calculated_capital_nominal = build_cost_nominal + row_cost_nominal + env_mitigation_nominal
     capital_costs_nominal = (
         data["capital_costs_nominal"]
@@ -235,9 +254,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Operational costs (PV) - O&M, operational insurance, and residual exceedance
-    oandm_pv = data.get("oandm_pv", 0) or 0
-    insurance_pv = data.get("insurance_pv", 0) or 0
-    residual_exceedance_pv = data.get("residual_exceedance_pv", 0) or 0
+    oandm_pv = safe_get_numeric(data, "oandm_pv")
+    insurance_pv = safe_get_numeric(data, "insurance_pv")
+    residual_exceedance_pv = safe_get_numeric(data, "residual_exceedance_pv")
     calculated_operational = oandm_pv + insurance_pv + residual_exceedance_pv
     operational_costs_pv = (
         data["operational_costs_pv"]
@@ -248,9 +267,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Operational costs (Nominal)
-    oandm_nominal = data.get("oandm_nominal", 0) or 0
-    insurance_nominal = data.get("insurance_nominal", 0) or 0
-    residual_exceedance_nominal = data.get("residual_exceedance_nominal", 0) or 0
+    oandm_nominal = safe_get_numeric(data, "oandm_nominal")
+    insurance_nominal = safe_get_numeric(data, "insurance_nominal")
+    residual_exceedance_nominal = safe_get_numeric(data, "residual_exceedance_nominal")
     calculated_operational_nominal = oandm_nominal + insurance_nominal + residual_exceedance_nominal
     operational_costs_nominal = (
         data["operational_costs_nominal"]
@@ -261,9 +280,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Energy & Emissions costs (PV) - Line losses and emissions
-    emissions_pv = data.get("emissions_cost_pv", 0) or 0
+    emissions_pv = safe_get_numeric(data, "emissions_cost_pv")
     # Line losses - only count as cost if positive (greenfield)
-    line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
+    line_loss_pv = safe_get_numeric(data, "line_loss_cost_pv")
     line_loss_cost_pv = max(0, line_loss_pv)
     calculated_energy_emissions = line_loss_cost_pv + emissions_pv
     energy_emissions_costs_pv = (
@@ -275,8 +294,8 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Energy & Emissions costs (Nominal)
-    emissions_nominal = data.get("emissions_cost_nominal", 0) or 0
-    line_loss_nominal = data.get("line_loss_cost_nominal", 0) or 0
+    emissions_nominal = safe_get_numeric(data, "emissions_cost_nominal")
+    line_loss_nominal = safe_get_numeric(data, "line_loss_cost_nominal")
     line_loss_cost_nominal = max(0, line_loss_nominal)
     calculated_energy_emissions_nominal = line_loss_cost_nominal + emissions_nominal
     energy_emissions_costs_nominal = (
@@ -288,9 +307,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
-    wildfire_pv = data.get("wildfire_pv", 0) or 0
-    outage_pv = data.get("outage_pv", 0) or 0
-    wildfire_liability_pv = data.get("wildfire_liability_pv", 0) or 0
+    wildfire_pv = safe_get_numeric(data, "wildfire_pv")
+    outage_pv = safe_get_numeric(data, "outage_pv")
+    wildfire_liability_pv = safe_get_numeric(data, "wildfire_liability_pv")
     calculated_risk = wildfire_pv + outage_pv + wildfire_liability_pv
     risk_costs_pv = (
         data["risk_costs_pv"]
@@ -301,9 +320,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Risk costs (Nominal)
-    wildfire_nominal = data.get("wildfire_nominal", 0) or 0
-    outage_nominal = data.get("outage_nominal", 0) or 0
-    wildfire_liability_nominal = data.get("wildfire_liability_nominal", 0) or 0
+    wildfire_nominal = safe_get_numeric(data, "wildfire_nominal")
+    outage_nominal = safe_get_numeric(data, "outage_nominal")
+    wildfire_liability_nominal = safe_get_numeric(data, "wildfire_liability_nominal")
     calculated_risk_nominal = wildfire_nominal + outage_nominal + wildfire_liability_nominal
     risk_costs_nominal = (
         data["risk_costs_nominal"]
@@ -314,9 +333,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Delay costs (PV)
-    delay_cost_pv = data.get("delay_cost_pv", 0) or 0
-    congestion_delay_pv = data.get("congestion_delay_cost_pv", 0) or 0
-    curtailment_delay_pv = data.get("curtailment_delay_cost_pv", 0) or 0
+    delay_cost_pv = safe_get_numeric(data, "delay_cost_pv")
+    congestion_delay_pv = safe_get_numeric(data, "congestion_delay_cost_pv")
+    curtailment_delay_pv = safe_get_numeric(data, "curtailment_delay_cost_pv")
     calculated_delay = delay_cost_pv + congestion_delay_pv + curtailment_delay_pv
     delay_costs_pv = (
         data["delay_costs_pv"]
@@ -327,9 +346,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     )
 
     # Delay costs (Nominal)
-    delay_cost_nominal = data.get("delay_cost_nominal", 0) or 0
-    congestion_delay_nominal = data.get("congestion_delay_cost_nominal", 0) or 0
-    curtailment_delay_nominal = data.get("curtailment_delay_cost_nominal", 0) or 0
+    delay_cost_nominal = safe_get_numeric(data, "delay_cost_nominal")
+    congestion_delay_nominal = safe_get_numeric(data, "congestion_delay_cost_nominal")
+    curtailment_delay_nominal = safe_get_numeric(data, "curtailment_delay_cost_nominal")
     calculated_delay_nominal = delay_cost_nominal + congestion_delay_nominal + curtailment_delay_nominal
     delay_costs_nominal = (
         data["delay_costs_nominal"]

@@ -28,6 +28,7 @@ from smart_loaders import (
 from financial_utils import calculate_present_value, calculate_cod_year
 from build_costs import load_costs
 from weighted_miles import calculate_weighted_miles
+from constants import TRANSMISSION_TYPE_DC
 from path_config import YAMLS_DIR
 
 
@@ -143,7 +144,7 @@ def main() -> None:
     category = build_category_string(project_details=project_details)
 
     # Determine number of converters
-    if project_details.ac_dc == "DC":
+    if project_details.ac_dc == TRANSMISSION_TYPE_DC:
         try:
             project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
