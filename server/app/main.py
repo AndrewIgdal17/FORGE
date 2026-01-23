@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import yaml
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
@@ -20,8 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
 OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
+YAMLS_DIR = BASE_DIR.parent / "yamls"
 INDEX_FILE = STATIC_DIR / "index.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
+SKIP_BASENAME = "project_category_template"
 
 app = FastAPI(title="CTCC API Server")
 
@@ -35,6 +38,32 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+def _refresh_final_combined() -> None:
+    """Regenerate final_combined.json from current YAML inputs."""
+    if not YAMLS_DIR.exists():
+        return
+
+    JSON_DIR.mkdir(parents=True, exist_ok=True)
+    combined: Dict[str, Any] = {}
+
+    yaml_files = sorted(list(YAMLS_DIR.glob("*.yaml")) + list(YAMLS_DIR.glob("*.yml")))
+    for yaml_file in yaml_files:
+        with yaml_file.open("r", encoding="utf-8") as handle:
+            data = yaml.safe_load(handle)
+
+        json_path = JSON_DIR / f"{yaml_file.stem}.json"
+        with json_path.open("w", encoding="utf-8") as json_handle:
+            json.dump(data, json_handle, indent=2)
+            json_handle.write("\n")
+
+        if yaml_file.stem != SKIP_BASENAME:
+            combined[yaml_file.stem] = data
+
+    with FINAL_COMBINED_FILE.open("w", encoding="utf-8") as handle:
+        json.dump(combined, handle, separators=(",", ":"))
+        handle.write("\n")
 
 
 class InputPayload(BaseModel):
@@ -84,6 +113,14 @@ async def serve_index() -> FileResponse:
 @app.get("/api/final_combined", response_class=JSONResponse)
 async def get_final_combined() -> JSONResponse:
     """Return the combined JSON payload generated from YAML files."""
+    try:
+        _refresh_final_combined()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to regenerate final_combined.json: {exc}",
+        ) from exc
+
     if not FINAL_COMBINED_FILE.exists():
         raise HTTPException(status_code=404, detail="final_combined.json not found")
 

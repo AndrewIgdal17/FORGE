@@ -620,16 +620,7 @@ def main() -> None:
                     bcr_metrics = calculate_bcr_metrics(
                         benefits,
                         costs,
-                        no_emissions=args.no_emissions,
-                        no_linelosses=args.no_linelosses,
-                        capital_only=args.capital_only,
-                        no_wildfire=args.no_wildfire,
-                        no_outages=args.no_outages,
-                        no_oandm=args.no_oandm,
-                        no_insurance=args.no_insurance,
-                        no_delay_costs=args.no_delay_costs,
-                        no_congestion=args.no_congestion,
-                        no_curtailment=args.no_curtailment,
+                        config=bcr_config,
                     )
                     bcr_results = {**benefits, **costs, **bcr_metrics}
                     csv_equivalent = build_csv_equivalent(
