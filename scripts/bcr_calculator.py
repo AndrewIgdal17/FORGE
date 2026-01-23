@@ -7,11 +7,36 @@ from __future__ import annotations
 
 import csv
 import os
+from dataclasses import dataclass
 from typing import Dict, Any, Optional, Tuple
 from path_config import OUTPUTS_DIR
 
 # BCR viability threshold
 BCR_VIABILITY_THRESHOLD = 1.0
+
+
+@dataclass
+class BCRConfig:
+    """Configuration for BCR calculation exclusions.
+    
+    All flags default to False, meaning all modules are included by default.
+    Set a flag to True to exclude that module from Primary BCR calculations.
+    """
+    no_emissions: bool = False
+    no_linelosses: bool = False
+    capital_only: bool = False
+    no_wildfire: bool = False
+    no_outages: bool = False
+    no_oandm: bool = False
+    no_insurance: bool = False
+    no_delay_costs: bool = False
+    no_congestion: bool = False
+    no_curtailment: bool = False
+    
+    @classmethod
+    def default(cls) -> "BCRConfig":
+        """Create default config (all modules included)."""
+        return cls()
 
 
 def format_bcr_viability(bcr_value: float) -> Tuple[str, str]:
@@ -428,16 +453,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
 def calculate_bcr_metrics(
     benefits: Dict[str, float],
     costs: Dict[str, float],
-    no_emissions: bool = False,
-    no_linelosses: bool = False,
-    capital_only: bool = False,
-    no_wildfire: bool = False,
-    no_outages: bool = False,
-    no_oandm: bool = False,
-    no_insurance: bool = False,
-    no_delay_costs: bool = False,
-    no_congestion: bool = False,
-    no_curtailment: bool = False,
+    config: BCRConfig = None,
 ) -> Dict[str, float]:
     """
     Calculate benefit-cost ratios and net benefits.
@@ -445,20 +461,13 @@ def calculate_bcr_metrics(
     Args:
         benefits: Dictionary with benefit breakdown
         costs: Dictionary with cost breakdown
-        no_emissions: If True, exclude emissions costs from calculations
-        no_linelosses: If True, exclude line loss costs from calculations
-        capital_only: If True, only calculate capital costs
-        no_wildfire: If True, exclude wildfire costs from Primary BCR
-        no_outages: If True, exclude outage costs from Primary BCR
-        no_oandm: If True, exclude O&M costs from Primary BCR
-        no_insurance: If True, exclude insurance costs from Primary BCR
-        no_delay_costs: If True, exclude delay costs from Primary BCR (note: delay always included in default)
-        no_congestion: If True, exclude congestion benefits from Primary BCR
-        no_curtailment: If True, exclude curtailment benefits from Primary BCR
+        config: BCR configuration (defaults to all modules included)
 
     Returns:
         Dictionary with BCR metrics (both nominal and PV)
     """
+    if config is None:
+        config = BCRConfig.default()
     # Present value metrics
     # Use conservative (haircut) benefits for all BCR calculations
     total_benefits_pv = benefits["total_benefits_haircut_pv"]
@@ -762,9 +771,9 @@ def calculate_bcr_metrics(
     # Note: congestion_benefit_pv, curtailment_benefit_pv, and revenue_pv are already extracted earlier
 
     primary_benefits_pv = revenue_pv
-    if not no_congestion:
+    if not config.no_congestion:
         primary_benefits_pv += congestion_benefit_pv
-    if not no_curtailment:
+    if not config.no_curtailment:
         primary_benefits_pv += curtailment_benefit_pv
 
     # Costs included:
@@ -783,17 +792,17 @@ def calculate_bcr_metrics(
     insurance_pv = costs.get("insurance_pv", 0) or 0
 
     primary_costs_pv = capital_costs_pv + delay_costs_pv
-    if not no_oandm:
+    if not config.no_oandm:
         primary_costs_pv += oandm_pv
-    if not no_insurance:
+    if not config.no_insurance:
         primary_costs_pv += insurance_pv
-    if not no_wildfire:
+    if not config.no_wildfire:
         primary_costs_pv += wildfire_pv + wildfire_liability_pv
-    if not no_outages:
+    if not config.no_outages:
         primary_costs_pv += outage_pv
-    if not no_linelosses:
+    if not config.no_linelosses:
         primary_costs_pv += line_loss_cost_pv
-    if not no_emissions:
+    if not config.no_emissions:
         primary_costs_pv += emissions_pv
 
     # Calculate Primary BCR
@@ -879,16 +888,7 @@ def calculate_bcr_metrics(
 def calculate_and_display_bcr(
     scenario_id: str,
     output_dir: str = str(OUTPUTS_DIR),
-    no_emissions: bool = False,
-    no_linelosses: bool = False,
-    capital_only: bool = False,
-    no_wildfire: bool = False,
-    no_outages: bool = False,
-    no_oandm: bool = False,
-    no_insurance: bool = False,
-    no_delay_costs: bool = False,
-    no_congestion: bool = False,
-    no_curtailment: bool = False,
+    config: BCRConfig = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Main function to calculate and display BCR analysis.
@@ -897,20 +897,14 @@ def calculate_and_display_bcr(
     Args:
         scenario_id: Unique identifier for the scenario
         output_dir: Directory containing batch_summary.csv
-        no_emissions: If True, exclude emissions costs from calculations
-        no_linelosses: If True, exclude line loss costs from calculations
-        capital_only: If True, only calculate capital costs
-        no_wildfire: If True, exclude wildfire costs from Primary BCR
-        no_outages: If True, exclude outage costs from Primary BCR
-        no_oandm: If True, exclude O&M costs from Primary BCR
-        no_insurance: If True, exclude insurance costs from Primary BCR
-        no_delay_costs: If True, exclude delay costs from Primary BCR (note: delay always included in default)
-        no_congestion: If True, exclude congestion benefits from Primary BCR
-        no_curtailment: If True, exclude curtailment benefits from Primary BCR
+        config: BCR configuration (defaults to all modules included)
 
     Returns:
         Dictionary with all BCR results, or None only if CSV doesn't exist or is empty
     """
+    if config is None:
+        config = BCRConfig.default()
+    
     # Load scenario data (now with robust lookup)
     data = load_scenario_data(scenario_id, output_dir)
     if data is None:
@@ -957,16 +951,7 @@ def calculate_and_display_bcr(
         bcr_metrics = calculate_bcr_metrics(
             benefits,
             costs,
-            no_emissions,
-            no_linelosses,
-            capital_only,
-            no_wildfire,
-            no_outages,
-            no_oandm,
-            no_insurance,
-            no_delay_costs,
-            no_congestion,
-            no_curtailment,
+            config=config,
         )
     except Exception as e:
         import traceback
@@ -1002,16 +987,7 @@ def calculate_and_display_bcr(
             costs,
             bcr_metrics,
             data,
-            no_emissions,
-            no_linelosses,
-            capital_only,
-            no_wildfire,
-            no_outages,
-            no_oandm,
-            no_insurance,
-            no_delay_costs,
-            no_congestion,
-            no_curtailment,
+            config=config,
         )
     except Exception as e:
         # Don't fail if printing fails, but log it
@@ -1025,16 +1001,7 @@ def print_bcr_summary(
     costs: Dict[str, float],
     bcr_metrics: Dict[str, float],
     data: Dict[str, Any],
-    no_emissions: bool = False,
-    no_linelosses: bool = False,
-    capital_only: bool = False,
-    no_wildfire: bool = False,
-    no_outages: bool = False,
-    no_oandm: bool = False,
-    no_insurance: bool = False,
-    no_delay_costs: bool = False,
-    no_congestion: bool = False,
-    no_curtailment: bool = False,
+    config: BCRConfig = None,
 ) -> None:
     """
     Print formatted BCR summary to terminal.
@@ -1044,29 +1011,23 @@ def print_bcr_summary(
         costs: Dictionary with cost breakdown
         bcr_metrics: Dictionary with BCR metrics
         data: Original scenario data
-        no_emissions: If True, exclude emissions costs from calculations
-        no_linelosses: If True, exclude line loss costs from calculations
-        capital_only: If True, only calculate capital costs
-        no_wildfire: If True, exclude wildfire costs from Primary BCR
-        no_outages: If True, exclude outage costs from Primary BCR
-        no_oandm: If True, exclude O&M costs from Primary BCR
-        no_insurance: If True, exclude insurance costs from Primary BCR
-        no_delay_costs: If True, exclude delay costs from Primary BCR
-        no_congestion: If True, exclude congestion benefits from Primary BCR
-        no_curtailment: If True, exclude curtailment benefits from Primary BCR
+        config: BCR configuration (defaults to all modules included)
     """
+    if config is None:
+        config = BCRConfig.default()
+    
     # Check if any custom flags are set (for display purposes)
     has_custom_flags = any(
         [
-            no_wildfire,
-            no_outages,
-            no_oandm,
-            no_insurance,
-            no_delay_costs,
-            no_congestion,
-            no_curtailment,
-            no_emissions,
-            no_linelosses,
+            config.no_wildfire,
+            config.no_outages,
+            config.no_oandm,
+            config.no_insurance,
+            config.no_delay_costs,
+            config.no_congestion,
+            config.no_curtailment,
+            config.no_emissions,
+            config.no_linelosses,
         ]
     )
 

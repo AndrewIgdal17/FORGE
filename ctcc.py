@@ -15,7 +15,7 @@ from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from bcr_calculator import calculate_and_display_bcr
+from bcr_calculator import calculate_and_display_bcr, BCRConfig
 from csv_output_manager import (
     CTCCOutputManager as CSVOutputManager,
     BATCH_SUMMARY_FIELDS,
@@ -374,6 +374,20 @@ def main() -> None:
             print(f"Warning: Could not load Primary BCR config from YAML: {e}")
             print("  Using command-line flags only.")
 
+    # Create BCRConfig from args (after YAML overrides are applied)
+    bcr_config = BCRConfig(
+        no_emissions=args.no_emissions,
+        no_linelosses=args.no_linelosses,
+        capital_only=args.capital_only,
+        no_wildfire=args.no_wildfire,
+        no_outages=args.no_outages,
+        no_oandm=args.no_oandm,
+        no_insurance=args.no_insurance,
+        no_delay_costs=args.no_delay_costs,
+        no_congestion=args.no_congestion,
+        no_curtailment=args.no_curtailment,
+    )
+
     # Handle flag interactions and set environment variables
     # --no_wildfire replaces --no_wf_liability and sets the environment variable
     if args.no_wildfire:
@@ -564,16 +578,7 @@ def main() -> None:
                 bcr_results = calculate_and_display_bcr(
                     scenario_id,
                     output_dir="outputs",
-                    no_emissions=args.no_emissions,
-                    no_linelosses=args.no_linelosses,
-                    capital_only=args.capital_only,
-                    no_wildfire=args.no_wildfire,
-                    no_outages=args.no_outages,
-                    no_oandm=args.no_oandm,
-                    no_insurance=args.no_insurance,
-                    no_delay_costs=args.no_delay_costs,
-                    no_congestion=args.no_congestion,
-                    no_curtailment=args.no_curtailment,
+                    config=bcr_config,
                 )
             except Exception as e:
                 import traceback
