@@ -84,24 +84,11 @@ def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, fl
 def main() -> None:
     """Main function to calculate and display ROW costs."""
     # Load project specifications and timeline
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Construct category identifier
     category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
     )
 
     # Load row width for this project category
@@ -127,20 +114,20 @@ def main() -> None:
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
 
     # Define timing parameters
-    if reconductoring or uses_existing_row:
+    if project_details.reconductoring or project_details.uses_existing_row:
         # For existing ROW (reconductoring or uses_existing_row), rent starts from year 1
         rent_start_year = 1
-        rent_total_years = delay_year + construction_years + project_lifetime
+        rent_total_years = project_details.delay_years + project_details.construction_years + project_details.project_lifetime
     else:
         # For new ROW, rent starts after delay period
-        rent_start_year = delay_year + 1
-        rent_total_years = project_lifetime + construction_years
+        rent_start_year = project_details.delay_years + 1
+        rent_total_years = project_details.project_lifetime + project_details.construction_years
 
-    if reconductoring or uses_existing_row:
+    if project_details.reconductoring or project_details.uses_existing_row:
         total_holding_cost = 0
         acquisition_cost = 0
         # Rent includes delay + construction + lifetime for existing ROW
-        total_rent_cost = yearly_rent_cost * (delay_year + construction_years + project_lifetime)
+        total_rent_cost = yearly_rent_cost * (project_details.delay_years + project_details.construction_years + project_details.project_lifetime)
         total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
 
         # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
@@ -158,8 +145,8 @@ def main() -> None:
 
     else:
         # Calculate total nominal costs over project lifetime
-        total_holding_cost = yearly_holding_cost * delay_year
-        total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
+        total_holding_cost = yearly_holding_cost * project_details.delay_years
+        total_rent_cost = yearly_rent_cost * (project_details.project_lifetime + project_details.construction_years)
         total_nominal_cost = total_holding_cost + acquisition_cost + total_rent_cost
 
         # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
@@ -169,8 +156,8 @@ def main() -> None:
                 calculate_afudc_capitalized_cost(
                     acquisition_cost,
                     timing_patterns["row_acquisition"],
-                    delay_year,
-                    construction_years,
+                    project_details.delay_years,
+                    project_details.construction_years,
                     afudc_rate,
                     delay_active,
                 )
@@ -187,11 +174,11 @@ def main() -> None:
 
         # Holding costs: incurred annually during delay period
         total_holding_cost_pv = calculate_present_value(
-            yearly_holding_cost, wacc_real, int(delay_year)
+            yearly_holding_cost, wacc_real, int(project_details.delay_years)
         )
 
         # Acquisition costs: one-time payment at end of delay period
-        total_acquisition_cost_pv = acquisition_cost / (1 + wacc_real) ** delay_year
+        total_acquisition_cost_pv = acquisition_cost / (1 + wacc_real) ** project_details.delay_years
 
         # Rent costs: incurred annually during operation period
         total_rent_cost_pv = calculate_present_value(
@@ -218,7 +205,7 @@ def main() -> None:
     print(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
     print()
 
-    if apply_afudc and not reconductoring:
+    if apply_afudc and not project_details.reconductoring:
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         print(f"  AFUDC Rate: {afudc_rate:.2%} ({afudc_source})")
         print(f"  Delay Period Active Work: {'Yes' if delay_active else 'No'}")
@@ -262,7 +249,7 @@ def main() -> None:
         "total_nominal": total_nominal_cost,
         "total_afudc": (
             acquisition_capitalized + total_holding_cost + total_rent_cost
-            if (apply_afudc and not reconductoring)
+            if (apply_afudc and not project_details.reconductoring)
             else 0
         ),
         "total_pv": total_pv_cost,

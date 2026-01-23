@@ -61,14 +61,9 @@ def load_project_technical_details() -> Tuple[float, int, int]:
     Returns:
         tuple: (delay_years, construction_years, project_lifetime)
     """
-    # load_project_technical_details_centralized returns:
-    # (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
-    #  line_utilization, reconductoring, uses_existing_row, delay_years, construction_years,
-    #  project_lifetime, converter_loss_percentage)
-    _, _, _, _, _, _, _, _, delay_years, construction_years, project_lifetime, _ = (
-        load_project_technical_details_centralized()
-    )
-    return delay_years, construction_years, project_lifetime
+    from yaml_loaders import ProjectTechnicalDetails
+    project_details: ProjectTechnicalDetails = load_project_technical_details_centralized()
+    return project_details.delay_years, project_details.construction_years, project_details.project_lifetime
 
 
 def get_capital_costs_pv() -> float:

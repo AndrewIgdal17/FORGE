@@ -5,9 +5,28 @@
 from __future__ import annotations
 
 import yaml
+from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
 from path_config import YAMLS_DIR
 from calculation_utils import normalize_capacity_mw
+from financial_utils import calculate_real_wacc
+
+
+@dataclass
+class ProjectTechnicalDetails:
+    """Project technical details returned from load_project_technical_details()."""
+    construction_type: str
+    ac_dc: str
+    capacity_mw: int
+    conductor_type: str
+    converter_type: str
+    line_utilization: float
+    reconductoring: bool
+    uses_existing_row: bool
+    delay_years: float
+    construction_years: int
+    project_lifetime: int
+    converter_loss_percentage: Optional[float]
 
 
 def load_financing_details() -> Tuple[float, int, float, float]:
@@ -30,15 +49,7 @@ def load_financing_details() -> Tuple[float, int, float, float]:
         base_year = financial["base_year"]
         wacc_nominal = financial["wacc_nominal"]
 
-        # Validate inflation_rate to prevent division by zero in Fisher equation
-        if inflation_rate <= -1:
-            raise ValueError(
-                f"Invalid inflation_rate: {inflation_rate}. "
-                f"Value must be > -1 to prevent division by zero in Fisher equation calculation. "
-                f"An inflation_rate of {inflation_rate} would cause (1 + inflation_rate) to be <= 0."
-            )
-
-        wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
+        wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
         return inflation_rate, base_year, wacc_nominal, wacc_real
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -70,9 +81,7 @@ def normalize_construction_type(construction_type: str) -> str:
     return normalized
 
 
-def load_project_technical_details() -> (
-    Tuple[str, str, int, str, str, float, bool, bool, float, int, int, Optional[float]]
-):
+def load_project_technical_details() -> ProjectTechnicalDetails:
     """Load project technical details - returns all project specs."""
     try:
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
@@ -126,19 +135,19 @@ def load_project_technical_details() -> (
             else project_data.get("converter_loss_percentage", None)
         )
         uses_existing_row = project_data.get("uses_existing_row", False)
-        return (
-            construction_type,
-            ac_dc,
-            capacity_mw,
-            conductor_type,
-            converter_type,
-            project_data["line_utilization"],
-            project_data["reconductoring"],
-            uses_existing_row,
-            timeline_data["delay_years"],
-            timeline_data["construction_years"],
-            timeline_data["project_lifetime"],
-            converter_loss_percentage,
+        return ProjectTechnicalDetails(
+            construction_type=construction_type,
+            ac_dc=ac_dc,
+            capacity_mw=capacity_mw,
+            conductor_type=conductor_type,
+            converter_type=converter_type,
+            line_utilization=project_data["line_utilization"],
+            reconductoring=project_data["reconductoring"],
+            uses_existing_row=uses_existing_row,
+            delay_years=timeline_data["delay_years"],
+            construction_years=timeline_data["construction_years"],
+            project_lifetime=timeline_data["project_lifetime"],
+            converter_loss_percentage=converter_loss_percentage,
         )
     except FileNotFoundError:
         raise FileNotFoundError(

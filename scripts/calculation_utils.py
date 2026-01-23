@@ -8,6 +8,32 @@ import math
 from typing import Union, Tuple
 
 
+def to_percent(decimal: float) -> float:
+    """
+    Convert decimal (0-1) to percentage (0-100).
+
+    Args:
+        decimal: Decimal value between 0 and 1
+
+    Returns:
+        float: Percentage value between 0 and 100
+    """
+    return decimal * 100
+
+
+def from_percent(percentage: float) -> float:
+    """
+    Convert percentage (0-100) to decimal (0-1).
+
+    Args:
+        percentage: Percentage value between 0 and 100
+
+    Returns:
+        float: Decimal value between 0 and 1
+    """
+    return percentage / 100
+
+
 def normalize_capacity_mw(capacity_mw: Union[int, str]) -> int:
     """
     Normalize capacity_mw to always return an integer.
@@ -134,12 +160,12 @@ def calculate_line_losses(
 
     total_line_loss_mw = losses_mw_per_mile * line_length
 
-    line_loss_per_mile_percent = (
+    line_loss_per_mile_percent = to_percent(
         losses_mw_per_mile / (capacity_mw_numeric * line_utilization_percent)
-    ) * 100
-    total_line_loss_percent = (
+    )
+    total_line_loss_percent = to_percent(
         total_line_loss_mw / (capacity_mw_numeric * line_utilization_percent)
-    ) * 100
+    )
 
     losses_mwh_per_year = total_line_loss_mw * 8760
     lifetime_losses_mwh = losses_mwh_per_year * project_lifetime
@@ -185,9 +211,9 @@ def calculate_converter_losses(
             converter_loss_percentage * line_utilization_percent * capacity_mw_numeric
         )
         total_converter_losses_mw = converter_losses_mw * number_of_converters
-        converter_loss_percent = (
+        converter_loss_percent = to_percent(
             total_converter_losses_mw / (capacity_mw_numeric * line_utilization_percent)
-        ) * 100
+        )
         total_converter_losses_mwh = total_converter_losses_mw * 8760
     else:
         total_converter_losses_mw = 0

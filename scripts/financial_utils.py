@@ -35,6 +35,26 @@ def validate_discount_rate(
     return rate
 
 
+def calculate_real_wacc(wacc_nominal: float, inflation_rate: float) -> float:
+    """
+    Calculate real WACC from nominal WACC and inflation rate using Fisher equation.
+
+    Formula: real_wacc = (1 + nominal_wacc) / (1 + inflation_rate) - 1
+
+    Args:
+        wacc_nominal: Nominal weighted average cost of capital
+        inflation_rate: Inflation rate
+
+    Returns:
+        float: Real WACC
+
+    Raises:
+        ValueError: If inflation_rate <= -1 (would cause division by zero)
+    """
+    validate_discount_rate(inflation_rate, "inflation_rate")
+    return (1 + wacc_nominal) / (1 + inflation_rate) - 1
+
+
 def calculate_present_value(
     annual_cost: float, wacc_real: float, total_years: float, start_year: int = 1
 ) -> float:
@@ -234,3 +254,53 @@ def calculate_afudc_capitalized_cost(
     afudc_amount = capitalized_cost - nominal_cost
 
     return capitalized_cost, afudc_amount
+
+
+def get_discount_rate_from_config(
+    config_yaml: Dict[str, Any], financing_yaml: Dict[str, Any], rate_key: str = "discount_rate_type"
+) -> Tuple[float, str]:
+    """
+    Get discount rate based on configuration source.
+
+    Supports both "discount_rate_type" (outage_costs) and "discount_rate_source" (wildfire_costs)
+    for backward compatibility. Defaults to "social" if not specified (wildfire behavior).
+
+    Args:
+        config_yaml: Loaded configuration YAML data (wildfire or outage)
+        financing_yaml: Loaded financing YAML data
+        rate_key: Key to look for in config ("discount_rate_type" or "discount_rate_source")
+
+    Returns:
+        tuple: (discount_rate, source_description)
+
+    Raises:
+        ValueError: If rate_type is unknown or inflation_rate <= -1
+    """
+    # Get the config section (wildfire or outage)
+    config_section = config_yaml.get("wildfire") or config_yaml.get("outage")
+    if not config_section:
+        raise ValueError("Config YAML must contain 'wildfire' or 'outage' section")
+
+    # Try both keys for backward compatibility, default to "social" for wildfire compatibility
+    rate_type = config_section.get(rate_key) or config_section.get("discount_rate_source", "social")
+
+    if rate_type == "social":
+        rate = financing_yaml["financial"]["social_discount_rate"]
+        # Use "social discount rate" for wildfire compatibility, "social" for outage compatibility
+        # Check which key was used to determine description
+        if "discount_rate_source" in config_section or rate_key == "discount_rate_source":
+            desc = "social discount rate"
+        else:
+            desc = "social"
+    elif rate_type == "wacc_real":
+        wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
+        inflation = financing_yaml["financial"]["inflation_rate"]
+        rate = calculate_real_wacc(wacc_nominal, inflation)
+        desc = "real WACC"
+    else:
+        raise ValueError(
+            f"Unknown {rate_key}: {rate_type}. "
+            f"Must be 'social' (uses social_discount_rate from financing.yaml) or 'wacc_real'"
+        )
+
+    return rate, desc

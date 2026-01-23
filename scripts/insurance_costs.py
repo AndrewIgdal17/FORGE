@@ -136,28 +136,15 @@ def calculate_wildfire_liability_premium(
 def main() -> None:
     """Main function to calculate and display insurance costs."""
     # Load project specifications
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Construct category identifier
     category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
     )
 
     # Determine number of converters
-    if ac_dc == "DC":
+    if project_details.ac_dc == "DC":
         try:
             project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
@@ -194,7 +181,7 @@ def main() -> None:
         weighted_miles,
         average_terrain_multiplier,
     ) = load_costs(
-        category, total_miles, number_of_converters, contingencies, reconductoring
+        category, total_miles, number_of_converters, contingencies, project_details.reconductoring
     )
 
     # Load insurance parameters
@@ -206,8 +193,8 @@ def main() -> None:
         conductor_cost_with_contingencies,
         structure_cost_with_contingencies,
         converter_cost_with_contingencies,
-        construction_type,
-        project_lifetime,
+        project_details.construction_type,
+        project_details.project_lifetime,
     )
 
     # Load financing parameters for present value calculation
@@ -218,7 +205,7 @@ def main() -> None:
     if "CTCC_NO_WF_LIABILITY" not in os.environ:
         wildfire_liability_results = calculate_wildfire_liability_premium(
             insurance_yaml,
-            project_lifetime,
+            project_details.project_lifetime,
         )
 
     # Calculate Present Value for operational insurance
@@ -237,7 +224,7 @@ def main() -> None:
         wildfire_liability_pv = calculate_present_value(
             wildfire_liability_results["annual_premium"],
             wacc_real,
-            project_lifetime,
+            project_details.project_lifetime,
             insurance_start_year,
         )
 
@@ -246,7 +233,7 @@ def main() -> None:
     print("OPERATIONAL INSURANCE COST CALCULATION RESULTS")
     print("=" * 80)
     print(f"Project Category: {category}")
-    print(f"Construction Type: {construction_type}")
+    print(f"Construction Type: {project_details.construction_type}")
     print()
 
     print("INSURABLE ASSET VALUE:")
@@ -264,7 +251,7 @@ def main() -> None:
     print("[NOMINAL VALUES]")
     print(f"  Premium Rate: {results['premium_rate']:.3%}")
     print(f"  Annual Premium: ${results['annual_premium']:,.2f}")
-    print(f"  Project Lifetime: {project_lifetime} years")
+    print(f"  Project Lifetime: {project_details.project_lifetime} years")
     print(f"  ---")
     print(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
     print()
@@ -290,7 +277,7 @@ def main() -> None:
         print()
         print("[NOMINAL VALUES]")
         print(f"  Annual Premium: ${wildfire_liability_results['annual_premium']:,.2f}")
-        print(f"  Project Lifetime: {project_lifetime} years")
+        print(f"  Project Lifetime: {project_details.project_lifetime} years")
         print(f"  ---")
         print(
             f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}"

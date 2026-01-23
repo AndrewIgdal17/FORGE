@@ -44,9 +44,21 @@ class JSONOutputManager:
         """
         try:
             # Use json_loaders to get data
-            (construction_type, ac_dc, capacity_mw, conductor_type, converter_type,
-             line_utilization, reconductoring, uses_existing_row, delay_years, construction_years,
-             project_lifetime, converter_loss_percentage) = json_loaders.load_project_technical_details()
+            from yaml_loaders import ProjectTechnicalDetails
+            project_details: ProjectTechnicalDetails = json_loaders.load_project_technical_details()
+            
+            construction_type = project_details.construction_type
+            ac_dc = project_details.ac_dc
+            capacity_mw = project_details.capacity_mw
+            conductor_type = project_details.conductor_type
+            converter_type = project_details.converter_type
+            line_utilization = project_details.line_utilization
+            reconductoring = project_details.reconductoring
+            uses_existing_row = project_details.uses_existing_row
+            delay_years = project_details.delay_years
+            construction_years = project_details.construction_years
+            project_lifetime = project_details.project_lifetime
+            converter_loss_percentage = project_details.converter_loss_percentage
 
             total_line_length = json_loaders.load_physical_details()
 

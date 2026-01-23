@@ -27,6 +27,7 @@ from energy_losses import (
     calculate_line_losses,
 )
 from financial_utils import calculate_present_value
+from calculation_utils import to_percent, from_percent
 from smart_loaders import (
     load_financing_social_discount_rate,
     load_project_technical_details as load_project_technical_details_centralized,
@@ -321,7 +322,7 @@ def main() -> None:
             print("PROJECT CONFIGURATION")
             print("-" * 70)
             print(f"Construction Type: {construction_type}")
-            print(f"Line Utilization: {line_utilization_percent * 100:.1f}%")
+            print(f"Line Utilization: {to_percent(line_utilization_percent):.1f}%")
             print(f"Project Lifetime: {project_lifetime} years")
             print(f"Electricity Price: ${baseline_electricity_price:.2f}/MWh")
             print()
@@ -386,12 +387,12 @@ def main() -> None:
             )
 
             # Calculate loss percentages
-            primary_loss_percent = (
+            primary_loss_percent = to_percent(
                 primary_losses_mwh_per_year / primary_delivered_mwh
-            ) * 100
-            comparison_loss_percent = (
+            )
+            comparison_loss_percent = to_percent(
                 comparison_losses_mwh_per_year / comparison_delivered_mwh
-            ) * 100
+            )
 
             # METHOD 1: Direct Comparison - Compare absolute losses
             direct_loss_difference_mwh = (
@@ -419,8 +420,7 @@ def main() -> None:
             # METHOD 3: Normalized (Per MWh) Comparison
             # Apply the difference in loss percentages to the comparison delivered energy
             normalized_loss_difference_mwh = (
-                (primary_loss_percent - comparison_loss_percent)
-                / 100
+                from_percent(primary_loss_percent - comparison_loss_percent)
                 * comparison_delivered_mwh
             )
             normalized_annual_cost_difference = (
@@ -499,7 +499,7 @@ def main() -> None:
             )
             print()
             print("DISCOUNTED VALUES (NPV):")
-            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${direct_npv:,.2f}")
             print()
@@ -525,7 +525,7 @@ def main() -> None:
             )
             print()
             print("DISCOUNTED VALUES (NPV):")
-            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
             print()
@@ -549,7 +549,7 @@ def main() -> None:
             )
             print()
             print("DISCOUNTED VALUES (NPV):")
-            print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+            print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${normalized_npv:,.2f}")
             print()
@@ -609,7 +609,7 @@ def main() -> None:
         print("=" * 70)
         print()
         print(f"Project Capacity: {capacity_mw} MW")
-        print(f"Line Utilization: {line_utilization_percent * 100:.1f}%")
+        print(f"Line Utilization: {to_percent(line_utilization_percent):.1f}%")
         print(f"Electricity Price: ${baseline_electricity_price:.2f}/MWh")
         print()
         print("NOMINAL VALUES:")
@@ -618,7 +618,7 @@ def main() -> None:
         print(f"  Lifetime Cost: ${lifetime_nominal_cost:,.2f}")
         print()
         print("DISCOUNTED VALUES (NPV):")
-        print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+        print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
         print(f"  Start Year: {start_year:.1f} years")
         print(f"  Net Present Value: ${pv_loss_cost:,.2f}")
         print()
@@ -675,7 +675,7 @@ def main() -> None:
     print(f"PROJECT CONFIGURATION")
     print("-" * 70)
     print(f"Construction Type: {construction_type}")
-    print(f"Line Utilization: {line_utilization_percent * 100:.1f}%")
+    print(f"Line Utilization: {to_percent(line_utilization_percent):.1f}%")
     print(f"Project Lifetime: {project_lifetime} years")
     print(f"Electricity Price: ${baseline_electricity_price:.2f}/MWh")
     print()
@@ -744,10 +744,10 @@ def main() -> None:
     new_delivered_mwh = capacity_mw * line_utilization_percent * 8760
 
     # Calculate loss percentages
-    baseline_loss_percent = (
+    baseline_loss_percent = to_percent(
         baseline_losses_mwh_per_year / baseline_delivered_mwh
-    ) * 100
-    new_loss_percent = (new_losses_mwh_per_year / new_delivered_mwh) * 100
+    )
+    new_loss_percent = to_percent(new_losses_mwh_per_year / new_delivered_mwh)
 
     # METHOD 1: Direct Comparison - Compare absolute losses
     direct_loss_reduction_mwh = baseline_losses_mwh_per_year - new_losses_mwh_per_year
@@ -766,7 +766,7 @@ def main() -> None:
     # METHOD 3: Normalized (Per MWh) Comparison
     # Apply the difference in loss percentages to the new delivered energy
     normalized_loss_reduction_mwh = (
-        (baseline_loss_percent - new_loss_percent) / 100 * new_delivered_mwh
+        from_percent(baseline_loss_percent - new_loss_percent) * new_delivered_mwh
     )
     normalized_annual_benefit = (
         normalized_loss_reduction_mwh * baseline_electricity_price
@@ -820,7 +820,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${direct_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+    print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${direct_npv:,.2f}")
     print()
@@ -836,7 +836,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${counterfactual_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+    print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
     print()
@@ -852,7 +852,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${normalized_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {social_discount_rate * 100:.1f}%")
+    print(f"  Discount Rate: {to_percent(social_discount_rate):.1f}%")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${normalized_npv:,.2f}")
     print()

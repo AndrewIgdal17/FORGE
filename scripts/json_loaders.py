@@ -6,6 +6,8 @@
 import os
 import json
 from typing import Dict, Any, Optional
+from financial_utils import calculate_real_wacc
+from yaml_loaders import ProjectTechnicalDetails
 
 
 class JSONDataSource:
@@ -84,18 +86,19 @@ def load_financing_details():
     inflation_rate = financing_data["financial"]["inflation_rate"]
     base_year = financing_data["financial"]["base_year"]
     wacc_nominal = financing_data["financial"]["wacc_nominal"]
-    wacc_real = (1 + wacc_nominal) / (1 + inflation_rate) - 1
+    wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
     return inflation_rate, base_year, wacc_nominal, wacc_real
 
 
-def load_project_technical_details():
+def load_project_technical_details() -> ProjectTechnicalDetails:
     """Load project technical details - returns all project specs."""
     from calculation_utils import normalize_capacity_mw
+    from yaml_loaders import normalize_construction_type
     
     project_details = _data_source.get_data("01_project_technical_details")
     pd = project_details["project"]
     tl = project_details["timeline"]
-    construction_type = pd["construction_type"]
+    construction_type = normalize_construction_type(pd["construction_type"])
     ac_dc = pd["ac_dc"]
     capacity_mw_raw = pd["capacity_mw"]
     capacity_mw = normalize_capacity_mw(capacity_mw_raw)
@@ -105,19 +108,19 @@ def load_project_technical_details():
         None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
     )
     uses_existing_row = pd.get("uses_existing_row", False)
-    return (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        pd["line_utilization"],
-        pd["reconductoring"],
-        uses_existing_row,
-        tl["delay_years"],
-        tl["construction_years"],
-        tl["project_lifetime"],
-        converter_loss_percentage,
+    return ProjectTechnicalDetails(
+        construction_type=construction_type,
+        ac_dc=ac_dc,
+        capacity_mw=capacity_mw,
+        conductor_type=conductor_type,
+        converter_type=converter_type,
+        line_utilization=pd["line_utilization"],
+        reconductoring=pd["reconductoring"],
+        uses_existing_row=uses_existing_row,
+        delay_years=tl["delay_years"],
+        construction_years=tl["construction_years"],
+        project_lifetime=tl["project_lifetime"],
+        converter_loss_percentage=converter_loss_percentage,
     )
 
 

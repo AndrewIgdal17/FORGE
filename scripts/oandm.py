@@ -374,20 +374,7 @@ def load_structure_om_costs(
 
 
 def main() -> None:
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_years,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
     (
         total_miles,
         forested_miles,
@@ -402,10 +389,10 @@ def main() -> None:
     ) = load_physical_details_detailed()
     inflation_rate, base_year, wacc_nominal, wacc_real = load_financing_details()
     variable_conductor_cost_per_mile_year = load_conductor_om_costs(
-        construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+        project_details.construction_type, project_details.ac_dc, project_details.capacity_mw, project_details.conductor_type, project_details.converter_type
     )
     variable_converter_cost_per_mile_year = load_converter_om_costs(
-        construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+        project_details.construction_type, project_details.ac_dc, project_details.capacity_mw, project_details.conductor_type, project_details.converter_type
     )
 
     (
@@ -414,7 +401,7 @@ def main() -> None:
         structure_dict,
         total_vegetation_management_cost_per_year,
     ) = load_structure_om_costs(
-        construction_type,
+        project_details.construction_type,
         forested_miles,
         scrubbed_flat_miles,
         wetland_miles,
@@ -431,11 +418,11 @@ def main() -> None:
     total_converter_cost_per_year = variable_converter_cost_per_mile_year * total_miles
 
     # Calculate lifetime costs (undiscounted)
-    total_structure_cost_lifetime = variable_structure_cost_per_year * project_lifetime
-    total_conductor_cost_lifetime = total_conductor_cost_per_year * project_lifetime
-    total_converter_cost_lifetime = total_converter_cost_per_year * project_lifetime
+    total_structure_cost_lifetime = variable_structure_cost_per_year * project_details.project_lifetime
+    total_conductor_cost_lifetime = total_conductor_cost_per_year * project_details.project_lifetime
+    total_converter_cost_lifetime = total_converter_cost_per_year * project_details.project_lifetime
     total_vegetation_management_cost_lifetime = (
-        total_vegetation_management_cost_per_year * project_lifetime
+        total_vegetation_management_cost_per_year * project_details.project_lifetime
     )
 
     # Calculate present values
@@ -473,12 +460,12 @@ def main() -> None:
     print("=" * 80)
 
     print("\n--- Project Overview ---")
-    print(f"Construction Type: {construction_type}")
+    print(f"Construction Type: {project_details.construction_type}")
     print(f"Total Line Length: {total_miles:.2f} miles")
-    print(f"Project Lifetime: {project_lifetime} years")
+    print(f"Project Lifetime: {project_details.project_lifetime} years")
 
     # Print structure information for overhead projects
-    if construction_type == "Overhead" and structure_dict:
+    if project_details.construction_type == "Overhead" and structure_dict:
         print("\n--- Structure Information ---")
         print(f"Total Structures: {int(structure_dict['total'])}")
         print("\nStructures by Terrain Type:")

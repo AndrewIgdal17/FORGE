@@ -142,24 +142,11 @@ def calculate_environmental_mitigation_costs(
 def main() -> None:
     """Main function to calculate and display environmental mitigation costs."""
     # Load project specifications
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Construct category identifier
     category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
     )
 
     # Load ROW width for this project category
@@ -183,7 +170,7 @@ def main() -> None:
 
     # Calculate environmental mitigation costs (nominal)
     results = calculate_environmental_mitigation_costs(
-        em_yaml, category, terrain_miles, row_width_feet, reconductoring
+        em_yaml, category, terrain_miles, row_width_feet, project_details.reconductoring
     )
 
     # Load financing parameters for discounting
@@ -203,8 +190,8 @@ def main() -> None:
         base_cap, base_afudc = calculate_afudc_capitalized_cost(
             results["base_cost"],
             timing_patterns["environmental_mitigation_base"],
-            delay_year,
-            construction_years,
+            project_details.delay_years,
+            project_details.construction_years,
             afudc_rate,
             delay_active,
         )
@@ -213,8 +200,8 @@ def main() -> None:
         credits_cap, credits_afudc = calculate_afudc_capitalized_cost(
             results["total_credits"],
             timing_patterns["environmental_mitigation_credits"],
-            delay_year,
-            construction_years,
+            project_details.delay_years,
+            project_details.construction_years,
             afudc_rate,
             delay_active,
         )
@@ -228,7 +215,7 @@ def main() -> None:
 
     # Credit purchases: occur upfront at start of construction (end of delay period)
     # Discount as one-time payment at delay_year + 1
-    credit_start_year = delay_year + 1
+    credit_start_year = project_details.delay_years + 1
     total_credits_pv = results["total_credits"] / (1 + wacc_real) ** credit_start_year
     wetlands_credits_pv = (
         results["wetlands_credits"] / (1 + wacc_real) ** credit_start_year
@@ -239,10 +226,10 @@ def main() -> None:
 
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years
-    if construction_years > 0:
-        annual_base_cost = results["base_cost"] / construction_years
+    if project_details.construction_years > 0:
+        annual_base_cost = results["base_cost"] / project_details.construction_years
         base_cost_pv = calculate_present_value(
-            annual_base_cost, wacc_real, construction_years, credit_start_year
+            annual_base_cost, wacc_real, project_details.construction_years, credit_start_year
         )
     else:
         # If construction_years is 0, treat as one-time cost at credit_start_year
@@ -295,7 +282,7 @@ def main() -> None:
     print(f"  Base Year: {base_year}")
     print()
     print(f"  Base Mitigation/Restoration PV: ${base_cost_pv:,.2f}")
-    print(f"    (Spread over {construction_years} year(s))")
+    print(f"    (Spread over {project_details.construction_years} year(s))")
     print(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
     print(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
     print(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")

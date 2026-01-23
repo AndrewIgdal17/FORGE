@@ -7,8 +7,27 @@ from __future__ import annotations
 
 import csv
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from path_config import OUTPUTS_DIR
+
+# BCR viability threshold
+BCR_VIABILITY_THRESHOLD = 1.0
+
+
+def format_bcr_viability(bcr_value: float) -> Tuple[str, str]:
+    """
+    Return (symbol, text) tuple for BCR viability display.
+
+    Args:
+        bcr_value: The BCR value to check
+
+    Returns:
+        tuple: (symbol, text) where symbol is "✅" or "❌" and text describes viability
+    """
+    if bcr_value >= BCR_VIABILITY_THRESHOLD:
+        return ("✅", ">= 1.0: economically viable")
+    else:
+        return ("❌", "< 1.0: not economically viable")
 
 
 def load_scenario_data(
@@ -1023,12 +1042,7 @@ def print_bcr_summary(
 
     # Primary BCR (prominently displayed first)
     bcr_primary = bcr_metrics.get("bcr_primary", 0)
-    primary_viable_symbol = "✅" if bcr_primary >= 1.0 else "❌"
-    primary_viable_text = (
-        ">= 1.0: economically viable"
-        if bcr_primary >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    primary_viable_symbol, primary_viable_text = format_bcr_viability(bcr_primary)
     if not has_custom_flags:
         primary_label = "Primary BCR (all modules):"
     else:
@@ -1039,12 +1053,7 @@ def print_bcr_summary(
     print()
 
     bcr_system = bcr_metrics["bcr_system"]
-    viable_symbol = "✅" if bcr_system >= 1.0 else "❌"
-    viable_text = (
-        ">= 1.0: economically viable"
-        if bcr_system >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol, viable_text = format_bcr_viability(bcr_system)
 
     print(
         f"  System BCR (conservative):    {bcr_system:>6.3f}  {viable_symbol} ({viable_text})"
@@ -1057,24 +1066,14 @@ def print_bcr_summary(
 
     # Utility/TSP Perspective
     bcr_utility = bcr_metrics.get("bcr_utility", 0)
-    utility_viable_symbol = "✅" if bcr_utility >= 1.0 else "❌"
-    utility_viable_text = (
-        ">= 1.0: economically viable"
-        if bcr_utility >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    utility_viable_symbol, utility_viable_text = format_bcr_viability(bcr_utility)
     print(
         f"  Utility/TSP BCR:            {bcr_utility:>6.3f}  {utility_viable_symbol} ({utility_viable_text})"
     )
 
     # Ratepayer Perspective
     bcr_ratepayer = bcr_metrics.get("bcr_ratepayer", 0)
-    ratepayer_viable_symbol = "✅" if bcr_ratepayer >= 1.0 else "❌"
-    ratepayer_viable_text = (
-        ">= 1.0: economically viable"
-        if bcr_ratepayer >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    ratepayer_viable_symbol, ratepayer_viable_text = format_bcr_viability(bcr_ratepayer)
     print(
         f"  Ratepayer BCR:               {bcr_ratepayer:>6.3f}  {ratepayer_viable_symbol} ({ratepayer_viable_text})"
     )
@@ -1093,12 +1092,7 @@ def print_bcr_summary(
         "bcr_excluding_wildfire_risk_and_outage_risk",
         bcr_metrics.get("bcr_excluding_risk", 0),
     )
-    viable_symbol_norisk = "✅" if bcr_excluding_risk >= 1.0 else "❌"
-    viable_text_norisk = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_risk >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol_norisk, viable_text_norisk = format_bcr_viability(bcr_excluding_risk)
     print(
         f"  System BCR (excl. risk):     {bcr_excluding_risk:>6.3f}  {viable_symbol_norisk} ({viable_text_norisk})"
     )
@@ -1106,12 +1100,7 @@ def print_bcr_summary(
 
     # 3. Exclude emissions only
     bcr_excluding_emissions = bcr_metrics["bcr_excluding_emissions"]
-    viable_symbol_emissions = "✅" if bcr_excluding_emissions >= 1.0 else "❌"
-    viable_text_emissions = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol_emissions, viable_text_emissions = format_bcr_viability(bcr_excluding_emissions)
     print(
         f"  System BCR (excl. emissions): {bcr_excluding_emissions:>6.3f}  {viable_symbol_emissions} ({viable_text_emissions})"
     )
@@ -1121,12 +1110,7 @@ def print_bcr_summary(
 
     # 4. Exclude line losses only
     bcr_excluding_linelosses = bcr_metrics["bcr_excluding_linelosses"]
-    viable_symbol_linelosses = "✅" if bcr_excluding_linelosses >= 1.0 else "❌"
-    viable_text_linelosses = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_linelosses >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol_linelosses, viable_text_linelosses = format_bcr_viability(bcr_excluding_linelosses)
     print(
         f"  System BCR (excl. line losses): {bcr_excluding_linelosses:>6.3f}  {viable_symbol_linelosses} ({viable_text_linelosses})"
     )
@@ -1138,13 +1122,8 @@ def print_bcr_summary(
     bcr_excluding_emissions_and_linelosses = bcr_metrics[
         "bcr_excluding_emissions_and_linelosses"
     ]
-    viable_symbol_emissions_linelosses = (
-        "✅" if bcr_excluding_emissions_and_linelosses >= 1.0 else "❌"
-    )
-    viable_text_emissions_linelosses = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_linelosses >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_emissions_linelosses, viable_text_emissions_linelosses = format_bcr_viability(
+        bcr_excluding_emissions_and_linelosses
     )
     print(
         f"  System BCR (excl. emissions & line losses): {bcr_excluding_emissions_and_linelosses:>6.3f}  {viable_symbol_emissions_linelosses} ({viable_text_emissions_linelosses})"
@@ -1158,13 +1137,8 @@ def print_bcr_summary(
         "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk",
         bcr_metrics.get("bcr_excluding_emissions_and_risk", 0),
     )
-    viable_symbol_emissions_risk = (
-        "✅" if bcr_excluding_emissions_and_risk >= 1.0 else "❌"
-    )
-    viable_text_emissions_risk = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_emissions_risk, viable_text_emissions_risk = format_bcr_viability(
+        bcr_excluding_emissions_and_risk
     )
     excluded_emissions_risk = emissions_pv + risk_costs_pv
     print(
@@ -1179,13 +1153,8 @@ def print_bcr_summary(
         "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk",
         bcr_metrics.get("bcr_excluding_linelosses_and_risk", 0),
     )
-    viable_symbol_linelosses_risk = (
-        "✅" if bcr_excluding_linelosses_and_risk >= 1.0 else "❌"
-    )
-    viable_text_linelosses_risk = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_linelosses_and_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_linelosses_risk, viable_text_linelosses_risk = format_bcr_viability(
+        bcr_excluding_linelosses_and_risk
     )
     excluded_linelosses_risk = line_loss_cost_pv + risk_costs_pv
     print(
@@ -1200,13 +1169,8 @@ def print_bcr_summary(
         "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk",
         bcr_metrics.get("bcr_excluding_emissions_and_linelosses_and_risk", 0),
     )
-    viable_symbol_all_three = (
-        "✅" if bcr_excluding_emissions_and_linelosses_and_risk >= 1.0 else "❌"
-    )
-    viable_text_all_three = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_linelosses_and_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_all_three, viable_text_all_three = format_bcr_viability(
+        bcr_excluding_emissions_and_linelosses_and_risk
     )
     excluded_all_three = energy_emissions_costs_pv + risk_costs_pv
     print(
@@ -1224,12 +1188,7 @@ def print_bcr_summary(
 
     print("  Wildfire-Only Exclusions:")
     bcr_excluding_wildfire_risk = bcr_metrics.get("bcr_excluding_wildfire_risk", 0)
-    viable_symbol_wf = "✅" if bcr_excluding_wildfire_risk >= 1.0 else "❌"
-    viable_text_wf = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_wildfire_risk >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol_wf, viable_text_wf = format_bcr_viability(bcr_excluding_wildfire_risk)
     print(
         f"    BCR (excl. wildfire risk): {bcr_excluding_wildfire_risk:>6.3f}  {viable_symbol_wf} ({viable_text_wf})"
     )
@@ -1240,13 +1199,8 @@ def print_bcr_summary(
     bcr_excluding_emissions_and_wildfire_risk = bcr_metrics.get(
         "bcr_excluding_emissions_and_wildfire_risk", 0
     )
-    viable_symbol_em_wf = (
-        "✅" if bcr_excluding_emissions_and_wildfire_risk >= 1.0 else "❌"
-    )
-    viable_text_em_wf = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_wildfire_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_em_wf, viable_text_em_wf = format_bcr_viability(
+        bcr_excluding_emissions_and_wildfire_risk
     )
     print(
         f"    BCR (excl. emissions & wildfire risk): {bcr_excluding_emissions_and_wildfire_risk:>6.3f}  {viable_symbol_em_wf} ({viable_text_em_wf})"
@@ -1258,13 +1212,8 @@ def print_bcr_summary(
     bcr_excluding_linelosses_and_wildfire_risk = bcr_metrics.get(
         "bcr_excluding_linelosses_and_wildfire_risk", 0
     )
-    viable_symbol_ll_wf = (
-        "✅" if bcr_excluding_linelosses_and_wildfire_risk >= 1.0 else "❌"
-    )
-    viable_text_ll_wf = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_linelosses_and_wildfire_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_ll_wf, viable_text_ll_wf = format_bcr_viability(
+        bcr_excluding_linelosses_and_wildfire_risk
     )
     print(
         f"    BCR (excl. line losses & wildfire risk): {bcr_excluding_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_ll_wf} ({viable_text_ll_wf})"
@@ -1276,15 +1225,8 @@ def print_bcr_summary(
     bcr_excluding_emissions_and_linelosses_and_wildfire_risk = bcr_metrics.get(
         "bcr_excluding_emissions_and_linelosses_and_wildfire_risk", 0
     )
-    viable_symbol_em_ll_wf = (
-        "✅"
-        if bcr_excluding_emissions_and_linelosses_and_wildfire_risk >= 1.0
-        else "❌"
-    )
-    viable_text_em_ll_wf = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_linelosses_and_wildfire_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_em_ll_wf, viable_text_em_ll_wf = format_bcr_viability(
+        bcr_excluding_emissions_and_linelosses_and_wildfire_risk
     )
     print(
         f"    BCR (excl. emissions & line losses & wildfire risk): {bcr_excluding_emissions_and_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_em_ll_wf} ({viable_text_em_ll_wf})"
@@ -1299,12 +1241,7 @@ def print_bcr_summary(
 
     print("  Outage-Only Exclusions:")
     bcr_excluding_outage_risk = bcr_metrics.get("bcr_excluding_outage_risk", 0)
-    viable_symbol_out = "✅" if bcr_excluding_outage_risk >= 1.0 else "❌"
-    viable_text_out = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_outage_risk >= 1.0
-        else "< 1.0: not economically viable"
-    )
+    viable_symbol_out, viable_text_out = format_bcr_viability(bcr_excluding_outage_risk)
     print(
         f"    BCR (excl. outage risk): {bcr_excluding_outage_risk:>6.3f}  {viable_symbol_out} ({viable_text_out})"
     )
@@ -1315,13 +1252,8 @@ def print_bcr_summary(
     bcr_excluding_emissions_and_outage_risk = bcr_metrics.get(
         "bcr_excluding_emissions_and_outage_risk", 0
     )
-    viable_symbol_em_out = (
-        "✅" if bcr_excluding_emissions_and_outage_risk >= 1.0 else "❌"
-    )
-    viable_text_em_out = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_outage_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_em_out, viable_text_em_out = format_bcr_viability(
+        bcr_excluding_emissions_and_outage_risk
     )
     print(
         f"    BCR (excl. emissions & outage risk): {bcr_excluding_emissions_and_outage_risk:>6.3f}  {viable_symbol_em_out} ({viable_text_em_out})"
@@ -1333,13 +1265,8 @@ def print_bcr_summary(
     bcr_excluding_linelosses_and_outage_risk = bcr_metrics.get(
         "bcr_excluding_linelosses_and_outage_risk", 0
     )
-    viable_symbol_ll_out = (
-        "✅" if bcr_excluding_linelosses_and_outage_risk >= 1.0 else "❌"
-    )
-    viable_text_ll_out = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_linelosses_and_outage_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_ll_out, viable_text_ll_out = format_bcr_viability(
+        bcr_excluding_linelosses_and_outage_risk
     )
     print(
         f"    BCR (excl. line losses & outage risk): {bcr_excluding_linelosses_and_outage_risk:>6.3f}  {viable_symbol_ll_out} ({viable_text_ll_out})"
@@ -1351,13 +1278,8 @@ def print_bcr_summary(
     bcr_excluding_emissions_and_linelosses_and_outage_risk = bcr_metrics.get(
         "bcr_excluding_emissions_and_linelosses_and_outage_risk", 0
     )
-    viable_symbol_em_ll_out = (
-        "✅" if bcr_excluding_emissions_and_linelosses_and_outage_risk >= 1.0 else "❌"
-    )
-    viable_text_em_ll_out = (
-        ">= 1.0: economically viable"
-        if bcr_excluding_emissions_and_linelosses_and_outage_risk >= 1.0
-        else "< 1.0: not economically viable"
+    viable_symbol_em_ll_out, viable_text_em_ll_out = format_bcr_viability(
+        bcr_excluding_emissions_and_linelosses_and_outage_risk
     )
     print(
         f"    BCR (excl. emissions & line losses & outage risk): {bcr_excluding_emissions_and_linelosses_and_outage_risk:>6.3f}  {viable_symbol_em_ll_out} ({viable_text_em_ll_out})"

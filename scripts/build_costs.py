@@ -151,28 +151,15 @@ def main() -> None:
     """
     Main function to calculate and display build costs.
     """
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Construct category identifier
     category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
     )
 
     # Determine number of converters
-    if ac_dc == "DC":
+    if project_details.ac_dc == "DC":
         # Load project data to get number_of_converters
         try:
             project_details_data = get_project_data_raw()
@@ -210,7 +197,7 @@ def main() -> None:
         weighted_miles,
         average_terrain_multiplier,
     ) = load_costs(
-        category, total_miles, number_of_converters, contingencies, reconductoring
+        category, total_miles, number_of_converters, contingencies, project_details.reconductoring
     )
 
     # Load AFUDC configuration and timing patterns
@@ -230,8 +217,8 @@ def main() -> None:
         ) = calculate_afudc_capitalized_cost(
             total_cost_with_contingencies,
             timing_patterns["build_costs"],
-            delay_year,
-            construction_years,
+            project_details.delay_years,
+            project_details.construction_years,
             afudc_rate,
             delay_active,
         )
@@ -239,11 +226,11 @@ def main() -> None:
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
     # Build costs: spread evenly over construction period
     # Annual cost during construction years
-    construction_start_year = delay_year + 1
-    if construction_years > 0:
-        annual_build_cost = total_cost_with_contingencies / construction_years
+    construction_start_year = project_details.delay_years + 1
+    if project_details.construction_years > 0:
+        annual_build_cost = total_cost_with_contingencies / project_details.construction_years
         build_cost_pv = calculate_present_value(
-            annual_build_cost, wacc_real, construction_years, construction_start_year
+            annual_build_cost, wacc_real, project_details.construction_years, construction_start_year
         )
     else:
         # Validate wacc_real before direct use to prevent division by zero
@@ -290,7 +277,7 @@ def main() -> None:
         )
         print(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
         print(
-            f"    (Build costs incurred during {construction_years} year construction)"
+            f"    (Build costs incurred during {project_details.construction_years} year construction)"
         )
         print()
 
@@ -299,12 +286,12 @@ def main() -> None:
     print(f"  Base Year: {base_year}")
     print()
     print("Build costs incurred during construction period:")
-    if construction_years > 0:
+    if project_details.construction_years > 0:
         print(
-            f"  Annual Cost (over {construction_years} year(s) construction): ${annual_build_cost:,.2f}"
+            f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
         )
         print(
-            f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + construction_years - 1}"
+            f"  Construction Period: Year {construction_start_year} to Year {construction_start_year + project_details.construction_years - 1}"
         )
     else:
         print(f"  One-time cost at Year {construction_start_year}")

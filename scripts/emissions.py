@@ -26,6 +26,7 @@ from smart_loaders import (
     get_project_data_raw,
 )
 from financial_utils import calculate_present_value
+from calculation_utils import from_percent
 
 
 
@@ -58,8 +59,8 @@ def calculate_energy_mix_by_year(
     initial_mix = {}
     rates = {}
     for source in sources:
-        initial_mix[source] = (
-            energy_source_mix_details.get(source, {}).get("percentage", 0.0) / 100.0
+        initial_mix[source] = from_percent(
+            energy_source_mix_details.get(source, {}).get("percentage", 0.0)
         )  # Convert to decimal
         rates[source] = energy_source_mix_details.get(source, {}).get(
             "rate_of_change", 0.0
@@ -377,23 +378,10 @@ def main() -> None:
     social_discount_rate = load_financing_social_discount_rate()
 
     # Get delay and construction years from project details
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization_percent,
-        reconductoring,
-        uses_existing_row,  # Added: 12th value from updated loader
-        delay_years,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Get number_of_converters if DC
-    if ac_dc == "DC":
+    if project_details.ac_dc == "DC":
         try:
             project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
@@ -436,10 +424,10 @@ def main() -> None:
         energy_source_mix_details,
         emission_intensities_details,
         societal_costs_details,
-        project_lifetime,
+        project_details.project_lifetime,
         social_discount_rate,
-        delay_years,
-        construction_years,
+        project_details.delay_years,
+        project_details.construction_years,
     )
 
     # Calculate TEC for display

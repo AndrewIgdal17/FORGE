@@ -25,44 +25,9 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
+from financial_utils import get_discount_rate_from_config
 
 
-def get_discount_rate(
-    outage_yaml: Dict[str, Any], financing_yaml: Dict[str, Any]
-) -> Tuple[float, str]:
-    """
-    Get discount rate based on configuration source.
-
-    Args:
-        outage_yaml: Loaded outage YAML data
-        financing_yaml: Loaded financing YAML data
-
-    Returns:
-        tuple: (discount_rate, source_description)
-    """
-    rate_type = outage_yaml["outage"]["discount_rate_type"]
-
-    if rate_type == "social":
-        rate = financing_yaml["financial"]["social_discount_rate"]
-        desc = "social"
-    elif rate_type == "wacc_real":
-        wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
-        inflation = financing_yaml["financial"]["inflation_rate"]
-
-        # Validate inflation_rate to prevent division by zero in Fisher equation
-        if inflation <= -1:
-            raise ValueError(
-                f"Invalid inflation_rate: {inflation}. "
-                f"Value must be > -1 to prevent division by zero in Fisher equation calculation. "
-                f"An inflation_rate of {inflation} would cause (1 + inflation_rate) to be <= 0."
-            )
-
-        rate = (1 + wacc_nominal) / (1 + inflation) - 1
-        desc = "real WACC"
-    else:
-        raise ValueError(f"Unknown discount_rate_type: {rate_type}")
-
-    return rate, desc
 
 
 def calculate_voll_cost_piecewise(
@@ -240,24 +205,11 @@ def calculate_outage_costs(
 def main() -> None:
     """Main function to calculate and display outage costs."""
     # Load project specifications
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
+    project_details = load_project_technical_details()
 
     # Construct category identifier
     category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
+        f"{project_details.construction_type}/{project_details.ac_dc}/{project_details.capacity_mw}MW/{project_details.conductor_type}/{project_details.converter_type}"
     )
 
     # Load terrain details
@@ -280,18 +232,20 @@ def main() -> None:
     financing_yaml = get_financing_data_raw()
 
     # Get discount rate
-    discount_rate, discount_source = get_discount_rate(outage_yaml, financing_yaml)
+    discount_rate, discount_source = get_discount_rate_from_config(
+        outage_yaml, financing_yaml, rate_key="discount_rate_type"
+    )
 
     # Calculate outage costs
     results = calculate_outage_costs(
         outage_yaml,
-        construction_type,
+        project_details.construction_type,
         terrain_miles,
-        capacity_mw,
-        project_lifetime,
+        project_details.capacity_mw,
+        project_details.project_lifetime,
         discount_rate,
-        delay_years=delay_year,
-        construction_years=construction_years,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
 
     # Display results
@@ -299,8 +253,8 @@ def main() -> None:
     print("EXPECTED OUTAGE COST CALCULATION RESULTS")
     print("=" * 80)
     print(f"Project Category: {category}")
-    print(f"Construction Type: {construction_type}")
-    print(f"Project Capacity: {capacity_mw} MW")
+    print(f"Construction Type: {project_details.construction_type}")
+    print(f"Project Capacity: {project_details.capacity_mw} MW")
     print(
         f"Capacity at Risk: {results['capacity_at_risk']*100:.1f}% (φ = {results['capacity_at_risk']:.2f})"
     )
@@ -329,7 +283,7 @@ def main() -> None:
     print()
 
     print("[NOMINAL VALUES]")
-    print(f"  Project Lifetime: {project_lifetime} years")
+    print(f"  Project Lifetime: {project_details.project_lifetime} years")
     print(f"  Risk Growth Rate: {results['growth_rate']:.1%}/year")
     print(f"  ---")
     print(f"  TOTAL NOMINAL COST: ${results['nominal_total']:,.2f}")
