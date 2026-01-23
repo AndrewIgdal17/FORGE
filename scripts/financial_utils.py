@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple
-from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE
+from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
 
 
 def validate_discount_rate(
@@ -92,6 +92,98 @@ def calculate_present_value(
         total_pv += annual_cost * frac / (1 + wacc_real) ** t_frac
 
     return total_pv
+
+
+def calculate_growing_annuity_pv(
+    annual_amount: float,
+    growth_rate: float,
+    discount_rate: float,
+    project_lifetime: int,
+    delay_years: float = 0.0,
+    construction_years: float = 0.0,
+) -> float:
+    """
+    Calculate present value of a growing annuity with optional delay period discounting.
+    
+    This function calculates the PV of annual payments that grow at a constant rate,
+    discounted at a given discount rate. It handles the edge case where discount rate
+    equals growth rate, and optionally discounts for delay/construction periods.
+    
+    Formula:
+    - If |d - g| < tolerance: PV = annual_amount * N
+    - Otherwise: PV = annual_amount * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
+    - If delay_period > 0: PV = PV / ((1 + d) ** delay_period)
+    
+    Args:
+        annual_amount: Base annual amount (e.g., EAL or EAC)
+        growth_rate: Annual growth rate (decimal, e.g., 0.02 for 2%)
+        discount_rate: Discount rate (decimal, e.g., 0.05 for 5%)
+        project_lifetime: Number of years in project lifetime
+        delay_years: Years of delay before operations start (default: 0.0)
+        construction_years: Years of construction (default: 0.0)
+    
+    Returns:
+        float: Present value of the growing annuity, discounted for delay period if applicable
+    
+    Raises:
+        ValueError: If discount_rate <= MIN_DISCOUNT_RATE
+    """
+    # Validate discount_rate to prevent division by zero
+    validate_discount_rate(discount_rate)
+    
+    # Handle None values for delay_years and construction_years
+    delay_years = delay_years if delay_years is not None else 0.0
+    construction_years = construction_years if construction_years is not None else 0.0
+    
+    # Calculate present value with growing annuity
+    g = growth_rate
+    d = discount_rate
+    N = project_lifetime
+    
+    if abs(d - g) < DISCOUNT_GROWTH_EQUALITY_TOLERANCE:  # Edge case: d = g
+        pv = annual_amount * N
+    else:
+        pv = annual_amount * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
+    
+    # Discount for delay and construction periods
+    # Risks only start accumulating after operations begin (after delay + construction)
+    delay_period = delay_years + construction_years
+    if delay_period > 0:
+        pv = pv / ((1 + d) ** delay_period)
+    
+    return pv
+
+
+def calculate_nominal_growing_series(
+    annual_amount: float,
+    growth_rate: float,
+    project_lifetime: int,
+) -> float:
+    """
+    Calculate nominal total cost as sum of a geometric series (growing annual costs).
+    
+    This function calculates the sum of annual amounts that grow at a constant rate
+    over the project lifetime. This is the nominal (undiscounted) total.
+    
+    Formula:
+    - If |growth_rate| < tolerance: total = annual_amount * project_lifetime
+    - Otherwise: total = annual_amount * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate
+    
+    This represents the sum of the geometric series:
+    sum((1 + g)^t for t=0 to N-1) = ((1 + g)^N - 1) / g
+    
+    Args:
+        annual_amount: Base annual amount (e.g., EAL or EAC)
+        growth_rate: Annual growth rate (decimal, e.g., 0.02 for 2%)
+        project_lifetime: Number of years in project lifetime
+    
+    Returns:
+        float: Nominal total cost (sum of growing annual costs, undiscounted)
+    """
+    if abs(growth_rate) < GROWTH_RATE_TOLERANCE:  # No growth
+        return annual_amount * project_lifetime
+    else:
+        return annual_amount * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate
 
 
 def calculate_cod_year(delay_years: float, construction_years: int) -> float:

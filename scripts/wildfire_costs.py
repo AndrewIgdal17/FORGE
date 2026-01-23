@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 
 # Local utility imports
-from constants import MIN_DISCOUNT_RATE
+from constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERANCE
 from smart_loaders import (
     load_project_technical_details,
     load_physical_details,
@@ -26,7 +26,8 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
-from financial_utils import get_discount_rate_from_config
+from financial_utils import get_discount_rate_from_config, calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from calculation_utils import normalize_construction_type_for_yaml
 
 
 
@@ -59,12 +60,7 @@ def calculate_wildfire_costs(
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     # Validate discount_rate to prevent division by zero
-    if discount_rate <= MIN_DISCOUNT_RATE:
-        raise ValueError(
-            f"Invalid discount_rate: {discount_rate}. "
-            f"Value must be > {MIN_DISCOUNT_RATE} to prevent division by zero in financial calculations. "
-            f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
-        )
+    validate_discount_rate(discount_rate)
 
     wildfire_config = wildfire_yaml["wildfire"]
     severity = wildfire_config["severity_per_event"]
@@ -73,14 +69,7 @@ def calculate_wildfire_costs(
     ignition_rate_multiplier = wildfire_config["ignition_rate_multiplier"]
 
     # Map construction type to YAML keys
-    # Handle full names like "Underground direct-buried", "Underground Tunnel", etc.
-    construction_type_lower = construction_type.lower()
-    if "underground" in construction_type_lower:
-        yaml_construction_type = "underground"
-    elif "subsea" in construction_type_lower:
-        yaml_construction_type = "subsea"
-    else:
-        yaml_construction_type = "overhead"  # Default to overhead
+    yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
 
     # Get construction type multiplier
     construction_multiplier = ignition_rate_multiplier.get(yaml_construction_type, 1.0)
@@ -108,31 +97,21 @@ def calculate_wildfire_costs(
     EAL = lambda_total * severity
 
     # Calculate nominal total cost (sum of growing annual costs)
-    # Sum of geometric series: EAL * sum((1+g)^t for t=0 to N-1)
-    if abs(growth_rate) < 1e-9:  # No growth
-        nominal_total = EAL * project_lifetime
-    else:
-        nominal_total = EAL * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate
+    nominal_total = calculate_nominal_growing_series(
+        annual_amount=EAL,
+        growth_rate=growth_rate,
+        project_lifetime=project_lifetime,
+    )
 
-    # Step 4: Present value with growing annuity
-    g = growth_rate
-    d = discount_rate
-    N = project_lifetime
-
-    if abs(d - g) < 1e-9:  # Edge case: d = g
-        pv_cost = EAL * N
-    else:
-        pv_cost = EAL * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
-
-    # Step 5: Discount for delay and construction periods
-    # Risks only start accumulating after operations begin (after delay + construction)
-    # Discount the PV by the delay period to account for when risks actually start
-    # Handle None values by defaulting to 0
-    delay_years = delay_years if delay_years is not None else 0
-    construction_years = construction_years if construction_years is not None else 0
-    delay_period = delay_years + construction_years
-    if delay_period > 0:
-        pv_cost = pv_cost / ((1 + d) ** delay_period)
+    # Step 4: Present value with growing annuity (with delay period discounting)
+    pv_cost = calculate_growing_annuity_pv(
+        annual_amount=EAL,
+        growth_rate=growth_rate,
+        discount_rate=discount_rate,
+        project_lifetime=project_lifetime,
+        delay_years=delay_years,
+        construction_years=construction_years,
+    )
 
     return {
         "lambda_total": lambda_total,

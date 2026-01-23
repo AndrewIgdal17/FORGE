@@ -28,6 +28,7 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
+from calculation_utils import normalize_construction_type_for_yaml
 from financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
@@ -72,12 +73,7 @@ def calculate_environmental_mitigation_costs(
     construction_type = category.split("/")[0]  # e.g., "overhead", "underground"
 
     # Map construction_type to YAML keys
-    construction_type_map = {
-        "overhead": "overhead",
-        "underground": "underground_direct_buried",  # default to direct_buried
-        "subsea": "subsea",
-    }
-    yaml_construction_type = construction_type_map.get(construction_type, "overhead")
+    yaml_construction_type = normalize_construction_type_for_yaml(construction_type, context="environmental")
 
     # Calculate base acreage by terrain (before uplift)
     total_base_acres = 0.0

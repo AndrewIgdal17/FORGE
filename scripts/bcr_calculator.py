@@ -39,6 +39,22 @@ class BCRConfig:
         return cls()
 
 
+def safe_divide(numerator: float, denominator: float) -> float:
+    """
+    Safely divide two numbers, returning 0 if denominator is <= 0.
+    
+    Prevents division by zero errors in BCR calculations.
+    
+    Args:
+        numerator: The dividend
+        denominator: The divisor
+        
+    Returns:
+        float: numerator / denominator if denominator > 0, else 0.0
+    """
+    return numerator / denominator if denominator > 0 else 0.0
+
+
 def format_bcr_viability(bcr_value: float) -> Tuple[str, str]:
     """
     Return (symbol, text) tuple for BCR viability display.
@@ -154,6 +170,39 @@ def safe_get_numeric(data: Dict[str, Any], key: str, default: float = 0.0) -> fl
     return data.get(key, default) or default
 
 
+def prefer_csv_subtotal(
+    data: Dict[str, Any], 
+    key: str, 
+    calculated_value: float
+) -> float:
+    """
+    Prefer CSV subtotal value if it exists and is valid, otherwise use calculated value.
+    
+    CSV subtotals are considered valid if they:
+    - Exist in the dictionary
+    - Are not empty strings
+    - Are not 0.0 (which indicates uninitialized value)
+    
+    This is used for subtotals that may be written to CSV by early-running scripts
+    before they're actually calculated. We prefer the CSV value if it's valid, but
+    fall back to calculating from components if the CSV value is missing or invalid.
+    
+    Args:
+        data: Dictionary containing CSV data
+        key: Key to look up in dictionary
+        calculated_value: Value calculated from components (fallback)
+    
+    Returns:
+        float: CSV value if valid, otherwise calculated value
+    """
+    if (key in data 
+        and data[key] != "" 
+        and data[key] != 0.0):
+        return data[key]
+    else:
+        return calculated_value
+
+
 def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
@@ -188,23 +237,11 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     revenue_nominal = safe_get_numeric(data, "revenue_nominal")
 
     calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
-    total_benefits_pv = (
-        data["total_benefits_pv"]
-        if ("total_benefits_pv" in data 
-            and data["total_benefits_pv"] != "" 
-            and data["total_benefits_pv"] != 0.0)
-        else calculated_total_benefits
-    )
+    total_benefits_pv = prefer_csv_subtotal(data, "total_benefits_pv", calculated_total_benefits)
     calculated_total_benefits_nominal = (
         congestion_benefit_nominal + curtailment_benefit_nominal + revenue_nominal
     )
-    total_benefits_nominal = (
-        data["total_benefits_nominal"]
-        if ("total_benefits_nominal" in data 
-            and data["total_benefits_nominal"] != "" 
-            and data["total_benefits_nominal"] != 0.0)
-        else calculated_total_benefits_nominal
-    )
+    total_benefits_nominal = prefer_csv_subtotal(data, "total_benefits_nominal", calculated_total_benefits_nominal)
 
     # Also calculate haircut benefits (conservative estimate)
     # Haircut applies conservative multipliers to uncertain benefits (congestion/curtailment)
@@ -214,13 +251,7 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     calculated_total_benefits_haircut = (
         congestion_benefit_haircut + curtailment_benefit_haircut + revenue_pv
     )
-    total_benefits_haircut_pv = (
-        data["total_benefits_haircut_pv"]
-        if ("total_benefits_haircut_pv" in data 
-            and data["total_benefits_haircut_pv"] != "" 
-            and data["total_benefits_haircut_pv"] != 0.0)
-        else calculated_total_benefits_haircut
-    )
+    total_benefits_haircut_pv = prefer_csv_subtotal(data, "total_benefits_haircut_pv", calculated_total_benefits_haircut)
 
     return {
         "congestion_benefit_pv": congestion_benefit_pv,
@@ -257,52 +288,28 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     row_cost_pv = safe_get_numeric(data, "row_cost_pv")
     env_mitigation_pv = safe_get_numeric(data, "env_mitigation_pv")
     calculated_capital = build_cost_pv + row_cost_pv + env_mitigation_pv
-    capital_costs_pv = (
-        data["capital_costs_pv"] 
-        if ("capital_costs_pv" in data 
-            and data["capital_costs_pv"] != "" 
-            and data["capital_costs_pv"] != 0.0)
-        else calculated_capital
-    )
+    capital_costs_pv = prefer_csv_subtotal(data, "capital_costs_pv", calculated_capital)
 
     # Capital costs (Nominal)
     build_cost_nominal = safe_get_numeric(data, "build_cost_nominal")
     row_cost_nominal = safe_get_numeric(data, "row_cost_nominal")
     env_mitigation_nominal = safe_get_numeric(data, "env_mitigation_nominal")
     calculated_capital_nominal = build_cost_nominal + row_cost_nominal + env_mitigation_nominal
-    capital_costs_nominal = (
-        data["capital_costs_nominal"]
-        if ("capital_costs_nominal" in data 
-            and data["capital_costs_nominal"] != "" 
-            and data["capital_costs_nominal"] != 0.0)
-        else calculated_capital_nominal
-    )
+    capital_costs_nominal = prefer_csv_subtotal(data, "capital_costs_nominal", calculated_capital_nominal)
 
     # Operational costs (PV) - O&M, operational insurance, and residual exceedance
     oandm_pv = safe_get_numeric(data, "oandm_pv")
     insurance_pv = safe_get_numeric(data, "insurance_pv")
     residual_exceedance_pv = safe_get_numeric(data, "residual_exceedance_pv")
     calculated_operational = oandm_pv + insurance_pv + residual_exceedance_pv
-    operational_costs_pv = (
-        data["operational_costs_pv"]
-        if ("operational_costs_pv" in data 
-            and data["operational_costs_pv"] != "" 
-            and data["operational_costs_pv"] != 0.0)
-        else calculated_operational
-    )
+    operational_costs_pv = prefer_csv_subtotal(data, "operational_costs_pv", calculated_operational)
 
     # Operational costs (Nominal)
     oandm_nominal = safe_get_numeric(data, "oandm_nominal")
     insurance_nominal = safe_get_numeric(data, "insurance_nominal")
     residual_exceedance_nominal = safe_get_numeric(data, "residual_exceedance_nominal")
     calculated_operational_nominal = oandm_nominal + insurance_nominal + residual_exceedance_nominal
-    operational_costs_nominal = (
-        data["operational_costs_nominal"]
-        if ("operational_costs_nominal" in data 
-            and data["operational_costs_nominal"] != "" 
-            and data["operational_costs_nominal"] != 0.0)
-        else calculated_operational_nominal
-    )
+    operational_costs_nominal = prefer_csv_subtotal(data, "operational_costs_nominal", calculated_operational_nominal)
 
     # Energy & Emissions costs (PV) - Line losses and emissions
     emissions_pv = safe_get_numeric(data, "emissions_cost_pv")
@@ -310,52 +317,28 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     line_loss_pv = safe_get_numeric(data, "line_loss_cost_pv")
     line_loss_cost_pv = max(0, line_loss_pv)
     calculated_energy_emissions = line_loss_cost_pv + emissions_pv
-    energy_emissions_costs_pv = (
-        data["energy_emissions_costs_pv"]
-        if ("energy_emissions_costs_pv" in data 
-            and data["energy_emissions_costs_pv"] != "" 
-            and data["energy_emissions_costs_pv"] != 0.0)
-        else calculated_energy_emissions
-    )
+    energy_emissions_costs_pv = prefer_csv_subtotal(data, "energy_emissions_costs_pv", calculated_energy_emissions)
 
     # Energy & Emissions costs (Nominal)
     emissions_nominal = safe_get_numeric(data, "emissions_cost_nominal")
     line_loss_nominal = safe_get_numeric(data, "line_loss_cost_nominal")
     line_loss_cost_nominal = max(0, line_loss_nominal)
     calculated_energy_emissions_nominal = line_loss_cost_nominal + emissions_nominal
-    energy_emissions_costs_nominal = (
-        data["energy_emissions_costs_nominal"]
-        if ("energy_emissions_costs_nominal" in data 
-            and data["energy_emissions_costs_nominal"] != "" 
-            and data["energy_emissions_costs_nominal"] != 0.0)
-        else calculated_energy_emissions_nominal
-    )
+    energy_emissions_costs_nominal = prefer_csv_subtotal(data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal)
 
     # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
     wildfire_pv = safe_get_numeric(data, "wildfire_pv")
     outage_pv = safe_get_numeric(data, "outage_pv")
     wildfire_liability_pv = safe_get_numeric(data, "wildfire_liability_pv")
     calculated_risk = wildfire_pv + outage_pv + wildfire_liability_pv
-    risk_costs_pv = (
-        data["risk_costs_pv"]
-        if ("risk_costs_pv" in data 
-            and data["risk_costs_pv"] != "" 
-            and data["risk_costs_pv"] != 0.0)
-        else calculated_risk
-    )
+    risk_costs_pv = prefer_csv_subtotal(data, "risk_costs_pv", calculated_risk)
 
     # Risk costs (Nominal)
     wildfire_nominal = safe_get_numeric(data, "wildfire_nominal")
     outage_nominal = safe_get_numeric(data, "outage_nominal")
     wildfire_liability_nominal = safe_get_numeric(data, "wildfire_liability_nominal")
     calculated_risk_nominal = wildfire_nominal + outage_nominal + wildfire_liability_nominal
-    risk_costs_nominal = (
-        data["risk_costs_nominal"]
-        if ("risk_costs_nominal" in data 
-            and data["risk_costs_nominal"] != "" 
-            and data["risk_costs_nominal"] != 0.0)
-        else calculated_risk_nominal
-    )
+    risk_costs_nominal = prefer_csv_subtotal(data, "risk_costs_nominal", calculated_risk_nominal)
 
     # Delay costs (PV)
     delay_cost_pv = safe_get_numeric(data, "delay_cost_pv")
@@ -375,13 +358,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     congestion_delay_nominal = safe_get_numeric(data, "congestion_delay_cost_nominal")
     curtailment_delay_nominal = safe_get_numeric(data, "curtailment_delay_cost_nominal")
     calculated_delay_nominal = delay_cost_nominal + congestion_delay_nominal + curtailment_delay_nominal
-    delay_costs_nominal = (
-        data["delay_costs_nominal"]
-        if ("delay_costs_nominal" in data 
-            and data["delay_costs_nominal"] != "" 
-            and data["delay_costs_nominal"] != 0.0)
-        else calculated_delay_nominal
-    )
+    delay_costs_nominal = prefer_csv_subtotal(data, "delay_costs_nominal", calculated_delay_nominal)
 
     # Totals
     calculated_total = (
@@ -391,13 +368,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         + risk_costs_pv
         + delay_costs_pv
     )
-    total_costs_pv = (
-        data["total_costs_pv"]
-        if ("total_costs_pv" in data 
-            and data["total_costs_pv"] != "" 
-            and data["total_costs_pv"] != 0.0)
-        else calculated_total
-    )
+    total_costs_pv = prefer_csv_subtotal(data, "total_costs_pv", calculated_total)
     calculated_total_nominal = (
         capital_costs_nominal
         + operational_costs_nominal
@@ -405,13 +376,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         + risk_costs_nominal
         + delay_costs_nominal
     )
-    total_costs_nominal = (
-        data["total_costs_nominal"]
-        if ("total_costs_nominal" in data 
-            and data["total_costs_nominal"] != "" 
-            and data["total_costs_nominal"] != 0.0)
-        else calculated_total_nominal
-    )
+    total_costs_nominal = prefer_csv_subtotal(data, "total_costs_nominal", calculated_total_nominal)
 
     return {
         # Capital (PV)
@@ -479,20 +444,20 @@ def calculate_bcr_metrics(
     ]  # Line Losses + Emissions
 
     # Separate emissions and line losses for individual calculations
-    emissions_pv = costs.get("emissions_cost_pv", 0) or 0
-    line_loss_cost_pv = costs.get("line_loss_cost_pv", 0) or 0
+    emissions_pv = safe_get_numeric(costs, "emissions_cost_pv")
+    line_loss_cost_pv = safe_get_numeric(costs, "line_loss_cost_pv")
 
     # Separate wildfire and outage risk for individual calculations
-    wildfire_pv = costs.get("wildfire_pv", 0) or 0
-    outage_pv = costs.get("outage_pv", 0) or 0
-    wildfire_liability_pv = costs.get("wildfire_liability_pv", 0) or 0
+    wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
+    outage_pv = safe_get_numeric(costs, "outage_pv")
+    wildfire_liability_pv = safe_get_numeric(costs, "wildfire_liability_pv")
     # Wildfire risk = wildfire + wildfire liability (grouped together)
     wildfire_risk_pv = wildfire_pv + wildfire_liability_pv
 
     # Extract benefit components early (needed for utility/TSP and ratepayer calculations)
-    congestion_benefit_pv = benefits.get("congestion_benefit_haircut_pv", 0) or 0
-    curtailment_benefit_pv = benefits.get("curtailment_benefit_haircut_pv", 0) or 0
-    revenue_pv = benefits.get("revenue_pv", 0) or 0
+    congestion_benefit_pv = safe_get_numeric(benefits, "congestion_benefit_haircut_pv")
+    curtailment_benefit_pv = safe_get_numeric(benefits, "curtailment_benefit_haircut_pv")
+    revenue_pv = safe_get_numeric(benefits, "revenue_pv")
 
     # Nominal metrics
     total_benefits_nominal = benefits["total_benefits_nominal"]
@@ -566,99 +531,33 @@ def calculate_bcr_metrics(
     )
 
     # Calculate capital + delay costs
-    delay_costs_pv = costs.get("delay_costs_pv", 0) or 0
+    delay_costs_pv = safe_get_numeric(costs, "delay_costs_pv")
     capital_and_delay_costs_pv = capital_costs_pv + delay_costs_pv
 
     # Prevent division by zero
     # All BCRs use conservative (haircut) benefits
-    bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
-    bcr_capital = total_benefits_pv / capital_costs_pv if capital_costs_pv > 0 else 0
-    bcr_capital_and_delay = (
-        total_benefits_pv / capital_and_delay_costs_pv
-        if capital_and_delay_costs_pv > 0
-        else 0
-    )
-    bcr_excluding_risk = (
-        total_benefits_pv / total_costs_excluding_risk_pv
-        if total_costs_excluding_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions = (
-        total_benefits_pv / total_costs_excluding_emissions_pv
-        if total_costs_excluding_emissions_pv > 0
-        else 0
-    )
-    bcr_excluding_linelosses = (
-        total_benefits_pv / total_costs_excluding_linelosses_pv
-        if total_costs_excluding_linelosses_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_linelosses = (
-        total_benefits_pv / total_costs_excluding_emissions_and_linelosses_pv
-        if total_costs_excluding_emissions_and_linelosses_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_risk = (
-        total_benefits_pv / total_costs_excluding_emissions_and_risk_pv
-        if total_costs_excluding_emissions_and_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_linelosses_and_risk = (
-        total_benefits_pv / total_costs_excluding_linelosses_and_risk_pv
-        if total_costs_excluding_linelosses_and_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_linelosses_and_risk = (
-        total_benefits_pv / total_costs_excluding_emissions_and_linelosses_and_risk_pv
-        if total_costs_excluding_emissions_and_linelosses_and_risk_pv > 0
-        else 0
-    )
+    bcr_system = safe_divide(total_benefits_pv, total_costs_pv)
+    bcr_capital = safe_divide(total_benefits_pv, capital_costs_pv)
+    bcr_capital_and_delay = safe_divide(total_benefits_pv, capital_and_delay_costs_pv)
+    bcr_excluding_risk = safe_divide(total_benefits_pv, total_costs_excluding_risk_pv)
+    bcr_excluding_emissions = safe_divide(total_benefits_pv, total_costs_excluding_emissions_pv)
+    bcr_excluding_linelosses = safe_divide(total_benefits_pv, total_costs_excluding_linelosses_pv)
+    bcr_excluding_emissions_and_linelosses = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_linelosses_pv)
+    bcr_excluding_emissions_and_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_risk_pv)
+    bcr_excluding_linelosses_and_risk = safe_divide(total_benefits_pv, total_costs_excluding_linelosses_and_risk_pv)
+    bcr_excluding_emissions_and_linelosses_and_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_linelosses_and_risk_pv)
 
     # BCR metrics excluding wildfire risk only (4 combinations)
-    bcr_excluding_wildfire_risk = (
-        total_benefits_pv / total_costs_excluding_wildfire_risk_pv
-        if total_costs_excluding_wildfire_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_wildfire_risk = (
-        total_benefits_pv / total_costs_excluding_emissions_and_wildfire_risk_pv
-        if total_costs_excluding_emissions_and_wildfire_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_linelosses_and_wildfire_risk = (
-        total_benefits_pv / total_costs_excluding_linelosses_and_wildfire_risk_pv
-        if total_costs_excluding_linelosses_and_wildfire_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_linelosses_and_wildfire_risk = (
-        total_benefits_pv
-        / total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv
-        if total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv > 0
-        else 0
-    )
+    bcr_excluding_wildfire_risk = safe_divide(total_benefits_pv, total_costs_excluding_wildfire_risk_pv)
+    bcr_excluding_emissions_and_wildfire_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_wildfire_risk_pv)
+    bcr_excluding_linelosses_and_wildfire_risk = safe_divide(total_benefits_pv, total_costs_excluding_linelosses_and_wildfire_risk_pv)
+    bcr_excluding_emissions_and_linelosses_and_wildfire_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv)
 
     # BCR metrics excluding outage risk only (4 combinations)
-    bcr_excluding_outage_risk = (
-        total_benefits_pv / total_costs_excluding_outage_risk_pv
-        if total_costs_excluding_outage_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_outage_risk = (
-        total_benefits_pv / total_costs_excluding_emissions_and_outage_risk_pv
-        if total_costs_excluding_emissions_and_outage_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_linelosses_and_outage_risk = (
-        total_benefits_pv / total_costs_excluding_linelosses_and_outage_risk_pv
-        if total_costs_excluding_linelosses_and_outage_risk_pv > 0
-        else 0
-    )
-    bcr_excluding_emissions_and_linelosses_and_outage_risk = (
-        total_benefits_pv
-        / total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv
-        if total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv > 0
-        else 0
-    )
+    bcr_excluding_outage_risk = safe_divide(total_benefits_pv, total_costs_excluding_outage_risk_pv)
+    bcr_excluding_emissions_and_outage_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_outage_risk_pv)
+    bcr_excluding_linelosses_and_outage_risk = safe_divide(total_benefits_pv, total_costs_excluding_linelosses_and_outage_risk_pv)
+    bcr_excluding_emissions_and_linelosses_and_outage_risk = safe_divide(total_benefits_pv, total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv)
 
     # Rename existing combined BCR metrics to wildfire_risk_and_outage_risk (4 combinations)
     bcr_excluding_wildfire_risk_and_outage_risk = bcr_excluding_risk
@@ -676,9 +575,9 @@ def calculate_bcr_metrics(
     # Benefits: Only revenue (rate base recovery)
     utility_benefits_pv = revenue_pv
     # Costs: What utility actually pays (capital + delay + operational)
-    operational_costs_pv = costs.get("operational_costs_pv", 0) or 0
+    operational_costs_pv = safe_get_numeric(costs, "operational_costs_pv")
     utility_costs_pv = capital_costs_pv + delay_costs_pv + operational_costs_pv
-    bcr_utility = utility_benefits_pv / utility_costs_pv if utility_costs_pv > 0 else 0
+    bcr_utility = safe_divide(utility_benefits_pv, utility_costs_pv)
     net_benefit_utility_pv = utility_benefits_pv - utility_costs_pv
 
     # Ratepayer Perspective
@@ -686,9 +585,7 @@ def calculate_bcr_metrics(
     ratepayer_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv
     # Costs: What ratepayers pay (line losses socialized through rates)
     ratepayer_costs_pv = line_loss_cost_pv
-    bcr_ratepayer = (
-        ratepayer_benefits_pv / ratepayer_costs_pv if ratepayer_costs_pv > 0 else 0
-    )
+    bcr_ratepayer = safe_divide(ratepayer_benefits_pv, ratepayer_costs_pv)
     net_benefit_ratepayer_pv = ratepayer_benefits_pv - ratepayer_costs_pv
 
     # Net benefits (using conservative benefits)
@@ -785,11 +682,11 @@ def calculate_bcr_metrics(
     # - Outage (if not no_outages)
     # - Line Losses (if not no_linelosses)
     # - Emissions (if not no_emissions)
-    wildfire_pv = costs.get("wildfire_pv", 0) or 0
-    outage_pv = costs.get("outage_pv", 0) or 0
-    wildfire_liability_pv = costs.get("wildfire_liability_pv", 0) or 0
-    oandm_pv = costs.get("oandm_pv", 0) or 0
-    insurance_pv = costs.get("insurance_pv", 0) or 0
+    wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
+    outage_pv = safe_get_numeric(costs, "outage_pv")
+    wildfire_liability_pv = safe_get_numeric(costs, "wildfire_liability_pv")
+    oandm_pv = safe_get_numeric(costs, "oandm_pv")
+    insurance_pv = safe_get_numeric(costs, "insurance_pv")
 
     primary_costs_pv = capital_costs_pv + delay_costs_pv
     if not config.no_oandm:
@@ -806,7 +703,7 @@ def calculate_bcr_metrics(
         primary_costs_pv += emissions_pv
 
     # Calculate Primary BCR
-    bcr_primary = primary_benefits_pv / primary_costs_pv if primary_costs_pv > 0 else 0
+    bcr_primary = safe_divide(primary_benefits_pv, primary_costs_pv)
     net_benefit_primary_pv = primary_benefits_pv - primary_costs_pv
 
     result = {
@@ -1057,7 +954,7 @@ def print_bcr_summary(
         f"  Curtailment Reduction (haircut): ${benefits['curtailment_benefit_haircut_pv']:>15,.0f}"
     )
 
-    line_loss_pv = data.get("line_loss_cost_pv", 0) or 0
+    line_loss_pv = safe_get_numeric(data, "line_loss_cost_pv")
     # Line losses are always costs (positive) for both greenfield and reconductoring
     # Don't display in benefits section - they're shown in costs section below
     # if line_loss_pv > 0:
@@ -1066,7 +963,7 @@ def print_bcr_summary(
     #     )
 
     # Add revenue display
-    revenue_pv = benefits.get("revenue_pv", 0) or 0
+    revenue_pv = safe_get_numeric(benefits, "revenue_pv")
     if revenue_pv > 0:
         print(f"  Revenue (Rate-Based):        ${revenue_pv:>15,.0f}")
 
@@ -1162,8 +1059,8 @@ def print_bcr_summary(
 
     # Print all BCRs systematically (8 combined + 4 wildfire-only + 4 outage-only = 16 total exclusion BCRs)
     risk_costs_pv = costs["risk_costs_pv"]
-    emissions_pv = costs.get("emissions_cost_pv", 0) or 0
-    line_loss_cost_pv = costs.get("line_loss_cost_pv", 0) or 0
+    emissions_pv = safe_get_numeric(costs, "emissions_cost_pv")
+    line_loss_cost_pv = safe_get_numeric(costs, "line_loss_cost_pv")
     energy_emissions_costs_pv = costs["energy_emissions_costs_pv"]
 
     # 1. No exclusions (already shown above as System BCR)
@@ -1263,8 +1160,8 @@ def print_bcr_summary(
     print()
 
     # Print wildfire-only BCRs (4 combinations)
-    wildfire_risk_pv = costs.get("wildfire_pv", 0) or 0
-    wildfire_liability_pv = costs.get("wildfire_liability_pv", 0) or 0
+    wildfire_risk_pv = safe_get_numeric(costs, "wildfire_pv")
+    wildfire_liability_pv = safe_get_numeric(costs, "wildfire_liability_pv")
     wildfire_risk_total_pv = wildfire_risk_pv + wildfire_liability_pv
 
     print("  Wildfire-Only Exclusions:")
@@ -1318,7 +1215,7 @@ def print_bcr_summary(
     print()
 
     # Print outage-only BCRs (4 combinations)
-    outage_risk_pv = costs.get("outage_pv", 0) or 0
+    outage_risk_pv = safe_get_numeric(costs, "outage_pv")
 
     print("  Outage-Only Exclusions:")
     bcr_excluding_outage_risk = bcr_metrics.get("bcr_excluding_outage_risk", 0)

@@ -333,3 +333,37 @@ def get_converter_type(ac_dc: str, converter_type: str) -> str:
         "LCC"
     """
     return CONVERTER_TYPE_NA if ac_dc == TRANSMISSION_TYPE_AC else converter_type
+
+
+def normalize_construction_type_for_yaml(
+    construction_type: str, context: str = "default"
+) -> str:
+    """
+    Normalize construction type string to YAML key format.
+
+    Handles various input formats:
+    - "Overhead" -> "overhead"
+    - "Underground" -> "underground" (or "underground_direct_buried" for environmental)
+    - "Underground direct-buried" -> "underground" (or "underground_direct_buried" for environmental)
+    - "Subsea" -> "subsea"
+
+    Args:
+        construction_type: Construction type string (case-insensitive)
+        context: Context for mapping ("default", "environmental")
+                 - "default": Maps underground variants to "underground"
+                 - "environmental": Maps "Underground" to "underground_direct_buried"
+
+    Returns:
+        str: Normalized YAML key (lowercase, standardized)
+    """
+    construction_type_lower = construction_type.lower()
+
+    if "subsea" in construction_type_lower:
+        return "subsea"
+    elif "underground" in construction_type_lower:
+        if context == "environmental":
+            return "underground_direct_buried"
+        else:
+            return "underground"
+    else:
+        return "overhead"  # Default

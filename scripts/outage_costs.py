@@ -26,7 +26,8 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
-from financial_utils import get_discount_rate_from_config
+from financial_utils import get_discount_rate_from_config, calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from calculation_utils import normalize_construction_type_for_yaml
 
 
 
@@ -96,12 +97,7 @@ def calculate_outage_costs(
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     # Validate discount_rate to prevent division by zero
-    if discount_rate <= MIN_DISCOUNT_RATE:
-        raise ValueError(
-            f"Invalid discount_rate: {discount_rate}. "
-            f"Value must be > {MIN_DISCOUNT_RATE} to prevent division by zero in financial calculations. "
-            f"A rate of {discount_rate} would cause (1 + discount_rate) to be <= 0, leading to invalid calculations."
-        )
+    validate_discount_rate(discount_rate)
 
     outage_config = outage_yaml["outage"]
     growth_rate = outage_config["risk_growth_rate"]
@@ -112,14 +108,7 @@ def calculate_outage_costs(
     outage_rates = outage_config["outage_rates"]
 
     # Map construction type to YAML keys
-    construction_type_map = {
-        "overhead": "overhead",
-        "underground": "underground",
-        "subsea": "subsea",
-    }
-    yaml_construction_type = construction_type_map.get(
-        construction_type.lower(), "overhead"
-    )
+    yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
 
     # Calculate outages and costs by terrain
     outage_by_terrain = {}
@@ -167,30 +156,21 @@ def calculate_outage_costs(
             EAC += annual_cost
 
     # Calculate nominal total cost (sum of growing annual costs)
-    if abs(growth_rate) < GROWTH_RATE_TOLERANCE:  # No growth
-        nominal_total = EAC * project_lifetime
-    else:
-        nominal_total = EAC * ((1 + growth_rate) ** project_lifetime - 1) / growth_rate
+    nominal_total = calculate_nominal_growing_series(
+        annual_amount=EAC,
+        growth_rate=growth_rate,
+        project_lifetime=project_lifetime,
+    )
 
-    # Present value with growing annuity
-    g = growth_rate
-    d = discount_rate
-    N = project_lifetime
-
-    if abs(d - g) < 1e-9:  # Edge case: d = g
-        pv_cost = EAC * N
-    else:
-        pv_cost = EAC * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
-
-    # Discount for delay and construction periods
-    # Risks only start accumulating after operations begin (after delay + construction)
-    # Discount the PV by the delay period to account for when risks actually start
-    # Handle None values by defaulting to 0
-    delay_years = delay_years if delay_years is not None else 0
-    construction_years = construction_years if construction_years is not None else 0
-    delay_period = delay_years + construction_years
-    if delay_period > 0:
-        pv_cost = pv_cost / ((1 + d) ** delay_period)
+    # Present value with growing annuity (with delay period discounting)
+    pv_cost = calculate_growing_annuity_pv(
+        annual_amount=EAC,
+        growth_rate=growth_rate,
+        discount_rate=discount_rate,
+        project_lifetime=project_lifetime,
+        delay_years=delay_years,
+        construction_years=construction_years,
+    )
 
     return {
         "lambda_total": lambda_total,

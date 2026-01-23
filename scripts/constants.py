@@ -21,6 +21,7 @@ AC_POWER_FACTOR = 0.95  # Power factor for AC transmission phase current calcula
 
 # Numerical tolerance constants
 GROWTH_RATE_TOLERANCE = 1e-9  # Tolerance for checking if growth rate is effectively zero
+DISCOUNT_GROWTH_EQUALITY_TOLERANCE = 1e-9  # Tolerance for checking if discount rate equals growth rate
 
 # Transmission type constants
 TRANSMISSION_TYPE_AC = "AC"
