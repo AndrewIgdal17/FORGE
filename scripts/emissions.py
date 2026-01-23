@@ -17,13 +17,8 @@ from smart_output import CTCCOutputManager
 
 # Local utility imports
 from energy_losses import (
+    get_total_energy_losses,
     load_project_technical_details,
-    load_physical_details,
-    load_circuit_and_resistance_details,
-    calculate_phase_current,
-    full_load_adjusted,
-    calculate_line_losses,
-    calculate_converter_losses,
 )
 from smart_loaders import (
     load_emissions_details,
@@ -33,121 +28,6 @@ from smart_loaders import (
 from financial_utils import calculate_present_value
 
 
-def calculate_total_energy_losses() -> Tuple[float, int]:
-    """
-    Calculate total energy losses by reusing energy_losses functions.
-
-    Returns:
-        float: Total energy losses in MWh/yr
-    """
-    # Load project details
-    (
-        construction_type,
-        ac_dc,
-        capacity_mw,
-        conductor_type,
-        converter_type,
-        line_utilization_percent,
-        reconductoring,
-        uses_existing_row,
-        delay_year,
-        construction_years,
-        project_lifetime,
-        converter_loss_percentage,
-    ) = load_project_technical_details()
-
-    # Construct category locally
-    category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
-    )
-
-    # Get number of converters if DC
-    if ac_dc == "DC":
-        try:
-            project_details_data = get_project_data_raw()
-            if "project" not in project_details_data:
-                raise KeyError(
-                    "Missing 'project' key in project technical details"
-                )
-            if "number_of_converters" not in project_details_data["project"]:
-                raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details"
-                )
-            number_of_converters = project_details_data["project"][
-                "number_of_converters"
-            ]
-        except KeyError as e:
-            raise KeyError(
-                f"Missing required key in project technical details: {e}"
-            )
-    else:
-        number_of_converters = 0
-
-    line_length = load_physical_details()
-
-    (
-        voltage_kv,
-        conductors_per_phase,
-        number_of_phases,
-        number_of_circuits_poles,
-        AC_75_resistance,
-        DC_20_resistance,
-    ) = load_circuit_and_resistance_details(category)
-
-    # Convert capacity_mw to numeric (handle both int and string with MW suffix)
-    if isinstance(capacity_mw, str):
-        capacity_mw_numeric = int(capacity_mw.replace("MW", ""))
-    else:
-        capacity_mw_numeric = int(capacity_mw)
-
-    # Calculate phase current and full load adjustment
-    phase_current = calculate_phase_current(
-        capacity_mw, voltage_kv, number_of_phases, number_of_circuits_poles, ac_dc
-    )
-    full_load_adj = full_load_adjusted(line_utilization_percent)
-
-    # Calculate line losses
-    (
-        losses_mwh_per_year,
-        lifetime_losses_mwh,
-        losses_mw_per_mile,
-        resistance_per_mile,
-        line_loss_per_mile_percent,
-        total_line_loss_mw,
-        total_line_loss_percent,
-    ) = calculate_line_losses(
-        phase_current,
-        full_load_adj,
-        AC_75_resistance,
-        DC_20_resistance,
-        ac_dc,
-        number_of_circuits_poles,
-        conductors_per_phase,
-        number_of_phases,
-        line_length,
-        project_lifetime,
-        capacity_mw_numeric,
-        line_utilization_percent,
-    )
-
-    # Calculate converter losses
-    (
-        total_converter_losses_mw,
-        total_converter_losses_mwh,
-        converter_loss_percent,
-    ) = calculate_converter_losses(
-        number_of_converters,
-        converter_type,
-        line_utilization_percent,
-        capacity_mw_numeric,
-        ac_dc,
-        converter_loss_percentage,
-    )
-
-    # Total energy losses is the sum of line and converter losses
-    total_losses_mwh_per_year = losses_mwh_per_year + total_converter_losses_mwh
-
-    return total_losses_mwh_per_year, project_lifetime
 
 
 def calculate_energy_mix_by_year(
@@ -535,9 +415,9 @@ def main() -> None:
         number_of_converters = 0
 
     # Calculate total energy losses
-    total_losses_mwh_per_year, project_lifetime_from_losses = (
-        calculate_total_energy_losses()
-    )
+    loss_data = get_total_energy_losses()
+    total_losses_mwh_per_year = loss_data["total_losses_mwh_per_year"]
+    project_lifetime_from_losses = loss_data["project_lifetime"]
 
     # Calculate emissions across lifetime
     (

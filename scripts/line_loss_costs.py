@@ -707,13 +707,11 @@ def main() -> None:
     print(f"Conductor Type: {conductor_type}")
     print()
 
-    # Look up voltage for new configuration first (for counterfactual comparison)
-    new_category = (
-        f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
-    )
-    voltage_kv_new, _, _, _, _, _ = load_circuit_and_resistance_details(new_category)
+    # Look up old voltage for reconductoring (physical towers unchanged)
+    old_category = f"{construction_type}/{old_ac_dc}/{old_capacity_mw}MW/{old_conductor_type}/{old_converter_type}"
+    old_voltage_kv, _, _, _, _, _ = load_circuit_and_resistance_details(old_category)
 
-    # Calculate new configuration losses
+    # Calculate new configuration losses using OLD voltage (towers unchanged)
     new_losses_mwh_per_year, new_lifetime_losses_mwh = calculate_configuration_losses(
         construction_type,
         ac_dc,
@@ -722,9 +720,10 @@ def main() -> None:
         converter_type,
         line_utilization_percent,
         project_lifetime,
+        voltage_kv_override=old_voltage_kv,  # Use old voltage since towers unchanged
     )
 
-    # Calculate counterfactual baseline losses (old conductor at new capacity @ new voltage)
+    # Calculate counterfactual baseline losses (old conductor at new capacity @ old voltage)
     # This ensures both use the same voltage for fair comparison (informational only)
     (
         counterfactual_baseline_losses_mwh_per_year,
@@ -737,7 +736,7 @@ def main() -> None:
         old_converter_type,
         line_utilization_percent,
         project_lifetime,
-        voltage_kv_override=voltage_kv_new,  # Use new voltage for fair comparison
+        voltage_kv_override=old_voltage_kv,  # Use old voltage for fair comparison
     )
 
     # Calculate delivered energy for each configuration
