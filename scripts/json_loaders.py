@@ -314,3 +314,94 @@ def load_terrain_data():
     """Load terrain data including terrain miles and multipliers from JSON."""
     physical_details = _data_source.get_data("02_project_physical_details")
     return physical_details["terrain"]
+
+
+def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
+    """
+    Load Primary BCR configuration from JSON data source.
+    
+    Returns:
+        Dictionary with module enable/disable flags grouped by category.
+        If section doesn't exist in JSON, returns default (all enabled).
+    
+    Structure:
+        {
+            "operational": {"oandm": True, "insurance": True, "delay_costs": True},
+            "risk": {"wildfire": True, "outages": True},
+            "energy": {"line_losses": True, "emissions": True},
+            "benefits": {"congestion": True, "curtailment": True}
+        }
+    """
+    # Default configuration (all modules enabled)
+    default_config = {
+        "operational": {
+            "oandm": True,
+            "insurance": True,
+            "delay_costs": True,
+        },
+        "risk": {
+            "wildfire": True,
+            "outages": True,
+        },
+        "energy": {
+            "line_losses": True,
+            "emissions": True,
+        },
+        "benefits": {
+            "congestion": True,
+            "curtailment": True,
+        },
+    }
+    
+    try:
+        # Try to load from JSON data source
+        # First check if JSON data is available
+        if _data_source._json_data is None:
+            # Try to auto-load from environment variable
+            _data_source._load_from_env_file()
+        
+        # Now try to get the BCR config section
+        try:
+            bcr_data = _data_source.get_data("22_primary_bcr_config")
+        except KeyError:
+            # Section not found in JSON data, return default (all enabled)
+            return default_config
+        
+        if not bcr_data:
+            # Empty data, return default
+            return default_config
+        
+        if "primary_bcr_config" not in bcr_data:
+            # Missing top-level key, return default
+            return default_config
+        
+        config = bcr_data["primary_bcr_config"]
+        
+        # Merge with defaults to handle missing keys
+        result = {}
+        for category in ["operational", "risk", "energy", "benefits"]:
+            result[category] = {}
+            category_config = config.get(category, {})
+            # Use defaults for each module if not specified
+            for module, default_value in default_config[category].items():
+                result[category][module] = category_config.get(module, default_value)
+        
+        return result
+    
+    except KeyError:
+        # Section not found in JSON data, return default (all enabled)
+        return default_config
+    except RuntimeError as e:
+        # JSON data not loaded or file not found - return default with warning
+        import warnings
+        warnings.warn(
+            f"JSON data not available for BCR config: {e}. Using default (all modules enabled)."
+        )
+        return default_config
+    except Exception as e:
+        # Any other error, return default with warning
+        import warnings
+        warnings.warn(
+            f"Error loading Primary BCR config from JSON: {e}. Using default (all modules enabled)."
+        )
+        return default_config

@@ -140,9 +140,15 @@ def load_project_details() -> LineLossProjectDetails:
         greenfield_comparison_capacity_mw = project.get(
             "greenfield_comparison_capacity_mw", None
         )
+        # Convert empty string to None
+        if greenfield_comparison_capacity_mw == "":
+            greenfield_comparison_capacity_mw = None
         greenfield_comparison_conductor_type = project.get(
             "greenfield_comparison_conductor_type", None
         )
+        # Convert empty string to None
+        if greenfield_comparison_conductor_type == "":
+            greenfield_comparison_conductor_type = None
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Project technical details not found"
@@ -261,8 +267,9 @@ def main() -> None:
         print("Greenfield project detected - calculating line loss costs.")
         print()
 
-        # Check if comparison capacity is provided
-        if project_details.greenfield_comparison_capacity_mw is not None:
+        # Check if comparison capacity is provided (must be non-None, non-zero, and non-empty)
+        comparison_capacity = project_details.greenfield_comparison_capacity_mw
+        if comparison_capacity is not None and comparison_capacity != 0 and comparison_capacity != "":
             # Greenfield with comparison - implement three comparison methods
             print("Comparison capacity detected - comparing two configurations.")
             print()

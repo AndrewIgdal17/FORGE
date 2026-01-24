@@ -66,6 +66,8 @@ def normalize_capacity_mw(capacity_mw: Union[int, str]) -> int:
     if isinstance(capacity_mw, str):
         # Strip "MW" suffix if present (case-insensitive)
         cleaned = capacity_mw.upper().replace("MW", "").strip()
+        if not cleaned:  # Empty string after cleaning
+            raise ValueError(f"Cannot convert empty capacity_mw to int: {capacity_mw}")
         return int(cleaned)
     raise ValueError(f"Cannot convert capacity_mw to int: {capacity_mw}")
 

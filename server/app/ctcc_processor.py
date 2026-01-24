@@ -264,6 +264,18 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 timeout=600  # 10 minute timeout
             )
 
+            # Log subprocess output for debugging (especially BCR config loading)
+            if result.stdout:
+                # Look for DEBUG messages
+                for line in result.stdout.split('\n'):
+                    if 'DEBUG:' in line or 'Warning:' in line:
+                        print(f"[CTCC Subprocess] {line}", flush=True)
+            if result.stderr:
+                # Log any errors
+                for line in result.stderr.split('\n'):
+                    if line.strip():  # Only log non-empty lines
+                        print(f"[CTCC Subprocess STDERR] {line}", flush=True)
+
             # Parse results based on output mode
             if output_mode == "json":
                 # Read the JSON output file

@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 import json_loaders
 import json
 import os
+import sys
 
 
 class JSONOutputManager:
@@ -369,8 +370,14 @@ class JSONOutputManager:
         # Merge state (taking the latest data from each module)
         if state.get("costs"):
             for key, value in state["costs"].items():
-                if value:  # Only update if there's actual data
-                    self.costs[key] = value
+                # Debug: Log line_loss specifically
+                if key == "line_loss":
+                    print(f"DEBUG: Loading line_loss from {os.path.basename(json_file)}: {value}", file=sys.stderr)
+                # Update if value exists (allow zero values and empty dicts for line_loss)
+                if value is not None:
+                    # Always include line_loss, even if empty dict or zero values
+                    if key == "line_loss" or value:
+                        self.costs[key] = value
 
         if state.get("benefits"):
             for key, value in state["benefits"].items():

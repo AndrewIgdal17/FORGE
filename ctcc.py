@@ -201,8 +201,18 @@ def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dic
     pattern = os.path.join(output_dir, f"json_output_{scenario_id}_*.json")
     json_files = glob.glob(pattern)
 
+    # Debug: Log what files we found
+    print(f"DEBUG: Looking for JSON files matching: {pattern}", file=sys.stderr)
+    print(
+        f"DEBUG: Found {len(json_files)} JSON files: {[os.path.basename(f) for f in json_files]}",
+        file=sys.stderr,
+    )
+
     # Load and merge each file
     for json_file in json_files:
+        print(
+            f"DEBUG: Loading JSON file: {os.path.basename(json_file)}", file=sys.stderr
+        )
         aggregator.load_from_file(json_file)
         # Clean up the intermediate file
         try:
@@ -331,48 +341,81 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Load YAML config for Primary BCR (YAML overrides command-line flags)
+    # Load Primary BCR config (from YAML or JSON based on input mode)
+    # This overrides command-line flags
+    bcr_config = None  # Initialize to avoid NameError if exception occurs
+    source = "YAML"  # Default source name for error messages
     try:
-        from scripts.yaml_loaders import load_primary_bcr_config
+        input_mode = os.environ.get("CTCC_INPUT_MODE", "yaml").lower()
 
-        yaml_config = load_primary_bcr_config()
+        if input_mode == "json":
+            # Use JSON loader when in JSON input mode
+            from scripts.json_loaders import load_primary_bcr_config
 
-        # YAML overrides command-line flags
-        if yaml_config:
-            # Convert YAML enabled flags to ctcc.py flags (invert logic)
+            source = "JSON"
+        else:
+            # Use YAML loader (default)
+            from scripts.yaml_loaders import load_primary_bcr_config
+
+            source = "YAML"
+
+        bcr_config = load_primary_bcr_config()
+
+        # Debug: Log what we loaded (always log for JSON mode to help diagnose issues)
+        if input_mode == "json":
+            line_losses_enabled = (
+                bcr_config.get("energy", {}).get("line_losses", True)
+                if bcr_config
+                else True
+            )
+            print(
+                f"DEBUG: BCR config loaded from {source}, line_losses={line_losses_enabled}",
+                file=sys.stderr,
+            )
+            print(
+                f"DEBUG: args.no_linelosses will be set to: {not line_losses_enabled}",
+                file=sys.stderr,
+            )
+
+        # BCR config overrides command-line flags
+        if bcr_config:
+            # Convert BCR config enabled flags to ctcc.py flags (invert logic)
             # Operational
-            if not yaml_config.get("operational", {}).get("oandm", True):
+            if not bcr_config.get("operational", {}).get("oandm", True):
                 args.no_oandm = True
-            if not yaml_config.get("operational", {}).get("insurance", True):
+            if not bcr_config.get("operational", {}).get("insurance", True):
                 args.no_insurance = True
-            if not yaml_config.get("operational", {}).get("delay_costs", True):
+            if not bcr_config.get("operational", {}).get("delay_costs", True):
                 args.no_delay_costs = True
 
             # Risk
-            if not yaml_config.get("risk", {}).get("wildfire", True):
+            if not bcr_config.get("risk", {}).get("wildfire", True):
                 args.no_wildfire = True
-            if not yaml_config.get("risk", {}).get("outages", True):
+            if not bcr_config.get("risk", {}).get("outages", True):
                 args.no_outages = True
 
             # Energy
-            if not yaml_config.get("energy", {}).get("line_losses", True):
+            if not bcr_config.get("energy", {}).get("line_losses", True):
                 args.no_linelosses = True
-            if not yaml_config.get("energy", {}).get("emissions", True):
+            if not bcr_config.get("energy", {}).get("emissions", True):
                 args.no_emissions = True
 
             # Benefits
-            if not yaml_config.get("benefits", {}).get("congestion", True):
+            if not bcr_config.get("benefits", {}).get("congestion", True):
                 args.no_congestion = True
-            if not yaml_config.get("benefits", {}).get("curtailment", True):
+            if not bcr_config.get("benefits", {}).get("curtailment", True):
                 args.no_curtailment = True
     except (FileNotFoundError, ImportError):
-        # YAML doesn't exist or can't be loaded - use command-line flags only
+        # Config file doesn't exist or can't be loaded - use command-line flags only
         pass
     except Exception as e:
-        # Any other error loading YAML config - use command-line flags only
+        # Any other error loading config - use command-line flags only
         if not args.simple:
-            print(f"Warning: Could not load Primary BCR config from YAML: {e}")
+            print(f"Warning: Could not load Primary BCR config from {source}: {e}")
             print("  Using command-line flags only.")
+            import traceback
+
+            traceback.print_exc()
 
     # Create BCRConfig from args (after YAML overrides are applied)
     bcr_config = BCRConfig(
@@ -537,10 +580,59 @@ def main() -> None:
     total_runs = len(scripts)
     failed_scripts = []
 
+    # Debug: Log which scripts will be run
+    if not args.simple:
+        print(f"DEBUG: Scripts to run ({total_runs}): {scripts}", file=sys.stderr)
+        if "line_loss_costs.py" in scripts:
+            print("DEBUG: line_loss_costs.py IS in the scripts list", file=sys.stderr)
+        else:
+            print(
+                "DEBUG: line_loss_costs.py is NOT in the scripts list!", file=sys.stderr
+            )
+
     for script in scripts:
+        # Debug: Log when we're about to run line_loss_costs
+        if script == "line_loss_costs.py":
+            print(
+                f"DEBUG: About to run line_loss_costs.py, args.no_linelosses={args.no_linelosses}",
+                file=sys.stderr,
+            )
         if not args.simple:
             print(f"\n🔄 Running {script}...")
-        if run_script(script, quiet=args.simple):
+
+        # Special handling for line_loss_costs to capture detailed error output
+        if script == "line_loss_costs.py":
+            import subprocess
+
+            env = os.environ.copy()
+            result = subprocess.run(
+                [sys.executable, script],
+                capture_output=True,
+                text=True,
+                cwd="scripts",
+                env=env,
+            )
+            success = result.returncode == 0
+            if not success:
+                print("DEBUG: line_loss_costs.py FAILED!", file=sys.stderr)
+                if result.stderr:
+                    print(
+                        f"DEBUG: line_loss_costs.py stderr:\n{result.stderr}",
+                        file=sys.stderr,
+                    )
+                if result.stdout:
+                    print(
+                        f"DEBUG: line_loss_costs.py stdout:\n{result.stdout}",
+                        file=sys.stderr,
+                    )
+            else:
+                print(f"DEBUG: line_loss_costs.py succeeded", file=sys.stderr)
+                if not args.simple and result.stdout:
+                    print(result.stdout)
+        else:
+            success = run_script(script, quiet=args.simple)
+
+        if success:
             successful_runs += 1
         else:
             failed_scripts.append(script)
