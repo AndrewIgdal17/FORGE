@@ -264,21 +264,21 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 ---
 
 ### `bcr_ratepayer` 
-**Equation:** `(Congestion Benefits + Curtailment Benefits) / Line Loss Costs`
+**Equation:** `(Congestion Benefits + Curtailment Benefits) / (Revenue + Line Loss Costs)`
 
 **Perspective:** Ratepayer/consumer perspective
 
 **Includes:**
 - **Benefits:** Congestion reduction + Curtailment reduction (what ratepayers receive)
-- **Costs:** Line losses only (what ratepayers pay through rates)
-- **Excludes:** Revenue (utilities get this), Capital costs (recovered through rates separately)
+- **Costs:** Revenue (rate base) + Line losses (what ratepayers pay through rates)
+- **Excludes:** Capital/O&M as separate line items (recovered via Revenue)
 
 **Use Case:**
 - Consumer advocate analysis
 - Public utility commission ratepayer impact assessment
-- Understanding ratepayer opposition (benefits may not exceed line loss costs they pay)
+- Understanding ratepayer opposition (benefits may not exceed revenue + line loss costs they pay)
 
-**Key Insight:** Ratepayers receive congestion/curtailment relief but pay for line losses through rates. They don't directly benefit from utility revenue.
+**Key Insight:** Ratepayers receive congestion/curtailment relief but pay for the project (revenue/rate base) and line losses through rates. Full ratepayer BCR compares those benefits to total ratepayer cost.
 
 ---
 
@@ -315,7 +315,7 @@ All BCRs have corresponding net benefit calculations (Present Value unless noted
 
 ### Stakeholder-Specific Net Benefits
 - `net_benefit_utility_pv = Revenue - (Capital Costs + Delay Costs + Operational Costs)`
-- `net_benefit_ratepayer_pv = (Congestion Benefits + Curtailment Benefits) - Line Loss Costs`
+- `net_benefit_ratepayer_pv = (Congestion Benefits + Curtailment Benefits) - (Revenue + Line Loss Costs)`
 
 ### Partial Exclusion Net Benefits (All 16 Combinations)
 
@@ -390,7 +390,7 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 ## Example: Scenario 1 (Rural Overhead AC 657MW)
 
 - `bcr_utility = 0.36` → Utility loses money (revenue doesn't cover costs)
-- `bcr_ratepayer = 0.22` → Ratepayers lose money (benefits don't cover line losses)
+- `bcr_ratepayer = 0.22` → Ratepayers lose money (benefits don't cover revenue + line losses)
 - `bcr_system = 0.02` → Very poor societal return (wildfire risk dominates)
 - `bcr_excluding_wildfire_risk_and_outage_risk = 0.24` → Better but still negative (excluding both risks)
 - `bcr_excluding_wildfire_risk = 0.XX` → Better if only wildfire risk excluded (keeps outage risk)

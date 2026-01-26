@@ -583,8 +583,8 @@ def calculate_bcr_metrics(
     # Ratepayer Perspective
     # Benefits: What ratepayers receive (congestion + curtailment)
     ratepayer_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv
-    # Costs: What ratepayers pay (line losses socialized through rates)
-    ratepayer_costs_pv = line_loss_cost_pv
+    # Costs: What ratepayers pay (revenue/rate base + line losses socialized through rates)
+    ratepayer_costs_pv = revenue_pv + line_loss_cost_pv
     bcr_ratepayer = safe_divide(ratepayer_benefits_pv, ratepayer_costs_pv)
     net_benefit_ratepayer_pv = ratepayer_benefits_pv - ratepayer_costs_pv
 
