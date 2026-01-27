@@ -16,13 +16,13 @@ wildfire:
   # Units: events per mile per year (>= 0)
   ignition_rates_by_terrain:
     forested: 0.002 # Higher risk in forested areas (>= 0)
-    scrubbed_flat: 0.001 # (>= 0)
+    scrubbed_flat: 0.0002 # (>= 0)
     wetland: 0.0001 # Lower risk in wet areas (>= 0)
     farmland: 0.0002 # (>= 0)
     desert_barren: 0.0001 # (>= 0)
     urban: 0.0001 # (>= 0)
     rolling_hills: 0.001 # (>= 0)
-    mountain: 0.0001 # (>= 0)
+    mountain: 0.002 # (>= 0)
     subsea: 0.0 # No wildfire risk subsea (>= 0)
 
   # Ignition rate multiplier by construction type
