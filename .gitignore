@@ -93,6 +93,11 @@ sensitivity_results/
 # Papers directory
 papers/
 
+# Root-only free-floating docs (do not track on GitHub)
+/*.tex
+/*.pdf
+/*.docx
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
