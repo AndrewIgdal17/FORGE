@@ -39,6 +39,7 @@ BATCH_SUMMARY_FIELDS = [
     "operational_costs_pv",
     # 5. Risk Costs PV (with breakdown)
     "wildfire_pv",
+    "wildfire_liability_insurance_pv",
     "outage_pv",
     "risk_costs_pv",
     # 6. Delay Costs PV
@@ -173,8 +174,9 @@ class CTCCOutputManager:
             #  line_utilization, reconductoring, delay_years, construction_years,
             #  project_lifetime, converter_loss_percentage)
             from yaml_loaders import ProjectTechnicalDetails
+
             project_details: ProjectTechnicalDetails = load_project_technical_details()
-            
+
             construction_type = project_details.construction_type
             ac_dc = project_details.ac_dc
             capacity_mw = project_details.capacity_mw
@@ -770,7 +772,7 @@ class CTCCOutputManager:
             {
                 "wildfire_liability_annual": results.get("annual_premium", 0),
                 "wildfire_liability_nominal": results.get("nominal_lifetime_cost", 0),
-                "wildfire_liability_pv": results.get("pv_total", 0),
+                "wildfire_liability_insurance_pv": results.get("pv_total", 0),
             }
         )
 
@@ -1217,12 +1219,14 @@ class CTCCOutputManager:
         risk_nominal = sum(
             [
                 self.batch_summary_data.get("wildfire_nominal", 0),
+                self.batch_summary_data.get("wildfire_liability_nominal", 0),
                 self.batch_summary_data.get("outage_nominal", 0),
             ]
         )
         risk_pv = sum(
             [
                 self.batch_summary_data.get("wildfire_pv", 0),
+                self.batch_summary_data.get("wildfire_liability_insurance_pv", 0),
                 self.batch_summary_data.get("outage_pv", 0),
             ]
         )

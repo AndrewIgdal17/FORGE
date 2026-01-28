@@ -141,6 +141,7 @@ def main() -> None:
 
     # Construct category identifier
     from calculation_utils import build_category_string
+
     category = build_category_string(project_details=project_details)
 
     # Determine number of converters
@@ -148,9 +149,7 @@ def main() -> None:
         try:
             project_details_data = get_project_data_raw()
             if "project" not in project_details_data:
-                raise KeyError(
-                    "Missing 'project' key in project technical details"
-                )
+                raise KeyError("Missing 'project' key in project technical details")
             if "number_of_converters" not in project_details_data["project"]:
                 raise KeyError(
                     "Missing 'number_of_converters' key in project section of technical details"
@@ -159,9 +158,7 @@ def main() -> None:
                 "number_of_converters"
             ]
         except KeyError as e:
-            raise KeyError(
-                f"Missing required key in project technical details: {e}"
-            )
+            raise KeyError(f"Missing required key in project technical details: {e}")
     else:
         number_of_converters = 0
 
@@ -170,7 +167,11 @@ def main() -> None:
     contingencies = load_contingencies()
 
     costs = load_costs(
-        category, total_miles, number_of_converters, contingencies, project_details.reconductoring
+        category,
+        total_miles,
+        number_of_converters,
+        contingencies,
+        project_details.reconductoring,
     )
 
     # Load insurance parameters
@@ -189,17 +190,24 @@ def main() -> None:
     # Load financing parameters for present value calculation
     financing = load_financing_details()
 
-    # Calculate wildfire liability insurance (skip if flag is set)
-    wildfire_liability_results = None
-    if "CTCC_NO_WF_LIABILITY" not in os.environ:
-        wildfire_liability_results = calculate_wildfire_liability_premium(
-            insurance_yaml,
-            project_details.project_lifetime,
-        )
+    # Calculate wildfire liability insurance.
+    #
+    # Controls:
+    # - YAML: insurance.wildfire_liability.enabled (primary control; if False -> disabled)
+    # - Dev flag: CTCC_NO_WF_LIABILITY (kept for developer workflows)
+    #
+    # Per project decision: YAML takes precedence. If YAML enables it, we still calculate
+    # even if the dev flag is set.
+    wildfire_liability_results = calculate_wildfire_liability_premium(
+        insurance_yaml,
+        project_details.project_lifetime,
+    )
 
     # Calculate Present Value for operational insurance
     # Insurance payments start at COD (after construction) and continue for project lifetime
-    insurance_start_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
+    insurance_start_year = calculate_cod_year(
+        project_details.delay_years, project_details.construction_years
+    )
     insurance_pv = calculate_present_value(
         results["annual_premium"],
         financing.wacc_real,
@@ -255,8 +263,8 @@ def main() -> None:
     print("NOTE: Operational insurance is not AFUDC-eligible (operating expense).")
     print("=" * 80)
 
-    # Display wildfire liability if enabled
-    if wildfire_liability_results:
+    # Display wildfire liability ONLY if enabled and non-zero
+    if wildfire_liability_results and wildfire_liability_pv > 0:
         print()
         print("=" * 80)
         print("WILDFIRE LIABILITY INSURANCE COST CALCULATION RESULTS")
@@ -273,8 +281,8 @@ def main() -> None:
         )
         print()
         print("[SOCIETAL PERSPECTIVE - Present Value]")
-        print(f"  Discount Rate: {wacc_real:.2%} (real WACC)")
-        print(f"  Base Year: {base_year}")
+        print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+        print(f"  Base Year: {financing.base_year}")
         print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
         print(f"  ---")
         print(f"  TOTAL PRESENT VALUE: ${wildfire_liability_pv:,.2f}")
@@ -301,7 +309,7 @@ def main() -> None:
     }
     csv_manager.add_insurance_costs(csv_results)
 
-    # Add wildfire liability if enabled
+    # Always write wildfire liability insurance to CSV (zeros when disabled)
     if wildfire_liability_results:
         wildfire_csv_results = {
             "annual_premium": wildfire_liability_results["annual_premium"],
@@ -313,6 +321,16 @@ def main() -> None:
             "rate_on_line": wildfire_liability_results["rate_on_line"],
         }
         csv_manager.add_wildfire_liability_costs(wildfire_csv_results)
+    else:
+        csv_manager.add_wildfire_liability_costs(
+            {
+                "annual_premium": 0,
+                "nominal_lifetime_cost": 0,
+                "pv_total": 0,
+                "liability_limit": 0,
+                "rate_on_line": 0,
+            }
+        )
 
     csv_manager.write_batch_summary()
 

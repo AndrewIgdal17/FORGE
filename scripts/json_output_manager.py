@@ -46,8 +46,11 @@ class JSONOutputManager:
         try:
             # Use json_loaders to get data
             from yaml_loaders import ProjectTechnicalDetails
-            project_details: ProjectTechnicalDetails = json_loaders.load_project_technical_details()
-            
+
+            project_details: ProjectTechnicalDetails = (
+                json_loaders.load_project_technical_details()
+            )
+
             construction_type = project_details.construction_type
             ac_dc = project_details.ac_dc
             capacity_mw = project_details.capacity_mw
@@ -64,7 +67,9 @@ class JSONOutputManager:
             total_line_length = json_loaders.load_physical_details()
 
             # Get additional details for reconductoring
-            tech_data = json_loaders._data_source.get_data("01_project_technical_details")
+            tech_data = json_loaders._data_source.get_data(
+                "01_project_technical_details"
+            )
             project = tech_data.get("project", {})
 
             # Get financial parameters
@@ -73,7 +78,6 @@ class JSONOutputManager:
             technical_details = {
                 # Project identification
                 "project_name": project.get("name", ""),
-
                 # Core technical specs
                 "construction_type": construction_type,
                 "ac_dc": ac_dc,
@@ -81,21 +85,27 @@ class JSONOutputManager:
                 "conductor_type": conductor_type,
                 "line_length_miles": total_line_length,
                 "line_utilization": line_utilization,
-
                 # Converter details (for DC projects)
                 "converter_type": converter_type,
-                "number_of_converters": project.get("number_of_converters", 0) if ac_dc == "DC" else 0,
-
+                "number_of_converters": (
+                    project.get("number_of_converters", 0) if ac_dc == "DC" else 0
+                ),
                 # Reconductoring details
                 "reconductoring": reconductoring,
-                "old_capacity_mw": project.get("old_capacity_mw", 0) if reconductoring else 0,
-                "old_conductor_type": project.get("old_conductor_type", "") if reconductoring else "",
+                "old_capacity_mw": (
+                    project.get("old_capacity_mw", 0) if reconductoring else 0
+                ),
+                "old_conductor_type": (
+                    project.get("old_conductor_type", "") if reconductoring else ""
+                ),
                 "old_ac_dc": project.get("old_ac_dc", "") if reconductoring else "",
-
                 # Financial parameters
-                "baseline_electricity_price_per_mwh": project.get("baseline_electricity_price_per_mwh", 0),
-                "social_discount_rate": financing_data["financial"].get("social_discount_rate", 0),
-
+                "baseline_electricity_price_per_mwh": project.get(
+                    "baseline_electricity_price_per_mwh", 0
+                ),
+                "social_discount_rate": financing_data["financial"].get(
+                    "social_discount_rate", 0
+                ),
                 # Timeline
                 "construction_years": construction_years,
                 "delay_years": delay_years,
@@ -111,7 +121,7 @@ class JSONOutputManager:
                 "construction_type": "Unknown",
                 "ac_dc": "Unknown",
                 "capacity_mw": 0,
-                "error": f"Failed to load technical details: {str(e)}"
+                "error": f"Failed to load technical details: {str(e)}",
             }
 
     def add_build_costs(self, results: Dict[str, Any]):
@@ -196,6 +206,7 @@ class JSONOutputManager:
         # Risk costs
         wildfire = self.costs.get("wildfire", {})
         outage = self.costs.get("outage", {})
+        wildfire_liability = self.costs.get("wildfire_liability", {})
 
         # Delay costs
         delay = self.costs.get("delay", {})
@@ -203,45 +214,44 @@ class JSONOutputManager:
         self.summary = {
             # Capital costs
             "total_capital_nominal": (
-                build.get("total_nominal", 0) +
-                row.get("total_nominal", 0) +
-                env.get("total_nominal", 0)
+                build.get("total_nominal", 0)
+                + row.get("total_nominal", 0)
+                + env.get("total_nominal", 0)
             ),
             "total_capital_afudc": (
-                build.get("total_afudc", 0) +
-                row.get("total_afudc", 0) +
-                env.get("total_afudc", 0)
+                build.get("total_afudc", 0)
+                + row.get("total_afudc", 0)
+                + env.get("total_afudc", 0)
             ),
             "total_capital_pv": (
-                build.get("total_pv", 0) +
-                row.get("total_pv", 0) +
-                env.get("total_pv", 0)
+                build.get("total_pv", 0)
+                + row.get("total_pv", 0)
+                + env.get("total_pv", 0)
             ),
-
             # Operational costs
             "total_operational_nominal": (
-                insurance.get("nominal_lifetime_cost", 0) +
-                oandm.get("total_nominal", 0) +
-                line_loss.get("total_nominal", 0) +  # Fixed: was lifetime_cost_nominal
-                emissions.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
+                insurance.get("nominal_lifetime_cost", 0)
+                + oandm.get("total_nominal", 0)
+                + line_loss.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
+                + emissions.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
             ),
             "total_operational_pv": (
-                insurance.get("pv_total", 0) +
-                oandm.get("total_pv", 0) +
-                line_loss.get("total_pv", 0) +  # Fixed: was lifetime_cost_pv
-                emissions.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
+                insurance.get("pv_total", 0)
+                + oandm.get("total_pv", 0)
+                + line_loss.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
+                + emissions.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
             ),
-
             # Risk costs
             "total_risk_nominal": (
-                wildfire.get("nominal_total", 0) +
-                outage.get("nominal_total", 0)
+                wildfire.get("nominal_total", 0)
+                + outage.get("nominal_total", 0)
+                + wildfire_liability.get("nominal_lifetime_cost", 0)
             ),
             "total_risk_pv": (
-                wildfire.get("pv_cost", 0) +
-                outage.get("pv_cost", 0)
+                wildfire.get("pv_cost", 0)
+                + outage.get("pv_cost", 0)
+                + wildfire_liability.get("pv_total", 0)
             ),
-
             # Grand totals
             "grand_total_cost_nominal": 0,  # Calculated below
             "grand_total_cost_afudc": 0,  # Calculated below
@@ -250,44 +260,55 @@ class JSONOutputManager:
 
         # Get congestion/curtailment delay costs and residual exceedance from benefits section (they're costs, not benefits)
         congestion_curtailment = self.benefits.get("congestion_curtailment", {})
-        congestion_delay_nominal = congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
-        curtailment_delay_nominal = congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
-        residual_exceedance_nominal = congestion_curtailment.get("residual_exceedance_nominal", 0) or 0
-        
-        # Add residual exceedance to operational costs
-        self.summary["total_operational_nominal"] += residual_exceedance_nominal
-        
-        # Calculate grand totals
-        self.summary["grand_total_cost_nominal"] = (
-            self.summary["total_capital_nominal"] +
-            self.summary["total_operational_nominal"] +
-            self.summary["total_risk_nominal"] +
-            delay.get("total_nominal", 0) +
-            congestion_delay_nominal +
-            curtailment_delay_nominal
+        congestion_delay_nominal = (
+            congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
+        )
+        curtailment_delay_nominal = (
+            congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
+        )
+        residual_exceedance_nominal = (
+            congestion_curtailment.get("residual_exceedance_nominal", 0) or 0
         )
 
-        self.summary["grand_total_cost_afudc"] = (
-            self.summary["total_capital_afudc"] +
-            delay.get("total_afudc", 0)
+        # Add residual exceedance to operational costs
+        self.summary["total_operational_nominal"] += residual_exceedance_nominal
+
+        # Calculate grand totals
+        self.summary["grand_total_cost_nominal"] = (
+            self.summary["total_capital_nominal"]
+            + self.summary["total_operational_nominal"]
+            + self.summary["total_risk_nominal"]
+            + delay.get("total_nominal", 0)
+            + congestion_delay_nominal
+            + curtailment_delay_nominal
         )
+
+        self.summary["grand_total_cost_afudc"] = self.summary[
+            "total_capital_afudc"
+        ] + delay.get("total_afudc", 0)
 
         # Get congestion/curtailment delay costs and residual exceedance from benefits section (they're costs, not benefits)
         congestion_curtailment = self.benefits.get("congestion_curtailment", {})
-        congestion_delay_pv = congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
-        curtailment_delay_pv = congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
-        residual_exceedance_pv = congestion_curtailment.get("residual_exceedance_pv", 0) or 0
-        
+        congestion_delay_pv = (
+            congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
+        )
+        curtailment_delay_pv = (
+            congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
+        )
+        residual_exceedance_pv = (
+            congestion_curtailment.get("residual_exceedance_pv", 0) or 0
+        )
+
         # Add residual exceedance to operational costs
         self.summary["total_operational_pv"] += residual_exceedance_pv
-        
+
         self.summary["grand_total_cost_pv"] = (
-            self.summary["total_capital_pv"] +
-            self.summary["total_operational_pv"] +
-            self.summary["total_risk_pv"] +
-            delay.get("total_pv", 0) +
-            congestion_delay_pv +
-            curtailment_delay_pv
+            self.summary["total_capital_pv"]
+            + self.summary["total_operational_pv"]
+            + self.summary["total_risk_pv"]
+            + delay.get("total_pv", 0)
+            + congestion_delay_pv
+            + curtailment_delay_pv
         )
 
     def get_json_results(self) -> Dict[str, Any]:
@@ -333,7 +354,9 @@ class JSONOutputManager:
         # If module_name provided, create unique file for this module
         # Otherwise use generic filename (may be overwritten by other modules)
         if module_name:
-            json_file = os.path.join(output_dir, f"json_output_{self.scenario_id}_{module_name}.json")
+            json_file = os.path.join(
+                output_dir, f"json_output_{self.scenario_id}_{module_name}.json"
+            )
         else:
             json_file = os.path.join(output_dir, f"json_output_{self.scenario_id}.json")
 
@@ -372,7 +395,10 @@ class JSONOutputManager:
             for key, value in state["costs"].items():
                 # Debug: Log line_loss specifically
                 if key == "line_loss":
-                    print(f"DEBUG: Loading line_loss from {os.path.basename(json_file)}: {value}", file=sys.stderr)
+                    print(
+                        f"DEBUG: Loading line_loss from {os.path.basename(json_file)}: {value}",
+                        file=sys.stderr,
+                    )
                 # Update if value exists (allow zero values and empty dicts for line_loss)
                 if value is not None:
                     # Always include line_loss, even if empty dict or zero values

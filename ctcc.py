@@ -122,6 +122,7 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         "wildfire_liability_pv": wildfire_liability.get("pv_total", 0) or 0,
         "wildfire_liability_nominal": wildfire_liability.get("nominal_lifetime_cost", 0)
         or 0,
+        "wildfire_liability_insurance_pv": wildfire_liability.get("pv_total", 0) or 0,
         # Delay costs (PV + nominal)
         "delay_cost_pv": delay.get("total_pv", 0) or 0,
         "delay_cost_nominal": delay.get("total_nominal", 0) or 0,

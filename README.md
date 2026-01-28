@@ -95,6 +95,19 @@ venv/bin/python3 ctcc.py -j -o --id scenario_A
 **JSON Mode** (`-o` flag):
 - `ctcc_results_[scenario_id].json` - Single aggregated file with all results
 
+## Comparing Scenarios
+
+After running multiple scenarios (e.g. with different `--id` values), use the comparison script to contrast them:
+
+```bash
+python3 compare_scenarios.py
+# or: ./run_compare_scenarios.command
+```
+
+- The script lists all scenarios in `outputs/batch_summary.csv` (numbered and lettered).
+- Enter which to compare (e.g. `1 3 5`, `1-4`, or `A C E`), then hit Enter.
+- It writes `outputs/scenario_comparison_YYYYMMDD_HHMMSS.csv` (metrics × scenarios) and `.md` (overview tables and a short contrast summary).
+
 ## Cost Modules
 
 CTCC calculates 13 cost and benefit categories:

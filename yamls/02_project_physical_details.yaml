@@ -2,7 +2,7 @@
 # Physical characteristics and terrain information
 
 terrain:
-  terrain_miles: # miles by terrain type (>= 0)
+  terrain_miles: # miles by terrain type (>= 0) - Scenario 2: 230 mi total, highway route, existing ROW, lower wildfire risk
     forested: 0 # miles (>= 0)
     scrubbed_flat: 180 # miles (>= 0)
     wetland: 0 # miles (>= 0)
