@@ -2,21 +2,21 @@
 # Core technical specifications for the transmission project
 
 project:
-  name: "S2_California_Highway_Route_AC_1792MW"
+  name: "S1_California_Rural_Overhead_AC_657MW"
   construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel, Subsea
   ac_dc: "AC" # AC or DC
   number_of_converters: 0 # 1 or 2
-  capacity_mw: 1792 # MW
+  capacity_mw: 657 # MW
   conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   converter_type: "NA" # LCC Converter or VSC Converter
   converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)
 
-  line_utilization: 0.6 # % [0,1]
+  line_utilization: 0.70 # % [0,1]
 
   baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)
 
   reconductoring: False # True or False
-  uses_existing_row: True # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
+  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   old_ac_dc: null # AC or DC
@@ -27,5 +27,5 @@ project:
 
 timeline:
   construction_years: 1 # years (> 0)
-  delay_years: 1 # years (>= 0)
+  delay_years: 4 # years (>= 0)
   project_lifetime: 50 # years (> 0)

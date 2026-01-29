@@ -205,10 +205,12 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
 
-    Benefits are:
+    System total benefits (societal) include only real resource benefits:
       - Congestion reduction savings
       - Curtailment reduction savings
-      - Revenue (rate-based revenue requirement)
+    Revenue (rate-based revenue requirement) is a transfer, not a net social
+    benefit; it is excluded from system totals but still returned in the dict
+    for Utility/Ratepayer BCRs.
 
     Note: Line losses are now always treated as costs, not benefits, for both
     greenfield and reconductoring projects.
@@ -234,14 +236,12 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     revenue_pv = safe_get_numeric(data, "revenue_pv")
     revenue_nominal = safe_get_numeric(data, "revenue_nominal")
 
-    calculated_total_benefits = (
-        congestion_benefit_pv + curtailment_benefit_pv + revenue_pv
-    )
+    calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv
     total_benefits_pv = prefer_csv_subtotal(
         data, "total_benefits_pv", calculated_total_benefits
     )
     calculated_total_benefits_nominal = (
-        congestion_benefit_nominal + curtailment_benefit_nominal + revenue_nominal
+        congestion_benefit_nominal + curtailment_benefit_nominal
     )
     total_benefits_nominal = prefer_csv_subtotal(
         data, "total_benefits_nominal", calculated_total_benefits_nominal
@@ -249,13 +249,12 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
 
     # Also calculate haircut benefits (conservative estimate)
     # Haircut applies conservative multipliers to uncertain benefits (congestion/curtailment)
-    # Revenue is certain (rate-based requirement) so it's included at full value
     congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
     curtailment_benefit_haircut = safe_get_numeric(
         data, "curtailment_benefit_haircut_pv"
     )
     calculated_total_benefits_haircut = (
-        congestion_benefit_haircut + curtailment_benefit_haircut + revenue_pv
+        congestion_benefit_haircut + curtailment_benefit_haircut
     )
     total_benefits_haircut_pv = prefer_csv_subtotal(
         data, "total_benefits_haircut_pv", calculated_total_benefits_haircut
@@ -735,13 +734,9 @@ def calculate_bcr_metrics(
     # Calculate Primary BCR
     # Always calculate from flags - if no flags are set (all False), calculation includes everything = System BCR
     # If flags are set, calculation excludes disabled modules = Custom BCR
-    # Benefits included:
-    # - Revenue (always included)
-    # - Congestion (if not no_congestion)
-    # - Curtailment (if not no_curtailment)
-    # Note: congestion_benefit_pv, curtailment_benefit_pv, and revenue_pv are already extracted earlier
+    # Primary benefits = congestion + curtailment only (per config). Revenue is excluded as a transfer.
 
-    primary_benefits_pv = revenue_pv
+    primary_benefits_pv = 0.0
     if not config.no_congestion:
         primary_benefits_pv += congestion_benefit_pv
     if not config.no_curtailment:
@@ -1045,6 +1040,7 @@ def print_bcr_summary(
     print(
         f"  Total Benefits (haircut):    ${benefits['total_benefits_haircut_pv']:>15,.0f}"
     )
+    print("  (societal; excludes revenue transfer)")
     print()
 
     # Costs section
