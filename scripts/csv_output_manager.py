@@ -50,7 +50,10 @@ BATCH_SUMMARY_FIELDS = [
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_cost_pv",
-    "line_loss_cost_pv",
+    "energy_losses_pv",
+    "conductor_loss_pv",
+    "converter_loss_pv",
+    "energy_losses_nominal",
     "energy_emissions_costs_pv",
     # 8. Total Costs PV
     "total_costs_pv",
@@ -950,23 +953,53 @@ class CTCCOutputManager:
         )
 
     def add_line_loss_costs(self, results: Dict[str, float]) -> None:
-        """Add line loss cost results to batch summary."""
-        self.append_to_batch_summary(
-            {
-                "line_loss_cost_nominal": results.get("total_nominal", 0),
-                "line_loss_cost_pv": results.get("total_pv", 0),
-                "line_loss_annual_cost": results.get("annual_cost", 0),
-            }
-        )
-
-        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values
-        summary_row = {
-            "row_type": "summary",
-            "pv_total": results.get("total_pv", 0),
-            "annual_cost": results.get("annual_cost", 0),
-            "nominal_total": results.get("total_nominal", 0),
+        """Add energy loss cost results to batch summary. Total = conductor + converter for DC. No 'line loss' keys."""
+        batch_data = {
+            "conductor_loss_pv": results.get("line_cost_pv", 0),
+            "converter_loss_pv": results.get("converter_cost_pv", 0),
+            "energy_losses_pv": results.get("total_pv", 0),
+            "energy_losses_nominal": results.get("total_nominal", 0),
         }
-        self.write_module_csv("line_loss_costs", summary_row=summary_row)
+        self.append_to_batch_summary(batch_data)
+
+        # Breakdown present when converter losses are reported (DC with converters)
+        has_breakdown = results.get("converter_loss_mwh_yr", 0) != 0
+
+        if has_breakdown:
+            detail_rows = [
+                {
+                    "row_type": "conductor",
+                    "loss_mwh_yr": results.get("line_loss_mwh_yr", 0),
+                    "annual_cost": results.get("line_annual_cost", 0),
+                    "pv_total": results.get("line_cost_pv", 0),
+                    "nominal_total": results.get("line_nominal_total", 0),
+                },
+                {
+                    "row_type": "converter",
+                    "loss_mwh_yr": results.get("converter_loss_mwh_yr", 0),
+                    "annual_cost": results.get("converter_annual_cost", 0),
+                    "pv_total": results.get("converter_cost_pv", 0),
+                    "nominal_total": results.get("converter_nominal_total", 0),
+                },
+            ]
+            summary_row = {
+                "row_type": "total",
+                "loss_mwh_yr": results.get("total_loss_mwh_yr", 0),
+                "annual_cost": results.get("annual_cost", 0),
+                "pv_total": results.get("total_pv", 0),
+                "nominal_total": results.get("total_nominal", 0),
+            }
+            self.write_module_csv(
+                "line_loss_costs", detail_rows=detail_rows, summary_row=summary_row
+            )
+        else:
+            summary_row = {
+                "row_type": "summary",
+                "pv_total": results.get("total_pv", 0),
+                "annual_cost": results.get("annual_cost", 0),
+                "nominal_total": results.get("total_nominal", 0),
+            }
+            self.write_module_csv("line_loss_costs", summary_row=summary_row)
 
     def add_congestion_curtailment(self, results: Dict[str, float]) -> None:
         """
@@ -1234,8 +1267,12 @@ class CTCCOutputManager:
         # Other costs
         emissions_nominal = self.batch_summary_data.get("emissions_cost_nominal", 0)
         emissions_pv = self.batch_summary_data.get("emissions_cost_pv", 0)
-        line_loss_nominal = self.batch_summary_data.get("line_loss_cost_nominal", 0)
-        line_loss_pv = self.batch_summary_data.get("line_loss_cost_pv", 0)
+        energy_losses_nominal = self.batch_summary_data.get(
+            "energy_losses_nominal", 0
+        ) or self.batch_summary_data.get("line_loss_cost_nominal", 0)
+        energy_losses_pv = self.batch_summary_data.get(
+            "energy_losses_pv", 0
+        ) or self.batch_summary_data.get("line_loss_cost_pv", 0)
 
         # Delay costs
         delay_nominal = self.batch_summary_data.get("delay_cost_nominal", 0)
@@ -1249,7 +1286,7 @@ class CTCCOutputManager:
             + risk_nominal
             + delay_nominal
             + emissions_nominal
-            + line_loss_nominal
+            + energy_losses_nominal
         )
         grand_total_afudc = (
             capital_afudc
@@ -1257,7 +1294,7 @@ class CTCCOutputManager:
             + risk_nominal
             + delay_afudc
             + emissions_nominal
-            + line_loss_nominal
+            + energy_losses_nominal
         )
         grand_total_pv = (
             capital_pv
@@ -1265,7 +1302,7 @@ class CTCCOutputManager:
             + risk_pv
             + delay_pv
             + emissions_pv
-            + line_loss_pv
+            + energy_losses_pv
         )
 
         totals_dict = {

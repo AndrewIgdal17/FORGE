@@ -24,7 +24,8 @@ LABEL_TO_CSV_FIELD = {
     "Base Delay": "delay_cost_pv",
     "Congestion Delay": "congestion_delay_cost_pv",
     "Curtailment Delay": "curtailment_delay_cost_pv",
-    "Line Losses": "line_loss_cost_pv",
+    "Energy Losses": "energy_losses_pv",
+    "Line Losses": "energy_losses_pv",  # backward compat: old LaTeX may say "Line Losses"
     "Emissions": "emissions_cost_pv",
     "Total Costs": "total_costs_pv",
     "Congestion (haircut)": "congestion_benefit_haircut_pv",
@@ -55,7 +56,8 @@ CSV_FIELD_SOURCES = {
     "congestion_delay_cost_pv": ("batch_summary", "congestion_delay_cost_pv"),
     "curtailment_delay_cost_pv": ("batch_summary", "curtailment_delay_cost_pv"),
     "residual_exceedance_pv": ("batch_summary", "residual_exceedance_pv"),
-    "line_loss_cost_pv": ("line_loss_costs", "pv_total"),
+    "energy_losses_pv": ("batch_summary", "energy_losses_pv"),
+    "line_loss_cost_pv": ("batch_summary", "energy_losses_pv"),  # backward compat
     "emissions_cost_pv": ("emissions_costs", "cost_pv"),
     "total_costs_pv": ("batch_summary", "total_costs_pv"),
     "congestion_benefit_haircut_pv": ("batch_summary", "congestion_benefit_haircut_pv"),
@@ -204,7 +206,15 @@ def get_csv_value(csv_field, scenario_name, csv_data_dict):
     if not scenario_data:
         return None
 
-    value_str = scenario_data.get(field_name, "0")
+    # Backward compat: energy_losses_pv may be in batch_summary as line_loss_cost_pv in old CSVs
+    if field_name == "energy_losses_pv" and source_file == "batch_summary":
+        value_str = (
+            scenario_data.get("energy_losses_pv")
+            or scenario_data.get("line_loss_cost_pv")
+            or "0"
+        )
+    else:
+        value_str = scenario_data.get(field_name, "0")
     if not value_str or value_str == "":
         return None
 

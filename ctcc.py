@@ -110,8 +110,10 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         "insurance_pv": insurance.get("pv_total", 0) or 0,
         "insurance_nominal": insurance.get("nominal_lifetime_cost", 0) or 0,
         # Energy & emissions costs (PV + nominal)
-        "line_loss_cost_pv": line_loss.get("total_pv", 0) or 0,
-        "line_loss_cost_nominal": line_loss.get("total_nominal", 0) or 0,
+        "energy_losses_pv": line_loss.get("total_pv", 0) or 0,
+        "energy_losses_nominal": line_loss.get("total_nominal", 0) or 0,
+        "conductor_loss_pv": line_loss.get("line_cost_pv", 0) or 0,
+        "converter_loss_pv": line_loss.get("converter_cost_pv", 0) or 0,
         "emissions_cost_pv": emissions.get("total_pv", 0) or 0,
         "emissions_cost_nominal": emissions.get("total_nominal", 0) or 0,
         # Risk costs (PV + nominal)

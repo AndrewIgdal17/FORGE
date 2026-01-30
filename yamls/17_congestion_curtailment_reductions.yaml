@@ -88,3 +88,11 @@ reconductoring_congestion_curtailment_reductions:
     # Higher values mean more saturation (less benefit per MW of capacity added)
     curtailment_saturation_factor: 0.1 # [0,1]
 
+
+###### DEFINITIONS:
+# 1) Congestion price: $/MWh
+#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding
+#      transmission constraints.
+# 2) Curtailment price: $/MWh
+#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)
+#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.

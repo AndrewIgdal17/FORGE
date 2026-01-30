@@ -328,21 +328,26 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         data, "operational_costs_nominal", calculated_operational_nominal
     )
 
-    # Energy & Emissions costs (PV) - Line losses and emissions
+    # Energy & Emissions costs (PV) - Energy losses (conductor + converter) and emissions
     emissions_pv = safe_get_numeric(data, "emissions_cost_pv")
-    # Line losses - only count as cost if positive (greenfield)
-    line_loss_pv = safe_get_numeric(data, "line_loss_cost_pv")
-    line_loss_cost_pv = max(0, line_loss_pv)
-    calculated_energy_emissions = line_loss_cost_pv + emissions_pv
+    energy_losses_pv = safe_get_numeric(data, "energy_losses_pv") or safe_get_numeric(
+        data, "line_loss_cost_pv"
+    )
+    energy_losses_pv = max(0, energy_losses_pv)
+    conductor_loss_pv = safe_get_numeric(data, "conductor_loss_pv")
+    converter_loss_pv = safe_get_numeric(data, "converter_loss_pv")
+    calculated_energy_emissions = energy_losses_pv + emissions_pv
     energy_emissions_costs_pv = prefer_csv_subtotal(
         data, "energy_emissions_costs_pv", calculated_energy_emissions
     )
 
     # Energy & Emissions costs (Nominal)
     emissions_nominal = safe_get_numeric(data, "emissions_cost_nominal")
-    line_loss_nominal = safe_get_numeric(data, "line_loss_cost_nominal")
-    line_loss_cost_nominal = max(0, line_loss_nominal)
-    calculated_energy_emissions_nominal = line_loss_cost_nominal + emissions_nominal
+    energy_losses_nominal = safe_get_numeric(
+        data, "energy_losses_nominal"
+    ) or safe_get_numeric(data, "line_loss_cost_nominal")
+    energy_losses_nominal = max(0, energy_losses_nominal)
+    calculated_energy_emissions_nominal = energy_losses_nominal + emissions_nominal
     energy_emissions_costs_nominal = prefer_csv_subtotal(
         data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal
     )
@@ -431,7 +436,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         "residual_exceedance_pv": residual_exceedance_pv,
         "operational_costs_pv": operational_costs_pv,
         # Energy & Emissions (PV)
-        "line_loss_cost_pv": line_loss_cost_pv,
+        "energy_losses_pv": energy_losses_pv,
+        "conductor_loss_pv": conductor_loss_pv,
+        "converter_loss_pv": converter_loss_pv,
         "emissions_cost_pv": emissions_pv,
         "energy_emissions_costs_pv": energy_emissions_costs_pv,
         # Risk (PV)
@@ -484,9 +491,9 @@ def calculate_bcr_metrics(
         "energy_emissions_costs_pv"
     ]  # Line Losses + Emissions
 
-    # Separate emissions and line losses for individual calculations
+    # Separate emissions and energy losses (total = conductor + converter) for individual calculations
     emissions_pv = safe_get_numeric(costs, "emissions_cost_pv")
-    line_loss_cost_pv = safe_get_numeric(costs, "line_loss_cost_pv")
+    energy_losses_pv = safe_get_numeric(costs, "energy_losses_pv")
 
     # Separate wildfire and outage risk for individual calculations
     wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
@@ -509,28 +516,28 @@ def calculate_bcr_metrics(
     # Calculate costs excluding risk (wildfire + outage + wildfire liability)
     total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
 
-    # Calculate costs excluding only emissions (keep line losses)
+    # Calculate costs excluding only emissions (keep energy losses)
     total_costs_excluding_emissions_pv = total_costs_pv - emissions_pv
 
-    # Calculate costs excluding only line losses (keep emissions)
-    total_costs_excluding_linelosses_pv = total_costs_pv - line_loss_cost_pv
+    # Calculate costs excluding only energy losses (keep emissions)
+    total_costs_excluding_linelosses_pv = total_costs_pv - energy_losses_pv
 
-    # Calculate costs excluding emissions and line losses (keep risk)
+    # Calculate costs excluding emissions and energy losses (keep risk)
     total_costs_excluding_emissions_and_linelosses_pv = (
         total_costs_pv - energy_emissions_costs_pv
     )
 
-    # Calculate costs excluding emissions and risk (keep line losses)
+    # Calculate costs excluding emissions and risk (keep energy losses)
     total_costs_excluding_emissions_and_risk_pv = (
         total_costs_pv - emissions_pv - risk_costs_pv
     )
 
-    # Calculate costs excluding line losses and risk (keep emissions)
+    # Calculate costs excluding energy losses and risk (keep emissions)
     total_costs_excluding_linelosses_and_risk_pv = (
-        total_costs_pv - line_loss_cost_pv - risk_costs_pv
+        total_costs_pv - energy_losses_pv - risk_costs_pv
     )
 
-    # Calculate costs excluding emissions, line losses, and risk (all three)
+    # Calculate costs excluding emissions, energy losses, and risk (all three)
     total_costs_excluding_emissions_and_linelosses_and_risk_pv = (
         total_costs_pv - energy_emissions_costs_pv - risk_costs_pv
     )
@@ -541,7 +548,7 @@ def calculate_bcr_metrics(
         total_costs_pv - emissions_pv - wildfire_risk_pv
     )
     total_costs_excluding_linelosses_and_wildfire_risk_pv = (
-        total_costs_pv - line_loss_cost_pv - wildfire_risk_pv
+        total_costs_pv - energy_losses_pv - wildfire_risk_pv
     )
     total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv = (
         total_costs_pv - energy_emissions_costs_pv - wildfire_risk_pv
@@ -553,7 +560,7 @@ def calculate_bcr_metrics(
         total_costs_pv - emissions_pv - outage_pv
     )
     total_costs_excluding_linelosses_and_outage_risk_pv = (
-        total_costs_pv - line_loss_cost_pv - outage_pv
+        total_costs_pv - energy_losses_pv - outage_pv
     )
     total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv = (
         total_costs_pv - energy_emissions_costs_pv - outage_pv
@@ -656,8 +663,8 @@ def calculate_bcr_metrics(
     # Ratepayer Perspective
     # Benefits: What ratepayers receive (congestion + curtailment)
     ratepayer_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv
-    # Costs: What ratepayers pay (revenue/rate base + line losses socialized through rates)
-    ratepayer_costs_pv = revenue_pv + line_loss_cost_pv
+    # Costs: What ratepayers pay (revenue/rate base + energy losses socialized through rates)
+    ratepayer_costs_pv = revenue_pv + energy_losses_pv
     bcr_ratepayer = safe_divide(ratepayer_benefits_pv, ratepayer_costs_pv)
     net_benefit_ratepayer_pv = ratepayer_benefits_pv - ratepayer_costs_pv
 
@@ -749,7 +756,7 @@ def calculate_bcr_metrics(
     # - Insurance (if not no_insurance)
     # - Wildfire (if not no_wildfire)
     # - Outage (if not no_outages)
-    # - Line Losses (if not no_linelosses)
+    # - Energy losses (if not no_linelosses)
     # - Emissions (if not no_emissions)
     wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
     outage_pv = safe_get_numeric(costs, "outage_pv")
@@ -767,7 +774,7 @@ def calculate_bcr_metrics(
     if not config.no_outages:
         primary_costs_pv += outage_pv
     if not config.no_linelosses:
-        primary_costs_pv += line_loss_cost_pv
+        primary_costs_pv += energy_losses_pv
     if not config.no_emissions:
         primary_costs_pv += emissions_pv
 
@@ -1023,8 +1030,10 @@ def print_bcr_summary(
         f"  Curtailment Reduction (haircut): ${benefits['curtailment_benefit_haircut_pv']:>15,.0f}"
     )
 
-    line_loss_pv = safe_get_numeric(data, "line_loss_cost_pv")
-    # Line losses are always costs (positive) for both greenfield and reconductoring
+    energy_losses_pv = safe_get_numeric(data, "energy_losses_pv") or safe_get_numeric(
+        data, "line_loss_cost_pv"
+    )
+    # Energy losses are always costs (positive) for both greenfield and reconductoring
     # Don't display in benefits section - they're shown in costs section below
     # if line_loss_pv > 0:
     #     print(
@@ -1058,7 +1067,14 @@ def print_bcr_summary(
     print(f"    Subtotal:                  ${costs['operational_costs_pv']:>15,.0f}")
     print()
     print("  Energy & Emissions Costs:")
-    print(f"    Line Losses:               ${costs['line_loss_cost_pv']:>15,.0f}")
+    converter_loss_pv = costs.get("converter_loss_pv", 0) or 0
+    conductor_loss_pv = costs.get("conductor_loss_pv", 0) or 0
+    energy_losses_pv = costs.get("energy_losses_pv", 0) or 0
+    if converter_loss_pv > 0:
+        print(f"    Converter Losses:          ${converter_loss_pv:>15,.0f}")
+        print(f"    Conductor Losses:          ${conductor_loss_pv:>15,.0f}")
+    else:
+        print(f"    Energy Losses:             ${energy_losses_pv:>15,.0f}")
     print(f"    Emissions:                 ${costs['emissions_cost_pv']:>15,.0f}")
     print(
         f"    Subtotal:                  ${costs['energy_emissions_costs_pv']:>15,.0f}"
@@ -1153,7 +1169,7 @@ def print_bcr_summary(
     # Print all BCRs systematically (8 combined + 4 wildfire-only + 4 outage-only = 16 total exclusion BCRs)
     risk_costs_pv = costs["risk_costs_pv"]
     emissions_pv = safe_get_numeric(costs, "emissions_cost_pv")
-    line_loss_cost_pv = safe_get_numeric(costs, "line_loss_cost_pv")
+    energy_losses_pv = safe_get_numeric(costs, "energy_losses_pv")
     energy_emissions_costs_pv = costs["energy_emissions_costs_pv"]
 
     # 1. No exclusions (already shown above as System BCR)
@@ -1178,19 +1194,19 @@ def print_bcr_summary(
         f"  System BCR (excl. emissions): {bcr_excluding_emissions:>6.3f}  {viable_symbol_emissions} ({viable_text_emissions})"
     )
     print(
-        f"    (Excludes ${emissions_pv:>15,.0f} in emissions costs, keeps line losses)"
+        f"    (Excludes ${emissions_pv:>15,.0f} in emissions costs, keeps energy losses)"
     )
 
-    # 4. Exclude line losses only
+    # 4. Exclude energy losses only
     bcr_excluding_linelosses = bcr_metrics["bcr_excluding_linelosses"]
     viable_symbol_linelosses, viable_text_linelosses = format_bcr_viability(
         bcr_excluding_linelosses
     )
     print(
-        f"  System BCR (excl. line losses): {bcr_excluding_linelosses:>6.3f}  {viable_symbol_linelosses} ({viable_text_linelosses})"
+        f"  System BCR (excl. energy losses): {bcr_excluding_linelosses:>6.3f}  {viable_symbol_linelosses} ({viable_text_linelosses})"
     )
     print(
-        f"    (Excludes ${line_loss_cost_pv:>15,.0f} in line loss costs, keeps emissions)"
+        f"    (Excludes ${energy_losses_pv:>15,.0f} in energy loss costs, keeps emissions)"
     )
 
     # 5. Exclude emissions and line losses
@@ -1204,7 +1220,7 @@ def print_bcr_summary(
         f"  System BCR (excl. emissions & line losses): {bcr_excluding_emissions_and_linelosses:>6.3f}  {viable_symbol_emissions_linelosses} ({viable_text_emissions_linelosses})"
     )
     print(
-        f"    (Excludes ${energy_emissions_costs_pv:>15,.0f} in emissions + line losses costs)"
+        f"    (Excludes ${energy_emissions_costs_pv:>15,.0f} in emissions + energy losses costs)"
     )
 
     # 6. Exclude emissions and risk
@@ -1220,10 +1236,10 @@ def print_bcr_summary(
         f"  System BCR (excl. emissions & risk): {bcr_excluding_emissions_and_risk:>6.3f}  {viable_symbol_emissions_risk} ({viable_text_emissions_risk})"
     )
     print(
-        f"    (Excludes ${excluded_emissions_risk:>15,.0f} in emissions + risk costs, keeps line losses)"
+        f"    (Excludes ${excluded_emissions_risk:>15,.0f} in emissions + risk costs, keeps energy losses)"
     )
 
-    # 7. Exclude line losses and risk
+    # 7. Exclude energy losses and risk
     bcr_excluding_linelosses_and_risk = bcr_metrics.get(
         "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk",
         bcr_metrics.get("bcr_excluding_linelosses_and_risk", 0),
@@ -1231,12 +1247,12 @@ def print_bcr_summary(
     viable_symbol_linelosses_risk, viable_text_linelosses_risk = format_bcr_viability(
         bcr_excluding_linelosses_and_risk
     )
-    excluded_linelosses_risk = line_loss_cost_pv + risk_costs_pv
+    excluded_linelosses_risk = energy_losses_pv + risk_costs_pv
     print(
-        f"  System BCR (excl. line losses & risk): {bcr_excluding_linelosses_and_risk:>6.3f}  {viable_symbol_linelosses_risk} ({viable_text_linelosses_risk})"
+        f"  System BCR (excl. energy losses & risk): {bcr_excluding_linelosses_and_risk:>6.3f}  {viable_symbol_linelosses_risk} ({viable_text_linelosses_risk})"
     )
     print(
-        f"    (Excludes ${excluded_linelosses_risk:>15,.0f} in line losses + risk costs, keeps emissions)"
+        f"    (Excludes ${excluded_linelosses_risk:>15,.0f} in energy losses + risk costs, keeps emissions)"
     )
 
     # 8. Exclude emissions, line losses, and risk (all three)
@@ -1252,7 +1268,7 @@ def print_bcr_summary(
         f"  System BCR (excl. emissions & line losses & risk): {bcr_excluding_emissions_and_linelosses_and_risk:>6.3f}  {viable_symbol_all_three} ({viable_text_all_three})"
     )
     print(
-        f"    (Excludes ${excluded_all_three:>15,.0f} in emissions + line losses + risk costs)"
+        f"    (Excludes ${excluded_all_three:>15,.0f} in emissions + energy losses + risk costs)"
     )
     print()
 
@@ -1283,7 +1299,7 @@ def print_bcr_summary(
         f"    BCR (excl. emissions & wildfire risk): {bcr_excluding_emissions_and_wildfire_risk:>6.3f}  {viable_symbol_em_wf} ({viable_text_em_wf})"
     )
     print(
-        f"      (Excludes ${emissions_pv + wildfire_risk_total_pv:>15,.0f} in emissions + wildfire costs, keeps line losses & outage)"
+        f"      (Excludes ${emissions_pv + wildfire_risk_total_pv:>15,.0f} in emissions + wildfire costs, keeps energy losses & outage)"
     )
 
     bcr_excluding_linelosses_and_wildfire_risk = bcr_metrics.get(
@@ -1293,10 +1309,10 @@ def print_bcr_summary(
         bcr_excluding_linelosses_and_wildfire_risk
     )
     print(
-        f"    BCR (excl. line losses & wildfire risk): {bcr_excluding_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_ll_wf} ({viable_text_ll_wf})"
+        f"    BCR (excl. energy losses & wildfire risk): {bcr_excluding_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_ll_wf} ({viable_text_ll_wf})"
     )
     print(
-        f"      (Excludes ${line_loss_cost_pv + wildfire_risk_total_pv:>15,.0f} in line losses + wildfire costs, keeps emissions & outage)"
+        f"      (Excludes ${energy_losses_pv + wildfire_risk_total_pv:>15,.0f} in energy losses + wildfire costs, keeps emissions & outage)"
     )
 
     bcr_excluding_emissions_and_linelosses_and_wildfire_risk = bcr_metrics.get(
@@ -1306,10 +1322,10 @@ def print_bcr_summary(
         bcr_excluding_emissions_and_linelosses_and_wildfire_risk
     )
     print(
-        f"    BCR (excl. emissions & line losses & wildfire risk): {bcr_excluding_emissions_and_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_em_ll_wf} ({viable_text_em_ll_wf})"
+        f"    BCR (excl. emissions & energy losses & wildfire risk): {bcr_excluding_emissions_and_linelosses_and_wildfire_risk:>6.3f}  {viable_symbol_em_ll_wf} ({viable_text_em_ll_wf})"
     )
     print(
-        f"      (Excludes ${energy_emissions_costs_pv + wildfire_risk_total_pv:>15,.0f} in emissions + line losses + wildfire costs, keeps outage)"
+        f"      (Excludes ${energy_emissions_costs_pv + wildfire_risk_total_pv:>15,.0f} in emissions + energy losses + wildfire costs, keeps outage)"
     )
     print()
 
@@ -1336,7 +1352,7 @@ def print_bcr_summary(
         f"    BCR (excl. emissions & outage risk): {bcr_excluding_emissions_and_outage_risk:>6.3f}  {viable_symbol_em_out} ({viable_text_em_out})"
     )
     print(
-        f"      (Excludes ${emissions_pv + outage_risk_pv:>15,.0f} in emissions + outage costs, keeps line losses & wildfire)"
+        f"      (Excludes ${emissions_pv + outage_risk_pv:>15,.0f} in emissions + outage costs, keeps energy losses & wildfire)"
     )
 
     bcr_excluding_linelosses_and_outage_risk = bcr_metrics.get(
@@ -1346,10 +1362,10 @@ def print_bcr_summary(
         bcr_excluding_linelosses_and_outage_risk
     )
     print(
-        f"    BCR (excl. line losses & outage risk): {bcr_excluding_linelosses_and_outage_risk:>6.3f}  {viable_symbol_ll_out} ({viable_text_ll_out})"
+        f"    BCR (excl. energy losses & outage risk): {bcr_excluding_linelosses_and_outage_risk:>6.3f}  {viable_symbol_ll_out} ({viable_text_ll_out})"
     )
     print(
-        f"      (Excludes ${line_loss_cost_pv + outage_risk_pv:>15,.0f} in line losses + outage costs, keeps emissions & wildfire)"
+        f"      (Excludes ${energy_losses_pv + outage_risk_pv:>15,.0f} in energy losses + outage costs, keeps emissions & wildfire)"
     )
 
     bcr_excluding_emissions_and_linelosses_and_outage_risk = bcr_metrics.get(
@@ -1359,10 +1375,10 @@ def print_bcr_summary(
         bcr_excluding_emissions_and_linelosses_and_outage_risk
     )
     print(
-        f"    BCR (excl. emissions & line losses & outage risk): {bcr_excluding_emissions_and_linelosses_and_outage_risk:>6.3f}  {viable_symbol_em_ll_out} ({viable_text_em_ll_out})"
+        f"    BCR (excl. emissions & energy losses & outage risk): {bcr_excluding_emissions_and_linelosses_and_outage_risk:>6.3f}  {viable_symbol_em_ll_out} ({viable_text_em_ll_out})"
     )
     print(
-        f"      (Excludes ${energy_emissions_costs_pv + outage_risk_pv:>15,.0f} in emissions + line losses + outage costs, keeps wildfire)"
+        f"      (Excludes ${energy_emissions_costs_pv + outage_risk_pv:>15,.0f} in emissions + energy losses + outage costs, keeps wildfire)"
     )
     print()
 

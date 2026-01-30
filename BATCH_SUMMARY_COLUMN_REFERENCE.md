@@ -193,13 +193,14 @@ _Note: Cost of emissions from line losses (new generation needed to offset losse
 
 ---
 
-## SECTION 13: LINE LOSS COSTS (Columns 70-72)
+## SECTION 13: ENERGY LOSS COSTS (Columns 70-74)
 
-70. **line_loss_cost_nominal** - Lifetime line loss costs (undiscounted)
-71. **line_loss_cost_pv** - Line loss cost present value
-72. **line_loss_annual_cost** - Annual line loss cost
+70. **energy_losses_pv** - Total energy loss cost present value (conductor + converter for DC; conductor only for AC)
+71. **conductor_loss_pv** - Present value of conductor loss costs only; 0 for AC
+72. **converter_loss_pv** - Present value of converter loss costs only (DC projects with converters); 0 for AC
+73. **energy_losses_nominal** - Lifetime energy loss costs (undiscounted); total = conductor + converter for DC
 
-_Note: For greenfield = COST (new losses created). For reconductoring = BENEFIT (losses reduced)_
+_Note: "Line loss" is no longer used. Only conductor losses, converter losses, and total energy losses are reported. For greenfield = COST (new losses created). For reconductoring = BENEFIT (losses reduced). energy_losses_pv = conductor_loss_pv + converter_loss_pv. line_loss_costs.csv still has conductor, converter, and total detail rows._
 
 ---
 
@@ -217,19 +218,19 @@ _Note: Includes conductor, structure, converter, and vegetation management costs
 
 ### Benefits (Column 76-78, 88)
 
-76. **line_loss_benefit_pv** - Line loss benefit for reconductoring projects (PV)
+76. **line_loss_benefit_pv** - Energy loss benefit for reconductoring projects (PV)
 77. **total_benefits_pv** - Sum of all benefits (PV)
 78. **total_benefits_haircut_pv** - Sum of conservative benefits (PV)
 79. **total_benefits_nominal** - Sum of all benefits (undiscounted)
 
-_Benefits = Congestion + Curtailment + Line Loss (if reconductoring)_
+_Benefits = Congestion + Curtailment + Energy Loss (if reconductoring)_
 
 ### Cost Aggregates by Category (Columns 79-83, 89-93)
 
 #### Present Value (PV)
 
 79. **capital_costs_pv** - Build + ROW + Environmental (PV)
-80. **operational_costs_pv** - O&M + Insurance + Line Losses + Emissions (PV)
+80. **operational_costs_pv** - O&M + Insurance + Energy Losses + Emissions (PV)
 81. **risk_costs_pv** - Wildfire + Outage (PV)
 82. **delay_costs_pv** - Construction Delay + Foregone Benefits + Residual (PV)
 83. **total_costs_pv** - Sum of all costs (PV)

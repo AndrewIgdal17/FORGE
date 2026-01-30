@@ -29,3 +29,8 @@ timeline:
   construction_years: 1 # years (> 0)
   delay_years: 4 # years (>= 0)
   project_lifetime: 50 # years (> 0)
+
+
+### DEFINITIONS:
+# 1) Electricity price: $/MWh
+#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.

@@ -18,8 +18,9 @@ Comprehensive technical documentation for developers working on CTCC.
 6. [File Structure](#file-structure)
 7. [Testing](#testing)
 8. [Known Issues](#known-issues)
-9. [Deployment](#deployment)
-10. [Troubleshooting](#troubleshooting)
+9. [Future Improvements](#future-improvements)
+10. [Deployment](#deployment)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -127,17 +128,20 @@ CTCC follows a **subprocess-based architecture** where:
 **Purpose:** Direct command-line calculations
 
 **Key Functions:**
+
 - `parse_arguments()` - Parse command-line flags
 - `run_script(script, env)` - Run calculation subprocess
 - `main()` - Orchestrate entire calculation flow
 
 **Usage:**
+
 ```bash
 venv/bin/python3 ctcc.py [-j] [-o] [--id SCENARIO_ID]
 ```
 
 **Important Note on Environment Variables:**
 When running in JSON input mode, `ctcc.py` sets `CTCC_JSON_DATA_FILE` in two places:
+
 1. In the `env` dict passed to subprocess scripts (for calculation modules)
 2. In `os.environ` for the parent process (for BCR calculation and JSON aggregation)
 
@@ -148,9 +152,11 @@ This is necessary because `json_output_manager.py` runs in the parent process du
 **Purpose:** Web API backend
 
 **Key Functions:**
+
 - `run_ctcc_calculation(payload)` - Main calculation function
 
 **How it works:**
+
 1. Receives JSON payload with configuration
 2. Writes `combined_data` to temp file (JSON mode)
 3. Sets environment variables
@@ -160,6 +166,7 @@ This is necessary because `json_output_manager.py` runs in the parent process du
 7. Cleans up temp files
 
 **Why delegate to ctcc.py?**
+
 - Single source of truth (fix once, works everywhere)
 - Automatic benefit from ctcc.py improvements
 - Reduced code: 453 → 189 lines (58% reduction)
@@ -189,6 +196,7 @@ Output (CSV/JSON)
 **Purpose:** Abstract I/O mode from calculation scripts
 
 **smart_loaders.py:**
+
 ```python
 import os
 
@@ -201,6 +209,7 @@ else:
 ```
 
 **smart_output.py:**
+
 ```python
 import os
 
@@ -213,6 +222,7 @@ else:
 ```
 
 **Benefits:**
+
 - Scripts use generic imports: `from smart_loaders import load_...`
 - Mode switching transparent to scripts
 - Easy to add new I/O formats
@@ -262,6 +272,7 @@ if __name__ == "__main__":
 #### Step 2: Add Output Methods
 
 **csv_output_manager.py:**
+
 ```python
 def add_new_module_costs(self, results):
     """Add new module results to CSV batch summary."""
@@ -270,6 +281,7 @@ def add_new_module_costs(self, results):
 ```
 
 **json_output_manager.py:**
+
 ```python
 def add_new_module_costs(self, results):
     """Add new module results to JSON output."""
@@ -385,6 +397,7 @@ Returns web UI (index.html)
 Returns combined JSON configuration
 
 **Response:**
+
 ```json
 {
   "01_project_technical_details": {...},
@@ -400,6 +413,7 @@ Returns combined JSON configuration
 Runs CTCC calculations
 
 **Request:**
+
 ```json
 {
   "input_mode": "json",
@@ -410,6 +424,7 @@ Runs CTCC calculations
 ```
 
 **Response (JSON output):**
+
 ```json
 {
   "success": true,
@@ -437,6 +452,7 @@ Runs CTCC calculations
 ```
 
 **Response (CSV output):**
+
 ```json
 {
   "success": true,
@@ -462,9 +478,11 @@ Runs CTCC calculations
 Downloads CSV output file
 
 **Query Parameters:**
+
 - `download` (bool, optional): Force download vs inline preview
 
 **Example:**
+
 ```bash
 # Preview
 curl http://localhost:8000/api/outputs/batch_summary.csv
@@ -475,6 +493,7 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
 ```
 
 **Security:**
+
 - Only .csv files allowed
 - Directory traversal prevented
 - File existence validated
@@ -614,9 +633,10 @@ venv/bin/python3 test_mode_comparison.py
 
 ### Unit Testing
 
-*To be implemented*
+_To be implemented_
 
 Planned structure:
+
 ```
 tests/
 ├── test_loaders.py
@@ -659,6 +679,7 @@ tests/
 **Solution:** Modified `ctcc.py` line 202 to set `os.environ['CTCC_JSON_DATA_FILE']` for the parent process in addition to the subprocess `env` dict. Also simplified `json_loaders.py` to automatically load from the environment variable when `get_data()` is called.
 
 **Files Modified:**
+
 - `ctcc.py:202` - Added `os.environ['CTCC_JSON_DATA_FILE'] = json_file_path`
 - `json_loaders.py:32-36` - Auto-load from env var in `get_data()` method
 
@@ -685,6 +706,22 @@ tests/
 **Implementation:** Added `reconductoring` parameter to `calculate_environmental_mitigation_costs()` function. When `reconductoring=True`, wetland and habitat credits are set to zero.
 
 **Impact:** This makes reconductoring economics more realistic. For example, S4's environmental mitigation costs reduced from $60.3M to ~$5.7M (90% reduction), making capital costs more accurate.
+
+### Issue 6: Emissions from Line Losses Use Average Fuel Mix
+
+**Status:** ⚠️ Known limitation / Future improvement
+
+**Problem:** Emissions due to line-loss compensation are calculated using the configured **average** energy source mix (e.g. from `16_emissions_reductions.yaml`). For incremental emissions from extra MWh of loss, the theoretically correct measure is the **marginal** unit (or marginal emission factor), not the system average.
+
+**Current behavior:** The emissions script (`scripts/emissions.py`) uses `energy_source_mix` shares as weights: emissions = TEC × Σ (mix_share_j × intensity_j). Average mix data is easy to obtain and consistent with CTCC’s current annual-level resolution.
+
+**Decided future direction:** The long-term plan is to base line-loss emissions on **EPA eGRID** (Emissions & Generation Resource Integrated Database): use eGRID **total output emission rates** for average-grid (scope 2–style) estimates and eGRID **non-baseload output emission rates** as a marginal-ish proxy when appropriate. eGRID rates are operational/stack (direct) emissions per MWh, not lifecycle—so adopting eGRID is a conceptual shift from current lifecycle-ish intensity defaults. See [papers/paper1/future_improvements.md](papers/paper1/future_improvements.md) for eGRID details, rationale for deferral, and when to revisit.
+
+---
+
+## Future Improvements
+
+Planned or desired improvements that are intentionally deferred are documented in **[papers/paper1/future_improvements.md](papers/paper1/future_improvements.md)**. That document explains current behavior, the proposed improvement, and why it is saved for later (e.g. dependency on hourly resolution, data availability).
 
 ---
 
@@ -716,9 +753,10 @@ export CTCC_TEMP_DIR=/var/tmp/ctcc
 
 ### Docker Deployment
 
-*To be implemented*
+_To be implemented_
 
 Planned Dockerfile:
+
 ```dockerfile
 FROM python:3.11-slim
 
@@ -742,6 +780,7 @@ CMD ["uvicorn", "server.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 **Error:** `Port 8000 already in use`
 
 **Solution:**
+
 ```bash
 # Find process
 lsof -i :8000
@@ -760,6 +799,7 @@ PORT=8001 ./run_calc_server.command
 **Cause:** Missing or incorrect configuration data
 
 **Solution:**
+
 ```bash
 # Verify JSON structure
 python3 -c "import json; print(json.load(open('server/json/final_combined.json')))"
@@ -774,6 +814,7 @@ cd server
 **Error:** Scripts use wrong mode
 
 **Solution:**
+
 ```bash
 # Check environment
 env | grep CTCC
@@ -790,6 +831,7 @@ unset CTCC_SCENARIO_ID
 **Symptom:** `json_output_*.json` files remain in `outputs/`
 
 **Solution:**
+
 ```bash
 # Manual cleanup
 rm outputs/json_output_*.json
@@ -803,6 +845,7 @@ rm outputs/json_output_*.json
 **Error:** Module not found
 
 **Solution:**
+
 ```bash
 # CLI venv
 cd CTCC
@@ -853,6 +896,7 @@ pip install -r requirements.txt
 ### v2.0 (2025-11-10)
 
 **Major Changes:**
+
 - Added JSON input/output modes
 - Implemented command-line flags (`-j`, `-o`, `--id`)
 - Refactored server processor to delegate to `ctcc.py`
@@ -860,6 +904,7 @@ pip install -r requirements.txt
 - Created comprehensive documentation
 
 **Improvements:**
+
 - Reduced server processor code by 58% (453 → 189 lines)
 - Single source of truth for calculations
 - Web UI with CSV preview and download
@@ -869,6 +914,7 @@ pip install -r requirements.txt
 ### v1.0 (2025-10-31)
 
 **Initial Release:**
+
 - 13 calculation modules
 - YAML input, CSV output
 - CLI interface (`ctcc.py`)
@@ -886,6 +932,7 @@ University of Texas at Austin
 ## Support
 
 For questions or issues:
+
 - Check README.md for user documentation
 - Check MODE_FLOW_DIAGRAM.md for architecture
 - Review code comments in calculation scripts
