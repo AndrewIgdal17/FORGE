@@ -1,0 +1,136 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Weighted Miles Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{weighted\_miles.py} script computes terrain-adjusted miles for a transmission line from project physical details. It reads miles per terrain type and terrain multipliers from \texttt{02\_project\_physical\_details.yaml}, then returns weighted miles and an average terrain multiplier. These values are used downstream by \texttt{build\_costs.py} and \texttt{insurance\_costs.py} for cost-per-mile calculations.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+\begin{enumerate}
+    \item Load \texttt{02\_project\_physical\_details.yaml} (via \texttt{path\_config.YAMLS\_DIR}).
+    \item For each terrain type, multiply \texttt{terrain\_miles[terrain\_type]} by \texttt{terrain\_multipliers[terrain\_type]} and sum to get weighted miles.
+    \item Compute average terrain multiplier as weighted miles divided by total (unweighted) miles.
+    \item Return \texttt{(weighted\_miles, average\_terrain\_multiplier)}; when run as \texttt{\_\_main\_\_}, print both values.
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+Data come from \texttt{project\_physical\_details["terrain"]}: \texttt{terrain\_miles} is a dict mapping terrain type to miles; \texttt{terrain\_multipliers} maps terrain type to a cost/mile multiplier.
+
+\begin{align}
+\text{weighted\_miles} &= \sum_{\text{terrain\_type}} \text{terrain\_miles}[\text{terrain\_type}] \times \text{terrain\_multipliers}[\text{terrain\_type}] \\
+\text{total\_miles} &= \sum_{\text{terrain\_type}} \text{terrain\_miles}[\text{terrain\_type}] \\
+\text{average\_terrain\_multiplier} &= \frac{\text{weighted\_miles}}{\text{total\_miles}}
+\end{align}
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item \texttt{02\_project\_physical\_details.yaml} (path from \texttt{path\_config.YAMLS\_DIR}): under \texttt{terrain}, keys \texttt{terrain\_miles} (dict: terrain type $\to$ miles) and \texttt{terrain\_multipliers} (dict: terrain type $\to$ multiplier).
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Return value: \texttt{(weighted\_miles: float, average\_terrain\_multiplier: float)}. When the script is run standalone, both values are printed to stdout. The script does not write to the CSV or JSON output managers; downstream scripts (\texttt{build\_costs.py}, \texttt{insurance\_costs.py}) call \texttt{calculate\_weighted\_miles()} and use the result.
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+\begin{itemize}
+    \item \texttt{path\_config.py} --- \texttt{YAMLS\_DIR} for the physical details file path.
+    \item \texttt{build\_costs.py} --- Imports \texttt{calculate\_weighted\_miles}, uses \texttt{weighted\_miles} for conductor and structure cost per mile; passes \texttt{weighted\_miles} and \texttt{average\_terrain\_multiplier} to the output manager.
+    \item \texttt{insurance\_costs.py} --- Imports \texttt{calculate\_weighted\_miles} for use in its calculations.
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{calculate\_weighted\_miles()}}
+
+Calculates weighted miles and average terrain multiplier from project physical details (YAML \texttt{02\_project\_physical\_details.yaml}).
+
+\textbf{Parameters:} None (reads from YAML path provided by \texttt{path\_config}).
+
+\textbf{Returns:} \texttt{tuple: (weighted\_miles: float, average\_terrain\_multiplier: float)}.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+weighted_miles = 0
+for terrain_type, terrain_miles in project_physical_details_df["terrain"][
+    "terrain_miles"
+].items():
+    if terrain_miles is None:
+        terrain_miles = 0
+    weighted_miles += (
+        terrain_miles
+        * project_physical_details_df["terrain"]["terrain_multipliers"][
+            terrain_type
+        ]
+    )
+average_terrain_multiplier = weighted_miles / sum(
+    project_physical_details_df["terrain"]["terrain_miles"].values()
+)
+return weighted_miles, average_terrain_multiplier
+\end{lstlisting}
+
+\section{Example}
+
+Standalone run (prints weighted miles and average terrain multiplier):
+\begin{lstlisting}
+cd scripts
+python weighted_miles.py
+\end{lstlisting}
+
+Typical YAML structure under \texttt{terrain}:
+\begin{lstlisting}
+terrain:
+  terrain_miles:
+    forested: 25
+    scrubbed_flat: 35
+    wetland: 5
+  terrain_multipliers:
+    forested: 2.25
+    scrubbed_flat: 1.0
+    wetland: 1.5
+\end{lstlisting}
+Example: weighted miles = $25 \times 2.25 + 35 \times 1.0 + 5 \times 1.5 = 56.25 + 35 + 7.5 = 98.75$; total miles = 65; average terrain multiplier = $98.75 / 65 \approx 1.52$.
+
+\end{document}

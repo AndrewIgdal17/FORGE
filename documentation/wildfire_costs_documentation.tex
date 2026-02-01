@@ -99,44 +99,20 @@ where:
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads project configuration and wildfire parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_financing\_details}, \texttt{load\_wildfire\_costs}, \texttt{get\_physical\_data\_raw}, \texttt{get\_financing\_data\_raw}, \texttt{load\_terrain\_miles}
+    \item \texttt{constants.py} --- \texttt{MIN\_DISCOUNT\_RATE}, \texttt{GROWTH\_RATE\_TOLERANCE}
+    \item \texttt{financial\_utils.py} --- \texttt{get\_discount\_rate\_from\_config}, \texttt{calculate\_growing\_annuity\_pv}, \texttt{validate\_discount\_rate}, \texttt{calculate\_nominal\_growing\_series}
+    \item \texttt{calculation\_utils.py} --- \texttt{build\_category\_string}, \texttt{normalize\_construction\_type\_for\_yaml}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_wildfire\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
 
-\subsection{\texttt{get\_discount\_rate(wildfire\_yaml, financing\_yaml)}}
+\subsection{\texttt{get\_discount\_rate\_from\_config} (from \texttt{financial\_utils})}
 
-Gets discount rate based on configuration source.
+The script uses \texttt{financial\_utils.get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_source")} to get the discount rate. In \texttt{main()}, it is called with \texttt{wildfire\_yaml}, \texttt{get\_financing\_data\_raw()}, and \texttt{rate\_key="discount\_rate\_source"}. Returns \texttt{(discount\_rate, source\_description)}. The configuration in the wildfire YAML specifies the source (e.g.\ \texttt{social}, \texttt{wacc\_real}, \texttt{custom}).
 
-\textbf{Parameters:}
-\begin{itemize}
-    \item \texttt{wildfire\_yaml} (dict): Loaded wildfire YAML data
-    \item \texttt{financing\_yaml} (dict): Loaded financing YAML data
-\end{itemize}
-
-\textbf{Returns:}
-\begin{itemize}
-    \item \texttt{discount\_rate} (float): Discount rate to use
-    \item \texttt{source\_description} (str): Description of rate source
-\end{itemize}
-
-\textbf{Key Logic:}
-\begin{lstlisting}
-source = wildfire_yaml["wildfire"]["discount_rate_source"]
-
-if source == "social":
-    rate = financing_yaml["financial"]["social_discount_rate"]
-elif source == "wacc_real":
-    wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
-    inflation = financing_yaml["financial"]["inflation_rate"]
-    rate = (1 + wacc_nominal) / (1 + inflation) - 1
-elif source == "custom":
-    rate = wildfire_yaml["wildfire"]["discount_rate_custom"]
-\end{lstlisting}
-
-\subsection{\texttt{calculate\_wildfire\_costs(wildfire\_yaml, construction\_type, terrain\_miles, project\_lifetime, discount\_rate)}}
+\subsection{\texttt{calculate\_wildfire\_costs(wildfire\_yaml, construction\_type, terrain\_miles, project\_lifetime, discount\_rate, delay\_years=0, construction\_years=0)}}
 
 Calculates expected wildfire costs using segment-based ignition rates.
 
@@ -147,6 +123,8 @@ Calculates expected wildfire costs using segment-based ignition rates.
     \item \texttt{terrain\_miles} (dict): Dictionary of terrain type to miles
     \item \texttt{project\_lifetime} (int): Project lifetime in years
     \item \texttt{discount\_rate} (float): Discount rate for PV calculation
+    \item \texttt{delay\_years} (float): Delay years before construction (default 0)
+    \item \texttt{construction\_years} (float): Construction period years (default 0)
 \end{itemize}
 
 \textbf{Returns:}
@@ -196,11 +174,10 @@ Main execution function that orchestrates the wildfire cost calculation and outp
 
 \textbf{Workflow:}
 \begin{enumerate}
-    \item Loads project technical details and terrain distribution
-    \item Loads wildfire parameters
-    \item Gets discount rate based on configuration
-    \item Calls \texttt{calculate\_wildfire\_costs()} to compute costs
-    \item Displays detailed results and writes to CSV
+    \item Loads project technical details; constructs category via \texttt{build\_category\_string}; loads terrain via \texttt{load\_terrain\_miles()}; loads \texttt{wildfire\_yaml} via \texttt{load\_wildfire\_costs()}; loads \texttt{financing\_yaml} via \texttt{get\_financing\_data\_raw()}
+    \item \texttt{discount\_rate, discount\_source} = \texttt{get\_discount\_rate\_from\_config(wildfire\_yaml, financing\_yaml, rate\_key="discount\_rate\_source")}
+    \item Calls \texttt{calculate\_wildfire\_costs(wildfire\_yaml, construction\_type, terrain\_miles, project\_lifetime, discount\_rate, delay\_years=..., construction\_years=...)}
+    \item Displays results; \texttt{add\_wildfire\_costs(results)}; \texttt{write\_batch\_summary()}
 \end{enumerate}
 
 \section{Example}

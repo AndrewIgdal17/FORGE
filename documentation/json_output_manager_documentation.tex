@@ -1,0 +1,173 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{JSON Output Manager Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{json\_output\_manager.py} module aggregates and writes CTCC results as JSON when \texttt{CTCC\_OUTPUT\_MODE=json}. Each calculation script instantiates \texttt{JSONOutputManager} (via \texttt{smart\_output.CTCCOutputManager}), calls \texttt{add\_*} methods to store its results in memory, then calls \texttt{save\_to\_file()} to write an intermediate \texttt{json\_output\_<scenario\_id>\_<module>.json}. The parent \texttt{ctcc.py} then aggregates these files with \texttt{load\_from\_file()}, computes BCR, calls \texttt{add\_bcr\_metrics()} and \texttt{calculate\_summary()}, and writes the final \texttt{ctcc\_results\_<scenario\_id>.json} using \texttt{get\_json\_results()}.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+\begin{enumerate}
+    \item On init: set \texttt{scenario\_id} (or auto-generate), load \texttt{technical\_details} via \texttt{load\_technical\_details()} (uses \texttt{json\_loaders}), and initialize \texttt{costs}, \texttt{benefits}, \texttt{summary}, \texttt{bcr} dicts.
+    \item Each calculation script calls \texttt{add\_build\_costs()}, \texttt{add\_row\_costs()}, \texttt{add\_congestion\_curtailment()}, etc., to store its result dict under the appropriate key.
+    \item Each script calls \texttt{save\_to\_file(output\_dir, module\_name)} to write an intermediate JSON file for aggregation.
+    \item \texttt{ctcc.py} calls \texttt{aggregate\_json\_outputs()} which creates a new \texttt{JSONOutputManager}, then \texttt{load\_from\_file()} for each intermediate file to merge \texttt{costs}, \texttt{benefits}, \texttt{bcr}; then \texttt{add\_bcr\_metrics()}, \texttt{calculate\_summary()}, and \texttt{get\_json\_results()} to build the final dict; \texttt{ctcc.py} writes \texttt{ctcc\_results\_<id>.json} to disk.
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+Output only; no cost/benefit formulas. \texttt{calculate\_summary()} sums stored costs and benefits into \texttt{summary}: total capital (build + row + environmental), total operational (insurance + oandm), total energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), total risk (wildfire + outage + wildfire\_liability), delay costs, and grand total (nominal, AFUDC, PV). Residual exceedance and congestion/curtailment delay costs are taken from \texttt{benefits["congestion\_curtailment"]} and included in the appropriate totals.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item In-memory results from calculation scripts passed to \texttt{add\_*()} (e.g.\ \texttt{add\_build\_costs(results)}).
+    \item \texttt{scenario\_id} (optional at init; auto-generated if not set).
+    \item Technical parameters loaded from \texttt{json\_loaders} in \texttt{load\_technical\_details()}.
+    \item BCR metrics from \texttt{ctcc.py} via \texttt{add\_bcr\_metrics(bcr\_results)}.
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Per-script: \texttt{save\_to\_file()} writes \texttt{json\_output\_<scenario\_id>\_<module\_name>.json} to \texttt{outputs/} (or given \texttt{output\_dir}).
+    \item Final: \texttt{get\_json\_results()} returns a dict with \texttt{scenario\_id}, \texttt{timestamp}, \texttt{technical\_parameters}, \texttt{costs}, \texttt{benefits}, \texttt{summary}, \texttt{bcr}; \texttt{ctcc.py} writes this to \texttt{ctcc\_results\_<scenario\_id>.json}.
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+\begin{itemize}
+    \item \texttt{smart\_output.py} --- When \texttt{CTCC\_OUTPUT\_MODE=json}, exports \texttt{JSONOutputManager} as \texttt{CTCCOutputManager}; all calculation scripts use it.
+    \item \texttt{json\_loaders.py} --- \texttt{load\_project\_technical\_details()}, \texttt{load\_physical\_details()}, \texttt{get\_data()} used in \texttt{load\_technical\_details()}.
+    \item \texttt{ctcc.py} --- \texttt{aggregate\_json\_outputs()} uses \texttt{JSONOutputManager} and \texttt{load\_from\_file()}; \texttt{write\_final\_json\_output()} uses \texttt{add\_bcr\_metrics()}, \texttt{calculate\_summary()}, \texttt{get\_json\_results()}, then writes the final JSON file.
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{JSONOutputManager.\_\_init\_\_(scenario\_id=None)}}
+
+Sets \texttt{scenario\_id} (or auto-generated timestamp), loads \texttt{technical\_details} via \texttt{load\_technical\_details()}, and initializes \texttt{costs}, \texttt{benefits}, \texttt{summary}, \texttt{bcr} as empty dicts.
+
+\subsection{\texttt{load\_technical\_details()}}
+
+Loads project and financial data via \texttt{json\_loaders} and returns a dict of technical parameters (project\_name, construction\_type, ac\_dc, capacity\_mw, line\_length\_miles, reconductoring, old\_capacity\_mw, delay\_years, project\_lifetime\_years, social\_discount\_rate, etc.). On failure returns a minimal dict with an \texttt{error} key.
+
+\subsection{\texttt{add\_*()} methods}
+
+Each \texttt{add\_*()} stores the passed dict under a fixed key: \texttt{add\_build\_costs} $\to$ \texttt{costs["build"]}, \texttt{add\_row\_costs} $\to$ \texttt{costs["row"]}, \texttt{add\_environmental\_mitigation} $\to$ \texttt{costs["environmental"]}, \texttt{add\_delay\_costs} $\to$ \texttt{costs["delay"]}, \texttt{add\_insurance\_costs} $\to$ \texttt{costs["insurance"]}, \texttt{add\_wildfire\_liability\_costs} $\to$ \texttt{costs["wildfire\_liability"]}, \texttt{add\_wildfire\_costs} $\to$ \texttt{costs["wildfire"]}, \texttt{add\_outage\_costs} $\to$ \texttt{costs["outage"]}, \texttt{add\_oandm\_costs} $\to$ \texttt{costs["oandm"]}, \texttt{add\_emissions\_costs} $\to$ \texttt{costs["emissions"]}, \texttt{add\_line\_loss\_costs} $\to$ \texttt{costs["line\_loss"]}, \texttt{add\_congestion\_curtailment} $\to$ \texttt{benefits["congestion\_curtailment"]}, \texttt{add\_revenue} $\to$ \texttt{benefits["revenue"]}. \texttt{add\_bcr\_metrics(bcr\_results)} sets \texttt{self.bcr}.
+
+\subsection{\texttt{calculate\_summary()}}
+
+Computes \texttt{self.summary} from \texttt{self.costs} and \texttt{self.benefits}: capital (build + row + environmental), operational (insurance + oandm), energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), risk (wildfire + outage + wildfire\_liability), delay; then grand total nominal, AFUDC, and PV.
+
+\textbf{Key logic (excerpt):}
+\begin{lstlisting}
+self.summary["total_capital_pv"] = (
+    build.get("total_pv", 0) + row.get("total_pv", 0) + env.get("total_pv", 0)
+)
+# ... operational, risk, energy_emissions (incl. residual from congestion_curtailment)
+self.summary["grand_total_cost_pv"] = (
+    self.summary["total_capital_pv"] + self.summary["total_operational_pv"]
+    + self.summary["total_risk_pv"] + delay.get("total_pv", 0)
+    + congestion_delay_pv + curtailment_delay_pv
+    + self.summary["total_energy_emissions_pv"]
+)
+\end{lstlisting}
+
+\subsection{\texttt{get\_json\_results()}}
+
+Calls \texttt{calculate\_summary()} if \texttt{summary} is empty, then returns \texttt{\{scenario\_id, timestamp, input\_mode, technical\_parameters, costs, benefits, summary, bcr\}}.
+
+\subsection{\texttt{save\_to\_file(output\_dir=None, module\_name=None)}}
+
+Writes current state (scenario\_id, timestamp, technical\_details, costs, benefits, summary, bcr) to \texttt{json\_output\_<scenario\_id>\_<module\_name>.json} (or \texttt{json\_output\_<scenario\_id>.json} if \texttt{module\_name} is omitted). Default \texttt{output\_dir} is \texttt{../outputs} relative to the script directory. Returns the path to the saved file.
+
+\subsection{\texttt{load\_from\_file(json\_file)}}
+
+Reads the JSON file and merges \texttt{state["costs"]}, \texttt{state["benefits"]}, \texttt{state["bcr"]} into \texttt{self.costs}, \texttt{self.benefits}, \texttt{self.bcr}. Used by \texttt{ctcc.aggregate\_json\_outputs()} to combine per-script outputs.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+with open(json_file, "r") as f:
+    state = json.load(f)
+if state.get("costs"):
+    for key, value in state["costs"].items():
+        if value is not None:
+            self.costs[key] = value
+if state.get("benefits"):
+    for key, value in state["benefits"].items():
+        if value:
+            self.benefits[key] = value
+if state.get("bcr"):
+    self.bcr = state["bcr"]
+\end{lstlisting}
+
+\section{Example}
+
+Final output structure (from \texttt{get\_json\_results()}):
+\begin{lstlisting}
+{
+  "scenario_id": "20250101_120000",
+  "timestamp": "2025-01-01T12:00:00",
+  "input_mode": "json",
+  "technical_parameters": { "project_name": "...", "capacity_mw": 500, ... },
+  "costs": {
+    "build": { "total_nominal": ..., "total_pv": ..., "total_afudc": ... },
+    "row": { ... },
+    "environmental": { ... },
+    "delay": { ... },
+    "insurance": { ... },
+    "wildfire": { ... },
+    "outage": { ... },
+    "wildfire_liability": { ... },
+    "oandm": { ... },
+    "emissions": { ... },
+    "line_loss": { ... }
+  },
+  "benefits": {
+    "congestion_curtailment": { "congestion_benefit_pv": ..., "residual_exceedance_pv": ..., ... },
+    "revenue": { ... }
+  },
+  "summary": { "total_capital_pv": ..., "grand_total_cost_pv": ..., ... },
+  "bcr": { "bcr_system": ..., "bcr_capital": ..., ... }
+}
+\end{lstlisting}
+
+\end{document}

@@ -45,7 +45,7 @@
 
 \section{Introduction}
 
-This document serves as a comprehensive guide to all configuration choices available in the Comprehensive Transmission Cost Calculator (CTCC). The CTCC uses YAML (YAML Ain't Markup Language) configuration files to define project parameters, financial settings, risk parameters, and operational characteristics.
+This document serves as a comprehensive guide to all configuration choices available in the Comprehensive Transmission Cost Calculator (CTCC). The CTCC uses YAML (YAML Ain't Markup Language) configuration files to define project parameters, financial settings, risk parameters, and operational characteristics. The same structure is used when running in JSON input mode: \texttt{smart\_loaders} dispatches to \texttt{yaml\_loaders} or \texttt{json\_loaders} by \texttt{CTCC\_INPUT\_MODE}; parameter names and nesting match this guide.
 
 \subsection{Purpose}
 
@@ -72,14 +72,18 @@ This guide is organized by YAML file, following the numerical naming convention 
 
 \subsection{Project Categories}
 
-Many parameters reference \textit{project categories}, which are constructed from core technical details using the format:
+Many parameters reference \textit{project categories}, which are constructed from core technical details using \texttt{calculation\_utils.build\_category\_string} in the format:
 \begin{verbatim}
 "{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
 \end{verbatim}
 
-For example: \texttt{"Overhead/AC/394MW/Advanced Aluminum Conductor/NA"}
+For example: \texttt{"Overhead/AC/394MW/Advanced Aluminum/NA"} or \texttt{"Overhead/AC/500MW/Advanced Aluminum Conductor/NA"}.
 
-For AC projects, \texttt{converter_type} is always \texttt{"NA"}. For DC projects, it is either \texttt{"LCC Converter"} or \texttt{"VSC Converter"}.
+For AC projects, \texttt{converter\_type} is always \texttt{"NA"}. For DC projects, it is typically \texttt{"LCC Converter"} or \texttt{"VSC Converter"}. Category lookups are used in build costs (10), circuit/resistance (21), O\&M conductors/converters (13, 15), and ROW widths (20).
+
+\subsection{YAML File Inventory}
+
+The CTCC \texttt{yamls/} directory includes: \texttt{01\_project\_technical\_details.yaml}, \texttt{02\_project\_physical\_details.yaml}, \texttt{03\_financing.yaml}, \texttt{04\_insurance.yaml}, \texttt{05\_delays.yaml}, \texttt{06\_wildfire\_costs.yaml}, \texttt{07\_outage\_costs.yaml}, \texttt{09\_environmental\_mitigation.yaml}, \texttt{10\_project\_category\_build\_costs.yaml}, \texttt{11\_project\_row\_details.yaml}, \texttt{12\_project\_om\_vegetation\_management.yaml}, \texttt{13\_category\_om\_conductors.yaml}, \texttt{14\_category\_om\_structures.yaml}, \texttt{15\_category\_om\_converters.yaml}, \texttt{16\_emissions\_reductions.yaml}, \texttt{17\_congestion\_curtailment\_reductions.yaml}, \texttt{19\_cost\_timing\_patterns.yaml}, \texttt{20\_project\_category\_row\_widths.yaml}, \texttt{21\_project\_category\_circuit\_and\_resistance\_detail.yaml}, \texttt{22\_primary\_bcr\_config.yaml}.
 
 \section{Core Project Configuration}
 \label{sec:technical_details}

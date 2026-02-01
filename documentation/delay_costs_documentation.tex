@@ -84,16 +84,16 @@ where $D$ is the number of delay years and $r$ is the real WACC discount rate.
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads delay cost configuration and financing parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_delay\_costs}, \texttt{load\_financing\_details}, \texttt{load\_project\_technical\_details} (centralized; local wrapper \texttt{load\_project\_technical\_details()} returns \texttt{delay\_years} only)
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_delay\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
 
 \subsection{\texttt{load\_project\_technical\_details()}}
 
-Loads delay years from project technical details YAML file.
+Local wrapper that loads project technical details via \texttt{smart\_loaders.load\_project\_technical\_details\_centralized} and returns only \texttt{delay\_years}.
 
 \textbf{Returns:}
 \begin{itemize}
@@ -134,11 +134,11 @@ total_yearly_delay_cost = (legal + admin + labor + material_and_equipment
 # Calculate total nominal cost
 total_delay_cost = total_yearly_delay_cost * delay_year
 
-# Calculate present value
+# Calculate present value (payments from year 1 for delay_year years)
 total_delay_cost_pv = calculate_present_value(
     total_yearly_delay_cost,
-    wacc_real,
-    int(round(delay_year))
+    financing.wacc_real,
+    delay_year,
 )
 \end{lstlisting}
 

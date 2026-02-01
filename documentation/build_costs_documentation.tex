@@ -46,11 +46,13 @@ The \texttt{build\_costs.py} script calculates the construction costs for a tran
 
 This script calculates the total build cost of a transmission line project by:
 \begin{enumerate}
-    \item Loading base costs from YAML configuration files
-    \item Adjusting costs for terrain complexity using weighted miles
-    \item Applying contingency factors to account for uncertainty
-    \item Calculating AFUDC (Allowance for Funds Used During Construction) for regulatory perspective
-    \item Computing present value and amortized costs for societal perspective
+    \item Loading project technical details and constructing category via \texttt{calculation\_utils.build\_category\_string}
+    \item Loading base costs from \texttt{10\_project\_category\_build\_costs.yaml} for that category
+    \item Adjusting costs for terrain complexity using \texttt{weighted\_miles.calculate\_weighted\_miles()}
+    \item Applying per-component contingency factors (conductor, structure, converter)
+    \item Loading AFUDC setup via \texttt{financial\_utils.load\_afudc\_setup}; if enabled, calculating AFUDC capitalized cost using timing patterns for regulatory perspective
+    \item Computing present value of build costs (spread evenly over construction period) for societal perspective
+    \item Writing results via \texttt{CTCCOutputManager.add\_build\_costs} and \texttt{write\_batch\_summary}
 \end{enumerate}
 
 \subsection{Calculation Approach}
@@ -62,7 +64,10 @@ The build cost calculation follows this structure:
 \text{Structure Cost} &= \text{Variable Cost/Mile} \times \text{Weighted Miles} \quad \text{(if not reconductoring)} \\
 \text{Converter Cost} &= \text{Fixed Cost} \times \text{Number of Converters} \quad \text{(if not reconductoring)} \\
 \text{Total Base Cost} &= \text{Conductor} + \text{Structure} + \text{Converter} \\
-\text{Total with Contingencies} &= \text{Base Cost} \times (1 + \text{Contingency Rate})
+\text{Conductor with Conting.} &= \text{Conductor} \times (1 + \text{conductor\_contingency}) \\
+\text{Structure with Conting.} &= \text{Structure} \times (1 + \text{structure\_contingency}) \\
+\text{Converter with Conting.} &= \text{Converter} \times (1 + \text{converter\_contingency}) \\
+\text{Total with Contingencies} &= \text{sum of above three}
 \end{align}
 
 For reconductoring projects, structure and converter costs are set to zero since existing infrastructure is reused.
@@ -73,9 +78,9 @@ For reconductoring projects, structure and converter costs are set to zero since
 \begin{itemize}
     \item Project technical details (construction type, AC/DC, capacity, conductor type, etc.)
     \item Physical details (terrain distribution)
-    \item Build cost parameters from YAML files
-    \item Contingency percentages
-    \item Financing parameters (WACC, inflation, AFUDC rate)
+    \item Build cost parameters from \texttt{10\_project\_category\_build\_costs.yaml} (by category from \texttt{build\_category\_string})
+    \item Per-component contingency percentages (\texttt{conductor\_contingency}, \texttt{structure\_contingency}, \texttt{converter\_contingency}) from financing
+    \item Financing parameters (WACC, inflation); AFUDC from \texttt{load\_afudc\_setup} (timing patterns, AFUDC rate)
 \end{itemize}
 
 \textbf{Outputs:}
@@ -90,10 +95,12 @@ For reconductoring projects, structure and converter costs are set to zero since
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{weighted\_miles.py} - Calculates terrain-adjusted miles (see \texttt{utilities\_documentation.tex})
-    \item \texttt{yaml\_loaders.py} - Loads project configuration (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} - \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_contingencies}, \texttt{load\_financing\_details}, \texttt{load\_cost\_timing\_patterns}, \texttt{load\_afudc\_config}, \texttt{get\_project\_data\_raw}, \texttt{get\_financing\_data\_raw}
+    \item \texttt{weighted\_miles.py} - \texttt{calculate\_weighted\_miles} for terrain-adjusted miles
+    \item \texttt{calculation\_utils.py} - \texttt{build\_category\_string} for project category
+    \item \texttt{financial\_utils.py} - \texttt{calculate\_present\_value}, \texttt{calculate\_afudc\_capitalized\_cost}, \texttt{load\_afudc\_setup}, \texttt{calculate\_construction\_start\_year}, \texttt{validate\_discount\_rate}
+    \item \texttt{path\_config.py} - \texttt{YAMLS\_DIR} for build costs YAML
+    \item \texttt{smart\_output.py} - \texttt{CTCCOutputManager} (writes CSV or JSON via \texttt{add\_build\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
@@ -111,40 +118,25 @@ Loads and calculates build costs for the specified project category.
     \item \texttt{reconductoring} (bool): Whether this is a reconductoring project
 \end{itemize}
 
-\textbf{Returns:}
-\begin{itemize}
-    \item \texttt{total\_cost} (float): Base total cost without contingencies
-    \item \texttt{total\_cost\_with\_contingencies} (float): Total cost with contingencies applied
-    \item \texttt{conductor\_cost} (float): Base conductor cost
-    \item \texttt{structure\_cost} (float): Base structure cost (0 for reconductoring)
-    \item \texttt{converter\_cost} (float): Base converter cost (0 for reconductoring)
-    \item \texttt{conductor\_cost\_with\_contingencies} (float): Conductor cost with contingency
-    \item \texttt{structure\_cost\_with\_contingencies} (float): Structure cost with contingency
-    \item \texttt{converter\_cost\_with\_contingencies} (float): Converter cost with contingency
-    \item \texttt{weighted\_miles} (float): Terrain-adjusted miles
-    \item \texttt{average\_terrain\_multiplier} (float): Average terrain cost multiplier
-\end{itemize}
+\textbf{Returns:} A \texttt{BuildCosts} dataclass with fields: \texttt{total\_cost}, \texttt{total\_cost\_with\_contingencies}, \texttt{conductor\_cost}, \texttt{structure\_cost}, \texttt{converter\_cost}, \texttt{conductor\_cost\_with\_contingencies}, \texttt{structure\_cost\_with\_contingencies}, \texttt{converter\_cost\_with\_contingencies}, \texttt{weighted\_miles}, \texttt{average\_terrain\_multiplier}. Structure and converter costs are 0 for reconductoring.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Calculate weighted miles for terrain adjustment
 weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
-
-# Conductor cost: variable per mile + fixed
-conductor_cost = (variable_conductor_cost_per_mile * weighted_miles) 
-                 + fixed_conductor_cost
-
-# Structure and converter costs only for new builds
+conductor_cost = (variable_conductor_cost_per_mile * weighted_miles) + fixed_conductor_cost
 if reconductoring:
     structure_cost = 0
     converter_cost = 0
 else:
     structure_cost = variable_structure_cost_per_mile * weighted_miles
     converter_cost = fixed_converter_cost * number_of_converters
-
-# Apply contingencies
-conductor_cost_with_contingencies = conductor_cost * 
-    (1 + contingencies["conductor_contingency"])
+total_cost = conductor_cost + structure_cost + converter_cost
+conductor_cost_with_contingencies = conductor_cost * (1 + contingencies["conductor_contingency"])
+structure_cost_with_contingencies = structure_cost * (1 + contingencies["structure_contingency"])
+converter_cost_with_contingencies = converter_cost * (1 + contingencies["converter_contingency"])
+total_cost_with_contingencies = (conductor_cost_with_contingencies
+    + structure_cost_with_contingencies + converter_cost_with_contingencies)
+return BuildCosts(...)
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -153,13 +145,12 @@ Main execution function that orchestrates the build cost calculation and output.
 
 \textbf{Workflow:}
 \begin{enumerate}
-    \item Loads project technical details and constructs category identifier
-    \item Determines number of converters (0 for AC projects)
-    \item Loads physical details, contingencies, and financing parameters
-    \item Calls \texttt{load\_costs()} to calculate base costs
-    \item Calculates AFUDC capitalized costs (if enabled)
-    \item Calculates amortized costs and present value
-    \item Displays results and writes to CSV
+    \item Loads project technical details; constructs category via \texttt{build\_category\_string(project\_details)}
+    \item Determines \texttt{number\_of\_converters} from \texttt{get\_project\_data\_raw()["project"]["number\_of\_converters"]} if DC, else 0
+    \item Loads physical details, contingencies, financing; calls \texttt{load\_costs(category, total\_miles, number\_of\_converters, contingencies, project\_details.reconductoring)}
+    \item Loads AFUDC setup via \texttt{load\_afudc\_setup()}; if \texttt{apply\_afudc}, calculates AFUDC capitalized cost via \texttt{calculate\_afudc\_capitalized\_cost(...)}
+    \item Computes \texttt{construction\_start\_year} = \texttt{calculate\_construction\_start\_year(delay\_years)}; if \texttt{construction\_years > 0}, \texttt{annual\_build\_cost} = total with contingencies / construction\_years, \texttt{build\_cost\_pv} = \texttt{calculate\_present\_value(annual\_build\_cost, wacc\_real, construction\_years, construction\_start\_year)}; else one-time PV at \texttt{construction\_start\_year}
+    \item Builds \texttt{results} dict (\texttt{total\_nominal}, \texttt{total\_afudc}, \texttt{total\_pv}, component nominals and zeros for component AFUDC); \texttt{CTCCOutputManager().add\_build\_costs(results).write\_batch\_summary()}
 \end{enumerate}
 
 \section{Example}
@@ -205,10 +196,13 @@ The following example demonstrates a typical usage of the build costs calculatio
 # 3. Writes to CSV via CTCCOutputManager:
 csv_manager = CTCCOutputManager()
 results = {
-    "total_nominal": total_cost_with_contingencies,
-    "total_afudc": capitalized_cost_with_contingencies,
-    "total_pv": pv_of_amortized,
-    # ... component costs
+    "total_nominal": costs.total_cost_with_contingencies,
+    "total_afudc": capitalized_cost_with_contingencies if afudc_setup.apply_afudc else 0,
+    "total_pv": build_cost_pv,
+    "conductor_nominal": costs.conductor_cost_with_contingencies,
+    "structure_nominal": costs.structure_cost_with_contingencies,
+    "converter_nominal": costs.converter_cost_with_contingencies,
+    "conductor_afudc": 0, "structure_afudc": 0, "converter_afudc": 0,
 }
 csv_manager.add_build_costs(results)
 csv_manager.write_batch_summary()
@@ -222,11 +216,11 @@ For reconductoring projects, the script sets structure and converter costs to ze
 
 \subsection{AFUDC Calculation}
 
-If AFUDC is enabled, the script calculates capitalized costs using the AFUDC rate and cost timing patterns. This represents the regulatory perspective where construction financing costs are capitalized.
+If AFUDC is enabled (\texttt{load\_afudc\_setup().apply\_afudc}), the script calculates capitalized costs via \texttt{calculate\_afudc\_capitalized\_cost} using the AFUDC rate and cost timing patterns (\texttt{afudc\_setup.timing\_patterns["build\_costs"]}). This represents the regulatory perspective where construction financing costs are capitalized.
 
-\subsection{Present Value Verification}
+\subsection{Present Value of Build Costs}
 
-The script verifies amortization calculations by discounting annual amortized payments back to present value, which should equal the original cost (within rounding).
+The script computes present value of build costs spread evenly over the construction period: \texttt{annual\_build\_cost} = \texttt{total\_cost\_with\_contingencies} / \texttt{construction\_years}, then \texttt{calculate\_present\_value(annual\_build\_cost, wacc\_real, construction\_years, construction\_start\_year)}. If \texttt{construction\_years} is 0, build cost is treated as a one-time cost at \texttt{construction\_start\_year}.
 
 \subsection{Weighted Miles}
 

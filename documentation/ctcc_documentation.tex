@@ -1,0 +1,212 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{CTCC Orchestrator Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{ctcc.py} script is the CLI entry point for the Comprehensive Transmission Cost Calculator (CTCC). It orchestrates all cost and benefit calculation modules by running them as subprocesses in a fixed order, sets environment variables for input/output mode (YAML/JSON, CSV/JSON) and optional flags, and aggregates results. In CSV mode it updates \texttt{batch\_summary.csv} and runs the BCR calculator; in JSON mode it aggregates per-script JSON outputs, computes BCR from the aggregated data, and writes a single \texttt{ctcc\_results\_<id>.json}.
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+\begin{enumerate}
+    \item Parse command-line arguments (e.g.\ \texttt{--no\_emissions}, \texttt{--capital\_only}, \texttt{--simple}).
+    \item Load Primary BCR config from YAML or JSON (based on \texttt{CTCC\_INPUT\_MODE}) and override args with config flags where present.
+    \item Build \texttt{BCRConfig} from args and set env vars (e.g.\ \texttt{CTCC\_NO\_CONGESTION}, \texttt{CTCC\_NO\_WF\_LIABILITY}).
+    \item Generate or use existing \texttt{CTCC\_SCENARIO\_ID}.
+    \item Build the list of scripts to run (prerequisites first, then capital costs, then optional modules based on flags; \texttt{--capital\_only} runs only weighted\_miles, build\_costs, row\_costs, environmental\_mitigation).
+    \item Run each script as a subprocess from \texttt{scripts/} with the current environment; track successes and failures.
+    \item If output mode is CSV: run \texttt{calculate\_and\_display\_bcr} on \texttt{batch\_summary.csv}, then add BCR metrics to \texttt{batch\_summary.csv} via \texttt{CSVOutputManager}.
+    \item If output mode is JSON: \texttt{aggregate\_json\_outputs} loads and merges \texttt{json\_output\_<id>\_*.json} files, \texttt{build\_bcr\_data\_from\_json} extracts a flat dict from aggregated results, BCR is computed via \texttt{calculate\_benefits}/\texttt{calculate\_costs}/\texttt{calculate\_bcr\_metrics}, then \texttt{write\_final\_json\_output} writes \texttt{ctcc\_results\_<id>.json} with BCR and summary.
+    \item Exit with code 1 if any script failed.
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+Orchestration only; no cost/benefit formulas are implemented in \texttt{ctcc.py}. Calculations live in the scripts in \texttt{scripts/}. Sequencing and mode handling (env vars, script list, BCR aggregation) are the only logic here.
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item Command-line flags: \texttt{--norisk}, \texttt{--simple}, \texttt{--no\_wf\_liability}, \texttt{--no\_emissions}, \texttt{--no\_linelosses}, \texttt{--capital\_only}, \texttt{--no\_oandm}, \texttt{--no\_insurance}, \texttt{--no\_delay\_costs}, \texttt{--no\_wildfire}, \texttt{--no\_outages}, \texttt{--no\_congestion}, \texttt{--no\_curtailment}.
+    \item Environment variables: \texttt{CTCC\_INPUT\_MODE}, \texttt{CTCC\_OUTPUT\_MODE}, \texttt{CTCC\_JSON\_DATA\_FILE}, \texttt{CTCC\_SCENARIO\_ID} (optional; auto-generated if unset).
+    \item Primary BCR config: loaded from YAML or JSON (via \texttt{load\_primary\_bcr\_config}) when available; overrides the above flags for which modules run.
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item CSV mode: \texttt{outputs/batch\_summary.csv} (and other CSVs written by scripts), updated with BCR metrics; BCR printed to stdout.
+    \item JSON mode: \texttt{outputs/ctcc\_results\_<scenario\_id>.json} containing aggregated costs, benefits, technical parameters, summary, and BCR; intermediate \texttt{json\_output\_<id>\_*.json} files are removed after merge.
+    \item Exit code 0 if all scripts succeeded, 1 if any failed.
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+\texttt{ctcc.py} runs (as subprocesses) and/or imports:
+\begin{itemize}
+    \item \texttt{scripts/weighted\_miles.py}, \texttt{build\_costs.py}, \texttt{row\_costs.py}, \texttt{environmental\_mitigation.py}, \texttt{revenue.py}, \texttt{insurance\_costs.py}, \texttt{delay\_costs.py}, \texttt{wildfire\_costs.py}, \texttt{outage\_costs.py}, \texttt{congestion\_curtailment\_reduction.py}, \texttt{energy\_losses.py}, \texttt{oandm.py}, \texttt{emissions.py}, \texttt{line\_loss\_costs.py} (subset depending on flags).
+    \item \texttt{scripts/bcr\_calculator.py} --- \texttt{calculate\_and\_display\_bcr}, \texttt{calculate\_benefits}, \texttt{calculate\_costs}, \texttt{calculate\_bcr\_metrics}.
+    \item \texttt{scripts/csv\_output\_manager.py} --- \texttt{CSVOutputManager}, \texttt{BATCH\_SUMMARY\_FIELDS}.
+    \item \texttt{scripts/json\_output\_manager.py} --- \texttt{JSONOutputManager} (used in \texttt{aggregate\_json\_outputs}).
+    \item \texttt{scripts/json\_loaders.py} or \texttt{scripts/yaml\_loaders.py} --- \texttt{load\_primary\_bcr\_config} (depending on \texttt{CTCC\_INPUT\_MODE}).
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{run\_script(script\_name, quiet=False)}}
+
+Runs a single Python script from the \texttt{scripts/} directory as a subprocess with the current environment.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{script\_name} (str): Name of the script (e.g.\ \texttt{weighted\_miles.py}).
+    \item \texttt{quiet} (bool): If True, suppress success/failure messages.
+\end{itemize}
+
+\textbf{Returns:} \texttt{True} if the script exited with code 0, \texttt{False} otherwise.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+env = os.environ.copy()
+result = subprocess.run(
+    [sys.executable, script_name],
+    capture_output=True,
+    text=True,
+    cwd="scripts",
+    env=env,
+)
+return result.returncode == 0
+\end{lstlisting}
+
+\subsection{\texttt{build\_bcr\_data\_from\_json(json\_results)}}
+
+Builds a flat dictionary suitable for BCR calculations from the aggregated JSON results (costs and benefits by category).
+
+\textbf{Parameters:} \texttt{json\_results} (dict): Aggregated results from \texttt{JSONOutputManager.get\_json\_results()}.
+
+\textbf{Returns:} Dict with keys such as \texttt{congestion\_benefit\_pv}, \texttt{build\_cost\_pv}, \texttt{delay\_cost\_pv}, etc., used by \texttt{calculate\_benefits} and \texttt{calculate\_costs}.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+costs = json_results.get("costs", {}) or {}
+benefits = json_results.get("benefits", {}) or {}
+congestion = benefits.get("congestion_curtailment", {}) or {}
+build = costs.get("build", {}) or {}
+# ... extract PV and nominal fields from each category
+return {
+    "congestion_benefit_pv": congestion.get("congestion_benefit_pv", 0) or 0,
+    "build_cost_pv": build.get("total_pv", 0) or 0,
+    # ... all BCR inputs
+}
+\end{lstlisting}
+
+\subsection{\texttt{aggregate\_json\_outputs(scenario\_id, output\_dir="outputs")}}
+
+Finds all \texttt{json\_output\_<scenario\_id>\_*.json} files in \texttt{output\_dir}, loads each into a \texttt{JSONOutputManager} aggregator, merges results, and deletes the intermediate files.
+
+\textbf{Parameters:}
+\begin{itemize}
+    \item \texttt{scenario\_id} (str): Scenario ID used in filenames.
+    \item \texttt{output\_dir} (str): Directory containing the JSON output files.
+\end{itemize}
+
+\textbf{Returns:} The \texttt{JSONOutputManager} instance with merged results (call \texttt{.get\_json\_results()} for the dict).
+
+\textbf{Key logic:}
+\begin{lstlisting}
+pattern = os.path.join(output_dir, f"json_output_{scenario_id}_*.json")
+json_files = glob.glob(pattern)
+aggregator = JSONOutputManager(scenario_id=scenario_id)
+for json_file in json_files:
+    aggregator.load_from_file(json_file)
+    os.unlink(json_file)  # remove intermediate file
+return aggregator
+\end{lstlisting}
+
+\subsection{\texttt{write\_final\_json\_output(aggregator, bcr\_results, scenario\_id, output\_dir, csv\_equivalent, summary\_override)}}
+
+Adds BCR metrics to the aggregator, computes summary, and writes \texttt{ctcc\_results\_<scenario\_id>.json}.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+if bcr_results:
+    aggregator.add_bcr_metrics(bcr_results)
+aggregator.calculate_summary()
+results = aggregator.get_json_results()
+if csv_equivalent is not None:
+    results["csv_equivalent"] = csv_equivalent
+if summary_override is not None:
+    results["summary"] = summary_override
+output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
+with open(output_file, "w") as f:
+    json.dump(results, f, indent=2)
+return output_file
+\end{lstlisting}
+
+\subsection{\texttt{main()}}
+
+Parses arguments, loads BCR config, sets env vars, builds script list, runs each script via \texttt{run\_script}, then either (CSV) runs \texttt{calculate\_and\_display\_bcr} and updates \texttt{batch\_summary.csv} or (JSON) aggregates JSON outputs, computes BCR from aggregated data, and calls \texttt{write\_final\_json\_output}. Exits with 1 if any script failed.
+
+\section{Example}
+
+Default run (YAML input, CSV output, all modules):
+\begin{lstlisting}
+python ctcc.py
+\end{lstlisting}
+
+JSON input and JSON output with scenario ID \texttt{test}:
+\begin{lstlisting}
+export CTCC_INPUT_MODE=json
+export CTCC_OUTPUT_MODE=json
+export CTCC_JSON_DATA_FILE=server/json/final_combined.json
+export CTCC_SCENARIO_ID=test
+python ctcc.py
+\end{lstlisting}
+
+Capital-only run (weighted miles, build, ROW, environmental mitigation):
+\begin{lstlisting}
+python ctcc.py --capital_only
+\end{lstlisting}
+
+Simple output (only BCR analysis printed):
+\begin{lstlisting}
+python ctcc.py --simple
+\end{lstlisting}
+
+\end{document}

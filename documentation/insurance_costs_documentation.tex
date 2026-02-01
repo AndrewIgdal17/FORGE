@@ -38,7 +38,7 @@
 
 \section{Introduction}
 
-The \texttt{insurance\_costs.py} script calculates operational insurance costs for transmission line assets. Insurance premiums are based on insurable asset value (conductors, structures, converters) and are paid annually over the project lifetime.
+The \texttt{insurance\_costs.py} script calculates operational insurance costs and, when enabled, wildfire liability insurance costs for transmission line assets. Operational premiums are based on insurable asset value (conductors, structures, converters) and are paid annually over the project lifetime. Wildfire liability uses a rate-on-line (ROL) formula: annual premium = ROL $\times$ liability limit. Both are written to the batch summary (operational via \texttt{add\_insurance\_costs}; wildfire liability via \texttt{add\_wildfire\_liability\_costs}, with zeros when disabled).
 
 \section{Method Overview}
 
@@ -46,11 +46,13 @@ The \texttt{insurance\_costs.py} script calculates operational insurance costs f
 
 This script calculates insurance costs by:
 \begin{enumerate}
-    \item Determining insurable asset value from build costs (with contingencies)
-    \item Applying premium rate based on construction type
-    \item Calculating annual premium
-    \item Computing lifetime nominal cost
-    \item Calculating present value of annual premiums
+    \item Loading project details and constructing category via \texttt{build\_category\_string}; loading build costs via \texttt{build\_costs.load\_costs} to get conductor/structure/converter costs with contingencies
+    \item Determining insurable asset value from which components are insured (\texttt{insurable\_components}; default all)
+    \item Applying premium rate from \texttt{premium\_by\_construction\_type} or default \texttt{premium\_rate}
+    \item Calculating annual premium and lifetime nominal cost for operational insurance
+    \item Optionally calculating wildfire liability premium (ROL $\times$ liability limit) when \texttt{insurance.wildfire\_liability.enabled} is true
+    \item Calculating present value of annual premiums (payment start at COD) for both operational and wildfire liability
+    \item Writing \texttt{add\_insurance\_costs} and \texttt{add\_wildfire\_liability\_costs} (zeros when wildfire liability disabled), then \texttt{write\_batch\_summary}
 \end{enumerate}
 
 \subsection{Calculation Approach}
@@ -61,40 +63,38 @@ The insurance cost calculation follows this structure:
 \text{Insurable Value} &= \sum_{\text{insured components}} \text{Component Cost with Contingencies} \\
 \text{Annual Premium} &= \text{Insurable Value} \times \text{Premium Rate} \\
 \text{Lifetime Nominal Cost} &= \text{Annual Premium} \times \text{Project Lifetime} \\
-\text{Present Value} &= \sum_{t=1}^{T} \frac{\text{Annual Premium}}{(1 + r)^t}
+\text{Present Value} &= \sum_{t=\text{COD}}^{\text{COD}+T-1} \frac{\text{Annual Premium}}{(1 + r)^t}
 \end{align}
+where $T$ is the project lifetime, $r$ is the real WACC discount rate, and COD = delay\_years + construction\_years (payment start at Commercial Operation Date).
 
-where $T$ is the project lifetime and $r$ is the real WACC discount rate.
+\textbf{Wildfire liability (when enabled):} Annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}; nominal lifetime cost = annual premium $\times$ project\_lifetime; PV same as above starting at COD. Returns \texttt{None} if \texttt{wildfire\_liability.enabled} is false or parameters invalid.
 
 \subsection{Inputs and Outputs}
 
 \textbf{Inputs:}
 \begin{itemize}
-    \item Build costs (conductor, structure, converter) with contingencies
-    \item Insurance configuration (premium rates, insurable components)
-    \item Construction type (affects premium rate)
-    \item Project lifetime
+    \item Build costs (conductor, structure, converter with contingencies) via \texttt{build\_costs.load\_costs}
+    \item Insurance configuration from \texttt{load\_insurance\_details} (04\_insurance): \texttt{insurance.insurable\_components}, \texttt{premium\_by\_construction\_type}, \texttt{premium\_rate}; \texttt{insurance.wildfire\_liability.enabled}, \texttt{liability\_limit}, \texttt{rate\_on\_line}
+    \item Project technical details (construction type, project lifetime, delay years, construction years)
     \item Financing parameters (WACC for present value)
-    \item Timeline (delay years, construction years for payment start)
 \end{itemize}
 
 \textbf{Outputs:}
 \begin{itemize}
-    \item Insurable asset value
-    \item Annual premium
-    \item Premium rate
-    \item Lifetime nominal cost
-    \item Present value of insurance costs
+    \item Operational: insurable value, annual premium, premium rate, nominal lifetime cost, PV total (via \texttt{add\_insurance\_costs})
+    \item Wildfire liability: when enabled, same metrics plus liability limit and rate-on-line (via \texttt{add\_wildfire\_liability\_costs}); when disabled, zeros written
 \end{itemize}
 
 \subsection{Integration with Other Scripts}
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{build\_costs.py} - Provides insurable asset values (see \texttt{build\_costs\_documentation.tex})
-    \item \texttt{yaml\_loaders.py} - Loads project configuration and insurance parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{build\_costs.py} - \texttt{load\_costs} for conductor/structure/converter costs with contingencies
+    \item \texttt{smart\_loaders.py} - \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_contingencies}, \texttt{load\_financing\_details}, \texttt{load\_insurance\_details}, \texttt{get\_project\_data\_raw}
+    \item \texttt{calculation\_utils.py} - \texttt{build\_category\_string}
+    \item \texttt{financial\_utils.py} - \texttt{calculate\_present\_value}, \texttt{calculate\_cod\_year}
+    \item \texttt{constants.py} - \texttt{TRANSMISSION\_TYPE\_DC} for DC check
+    \item \texttt{smart\_output.py} - \texttt{CTCCOutputManager} (\texttt{add\_insurance\_costs}, \texttt{add\_wildfire\_liability\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
@@ -146,18 +146,36 @@ annual_premium = insurable_value * premium_rate
 nominal_lifetime_cost = annual_premium * project_lifetime
 \end{lstlisting}
 
+\subsection{\texttt{calculate\_wildfire\_liability\_premium(insurance\_yaml, project\_lifetime)}}
+
+Calculates wildfire liability insurance premium using rate-on-line (ROL). Returns \texttt{None} if \texttt{insurance.wildfire\_liability.enabled} is false or \texttt{liability\_limit} / \texttt{rate\_on\_line} $\leq$ 0.
+
+\textbf{Returns:} Dict with \texttt{liability\_limit}, \texttt{rate\_on\_line}, \texttt{annual\_premium}, \texttt{nominal\_lifetime\_cost}, or \texttt{None}.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+if not wildfire_liability.get("enabled", False):
+    return None
+liability_limit = wildfire_liability.get("liability_limit", 0)
+rate_on_line = wildfire_liability.get("rate_on_line", 0)
+if liability_limit <= 0 or rate_on_line <= 0:
+    return None
+annual_premium = rate_on_line * liability_limit
+nominal_lifetime_cost = annual_premium * project_lifetime
+return {"liability_limit": ..., "rate_on_line": ..., "annual_premium": ..., "nominal_lifetime_cost": ...}
+\end{lstlisting}
+
 \subsection{\texttt{main()}}
 
 Main execution function that orchestrates the insurance cost calculation and output.
 
 \textbf{Workflow:}
 \begin{enumerate}
-    \item Loads project technical details and constructs category identifier
-    \item Loads build costs to get insurable asset values
-    \item Loads insurance parameters
-    \item Calls \texttt{calculate\_insurance\_costs()} to compute costs
-    \item Calculates present value of annual premiums
-    \item Displays results and writes to CSV
+    \item Loads project technical details; constructs category via \texttt{build\_category\_string}; gets \texttt{number\_of\_converters} from \texttt{get\_project\_data\_raw} if DC
+    \item Loads build costs via \texttt{load\_costs(category, total\_miles, number\_of\_converters, contingencies, reconductoring)}; loads insurance via \texttt{load\_insurance\_details()}
+    \item Calls \texttt{calculate\_insurance\_costs(...)} and \texttt{calculate\_wildfire\_liability\_premium(insurance\_yaml, project\_lifetime)}
+    \item \texttt{insurance\_start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}; \texttt{insurance\_pv} = \texttt{calculate\_present\_value(annual\_premium, wacc\_real, project\_lifetime, insurance\_start\_year)}; same for wildfire liability PV if enabled
+    \item \texttt{add\_insurance\_costs(csv\_results)}; \texttt{add\_wildfire\_liability\_costs(...)} (with zeros when disabled); \texttt{write\_batch\_summary()}
 \end{enumerate}
 
 \section{Example}
@@ -205,6 +223,10 @@ csv_results = {
     "premium_rate": results["premium_rate"],
 }
 csv_manager.add_insurance_costs(csv_results)
+if wildfire_liability_results:
+    csv_manager.add_wildfire_liability_costs(wildfire_csv_results)
+else:
+    csv_manager.add_wildfire_liability_costs({"annual_premium": 0, "nominal_lifetime_cost": 0, "pv_total": 0, "liability_limit": 0, "rate_on_line": 0})
 csv_manager.write_batch_summary()
 \end{lstlisting}
 
@@ -221,6 +243,10 @@ Different construction types may have different premium rates. The script first 
 \subsection{Payment Timing}
 
 Insurance premiums start at Commercial Operation Date (COD), which is after the delay and construction periods. Premiums are paid annually for the project lifetime.
+
+\subsection{Wildfire Liability}
+
+Wildfire liability insurance is optional and controlled by \texttt{insurance.wildfire\_liability.enabled} in the insurance YAML. When enabled, annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}. The script always writes \texttt{add\_wildfire\_liability\_costs} (with zeros when disabled) so batch summary columns remain consistent.
 
 \subsection{AFUDC Treatment}
 

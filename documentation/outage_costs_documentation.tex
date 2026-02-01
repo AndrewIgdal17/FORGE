@@ -84,11 +84,11 @@ where:
 
 \textbf{Inputs:}
 \begin{itemize}
-    \item Project technical details (construction type, capacity)
-    \item Physical details (terrain distribution)
+    \item Project technical details (construction type, capacity, project lifetime, delay years, construction years)
+    \item Terrain miles (\texttt{load\_terrain\_miles})
     \item Outage parameters (outage rates, duration by terrain, duration multipliers, VoLL tiers, capacity at risk factor, growth rate)
-    \item Discount rate source (social or WACC real)
-    \item Project lifetime
+    \item Discount rate (\texttt{discount\_rate\_type} from financing)
+    \item Financing data (for discount rate)
 \end{itemize}
 
 \textbf{Outputs:}
@@ -104,28 +104,18 @@ where:
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads project configuration and outage parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_project\_technical\_details}, \texttt{load\_financing\_details}, \texttt{load\_outage\_costs}, \texttt{load\_terrain\_miles}, \texttt{get\_financing\_data\_raw}
+    \item \texttt{constants.py} --- \texttt{MIN\_DISCOUNT\_RATE}, \texttt{GROWTH\_RATE\_TOLERANCE}
+    \item \texttt{financial\_utils.py} --- \texttt{get\_discount\_rate\_from\_config}, \texttt{calculate\_growing\_annuity\_pv}, \texttt{validate\_discount\_rate}, \texttt{calculate\_nominal\_growing\_series}
+    \item \texttt{calculation\_utils.py} --- \texttt{build\_category\_string}, \texttt{normalize\_construction\_type\_for\_yaml}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_outage\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
 
-\subsection{\texttt{get\_discount\_rate(outage\_yaml, financing\_yaml)}}
+\subsection{\texttt{get\_discount\_rate\_from\_config} (from \texttt{financial\_utils})}
 
-Gets discount rate based on configuration source.
-
-\textbf{Parameters:}
-\begin{itemize}
-    \item \texttt{outage\_yaml} (dict): Loaded outage YAML data
-    \item \texttt{financing\_yaml} (dict): Loaded financing YAML data
-\end{itemize}
-
-\textbf{Returns:}
-\begin{itemize}
-    \item \texttt{discount\_rate} (float): Discount rate to use
-    \item \texttt{source\_description} (str): Description of rate source
-\end{itemize}
+The script uses \texttt{financial\_utils.get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_type")}. In \texttt{main()}, it is called with \texttt{outage\_yaml}, \texttt{get\_financing\_data\_raw()}, and \texttt{rate\_key="discount\_rate\_type"}. Returns \texttt{(discount\_rate, source\_description)}.
 
 \subsection{\texttt{calculate\_voll\_cost\_piecewise(duration\_hours, mw\_lost, tiers)}}
 
@@ -151,7 +141,7 @@ hours_remaining = duration_hours
 prev_threshold = 0
 
 for tier in tiers:
-    max_hours = tier["max_hours"]
+    max_hours = float("inf") if tier["max_hours"] == ".inf" else tier["max_hours"]
     value_per_mwh = tier["value_per_mwh"]
     hours_in_tier = min(hours_remaining, max_hours - prev_threshold)
     if hours_in_tier > 0:
@@ -159,6 +149,8 @@ for tier in tiers:
         total_cost += mwh_in_tier * value_per_mwh
         hours_remaining -= hours_in_tier
         prev_threshold = max_hours
+    if hours_remaining <= 0:
+        break
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_outage\_costs(outage\_yaml, construction\_type, terrain\_miles, capacity\_mw, project\_lifetime, discount\_rate)}}
@@ -173,6 +165,8 @@ Calculates expected outage costs using simplified outage rate model.
     \item \texttt{capacity\_mw} (float): Project capacity in MW
     \item \texttt{project\_lifetime} (int): Project lifetime in years
     \item \texttt{discount\_rate} (float): Discount rate for PV calculation
+    \item \texttt{delay\_years} (float, optional): Years of delay before construction starts
+    \item \texttt{construction\_years} (float, optional): Years of construction (PV annuity starts after delay + construction)
 \end{itemize}
 
 \textbf{Returns:}
@@ -191,31 +185,27 @@ Calculates expected outage costs using simplified outage rate model.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# For each terrain segment:
+yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
+
 for terrain, miles in terrain_miles.items():
-    # Outage rate
-    outage_rate = outage_rates[construction_type][terrain]
-    lambda_segment = miles * outage_rate
-    
-    # Effective duration (multiplicative model)
-    H_base = duration_by_terrain[terrain]
-    duration_mult = duration_multiplier[construction_type]
-    H_eff = H_base * duration_mult
-    
-    # MW lost per event
-    mw_lost_per_event = capacity_at_risk * capacity_mw
-    
-    # Unserved energy per event
-    unserved_mwh_per_event = H_eff * mw_lost_per_event
-    
-    # Cost per event (piecewise VoLL)
-    cost_per_event = calculate_voll_cost_piecewise(
-        H_eff, mw_lost_per_event, voll_tiers
-    )
-    
-    # Annual cost for this terrain
-    annual_cost = lambda_segment * cost_per_event
-    EAC += annual_cost
+    if miles > 0:
+        outage_rate = outage_rates[yaml_construction_type].get(terrain, 0.0)
+        lambda_segment = miles * outage_rate
+
+        H_base = duration_by_terrain.get(terrain, 0)
+        duration_mult = duration_multiplier.get(yaml_construction_type, 1.0)
+        H_eff = H_base * duration_mult
+
+        mw_lost_per_event = capacity_at_risk * capacity_mw
+        unserved_mwh_per_event = H_eff * mw_lost_per_event
+        cost_per_event = calculate_voll_cost_piecewise(
+            H_eff, mw_lost_per_event, voll_tiers
+        )
+        annual_cost = lambda_segment * cost_per_event
+        # ... store in outage_by_terrain, accumulate lambda_total, EAC
+
+nominal_total = calculate_nominal_growing_series(...)
+pv_cost = calculate_growing_annuity_pv(..., delay_years=..., construction_years=...)
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -311,7 +301,7 @@ The capacity at risk factor ($\phi$) represents the fraction of project capacity
 
 \subsection{Growing Annuity Formula}
 
-Similar to wildfire costs, the script accounts for increasing outage risk over time using a growing annuity formula.
+Similar to wildfire costs, the script accounts for increasing outage risk over time using a growing annuity formula. Present value uses \texttt{calculate\_growing\_annuity\_pv} with \texttt{delay\_years} and \texttt{construction\_years} so the annuity stream starts after construction (delay + construction years).
 
 \subsection{AFUDC Treatment}
 

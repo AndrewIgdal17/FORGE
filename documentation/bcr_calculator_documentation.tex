@@ -46,12 +46,12 @@ The \texttt{bcr\_calculator.py} script calculates Benefit-Cost Ratios (BCR) and 
 
 This script calculates BCR metrics by:
 \begin{enumerate}
-    \item Loading scenario data from \texttt{batch\_summary.csv}
-    \item Aggregating benefits (congestion, curtailment, line loss benefits for reconductoring)
-    \item Aggregating costs by category (capital, operational, risk, delay)
+    \item Loading scenario data from \texttt{batch\_summary.csv} (robust lookup: exact, partial, prefix, last-row fallback)
+    \item Aggregating benefits (congestion, curtailment; line losses are always costs, never benefits)
+    \item Aggregating costs by category (capital, operational, energy/emissions, risk, delay) using \texttt{safe\_get\_numeric} and \texttt{prefer\_csv\_subtotal}
+    \item Applying optional \texttt{BCRConfig} exclusions (no\_emissions, no\_linelosses, capital\_only, no\_wildfire, etc.) when loading from YAML
     \item Calculating multiple BCR metrics (system, capital, excluding risk, excluding emissions)
-    \item Computing net benefits (total and excluding risk)
-    \item Displaying formatted summary and updating CSV
+    \item Computing net benefits; displaying formatted summary and updating CSV
 \end{enumerate}
 
 \subsection{Calculation Approach}
@@ -59,8 +59,8 @@ This script calculates BCR metrics by:
 The BCR calculation follows this structure:
 
 \begin{align}
-\text{Total Benefits (Conservative)} &= \text{Congestion (Haircut)} + \text{Curtailment (Haircut)} + \text{Line Loss Benefits} \\
-\text{Total Costs} &= \text{Capital} + \text{Operational} + \text{Risk} + \text{Delay} \\
+\text{Total Benefits (Conservative)} &= \text{Congestion (Haircut)} + \text{Curtailment (Haircut)} \quad \text{(line losses are costs, not benefits)} \\
+\text{Total Costs} &= \text{Capital} + \text{Operational} + \text{Energy/Emissions} + \text{Risk} + \text{Delay} \\
 \text{BCR}_{system} &= \frac{\text{Conservative Benefits}}{\text{Total Costs}} \\
 \text{BCR}_{capital} &= \frac{\text{Conservative Benefits}}{\text{Capital Costs}} \\
 \text{BCR}_{excluding\_risk} &= \frac{\text{Conservative Benefits}}{\text{Total Costs} - \text{Risk Costs}} \\
@@ -88,43 +88,27 @@ The BCR calculation follows this structure:
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{csv\_output\_manager.py} - Reads from and writes to \texttt{batch\_summary.csv} (see \texttt{csv\_output\_manager\_documentation.tex})
-    \item All CTCC cost/benefit calculation scripts - Aggregates their outputs
+    \item \texttt{path\_config.py} --- \texttt{OUTPUTS\_DIR}, \texttt{YAMLS\_DIR} (BCR config YAML optional)
+    \item \texttt{batch\_summary.csv} --- Reads scenario row by \texttt{scenario\_id}; writes BCR columns back
+    \item All CTCC cost/benefit scripts --- Aggregates their outputs from the batch summary row
 \end{itemize}
 
 \section{Key Functions}
 
 \subsection{\texttt{load\_scenario\_data(scenario\_id, output\_dir)}}
 
-Loads scenario data from \texttt{batch\_summary.csv} for the given scenario ID.
+Loads scenario data from \texttt{batch\_summary.csv}. Uses robust lookup: (1) exact match on \texttt{scenario\_id}, (2) partial match (substring), (3) prefix match (e.g.\ \texttt{sample\_0\_...}), (4) fallback to last row (for batch sensitivity runs). Converts numeric cells via \texttt{convert\_row\_to\_numeric}.
 
 \textbf{Parameters:}
 \begin{itemize}
-    \item \texttt{scenario\_id} (str): Unique identifier for the scenario
-    \item \texttt{output\_dir} (str): Directory containing \texttt{batch\_summary.csv}
+    \item \texttt{scenario\_id} (str): Scenario identifier
+    \item \texttt{output\_dir} (str): Directory containing \texttt{batch\_summary.csv} (default \texttt{OUTPUTS\_DIR})
 \end{itemize}
 
 \textbf{Returns:}
 \begin{itemize}
-    \item Dictionary with all data for the scenario, or None if not found
+    \item Dictionary with all data for the scenario, or \texttt{None} if file missing/empty
 \end{itemize}
-
-\textbf{Key Logic:}
-\begin{lstlisting}
-# Read CSV and find matching scenario_id
-with open(batch_path, 'r') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        if row.get('scenario_id') == scenario_id:
-            # Convert numeric strings to floats
-            for key, value in row.items():
-                if value and value != '':
-                    try:
-                        row[key] = float(value)
-                    except (ValueError, TypeError):
-                        pass
-            return row
-\end{lstlisting}
 
 \subsection{\texttt{calculate\_benefits(data)}}
 
@@ -142,23 +126,15 @@ Calculates total benefits from scenario data.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Present value benefits
-congestion_benefit_pv = data.get('congestion_benefit_pv', 0) or 0
-curtailment_benefit_pv = data.get('curtailment_benefit_pv', 0) or 0
-line_loss_pv = data.get('line_loss_cost_pv', 0) or 0
-
-# For reconductoring, line losses are negative (benefit)
-line_loss_benefit_pv = 0
-if line_loss_pv < 0:
-    line_loss_benefit_pv = abs(line_loss_pv)
-
-total_benefits_pv = (congestion_benefit_pv + curtailment_benefit_pv 
-                     + line_loss_benefit_pv)
-
-# Haircut benefits (conservative)
-total_benefits_haircut_pv = (congestion_benefit_haircut 
-                            + curtailment_benefit_haircut 
-                            + line_loss_benefit_pv)
+congestion_benefit_pv = safe_get_numeric(data, "congestion_benefit_pv")
+curtailment_benefit_pv = safe_get_numeric(data, "curtailment_benefit_pv")
+# Line losses are always costs, never benefits (line_loss_benefit_pv = 0)
+calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv
+total_benefits_pv = prefer_csv_subtotal(data, "total_benefits_pv", calculated_total_benefits)
+congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
+curtailment_benefit_haircut = safe_get_numeric(data, "curtailment_benefit_haircut_pv")
+total_benefits_haircut_pv = prefer_csv_subtotal(data, "total_benefits_haircut_pv",
+    congestion_benefit_haircut + curtailment_benefit_haircut)
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_costs(data)}}

@@ -1,0 +1,128 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=4,
+    showstringspaces=false
+}
+
+\title{Smart Output Documentation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The \texttt{smart\_output.py} module provides output abstraction for CTCC: it chooses \texttt{CSVOutputManager} or \texttt{JSONOutputManager} at instantiation time based on the \texttt{CTCC\_OUTPUT\_MODE} environment variable, then delegates all method calls to the underlying manager. Calculation scripts import \texttt{CTCCOutputManager} from \texttt{smart\_output} (which is an alias for \texttt{SmartOutputManager}) and use the same \texttt{add\_*}, \texttt{write\_batch\_summary} API regardless of mode; the backend writes either CSV (batch\_summary.csv and related) or JSON (intermediate \texttt{json\_output\_<id>\_<module>.json} files for aggregation by \texttt{ctcc.py}).
+
+\section{Method Overview}
+
+\subsection{Purpose}
+
+\begin{enumerate}
+    \item On \texttt{CTCCOutputManager()} (i.e.\ \texttt{SmartOutputManager()}): read \texttt{CTCC\_OUTPUT\_MODE} (default \texttt{csv}); if \texttt{json}, create \texttt{JSONOutputManager(scenario\_id=CTCC\_SCENARIO\_ID or ``default'')}; else create \texttt{csv\_output\_manager.CTCCOutputManager()}.
+    \item Expose the same API as the underlying manager: \texttt{add\_build\_costs}, \texttt{add\_row\_costs}, \texttt{write\_batch\_summary}, etc., via \texttt{\_\_getattr\_\_} delegation to \texttt{self.\_manager}.
+    \item Override \texttt{write\_batch\_summary}: in JSON mode, infer the calling script name (from the call stack or \texttt{sys.argv[0]} when \texttt{\_\_name\_\_ == '\_\_main\_\_'}), then call \texttt{self.\_manager.save\_to\_file(module\_name=module\_name)}; in CSV mode, call \texttt{self.\_manager.write\_batch\_summary()}.
+\end{enumerate}
+
+\subsection{Calculation Approach}
+
+Dispatch only; no cost/benefit formulas. The module does not implement output logic; it only selects the backend and delegates. All \texttt{add\_*} and write logic live in \texttt{csv\_output\_manager.py} or \texttt{json\_output\_manager.py} (see their documentation).
+
+\subsection{Inputs and Outputs}
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item \texttt{CTCC\_OUTPUT\_MODE} environment variable (read at \texttt{SmartOutputManager.\_\_init\_\_}): \texttt{csv} (default) or \texttt{json}.
+    \item \texttt{CTCC\_SCENARIO\_ID} (optional, used in JSON mode when constructing \texttt{JSONOutputManager}).
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item Same \texttt{CTCCOutputManager} API; backend writes CSV (batch\_summary.csv, etc.) or JSON (intermediate files; final \texttt{ctcc\_results\_<id>.json} is written by \texttt{ctcc.py} after aggregation).
+\end{itemize}
+
+\subsection{Integration with Other Scripts}
+
+\begin{itemize}
+    \item Every calculation script that writes results imports \texttt{CTCCOutputManager} from \texttt{smart\_output} and calls \texttt{add\_build\_costs(results)}, \texttt{write\_batch\_summary()}, etc.
+    \item \texttt{smart\_output} delegates to \texttt{csv\_output\_manager.CTCCOutputManager} or \texttt{json\_output\_manager.JSONOutputManager}; it does not implement \texttt{add\_*} or file format logic.
+\end{itemize}
+
+\section{Key Functions}
+
+\subsection{\texttt{SmartOutputManager} (exported as \texttt{CTCCOutputManager})}
+
+Wrapper class that holds either a \texttt{CSVOutputManager} or \texttt{JSONOutputManager} and delegates all attribute access to it.
+
+\subsection{\texttt{\_\_init\_\_()}}
+
+Reads \texttt{CTCC\_OUTPUT\_MODE} (default \texttt{csv}). If \texttt{json}, instantiates \texttt{JSONOutputManager(scenario\_id=os.environ.get('CTCC\_SCENARIO\_ID', 'default'))}; else instantiates \texttt{csv\_output\_manager.CTCCOutputManager()}. Stores the instance in \texttt{self.\_manager}.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+self.output_mode = os.environ.get('CTCC_OUTPUT_MODE', 'csv').lower()
+if self.output_mode == 'json':
+    from json_output_manager import JSONOutputManager
+    scenario_id = os.environ.get('CTCC_SCENARIO_ID', 'default')
+    self._manager = JSONOutputManager(scenario_id=scenario_id)
+else:
+    from csv_output_manager import CTCCOutputManager
+    self._manager = CTCCOutputManager()
+\end{lstlisting}
+
+\subsection{\texttt{write\_batch\_summary()}}
+
+In JSON mode: infers the calling script name (inspect stack; if \texttt{\_\_name\_\_ == '\_\_main\_\_'} use \texttt{os.path.basename(sys.argv[0])} without extension), then calls \texttt{self.\_manager.save\_to\_file(module\_name=module\_name)} and returns the result. In CSV mode: calls \texttt{self.\_manager.write\_batch\_summary()} and returns the result.
+
+\subsection{\texttt{\_\_getattr\_\_(name)}}
+
+Delegates to \texttt{getattr(self.\_manager, name)} so all \texttt{add\_build\_costs}, \texttt{add\_row\_costs}, \texttt{add\_bcr\_metrics}, etc., are forwarded to the underlying CSV or JSON manager.
+
+\section{Example}
+
+Script uses the same code for both modes:
+\begin{lstlisting}
+from smart_output import CTCCOutputManager
+output_manager = CTCCOutputManager()
+output_manager.add_build_costs(results)
+output_manager.write_batch_summary()
+\end{lstlisting}
+
+To force JSON mode (e.g. before instantiating):
+\begin{lstlisting}
+import os
+os.environ["CTCC_OUTPUT_MODE"] = "json"
+os.environ["CTCC_SCENARIO_ID"] = "test"
+from smart_output import CTCCOutputManager
+output_manager = CTCCOutputManager()
+output_manager.add_build_costs(results)
+output_manager.write_batch_summary()  # writes json_output_test_build_costs.json
+\end{lstlisting}
+
+\end{document}

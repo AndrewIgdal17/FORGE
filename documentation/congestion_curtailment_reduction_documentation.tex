@@ -118,9 +118,11 @@ E_{residual} &= E_{res,cong} + E_{res,curt} \\
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads project configuration (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_congestion\_curtailment\_reductions}, \texttt{load\_project\_technical\_details}, \texttt{load\_financing\_details}, \texttt{get\_project\_data\_raw}
+    \item \texttt{yaml\_loaders.py} --- \texttt{ProjectTechnicalDetails} (via centralized loader)
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}, \texttt{calculate\_cod\_year}
+    \item \texttt{constants.py} --- \texttt{MIN\_DISCOUNT\_RATE}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_congestion\_curtailment}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
@@ -146,18 +148,22 @@ Allocates effective capacity relief between curtailment and congestion to avoid 
 
 \textbf{Key Logic:}
 \begin{lstlisting}
+Hb = max(0.0, binding_hours_total)
+Hc = max(0.0, curtailment_hours_total)
 # Curtailment relief (MWh/yr)
-E_curt = Hc * min(DC, Cc)
+E_curt = Hc * min(DeltaC_eff_mw, Cc)
 curt_benefit = E_curt * lambda_c
+
+if Hb <= 0:
+    return {..., "H_bc": 0, "H_bnon": 0, "DeltaC_remain_bc_mw": DeltaC_eff_mw}
 
 # Overlap proxy between binding and curtailment time
 theta = min(1.0, Hc / Hb) if Hc > 0 else 0.0
-H_bc = theta * Hb  # Overlap hours
-H_bnon = (1.0 - theta) * Hb  # Non-overlap hours
-
-# Capacity used by curtailment in overlap
-DC_used_bc = min(DC, Cc)
-DC_remain_bc = max(0.0, DC - DC_used_bc)
+H_bc = theta * Hb
+H_bnon = (1.0 - theta) * Hb
+DeltaC_used_bc = min(DeltaC_eff_mw, Cc)
+DeltaC_remain_bc = max(0.0, DeltaC_eff_mw - DeltaC_used_bc)
+# Returns E_curt_mwh_yr, curtailment_benefit_$_yr, theta_overlap, H_bc, H_bnon, DeltaC_remain_bc_mw
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_congestion\_reduction\_costs(...)}}
@@ -176,30 +182,29 @@ Main function that calculates congestion and curtailment benefits.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Determine effective capacity relief
 if not reconductoring:
-    effective_capacity_relief = flow_factor * capacity_mw
+    effective_capacity_relief = max(0, flow_factor * capacity_mw)
 else:
-    effective_capacity_relief = capacity_mw - old_capacity_mw
+    effective_capacity_relief = max(0, capacity_mw - old_capacity_mw)
 
-# Allocate between curtailment and congestion
-alloc = allocate_curtailment_then_congestion(...)
+alloc = allocate_curtailment_then_congestion(DeltaC_eff_mw=effective_capacity_relief, ...)
+DeltaC_rem = alloc["DeltaC_remain_bc_mw"]
+H_bc, H_bnon = alloc["H_bc"], alloc["H_bnon"]
 
-# Congestion relief energy
-E_cong_bc = H_bc * min(DC_remain, average_exceedance)
+E_cong_bc = H_bc * min(DeltaC_rem, average_exceedance)
 E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
 E_near = k * near_binding_hours * effective_capacity_relief
 energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
 
-# Monetize with saturation haircut
-annual_congestion_benefit_raw = energy_congestion_reduction * congestion_price
-annual_congestion_benefit_haircut = (1 - saturation_factor) * annual_congestion_benefit_raw
+annual_congestion_reduction_cost_raw = energy_congestion_reduction * average_congestion_price
+annual_congestion_reduction_cost_haircut = (1 - saturation_factor) * annual_congestion_reduction_cost_raw
 
-# Residual exceedance (one number from congestion and/or curtailment)
+total_binding_hours = H_bc + H_bnon
 energy_residual_congestion = total_binding_hours * max(0, average_exceedance - effective_capacity_relief)
 energy_residual_curtailment = curtailment_hours_total * max(0, average_curtailment_mw - effective_capacity_relief)
 energy_residual_exceedance = energy_residual_congestion + energy_residual_curtailment
-annual_residual_exceedance_cost = energy_residual_exceedance * (residual_exceedance_value or average_congestion_price)
+residual_exceedance_value_used = residual_exceedance_value or average_congestion_price
+annual_residual_exceedance_cost = energy_residual_exceedance * residual_exceedance_value_used
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -259,15 +264,17 @@ The following example demonstrates a typical usage:
 \textbf{Integration Example:}
 
 \begin{lstlisting}
-# When called from ctcc.py:
+# When called from ctcc.py (main() builds results from CongestionReductionResults):
 csv_manager = CTCCOutputManager()
 results = {
-    "congestion_benefit_annual": annual_congestion_benefit_raw,
-    "congestion_benefit_pv": lifetime_congestion_benefit_pv,
-    "curtailment_benefit_annual": annual_curtailment_benefit,
-    "curtailment_benefit_pv": lifetime_curtailment_benefit_pv,
-    "residual_exceedance_annual": annual_residual_exceedance_cost,
-    # ... more fields
+    "congestion_benefit_annual": congestion_results.annual_congestion_reduction_cost_raw,
+    "congestion_benefit_nominal": congestion_results.lifetime_congestion_reduction_cost,
+    "congestion_benefit_pv": congestion_results.lifetime_congestion_reduction_cost_pv,
+    "curtailment_benefit_annual": congestion_results.annual_curtailment_benefit,
+    "curtailment_benefit_pv": congestion_results.lifetime_curtailment_benefit_pv,
+    "residual_exceedance_annual": congestion_results.annual_residual_exceedance_cost,
+    "residual_exceedance_pv": congestion_results.lifetime_residual_exceedance_cost_pv,
+    # ... delay costs, haircut variants, physical metrics
 }
 csv_manager.add_congestion_curtailment(results)
 csv_manager.write_batch_summary()
@@ -297,7 +304,7 @@ The script includes near-binding hours with a relief factor to capture benefits 
 
 \subsection{Delay and Construction Period Costs}
 
-The script calculates delay-period opportunity costs using the same curtailment-first allocation as operations, so overlapping hours are not double counted. This represents the value of forgone relief while the project is delayed.
+The script calculates delay-period opportunity costs using the same curtailment-first allocation as operations, so overlapping hours are not double counted. This represents the value of forgone relief while the project is delayed. Present values use \texttt{financial\_utils.calculate\_present\_value} with \texttt{start\_year=calculate\_cod\_year(delay\_years, construction\_years)} for benefits (annuity starts at COD); delay/construction costs use \texttt{start\_year=1} over \texttt{delay\_years + construction\_years}.
 
 \end{document}
 

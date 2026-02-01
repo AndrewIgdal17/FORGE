@@ -38,7 +38,7 @@
 
 \section{Introduction}
 
-This document describes the utility modules used throughout the CTCC: \texttt{yaml\_loaders.py}, \texttt{financial\_utils.py}, \texttt{calculation\_utils.py}, and \texttt{weighted\_miles.py}. These modules provide shared functionality for loading configuration data, performing financial calculations, computing transmission line parameters, and calculating terrain-adjusted distances.
+This document describes the utility modules used throughout the CTCC: \texttt{yaml\_loaders.py} (or \texttt{smart\_loaders}, which dispatches to YAML/JSON by mode), \texttt{financial\_utils.py}, \texttt{calculation\_utils.py}, \texttt{constants.py}, and \texttt{weighted\_miles.py}. They provide shared functionality for loading configuration data, financial calculations (PV, AFUDC, discount rate from config), transmission line parameters (phase current, line/converter losses), constants (e.g.\ \texttt{MIN\_DISCOUNT\_RATE}, \texttt{HOURS\_PER\_YEAR}), and terrain-adjusted distances.
 
 \section{yaml\_loaders.py}
 
@@ -145,9 +145,29 @@ total_miles = load_physical_details()
 
 \subsection{Method Overview}
 
-The \texttt{financial\_utils.py} module provides shared financial calculation functions for present value calculations, amortization, and AFUDC capitalization.
+The \texttt{financial\_utils.py} module provides shared financial calculation functions: present value (level and growing annuity), COD year, discount rate from config, amortization, and AFUDC capitalization.
 
 \subsection{Key Functions}
+
+\subsubsection{\texttt{get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_type")}}
+
+Returns discount rate and source description from config (e.g.\ wildfire, outage). Supports \texttt{discount\_rate\_type} or \texttt{discount\_rate\_source}; uses financing YAML for social or WACC real. Returns \texttt{(discount\_rate, source\_description)}.
+
+\subsubsection{\texttt{calculate\_cod\_year(delay\_years, construction\_years)}}
+
+Returns Commercial Operation Date year: \texttt{delay\_years + construction\_years + 1.0} (can be fractional). Used as \texttt{start\_year} in PV calculations so benefits/costs start at COD.
+
+\subsubsection{\texttt{calculate\_growing\_annuity\_pv(annual\_amount, growth\_rate, discount\_rate, project\_lifetime, delay\_years=0, construction\_years=0)}}
+
+Present value of a growing annuity starting at COD; used for wildfire, outage, and similar streams.
+
+\subsubsection{\texttt{calculate\_nominal\_growing\_series(annual\_amount, growth\_rate, project\_lifetime)}}
+
+Nominal (undiscounted) sum of growing annual amounts over project lifetime.
+
+\subsubsection{\texttt{validate\_discount\_rate(discount\_rate)}}
+
+Raises \texttt{ValueError} if discount rate $\le$ \texttt{constants.MIN\_DISCOUNT\_RATE} (avoids division by zero in PV).
 
 \subsubsection{\texttt{calculate\_present\_value(annual\_cost, wacc\_real, total\_years, start\_year=1)}}
 
@@ -389,9 +409,9 @@ losses_mwh_per_year = total_line_loss_mw * 8760
 lifetime_losses_mwh = losses_mwh_per_year * project_lifetime
 \end{lstlisting}
 
-\subsubsection{\texttt{calculate\_converter\_losses(number\_of\_converters, converter\_type, line\_utilization\_percent, capacity\_mw\_numeric, ac\_dc)}}
+\subsubsection{\texttt{calculate\_converter\_losses(number\_of\_converters, converter\_type, line\_utilization\_percent, capacity\_mw\_numeric, ac\_dc, converter\_loss\_percentage=None)}}
 
-Calculates converter losses based on number of converters (DC only).
+Calculates converter losses based on number of converters (DC only). Uses \texttt{converter\_loss\_percentage} from project if provided; otherwise \texttt{constants.LCC\_CONVERTER\_LOSS} or \texttt{VSC\_CONVERTER\_LOSS} by converter type.
 
 \textbf{Parameters:}
 \begin{itemize}
@@ -400,6 +420,7 @@ Calculates converter losses based on number of converters (DC only).
     \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal
     \item \texttt{capacity\_mw\_numeric} (float): Capacity in MW
     \item \texttt{ac\_dc} (str): "AC" or "DC"
+    \item \texttt{converter\_loss\_percentage} (float, optional): Override loss rate from project
 \end{itemize}
 
 \textbf{Returns:}
@@ -421,13 +442,24 @@ else:
     total_converter_losses_mwh = 0
 \end{lstlisting}
 
+\subsubsection{Other calculation\_utils functions}
+
+\begin{itemize}
+    \item \texttt{build\_category\_string(...)} --- Build project category for YAML/JSON lookups (e.g.\ \texttt{Overhead/AC/500MW/Advanced Aluminum/NA}).
+    \item \texttt{normalize\_construction\_type\_for\_yaml(construction\_type)} --- Map script construction type to YAML key (e.g.\ \texttt{overhead} $\to$ \texttt{Overhead}).
+    \item \texttt{get\_converter\_type(ac\_dc, converter\_type)} --- Return converter type for category (e.g.\ AC $\to$ \texttt{NA}).
+    \item \texttt{miles\_to\_acres(miles, row\_width\_feet)} --- Convert ROW miles to acres using \texttt{constants.FEET\_PER\_MILE} and \texttt{SQUARE\_FEET\_PER\_ACRE}.
+    \item \texttt{to\_percent(decimal)}, \texttt{from\_percent(percentage)} --- Convert between decimal and percentage.
+\end{itemize}
+
 \subsection{Example}
 
 \begin{lstlisting}
 from calculation_utils import (
     calculate_phase_current,
     full_load_adjusted,
-    calculate_line_losses
+    calculate_line_losses,
+    build_category_string,
 )
 
 # Calculate phase current
@@ -560,6 +592,24 @@ AFUDC capitalization compounds costs forward to Commercial Operation Date (COD).
 \subsection{Terrain Multipliers}
 
 Terrain multipliers reflect the relative cost/complexity of construction in different terrain types. For example, forested terrain may have a multiplier of 2.25, meaning construction costs 2.25x more per mile than baseline terrain.
+
+\section{constants.py}
+
+\subsection{Method Overview}
+
+The \texttt{constants.py} module centralizes magic numbers used across CTCC scripts.
+
+\subsection{Key Constants}
+
+\begin{itemize}
+    \item \texttt{FEET\_PER\_MILE}, \texttt{SQUARE\_FEET\_PER\_ACRE}, \texttt{HOURS\_PER\_YEAR}
+    \item \texttt{MIN\_DISCOUNT\_RATE} --- Minimum allowed discount rate (e.g.\ $-0.99$) to avoid division by zero in PV
+    \item \texttt{GROWTH\_RATE\_TOLERANCE}, \texttt{DISCOUNT\_GROWTH\_EQUALITY\_TOLERANCE}
+    \item \texttt{LCC\_CONVERTER\_LOSS}, \texttt{VSC\_CONVERTER\_LOSS} --- Converter loss fractions
+    \item \texttt{AC\_POWER\_FACTOR} --- Power factor for AC phase current
+    \item \texttt{CONSTRUCTION\_TYPE\_OVERHEAD}, \texttt{CONSTRUCTION\_TYPE\_UNDERGROUND}, \texttt{CONSTRUCTION\_TYPE\_SUBSEA}, etc.
+    \item \texttt{CONVERTER\_TYPE\_NA} --- Used when AC (no converter)
+\end{itemize}
 
 \end{document}
 

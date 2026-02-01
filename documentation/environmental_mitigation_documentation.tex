@@ -94,9 +94,11 @@ The uplift factor accounts for additional mitigation requirements beyond the phy
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads project configuration and environmental mitigation parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_row\_widths}, \texttt{load\_environmental\_mitigation}, \texttt{load\_financing\_details}, \texttt{load\_cost\_timing\_patterns}, \texttt{load\_afudc\_config}, \texttt{get\_physical\_data\_raw}, \texttt{get\_financing\_data\_raw}, \texttt{load\_terrain\_miles}
+    \item \texttt{calculation\_utils.py} --- \texttt{build\_category\_string}, \texttt{normalize\_construction\_type\_for\_yaml}, \texttt{miles\_to\_acres}
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}, \texttt{calculate\_afudc\_capitalized\_cost}, \texttt{validate\_discount\_rate}, \texttt{calculate\_construction\_start\_year}, \texttt{load\_afudc\_setup}
+    \item \texttt{path\_config.py} --- \texttt{YAMLS\_DIR}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_environmental\_mitigation}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
@@ -133,25 +135,20 @@ Calculates environmental mitigation costs including base mitigation and credit p
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Calculate acres by terrain
+construction_type = category.split("/")[0]
+yaml_construction_type = normalize_construction_type_for_yaml(construction_type, context="environmental")
 for terrain, miles in terrain_miles_dict.items():
     if miles > 0:
-        terrain_acres = (miles * 5280 * row_width_feet) / 43560
+        terrain_acres = miles_to_acres(miles, row_width_feet)
+        acres_by_terrain[terrain] = terrain_acres
+        total_base_acres += terrain_acres
         effective_acres = terrain_acres * uplift_factor
-        cost_per_acre = base_costs[construction_type][terrain]
+        cost_per_acre = base_costs.get(yaml_construction_type, {}).get(terrain, 0.0)
         base_cost += cost_per_acre * effective_acres
-
-# Calculate credit purchases
-wetland_impacted_acres = acres_by_terrain["wetland"] * uplift_factor
-wetlands_credits = (wetland_cost_per_acre * wetland_ratio 
-                     * wetland_impacted_acres)
-
-habitat_impacted_acres = sum(acres_by_terrain[t] for t in habitat_terrains) 
-                         * uplift_factor
-habitat_credits = (habitat_cost_per_acre * habitat_ratio 
-                   * habitat_impacted_acres)
-
-# For reconductoring projects, set credits to zero
+wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor
+habitat_impacted_acres = sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
+wetlands_credits = wetland_cost_per_acre * wetland_ratio * wetland_impacted_acres
+habitat_credits = habitat_cost_per_acre * habitat_ratio * habitat_impacted_acres
 if reconductoring:
     wetlands_credits = 0.0
     habitat_credits = 0.0
@@ -163,13 +160,11 @@ Main execution function that orchestrates the environmental mitigation cost calc
 
 \textbf{Workflow:}
 \begin{enumerate}
-    \item Loads project technical details and constructs category identifier
-    \item Loads ROW width and terrain distribution
-    \item Loads environmental mitigation parameters
-    \item Calls \texttt{calculate\_environmental\_mitigation\_costs()} to compute costs
-    \item Calculates AFUDC capitalized costs (base and credits separately)
-    \item Calculates present values (base spread over construction, credits upfront)
-    \item Displays results and writes to CSV
+    \item Loads project technical details; constructs category via \texttt{build\_category\_string}; loads ROW width via \texttt{load\_row\_widths(category)}; loads terrain via \texttt{load\_terrain\_miles()}; loads \texttt{em\_yaml} via \texttt{load\_environmental\_mitigation()}
+    \item Calls \texttt{calculate\_environmental\_mitigation\_costs(em\_yaml, category, terrain\_miles, row\_width\_feet, project\_details.reconductoring)}
+    \item Loads \texttt{load\_afudc\_setup()}; if \texttt{apply\_afudc}, calculates AFUDC for base and credits separately using \texttt{timing\_patterns["environmental\_mitigation\_base"]} and \texttt{["environmental\_mitigation\_credits"]}
+    \item Credits PV: one-time at \texttt{credit\_start\_year} = \texttt{calculate\_construction\_start\_year(delay\_years)}; base PV: \texttt{calculate\_present\_value(annual\_base\_cost, wacc\_real, construction\_years, credit\_start\_year)} (or one-time at \texttt{credit\_start\_year} if \texttt{construction\_years} is 0)
+    \item \texttt{add\_environmental\_mitigation(results)}; \texttt{write\_batch\_summary()}
 \end{enumerate}
 
 \section{Example}

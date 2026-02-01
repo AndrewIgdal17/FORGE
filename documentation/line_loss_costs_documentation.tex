@@ -95,9 +95,12 @@ The script uses a normalized comparison method that accounts for capacity differ
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{energy\_losses.py} - Calculates line losses for configurations (see \texttt{energy\_losses\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{energy\_losses.py} --- \texttt{get\_total\_energy\_losses} (primary config), \texttt{load\_physical\_details}, \texttt{load\_circuit\_and\_resistance\_details}, \texttt{calculate\_phase\_current}, \texttt{full\_load\_adjusted}, \texttt{calculate\_line\_losses}
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_financing\_social\_discount\_rate}, \texttt{load\_project\_technical\_details}, \texttt{get\_project\_data\_raw}
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}, \texttt{calculate\_cod\_year}
+    \item \texttt{calculation\_utils.py} --- \texttt{to\_percent}, \texttt{from\_percent}, \texttt{build\_category\_string}, \texttt{calculate\_converter\_losses}
+    \item \texttt{constants.py} --- \texttt{HOURS\_PER\_YEAR}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_line\_loss\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
@@ -111,42 +114,31 @@ Loads project technical details with line\_loss\_costs specific fields.
     \item Multiple values including construction type, AC/DC, capacity, conductor type, utilization, reconductoring status, timeline parameters
 \end{itemize}
 
-\subsection{\texttt{calculate\_configuration\_losses(construction\_type, ac\_dc, capacity\_mw, conductor\_type, converter\_type, line\_utilization\_percent, project\_lifetime)}}
+\subsection{\texttt{calculate\_configuration\_losses(...)}}
 
-Calculates line losses for a given configuration.
+Calculates line losses (conductor only) for a given configuration. Used for reconductoring baseline (old) and for greenfield comparison configurations. Optional \texttt{voltage\_kv\_override} allows using a different voltage (e.g., reconductoring: old tower voltage).
 
 \textbf{Parameters:}
 \begin{itemize}
-    \item \texttt{construction\_type} (str): Construction type
-    \item \texttt{ac\_dc} (str): AC or DC
-    \item \texttt{capacity\_mw} (float): Capacity in MW
-    \item \texttt{conductor\_type} (str): Type of conductor
-    \item \texttt{converter\_type} (str): Converter type (for DC) or "NA"
-    \item \texttt{line\_utilization\_percent} (float): Line utilization as decimal
-    \item \texttt{project\_lifetime} (int): Project lifetime in years
+    \item \texttt{construction\_type}, \texttt{ac\_dc}, \texttt{capacity\_mw}, \texttt{conductor\_type}, \texttt{converter\_type}, \texttt{line\_utilization\_percent}, \texttt{project\_lifetime}
+    \item \texttt{voltage\_kv\_override} (optional): If set, used instead of category lookup voltage
 \end{itemize}
 
 \textbf{Returns:}
 \begin{itemize}
-    \item \texttt{losses\_mwh\_per\_year} (float): Annual losses in MWh
-    \item \texttt{lifetime\_losses\_mwh} (float): Lifetime losses in MWh
+    \item \texttt{losses\_mwh\_per\_year}, \texttt{lifetime\_losses\_mwh} (conductor losses only; converter losses computed separately when needed)
 \end{itemize}
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Build category string for lookup
-category = f"{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
-
-# Load physical and circuit details
+category = build_category_string(construction_type, ac_dc, capacity_mw, conductor_type, converter_type)
 line_length = load_physical_details()
-voltage_kv, conductors_per_phase, ... = load_circuit_and_resistance_details(category)
-
-# Calculate phase current and full load adjustment
-phase_current = calculate_phase_current(...)
+circuit = load_circuit_and_resistance_details(category)
+voltage_kv = voltage_kv_override if voltage_kv_override is not None else circuit.voltage_kv
+capacity_mw_str = f"{capacity_mw}MW"
+phase_current = calculate_phase_current(capacity_mw_str, voltage_kv, circuit.number_of_phases, circuit.number_of_circuits_poles, ac_dc)
 full_load_adj = full_load_adjusted(line_utilization_percent)
-
-# Calculate line losses
-losses_mwh_per_year, lifetime_losses_mwh, ... = calculate_line_losses(...)
+losses_mwh_per_year, lifetime_losses_mwh, ... = calculate_line_losses(phase_current, full_load_adj, circuit.AC_75_resistance, circuit.DC_20_resistance, ac_dc, ...)
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -155,21 +147,16 @@ Main execution function that orchestrates the line loss cost/benefit calculation
 
 \textbf{Workflow for Greenfield:}
 \begin{enumerate}
-    \item Calculates losses for the greenfield configuration
-    \item Converts losses to costs (losses × electricity price)
-    \item Calculates present value
-    \item Writes to CSV as costs
+    \item Gets losses via \texttt{get\_total\_energy\_losses()} (line + converter)
+    \item Converts to costs (losses × \texttt{baseline\_electricity\_price}), \texttt{start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}
+    \item Calculates present value; writes results (including optional line/converter breakdown) to CSV
 \end{enumerate}
 
 \textbf{Workflow for Reconductoring:}
 \begin{enumerate}
-    \item Calculates losses for baseline (old) configuration
-    \item Calculates losses for new configuration
-    \item Calculates counterfactual baseline losses (old conductor at new capacity)
-    \item Compares using normalized method
-    \item Calculates benefits (reduced losses)
-    \item Calculates present value
-    \item Writes to CSV as benefits
+    \item Baseline (old) losses: \texttt{calculate\_configuration\_losses(old\_...)} + \texttt{calculate\_converter\_losses} for old config; new (primary) losses: \texttt{get\_total\_energy\_losses()}
+    \item Counterfactual: old conductor at new capacity via \texttt{calculate\_configuration\_losses} with new capacity
+    \item Benefit = (baseline or counterfactual total losses − new total losses) × price; PV and CSV as benefits
 \end{enumerate}
 
 \section{Example}
@@ -223,13 +210,18 @@ The following example demonstrates a typical usage:
 \textbf{Integration Example:}
 
 \begin{lstlisting}
-# When called from ctcc.py:
+# When called from ctcc.py (main() builds results):
 csv_manager = CTCCOutputManager()
 results = {
-    "annual_cost": annual_loss_cost,  # or annual_benefit for reconductoring
-    "total_nominal": lifetime_nominal_cost,  # or lifetime_benefit
-    "total_afudc": 0,  # Line losses not AFUDC-eligible
-    "total_pv": pv_loss_cost,  # or pv_benefit
+    "annual_cost": total_annual_cost,
+    "total_nominal": total_lifetime_nominal,
+    "total_afudc": 0,
+    "total_pv": total_pv_loss_cost,
+    "line_loss_mwh_yr": losses_mwh_per_year,
+    "converter_loss_mwh_yr": total_converter_losses_mwh,
+    "total_loss_mwh_yr": total_losses_mwh_per_year,
+    "line_annual_cost": ..., "converter_annual_cost": ...,
+    "line_cost_pv": ..., "converter_cost_pv": ...,
 }
 csv_manager.add_line_loss_costs(results)
 csv_manager.write_batch_summary()

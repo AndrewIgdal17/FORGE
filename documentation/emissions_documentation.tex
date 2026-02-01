@@ -100,35 +100,23 @@ where:
 
 This script integrates with:
 \begin{itemize}
-    \item \texttt{energy\_losses.py} - Calculates line and converter losses (see \texttt{energy\_losses\_documentation.tex})
-    \item \texttt{yaml\_loaders.py} - Loads emissions parameters (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \texttt{energy\_losses.py} --- \texttt{get\_total\_energy\_losses()} (loss data), \texttt{load\_project\_technical\_details}
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_emissions\_details}, \texttt{load\_financing\_social\_discount\_rate}, \texttt{get\_project\_data\_raw}
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}, \texttt{calculate\_cod\_year}
+    \item \texttt{calculation\_utils.py} --- \texttt{from\_percent}
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_emissions\_costs}, \texttt{write\_batch\_summary})
 \end{itemize}
 
 \section{Key Functions}
 
-\subsection{\texttt{calculate\_total\_energy\_losses()}}
+\subsection{Loss data from \texttt{energy\_losses.get\_total\_energy\_losses()}}
 
-Calculates total energy losses by reusing energy\_losses functions.
-
-\textbf{Returns:}
+The script does not compute losses itself; it calls \texttt{get\_total\_energy\_losses()} from \texttt{energy\_losses.py} and uses:
 \begin{itemize}
-    \item \texttt{total\_losses\_mwh\_per\_year} (float): Total energy losses in MWh/year
-    \item \texttt{project\_lifetime} (int): Project lifetime in years
+    \item \texttt{loss\_data["total\_losses\_mwh\_per\_year"]} --- total line + converter losses (MWh/year)
+    \item \texttt{loss\_data["project\_lifetime"]} --- project lifetime (years)
 \end{itemize}
-
-\textbf{Key Logic:}
-\begin{lstlisting}
-# Calculate line losses
-losses_mwh_per_year, ... = calculate_line_losses(...)
-
-# Calculate converter losses (for DC projects)
-total_converter_losses_mwh, ... = calculate_converter_losses(...)
-
-# Total energy losses
-total_losses_mwh_per_year = losses_mwh_per_year + total_converter_losses_mwh
-\end{lstlisting}
+Project delay/construction years come from \texttt{load\_project\_technical\_details()}.
 
 \subsection{\texttt{calculate\_energy\_mix\_by\_year(energy\_source\_mix\_details, project\_lifetime)}}
 
@@ -147,16 +135,14 @@ Calculates energy mix for each year with growth/decay rates.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# For each year:
+# sources: coal, oil, natural_gas, solar, wind, hydro, nuclear, other
+# Initial mix and rates from energy_source_mix_details (percentage, rate_of_change)
+initial_mix[source] = from_percent(details.get(source, {}).get("percentage", 0.0))
+rates[source] = details.get(source, {}).get("rate_of_change", 0.0)
 for year in range(1, project_lifetime + 1):
-    # Apply growth/decay rates
-    next_mix = {}
-    for source in sources:
-        next_mix[source] = current_mix[source] * (1 + rates[source])
-    
-    # Normalize to sum to 1.0
+    next_mix[source] = current_mix[source] * (1 + rates[source])
     total = sum(next_mix.values())
-    normalized_mix = {source: next_mix[source] / total for source in sources}
+    normalized_mix = {s: next_mix[s] / total for s in sources} if total > 0 else next_mix
     energy_mix_by_year.append(normalized_mix)
     current_mix = normalized_mix
 \end{lstlisting}
@@ -179,14 +165,15 @@ Calculates emissions for a single year.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# For each pollutant:
+# Intensity keys: co2_intensity_kg_per_mwh, sox_intensity_kg_per_mwh, nox_intensity_kg_per_mwh
+# Each maps source -> kg/MWh
+intensity_key_map = {"co2": "co2_intensity_kg_per_mwh", "sox": "...", "nox": "..."}
 for pollutant in ["co2", "sox", "nox"]:
-    emissions[pollutant] = 0.0
-    # For each energy source:
+    intensity_dict = emission_intensities.get(intensity_key_map[pollutant], {})
     for source in sources:
-        p_j = energy_mix[source]  # Percentage from source j
-        I_jk = emission_intensities[pollutant][source]  # Intensity
-        emissions[pollutant] += tec * p_j * I_jk
+        p_j = energy_mix.get(source, 0.0)
+        I_jk = intensity_dict.get(source, 0.0)
+        emissions[pollutant] += total_energy_compensated_mwh * p_j * I_jk
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_lifetime\_emissions(...)}}
@@ -213,28 +200,22 @@ Calculates emissions across project lifetime.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Calculate TEC
-tec = compensation_percent * total_losses_mwh_per_year
+start_year = calculate_cod_year(delay_years, construction_years)
+total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
+energy_mix_by_year = calculate_energy_mix_by_year(energy_source_mix_details, project_lifetime)
 
-# Calculate energy mix for each year
-energy_mix_by_year = calculate_energy_mix_by_year(...)
-
-# For each year:
 for year, energy_mix in enumerate(energy_mix_by_year, 1):
-    # Calculate emissions
-    emissions = calculate_emissions_by_year(tec, energy_mix, emission_intensities)
-    
-    # Calculate costs: C_k = E_k × c_k
+    emissions = calculate_emissions_by_year(total_energy_compensated_mwh, energy_mix, emission_intensities)
     year_cost = 0.0
     for pollutant, emissions_kg in emissions.items():
-        cost_per_kg = societal_costs[f"{pollutant}_cost_per_kg"]
+        cost_per_kg = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
         pollutant_cost = emissions_kg * cost_per_kg
         year_cost += pollutant_cost
-    
-    # Calculate present value
+        total_costs_by_pollutant[pollutant] += pollutant_cost
     year_discount_year = start_year + year - 1
     year_pv = year_cost / ((1 + social_discount_rate) ** year_discount_year)
     lifetime_cost_pv += year_pv
+    # total_costs_by_pollutant_pv updated per pollutant similarly
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -287,15 +268,17 @@ The following example demonstrates a typical usage of the emissions cost calcula
 \textbf{Integration Example:}
 
 \begin{lstlisting}
-# When called from ctcc.py:
+# When called from ctcc.py (main() builds results from LifetimeEmissionsResults):
 csv_manager = CTCCOutputManager()
 results = {
-    "total_nominal": lifetime_cost,
-    "total_pv": lifetime_cost_pv,
-    "co2_nominal": total_costs_by_pollutant["co2"],
-    "sox_nominal": total_costs_by_pollutant["sox"],
-    "nox_nominal": total_costs_by_pollutant["nox"],
-    # ... more fields
+    "total_nominal": emissions_results.lifetime_cost,
+    "total_pv": emissions_results.lifetime_cost_pv,
+    "annual_cost": emissions_results.avg_annual_costs,
+    "co2_emissions_kg": emissions_results.total_emissions["co2"],
+    "co2_cost_nominal": emissions_results.total_costs_by_pollutant["co2"],
+    "co2_cost_pv": emissions_results.total_costs_by_pollutant_pv["co2"],
+    "sox_emissions_kg": ..., "sox_cost_nominal": ..., "sox_cost_pv": ...,
+    "nox_emissions_kg": ..., "nox_cost_nominal": ..., "nox_cost_pv": ...,
 }
 csv_manager.add_emissions_costs(results)
 csv_manager.write_batch_summary()

@@ -233,17 +233,29 @@ Legacy output keys may still use ``rent'' (e.g., \texttt{rent\_nominal}) for com
 
 \subsection{\texttt{calculate\_zone\_costs(row\_width\_feet)}}
 
-Returns, for all zones with miles $> 0$, the potential yearly holding cost, potential one-time acquisition cost, potential yearly annual ROW payment, and total acres. The caller then applies the ROW agreement type to zero out terms that do not apply.
+Returns \texttt{(yearly\_holding\_cost, acquisition\_cost, yearly\_rent\_cost, total\_acres)} for all zones with miles $> 0$. Uses \texttt{load\_row\_details()} and \texttt{miles\_to\_acres(miles, row\_width\_feet)}; sums zone acres $\times$ \texttt{acquisition\_cost}, \texttt{hold\_cost}, \texttt{rent\_cost} per zone. The caller applies the ROW agreement type to zero out terms that do not apply.
+
+\textbf{Key logic:}
+\begin{lstlisting}
+row_details = load_row_details()
+for zone_details in row_details["right_of_way"].values():
+    if zone_details["miles"] > 0:
+        zone_acres = miles_to_acres(zone_details["miles"], row_width_feet)
+        acquisition_cost += zone_acres * zone_details["acquisition_cost"]
+        yearly_rent_cost += zone_acres * zone_details["rent_cost"]
+        yearly_holding_cost += zone_acres * zone_details["hold_cost"]
+return yearly_holding_cost, acquisition_cost, yearly_rent_cost, total_acres
+\end{lstlisting}
 
 \subsection{\texttt{main()}}
 
 \begin{enumerate}
-    \item Load project technical details and compute \texttt{row\_agreement\_type} (from field or inferred from \texttt{reconductoring} / \texttt{uses\_existing\_row}).
-    \item Load ROW width and call \texttt{calculate\_zone\_costs()}.
-    \item Apply agreement type: set acquisition, holding, or annual ROW payment to zero as required.
-    \item Compute nominal totals over the correct time windows (e.g., holding during delay; annual ROW payment from year 1 for lease, or from construction start for federal hybrid; etc.).
-    \item Apply AFUDC to acquisition (if applicable).
-    \item Compute PV for each component and total; write results and batch summary.
+    \item Load project technical details; construct category via \texttt{build\_category\_string}; get \texttt{row\_agreement\_type} from \texttt{getattr(project\_details, "row\_agreement\_type", None)} or infer (\texttt{lease\_license\_existing} if reconductoring or uses\_existing\_row, else \texttt{permanent\_easement\_new}).
+    \item Load ROW width via \texttt{load\_row\_widths(category)}; call \texttt{calculate\_zone\_costs(row\_width\_feet)}.
+    \item Apply agreement type: \texttt{lease\_license\_existing} $\to$ acquisition = 0, holding = 0; \texttt{permanent\_easement\_new} or \texttt{fee\_simple} $\to$ yearly\_rent\_cost = 0; \texttt{federal\_hybrid} keeps all.
+    \item Compute nominal totals (holding $\times$ delay years; rent over appropriate years; acquisition\_cost\_used); \texttt{rent\_start\_year} and \texttt{rent\_total\_years} depend on agreement type (lease: year 1, delay+construction+lifetime; else: construction start, construction+lifetime).
+    \item Load \texttt{load\_afudc\_setup()}; if \texttt{apply\_afudc} and acquisition used, \texttt{calculate\_afudc\_capitalized\_cost(acquisition\_cost\_used, timing\_patterns["row\_acquisition"], ...)}; else acquisition PV = acquisition / $(1+r)^{\mathrm{delay\_years}}$.
+    \item \texttt{add\_row\_costs(results)} with \texttt{total\_nominal}, \texttt{total\_afudc}, \texttt{total\_pv}, \texttt{acquisition\_nominal}, \texttt{holding\_nominal}, \texttt{rent\_nominal}; \texttt{write\_batch\_summary()}.
 \end{enumerate}
 
 \section{Present Value Timing}
@@ -262,6 +274,13 @@ Returns, for all zones with miles $> 0$, the potential yearly holding cost, pote
 
 \section{Integration}
 
-The script uses \texttt{smart\_loaders} (YAML or JSON), \texttt{financial\_utils} (PV, AFUDC), and \texttt{smart\_output} (CSV/JSON). See utilities and output manager documentation for details.
+The script integrates with:
+\begin{itemize}
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_row\_widths}, \texttt{load\_row\_details}, \texttt{load\_financing\_details}, \texttt{load\_cost\_timing\_patterns}, \texttt{load\_afudc\_config}, \texttt{get\_financing\_data\_raw}
+    \item \texttt{calculation\_utils.py} --- \texttt{build\_category\_string}, \texttt{miles\_to\_acres}
+    \item \texttt{financial\_utils.py} --- \texttt{calculate\_present\_value}, \texttt{calculate\_afudc\_capitalized\_cost}, \texttt{validate\_discount\_rate}, \texttt{calculate\_construction\_start\_year}, \texttt{load\_afudc\_setup}
+    \item \texttt{path\_config.py} --- \texttt{YAMLS\_DIR} (used by loaders)
+    \item \texttt{smart\_output.py} --- \texttt{CTCCOutputManager} (\texttt{add\_row\_costs}, \texttt{write\_batch\_summary})
+\end{itemize}
 
 \end{document}

@@ -68,9 +68,15 @@ All CSVs automatically include technical parameters as the first columns for eas
 
 This script is used by:
 \begin{itemize}
-    \item All cost/benefit calculation scripts - Each calls appropriate \texttt{add\_*} methods
-    \item \texttt{bcr\_calculator.py} - Adds BCR metrics (see \texttt{bcr\_calculator\_documentation.tex})
-    \item \texttt{ctcc.py} - Coordinates scenario ID and final summary
+    \item All cost/benefit calculation scripts --- via \texttt{smart\_output.CTCCOutputManager} (dispatches to \texttt{CSVOutputManager} or \texttt{JSONOutputManager} by mode); each calls \texttt{add\_*} methods and \texttt{write\_batch\_summary}
+    \item \texttt{bcr\_calculator.py} --- Reads \texttt{batch\_summary.csv} and writes BCR columns
+    \item \texttt{ctcc.py} --- Sets \texttt{CTCC\_SCENARIO\_ID} and coordinates final summary
+\end{itemize}
+
+\textbf{Dependencies:}
+\begin{itemize}
+    \item \texttt{path\_config.py} --- \texttt{OUTPUTS\_DIR}, \texttt{YAMLS\_DIR}
+    \item \texttt{smart\_loaders.py} --- \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_financing\_social\_discount\_rate}, \texttt{get\_project\_data\_raw} (for \texttt{load\_technical\_details}; supports YAML and JSON input mode)
 \end{itemize}
 
 \section{Key Functions}
@@ -87,27 +93,21 @@ Initializes the output manager.
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Scenario ID priority: explicit > environment variable > auto-generated
-self.scenario_id = (scenario_id or 
-                   os.environ.get('CTCC_SCENARIO_ID') or 
-                   datetime.now().strftime("%Y%m%d_%H%M%S"))
-
-# Load technical details and prepend to batch_summary_data
+# Scenario ID: explicit > CTCC_SCENARIO_ID env > auto-generated (with microseconds)
+self.scenario_id = (scenario_id or os.environ.get("CTCC_SCENARIO_ID")
+    or datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+self.timestamp = datetime.now().isoformat()
 technical_details = self.load_technical_details()
-self.batch_summary_data = {
-    **technical_details,  # Technical parameters first
-    "scenario_id": self.scenario_id,
-    "timestamp": self.timestamp,
-}
+self.batch_summary_data = {**technical_details, "scenario_id": self.scenario_id, "timestamp": self.timestamp}
 \end{lstlisting}
 
 \subsection{\texttt{load\_technical\_details()}}
 
-Loads technical parameters from YAML files to include in CSV outputs.
+Loads technical parameters using centralized loaders (\texttt{smart\_loaders}: \texttt{load\_project\_technical\_details}, \texttt{load\_physical\_details}, \texttt{load\_financing\_social\_discount\_rate}, \texttt{get\_project\_data\_raw}) to include in CSV outputs. Supports both YAML and JSON input modes.
 
 \textbf{Returns:}
 \begin{itemize}
-    \item Dictionary of technical parameters (project name, construction type, capacity, etc.)
+    \item Dictionary of technical parameters (project name, construction type, capacity, line length, discount rate, timeline, etc.)
 \end{itemize}
 
 \textbf{Technical Parameters Loaded:}
