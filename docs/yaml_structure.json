@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "total_yamls": 23,
-    "total_fields": 4103,
+    "total_yamls": 22,
+    "total_fields": 4109,
     "total_configurations": 0,
     "categories": {
       "Technical": {
         "file_count": 5,
-        "field_count": 158
+        "field_count": 159
       },
       "Physical": {
         "file_count": 1,
@@ -26,11 +26,11 @@
       },
       "Environmental": {
         "file_count": 4,
-        "field_count": 104
+        "field_count": 103
       },
       "Benefits": {
-        "file_count": 2,
-        "field_count": 22
+        "file_count": 1,
+        "field_count": 28
       },
       "Configurations": {
         "file_count": 3,
@@ -52,7 +52,7 @@
             "fields": {
               "name": {
                 "type": "str",
-                "default": "S4_Reconductoring_329to657MW",
+                "default": "S1_California_Rural_Overhead_AC_657MW",
                 "units": "detected",
                 "description": "",
                 "path": "01_project_technical_details.project.name"
@@ -87,7 +87,7 @@
               },
               "conductor_type": {
                 "type": "str",
-                "default": "Advanced Aluminum Conductor",
+                "default": "Standard Aluminum Conductor",
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.conductor_type"
@@ -122,35 +122,42 @@
               },
               "reconductoring": {
                 "type": "bool",
-                "default": true,
+                "default": false,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.reconductoring"
               },
+              "uses_existing_row": {
+                "type": "bool",
+                "default": false,
+                "units": null,
+                "description": "",
+                "path": "01_project_technical_details.project.uses_existing_row"
+              },
               "old_capacity_mw": {
-                "type": "int",
-                "default": 329,
+                "type": "NoneType",
+                "default": null,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.old_capacity_mw"
               },
               "old_conductor_type": {
-                "type": "str",
-                "default": "Standard Aluminum Conductor",
+                "type": "NoneType",
+                "default": null,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.old_conductor_type"
               },
               "old_ac_dc": {
-                "type": "str",
-                "default": "AC",
+                "type": "NoneType",
+                "default": null,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.old_ac_dc"
               },
               "greenfield_comparison_capacity_mw": {
-                "type": "int",
-                "default": 0,
+                "type": "NoneType",
+                "default": null,
                 "units": null,
                 "description": "Greenfield capacity comparison (only used when reconductoring: False)",
                 "path": "01_project_technical_details.project.greenfield_comparison_capacity_mw"
@@ -164,7 +171,7 @@
               }
             },
             "subsections": {},
-            "field_count": 16
+            "field_count": 17
           },
           "timeline": {
             "type": "object",
@@ -177,8 +184,8 @@
                 "path": "01_project_technical_details.timeline.construction_years"
               },
               "delay_years": {
-                "type": "float",
-                "default": 0.5,
+                "type": "int",
+                "default": 4,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.timeline.delay_years"
@@ -195,13 +202,13 @@
             "field_count": 3
           }
         },
-        "field_count": 19
+        "field_count": 20
       },
-      "field_count": 19,
+      "field_count": 20,
       "comments": {
         "greenfield_comparison_capacity_mw": "Greenfield capacity comparison (only used when reconductoring: False)"
       },
-      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  name: \"S4_Reconductoring_329to657MW\"\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 657 # MW\n  conductor_type: \"Advanced Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: .70 # % [0,1]\n\n  baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)\n\n  reconductoring: True # True or False\n  old_capacity_mw: 329 # MW\n  old_conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: \"AC\" # AC or DC\n\n  # Greenfield capacity comparison (only used when reconductoring: False)\n  greenfield_comparison_capacity_mw: 0 # Optional: Capacity in MW for comparison configuration\n  greenfield_comparison_conductor_type: \"Standard Aluminum Conductor\" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 0.5 # years (>= 0)\n  project_lifetime: 50 # years (> 0)\n"
+      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  name: \"S1_California_Rural_Overhead_AC_657MW\"\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 657 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)\n\n  reconductoring: False # True or False\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Greenfield capacity comparison (only used when reconductoring: False)\n  greenfield_comparison_capacity_mw: null # Optional: Capacity in MW for comparison configuration\n  greenfield_comparison_conductor_type: \"Standard Aluminum Conductor\" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 4 # years (>= 0)\n  project_lifetime: 50 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
     },
     "02_project_physical_details.yaml": {
       "filename": "02_project_physical_details.yaml",
@@ -220,28 +227,28 @@
                 "fields": {
                   "forested": {
                     "type": "int",
-                    "default": 30,
+                    "default": 20,
                     "units": null,
                     "description": "",
                     "path": "02_project_physical_details.terrain.terrain_miles.forested"
                   },
                   "scrubbed_flat": {
                     "type": "int",
-                    "default": 50,
+                    "default": 40,
                     "units": null,
                     "description": "",
                     "path": "02_project_physical_details.terrain.terrain_miles.scrubbed_flat"
                   },
                   "wetland": {
                     "type": "int",
-                    "default": 10,
+                    "default": 5,
                     "units": null,
                     "description": "",
                     "path": "02_project_physical_details.terrain.terrain_miles.wetland"
                   },
                   "farmland": {
                     "type": "int",
-                    "default": 40,
+                    "default": 25,
                     "units": null,
                     "description": "",
                     "path": "02_project_physical_details.terrain.terrain_miles.farmland"
@@ -262,7 +269,7 @@
                   },
                   "rolling_hills": {
                     "type": "int",
-                    "default": 20,
+                    "default": 10,
                     "units": null,
                     "description": "",
                     "path": "02_project_physical_details.terrain.terrain_miles.rolling_hills"
@@ -363,7 +370,7 @@
       },
       "field_count": 18,
       "comments": {},
-      "raw_content": "# Project Physical Details\n# Physical characteristics and terrain information\n\nterrain:\n  terrain_miles: # miles by terrain type (>= 0)\n    forested: 30 # miles (>= 0)\n    scrubbed_flat: 50 # miles (>= 0)\n    wetland: 10 # miles (>= 0)\n    farmland: 40 # miles (>= 0)\n    desert_barren: 0 # miles (>= 0)\n    urban: 0 # miles (>= 0)\n    rolling_hills: 20 # miles (>= 0)\n    mountain: 0 # miles (>= 0)\n    subsea: 0 # miles (>= 0)\n\n  terrain_multipliers: # terrain multipliers\n    forested: 2.25\n    scrubbed_flat: 1\n    wetland: 1.2\n    farmland: 1\n    desert_barren: 1.05\n    urban: 1.59\n    rolling_hills: 1.4\n    mountain: 1.75\n    subsea: 1\n"
+      "raw_content": "# Project Physical Details\n# Physical characteristics and terrain information\n\nterrain:\n  terrain_miles: # miles by terrain type (>= 0) - Scenario 1: 100 mi total, direct route, high wildfire risk\n    forested: 20 # miles (>= 0)\n    scrubbed_flat: 40 # miles (>= 0)\n    wetland: 5 # miles (>= 0)\n    farmland: 25 # miles (>= 0)\n    desert_barren: 0 # miles (>= 0)\n    urban: 0 # miles (>= 0)\n    rolling_hills: 10 # miles (>= 0)\n    mountain: 0 # miles (>= 0) - Note: mountainous terrain included in forested/rolling_hills\n    subsea: 0 # miles (>= 0)\n\n  terrain_multipliers: # terrain multipliers\n    forested: 2.25\n    scrubbed_flat: 1\n    wetland: 1.2\n    farmland: 1\n    desert_barren: 1.05\n    urban: 1.59\n    rolling_hills: 1.4\n    mountain: 1.75\n    subsea: 1\n"
     },
     "03_financing.yaml": {
       "filename": "03_financing.yaml",
@@ -616,7 +623,7 @@
                 "fields": {
                   "enabled": {
                     "type": "bool",
-                    "default": false,
+                    "default": true,
                     "units": null,
                     "description": "",
                     "path": "04_insurance.insurance.wildfire_liability.enabled"
@@ -630,7 +637,7 @@
                   },
                   "rate_on_line": {
                     "type": "float",
-                    "default": 0.6,
+                    "default": 0.3,
                     "units": null,
                     "description": "",
                     "path": "04_insurance.insurance.wildfire_liability.rate_on_line"
@@ -651,7 +658,7 @@
         "premium_by_construction_type": "If not specified, uses premium_rate above",
         "wildfire_liability": "Wildfire liability insurance (optional)"
       },
-      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n\n  # Premium rate can vary by construction type (optional)\n  # If not specified, uses premium_rate above\n  premium_by_construction_type:\n    overhead: 0.002 # 0.2% [0,1]\n    underground: 0.0015 # 0.15% [0,1] (typically lower risk)\n    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)\n\n  # Wildfire liability insurance (optional)\n  wildfire_liability:\n    enabled: false # Set to false to disable\n    liability_limit: 1000000000 # $1B liability limit (>= 0)\n    rate_on_line: 0.6 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)\n"
+      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n\n  # Premium rate can vary by construction type (optional)\n  # If not specified, uses premium_rate above\n  premium_by_construction_type:\n    overhead: 0.002 # 0.2% [0,1]\n    underground: 0.0015 # 0.15% [0,1] (typically lower risk)\n    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)\n\n  # Wildfire liability insurance (optional)\n  wildfire_liability:\n    enabled: true # Set to false to disable\n    liability_limit: 1000000000 # $1B liability limit (>= 0)\n    rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)\n"
     },
     "05_delays.yaml": {
       "filename": "05_delays.yaml",
@@ -746,7 +753,7 @@
                 "type": "int",
                 "default": 5000000000,
                 "units": null,
-                "description": "Event severity (consequence)",
+                "description": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).",
                 "path": "06_wildfire_costs.wildfire.severity_per_event"
               },
               "risk_growth_rate": {
@@ -762,13 +769,6 @@
                 "units": null,
                 "description": "Discount rate configuration",
                 "path": "06_wildfire_costs.wildfire.discount_rate_source"
-              },
-              "discount_rate_custom": {
-                "type": "float",
-                "default": 0.03,
-                "units": null,
-                "description": "",
-                "path": "06_wildfire_costs.wildfire.discount_rate_custom"
               }
             },
             "subsections": {
@@ -784,7 +784,7 @@
                   },
                   "scrubbed_flat": {
                     "type": "float",
-                    "default": 0.001,
+                    "default": 0.0002,
                     "units": null,
                     "description": "",
                     "path": "06_wildfire_costs.wildfire.ignition_rates_by_terrain.scrubbed_flat"
@@ -826,7 +826,7 @@
                   },
                   "mountain": {
                     "type": "float",
-                    "default": 0.0001,
+                    "default": 0.002,
                     "units": null,
                     "description": "",
                     "path": "06_wildfire_costs.wildfire.ignition_rates_by_terrain.mountain"
@@ -871,20 +871,20 @@
                 "field_count": 3
               }
             },
-            "field_count": 16
+            "field_count": 15
           }
         },
-        "field_count": 16
+        "field_count": 15
       },
-      "field_count": 16,
+      "field_count": 15,
       "comments": {
-        "severity_per_event": "Event severity (consequence)",
+        "severity_per_event": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).",
         "risk_growth_rate": "Risk growth (optional - wildfire risk increases over time)",
         "discount_rate_source": "Discount rate configuration",
         "ignition_rates_by_terrain": "Units: events per mile per year (>= 0)",
         "ignition_rate_multiplier": "All multipliers (>= 0)"
       },
-      "raw_content": "# Wildfire Risk Cost Parameters\n# Expected wildfire costs based on ignition rates and severity\n\nwildfire:\n  # Event severity (consequence)\n  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event) (>= 0)\n\n  # Risk growth (optional - wildfire risk increases over time)\n  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)\n\n  # Discount rate configuration\n  discount_rate_source: \"social\" # Options: \"social\" | \"wacc_real\" | \"custom\"\n  discount_rate_custom: 0.03 # Used only if discount_rate_source = \"custom\"\n\n  # Base ignition rates by terrain (for overhead baseline)\n  # Units: events per mile per year (>= 0)\n  ignition_rates_by_terrain:\n    forested: 0.002 # Higher risk in forested areas (>= 0)\n    scrubbed_flat: 0.001 # (>= 0)\n    wetland: 0.0001 # Lower risk in wet areas (>= 0)\n    farmland: 0.0002 # (>= 0)\n    desert_barren: 0.0001 # (>= 0)\n    urban: 0.0001 # (>= 0)\n    rolling_hills: 0.001 # (>= 0)\n    mountain: 0.0001 # (>= 0)\n    subsea: 0.0 # No wildfire risk subsea (>= 0)\n\n  # Ignition rate multiplier by construction type\n  # Effective rate = ignition_rates_by_terrain × multiplier\n  # All multipliers (>= 0)\n  ignition_rate_multiplier:\n    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)\n    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)\n    subsea: 0.0 # No wildfire risk (>= 0)\n"
+      "raw_content": "# Wildfire Risk Cost Parameters\n# Expected wildfire costs based on ignition rates and severity\n\nwildfire:\n  # Event severity: uninsured residual loss per event ($). Include deductibles, above limit,\n  # exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).\n  severity_per_event: 5000000000 # (>= 0)\n\n  # Risk growth (optional - wildfire risk increases over time)\n  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)\n\n  # Discount rate configuration\n  discount_rate_source: \"social\" # Options: \"social\" | \"wacc_real\"\n\n  # Base ignition rates by terrain (for overhead baseline)\n  # Units: events per mile per year (>= 0)\n  ignition_rates_by_terrain:\n    forested: 0.002 # Higher risk in forested areas (>= 0)\n    scrubbed_flat: 0.0002 # (>= 0)\n    wetland: 0.0001 # Lower risk in wet areas (>= 0)\n    farmland: 0.0002 # (>= 0)\n    desert_barren: 0.0001 # (>= 0)\n    urban: 0.0001 # (>= 0)\n    rolling_hills: 0.001 # (>= 0)\n    mountain: 0.002 # (>= 0)\n    subsea: 0.0 # No wildfire risk subsea (>= 0)\n\n  # Ignition rate multiplier by construction type\n  # Effective rate = ignition_rates_by_terrain × multiplier\n  # All multipliers (>= 0)\n  ignition_rate_multiplier:\n    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)\n    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)\n    subsea: 0.0 # No wildfire risk (>= 0)\n"
     },
     "07_outage_costs.yaml": {
       "filename": "07_outage_costs.yaml",
@@ -16358,248 +16358,295 @@
       },
       "raw_content": "# Emissions Reductions\n# Environmental benefits from emissions reductions\n\nemissions_reductions:\n  compensation_percent: 0.9 # [0,1]\n  # User Inputs - Energy Source Mix (Yellow)\n  energy_source_mix:\n    coal:\n      percentage: 10\n      # will have to be normalized\n      rate_of_change: -0.05\n    oil:\n      percentage: 2\n      # will have to be normalized\n      rate_of_change: -0.04\n    natural_gas:\n      percentage: 38\n      # will have to be normalized\n      rate_of_change: 0.0\n    solar:\n      percentage: 10\n      # will have to be normalized\n      rate_of_change: 0.05\n    wind:\n      percentage: 26\n      # will have to be normalized\n      rate_of_change: 0.04\n    hydro:\n      percentage: 5\n      # will have to be normalized\n      rate_of_change: 0.0\n    nuclear:\n      percentage: 5\n      # will have to be normalized\n      rate_of_change: 0.0\n    other:\n      percentage: 4\n      # will have to be normalized\n      rate_of_change: 0.0\n\n  # User Inputs - Emission Intensities (Blue)\n  emission_intensities:\n    co2_intensity_kg_per_mwh:\n      coal: 820\n      oil: 650\n      natural_gas: 450\n      solar: 48\n      wind: 12\n      hydro: 4\n      nuclear: 12\n      other: 0\n    sox_intensity_kg_per_mwh:\n      coal: 13\n      oil: 10\n      natural_gas: 0.1\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n    nox_intensity_kg_per_mwh:\n      coal: 4\n      oil: 3.5\n      natural_gas: 0.2\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n\n  # User Inputs - Societal Costs (Yellow)\n  societal_costs_per_kg:\n    co2_cost_per_kg: 0.051 # $/KGCO2\n    sox_cost_per_kg: 6.2 # $/KGSOX\n    nox_cost_per_kg: 5.0 # $/KGNOX\n\n"
     },
-    "17_congestion_reductions.yaml": {
-      "filename": "17_congestion_reductions.yaml",
-      "filepath": "yamls/17_congestion_reductions.yaml",
+    "17_congestion_curtailment_reductions.yaml": {
+      "filename": "17_congestion_curtailment_reductions.yaml",
+      "filepath": "yamls/17_congestion_curtailment_reductions.yaml",
       "category": "Benefits",
       "structure": {
         "type": "object",
         "fields": {},
         "subsections": {
-          "greenfield_congestion_reductions": {
+          "greenfield_congestion_curtailment_reductions": {
             "type": "object",
             "fields": {},
             "subsections": {
-              "constraints": {
+              "congestion": {
                 "type": "object",
-                "fields": {
-                  "flow_factor": {
-                    "type": "float",
-                    "default": 0.65,
-                    "units": null,
-                    "description": "We need the capacity from project technical details",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor"
+                "fields": {},
+                "subsections": {
+                  "constraints": {
+                    "type": "object",
+                    "fields": {
+                      "flow_factor": {
+                        "type": "float",
+                        "default": 0.6,
+                        "units": null,
+                        "description": "We need the capacity from project technical details",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor"
+                      },
+                      "binding_hours": {
+                        "type": "int",
+                        "default": 1000,
+                        "units": null,
+                        "description": "delta C_eff = delta C_eff_new - delta C_eff_old",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours"
+                      },
+                      "average_exceedance": {
+                        "type": "int",
+                        "default": 560,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance"
+                      },
+                      "near_binding_hours": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "baseline congestion energy = H_b * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_hours"
+                      },
+                      "near_average_exceedance": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance"
+                      },
+                      "near_binding_relief_factor": {
+                        "type": "float",
+                        "default": 0.25,
+                        "units": null,
+                        "description": "near baseline congestion energy = H_n * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
+                      },
+                      "saturation_factor": {
+                        "type": "float",
+                        "default": 0.3,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor"
+                      }
+                    },
+                    "subsections": {},
+                    "field_count": 7
                   },
-                  "binding_hours": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "delta C_eff = delta C_eff_new - delta C_eff_old",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.binding_hours"
-                  },
-                  "average_exceedance": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance"
-                  },
-                  "near_binding_hours": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "baseline congestion energy = H_b * X mwh/yr",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_hours"
-                  },
-                  "near_average_exceedance": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_average_exceedance"
-                  },
-                  "near_binding_relief_factor": {
-                    "type": "float",
-                    "default": 0.25,
-                    "units": null,
-                    "description": "near baseline congestion energy = H_n * X mwh/yr",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_relief_factor"
-                  },
-                  "saturation_factor": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.saturation_factor"
+                  "costs": {
+                    "type": "object",
+                    "fields": {
+                      "average_congestion_price": {
+                        "type": "int",
+                        "default": 30,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price"
+                      },
+                      "residual_exceedance_value": {
+                        "type": "NoneType",
+                        "default": null,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value"
+                      },
+                      "value_of_lost_load": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.value_of_lost_load"
+                      }
+                    },
+                    "subsections": {},
+                    "field_count": 3
                   }
                 },
-                "subsections": {},
-                "field_count": 7
+                "field_count": 10
               },
-              "costs": {
+              "curtailment": {
                 "type": "object",
                 "fields": {
-                  "average_congestion_price": {
+                  "curtailment_hours_total": {
+                    "type": "int",
+                    "default": 1000,
+                    "units": null,
+                    "description": "transmission capacity is insufficient to deliver power to demand centers",
+                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total"
+                  },
+                  "average_curtailment_mw": {
+                    "type": "int",
+                    "default": 560,
+                    "units": null,
+                    "description": "THis is already expressed as \"constraint-equivalent MW\" conceptually",
+                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw"
+                  },
+                  "average_curtailment_price": {
                     "type": "int",
                     "default": 30,
                     "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.costs.average_congestion_price"
+                    "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
+                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price"
                   },
-                  "value_of_lost_load": {
-                    "type": "int",
-                    "default": 0,
+                  "curtailment_saturation_factor": {
+                    "type": "float",
+                    "default": 0.1,
                     "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.greenfield_congestion_reductions.costs.value_of_lost_load"
+                    "description": "Higher values mean more saturation (less benefit per MW of capacity added)",
+                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor"
                   }
                 },
                 "subsections": {},
-                "field_count": 2
+                "field_count": 4
               }
             },
-            "field_count": 9
+            "field_count": 14
           },
-          "reconductoring_congestion_reductions": {
+          "reconductoring_congestion_curtailment_reductions": {
             "type": "object",
             "fields": {},
             "subsections": {
-              "constraints": {
+              "congestion": {
                 "type": "object",
-                "fields": {
-                  "binding_hours": {
-                    "type": "int",
-                    "default": 1800,
-                    "units": null,
-                    "description": "delta C_eff = delta C_eff_new - delta C_eff_old",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.binding_hours"
+                "fields": {},
+                "subsections": {
+                  "constraints": {
+                    "type": "object",
+                    "fields": {
+                      "binding_hours": {
+                        "type": "int",
+                        "default": 1800,
+                        "units": null,
+                        "description": "delta C_eff = delta C_eff_new - delta C_eff_old",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.binding_hours"
+                      },
+                      "average_exceedance": {
+                        "type": "int",
+                        "default": 328,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.average_exceedance"
+                      },
+                      "near_binding_hours": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "baseline congestion energy = H_b * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_hours"
+                      },
+                      "near_average_exceedance": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance"
+                      },
+                      "near_binding_relief_factor": {
+                        "type": "float",
+                        "default": 0.25,
+                        "units": null,
+                        "description": "near baseline congestion energy = H_n * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
+                      },
+                      "saturation_factor": {
+                        "type": "float",
+                        "default": 0.35,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor"
+                      },
+                      "hot_hour_weights": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.hot_hour_weights"
+                      }
+                    },
+                    "subsections": {},
+                    "field_count": 7
                   },
-                  "average_exceedance": {
-                    "type": "int",
-                    "default": 328,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.average_exceedance"
-                  },
-                  "near_binding_hours": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "baseline congestion energy = H_b * X mwh/yr",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_hours"
-                  },
-                  "near_average_exceedance": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_average_exceedance"
-                  },
-                  "near_binding_relief_factor": {
-                    "type": "float",
-                    "default": 0.25,
-                    "units": null,
-                    "description": "near baseline congestion energy = H_n * X mwh/yr",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_relief_factor"
-                  },
-                  "saturation_factor": {
-                    "type": "float",
-                    "default": 0.35,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.saturation_factor"
-                  },
-                  "hot_hour_weights": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.hot_hour_weights"
+                  "costs": {
+                    "type": "object",
+                    "fields": {
+                      "average_congestion_price": {
+                        "type": "int",
+                        "default": 30,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.average_congestion_price"
+                      },
+                      "residual_exceedance_value": {
+                        "type": "NoneType",
+                        "default": null,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value"
+                      },
+                      "value_of_lost_load": {
+                        "type": "int",
+                        "default": 0,
+                        "units": null,
+                        "description": "",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.value_of_lost_load"
+                      }
+                    },
+                    "subsections": {},
+                    "field_count": 3
                   }
                 },
-                "subsections": {},
-                "field_count": 7
+                "field_count": 10
               },
-              "costs": {
+              "curtailment": {
                 "type": "object",
                 "fields": {
-                  "average_congestion_price": {
+                  "curtailment_hours_total": {
+                    "type": "int",
+                    "default": 0,
+                    "units": null,
+                    "description": "transmission capacity is insufficient to deliver power to demand centers",
+                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_hours_total"
+                  },
+                  "average_curtailment_mw": {
+                    "type": "int",
+                    "default": 0,
+                    "units": null,
+                    "description": "THis is already expressed as \"constraint-equivalent MW\" conceptually",
+                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_mw"
+                  },
+                  "average_curtailment_price": {
                     "type": "int",
                     "default": 30,
                     "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.costs.average_congestion_price"
+                    "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
+                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_price"
                   },
-                  "value_of_lost_load": {
-                    "type": "int",
-                    "default": 0,
+                  "curtailment_saturation_factor": {
+                    "type": "float",
+                    "default": 0.1,
                     "units": null,
-                    "description": "",
-                    "path": "17_congestion_reductions.reconductoring_congestion_reductions.costs.value_of_lost_load"
+                    "description": "Higher values mean more saturation (less benefit per MW of capacity added)",
+                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor"
                   }
                 },
                 "subsections": {},
-                "field_count": 2
+                "field_count": 4
               }
             },
-            "field_count": 9
+            "field_count": 14
           }
         },
-        "field_count": 18
+        "field_count": 28
       },
-      "field_count": 18,
+      "field_count": 28,
       "comments": {
         "flow_factor": "We need the capacity from project technical details",
         "binding_hours": "delta C_eff = delta C_eff_new - delta C_eff_old",
         "near_binding_hours": "baseline congestion energy = H_b * X mwh/yr",
-        "near_binding_relief_factor": "near baseline congestion energy = H_n * X mwh/yr"
-      },
-      "raw_content": "# Congestion Reductions\n# Cost savings from reduced transmission congestion\n\ngreenfield_congestion_reductions:\n  constraints:\n    # We need the capacity from project technical details\n    flow_factor: .65 # flow factor is deliverability to the targeted constrained [0,1]\n    # delta C_eff = S * capacity\n    binding_hours: 0 # binding hours is the number of hours per year that the line is binding (>= 0)\n    average_exceedance: 0 # MW exceedance during binding hours (>= 0)\n    # baseline congestion energy = H_b * X mwh/yr\n    near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n    near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n    # near baseline congestion energy = H_n * X mwh/yr\n    near_binding_relief_factor: 0.25 # [0,1]\n    saturation_factor: 0 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n  costs:\n    average_congestion_price: 30 # $/mwh (>= 0)\n    value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n    # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\nreconductoring_congestion_reductions:\n  constraints:\n    # delta C_eff = delta C_eff_new - delta C_eff_old\n    binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n    average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n    # baseline congestion energy = H_b * X mwh/yr\n    near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n    near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n    # near baseline congestion energy = H_n * X mwh/yr\n    near_binding_relief_factor: 0.25 # [0,1]\n    saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n    hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n  # energy loss info is in project_category_circuit_detail.yaml\n\n  costs:\n    average_congestion_price: 30 # $/mwh (>= 0)\n    value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n    # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n"
-    },
-    "18_curtailment_reductions.yaml": {
-      "filename": "18_curtailment_reductions.yaml",
-      "filepath": "yamls/18_curtailment_reductions.yaml",
-      "category": "Benefits",
-      "structure": {
-        "type": "object",
-        "fields": {},
-        "subsections": {
-          "curtailment_reductions": {
-            "type": "object",
-            "fields": {
-              "curtailment_hours_total": {
-                "type": "int",
-                "default": 0,
-                "units": null,
-                "description": "transmission capacity is insufficient to deliver power to demand centers",
-                "path": "18_curtailment_reductions.curtailment_reductions.curtailment_hours_total"
-              },
-              "average_curtailment_mw": {
-                "type": "int",
-                "default": 0,
-                "units": null,
-                "description": "Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief",
-                "path": "18_curtailment_reductions.curtailment_reductions.average_curtailment_mw"
-              },
-              "average_curtailment_price": {
-                "type": "int",
-                "default": 30,
-                "units": null,
-                "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
-                "path": "18_curtailment_reductions.curtailment_reductions.average_curtailment_price"
-              },
-              "curtailment_saturation_factor": {
-                "type": "float",
-                "default": 0.1,
-                "units": null,
-                "description": "Higher values mean more saturation (less benefit per MW of capacity added)",
-                "path": "18_curtailment_reductions.curtailment_reductions.curtailment_saturation_factor"
-              }
-            },
-            "subsections": {},
-            "field_count": 4
-          }
-        },
-        "field_count": 4
-      },
-      "field_count": 4,
-      "comments": {
+        "near_binding_relief_factor": "near baseline congestion energy = H_n * X mwh/yr",
         "curtailment_hours_total": "transmission capacity is insufficient to deliver power to demand centers",
-        "average_curtailment_mw": "Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief",
+        "average_curtailment_mw": "THis is already expressed as \"constraint-equivalent MW\" conceptually",
         "average_curtailment_price": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
         "curtailment_saturation_factor": "Higher values mean more saturation (less benefit per MW of capacity added)"
       },
-      "raw_content": "# Curtailment Reductions\n# Cost savings from reduced renewable energy curtailment\n\n# Curtailment Reductions\n# Cost savings from reduced renewable energy curtailment (at this interface)\n\ncurtailment_reductions:\n  # Number of hours per year when renewable energy curtailment occurs\n  # Curtailment happens when renewable generators must reduce output because\n  # transmission capacity is insufficient to deliver power to demand centers\n  curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n  # Average MW of renewable energy that is curtailed during curtailment hours\n  # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n  # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n  # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n  average_curtailment_mw: 0 # MW (>= 0)\n\n  # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n  # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n  average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n  # Saturation factor [0,1] to account for diminishing returns\n  # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n  # Higher values mean more saturation (less benefit per MW of capacity added)\n  curtailment_saturation_factor: 0.1 # [0,1]\n"
+      "raw_content": "# Congestion and Curtailment Reductions\n# Cost savings from reduced transmission congestion and renewable energy curtailment\n\ngreenfield_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # We need the capacity from project technical details\n      flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]\n      # delta C_eff = S * capacity\n      binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 560 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 1000 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 560 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\nreconductoring_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # delta C_eff = delta C_eff_new - delta C_eff_old\n      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n    # energy loss info is in project_category_circuit_detail.yaml\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 0 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\n\n###### DEFINITIONS:\n# 1) Congestion price: $/MWh\n#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding\n#      transmission constraints.\n# 2) Curtailment price: $/MWh\n#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)\n#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.\n"
     },
     "19_cost_timing_patterns.yaml": {
       "filename": "19_cost_timing_patterns.yaml",
@@ -33521,7 +33568,7 @@
       "field_name": "name",
       "full_path": "01_project_technical_details.project.name",
       "type": "str",
-      "default": "S4_Reconductoring_329to657MW",
+      "default": "S1_California_Rural_Overhead_AC_657MW",
       "description": ""
     },
     "01_project_technical_details.project.construction_type": {
@@ -33561,7 +33608,7 @@
       "field_name": "conductor_type",
       "full_path": "01_project_technical_details.project.conductor_type",
       "type": "str",
-      "default": "Advanced Aluminum Conductor",
+      "default": "Standard Aluminum Conductor",
       "description": ""
     },
     "01_project_technical_details.project.converter_type": {
@@ -33601,39 +33648,47 @@
       "field_name": "reconductoring",
       "full_path": "01_project_technical_details.project.reconductoring",
       "type": "bool",
-      "default": true,
+      "default": false,
+      "description": ""
+    },
+    "01_project_technical_details.project.uses_existing_row": {
+      "yaml_file": "01_project_technical_details",
+      "field_name": "uses_existing_row",
+      "full_path": "01_project_technical_details.project.uses_existing_row",
+      "type": "bool",
+      "default": false,
       "description": ""
     },
     "01_project_technical_details.project.old_capacity_mw": {
       "yaml_file": "01_project_technical_details",
       "field_name": "old_capacity_mw",
       "full_path": "01_project_technical_details.project.old_capacity_mw",
-      "type": "int",
-      "default": 329,
+      "type": "NoneType",
+      "default": null,
       "description": ""
     },
     "01_project_technical_details.project.old_conductor_type": {
       "yaml_file": "01_project_technical_details",
       "field_name": "old_conductor_type",
       "full_path": "01_project_technical_details.project.old_conductor_type",
-      "type": "str",
-      "default": "Standard Aluminum Conductor",
+      "type": "NoneType",
+      "default": null,
       "description": ""
     },
     "01_project_technical_details.project.old_ac_dc": {
       "yaml_file": "01_project_technical_details",
       "field_name": "old_ac_dc",
       "full_path": "01_project_technical_details.project.old_ac_dc",
-      "type": "str",
-      "default": "AC",
+      "type": "NoneType",
+      "default": null,
       "description": ""
     },
     "01_project_technical_details.project.greenfield_comparison_capacity_mw": {
       "yaml_file": "01_project_technical_details",
       "field_name": "greenfield_comparison_capacity_mw",
       "full_path": "01_project_technical_details.project.greenfield_comparison_capacity_mw",
-      "type": "int",
-      "default": 0,
+      "type": "NoneType",
+      "default": null,
       "description": "Greenfield capacity comparison (only used when reconductoring: False)"
     },
     "01_project_technical_details.project.greenfield_comparison_conductor_type": {
@@ -33656,8 +33711,8 @@
       "yaml_file": "01_project_technical_details",
       "field_name": "delay_years",
       "full_path": "01_project_technical_details.timeline.delay_years",
-      "type": "float",
-      "default": 0.5,
+      "type": "int",
+      "default": 4,
       "description": ""
     },
     "01_project_technical_details.timeline.project_lifetime": {
@@ -33673,7 +33728,7 @@
       "field_name": "forested",
       "full_path": "02_project_physical_details.terrain.terrain_miles.forested",
       "type": "int",
-      "default": 30,
+      "default": 20,
       "description": ""
     },
     "02_project_physical_details.terrain.terrain_miles.scrubbed_flat": {
@@ -33681,7 +33736,7 @@
       "field_name": "scrubbed_flat",
       "full_path": "02_project_physical_details.terrain.terrain_miles.scrubbed_flat",
       "type": "int",
-      "default": 50,
+      "default": 40,
       "description": ""
     },
     "02_project_physical_details.terrain.terrain_miles.wetland": {
@@ -33689,7 +33744,7 @@
       "field_name": "wetland",
       "full_path": "02_project_physical_details.terrain.terrain_miles.wetland",
       "type": "int",
-      "default": 10,
+      "default": 5,
       "description": ""
     },
     "02_project_physical_details.terrain.terrain_miles.farmland": {
@@ -33697,7 +33752,7 @@
       "field_name": "farmland",
       "full_path": "02_project_physical_details.terrain.terrain_miles.farmland",
       "type": "int",
-      "default": 40,
+      "default": 25,
       "description": ""
     },
     "02_project_physical_details.terrain.terrain_miles.desert_barren": {
@@ -33721,7 +33776,7 @@
       "field_name": "rolling_hills",
       "full_path": "02_project_physical_details.terrain.terrain_miles.rolling_hills",
       "type": "int",
-      "default": 20,
+      "default": 10,
       "description": ""
     },
     "02_project_physical_details.terrain.terrain_miles.mountain": {
@@ -33993,7 +34048,7 @@
       "field_name": "enabled",
       "full_path": "04_insurance.insurance.wildfire_liability.enabled",
       "type": "bool",
-      "default": false,
+      "default": true,
       "description": ""
     },
     "04_insurance.insurance.wildfire_liability.liability_limit": {
@@ -34009,7 +34064,7 @@
       "field_name": "rate_on_line",
       "full_path": "04_insurance.insurance.wildfire_liability.rate_on_line",
       "type": "float",
-      "default": 0.6,
+      "default": 0.3,
       "description": ""
     },
     "05_delays.annual_delay_costs.legal": {
@@ -34082,7 +34137,7 @@
       "full_path": "06_wildfire_costs.wildfire.severity_per_event",
       "type": "int",
       "default": 5000000000,
-      "description": "Event severity (consequence)"
+      "description": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance)."
     },
     "06_wildfire_costs.wildfire.risk_growth_rate": {
       "yaml_file": "06_wildfire_costs",
@@ -34100,14 +34155,6 @@
       "default": "social",
       "description": "Discount rate configuration"
     },
-    "06_wildfire_costs.wildfire.discount_rate_custom": {
-      "yaml_file": "06_wildfire_costs",
-      "field_name": "discount_rate_custom",
-      "full_path": "06_wildfire_costs.wildfire.discount_rate_custom",
-      "type": "float",
-      "default": 0.03,
-      "description": ""
-    },
     "06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested": {
       "yaml_file": "06_wildfire_costs",
       "field_name": "forested",
@@ -34121,7 +34168,7 @@
       "field_name": "scrubbed_flat",
       "full_path": "06_wildfire_costs.wildfire.ignition_rates_by_terrain.scrubbed_flat",
       "type": "float",
-      "default": 0.001,
+      "default": 0.0002,
       "description": ""
     },
     "06_wildfire_costs.wildfire.ignition_rates_by_terrain.wetland": {
@@ -34169,7 +34216,7 @@
       "field_name": "mountain",
       "full_path": "06_wildfire_costs.wildfire.ignition_rates_by_terrain.mountain",
       "type": "float",
-      "default": 0.0001,
+      "default": 0.002,
       "description": ""
     },
     "06_wildfire_costs.wildfire.ignition_rates_by_terrain.subsea": {
@@ -49329,178 +49376,226 @@
       "default": 5.0,
       "description": ""
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "flow_factor",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor",
       "type": "float",
-      "default": 0.65,
+      "default": 0.6,
       "description": "We need the capacity from project technical details"
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.binding_hours": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "binding_hours",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.binding_hours",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours",
       "type": "int",
-      "default": 0,
+      "default": 1000,
       "description": "delta C_eff = delta C_eff_new - delta C_eff_old"
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "average_exceedance",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance",
       "type": "int",
-      "default": 0,
+      "default": 560,
       "description": ""
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_hours": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_hours": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "near_binding_hours",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_hours",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_hours",
       "type": "int",
       "default": 0,
       "description": "baseline congestion energy = H_b * X mwh/yr"
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_average_exceedance": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "near_average_exceedance",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_average_exceedance",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_relief_factor": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "near_binding_relief_factor",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.near_binding_relief_factor",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor",
       "type": "float",
       "default": 0.25,
       "description": "near baseline congestion energy = H_n * X mwh/yr"
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.constraints.saturation_factor": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "saturation_factor",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.saturation_factor",
-      "type": "int",
-      "default": 0,
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor",
+      "type": "float",
+      "default": 0.3,
       "description": ""
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.costs.average_congestion_price": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "average_congestion_price",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.costs.average_congestion_price",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price",
       "type": "int",
       "default": 30,
       "description": ""
     },
-    "17_congestion_reductions.greenfield_congestion_reductions.costs.value_of_lost_load": {
-      "yaml_file": "17_congestion_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "residual_exceedance_value",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value",
+      "type": "NoneType",
+      "default": null,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.value_of_lost_load": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "value_of_lost_load",
-      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.costs.value_of_lost_load",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.value_of_lost_load",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.binding_hours": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "binding_hours",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.binding_hours",
-      "type": "int",
-      "default": 1800,
-      "description": "delta C_eff = delta C_eff_new - delta C_eff_old"
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.average_exceedance": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "average_exceedance",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.average_exceedance",
-      "type": "int",
-      "default": 328,
-      "description": ""
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_hours": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "near_binding_hours",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_hours",
-      "type": "int",
-      "default": 0,
-      "description": "baseline congestion energy = H_b * X mwh/yr"
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_average_exceedance": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "near_average_exceedance",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_average_exceedance",
-      "type": "int",
-      "default": 0,
-      "description": ""
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_relief_factor": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "near_binding_relief_factor",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.near_binding_relief_factor",
-      "type": "float",
-      "default": 0.25,
-      "description": "near baseline congestion energy = H_n * X mwh/yr"
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.saturation_factor": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "saturation_factor",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.saturation_factor",
-      "type": "float",
-      "default": 0.35,
-      "description": ""
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.constraints.hot_hour_weights": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "hot_hour_weights",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.constraints.hot_hour_weights",
-      "type": "int",
-      "default": 0,
-      "description": ""
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.costs.average_congestion_price": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "average_congestion_price",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.costs.average_congestion_price",
-      "type": "int",
-      "default": 30,
-      "description": ""
-    },
-    "17_congestion_reductions.reconductoring_congestion_reductions.costs.value_of_lost_load": {
-      "yaml_file": "17_congestion_reductions",
-      "field_name": "value_of_lost_load",
-      "full_path": "17_congestion_reductions.reconductoring_congestion_reductions.costs.value_of_lost_load",
-      "type": "int",
-      "default": 0,
-      "description": ""
-    },
-    "18_curtailment_reductions.curtailment_reductions.curtailment_hours_total": {
-      "yaml_file": "18_curtailment_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "curtailment_hours_total",
-      "full_path": "18_curtailment_reductions.curtailment_reductions.curtailment_hours_total",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total",
       "type": "int",
-      "default": 0,
+      "default": 1000,
       "description": "transmission capacity is insufficient to deliver power to demand centers"
     },
-    "18_curtailment_reductions.curtailment_reductions.average_curtailment_mw": {
-      "yaml_file": "18_curtailment_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "average_curtailment_mw",
-      "full_path": "18_curtailment_reductions.curtailment_reductions.average_curtailment_mw",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw",
       "type": "int",
-      "default": 0,
-      "description": "Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief"
+      "default": 560,
+      "description": "THis is already expressed as \"constraint-equivalent MW\" conceptually"
     },
-    "18_curtailment_reductions.curtailment_reductions.average_curtailment_price": {
-      "yaml_file": "18_curtailment_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "average_curtailment_price",
-      "full_path": "18_curtailment_reductions.curtailment_reductions.average_curtailment_price",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price",
       "type": "int",
       "default": 30,
       "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price"
     },
-    "18_curtailment_reductions.curtailment_reductions.curtailment_saturation_factor": {
-      "yaml_file": "18_curtailment_reductions",
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "curtailment_saturation_factor",
-      "full_path": "18_curtailment_reductions.curtailment_reductions.curtailment_saturation_factor",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor",
+      "type": "float",
+      "default": 0.1,
+      "description": "Higher values mean more saturation (less benefit per MW of capacity added)"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.binding_hours": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "binding_hours",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.binding_hours",
+      "type": "int",
+      "default": 1800,
+      "description": "delta C_eff = delta C_eff_new - delta C_eff_old"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.average_exceedance": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "average_exceedance",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.average_exceedance",
+      "type": "int",
+      "default": 328,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_hours": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "near_binding_hours",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_hours",
+      "type": "int",
+      "default": 0,
+      "description": "baseline congestion energy = H_b * X mwh/yr"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "near_average_exceedance",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance",
+      "type": "int",
+      "default": 0,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "near_binding_relief_factor",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor",
+      "type": "float",
+      "default": 0.25,
+      "description": "near baseline congestion energy = H_n * X mwh/yr"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "saturation_factor",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor",
+      "type": "float",
+      "default": 0.35,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.hot_hour_weights": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "hot_hour_weights",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.hot_hour_weights",
+      "type": "int",
+      "default": 0,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.average_congestion_price": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "average_congestion_price",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.average_congestion_price",
+      "type": "int",
+      "default": 30,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "residual_exceedance_value",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.residual_exceedance_value",
+      "type": "NoneType",
+      "default": null,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.value_of_lost_load": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "value_of_lost_load",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.value_of_lost_load",
+      "type": "int",
+      "default": 0,
+      "description": ""
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_hours_total": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "curtailment_hours_total",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_hours_total",
+      "type": "int",
+      "default": 0,
+      "description": "transmission capacity is insufficient to deliver power to demand centers"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_mw": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "average_curtailment_mw",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_mw",
+      "type": "int",
+      "default": 0,
+      "description": "THis is already expressed as \"constraint-equivalent MW\" conceptually"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_price": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "average_curtailment_price",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_price",
+      "type": "int",
+      "default": 30,
+      "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price"
+    },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "curtailment_saturation_factor",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor",
       "type": "float",
       "default": 0.1,
       "description": "Higher values mean more saturation (less benefit per MW of capacity added)"
@@ -66385,8 +66480,7 @@
       "16_emissions_reductions.yaml"
     ],
     "Benefits": [
-      "17_congestion_reductions.yaml",
-      "18_curtailment_reductions.yaml"
+      "17_congestion_curtailment_reductions.yaml"
     ],
     "Configurations": [
       "20_project_category_row_widths.yaml",

@@ -65,7 +65,7 @@ The insurance cost calculation follows this structure:
 \text{Lifetime Nominal Cost} &= \text{Annual Premium} \times \text{Project Lifetime} \\
 \text{Present Value} &= \sum_{t=\text{COD}}^{\text{COD}+T-1} \frac{\text{Annual Premium}}{(1 + r)^t}
 \end{align}
-where $T$ is the project lifetime, $r$ is the real WACC discount rate, and COD = delay\_years + construction\_years (payment start at Commercial Operation Date).
+where $T$ is the project lifetime, $r$ is the real WACC discount rate. The first payment year is COD (Commercial Operation Date) = delay\_years + construction\_years + 1, i.e.\ the first year after construction ends.
 
 \textbf{Wildfire liability (when enabled):} Annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}; nominal lifetime cost = annual premium $\times$ project\_lifetime; PV same as above starting at COD. Returns \texttt{None} if \texttt{wildfire\_liability.enabled} is false or parameters invalid.
 
@@ -242,11 +242,15 @@ Different construction types may have different premium rates. The script first 
 
 \subsection{Payment Timing}
 
-Insurance premiums start at Commercial Operation Date (COD), which is after the delay and construction periods. Premiums are paid annually for the project lifetime.
+Insurance premiums start at Commercial Operation Date (COD), which is the first year after the delay and construction periods (COD = delay\_years + construction\_years + 1). Premiums are paid annually for the project lifetime.
+
+\subsection{Discount rate and perspective}
+
+Operational and wildfire liability insurance PV use the \textbf{real WACC} (utility/private perspective). The resulting PV is a private cost to the utility. CTCC can report both societal-cost PV (e.g.\ wildfire expected loss in file 06, which uses the social discount rate) and utility-cost PV (insurance); totals that combine them are hybrid unless interpreted accordingly.
 
 \subsection{Wildfire Liability}
 
-Wildfire liability insurance is optional and controlled by \texttt{insurance.wildfire\_liability.enabled} in the insurance YAML. When enabled, annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}. The script always writes \texttt{add\_wildfire\_liability\_costs} (with zeros when disabled) so batch summary columns remain consistent.
+Wildfire liability insurance covers the \textbf{insured} portion of wildfire risk. The wildfire cost module (file 06) uses \textbf{uninsured} severity (residual damages), so including both this module and wildfire liability insurance does not double-count. Wildfire liability is optional and controlled by \texttt{insurance.wildfire\_liability.enabled} in the insurance YAML. When enabled, annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}. The script always writes \texttt{add\_wildfire\_liability\_costs} (with zeros when disabled) so batch summary columns remain consistent.
 
 \subsection{AFUDC Treatment}
 

@@ -636,11 +636,11 @@ This file configures wildfire risk parameters, including event severity, ignitio
 \subsubsection{Event Severity}
 
 \begin{itemize}
-    \item \textbf{severity\_per\_event} (float): Mean loss per wildfire event
+    \item \textbf{severity\_per\_event} (float): Mean \textbf{uninsured} loss per wildfire event
     \begin{itemize}
         \item \textbf{Valid Values}: Large numbers (typical: \$1B to \$10B)
-        \item \textbf{Meaning}: Expected financial loss if a wildfire is ignited by the line
-        \item \textbf{Example}: 5000000000 = \$5 billion per event
+        \item \textbf{Meaning}: Expected residual loss not covered by liability insurance---e.g.\ deductibles, amounts above the liability limit, exclusions, or societal/external costs. Wildfire liability insurance (file 04) covers the insured portion; severity here should exclude that to avoid double-counting.
+        \item \textbf{Example}: 5000000000 = \$5 billion uninsured loss per event
     \end{itemize}
 \end{itemize}
 
@@ -662,15 +662,9 @@ This file configures wildfire risk parameters, including event severity, ignitio
     \begin{itemize}
         \item \textbf{Valid Values}: 
         \begin{itemize}
-            \item \texttt{"social"} - Use social discount rate from file 03
-            \item \texttt{"wacc\_real"} - Use real WACC from file 03
-            \item \texttt{"custom"} - Use custom rate specified below
+            \item \texttt{"social"} - Use social discount rate from file 03 (societal perspective)
+            \item \texttt{"wacc\_real"} - Use real WACC from file 03 (utility perspective)
         \end{itemize}
-    \end{itemize}
-    
-    \item \textbf{discount\_rate\_custom} (float): Custom discount rate (if source = "custom")
-    \begin{itemize}
-        \item \textbf{Valid Values}: Typically 0.02 to 0.07
     \end{itemize}
 \end{itemize}
 
@@ -715,7 +709,6 @@ wildfire:
   severity_per_event: 5000000000
   risk_growth_rate: 0.02
   discount_rate_source: "social"
-  discount_rate_custom: 0.03
 
   ignition_rates_by_terrain:
     forested: 0.0001

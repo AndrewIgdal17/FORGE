@@ -36,7 +36,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 - **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
 - **Costs:** Capital + Operational + Energy/Emissions + Delay (excludes wildfire + wildfire liability + outage)
 
-**Use Case:** Analysis when both wildfire and outage risk costs may be insured, managed separately, or contextually inappropriate. This is the renamed version of the previous `bcr_excluding_risk` metric.
+**Use Case:** Analysis when both wildfire and outage risk costs may be insured, managed separately, or contextually inappropriate.
 
 ---
 
@@ -216,7 +216,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 - **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Line Losses (excludes emissions + wildfire + outage)
 
-**Use Case:** Core project economics from societal perspective, excluding emissions externalities and both probabilistic risks, but including line losses. This is the renamed version of `bcr_excluding_emissions_and_risk`.
+**Use Case:** Core project economics from societal perspective, excluding emissions externalities and both probabilistic risks, but including line losses.
 
 ---
 
@@ -231,7 +231,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 - **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Emissions (excludes line losses + wildfire + outage)
 
-**Use Case:** Core project economics from societal perspective, excluding line losses and both probabilistic risks, but including emissions. This is the renamed version of `bcr_excluding_linelosses_and_risk`.
+**Use Case:** Core project economics from societal perspective, excluding line losses and both probabilistic risks, but including emissions.
 
 ---
 
@@ -246,7 +246,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 - **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay only
 
-**Use Case:** Core project economics from societal perspective, excluding all externalities and both probabilistic risks. This is the renamed version of `bcr_excluding_emissions_and_linelosses_and_risk`.
+**Use Case:** Core project economics from societal perspective, excluding all externalities and both probabilistic risks.
 
 ---
 
@@ -276,7 +276,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 **Includes:**
 
 - **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
-- **Costs:** Capital + Delay costs (construction delay + congestion/curtailment delay + residual congestion)
+- **Costs:** Capital + Delay costs (construction delay + congestion delay + curtailment delay)
 
 **Use Case:** Capital investment analysis accounting for project delays and time value of money from societal perspective
 
@@ -354,11 +354,11 @@ All BCRs have corresponding net benefit calculations (Present Value unless noted
 - `net_benefit_pv = Total Benefits (haircut) - Total Costs`
 - `net_benefit_nominal = Total Benefits (nominal) - Total Costs (nominal)` _(undiscounted)_
 - `net_benefit_primary_pv = Primary Benefits - Primary Costs` _(customizable via flags)_
-- `net_benefit_excluding_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Wildfire Risk - Outage Risk)` _(renamed from net_benefit_excluding_risk_pv)_
+- `net_benefit_excluding_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Wildfire Risk - Outage Risk)`
 - `net_benefit_excluding_wildfire_risk_pv = Total Benefits - (Total Costs - Wildfire Risk)` _(new: excludes wildfire only)_
 - `net_benefit_excluding_outage_risk_pv = Total Benefits - (Total Costs - Outage Risk)` _(new: excludes outage only)_
 - `net_benefit_excluding_emissions_and_linelosses_pv = Total Benefits - (Total Costs - Energy/Emissions Costs)` _(excludes both emissions and line losses)_
-- `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Energy/Emissions - Wildfire Risk - Outage Risk)` _(renamed, excludes all four)_
+- `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Energy/Emissions - Wildfire Risk - Outage Risk)`
 - `net_benefit_capital_only_pv = Total Benefits - Capital Costs`
 - `net_benefit_capital_and_delay_pv = Total Benefits - (Capital Costs + Delay Costs)`
 

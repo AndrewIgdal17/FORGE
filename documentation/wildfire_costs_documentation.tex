@@ -65,6 +65,7 @@ f_{i,t} &= \text{Base Rate}_{terrain} \times \text{Construction Multiplier} \\
 \text{Nominal Total} &= \text{EAL} \times \frac{(1+g)^N - 1}{g} \quad \text{(if } g \neq 0 \text{)} \\
 \text{PV} &= \text{EAL} \times \frac{1 - \left(\frac{1+g}{1+d}\right)^N}{d - g} \quad \text{(if } d \neq g \text{)}
 \end{align}
+The PV is discounted for the delay and construction period so the cost stream begins at Commercial Operation Date (COD), not year 1; see ``Payment timing (COD)'' below.
 
 where:
 \begin{itemize}
@@ -82,7 +83,7 @@ where:
     \item Project technical details (construction type)
     \item Physical details (terrain distribution)
     \item Wildfire parameters (ignition rates by terrain, severity, growth rate, construction multipliers)
-    \item Discount rate source (social, WACC real, or custom)
+    \item Discount rate source (social or wacc\_real; societal perspective by default)
     \item Project lifetime
 \end{itemize}
 
@@ -110,7 +111,7 @@ This script integrates with:
 
 \subsection{\texttt{get\_discount\_rate\_from\_config} (from \texttt{financial\_utils})}
 
-The script uses \texttt{financial\_utils.get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_source")} to get the discount rate. In \texttt{main()}, it is called with \texttt{wildfire\_yaml}, \texttt{get\_financing\_data\_raw()}, and \texttt{rate\_key="discount\_rate\_source"}. Returns \texttt{(discount\_rate, source\_description)}. The configuration in the wildfire YAML specifies the source (e.g.\ \texttt{social}, \texttt{wacc\_real}, \texttt{custom}).
+The script uses \texttt{financial\_utils.get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_source")} to get the discount rate. In \texttt{main()}, it is called with \texttt{wildfire\_yaml}, \texttt{get\_financing\_data\_raw()}, and \texttt{rate\_key="discount\_rate\_source"}. Returns \texttt{(discount\_rate, source\_description)}. Supported sources are \texttt{social} (societal perspective, default) and \texttt{wacc\_real} (utility perspective).
 
 \subsection{\texttt{calculate\_wildfire\_costs(wildfire\_yaml, construction\_type, terrain\_miles, project\_lifetime, discount\_rate, delay\_years=0, construction\_years=0)}}
 
@@ -134,7 +135,7 @@ Calculates expected wildfire costs using segment-based ignition rates.
         \item \texttt{lambda\_total} (float): Total annual event rate
         \item \texttt{EAL} (float): Expected Annual Loss
         \item \texttt{lambda\_by\_terrain} (dict): Event rates by terrain segment
-        \item \texttt{severity} (float): Mean loss per event
+        \item \texttt{severity} (float): Mean uninsured loss per event (see ``Severity definition'' below)
         \item \texttt{growth\_rate} (float): Risk growth rate
         \item \texttt{nominal\_total} (float): Total nominal cost
         \item \texttt{pv\_cost} (float): Present value cost
@@ -224,6 +225,18 @@ csv_manager.write_batch_summary()
 \end{lstlisting}
 
 \section{Key Implementation Details}
+
+\subsection{Payment timing (COD)}
+
+The cost stream starts at Commercial Operation Date (COD), i.e.\ when the line is in operation (after delay and construction). Wildfire risk is treated as operating-period risk: the PV is discounted for the delay and construction period so the first year of expected loss is at COD, not at year 1. This matches the timing used for wildfire liability insurance (file 04).
+
+\subsection{Severity definition (uninsured residual)}
+
+Severity (\texttt{severity\_per\_event}) is the expected \textbf{uninsured} loss per wildfire event: deductibles, amounts above the liability limit, exclusions, or societal/external damages. The insured portion of wildfire risk is captured by the optional wildfire liability insurance module (file 04). Defining severity as uninsured ensures that including both this module and wildfire liability insurance does not double-count; the former is uninsured expected loss (societal or residual), the latter is the utility's cost to transfer insured risk.
+
+\subsection{Discount rate and perspective}
+
+The wildfire module uses the social discount rate (societal perspective) when \texttt{discount\_rate\_source} is \texttt{social} (the default). The resulting PV is a \textbf{societal} cost. Use \texttt{wacc\_real} for a utility perspective if desired.
 
 \subsection{Probabilistic Risk Approach}
 

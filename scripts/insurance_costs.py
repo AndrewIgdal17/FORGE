@@ -253,7 +253,7 @@ def main() -> None:
     print(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
     print()
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
+    print("[UTILITY PERSPECTIVE - Present Value]")
     print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
     print(f"  Base Year: {financing.base_year}")
     print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
@@ -280,7 +280,7 @@ def main() -> None:
             f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}"
         )
         print()
-        print("[SOCIETAL PERSPECTIVE - Present Value]")
+        print("[UTILITY PERSPECTIVE - Present Value]")
         print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
         print(f"  Base Year: {financing.base_year}")
         print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
