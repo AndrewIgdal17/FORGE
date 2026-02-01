@@ -308,11 +308,11 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         data, "capital_costs_nominal", calculated_capital_nominal
     )
 
-    # Operational costs (PV) - O&M, operational insurance, and residual exceedance
+    # Operational costs (PV) - O&M and operational insurance only (residual exceedance is in energy/emissions)
     oandm_pv = safe_get_numeric(data, "oandm_pv")
     insurance_pv = safe_get_numeric(data, "insurance_pv")
     residual_exceedance_pv = safe_get_numeric(data, "residual_exceedance_pv")
-    calculated_operational = oandm_pv + insurance_pv + residual_exceedance_pv
+    calculated_operational = oandm_pv + insurance_pv
     operational_costs_pv = prefer_csv_subtotal(
         data, "operational_costs_pv", calculated_operational
     )
@@ -321,14 +321,12 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     oandm_nominal = safe_get_numeric(data, "oandm_nominal")
     insurance_nominal = safe_get_numeric(data, "insurance_nominal")
     residual_exceedance_nominal = safe_get_numeric(data, "residual_exceedance_nominal")
-    calculated_operational_nominal = (
-        oandm_nominal + insurance_nominal + residual_exceedance_nominal
-    )
+    calculated_operational_nominal = oandm_nominal + insurance_nominal
     operational_costs_nominal = prefer_csv_subtotal(
         data, "operational_costs_nominal", calculated_operational_nominal
     )
 
-    # Energy & Emissions costs (PV) - Energy losses (conductor + converter) and emissions
+    # Energy & Emissions costs (PV) - Energy losses, emissions, and residual exceedance (system cost only)
     emissions_pv = safe_get_numeric(data, "emissions_cost_pv")
     energy_losses_pv = safe_get_numeric(data, "energy_losses_pv") or safe_get_numeric(
         data, "line_loss_cost_pv"
@@ -336,18 +334,22 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     energy_losses_pv = max(0, energy_losses_pv)
     conductor_loss_pv = safe_get_numeric(data, "conductor_loss_pv")
     converter_loss_pv = safe_get_numeric(data, "converter_loss_pv")
-    calculated_energy_emissions = energy_losses_pv + emissions_pv
+    calculated_energy_emissions = (
+        energy_losses_pv + emissions_pv + residual_exceedance_pv
+    )
     energy_emissions_costs_pv = prefer_csv_subtotal(
         data, "energy_emissions_costs_pv", calculated_energy_emissions
     )
 
-    # Energy & Emissions costs (Nominal)
+    # Energy & Emissions costs (Nominal) - includes residual exceedance
     emissions_nominal = safe_get_numeric(data, "emissions_cost_nominal")
     energy_losses_nominal = safe_get_numeric(
         data, "energy_losses_nominal"
     ) or safe_get_numeric(data, "line_loss_cost_nominal")
     energy_losses_nominal = max(0, energy_losses_nominal)
-    calculated_energy_emissions_nominal = energy_losses_nominal + emissions_nominal
+    calculated_energy_emissions_nominal = (
+        energy_losses_nominal + emissions_nominal + residual_exceedance_nominal
+    )
     energy_emissions_costs_nominal = prefer_csv_subtotal(
         data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal
     )
@@ -1063,7 +1065,6 @@ def print_bcr_summary(
     print("  Operational Costs:")
     print(f"    O&M:                       ${costs['oandm_pv']:>15,.0f}")
     print(f"    Insurance (operational):  ${costs['insurance_pv']:>15,.0f}")
-    print(f"    Residual Exceedance:       ${costs['residual_exceedance_pv']:>15,.0f}")
     print(f"    Subtotal:                  ${costs['operational_costs_pv']:>15,.0f}")
     print()
     print("  Energy & Emissions Costs:")
@@ -1075,6 +1076,7 @@ def print_bcr_summary(
         print(f"    Conductor Losses:          ${conductor_loss_pv:>15,.0f}")
     else:
         print(f"    Energy Losses:             ${energy_losses_pv:>15,.0f}")
+    print(f"    Residual Exceedance:       ${costs['residual_exceedance_pv']:>15,.0f}")
     print(f"    Emissions:                 ${costs['emissions_cost_pv']:>15,.0f}")
     print(
         f"    Subtotal:                  ${costs['energy_emissions_costs_pv']:>15,.0f}"

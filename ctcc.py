@@ -786,6 +786,10 @@ def main() -> None:
             # In simple mode, show error even if quiet
             print("⚠️  Some calculations failed. BCR analysis may be incomplete.")
 
+    # Exit with failure so callers (e.g. batch_craft) can detect module failures
+    if failed_scripts:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

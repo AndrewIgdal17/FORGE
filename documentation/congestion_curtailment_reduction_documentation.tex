@@ -51,7 +51,7 @@ This script calculates congestion and curtailment benefits by:
     \item Calculating congestion reduction energy and costs
     \item Calculating curtailment reduction energy and benefits
     \item Applying saturation factors (haircuts) to account for diminishing returns
-    \item Computing residual congestion costs (unmet capacity needs)
+    \item Computing residual exceedance costs (unmet capacity needs; one cost from congestion and/or curtailment)
     \item Calculating present values of all benefits and costs
 \end{enumerate}
 
@@ -85,10 +85,14 @@ E_{cong} &= E_{cong,bc} + E_{cong,non} + E_{near} \\
 
 where the energy is split between overlap hours (with curtailment) and non-overlap binding hours.
 
-\textbf{Residual Congestion Costs:}
+\textbf{Residual Exceedance:}
+Residual exceedance is one cost that can have two sources---congestion binding hours and/or curtailment hours---so it works for congestion-only, curtailment-only, or both. When only one of congestion or curtailment is used, the other term is zero; when both are used, the user should set \texttt{residual\_exceedance\_value} if the single default (\$/MWh) is not appropriate.
+
 \begin{align}
-E_{residual} &= H_{bc} \times \max(0, X - \Delta C_{remain,bc}) + H_{bnon} \times \max(0, X - \Delta C_{eff}) \\
-\text{Cost}_{residual} &= E_{residual} \times \lambda_{cong}
+E_{res,cong} &= (H_{bc} + H_{bnon}) \times \max(0, X_{cong} - \Delta C_{eff}) \\
+E_{res,curt} &= H_c \times \max(0, C_c - \Delta C_{eff}) \\
+E_{residual} &= E_{res,cong} + E_{res,curt} \\
+\text{Cost}_{residual} &= E_{residual} \times \lambda, \quad \lambda = \text{\texttt{residual\_exceedance\_value}} \text{ if set, else } \lambda_{cong}
 \end{align}
 
 \subsection{Inputs and Outputs}
@@ -96,7 +100,7 @@ E_{residual} &= H_{bc} \times \max(0, X - \Delta C_{remain,bc}) + H_{bnon} \time
 \textbf{Inputs:}
 \begin{itemize}
     \item Project technical details (capacity, old capacity, reconductoring status)
-    \item Congestion parameters (binding hours, average exceedance, flow factor, saturation factor, congestion price)
+    \item Congestion parameters (binding hours, average exceedance, flow factor, saturation factor, congestion price; \texttt{residual\_exceedance\_value} optional, null = use average congestion price)
     \item Curtailment parameters (curtailment hours, average curtailment MW, curtailment price, saturation factor)
     \item Financing parameters (WACC, timeline)
 \end{itemize}
@@ -105,7 +109,7 @@ E_{residual} &= H_{bc} \times \max(0, X - \Delta C_{remain,bc}) + H_{bnon} \time
 \begin{itemize}
     \item Annual and lifetime congestion benefits (raw and haircut)
     \item Annual and lifetime curtailment benefits (raw and haircut)
-    \item Residual congestion costs
+    \item Residual exceedance costs
     \item Congestion and curtailment costs during delay/construction (allocated, no double count)
     \item Present values of all metrics
 \end{itemize}
@@ -191,10 +195,11 @@ energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
 annual_congestion_benefit_raw = energy_congestion_reduction * congestion_price
 annual_congestion_benefit_haircut = (1 - saturation_factor) * annual_congestion_benefit_raw
 
-# Residual congestion
-energy_congestion_residual = H_bc * max(0, average_exceedance - DC_remain) 
-                            + H_bnon * max(0, average_exceedance - effective_capacity_relief)
-annual_congestion_residual_cost = energy_congestion_residual * congestion_price
+# Residual exceedance (one number from congestion and/or curtailment)
+energy_residual_congestion = total_binding_hours * max(0, average_exceedance - effective_capacity_relief)
+energy_residual_curtailment = curtailment_hours_total * max(0, average_curtailment_mw - effective_capacity_relief)
+energy_residual_exceedance = energy_residual_congestion + energy_residual_curtailment
+annual_residual_exceedance_cost = energy_residual_exceedance * (residual_exceedance_value or average_congestion_price)
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -238,7 +243,8 @@ The following example demonstrates a typical usage:
 #     Benefit_raw = 375,000 * $50 = $18.75M/year
 #     Benefit_haircut = (1 - 0.2) * $18.75M = $15M/year
 #   
-#   Residual congestion:
+#   Residual exceedance (congestion contribution here; curtailment-only: E_res,cong=0,
+#     E_res,curt = H_c * max(0, C_c - Delta_C_eff)):
 #     E_residual = 1500 * max(0, 300-150) + 500 * max(0, 300-350) 
 #                = 225,000 MWh/year
 #     Cost = 225,000 * $50 = $11.25M/year
@@ -246,7 +252,7 @@ The following example demonstrates a typical usage:
 # Output:
 #   - Annual curtailment benefit: $9M
 #   - Annual congestion benefit (haircut): $15M
-#   - Annual residual congestion cost: $11.25M
+#   - Annual residual exceedance cost: $11.25M
 #   - Net annual benefit: $12.75M
 \end{lstlisting}
 
@@ -260,7 +266,7 @@ results = {
     "congestion_benefit_pv": lifetime_congestion_benefit_pv,
     "curtailment_benefit_annual": annual_curtailment_benefit,
     "curtailment_benefit_pv": lifetime_curtailment_benefit_pv,
-    "residual_congestion_cost_annual": annual_congestion_residual_cost,
+    "residual_exceedance_annual": annual_residual_exceedance_cost,
     # ... more fields
 }
 csv_manager.add_congestion_curtailment(results)
@@ -277,9 +283,9 @@ The script prevents double-counting by allocating capacity relief first to curta
 
 Saturation factors (haircuts) account for diminishing returns as more capacity is added. They reduce the monetized benefits to reflect that not all theoretical benefits are realized.
 
-\subsection{Residual Congestion}
+\subsection{Residual Exceedance}
 
-The script calculates residual congestion costs, representing unmet capacity needs when effective capacity relief is less than average exceedance. This is important for partial solutions (e.g., reconductoring that doesn't fully solve congestion).
+The script calculates residual exceedance costs, representing unmet capacity when effective relief is less than the constraint (exceedance or curtailment). Residual exceedance can come from (1) congestion binding hours, (2) curtailment hours, or both. One \$/MWh price is applied (default: average congestion price; the user can set \texttt{residual\_exceedance\_value} when both apply). This is important for partial solutions (e.g., reconductoring or a line that does not fully relieve curtailment). In CTCC, residual exceedance is a system/societal cost categorized under energy/emissions (not under the utility or ratepayer perspective).
 
 \subsection{Flow Factor}
 

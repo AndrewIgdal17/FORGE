@@ -38,201 +38,230 @@
 
 \section{Introduction}
 
-The \texttt{row\_costs.py} script calculates the right-of-way (ROW) costs for a transmission line project. It computes acquisition costs (one-time purchase), holding costs (annual costs during delay period), and rental costs (annual costs during operation), then calculates both regulatory (AFUDC) and societal (present value) perspectives.
+The \texttt{row\_costs.py} script calculates right-of-way (ROW) costs for a transmission line project. ROW costs depend on the \textbf{ROW agreement type}: who owns or controls the corridor and how the utility secures the right to use it. The script uses a \textbf{ROW agreement type} switch to determine which cost terms apply, so that acquisition (upfront payment) and annual ROW payment (ongoing permission) are \textbf{mutually exclusive} unless the regime explicitly allows both (e.g., federal/hybrid).
+
+Cost terms used in the model:
+\begin{itemize}
+    \item \textbf{Acquisition}: One-time upfront payment (easement compensation, fee-simple purchase, or similar).
+    \item \textbf{Holding cost}: Option fee---an explicit annual payment during the delay (permitting) period to secure the ROW so it is not taken by others. Not the same as ``cost of capital'' on acquisition; cost of capital on acquisition during delay is handled by AFUDC.
+    \item \textbf{Annual ROW payment}: Ongoing payment for permission to use the corridor (lease, license, or federal annual use fee). Labeled in data and outputs as ``annual ROW payment''; in legacy inputs the parameter may still be named \texttt{rent\_cost}.
+\end{itemize}
+
+\section{ROW Agreement Types}
+
+The following agreement types drive which cost terms are applied. Only one regime applies per scenario.
+
+\subsection{Permanent easement (new)}
+
+Typical greenfield: utility secures a \textbf{permanent} right to build and operate (easement or similar). Landowner or agency is paid upfront; there is no ongoing ``rent'' for the same corridor.
+
+\begin{itemize}
+    \item \textbf{Acquisition}: Yes (upfront payment).
+    \item \textbf{Annual ROW payment}: No (set to zero in the calculator).
+    \item \textbf{Holding cost}: Optional. If the user provides an option fee (\texttt{hold\_cost} per acre per year), it is applied during the delay period only.
+\end{itemize}
+
+\subsection{Lease / license (existing)}
+
+Utility uses an \textbf{existing} corridor (e.g., highway, railroad, another utility) and pays the owner for ongoing permission. No upfront purchase of the ROW.
+
+\begin{itemize}
+    \item \textbf{Acquisition}: No (set to zero).
+    \item \textbf{Holding cost}: No (set to zero).
+    \item \textbf{Annual ROW payment}: Yes (paid over delay + construction + project lifetime, or as configured).
+\end{itemize}
+
+Reconductoring or ``uses existing ROW'' scenarios typically use this regime.
+
+\subsection{Fee simple purchase}
+
+Utility \textbf{buys} the strip of land. Same cost treatment as permanent easement (new): upfront only, no annual ROW payment. Holding (option fee) optional during delay if applicable.
+
+\subsection{Federal / hybrid}
+
+Some federal or negotiated arrangements have both an upfront fee and an annual use fee for the same corridor. Both acquisition and annual ROW payment are applied.
+
+\begin{itemize}
+    \item \textbf{Acquisition}: Yes.
+    \item \textbf{Annual ROW payment}: Yes.
+    \item \textbf{Holding cost}: Optional (option fee during delay if provided).
+\end{itemize}
+
+\section{Mutual Exclusivity and Defaults}
+
+\begin{itemize}
+    \item For \textbf{permanent easement (new)} and \textbf{fee simple}, annual ROW payment from the ROW-details file is \textbf{ignored} (set to zero) so that ``buy the ROW'' does not also charge rent for the same miles.
+    \item For \textbf{lease / license (existing)}, acquisition and holding are set to zero; only annual ROW payment applies.
+    \item If \texttt{row\_agreement\_type} is not set in the project technical details, it is \textbf{inferred}: if \texttt{reconductoring} or \texttt{uses\_existing\_row} is true, regime is \textbf{lease\_license\_existing}; otherwise \textbf{permanent\_easement\_new}. This keeps existing scenarios consistent.
+\end{itemize}
+
+\section{Configuring YAMLs for ROW Costs}
+
+This section describes how to set up the YAML files for each ROW scenario. No method re-explanation---only which files and keys to use.
+
+\textbf{Files involved:}
+\begin{itemize}
+    \item \texttt{01\_project\_technical\_details.yaml} --- project section: \texttt{reconductoring}, \texttt{uses\_existing\_row}, and optionally \texttt{row\_agreement\_type}.
+    \item \texttt{11\_project\_row\_details.yaml} --- \texttt{right\_of\_way} with one entry per zone; each zone has \texttt{miles}, \texttt{acquisition\_cost}, \texttt{hold\_cost} (\$/acre/year), and \texttt{rent\_cost} (\$/acre/year, annual ROW payment).
+\end{itemize}
+
+\subsection{New greenfield (permanent easement)}
+
+\textbf{Result:} Acquisition + optional option fee (holding). No annual ROW payment for the same miles.
+
+\begin{itemize}
+    \item \textbf{01:} \texttt{reconductoring: False}, \texttt{uses\_existing\_row: False}. Omit \texttt{row\_agreement\_type} (inferred as \texttt{permanent\_easement\_new}).
+    \item \textbf{11:} Set \texttt{miles}, \texttt{acquisition\_cost}, and \texttt{hold\_cost} per zone. \texttt{rent\_cost} is ignored. To get \textbf{acquisition only} (no option fee), set \texttt{hold\_cost: 0} for every zone that has \texttt{miles} $> 0$.
+\end{itemize}
+
+\subsection{Existing corridor (lease / license)}
+
+\textbf{Result:} Annual ROW payment only. No acquisition, no holding.
+
+\begin{itemize}
+    \item \textbf{01:} \texttt{uses\_existing\_row: True} \textbf{or} \texttt{reconductoring: True}. Omit \texttt{row\_agreement\_type} (inferred as \texttt{lease\_license\_existing}).
+    \item \textbf{11:} Set \texttt{miles} and \texttt{rent\_cost} per zone. \texttt{acquisition\_cost} and \texttt{hold\_cost} are ignored.
+\end{itemize}
+
+\subsection{Fee simple purchase}
+
+\textbf{Result:} Same as new greenfield (acquisition + optional holding; no annual ROW payment).
+
+\begin{itemize}
+    \item \textbf{01:} \texttt{row\_agreement\_type: fee\_simple}. Or use the same 01 as new greenfield (inference gives \texttt{permanent\_easement\_new}, which has the same cost treatment).
+    \item \textbf{11:} Same as new greenfield: \texttt{acquisition\_cost}, \texttt{hold\_cost}; \texttt{rent\_cost} ignored.
+\end{itemize}
+
+\subsection{Federal / hybrid (upfront + annual)}
+
+\textbf{Result:} Acquisition and annual ROW payment (and optional holding). Both upfront and ongoing payments apply.
+
+\begin{itemize}
+    \item \textbf{01:} \texttt{row\_agreement\_type: federal\_hybrid}.
+    \item \textbf{11:} Set \texttt{miles}, \texttt{acquisition\_cost}, \texttt{rent\_cost}, and optionally \texttt{hold\_cost} per zone. All three cost fields are used.
+\end{itemize}
+
+\subsection{Explicit override of inferred type}
+
+To force a regime that does not match the default inference (e.g., new build but you want lease treatment, or vice versa), set \texttt{row\_agreement\_type} in \texttt{01\_project\_technical\_details.yaml} to one of: \texttt{permanent\_easement\_new}, \texttt{lease\_license\_existing}, \texttt{fee\_simple}, \texttt{federal\_hybrid}. Then configure \texttt{11\_project\_row\_details.yaml} as in the corresponding subsection above.
+
+\subsection{Quick reference}
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Scenario & 01 settings & 11: which costs used \\
+\midrule
+New greenfield & \texttt{reconductoring: False}, \texttt{uses\_existing\_row: False} & \texttt{acquisition\_cost}, \texttt{hold\_cost} \\
+Acquisition only & Same as above & Same; set \texttt{hold\_cost: 0} everywhere \\
+Existing corridor & \texttt{uses\_existing\_row: True} or \texttt{reconductoring: True} & \texttt{rent\_cost} only \\
+Federal/hybrid & \texttt{row\_agreement\_type: federal\_hybrid} & \texttt{acquisition\_cost}, \texttt{rent\_cost}, \texttt{hold\_cost} \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \section{Method Overview}
 
 \subsection{Purpose}
 
-This script calculates ROW costs by:
+The script:
 \begin{enumerate}
-    \item Determining ROW width based on project category
-    \item Calculating acres for each terrain zone
-    \item Computing acquisition, holding, and rental costs per zone
-    \item Aggregating costs across all zones
-    \item Applying AFUDC capitalization for regulatory perspective (acquisition only)
-    \item Computing present values for societal perspective
+    \item Determines ROW width from project category.
+    \item Computes zone acres from zone miles and ROW width.
+    \item Loads ROW agreement type (or infers it).
+    \item For each zone with miles $> 0$, computes potential acquisition, holding, and annual ROW payment from per-acre rates; then applies the \textbf{agreement type} to zero out terms that do not apply.
+    \item Aggregates costs across zones.
+    \item Applies AFUDC capitalization (acquisition only, when eligible) for the regulatory perspective.
+    \item Computes present values for the societal perspective.
 \end{enumerate}
 
-\subsection{Calculation Approach}
+\subsection{Acres and Zone-Level Potential Costs}
 
-The ROW cost calculation follows this structure:
+Zone area (acres):
+\begin{equation}
+\text{Zone Acres} = \frac{\text{Zone Miles} \times 5280 \times \text{ROW Width (ft)}}{43560}.
+\end{equation}
+
+From the ROW details file, each zone has (per acre): \texttt{acquisition\_cost}, \texttt{hold\_cost} (\$/acre/year), and \texttt{rent\_cost} (\$/acre/year, interpreted as annual ROW payment). The script first computes:
 
 \begin{align}
-\text{Zone Acres} &= \frac{\text{Zone Miles} \times 5280 \times \text{ROW Width (feet)}}{43560} \\
-\text{Acquisition Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Acquisition Cost/Acre} \\
-\text{Holding Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Holding Cost/Acre/Year} \times \text{Delay Years} \\
-\text{Rent Cost} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Rent Cost/Acre/Year} \times \text{Operation Years} \\
-\text{Total Nominal} &= \text{Acquisition} + \text{Holding} + \text{Rent}
+\text{Potential acquisition} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Acquisition cost/acre}, \\
+\text{Potential yearly holding} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Hold cost/acre/year}, \\
+\text{Potential yearly annual ROW payment} &= \sum_{\text{zones}} \text{Zone Acres} \times \text{Rent cost/acre/year}.
 \end{align}
 
-For reconductoring projects, acquisition and holding costs are zero since existing ROW is used. Only rental costs apply.
+Then the \textbf{ROW agreement type} is applied:
+\begin{itemize}
+    \item \textbf{Permanent easement (new)} or \textbf{fee simple}: Use acquisition and (optionally) holding; set annual ROW payment to zero.
+    \item \textbf{Lease / license (existing)}: Use annual ROW payment only; set acquisition and holding to zero.
+    \item \textbf{Federal / hybrid}: Use acquisition, annual ROW payment, and (optionally) holding.
+\end{itemize}
+
+Nominal totals (after applying the regime) are then computed for the chosen terms over the appropriate time periods (delay, construction, lifetime).
 
 \subsection{Inputs and Outputs}
 
 \textbf{Inputs:}
 \begin{itemize}
-    \item Project technical details (construction type, AC/DC, capacity, etc.)
-    \item Physical details (terrain distribution by zone)
-    \item ROW width for project category
-    \item ROW cost parameters (acquisition, holding, rent per acre) by zone
-    \item Financing parameters (WACC, inflation, AFUDC rate)
-    \item Timeline (delay years, construction years, project lifetime)
+    \item Project technical details (construction type, AC/DC, capacity, etc.), including optional \texttt{row\_agreement\_type} (if absent, inferred from \texttt{reconductoring} and \texttt{uses\_existing\_row}).
+    \item Physical details (terrain/zone miles).
+    \item ROW width for project category (\texttt{20\_project\_category\_row\_widths}).
+    \item ROW cost parameters by zone (\texttt{11\_project\_row\_details}): \texttt{acquisition\_cost}, \texttt{hold\_cost}, \texttt{rent\_cost} (annual ROW payment per acre per year).
+    \item Financing (WACC, base year), AFUDC configuration, and cost timing patterns (\texttt{19\_cost\_timing\_patterns}).
+    \item Timeline (delay years, construction years, project lifetime).
 \end{itemize}
 
 \textbf{Outputs:}
 \begin{itemize}
-    \item Nominal costs (acquisition, holding, rent)
-    \item AFUDC capitalized costs (acquisition only, regulatory perspective)
-    \item Present value costs (societal perspective)
-    \item Total acres required
+    \item Nominal costs (acquisition, holding, annual ROW payment).
+    \item AFUDC capitalized cost (acquisition only, when applicable).
+    \item Present value costs (societal perspective).
+    \item Total acres.
 \end{itemize}
 
-\subsection{Integration with Other Scripts}
+Legacy output keys may still use ``rent'' (e.g., \texttt{rent\_nominal}) for compatibility; conceptually the amount is ``annual ROW payment.''
 
-This script integrates with:
+\section{AFUDC and Holding Cost}
+
 \begin{itemize}
-    \item \texttt{yaml\_loaders.py} - Loads project configuration and ROW details (see \texttt{utilities\_documentation.tex})
-    \item \texttt{financial\_utils.py} - Financial calculations (see \texttt{utilities\_documentation.tex})
-    \item \texttt{csv\_output\_manager.py} - Writes results to CSV (see \texttt{csv\_output\_manager\_documentation.tex})
+    \item \textbf{Acquisition} is AFUDC-eligible when the regime includes it; the cost timing pattern \texttt{row\_acquisition} (e.g., 80\% during delay, 20\% during construction) is used to capitalize it to COD. The \textbf{cost of capital on ROW acquisition during the delay} is therefore included in AFUDC; no separate ``holding'' term is used for that.
+    \item \textbf{Holding cost} in this script is an \textbf{option fee}: an explicit annual expense during the delay period to secure the ROW. It is \textbf{not} AFUDC-eligible (operating expense).
+    \item \textbf{Annual ROW payment} is an operational expense and is not AFUDC-eligible.
 \end{itemize}
 
 \section{Key Functions}
 
 \subsection{\texttt{calculate\_zone\_costs(row\_width\_feet)}}
 
-Calculates ROW costs for each zone where the transmission line passes.
-
-\textbf{Parameters:}
-\begin{itemize}
-    \item \texttt{row\_width\_feet} (float): Right-of-way width in feet for this project category
-\end{itemize}
-
-\textbf{Returns:}
-\begin{itemize}
-    \item \texttt{yearly\_holding\_cost} (float): Total annual holding cost across all zones
-    \item \texttt{acquisition\_cost} (float): Total one-time acquisition cost
-    \item \texttt{yearly\_rent\_cost} (float): Total annual rental cost across all zones
-    \item \texttt{total\_acres} (float): Total acres required across all zones
-\end{itemize}
-
-\textbf{Key Logic:}
-\begin{lstlisting}
-# For each zone with miles > 0:
-for zone_details in row_details["right_of_way"].values():
-    if zone_details["miles"] > 0:
-        # Calculate acres: (miles * 5280 ft/mile * width_ft) / 43560 ft^2/acre
-        zone_acres = (zone_details["miles"] * 5280 * row_width_feet) / 43560
-        
-        # Accumulate costs
-        acquisition_cost += zone_acres * zone_details["acquisition_cost"]
-        yearly_rent_cost += zone_acres * zone_details["rent_cost"]
-        yearly_holding_cost += zone_acres * zone_details["hold_cost"]
-\end{lstlisting}
+Returns, for all zones with miles $> 0$, the potential yearly holding cost, potential one-time acquisition cost, potential yearly annual ROW payment, and total acres. The caller then applies the ROW agreement type to zero out terms that do not apply.
 
 \subsection{\texttt{main()}}
 
-Main execution function that orchestrates the ROW cost calculation and output.
-
-\textbf{Workflow:}
 \begin{enumerate}
-    \item Loads project technical details and constructs category identifier
-    \item Loads ROW width for the project category
-    \item Calls \texttt{calculate\_zone\_costs()} to compute costs per zone
-    \item Handles reconductoring vs. new build logic
-    \item Calculates AFUDC capitalized costs (acquisition only, if enabled)
-    \item Calculates present values for all cost components
-    \item Displays results and writes to CSV
+    \item Load project technical details and compute \texttt{row\_agreement\_type} (from field or inferred from \texttt{reconductoring} / \texttt{uses\_existing\_row}).
+    \item Load ROW width and call \texttt{calculate\_zone\_costs()}.
+    \item Apply agreement type: set acquisition, holding, or annual ROW payment to zero as required.
+    \item Compute nominal totals over the correct time windows (e.g., holding during delay; annual ROW payment from year 1 for lease, or from construction start for federal hybrid; etc.).
+    \item Apply AFUDC to acquisition (if applicable).
+    \item Compute PV for each component and total; write results and batch summary.
 \end{enumerate}
 
-\textbf{Reconductoring Logic:}
-\begin{lstlisting}
-if reconductoring:
-    # No acquisition or holding costs (existing ROW)
-    total_holding_cost = 0
-    acquisition_cost = 0
-    # Only rent costs apply
-    total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
-else:
-    # New build: all costs apply
-    total_holding_cost = yearly_holding_cost * delay_year
-    total_rent_cost = yearly_rent_cost * (project_lifetime + construction_years)
-\end{lstlisting}
-
-\section{Example}
-
-The following example demonstrates a typical usage of the ROW cost calculation:
-
-\begin{lstlisting}
-# Example: 500 MW Overhead AC line
-# Category: "Overhead/AC/500MW/Advanced Aluminum/NA"
-# 
-# Inputs (from YAML):
-#   - ROW width: 200 feet
-#   - Terrain distribution:
-#     * Zone 1 (Forested): 40 miles, $5000/acre acquisition, $50/acre/year rent
-#     * Zone 2 (Farmland): 60 miles, $3000/acre acquisition, $30/acre/year rent
-#   - Delay period: 2 years
-#   - Project lifetime: 50 years
-#   - Construction: 2 years
-#
-# Calculation:
-#   Zone 1 acres = (40 * 5280 * 200) / 43560 = 969.7 acres
-#   Zone 2 acres = (60 * 5280 * 200) / 43560 = 1454.5 acres
-#   Total acres = 2424.2 acres
-#
-#   Acquisition = (969.7 * $5000) + (1454.5 * $3000) = $7.3M
-#   Holding (2 years) = (969.7 * $50 * 2) + (1454.5 * $30 * 2) = $0.2M
-#   Rent (52 years) = (969.7 * $50 * 52) + (1454.5 * $30 * 52) = $5.2M
-#   Total nominal = $12.7M
-#
-# Output:
-#   - Nominal cost: $12.7M
-#   - AFUDC capitalized (acquisition): $7.5M (if AFUDC enabled)
-#   - Present value: $11.2M (discounted at real WACC)
-\end{lstlisting}
-
-\textbf{Integration Example:}
-
-\begin{lstlisting}
-# When called from ctcc.py:
-csv_manager = CTCCOutputManager()
-results = {
-    "total_nominal": total_nominal_cost,
-    "total_afudc": acquisition_capitalized + total_holding_cost + total_rent_cost,
-    "total_pv": total_pv_cost,
-    "acquisition_nominal": acquisition_cost,
-    "holding_nominal": total_holding_cost,
-    "rent_nominal": total_rent_cost,
-}
-csv_manager.add_row_costs(results)
-csv_manager.write_batch_summary()
-\end{lstlisting}
-
-\section{Key Implementation Details}
-
-\subsection{AFUDC Eligibility}
-
-Only acquisition costs are AFUDC-eligible (capitalized to plant cost). Holding costs are operating expenses during the delay period, and rent costs are operational period expenses. Neither holding nor rent costs receive AFUDC treatment.
-
-\subsection{Reconductoring Handling}
-
-For reconductoring projects, acquisition and holding costs are set to zero since existing ROW is used. Only rental costs apply during the operational period.
-
-\subsection{Present Value Timing}
+\section{Present Value Timing}
 
 \begin{itemize}
-    \item \textbf{Holding costs}: Incurred annually during delay period (years 1 to delay\_year)
-    \item \textbf{Acquisition costs}: One-time payment at end of delay period (year delay\_year)
-    \item \textbf{Rent costs}: Incurred annually during operation (years delay\_year+1 to delay\_year+construction\_years+project\_lifetime)
+    \item \textbf{Holding cost}: Annually during delay (years 1 to \texttt{delay\_years}).
+    \item \textbf{Acquisition}: One-time at end of delay (year \texttt{delay\_years}), discounted to base.
+    \item \textbf{Annual ROW payment}: For lease/license (existing), from year 1 for (delay + construction + lifetime) years; for new builds with annual payment (federal/hybrid), from construction start for (construction + lifetime) years.
 \end{itemize}
 
-\subsection{Acres Calculation}
+\section{Acres Calculation}
 
-The script converts miles and ROW width to acres using the standard conversion:
 \[
-\text{Acres} = \frac{\text{Miles} \times 5280 \text{ ft/mile} \times \text{ROW Width (ft)}}{43560 \text{ ft}^2/\text{acre}}
+\text{Acres} = \frac{\text{Miles} \times 5280 \text{ ft/mile} \times \text{ROW Width (ft)}}{43560 \text{ ft}^2/\text{acre}}.
 \]
 
-\end{document}
+\section{Integration}
 
+The script uses \texttt{smart\_loaders} (YAML or JSON), \texttt{financial\_utils} (PV, AFUDC), and \texttt{smart\_output} (CSV/JSON). See utilities and output manager documentation for details.
+
+\end{document}

@@ -31,6 +31,7 @@ from smart_loaders import (
 @dataclass
 class CongestionProjectDetails:
     """Project technical details for congestion/curtailment calculations."""
+
     delay_years: float
     construction_years: int
     project_lifetime: int
@@ -42,6 +43,7 @@ class CongestionProjectDetails:
 @dataclass
 class CongestionReductionResults:
     """Results from congestion and curtailment reduction cost calculations."""
+
     # Congestion lifetime values
     lifetime_congestion_reduction_cost: float
     lifetime_congestion_reduction_cost_haircut: float
@@ -97,7 +99,10 @@ def load_project_technical_details() -> CongestionProjectDetails:
         CongestionProjectDetails: Project technical details dataclass
     """
     from yaml_loaders import ProjectTechnicalDetails
-    project_details: ProjectTechnicalDetails = load_project_technical_details_centralized()
+
+    project_details: ProjectTechnicalDetails = (
+        load_project_technical_details_centralized()
+    )
 
     # Get old_capacity_mw separately (not in centralized loader return)
     old_capacity_mw = _get_old_capacity_mw()
@@ -236,9 +241,10 @@ def calculate_congestion_reduction_costs(
     1. Calculates effective capacity relief (greenfield: flow_factor * capacity; reconductoring: capacity - old_capacity)
     2. Allocates capacity relief between curtailment and congestion using allocate_curtailment_then_congestion()
     3. Calculates congestion reduction energy (MWh/yr) for binding hours, near-binding hours, and residual
-    4. Applies saturation factors to monetized values (conservative estimates)
-    5. Calculates present values using real WACC, starting after construction completion
-    6. Calculates opportunity costs during delay/construction periods
+    4. Residual exceedance energy is the sum of (1) congestion residual (total_binding_hours × max(0, average_exceedance − effective_capacity_relief)) and (2) curtailment residual (curtailment_hours_total × max(0, average_curtailment_mw − effective_capacity_relief)); one price (residual_exceedance_value or average_congestion_price) is applied.
+    5. Applies saturation factors to monetized values (conservative estimates)
+    6. Calculates present values using real WACC, starting after construction completion
+    7. Calculates opportunity costs during delay/construction periods
 
     Args:
         reconductoring: True if this is a reconductoring project, False for greenfield
@@ -336,15 +342,30 @@ def calculate_congestion_reduction_costs(
         1 - saturation_factor
     ) * annual_congestion_reduction_cost_raw
 
-    # Residual exceedance energy (MWh/yr) on binding hours
-    # Residual uses physical capacity relief for ALL binding hours, regardless of allocation
+    # Residual exceedance energy (MWh/yr): one number from congestion and/or curtailment
+    # Congestion contribution: binding hours × residual MW when relief < exceedance
     total_binding_hours = H_bc + H_bnon
-    residual_exceedance_per_hour = max(0.0, average_exceedance - effective_capacity_relief)
-    energy_residual_exceedance = total_binding_hours * residual_exceedance_per_hour
+    energy_residual_congestion = total_binding_hours * max(
+        0.0, average_exceedance - effective_capacity_relief
+    )
+    # Curtailment contribution: curtailment hours × residual MW when relief < curtailment
+    residual_curtailment_mw = max(
+        0.0, average_curtailment_mw - effective_capacity_relief
+    )
+    energy_residual_curtailment = curtailment_hours_total * residual_curtailment_mw
+    energy_residual_exceedance = (
+        energy_residual_congestion + energy_residual_curtailment
+    )
 
     # Use residual_exceedance_value (default to average_congestion_price if None)
-    residual_exceedance_value_used = residual_exceedance_value if residual_exceedance_value is not None else average_congestion_price
-    annual_residual_exceedance_cost = energy_residual_exceedance * residual_exceedance_value_used
+    residual_exceedance_value_used = (
+        residual_exceedance_value
+        if residual_exceedance_value is not None
+        else average_congestion_price
+    )
+    annual_residual_exceedance_cost = (
+        energy_residual_exceedance * residual_exceedance_value_used
+    )
 
     # Apply curtailment saturation factor
     annual_curtailment_benefit_haircut = (
@@ -507,9 +528,15 @@ def main() -> None:
     print("=" * 60)
     print("CONGESTION ENERGY REDUCTION RELIEF PHYSICAL RESULTS AND QUANTITIES")
     print("=" * 60)
-    print(f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW")
-    print(f"Energy congestion reduction: {congestion_results.energy_congestion_reduction:,.2f} MWh/yr")
-    print(f"Energy residual exceedance: {congestion_results.energy_residual_exceedance:,.2f} MWh/yr")
+    print(
+        f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW"
+    )
+    print(
+        f"Energy congestion reduction: {congestion_results.energy_congestion_reduction:,.2f} MWh/yr"
+    )
+    print(
+        f"Energy residual exceedance: {congestion_results.energy_residual_exceedance:,.2f} MWh/yr"
+    )
     print(f"E_near: {congestion_results.E_near:,.2f} MWh/yr")
 
     print()
@@ -529,7 +556,9 @@ def main() -> None:
     print("CURTAILMENT REDUCTION RESULTS AND QUANTITIES")
     print("=" * 60)
     print(f"Curtailment energy reduction: {congestion_results.E_curt:,.2f} MWh/yr")
-    print(f"Annual curtailment benefit: ${congestion_results.annual_curtailment_benefit:,.2f}")
+    print(
+        f"Annual curtailment benefit: ${congestion_results.annual_curtailment_benefit:,.2f}"
+    )
     print(
         f"Annual curtailment benefit haircut: ${congestion_results.annual_curtailment_benefit_haircut:,.2f}"
     )
@@ -553,7 +582,9 @@ def main() -> None:
     print("=" * 60)
     print("CURTAILMENT REDUCTION COST CALCULATION RESULTS")
     print("=" * 60)
-    print(f"Lifetime curtailment benefit: ${congestion_results.lifetime_curtailment_benefit:,.2f}")
+    print(
+        f"Lifetime curtailment benefit: ${congestion_results.lifetime_curtailment_benefit:,.2f}"
+    )
     print(
         f"Lifetime curtailment benefit haircut: ${congestion_results.lifetime_curtailment_benefit_haircut:,.2f}"
     )
@@ -562,7 +593,9 @@ def main() -> None:
     print(
         f"PRESENT VALUES (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
     )
-    print(f"Lifetime curtailment benefit PV: ${congestion_results.lifetime_curtailment_benefit_pv:,.2f}")
+    print(
+        f"Lifetime curtailment benefit PV: ${congestion_results.lifetime_curtailment_benefit_pv:,.2f}"
+    )
     print(
         f"Lifetime curtailment benefit haircut PV: ${congestion_results.lifetime_curtailment_benefit_haircut_pv:,.2f}"
     )

@@ -4,6 +4,8 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Important Note on Revenue:** Revenue (rate-based revenue requirement) is a **transfer** from ratepayers to the utility/TSP, not a net social benefit. System/societal BCRs exclude revenue from total benefits. Revenue appears only in stakeholder BCRs where it's a benefit to utilities and a cost to ratepayers.
 
+**Cost categories:** **Operational** = O&M + insurance only. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a system/societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs).
+
 ---
 
 ## System/Societal Perspectives
@@ -17,7 +19,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 **Includes:**
 
 - **Benefits:** Congestion reduction + Curtailment reduction (with conservative haircuts; excludes revenue transfer)
-- **Costs:** Capital + Operational + Energy/Emissions + Risk + Delay (everything)
+- **Costs:** Capital + Operational (O&M + insurance only) + Energy/Emissions (line losses + emissions + residual exceedance) + Risk + Delay (everything)
 
 **Use Case:** Complete societal cost-benefit analysis including all externalities and risks
 
@@ -291,8 +293,8 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 **Includes:**
 
 - **Benefits:** Revenue only (rate base recovery - what utilities actually receive)
-- **Costs:** Capital + Delay + Operational (what utilities actually pay)
-- **Excludes:** Line losses (socialized), Emissions (externalities), Risk (may be insured/not applicable)
+- **Costs:** Capital + Delay + Operational (O&M + insurance only; what utilities actually pay)
+- **Excludes:** Line losses (socialized), Emissions (externalities), Residual exceedance (system cost only; not paid by utility), Risk (may be insured/not applicable)
 
 **Use Case:**
 

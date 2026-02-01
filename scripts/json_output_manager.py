@@ -228,18 +228,20 @@ class JSONOutputManager:
                 + row.get("total_pv", 0)
                 + env.get("total_pv", 0)
             ),
-            # Operational costs
+            # Operational costs (O&M + insurance only; residual exceedance is in energy/emissions)
             "total_operational_nominal": (
                 insurance.get("nominal_lifetime_cost", 0)
                 + oandm.get("total_nominal", 0)
-                + line_loss.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
-                + emissions.get("total_nominal", 0)  # Fixed: was lifetime_cost_nominal
             ),
             "total_operational_pv": (
-                insurance.get("pv_total", 0)
-                + oandm.get("total_pv", 0)
-                + line_loss.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
-                + emissions.get("total_pv", 0)  # Fixed: was lifetime_cost_pv
+                insurance.get("pv_total", 0) + oandm.get("total_pv", 0)
+            ),
+            # Energy/emissions costs (line losses + emissions + residual exceedance; residual added below)
+            "total_energy_emissions_nominal": (
+                line_loss.get("total_nominal", 0) + emissions.get("total_nominal", 0)
+            ),
+            "total_energy_emissions_pv": (
+                line_loss.get("total_pv", 0) + emissions.get("total_pv", 0)
             ),
             # Risk costs
             "total_risk_nominal": (
@@ -270,8 +272,8 @@ class JSONOutputManager:
             congestion_curtailment.get("residual_exceedance_nominal", 0) or 0
         )
 
-        # Add residual exceedance to operational costs
-        self.summary["total_operational_nominal"] += residual_exceedance_nominal
+        # Add residual exceedance to energy/emissions (system cost only; not operational)
+        self.summary["total_energy_emissions_nominal"] += residual_exceedance_nominal
 
         # Calculate grand totals
         self.summary["grand_total_cost_nominal"] = (
@@ -281,6 +283,7 @@ class JSONOutputManager:
             + delay.get("total_nominal", 0)
             + congestion_delay_nominal
             + curtailment_delay_nominal
+            + self.summary["total_energy_emissions_nominal"]
         )
 
         self.summary["grand_total_cost_afudc"] = self.summary[
@@ -299,8 +302,8 @@ class JSONOutputManager:
             congestion_curtailment.get("residual_exceedance_pv", 0) or 0
         )
 
-        # Add residual exceedance to operational costs
-        self.summary["total_operational_pv"] += residual_exceedance_pv
+        # Add residual exceedance to energy/emissions (system cost only; not operational)
+        self.summary["total_energy_emissions_pv"] += residual_exceedance_pv
 
         self.summary["grand_total_cost_pv"] = (
             self.summary["total_capital_pv"]
@@ -309,6 +312,7 @@ class JSONOutputManager:
             + delay.get("total_pv", 0)
             + congestion_delay_pv
             + curtailment_delay_pv
+            + self.summary["total_energy_emissions_pv"]
         )
 
     def get_json_results(self) -> Dict[str, Any]:

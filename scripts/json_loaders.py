@@ -105,7 +105,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
     """Load project technical details - returns all project specs."""
     from calculation_utils import normalize_capacity_mw
     from yaml_loaders import normalize_construction_type
-    
+
     project_details = _data_source.get_data("01_project_technical_details")
     pd = project_details["project"]
     tl = project_details["timeline"]
@@ -115,11 +115,20 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
     capacity_mw = normalize_capacity_mw(capacity_mw_raw)
     conductor_type = pd["conductor_type"]
     from calculation_utils import get_converter_type
+
     converter_type = get_converter_type(ac_dc, pd["converter_type"])
     converter_loss_percentage = (
         None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
     )
     uses_existing_row = pd.get("uses_existing_row", False)
+    reconductoring = pd["reconductoring"]
+    row_agreement_type = pd.get("row_agreement_type")
+    if row_agreement_type is None:
+        row_agreement_type = (
+            "lease_license_existing"
+            if (reconductoring or uses_existing_row)
+            else "permanent_easement_new"
+        )
     return ProjectTechnicalDetails(
         construction_type=construction_type,
         ac_dc=ac_dc,
@@ -127,12 +136,13 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
         conductor_type=conductor_type,
         converter_type=converter_type,
         line_utilization=pd["line_utilization"],
-        reconductoring=pd["reconductoring"],
+        reconductoring=reconductoring,
         uses_existing_row=uses_existing_row,
         delay_years=tl["delay_years"],
         construction_years=tl["construction_years"],
         project_lifetime=tl["project_lifetime"],
         converter_loss_percentage=converter_loss_percentage,
+        row_agreement_type=row_agreement_type,
     )
 
 
@@ -233,15 +243,25 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         binding_hours=float(congestion_data["constraints"]["binding_hours"]),
         average_exceedance=float(congestion_data["constraints"]["average_exceedance"]),
         near_binding_hours=float(congestion_data["constraints"]["near_binding_hours"]),
-        near_average_exceedance=float(congestion_data["constraints"]["near_average_exceedance"]),
-        near_binding_relief_factor=float(congestion_data["constraints"]["near_binding_relief_factor"]),
+        near_average_exceedance=float(
+            congestion_data["constraints"]["near_average_exceedance"]
+        ),
+        near_binding_relief_factor=float(
+            congestion_data["constraints"]["near_binding_relief_factor"]
+        ),
         saturation_factor=float(congestion_data["constraints"]["saturation_factor"]),
         average_congestion_price=float(average_congestion_price),
         residual_exceedance_value=residual_exceedance_value,
-        curtailment_hours_total=float(curtailment_data.get("curtailment_hours_total", 0)),
+        curtailment_hours_total=float(
+            curtailment_data.get("curtailment_hours_total", 0)
+        ),
         average_curtailment_mw=float(curtailment_data.get("average_curtailment_mw", 0)),
-        average_curtailment_price=float(curtailment_data.get("average_curtailment_price", 0)),
-        curtailment_saturation_factor=float(curtailment_data.get("curtailment_saturation_factor", 0)),
+        average_curtailment_price=float(
+            curtailment_data.get("average_curtailment_price", 0)
+        ),
+        curtailment_saturation_factor=float(
+            curtailment_data.get("curtailment_saturation_factor", 0)
+        ),
     )
 
 
@@ -319,11 +339,11 @@ def load_terrain_data():
 def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
     """
     Load Primary BCR configuration from JSON data source.
-    
+
     Returns:
         Dictionary with module enable/disable flags grouped by category.
         If section doesn't exist in JSON, returns default (all enabled).
-    
+
     Structure:
         {
             "operational": {"oandm": True, "insurance": True, "delay_costs": True},
@@ -352,31 +372,31 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
             "curtailment": True,
         },
     }
-    
+
     try:
         # Try to load from JSON data source
         # First check if JSON data is available
         if _data_source._json_data is None:
             # Try to auto-load from environment variable
             _data_source._load_from_env_file()
-        
+
         # Now try to get the BCR config section
         try:
             bcr_data = _data_source.get_data("22_primary_bcr_config")
         except KeyError:
             # Section not found in JSON data, return default (all enabled)
             return default_config
-        
+
         if not bcr_data:
             # Empty data, return default
             return default_config
-        
+
         if "primary_bcr_config" not in bcr_data:
             # Missing top-level key, return default
             return default_config
-        
+
         config = bcr_data["primary_bcr_config"]
-        
+
         # Merge with defaults to handle missing keys
         result = {}
         for category in ["operational", "risk", "energy", "benefits"]:
@@ -385,15 +405,16 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
             # Use defaults for each module if not specified
             for module, default_value in default_config[category].items():
                 result[category][module] = category_config.get(module, default_value)
-        
+
         return result
-    
+
     except KeyError:
         # Section not found in JSON data, return default (all enabled)
         return default_config
     except RuntimeError as e:
         # JSON data not loaded or file not found - return default with warning
         import warnings
+
         warnings.warn(
             f"JSON data not available for BCR config: {e}. Using default (all modules enabled)."
         )
@@ -401,6 +422,7 @@ def load_primary_bcr_config() -> Dict[str, Dict[str, bool]]:
     except Exception as e:
         # Any other error, return default with warning
         import warnings
+
         warnings.warn(
             f"Error loading Primary BCR config from JSON: {e}. Using default (all modules enabled)."
         )

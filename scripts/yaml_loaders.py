@@ -15,6 +15,7 @@ from financial_utils import calculate_real_wacc
 @dataclass
 class ProjectTechnicalDetails:
     """Project technical details returned from load_project_technical_details()."""
+
     construction_type: str
     ac_dc: str
     capacity_mw: int
@@ -27,11 +28,15 @@ class ProjectTechnicalDetails:
     construction_years: int
     project_lifetime: int
     converter_loss_percentage: Optional[float]
+    row_agreement_type: Optional[str] = (
+        None  # permanent_easement_new | lease_license_existing | fee_simple | federal_hybrid; if None, inferred from reconductoring/uses_existing_row
+    )
 
 
 @dataclass
 class CongestionCurtailmentParams:
     """Congestion and curtailment reduction parameters."""
+
     flow_factor: float
     binding_hours: float
     average_exceedance: float
@@ -50,6 +55,7 @@ class CongestionCurtailmentParams:
 @dataclass
 class PhysicalDetailsDetailed:
     """Detailed physical project details with terrain breakdown."""
+
     total_miles: float
     forested_miles: float
     scrubbed_flat_miles: float
@@ -65,6 +71,7 @@ class PhysicalDetailsDetailed:
 @dataclass
 class CircuitAndResistanceDetails:
     """Circuit and resistance details for a project category."""
+
     voltage_kv: float
     conductors_per_phase: int
     number_of_phases: int
@@ -76,6 +83,7 @@ class CircuitAndResistanceDetails:
 @dataclass
 class FinancingDetails:
     """Financing parameters and WACC calculations."""
+
     inflation_rate: float
     base_year: int
     wacc_nominal: float
@@ -187,6 +195,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
         capacity_mw = normalize_capacity_mw(capacity_mw_raw)
         conductor_type = project_data["conductor_type"]
         from calculation_utils import get_converter_type
+
         converter_type = get_converter_type(ac_dc, project_data["converter_type"])
         converter_loss_percentage = (
             None
@@ -194,6 +203,14 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             else project_data.get("converter_loss_percentage", None)
         )
         uses_existing_row = project_data.get("uses_existing_row", False)
+        reconductoring = project_data["reconductoring"]
+        row_agreement_type = project_data.get("row_agreement_type")
+        if row_agreement_type is None:
+            row_agreement_type = (
+                "lease_license_existing"
+                if (reconductoring or uses_existing_row)
+                else "permanent_easement_new"
+            )
         return ProjectTechnicalDetails(
             construction_type=construction_type,
             ac_dc=ac_dc,
@@ -201,12 +218,13 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             conductor_type=conductor_type,
             converter_type=converter_type,
             line_utilization=project_data["line_utilization"],
-            reconductoring=project_data["reconductoring"],
+            reconductoring=reconductoring,
             uses_existing_row=uses_existing_row,
             delay_years=timeline_data["delay_years"],
             construction_years=timeline_data["construction_years"],
             project_lifetime=timeline_data["project_lifetime"],
             converter_loss_percentage=converter_loss_percentage,
+            row_agreement_type=row_agreement_type,
         )
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -283,9 +301,13 @@ def load_circuit_and_resistance_details(
                 )
         return CircuitAndResistanceDetails(
             voltage_kv=circuit_resistance_details[category]["voltage_kv"],
-            conductors_per_phase=circuit_resistance_details[category]["conductors_per_phase"],
+            conductors_per_phase=circuit_resistance_details[category][
+                "conductors_per_phase"
+            ],
             number_of_phases=circuit_resistance_details[category]["number_of_phases"],
-            number_of_circuits_poles=circuit_resistance_details[category]["number_of_circuits_poles"],
+            number_of_circuits_poles=circuit_resistance_details[category][
+                "number_of_circuits_poles"
+            ],
             AC_75_resistance=circuit_resistance_details[category]["AC_75_resistance"],
             DC_20_resistance=circuit_resistance_details[category]["DC_20_resistance"],
         )
@@ -518,8 +540,12 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             residual_exceedance_value=residual_exceedance_value,
             curtailment_hours_total=float(curtailment_data["curtailment_hours_total"]),
             average_curtailment_mw=float(curtailment_data["average_curtailment_mw"]),
-            average_curtailment_price=float(curtailment_data["average_curtailment_price"]),
-            curtailment_saturation_factor=float(curtailment_data["curtailment_saturation_factor"]),
+            average_curtailment_price=float(
+                curtailment_data["average_curtailment_price"]
+            ),
+            curtailment_saturation_factor=float(
+                curtailment_data["curtailment_saturation_factor"]
+            ),
         )
     except FileNotFoundError:
         raise FileNotFoundError(
