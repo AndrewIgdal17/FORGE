@@ -19,9 +19,6 @@
       }
       body > h1 {
         margin: 0;
-        padding: 1.5rem 2rem 1rem 2rem;
-        background: rgba(0, 100, 200, 0.03);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       }
       form {
         display: grid;
@@ -88,7 +85,9 @@
         flex-wrap: wrap;
         gap: 0.25rem;
         border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+        padding-top: 0.5rem;
       }
       .tab-button {
         padding: 0.5rem 1rem;
@@ -117,10 +116,10 @@
       }
       .tab-content {
         display: none;
-        padding: 2rem;
-        background: rgba(0, 0, 0, 0.02);
+        padding: 1.5rem;
+        background: transparent;
         border-radius: 0.5rem;
-        max-height: 70vh;
+        flex: 1;
         overflow-y: auto;
       }
       .tab-content.active {
@@ -188,47 +187,112 @@
       .main-tab-button.results-available:hover:not(.disabled) {
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
       }
-      .main-tab-content {
-        display: none;
-        overflow-y: auto;
-        flex: 1;
-        padding: 2rem;
-      }
-      .main-tab-content.active {
-        display: block;
-      }
-      .results-notification {
-        display: none;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem 1.5rem;
+      .run-button {
+        padding: 0.75rem 2rem;
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        border-radius: 0.5rem;
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 1rem;
         font-weight: 600;
-        margin-top: 1rem;
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        transition: all 0.2s;
       }
-      .results-notification.visible {
+      .run-button:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+      }
+      .main-tab-content {
+        display: none;
+        overflow: hidden;
+        flex: 1;
+        padding: 0 2rem;
+        min-height: 0;
+      }
+      .main-tab-content.active {
+        display: flex;
+        flex-direction: column;
+      }
+      #main-tab-results.active {
+        overflow-y: auto;
+      }
+      .main-tab-content > form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+      .main-tab-content .section {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+      .main-tab-content .section[hidden] {
+        display: none;
+      }
+      #ctcc-json-inputs {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+      #tabs-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+      #tabs-container.tabs-hidden {
+        display: none;
+      }
+      #tab-contents {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+      .status-bar {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 2rem;
+        height: 40px;
+        box-sizing: border-box;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .status-bar.visible {
         display: flex;
       }
-      .results-notification-icon {
-        font-size: 1.5rem;
+      .status-bar.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       }
-      .results-notification-text {
-        flex: 1;
+      .status-bar.error {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       }
-      .results-notification-button {
+      .status-bar-icon {
+        font-size: 1rem;
+      }
+      .status-bar-text {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      .status-bar-button {
         background: rgba(255, 255, 255, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.3);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
         font-weight: 600;
+        font-size: 0.8rem;
         cursor: pointer;
         transition: background 0.2s;
       }
-      .results-notification-button:hover {
+      .status-bar-button:hover {
         background: rgba(255, 255, 255, 0.3);
       }
       .submit-row {
@@ -239,15 +303,22 @@
       .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.25rem;
-        margin-bottom: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
       }
       .form-field {
         display: flex;
         flex-direction: column;
         gap: 0.4rem;
+        background: rgba(0, 0, 0, 0.03);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
       }
       .form-field label {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0;
         font-size: 0.875rem;
         font-weight: 600;
         color: rgba(0, 0, 0, 0.75);
@@ -288,6 +359,383 @@
       }
       .section-header:first-child {
         margin-top: 0;
+      }
+      .subsection-header {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin: 1.25rem 0 0.5rem 0;
+        padding: 0.4rem 0.75rem;
+        background: rgba(0, 100, 200, 0.08);
+        border-radius: 0.25rem;
+        color: #0066cc;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .subsection-header:first-child,
+      .section-header-row + .form-grid {
+        margin-top: 0;
+      }
+      .tab-section-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 2rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(0, 100, 200, 0.3);
+        color: #0066cc;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .tab-section-header:first-child {
+        margin-top: 0;
+      }
+      /* Toggle switch styles */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 24px;
+      }
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+      .toggle-switch input:checked + .toggle-slider {
+        background-color: #0066cc;
+      }
+      .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+      }
+      .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+      }
+      /* Slider input styles */
+      .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .slider-container input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        cursor: pointer;
+        height: 20px;
+        background: linear-gradient(to right, #0066cc 50%, #ddd 50%);
+        background-size: 100% 4px;
+        background-position: center;
+        background-repeat: no-repeat;
+        border-radius: 2px;
+        border: none;
+        outline: none;
+        box-shadow: none;
+      }
+      .slider-container input[type="range"]:focus,
+      .slider-container input[type="range"]:active {
+        border: none;
+        outline: none;
+        box-shadow: none;
+      }
+      .slider-container input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 2px;
+        background: transparent;
+      }
+      .slider-container input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #0066cc;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        margin-top: -6px;
+        transition: transform 0.1s, box-shadow 0.1s;
+      }
+      .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      }
+      .slider-container input[type="range"]::-moz-range-track {
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        border: none;
+      }
+      .slider-container input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #0066cc;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      }
+      .slider-value {
+        min-width: 65px;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.85rem;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.25rem;
+        background: #f8f9fa;
+        font-family: 'SF Mono', Monaco, monospace;
+      }
+      .slider-value:focus {
+        outline: none;
+        border-color: #0066cc;
+        background: white;
+      }
+      /* Formatted number input styles */
+      .form-field input.currency-input,
+      .form-field input.percentage-input,
+      .form-field input.number-input {
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        text-align: right;
+      }
+      /* Required field indicator */
+      .form-field label .required-indicator {
+        color: #dc2626;
+        margin-left: 0.25rem;
+      }
+      /* Unit display */
+      .form-field .unit-label {
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+        font-weight: 400;
+        margin-left: 0.35rem;
+      }
+      /* Help tooltip */
+      .form-field .help-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-left: 0.35rem;
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+      }
+      /* Tooltip element (added via JS) */
+      .help-tooltip {
+        position: fixed;
+        background: #1f2937;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.8rem;
+        font-weight: 400;
+        white-space: normal;
+        width: max-content;
+        max-width: 250px;
+        z-index: 10001;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        pointer-events: none;
+      }
+      .help-tooltip-arrow {
+        position: absolute;
+        width: 0;
+        height: 0;
+        border: 6px solid transparent;
+      }
+      .help-tooltip-arrow.arrow-bottom {
+        border-top-color: #1f2937;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .help-tooltip-arrow.arrow-top {
+        border-bottom-color: #1f2937;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      /* Auto-calculated total display */
+      .calculated-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 0.5rem;
+        margin: 0.75rem 0;
+      }
+      .calculated-total-label {
+        font-weight: 600;
+        color: #065f46;
+        font-size: 0.9rem;
+      }
+      .calculated-total-value {
+        font-family: 'SF Mono', Monaco, monospace;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #047857;
+      }
+      /* Reset button */
+      .section-reset-btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 0.25rem;
+        color: rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .section-reset-btn:hover {
+        background: #f5f5f5;
+        color: rgba(0, 0, 0, 0.8);
+        border-color: rgba(0, 0, 0, 0.3);
+      }
+      .section-header-row {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0 1rem 0;
+        position: relative;
+      }
+      .section-header-row:first-child {
+        margin-top: 0;
+      }
+      .section-header-row .section-header {
+        flex: 1;
+        margin: 0;
+      }
+      .section-header-row .subsection-header {
+        flex: 1;
+        margin: 0;
+        padding: 0.4rem 0.75rem;
+        background: rgba(0, 100, 200, 0.08);
+        border-radius: 0.25rem;
+      }
+      .section-header-row .section-reset-btn {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 1;
+      }
+      .section-header-row:hover .section-reset-btn {
+        opacity: 1;
+      }
+      /* Conditional field hiding */
+      .form-field.field-hidden {
+        display: none !important;
+      }
+      /* Custom modal dialog */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.visible {
+        display: flex;
+      }
+      .modal-dialog {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 90%;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem 0;
+        color: #1f2937;
+      }
+      .modal-message {
+        font-size: 0.95rem;
+        color: #4b5563;
+        margin: 0 0 1.5rem 0;
+        line-height: 1.5;
+      }
+      .modal-buttons {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+      .modal-btn {
+        padding: 0.6rem 1.25rem;
+        border-radius: 0.375rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .modal-btn-cancel {
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        color: #374151;
+      }
+      .modal-btn-cancel:hover {
+        background: #e5e7eb;
+      }
+      .modal-btn-confirm {
+        background: #0066cc;
+        border: 1px solid #0066cc;
+        color: white;
+      }
+      .modal-btn-confirm:hover {
+        background: #0052a3;
+      }
+      /* Dropdown select styles */
+      .form-field select {
+        padding: 0.6rem;
+        font: inherit;
+        font-size: 0.95rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 0.375rem;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .form-field select:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
       }
       /* Results Display Styles */
       .results-container {
@@ -499,55 +947,49 @@
     </style>
   </head>
   <body>
-    <h1>CTCC Online</h1>
+    <!-- Custom Modal Dialog -->
+    <div id="modal-overlay" class="modal-overlay">
+      <div class="modal-dialog">
+        <div class="modal-title" id="modal-title">Confirm</div>
+        <div class="modal-message" id="modal-message">Are you sure?</div>
+        <div class="modal-buttons">
+          <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
+          <button type="button" class="modal-btn modal-btn-confirm" id="modal-confirm">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem 1rem 2rem; background: rgba(0, 100, 200, 0.03); border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+      <h1 style="margin: 0; padding: 0; background: none; border: none;">CTCC Online</h1>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="scenario-id" style="font-size: 0.9rem; font-weight: 500;">Scenario ID</label>
+        <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" form="demo-form" style="width: 200px; padding: 0.5rem;" />
+      </div>
+    </div>
 
     <!-- Main Tabs -->
     <div class="main-tabs">
       <button type="button" class="main-tab-button active" data-tab="inputs">Inputs</button>
       <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
       <button type="button" class="main-tab-button disabled" data-tab="scenarios">Scenarios</button>
+      <button type="button" class="main-tab-button" data-tab="server-config">Server Config</button>
+      <button type="submit" form="demo-form" class="run-button">Run</button>
+    </div>
+
+    <!-- Status Bar -->
+    <div id="status-bar" class="status-bar">
+      <span class="status-bar-icon" id="status-bar-icon">⏳</span>
+      <div class="status-bar-text">
+        <strong id="status-bar-label">Calculating...</strong>
+        <span id="status-bar-timestamp"></span>
+      </div>
+      <button type="button" class="status-bar-button" id="status-bar-view-btn" style="display: none;" onclick="document.querySelector('.main-tab-button[data-tab=&quot;results&quot;]').click()">View Results</button>
+      <span id="status-bar-modified" style="display: none; margin-left: 0.5rem; opacity: 0.9; font-style: italic;">Inputs modified since last run - <a href="#" id="status-bar-rerun" style="color: white; text-decoration: underline;">rerun?</a></span>
     </div>
 
     <!-- Inputs Tab -->
     <div class="main-tab-content active" id="main-tab-inputs">
-    <form id="demo-form">
-      <div class="section">
-        <label for="api-base">API Base URL</label>
-        <input
-          id="api-base"
-          name="api-base"
-          type="url"
-          required
-          data-default-port="8000"
-          placeholder="http://example.com:8000"
-        />
-      </div>
-
-      <hr />
-
-      <div class="section">
-        <h2>Mode</h2>
-        <div class="mode-selection">
-          <div class="mode-row">
-            <label class="radio">
-              <input type="radio" name="mode" value="simple" checked />
-              <span>Simple Test</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="mode" value="bulk" />
-              <span>Bulk Test</span>
-            </label>
-          </div>
-          <div class="mode-row">
-            <label class="radio">
-              <input type="radio" name="mode" value="ctcc" />
-              <span>CTCC</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <hr />
+    <form id="demo-form" novalidate>
 
       <div id="simple-section" class="section">
         <h2>Simple Payload</h2>
@@ -579,39 +1021,9 @@
       </div>
 
       <div id="ctcc-section" class="section" hidden>
-        <label for="scenario-id">Scenario ID (optional)</label>
-        <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" />
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
-          <div>
-            <h3 style="margin-top: 0;">Input Mode</h3>
-            <label class="radio">
-              <input type="radio" name="ctcc-input-mode" value="json" checked />
-              <span>JSON: use <code>final_combined.json</code> from server</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="ctcc-input-mode" value="yaml" />
-              <span>YAML: use local YAML files on server (requires server-side YAMLs)</span>
-            </label>
-          </div>
-
-          <div>
-            <h3 style="margin-top: 0;">Output Mode</h3>
-            <label class="radio">
-              <input type="radio" name="ctcc-output-mode" value="json" checked />
-              <span>JSON: return results as JSON response to browser</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="ctcc-output-mode" value="csv" />
-              <span>CSV: write CSV files to server outputs folder (returns file list)</span>
-            </label>
-          </div>
-        </div>
-
         <div id="ctcc-json-inputs" hidden>
-          <h3>Input Data</h3>
-          <p id="load-status" style="margin: 0.5rem 0 1rem 0; font-size: 0.9rem; min-height: 1.5rem;"></p>
-          <div id="tabs-container" style="display: none;">
+          <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
+          <div id="tabs-container" class="tabs-hidden">
             <div class="tabs" id="tab-buttons"></div>
             <div id="tab-contents"></div>
           </div>
@@ -625,19 +1037,6 @@
         </div>
       </div>
 
-      <div class="submit-row">
-        <!-- Results Notification (inline) -->
-        <div id="results-notification" class="results-notification">
-          <span class="results-notification-icon">✓</span>
-          <div class="results-notification-text">
-            <strong>Results available</strong><br>
-            <span id="results-timestamp"></span>
-          </div>
-          <button type="button" class="results-notification-button" onclick="document.querySelector('.main-tab-button[data-tab=&quot;results&quot;]').click()">View Results</button>
-        </div>
-
-        <button type="submit">Send JSON</button>
-      </div>
     </form>
     </div>
 
@@ -653,6 +1052,75 @@
       <p style="color: rgba(0, 0, 0, 0.5); font-style: italic;">
         Scenario management will be available in a future release. This feature will allow you to save, load, and compare multiple calculation scenarios.
       </p>
+    </div>
+
+    <!-- Server Config Tab -->
+    <div class="main-tab-content" id="main-tab-server-config">
+      <div class="section">
+        <h2>API Base URL</h2>
+        <label for="api-base">Server URL</label>
+        <input
+          id="api-base"
+          name="api-base"
+          type="url"
+          required
+          data-default-port="8000"
+          placeholder="http://example.com:8000"
+          form="demo-form"
+        />
+      </div>
+
+      <hr />
+
+      <div class="section">
+        <h2>Mode</h2>
+        <div class="mode-selection">
+          <div class="mode-row">
+            <label class="radio">
+              <input type="radio" name="mode" value="simple" form="demo-form" />
+              <span>Simple Test</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="mode" value="bulk" form="demo-form" />
+              <span>Bulk Test</span>
+            </label>
+          </div>
+          <div class="mode-row">
+            <label class="radio">
+              <input type="radio" name="mode" value="ctcc" checked form="demo-form" />
+              <span>CTCC</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="section">
+        <h2>Input Mode</h2>
+        <label class="radio">
+          <input type="radio" name="ctcc-input-mode" value="json" checked form="demo-form" />
+          <span>JSON: use <code>final_combined.json</code> from server</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="ctcc-input-mode" value="yaml" form="demo-form" />
+          <span>YAML: use local YAML files on server (requires server-side YAMLs)</span>
+        </label>
+      </div>
+
+      <hr />
+
+      <div class="section">
+        <h2>Output Mode</h2>
+        <label class="radio">
+          <input type="radio" name="ctcc-output-mode" value="json" checked form="demo-form" />
+          <span>JSON: return results as JSON response to browser</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="ctcc-output-mode" value="csv" form="demo-form" />
+          <span>CSV: write CSV files to server outputs folder (returns file list)</span>
+        </label>
+      </div>
     </div>
 
     <script>
@@ -684,11 +1152,369 @@
       // Main tab elements
       const mainTabButtons = document.querySelectorAll('.main-tab-button');
       const mainTabContents = document.querySelectorAll('.main-tab-content');
-      const resultsNotification = document.getElementById('results-notification');
-      const resultsTimestamp = document.getElementById('results-timestamp');
+      const statusBar = document.getElementById('status-bar');
+      const statusBarIcon = document.getElementById('status-bar-icon');
+      const statusBarLabel = document.getElementById('status-bar-label');
+      const statusBarTimestamp = document.getElementById('status-bar-timestamp');
+      const statusBarViewBtn = document.getElementById('status-bar-view-btn');
+      const statusBarModified = document.getElementById('status-bar-modified');
+      const statusBarRerun = document.getElementById('status-bar-rerun');
+
+      // Rerun link click handler
+      statusBarRerun.addEventListener('click', function(e) {
+        e.preventDefault();
+        form.requestSubmit();
+      });
 
       let ctccJsonData = null;
       let activeTabIndex = 0;
+
+      // Modal dialog helpers
+      const modalOverlay = document.getElementById('modal-overlay');
+      const modalTitle = document.getElementById('modal-title');
+      const modalMessage = document.getElementById('modal-message');
+      const modalCancel = document.getElementById('modal-cancel');
+      const modalConfirm = document.getElementById('modal-confirm');
+      let modalCallback = null;
+
+      function showModal(title, message, onConfirm) {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        modalCallback = onConfirm;
+        modalOverlay.classList.add('visible');
+      }
+
+      function hideModal() {
+        modalOverlay.classList.remove('visible');
+        modalCallback = null;
+      }
+
+      modalCancel.addEventListener('click', hideModal);
+      modalConfirm.addEventListener('click', function() {
+        if (modalCallback) {
+          modalCallback();
+        }
+        hideModal();
+      });
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+          hideModal();
+        }
+      });
+
+      // Smart tooltip positioning
+      let activeTooltip = null;
+
+      function showTooltip(helpIcon) {
+        hideTooltip(); // Remove any existing tooltip
+
+        const text = helpIcon.dataset.tooltip;
+        if (!text) return;
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'help-tooltip';
+        tooltip.textContent = text;
+
+        const arrow = document.createElement('div');
+        arrow.className = 'help-tooltip-arrow';
+        tooltip.appendChild(arrow);
+
+        document.body.appendChild(tooltip);
+        activeTooltip = tooltip;
+
+        // Get positions
+        const iconRect = helpIcon.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 10;
+
+        // Calculate ideal centered position
+        let left = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
+        let top = iconRect.top - tooltipRect.height - 8;
+
+        // Adjust for left edge
+        if (left < padding) {
+          left = padding;
+        }
+
+        // Adjust for right edge
+        if (left + tooltipRect.width > viewportWidth - padding) {
+          left = viewportWidth - tooltipRect.width - padding;
+        }
+
+        // If not enough space above, show below
+        if (top < padding) {
+          top = iconRect.bottom + 8;
+          arrow.className = 'help-tooltip-arrow arrow-top';
+        } else {
+          arrow.className = 'help-tooltip-arrow arrow-bottom';
+        }
+
+        // Position arrow relative to icon center
+        const arrowLeft = iconRect.left + (iconRect.width / 2) - left;
+        arrow.style.left = Math.max(10, Math.min(arrowLeft, tooltipRect.width - 10)) + 'px';
+        arrow.style.transform = 'translateX(-50%)';
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+      }
+
+      function hideTooltip() {
+        if (activeTooltip) {
+          activeTooltip.remove();
+          activeTooltip = null;
+        }
+      }
+
+      // Delegate tooltip events to document
+      document.addEventListener('mouseenter', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('help-icon')) {
+          showTooltip(e.target);
+        }
+      }, true);
+
+      document.addEventListener('mouseleave', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('help-icon')) {
+          hideTooltip();
+        }
+      }, true);
+
+      // Tab configuration for 9-tab structure
+      const TAB_CONFIG = [
+        { id: 'project-overview', label: 'Project Overview', sections: ['01_project_technical_details'] },
+        { id: 'physical-route', label: 'Physical Route Details', sections: ['02_project_physical_details'] },
+        { id: 'financial', label: 'Financial Parameters', sections: ['03_financing', '19_cost_timing_patterns', '22_primary_bcr_config'] },
+        { id: 'row', label: 'Right-of-Way', sections: ['11_project_row_details'] },
+        { id: 'environmental', label: 'Environmental & Mitigation', sections: ['09_environmental_mitigation'] },
+        { id: 'risk', label: 'Risk Parameters', sections: ['06_wildfire_costs', '07_outage_costs'] },
+        { id: 'congestion', label: 'Benefits - Congestion & Curtailment', sections: ['17_congestion_curtailment_reductions'] },
+        { id: 'emissions', label: 'Benefits - Emissions', sections: ['16_emissions_reductions'] },
+        { id: 'operational', label: 'Operational Costs', sections: ['04_insurance', '05_delays', '12_project_om_vegetation_management'] }
+      ];
+
+      // Field metadata: units, help text, required status
+      const FIELD_METADATA = {
+        // Project Overview
+        '01_project_technical_details.project.name': { required: true, help: 'Unique identifier for this project scenario' },
+        '01_project_technical_details.project.construction_type': { required: true, help: 'Method of transmission line construction' },
+        '01_project_technical_details.project.ac_dc': { required: true, help: 'Alternating Current or Direct Current transmission' },
+        '01_project_technical_details.project.capacity_mw': { required: true, unit: 'MW', help: 'Maximum power transfer capacity' },
+        '01_project_technical_details.project.conductor_type': { required: true, help: 'Type of conductor material and design' },
+        '01_project_technical_details.project.number_of_converters': { help: 'Number of AC/DC converter stations (DC only)' },
+        '01_project_technical_details.project.converter_type': { help: 'LCC (Line Commutated) or VSC (Voltage Source) converter' },
+        '01_project_technical_details.project.converter_loss_percentage': { unit: '%', help: 'Energy lost in AC/DC conversion' },
+        '01_project_technical_details.project.line_utilization': { help: 'Fraction of rated capacity typically used (0-1)' },
+        '01_project_technical_details.project.baseline_electricity_price_per_mwh': { unit: '$/MWh', help: 'Reference electricity price for calculations' },
+        '01_project_technical_details.project.old_capacity_mw': { unit: 'MW', help: 'Existing line capacity before reconductoring' },
+        '01_project_technical_details.project.greenfield_comparison_capacity_mw': { unit: 'MW', help: 'Capacity of alternative greenfield project for comparison' },
+        '01_project_technical_details.timeline.construction_years': { required: true, unit: 'years', help: 'Duration of construction phase' },
+        '01_project_technical_details.timeline.delay_years': { required: true, unit: 'years', help: 'Expected permitting and regulatory delay' },
+        '01_project_technical_details.timeline.project_lifetime': { required: true, unit: 'years', help: 'Expected operational lifetime of the project' },
+
+        // Physical Route - terrain miles
+        '02_project_physical_details.terrain.terrain_miles.forested': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.scrubbed_flat': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.wetland': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.farmland': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.desert_barren': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.urban': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.rolling_hills': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.mountain': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.subsea': { unit: 'miles' },
+
+        // Financial
+        '03_financing.financial.inflation_rate': { help: 'Annual inflation rate for cost escalation' },
+        '03_financing.financial.base_year': { required: true, help: 'Reference year for all dollar values' },
+        '03_financing.financial.wacc_nominal': { help: 'Weighted Average Cost of Capital (nominal)' },
+        '03_financing.financial.social_discount_rate': { help: 'Discount rate for societal benefits (OMB recommends 2-7%)' },
+        '03_financing.financial.capital_structure.equity_percent': { help: 'Fraction of capital from equity financing' },
+        '03_financing.financial.capital_structure.debt_percent': { help: 'Fraction of capital from debt financing' },
+        '03_financing.financial.capital_structure.cost_of_equity': { help: 'Required return on equity investment' },
+        '03_financing.financial.capital_structure.cost_of_debt': { help: 'Interest rate on debt financing' },
+        '03_financing.financial.afudc.apply_afudc': { help: 'Apply Allowance for Funds Used During Construction' },
+        '03_financing.financial.afudc.delay_period_active_work': { help: 'AFUDC accrues if active work continues during delay' },
+
+        // Insurance
+        '04_insurance.insurance.premium_rate': { help: 'Annual insurance premium as fraction of insured value' },
+        '04_insurance.insurance.wildfire_liability.liability_limit': { unit: '$', help: 'Maximum wildfire liability coverage' },
+        '04_insurance.insurance.wildfire_liability.rate_on_line': { help: 'Annual premium = Rate on Line × Liability Limit' },
+
+        // Delays
+        '05_delays.annual_delay_costs.legal': { unit: '$/year' },
+        '05_delays.annual_delay_costs.admin': { unit: '$/year' },
+        '05_delays.annual_delay_costs.labor': { unit: '$/year' },
+        '05_delays.annual_delay_costs.material_and_equipment': { unit: '$/year' },
+        '05_delays.annual_delay_costs.regulatory': { unit: '$/year' },
+        '05_delays.annual_delay_costs.public_relations': { unit: '$/year' },
+        '05_delays.annual_delay_costs.project_management': { unit: '$/year' },
+        '05_delays.annual_delay_costs.miscellaneous': { unit: '$/year' },
+
+        // Wildfire
+        '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average cost per wildfire ignition event' },
+        '06_wildfire_costs.wildfire.risk_growth_rate': { help: 'Annual increase in wildfire risk' },
+        '06_wildfire_costs.wildfire.discount_rate_source': { help: 'Which discount rate to use for wildfire cost PV' },
+
+        // Outage
+        '07_outage_costs.outage.capacity_at_risk_factor': { help: '1.0 = radial line, <1.0 = meshed/redundant network' },
+        '07_outage_costs.outage.risk_growth_rate': { help: 'Annual increase in outage risk' },
+
+        // ROW - add units for all zones
+        '11_project_row_details.right_of_way.zone_1.miles': { unit: 'miles' },
+        '11_project_row_details.right_of_way.zone_1.acquisition_cost': { unit: '$/acre' },
+        '11_project_row_details.right_of_way.zone_1.rent_cost': { unit: '$/acre/year' },
+        '11_project_row_details.right_of_way.zone_1.hold_cost': { unit: '$/acre' },
+
+        // Congestion
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor': { help: 'Deliverability to the targeted constrained area (0-1)' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours': { unit: 'hrs/year', help: 'Hours per year constraint is binding' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance': { unit: 'MW', help: 'Average MW exceeding constraint when binding' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: '0 for radial line, higher for meshed system' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price': { unit: '$/MWh' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total': { unit: 'hrs/year' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw': { unit: 'MW' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price': { unit: '$/MWh', help: 'Typically PPA price or avoided cost' },
+
+        // Emissions
+        '16_emissions_reductions.emissions_reductions.compensation_percent': { help: 'Fraction of displaced generation that reduces emissions' },
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg': { unit: '$/kg' },
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg': { unit: '$/kg' },
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg': { unit: '$/kg' }
+      };
+
+      // Fields to show/hide based on conditions
+      const CONDITIONAL_FIELDS = {
+        // DC-only fields
+        dc_only: [
+          '01_project_technical_details.project.number_of_converters',
+          '01_project_technical_details.project.converter_type',
+          '01_project_technical_details.project.converter_loss_percentage',
+          '03_financing.financial.contingencies.converter_contingency'
+        ],
+        // Reconductoring-only fields
+        reconductoring_only: [
+          '01_project_technical_details.project.old_capacity_mw',
+          '01_project_technical_details.project.old_conductor_type',
+          '01_project_technical_details.project.old_ac_dc'
+        ],
+        // Greenfield-only fields (shown when NOT reconductoring)
+        greenfield_only: [
+          '01_project_technical_details.project.greenfield_comparison_capacity_mw',
+          '01_project_technical_details.project.greenfield_comparison_conductor_type'
+        ]
+      };
+
+      // Field configuration for special input types
+      const FIELD_CONFIG = {
+        // Dropdowns
+        '01_project_technical_details.project.construction_type': {
+          type: 'dropdown',
+          options: ['Overhead', 'Underground Direct-Buried', 'Underground Tunnel', 'Subsea']
+        },
+        '01_project_technical_details.project.ac_dc': {
+          type: 'dropdown',
+          options: ['AC', 'DC']
+        },
+        '01_project_technical_details.project.conductor_type': {
+          type: 'dropdown',
+          options: ['Standard Aluminum Conductor', 'Advanced Aluminum Conductor', 'Underground Copper Conductor', 'Subsea Copper Conductor']
+        },
+        '01_project_technical_details.project.number_of_converters': {
+          type: 'dropdown',
+          options: [0, 1, 2]
+        },
+        '01_project_technical_details.project.converter_type': {
+          type: 'dropdown',
+          options: ['NA', 'LCC Converter', 'VSC Converter']
+        },
+        '01_project_technical_details.project.old_conductor_type': {
+          type: 'dropdown',
+          options: ['', 'Standard Aluminum Conductor', 'Advanced Aluminum Conductor', 'Underground Copper Conductor', 'Subsea Copper Conductor']
+        },
+        '01_project_technical_details.project.old_ac_dc': {
+          type: 'dropdown',
+          options: ['', 'AC', 'DC']
+        },
+        '01_project_technical_details.project.greenfield_comparison_conductor_type': {
+          type: 'dropdown',
+          options: ['', 'Standard Aluminum Conductor', 'Advanced Aluminum Conductor', 'Underground Copper Conductor', 'Subsea Copper Conductor']
+        },
+        '06_wildfire_costs.wildfire.discount_rate_source': {
+          type: 'dropdown',
+          options: ['social', 'wacc_real', 'custom']
+        },
+        '07_outage_costs.outage.discount_rate_type': {
+          type: 'dropdown',
+          options: ['social', 'wacc_real']
+        },
+
+        // Toggles (booleans that should be toggle switches)
+        '01_project_technical_details.project.reconductoring': { type: 'toggle' },
+        '01_project_technical_details.project.uses_existing_row': { type: 'toggle' },
+        '03_financing.financial.afudc.apply_afudc': { type: 'toggle' },
+        '03_financing.financial.afudc.delay_period_active_work': { type: 'toggle' },
+        '03_financing.financial.revenue.rate_based.enabled': { type: 'toggle' },
+        '04_insurance.insurance.insurable_components.conductors': { type: 'toggle' },
+        '04_insurance.insurance.insurable_components.structures': { type: 'toggle' },
+        '04_insurance.insurance.insurable_components.converters': { type: 'toggle' },
+        '04_insurance.insurance.wildfire_liability.enabled': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.afudc_eligible': { type: 'toggle' },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.afudc_eligible': { type: 'toggle' },
+
+        // Sliders (0-1 range values)
+        '01_project_technical_details.project.line_utilization': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '03_financing.financial.inflation_rate': { type: 'slider', min: 0, max: 0.2, step: 0.005 },
+        '03_financing.financial.wacc_nominal': { type: 'slider', min: 0, max: 0.2, step: 0.005 },
+        '03_financing.financial.social_discount_rate': { type: 'slider', min: 0, max: 0.1, step: 0.005 },
+        '03_financing.financial.contingencies.conductor_contingency': { type: 'slider', min: 0, max: 0.5, step: 0.01 },
+        '03_financing.financial.contingencies.structure_contingency': { type: 'slider', min: 0, max: 0.5, step: 0.01 },
+        '03_financing.financial.contingencies.converter_contingency': { type: 'slider', min: 0, max: 0.5, step: 0.01 },
+        '03_financing.financial.capital_structure.equity_percent': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '03_financing.financial.capital_structure.debt_percent': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '03_financing.financial.capital_structure.cost_of_equity': { type: 'slider', min: 0, max: 0.3, step: 0.005 },
+        '03_financing.financial.capital_structure.cost_of_debt': { type: 'slider', min: 0, max: 0.2, step: 0.005 },
+        '03_financing.financial.revenue.rate_based.allowed_return_rate': { type: 'slider', min: 0, max: 0.2, step: 0.005 },
+        '04_insurance.insurance.premium_rate': { type: 'slider', min: 0, max: 0.01, step: 0.0001 },
+        '04_insurance.insurance.wildfire_liability.rate_on_line': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '06_wildfire_costs.wildfire.risk_growth_rate': { type: 'slider', min: 0, max: 0.1, step: 0.005 },
+        '07_outage_costs.outage.risk_growth_rate': { type: 'slider', min: 0, max: 0.1, step: 0.005 },
+        '07_outage_costs.outage.capacity_at_risk_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '16_emissions_reductions.emissions_reductions.compensation_percent': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.flow_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        // Cost timing patterns sliders (0-1)
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.during_delay': { type: 'slider', min: 0, max: 1, step: 0.01 },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.during_construction': { type: 'slider', min: 0, max: 1, step: 0.01 }
+      };
 
       // Main tab switching
       function switchMainTab(tabName) {
@@ -710,6 +1536,18 @@
             content.classList.remove('active');
           }
         });
+
+        // Only show status bar on Inputs tab
+        if (tabName === 'inputs') {
+          if (statusBar.dataset.wasVisible === 'true') {
+            statusBar.classList.add('visible');
+          }
+        } else {
+          if (statusBar.classList.contains('visible')) {
+            statusBar.dataset.wasVisible = 'true';
+          }
+          statusBar.classList.remove('visible');
+        }
       }
 
       function enableResultsTab() {
@@ -719,6 +1557,21 @@
         }
       }
 
+      function showCalculating() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        statusBar.classList.remove('success');
+        statusBar.classList.remove('error');
+        statusBar.classList.add('visible');
+        statusBar.dataset.wasVisible = 'true';
+        statusBarIcon.textContent = '⏳';
+        statusBarLabel.textContent = 'Calculating...';
+        statusBarTimestamp.textContent = `Started ${timeStr}`;
+        statusBarViewBtn.style.display = 'none';
+        statusBarModified.style.display = 'none';
+      }
+
       function markResultsAvailable(durationMs) {
         const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
         if (resultsButton) {
@@ -726,20 +1579,29 @@
           resultsButton.classList.add('results-available');
         }
 
-        // Show notification with timestamp and duration
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
         // Format duration
         const durationSeconds = (durationMs / 1000).toFixed(2);
 
-        resultsTimestamp.textContent = `${timeStr} ${dateStr} • ${durationSeconds}s`;
-        resultsNotification.classList.add('visible');
+        statusBar.classList.add('success');
+        statusBarIcon.textContent = '✓';
+        statusBarLabel.textContent = 'Results available';
+        statusBarTimestamp.textContent = `Completed in ${durationSeconds}s`;
+        statusBarViewBtn.style.display = 'block';
       }
 
-      function hideResultsNotification() {
-        resultsNotification.classList.remove('visible');
+      function hideStatusBar() {
+        statusBar.classList.remove('visible');
+        statusBar.classList.remove('success');
+        statusBar.classList.remove('error');
+        statusBar.dataset.wasVisible = 'false';
+        statusBarModified.style.display = 'none';
+      }
+
+      function markInputsModified() {
+        // Only show modified message if results are available (success state)
+        if (statusBar.classList.contains('success')) {
+          statusBarModified.style.display = 'inline';
+        }
       }
 
       // Attach click handlers to main tabs
@@ -849,7 +1711,96 @@
       function humanizeKey(key) {
         return key
           .replace(/_/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase());
+          .replace(/\b\w/g, l => l.toUpperCase())
+          .replace(/\bAfudc\b/g, 'AFUDC')
+          .replace(/\bWacc\b/g, 'WACC')
+          .replace(/\bOandm\b/g, 'O&M')
+          .replace(/\bAc Dc\b/g, 'AC/DC')
+          .replace(/\bCo2\b/g, 'CO2')
+          .replace(/\bSox\b/g, 'SOx')
+          .replace(/\bNox\b/g, 'NOx')
+          .replace(/\bMwh\b/g, 'MWh')
+          .replace(/\bMw\b/g, 'MW');
+      }
+
+      // Field type detection and formatting
+      function isCurrencyField(path) {
+        const lowerPath = path.toLowerCase();
+        const currencyPatterns = [
+          '_cost', 'cost_', 'costs',
+          '_price', 'price_',
+          'severity_per_event',
+          'liability_limit',
+          'value_of_lost_load',
+          'acquisition_cost', 'rent_cost', 'hold_cost',
+          'annual_delay_costs.',
+          'legal', 'admin', 'labor', 'regulatory', 'miscellaneous',
+          'material_and_equipment', 'public_relations', 'project_management'
+        ];
+        return currencyPatterns.some(pattern => lowerPath.includes(pattern));
+      }
+
+      function isPercentageField(path) {
+        const lowerPath = path.toLowerCase();
+        const percentPatterns = [
+          'percent', '_rate', 'rate_', 'contingency', 'factor',
+          'equity_percent', 'debt_percent', 'utilization',
+          'inflation', 'wacc', 'discount', 'return_rate',
+          'premium_rate', 'rate_on_line', 'compensation_percent',
+          'during_delay', 'during_construction'
+        ];
+        // Exclude fields that have "rate" or "percent" but aren't decimal percentages
+        const excludePatterns = ['ignition_rate', 'outage_rate', 'rate_of_change', 'energy_source_mix'];
+        if (excludePatterns.some(pattern => lowerPath.includes(pattern))) {
+          return false;
+        }
+        return percentPatterns.some(pattern => lowerPath.includes(pattern));
+      }
+
+      function formatCurrencyInput(value) {
+        if (value === null || value === undefined || value === '') return '';
+        const num = typeof value === 'string' ? parseFloat(value.replace(/[$,]/g, '')) : value;
+        if (isNaN(num)) return '';
+        return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function parseCurrencyInput(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const cleaned = String(value).replace(/[$,]/g, '');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? null : num;
+      }
+
+      function formatPercentageInput(value) {
+        if (value === null || value === undefined || value === '') return '';
+        const num = typeof value === 'string' ? parseFloat(value.replace(/[%,]/g, '')) : value;
+        if (isNaN(num)) return '';
+        // Value is stored as decimal (0.1 = 10%), display as percentage
+        const pct = num * 100;
+        return pct.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '%';
+      }
+
+      function parsePercentageInput(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const cleaned = String(value).replace(/[%,]/g, '');
+        const num = parseFloat(cleaned);
+        if (isNaN(num)) return null;
+        // Convert back to decimal (10% = 0.1)
+        return num / 100;
+      }
+
+      function formatNumberInput(value) {
+        if (value === null || value === undefined || value === '') return '';
+        const num = typeof value === 'string' ? parseFloat(value.replace(/,/g, '')) : value;
+        if (isNaN(num)) return '';
+        return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 6 });
+      }
+
+      function parseNumberInput(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const cleaned = String(value).replace(/,/g, '');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? null : num;
       }
 
       function createFormField(key, value, path = '') {
@@ -860,36 +1811,234 @@
 
         const fieldDiv = document.createElement('div');
         fieldDiv.className = 'form-field';
+        fieldDiv.dataset.fieldPath = path;
 
-        const label = document.createElement('label');
-        label.textContent = humanizeKey(key);
-        label.htmlFor = path;
-        fieldDiv.appendChild(label);
-
-        let input;
-        if (typeof value === 'boolean') {
-          input = document.createElement('input');
-          input.type = 'checkbox';
-          input.checked = value;
-        } else if (typeof value === 'number') {
-          input = document.createElement('input');
-          input.type = 'number';
-          input.step = 'any';
-          input.value = value;
-        } else if (value === null || value === undefined) {
-          input = document.createElement('input');
-          input.type = 'text';
-          input.value = '';
-          input.placeholder = 'null';
-        } else {
-          input = document.createElement('input');
-          input.type = 'text';
-          input.value = String(value);
+        // Check if this field should be conditionally hidden
+        if (CONDITIONAL_FIELDS.dc_only.includes(path) ||
+            CONDITIONAL_FIELDS.reconductoring_only.includes(path) ||
+            CONDITIONAL_FIELDS.greenfield_only.includes(path)) {
+          fieldDiv.dataset.conditional = 'true';
         }
 
-        input.id = path;
-        input.dataset.path = path;
-        fieldDiv.appendChild(input);
+        // Get field metadata
+        const metadata = FIELD_METADATA[path] || {};
+
+        const label = document.createElement('label');
+        label.htmlFor = path;
+
+        // Add label text
+        const labelText = document.createElement('span');
+        labelText.textContent = humanizeKey(key);
+        label.appendChild(labelText);
+
+        // Add required indicator
+        if (metadata.required) {
+          const requiredSpan = document.createElement('span');
+          requiredSpan.className = 'required-indicator';
+          requiredSpan.textContent = '*';
+          label.appendChild(requiredSpan);
+        }
+
+        // Add unit label
+        if (metadata.unit) {
+          const unitSpan = document.createElement('span');
+          unitSpan.className = 'unit-label';
+          unitSpan.textContent = '(' + metadata.unit + ')';
+          label.appendChild(unitSpan);
+        }
+
+        // Add help icon
+        if (metadata.help) {
+          const helpIcon = document.createElement('span');
+          helpIcon.className = 'help-icon';
+          helpIcon.textContent = '?';
+          helpIcon.dataset.tooltip = metadata.help;
+          label.appendChild(helpIcon);
+        }
+
+        fieldDiv.appendChild(label);
+
+        // Check for special field configuration
+        const fieldConfig = FIELD_CONFIG[path];
+        let input;
+
+        if (fieldConfig) {
+          if (fieldConfig.type === 'dropdown') {
+            // Create dropdown select
+            input = document.createElement('select');
+            input.id = path;
+            input.dataset.path = path;
+            fieldConfig.options.forEach(opt => {
+              const option = document.createElement('option');
+              option.value = opt;
+              option.textContent = opt === '' ? '(None)' : opt;
+              if (String(value) === String(opt) || (value === null && opt === '')) {
+                option.selected = true;
+              }
+              input.appendChild(option);
+            });
+            fieldDiv.appendChild(input);
+          } else if (fieldConfig.type === 'toggle') {
+            // Create toggle switch
+            const toggleLabel = document.createElement('label');
+            toggleLabel.className = 'toggle-switch';
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = path;
+            input.dataset.path = path;
+            input.checked = Boolean(value);
+            const slider = document.createElement('span');
+            slider.className = 'toggle-slider';
+            toggleLabel.appendChild(input);
+            toggleLabel.appendChild(slider);
+            fieldDiv.appendChild(toggleLabel);
+          } else if (fieldConfig.type === 'slider') {
+            // Create slider with value display
+            const container = document.createElement('div');
+            container.className = 'slider-container';
+
+            const range = document.createElement('input');
+            range.type = 'range';
+            range.min = fieldConfig.min;
+            range.max = fieldConfig.max;
+            range.step = fieldConfig.step;
+            range.value = value !== null ? value : fieldConfig.min;
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'number';
+            valueInput.className = 'slider-value';
+            valueInput.id = path;
+            valueInput.dataset.path = path;
+            valueInput.step = fieldConfig.step;
+            valueInput.min = fieldConfig.min;
+            valueInput.max = fieldConfig.max;
+            valueInput.value = value !== null ? value : fieldConfig.min;
+
+            // Update fill gradient
+            function updateSliderFill() {
+              const percent = ((range.value - range.min) / (range.max - range.min)) * 100;
+              range.style.background = `linear-gradient(to right, #0066cc 0%, #0066cc ${percent}%, #ddd ${percent}%, #ddd 100%)`;
+              range.style.backgroundSize = '100% 4px';
+              range.style.backgroundPosition = 'center';
+              range.style.backgroundRepeat = 'no-repeat';
+            }
+            updateSliderFill();
+
+            // Sync slider and input
+            range.addEventListener('input', () => {
+              valueInput.value = range.value;
+              updateSliderFill();
+            });
+            valueInput.addEventListener('input', () => {
+              range.value = valueInput.value;
+              updateSliderFill();
+            });
+
+            container.appendChild(range);
+            container.appendChild(valueInput);
+            fieldDiv.appendChild(container);
+            input = valueInput; // For data collection
+          }
+        } else {
+          // Default input types based on value
+          if (typeof value === 'boolean') {
+            // Create toggle switch for all booleans
+            const toggleLabel = document.createElement('label');
+            toggleLabel.className = 'toggle-switch';
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = path;
+            input.dataset.path = path;
+            input.checked = value;
+            const slider = document.createElement('span');
+            slider.className = 'toggle-slider';
+            toggleLabel.appendChild(input);
+            toggleLabel.appendChild(slider);
+            fieldDiv.appendChild(toggleLabel);
+          } else if (typeof value === 'number') {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.id = path;
+            input.dataset.path = path;
+
+            if (isCurrencyField(path)) {
+              // Currency field
+              input.className = 'currency-input';
+              input.value = formatCurrencyInput(value);
+              input.dataset.rawValue = value;
+
+              input.addEventListener('focus', function() {
+                const raw = parseCurrencyInput(this.value);
+                this.value = raw !== null ? raw : '';
+                this.select();
+              });
+
+              input.addEventListener('blur', function() {
+                const parsed = parseCurrencyInput(this.value);
+                this.dataset.rawValue = parsed !== null ? parsed : '';
+                this.value = formatCurrencyInput(parsed);
+              });
+            } else if (isPercentageField(path)) {
+              // Percentage field
+              input.className = 'percentage-input';
+              input.value = formatPercentageInput(value);
+              input.dataset.rawValue = value;
+
+              input.addEventListener('focus', function() {
+                // Show as percentage number (e.g., 10 for 10%) for easy editing
+                const raw = parsePercentageInput(this.value);
+                this.value = raw !== null ? (raw * 100) : '';
+                this.select();
+              });
+
+              input.addEventListener('blur', function() {
+                // Parse and format - input is percentage number, store as decimal
+                let inputVal = parseFloat(this.value.replace(/[%,]/g, ''));
+                if (!isNaN(inputVal)) {
+                  const decimal = inputVal / 100;
+                  this.dataset.rawValue = decimal;
+                  this.value = formatPercentageInput(decimal);
+                } else {
+                  this.dataset.rawValue = '';
+                  this.value = '';
+                }
+              });
+            } else {
+              // Regular number with comma formatting
+              input.className = 'number-input';
+              input.value = formatNumberInput(value);
+              input.dataset.rawValue = value;
+
+              input.addEventListener('focus', function() {
+                const raw = parseNumberInput(this.value);
+                this.value = raw !== null ? raw : '';
+                this.select();
+              });
+
+              input.addEventListener('blur', function() {
+                const parsed = parseNumberInput(this.value);
+                this.dataset.rawValue = parsed !== null ? parsed : '';
+                this.value = formatNumberInput(parsed);
+              });
+            }
+            fieldDiv.appendChild(input);
+          } else if (value === null || value === undefined) {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.value = '';
+            input.placeholder = 'null';
+            input.id = path;
+            input.dataset.path = path;
+            fieldDiv.appendChild(input);
+          } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.value = String(value);
+            input.id = path;
+            input.dataset.path = path;
+            fieldDiv.appendChild(input);
+          }
+        }
 
         return fieldDiv;
       }
@@ -902,40 +2051,98 @@
           v === null || typeof v !== 'object' || Array.isArray(v)
         );
 
-        if (hasOnlyPrimitives || level > 0) {
-          // Create a single grid for all fields at this level
+        if (hasOnlyPrimitives) {
+          // Create a single grid for all primitive fields at this level
           const gridContainer = document.createElement('div');
           gridContainer.className = 'form-grid';
 
           entries.forEach(([key, value]) => {
             const path = basePath ? `${basePath}.${key}` : key;
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-              // Nested object within a grid - add header and fields inline
-              Object.entries(value).forEach(([subKey, subValue]) => {
-                const subPath = `${path}.${subKey}`;
-                const field = createFormField(`${humanizeKey(key)} - ${humanizeKey(subKey)}`, subValue, subPath);
-                if (field) gridContainer.appendChild(field);
-              });
-            } else {
-              const field = createFormField(key, value, path);
-              if (field) gridContainer.appendChild(field);
-            }
+            const field = createFormField(key, value, path);
+            if (field) gridContainer.appendChild(field);
           });
 
           container.appendChild(gridContainer);
         } else {
-          // Top-level with nested sections
+          // Mixed content - handle nested objects with subsection headers
           entries.forEach(([key, value]) => {
             const path = basePath ? `${basePath}.${key}` : key;
 
             if (value && typeof value === 'object' && !Array.isArray(value)) {
-              const sectionHeader = document.createElement('div');
-              sectionHeader.className = 'section-header';
-              sectionHeader.textContent = humanizeKey(key);
-              container.appendChild(sectionHeader);
+              // Check if this nested object has only primitives
+              const nestedEntries = Object.entries(value);
+              const nestedHasOnlyPrimitives = nestedEntries.every(([k, v]) =>
+                v === null || typeof v !== 'object' || Array.isArray(v)
+              );
 
-              renderObjectAsForm(value, container, path, level + 1);
+              if (nestedHasOnlyPrimitives && nestedEntries.length > 0) {
+                // Create subsection header row with reset button
+                const headerRow = document.createElement('div');
+                headerRow.className = 'section-header-row';
+
+                const subsectionHeader = document.createElement('div');
+                subsectionHeader.className = level === 0 ? 'section-header' : 'subsection-header';
+                subsectionHeader.textContent = humanizeKey(key);
+                headerRow.appendChild(subsectionHeader);
+
+                const resetBtn = document.createElement('button');
+                resetBtn.type = 'button';
+                resetBtn.className = 'section-reset-btn';
+                resetBtn.textContent = 'Reset';
+                resetBtn.dataset.sectionPath = path;
+                resetBtn.addEventListener('click', function() {
+                  const sectionPath = this.dataset.sectionPath;
+                  showModal(
+                    'Reset Section',
+                    'Reset this section to default values? This cannot be undone.',
+                    function() { resetSectionToDefaults(sectionPath); }
+                  );
+                });
+                headerRow.appendChild(resetBtn);
+
+                container.appendChild(headerRow);
+
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'form-grid';
+
+                nestedEntries.forEach(([subKey, subValue]) => {
+                  const subPath = `${path}.${subKey}`;
+                  const field = createFormField(subKey, subValue, subPath);
+                  if (field) gridContainer.appendChild(field);
+                });
+
+                container.appendChild(gridContainer);
+              } else {
+                // Nested object with more nesting - create section header row with reset button and recurse
+                const headerRow = document.createElement('div');
+                headerRow.className = 'section-header-row';
+
+                const sectionHeader = document.createElement('div');
+                sectionHeader.className = level === 0 ? 'section-header' : 'subsection-header';
+                sectionHeader.textContent = humanizeKey(key);
+                headerRow.appendChild(sectionHeader);
+
+                const resetBtn = document.createElement('button');
+                resetBtn.type = 'button';
+                resetBtn.className = 'section-reset-btn';
+                resetBtn.textContent = 'Reset';
+                resetBtn.dataset.sectionPath = path;
+                resetBtn.addEventListener('click', function() {
+                  const sectionPath = this.dataset.sectionPath;
+                  showModal(
+                    'Reset Section',
+                    'Reset this section to default values? This cannot be undone.',
+                    function() { resetSectionToDefaults(sectionPath); }
+                  );
+                });
+                headerRow.appendChild(resetBtn);
+
+                container.appendChild(headerRow);
+
+                renderObjectAsForm(value, container, path, level + 1);
+              }
             } else {
+              // Primitive at this level - create single-item grid
               const gridContainer = document.createElement('div');
               gridContainer.className = 'form-grid';
               const field = createFormField(key, value, path);
@@ -953,15 +2160,13 @@
         tabContentsContainer.innerHTML = '';
         ctccJsonData = data;
 
-        const sections = Object.keys(data).filter(key => key !== 'project_category_template');
-
-        sections.forEach((key, index) => {
+        TAB_CONFIG.forEach((tab, index) => {
           // Create tab button
           const tabButton = document.createElement('button');
           tabButton.type = 'button';
           tabButton.className = 'tab-button';
           if (index === 0) tabButton.classList.add('active');
-          tabButton.textContent = key.replace(/^\d+_/, '').replace(/_/g, ' ');
+          tabButton.textContent = tab.label;
           tabButton.dataset.tabIndex = index;
           tabButton.addEventListener('click', () => switchTab(index));
           tabButtonsContainer.appendChild(tabButton);
@@ -970,13 +2175,26 @@
           const tabContent = document.createElement('div');
           tabContent.className = 'tab-content';
           if (index === 0) tabContent.classList.add('active');
-          tabContent.dataset.sectionKey = key;
+          tabContent.dataset.tabId = tab.id;
 
-          renderObjectAsForm(data[key], tabContent, key);
+          // Render each JSON section within this tab
+          tab.sections.forEach((sectionKey, sectionIndex) => {
+            if (data[sectionKey]) {
+              // Add section header if multiple sections in tab
+              if (tab.sections.length > 1) {
+                const sectionHeader = document.createElement('div');
+                sectionHeader.className = 'tab-section-header';
+                sectionHeader.textContent = humanizeKey(sectionKey.replace(/^\d+_/, ''));
+                tabContent.appendChild(sectionHeader);
+              }
+              renderObjectAsForm(data[sectionKey], tabContent, sectionKey);
+            }
+          });
+
           tabContentsContainer.appendChild(tabContent);
         });
 
-        tabsContainer.style.display = 'block';
+        tabsContainer.classList.remove('tabs-hidden');
       }
 
       function switchTab(index) {
@@ -1000,23 +2218,8 @@
         // Deep clone the original data to preserve nested structures
         const result = JSON.parse(JSON.stringify(ctccJsonData));
 
-        // Update with edited values from form inputs
-        const inputs = tabContentsContainer.querySelectorAll('input');
-
-        inputs.forEach(input => {
-          const path = input.dataset.path;
-          if (!path) return;
-
-          let value;
-          if (input.type === 'checkbox') {
-            value = input.checked;
-          } else if (input.type === 'number') {
-            value = parseFloat(input.value);
-          } else {
-            value = input.value;
-          }
-
-          // Navigate to the correct location in the cloned data and update the value
+        // Helper function to set value at path
+        function setValueAtPath(path, value) {
           const keys = path.split('.');
           let current = result;
 
@@ -1028,6 +2231,48 @@
           }
 
           current[keys[keys.length - 1]] = value;
+        }
+
+        // Update with edited values from form inputs
+        const inputs = tabContentsContainer.querySelectorAll('input');
+        inputs.forEach(input => {
+          const path = input.dataset.path;
+          if (!path) return;
+
+          let value;
+          if (input.type === 'checkbox') {
+            value = input.checked;
+          } else if (input.type === 'number') {
+            value = input.value === '' ? null : parseFloat(input.value);
+          } else if (input.classList.contains('currency-input')) {
+            value = parseCurrencyInput(input.value);
+          } else if (input.classList.contains('percentage-input')) {
+            value = parsePercentageInput(input.value);
+          } else if (input.classList.contains('number-input')) {
+            value = parseNumberInput(input.value);
+          } else {
+            value = input.value;
+          }
+
+          setValueAtPath(path, value);
+        });
+
+        // Update with edited values from select dropdowns
+        const selects = tabContentsContainer.querySelectorAll('select');
+        selects.forEach(select => {
+          const path = select.dataset.path;
+          if (!path) return;
+
+          let value = select.value;
+          // Check if this should be a number (for number_of_converters)
+          const fieldConfig = FIELD_CONFIG[path];
+          if (fieldConfig && fieldConfig.options.some(opt => typeof opt === 'number')) {
+            value = value === '' ? null : parseInt(value, 10);
+          } else if (value === '') {
+            value = null;
+          }
+
+          setValueAtPath(path, value);
         });
 
         return result;
@@ -1035,15 +2280,9 @@
 
       async function loadCtccJson() {
         try {
-          loadStatus.textContent = 'Loading...';
-          loadStatus.style.color = '';
           const baseUrl = apiBaseInput.value.trim();
           const data = await fetchFinalCombined(baseUrl);
           renderJsonInputs(data);
-          const sectionCount = Object.keys(data).filter(k => k !== 'project_category_template').length;
-          loadStatus.textContent = `✓ Loaded ${sectionCount} input sections`;
-          loadStatus.style.color = '#0a0';
-          setTimeout(() => { loadStatus.textContent = ''; }, 5000);
         } catch (error) {
           loadStatus.textContent = '✗ ' + error.message;
           loadStatus.style.color = '#b00020';
@@ -1509,7 +2748,8 @@
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const startTime = performance.now();
-        statusEl.textContent = "Preparing request...";
+        showCalculating();
+        statusEl.textContent = "";
         statusEl.classList.remove("error");
         resultEl.textContent = "";
 
@@ -1524,7 +2764,6 @@
             payload.values = parseValues(valuesInput.value);
             endpoint = new URL("/api/process", baseUrl).toString();
           } else if (mode === "bulk") {
-            statusEl.textContent = "Loading combined JSON…";
             const bulkSource = Array.from(
               document.querySelectorAll('input[name="bulk-source"]')
             ).find((input) => input.checked)?.value ?? "server";
@@ -1540,7 +2779,6 @@
             }
             endpoint = new URL("/api/process", baseUrl).toString();
           } else if (mode === "ctcc") {
-            statusEl.textContent = "Preparing CTCC calculation…";
 
             // Get CTCC configuration
             const inputMode = Array.from(
@@ -1564,19 +2802,15 @@
 
             // If input mode is JSON, use the edited data or fetch from server
             if (inputMode === "json") {
-              if (ctccJsonData && tabsContainer.style.display !== 'none') {
-                statusEl.textContent = "Collecting edited input data…";
+              if (ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
                 payload.combined_data = collectJsonData();
               } else {
-                statusEl.textContent = "Loading combined JSON from server…";
                 payload.combined_data = await fetchFinalCombined(baseUrl);
               }
             }
 
             endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
           }
-
-          statusEl.textContent = "Sending...";
 
           const response = await fetch(endpoint, {
             method: "POST",
@@ -1592,14 +2826,11 @@
           }
 
           const json = await response.json();
-          statusEl.textContent = "Success";
-          statusEl.classList.remove("error");
 
           if (json.mode === "bulk" && json.text) {
             resultEl.textContent = json.text;
           } else if (mode === "ctcc" && json.output_mode === "csv" && json.csv_files) {
             // CSV output mode - fetch and display CSV contents
-            statusEl.textContent = "Fetching CSV files...";
             await displayCsvFiles(json, baseUrl);
           } else if (mode === "ctcc" && json.output_mode === "json" && json.results) {
             // JSON output mode - render structured CTCC results
@@ -1614,15 +2845,325 @@
           const duration = endTime - startTime;
           markResultsAvailable(duration);
         } catch (error) {
-          statusEl.textContent = "Request failed";
-          statusEl.classList.add("error");
+          statusBar.classList.remove('success');
+          statusBar.classList.add('error');
+          statusBarIcon.textContent = '✗';
+          statusBarLabel.textContent = 'Request failed';
+          statusBarTimestamp.textContent = error.message;
+          statusBarViewBtn.style.display = 'none';
           resultEl.textContent = error.message;
         }
       });
 
-      // Hide results notification when any input changes
-      form.addEventListener('input', hideResultsNotification);
-      form.addEventListener('change', hideResultsNotification);
+      // Show modified indicator when any input changes
+      form.addEventListener('input', markInputsModified);
+      form.addEventListener('change', markInputsModified);
+
+      // =============================================
+      // Conditional Field Visibility
+      // =============================================
+      function updateConditionalFieldVisibility() {
+        // Get current values of controlling fields
+        const acDcSelect = document.querySelector('select[data-path="01_project_technical_details.project.ac_dc"]');
+        const reconductoringToggle = document.querySelector('input[data-path="01_project_technical_details.project.reconductoring"]');
+
+        const isDC = acDcSelect && acDcSelect.value === 'DC';
+        const isReconductoring = reconductoringToggle && reconductoringToggle.checked;
+
+        // Show/hide DC-only fields
+        CONDITIONAL_FIELDS.dc_only.forEach(path => {
+          const field = document.querySelector(`.form-field[data-field-path="${path}"]`);
+          if (field) {
+            field.classList.toggle('field-hidden', !isDC);
+          }
+        });
+
+        // Show/hide reconductoring-only fields
+        CONDITIONAL_FIELDS.reconductoring_only.forEach(path => {
+          const field = document.querySelector(`.form-field[data-field-path="${path}"]`);
+          if (field) {
+            field.classList.toggle('field-hidden', !isReconductoring);
+          }
+        });
+
+        // Show/hide greenfield-only fields (shown when NOT reconductoring)
+        CONDITIONAL_FIELDS.greenfield_only.forEach(path => {
+          const field = document.querySelector(`.form-field[data-field-path="${path}"]`);
+          if (field) {
+            field.classList.toggle('field-hidden', isReconductoring);
+          }
+        });
+      }
+
+      // Set up event listeners for controlling fields after JSON loads
+      function setupConditionalFieldListeners() {
+        const acDcSelect = document.querySelector('select[data-path="01_project_technical_details.project.ac_dc"]');
+        const reconductoringToggle = document.querySelector('input[data-path="01_project_technical_details.project.reconductoring"]');
+
+        if (acDcSelect) {
+          acDcSelect.addEventListener('change', updateConditionalFieldVisibility);
+        }
+        if (reconductoringToggle) {
+          reconductoringToggle.addEventListener('change', updateConditionalFieldVisibility);
+        }
+
+        // Initial visibility update
+        updateConditionalFieldVisibility();
+      }
+
+      // =============================================
+      // Auto-Calculated Totals
+      // =============================================
+      function createCalculatedTotal(labelText, value, containerId) {
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'calculated-total';
+        totalDiv.id = containerId;
+
+        const label = document.createElement('span');
+        label.className = 'calculated-total-label';
+        label.textContent = labelText;
+
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'calculated-total-value';
+        valueSpan.textContent = value;
+
+        totalDiv.appendChild(label);
+        totalDiv.appendChild(valueSpan);
+        return totalDiv;
+      }
+
+      function calculateTerrainMilesTotal() {
+        const terrainFields = [
+          '02_project_physical_details.terrain.terrain_miles.forested',
+          '02_project_physical_details.terrain.terrain_miles.scrubbed_flat',
+          '02_project_physical_details.terrain.terrain_miles.wetland',
+          '02_project_physical_details.terrain.terrain_miles.farmland',
+          '02_project_physical_details.terrain.terrain_miles.desert_barren',
+          '02_project_physical_details.terrain.terrain_miles.urban',
+          '02_project_physical_details.terrain.terrain_miles.rolling_hills',
+          '02_project_physical_details.terrain.terrain_miles.mountain',
+          '02_project_physical_details.terrain.terrain_miles.subsea'
+        ];
+
+        let total = 0;
+        terrainFields.forEach(path => {
+          const input = document.querySelector(`input[data-path="${path}"]`);
+          if (input) {
+            const value = parseNumberInput(input.value);
+            if (value !== null) total += value;
+          }
+        });
+        return total;
+      }
+
+      function calculateDelayTotal() {
+        const delayFields = [
+          '05_delays.annual_delay_costs.legal',
+          '05_delays.annual_delay_costs.admin',
+          '05_delays.annual_delay_costs.labor',
+          '05_delays.annual_delay_costs.material_and_equipment',
+          '05_delays.annual_delay_costs.regulatory',
+          '05_delays.annual_delay_costs.public_relations',
+          '05_delays.annual_delay_costs.project_management',
+          '05_delays.annual_delay_costs.miscellaneous'
+        ];
+
+        let total = 0;
+        delayFields.forEach(path => {
+          const input = document.querySelector(`input[data-path="${path}"]`);
+          if (input) {
+            const value = parseCurrencyInput(input.value);
+            if (value !== null) total += value;
+          }
+        });
+        return total;
+      }
+
+      function calculateROWMilesTotal() {
+        const rowMilesFields = [
+          '11_project_row_details.right_of_way.zone_1.miles',
+          '11_project_row_details.right_of_way.zone_2.miles',
+          '11_project_row_details.right_of_way.zone_3.miles',
+          '11_project_row_details.right_of_way.zone_4.miles',
+          '11_project_row_details.right_of_way.zone_5.miles'
+        ];
+
+        let total = 0;
+        rowMilesFields.forEach(path => {
+          const input = document.querySelector(`input[data-path="${path}"]`);
+          if (input) {
+            const value = parseNumberInput(input.value);
+            if (value !== null) total += value;
+          }
+        });
+        return total;
+      }
+
+      function updateCalculatedTotals() {
+        // Update terrain miles total
+        const terrainTotal = document.getElementById('terrain-miles-total');
+        if (terrainTotal) {
+          const value = calculateTerrainMilesTotal();
+          terrainTotal.querySelector('.calculated-total-value').textContent = formatNumberInput(value) + ' miles';
+        }
+
+        // Update delay costs total
+        const delayTotal = document.getElementById('delay-costs-total');
+        if (delayTotal) {
+          const value = calculateDelayTotal();
+          delayTotal.querySelector('.calculated-total-value').textContent = formatCurrencyInput(value) + '/year';
+        }
+
+        // Update ROW miles total
+        const rowTotal = document.getElementById('row-miles-total');
+        if (rowTotal) {
+          const value = calculateROWMilesTotal();
+          rowTotal.querySelector('.calculated-total-value').textContent = formatNumberInput(value) + ' miles';
+        }
+      }
+
+      function insertCalculatedTotals() {
+        // Insert terrain miles total after terrain_miles section
+        const terrainMilesSubsection = document.querySelector('.subsection-header');
+        if (terrainMilesSubsection && terrainMilesSubsection.textContent.includes('Terrain Miles')) {
+          const nextGrid = terrainMilesSubsection.nextElementSibling;
+          if (nextGrid && nextGrid.classList.contains('form-grid')) {
+            const totalDiv = createCalculatedTotal('Total Route Length', '0 miles', 'terrain-miles-total');
+            nextGrid.parentNode.insertBefore(totalDiv, nextGrid.nextSibling);
+          }
+        }
+
+        // Insert delay costs total after annual_delay_costs section
+        const allSubsections = document.querySelectorAll('.subsection-header');
+        allSubsections.forEach(subsection => {
+          if (subsection.textContent.includes('Annual Delay Costs')) {
+            const nextGrid = subsection.nextElementSibling;
+            if (nextGrid && nextGrid.classList.contains('form-grid')) {
+              const totalDiv = createCalculatedTotal('Total Annual Delay Cost', '$0/year', 'delay-costs-total');
+              nextGrid.parentNode.insertBefore(totalDiv, nextGrid.nextSibling);
+            }
+          }
+        });
+
+        // Insert ROW miles total after right_of_way section
+        const rowTab = document.querySelector('[data-tab-id="row"]');
+        if (rowTab) {
+          const sectionHeader = rowTab.querySelector('.section-header');
+          if (sectionHeader && sectionHeader.textContent.includes('Right Of Way')) {
+            // Find the last zone's grid
+            const grids = rowTab.querySelectorAll('.form-grid');
+            if (grids.length > 0) {
+              const lastGrid = grids[grids.length - 1];
+              const totalDiv = createCalculatedTotal('Total ROW Miles', '0 miles', 'row-miles-total');
+              lastGrid.parentNode.insertBefore(totalDiv, lastGrid.nextSibling);
+            }
+          }
+        }
+
+        // Attach input listeners to update totals
+        const terrainInputs = document.querySelectorAll('input[data-path*="terrain_miles"]');
+        terrainInputs.forEach(input => {
+          input.addEventListener('blur', updateCalculatedTotals);
+        });
+
+        const delayInputs = document.querySelectorAll('input[data-path*="annual_delay_costs"]');
+        delayInputs.forEach(input => {
+          input.addEventListener('blur', updateCalculatedTotals);
+        });
+
+        const rowInputs = document.querySelectorAll('input[data-path*="right_of_way"][data-path*=".miles"]');
+        rowInputs.forEach(input => {
+          input.addEventListener('blur', updateCalculatedTotals);
+        });
+
+        // Initial calculation
+        updateCalculatedTotals();
+      }
+
+      // =============================================
+      // Reset to Defaults
+      // =============================================
+      let originalJsonData = null;
+
+      function resetFieldToDefault(path) {
+        if (!originalJsonData) return;
+
+        // Navigate to the value in original data
+        const keys = path.split('.');
+        let value = originalJsonData;
+        for (const key of keys) {
+          if (value && typeof value === 'object') {
+            value = value[key];
+          } else {
+            value = undefined;
+            break;
+          }
+        }
+
+        // Find and reset the input
+        const input = document.querySelector(`input[data-path="${path}"], select[data-path="${path}"]`);
+        if (!input) return;
+
+        if (input.type === 'checkbox') {
+          input.checked = Boolean(value);
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (input.tagName === 'SELECT') {
+          input.value = value !== null && value !== undefined ? String(value) : '';
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (input.classList.contains('currency-input')) {
+          input.value = formatCurrencyInput(value);
+          input.dataset.rawValue = value;
+        } else if (input.classList.contains('percentage-input')) {
+          input.value = formatPercentageInput(value);
+          input.dataset.rawValue = value;
+        } else if (input.classList.contains('number-input')) {
+          input.value = formatNumberInput(value);
+          input.dataset.rawValue = value;
+        } else if (input.classList.contains('slider-value')) {
+          input.value = value;
+          // Update the associated range slider
+          const container = input.closest('.slider-container');
+          if (container) {
+            const range = container.querySelector('input[type="range"]');
+            if (range) {
+              range.value = value;
+              range.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        } else {
+          input.value = value !== null && value !== undefined ? String(value) : '';
+        }
+      }
+
+      function resetSectionToDefaults(sectionPath) {
+        // Find all inputs within this section
+        const inputs = document.querySelectorAll(`input[data-path^="${sectionPath}"], select[data-path^="${sectionPath}"]`);
+        inputs.forEach(input => {
+          const path = input.dataset.path;
+          if (path) {
+            resetFieldToDefault(path);
+          }
+        });
+
+        // Update calculated totals after reset
+        updateCalculatedTotals();
+      }
+
+      // Modified renderJsonInputs to store original data and set up features
+      const originalRenderJsonInputs = renderJsonInputs;
+      renderJsonInputs = function(data) {
+        // Store original data for reset functionality
+        originalJsonData = JSON.parse(JSON.stringify(data));
+
+        // Call original function
+        originalRenderJsonInputs(data);
+
+        // Set up conditional field listeners
+        setupConditionalFieldListeners();
+
+        // Insert calculated totals
+        insertCalculatedTotals();
+      };
 
       console.log('Calling initialiseApiBase and updateModeVisibility...');
       initialiseApiBase();
