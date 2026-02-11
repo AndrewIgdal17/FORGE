@@ -159,7 +159,7 @@ H_bc, H_bnon = alloc["H_bc"], alloc["H_bnon"]
 
 E_cong_bc = H_bc * min(DeltaC_rem, average_exceedance)
 E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
-E_near = k * near_binding_hours * effective_capacity_relief
+E_near = near_binding_hours * min(effective_capacity_relief, near_average_exceedance)
 energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
 
 annual_congestion_reduction_cost_raw = energy_congestion_reduction * average_congestion_price
@@ -266,7 +266,7 @@ For greenfield projects, the flow factor ($\phi$) represents the fraction of nam
 
 \subsection{Near-Binding Hours}
 
-The script includes near-binding hours with a relief factor to capture benefits from reducing near-constraint conditions, not just fully binding constraints.
+The script includes near-binding hours in a way that is methodologically consistent with binding hours: relief is capped by \texttt{near\_average\_exceedance}. The formula is $E_{near} = H_n \times \min(\Delta C_{eff}, X_n)$ where $H_n$ is near-binding hours and $X_n$ is near-average exceedance (MW).
 
 \subsection{Delay and Construction Period Costs}
 

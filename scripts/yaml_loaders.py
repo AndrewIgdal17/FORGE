@@ -42,7 +42,6 @@ class CongestionCurtailmentParams:
     average_exceedance: float
     near_binding_hours: float
     near_average_exceedance: float
-    near_binding_relief_factor: float
     saturation_factor: float
     average_congestion_price: float
     residual_exceedance_value: Optional[float]
@@ -497,7 +496,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             "average_exceedance",
             "near_binding_hours",
             "near_average_exceedance",
-            "near_binding_relief_factor",
             "saturation_factor",
         ]
         for key in required_constraint_keys:
@@ -534,7 +532,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             average_exceedance=float(constraints["average_exceedance"]),
             near_binding_hours=float(constraints["near_binding_hours"]),
             near_average_exceedance=float(constraints["near_average_exceedance"]),
-            near_binding_relief_factor=float(constraints["near_binding_relief_factor"]),
             saturation_factor=float(constraints["saturation_factor"]),
             average_congestion_price=float(costs["average_congestion_price"]),
             residual_exceedance_value=residual_exceedance_value,

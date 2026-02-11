@@ -246,9 +246,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         near_average_exceedance=float(
             congestion_data["constraints"]["near_average_exceedance"]
         ),
-        near_binding_relief_factor=float(
-            congestion_data["constraints"]["near_binding_relief_factor"]
-        ),
         saturation_factor=float(congestion_data["constraints"]["saturation_factor"]),
         average_congestion_price=float(average_congestion_price),
         residual_exceedance_value=residual_exceedance_value,

@@ -1298,12 +1298,7 @@ This file configures cost savings from reduced transmission congestion. Congesti
             \item \textbf{near\_average\_exceedance} (float): Average MW exceedance during near-binding hours
             \begin{itemize}
                 \item \textbf{Valid Values}: Non-negative numbers (MW)
-            \end{itemize}
-            
-            \item \textbf{near\_binding\_relief\_factor} (float): Relief factor for near-binding hours [0, 1]
-            \begin{itemize}
-                \item \textbf{Valid Values}: Range [0, 1] (typical: 0.25)
-                \item \textbf{Meaning}: Fraction of near-binding congestion relieved
+                \item \textbf{Meaning}: Relief during near-binding hours is capped by this value; $E_{near} = \texttt{near\_binding\_hours} \times \min(\Delta C_{eff}, \texttt{near\_average\_exceedance})$ (MWh/year), consistent with binding hours.
             \end{itemize}
             
             \item \textbf{saturation\_factor} (float): System saturation factor
@@ -1348,7 +1343,6 @@ greenfield_congestion_reductions:
     average_exceedance: 150
     near_binding_hours: 800
     near_average_exceedance: 0
-    near_binding_relief_factor: 0.25
     saturation_factor: 0.2
   costs:
     average_congestion_price: 20
@@ -1359,7 +1353,6 @@ reconductoring_congestion_reductions:
     average_exceedance: 0
     near_binding_hours: 0
     near_average_exceedance: 0
-    near_binding_relief_factor: 0
     saturation_factor: 0
     hot_hour_weights: 0
 \end{lstlisting}

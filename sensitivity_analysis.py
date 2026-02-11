@@ -144,21 +144,6 @@ PARAM_DEFINITIONS = {
         ],
         "description": "Near binding hours multiplier",
     },
-    "congestion_near_binding_relief_factor_mult": {
-        "type": "linear",
-        "range": (0.5, 1.5),
-        "yaml_file": "17_congestion_reductions.yaml",
-        "yaml_path": [
-            "greenfield_congestion_reductions",
-            "constraints",
-            "near_binding_relief_factor",
-        ],
-        "description": "Near binding relief factor multiplier [0,1]",
-        "final_value_bounds": (
-            0.0,
-            1.0,
-        ),  # Physical constraint: relief factor must be [0, 1]
-    },
     "congestion_saturation_factor_mult": {
         "type": "linear",
         "range": (0.5, 2.0),
@@ -791,7 +776,6 @@ def apply_sample_to_yamls(
         zero_one_params = {
             "line_utilization_mult",
             "congestion_flow_factor_mult",
-            "congestion_near_binding_relief_factor_mult",
         }
 
         # Check if this parameter has [0, 1] bounds

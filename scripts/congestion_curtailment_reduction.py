@@ -216,7 +216,6 @@ def calculate_congestion_reduction_costs(
     average_exceedance: int,
     near_binding_hours: int,
     near_average_exceedance: int,
-    near_binding_relief_factor: float,
     saturation_factor: float,
     average_congestion_price: float,
     residual_exceedance_value: float | None,
@@ -255,7 +254,6 @@ def calculate_congestion_reduction_costs(
         average_exceedance: Average MW by which constraints are exceeded during binding hours
         near_binding_hours: Number of hours per year when constraints are near-binding
         near_average_exceedance: Average MW exceedance during near-binding hours
-        near_binding_relief_factor: Fraction of capacity relief applied to near-binding hours (0-1)
         saturation_factor: Conservative multiplier for congestion benefits (0-1, where 1 = no haircut)
         average_congestion_price: Average price of congestion in $/MWh
         residual_exceedance_value: Price per MWh for residual exceedance ($/MWh, None = use average_congestion_price)
@@ -326,10 +324,10 @@ def calculate_congestion_reduction_costs(
     E_cong_bc = H_bc * min(ΔC_rem, average_exceedance)
     E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
 
-    # Near-binding add (unchanged)
-    k = max(0.0, min(1.0, near_binding_relief_factor))
+    # Near-binding: same structure as binding hours (relief capped by exceedance)
     near_hours = max(0.0, near_binding_hours)
-    E_near = k * near_hours * effective_capacity_relief  #  MWh/yr
+    near_exceedance = max(0.0, near_average_exceedance)
+    E_near = near_hours * min(effective_capacity_relief, near_exceedance)  # MWh/yr
 
     # Total congestion energy
     energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
@@ -511,7 +509,6 @@ def main() -> None:
         params.average_exceedance,
         params.near_binding_hours,
         params.near_average_exceedance,
-        params.near_binding_relief_factor,
         params.saturation_factor,
         params.average_congestion_price,
         params.residual_exceedance_value,

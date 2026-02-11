@@ -261,7 +261,7 @@ The 35 parameters are organized into the following categories:
    - `wildfire_ignition_rate_mult`
    - `congestion_price_mult`, `congestion_flow_factor_mult`, `congestion_binding_hours_mult`
    - `congestion_average_exceedance_mult`, `congestion_near_binding_hours_mult`
-   - `congestion_near_binding_relief_factor_mult`, `congestion_saturation_factor_mult`
+   - `congestion_saturation_factor_mult`
    - `environmental_mitigation_cost_mult`
 
 2. **ROW Cost Multipliers (3 parameters):**
