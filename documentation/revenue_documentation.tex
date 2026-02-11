@@ -4,7 +4,7 @@
 
 \section{Introduction}
 
-The \texttt{revenue.py} script calculates the rate-based revenue requirement from a utility perspective. Revenue is defined as Capital Costs PV (build + ROW + environmental mitigation) times an allowed return rate, computed annually over the project lifetime and discounted to present value. The result is written to the batch summary (CSV or JSON) and used in BCR and reporting. Revenue calculation can be disabled via \texttt{financial.revenue.rate\_based.enabled} in the financing config.
+The \texttt{revenue.py} script calculates the rate-based revenue requirement from a utility perspective. \textbf{Rate base} is AFUDC capital at COD (build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc). Annual revenue = rate base $\times$ allowed return rate; revenue present value is the PV of that annual stream from COD over the project lifetime. The result is written to the batch summary (CSV or JSON) and used in BCR and reporting. Revenue calculation can be disabled via \texttt{financial.revenue.rate\_based.enabled} in the financing config.
 
 \section{Method Overview}
 
@@ -14,23 +14,23 @@ The \texttt{revenue.py} script calculates the rate-based revenue requirement fro
     \item Load rate-based revenue parameters from financing data: \texttt{enabled} and \texttt{allowed\_return\_rate} (from \texttt{financial.revenue.rate\_based}).
     \item If not enabled: write zero revenue to the output manager and return.
     \item Load project technical details (delay\_years, construction\_years, project\_lifetime) and financing details (WACC, base year).
-    \item Get capital costs PV from \texttt{batch\_summary.csv} (CSV mode) or from \texttt{json\_output\_<id>\_build\_costs.json}, \texttt{row\_costs.json}, \texttt{environmental\_mitigation.json} (JSON mode); capital = build\_cost\_pv + row\_cost\_pv + env\_mitigation\_pv.
-    \item Compute annual revenue = capital\_costs\_pv $\times$ allowed\_return\_rate; total nominal = annual $\times$ project\_lifetime.
+    \item Get rate base (AFUDC capital at COD) from \texttt{batch\_summary.csv} (CSV: \texttt{build\_cost\_afudc}, \texttt{row\_cost\_afudc}, \texttt{env\_mitigation\_afudc}) or from per-module JSON \texttt{total\_afudc} (JSON mode).
+    \item Compute annual revenue = rate\_base $\times$ allowed\_return\_rate; total nominal = annual $\times$ project\_lifetime.
     \item Compute present value of revenue stream using \texttt{calculate\_present\_value} (real WACC, project\_lifetime, start\_year = COD from delay and construction years).
-    \item Write \texttt{revenue\_nominal}, \texttt{revenue\_pv}, \texttt{annual\_revenue}, \texttt{rate\_base\_pv}, \texttt{allowed\_return\_rate} to the output manager and call \texttt{write\_batch\_summary()}.
+    \item Write \texttt{revenue\_nominal}, \texttt{revenue\_pv}, \texttt{annual\_revenue}, \texttt{rate\_base}, \texttt{rate\_base\_pv}, \texttt{allowed\_return\_rate} to the output manager and call \texttt{write\_batch\_summary()}.
 \end{enumerate}
 
 \subsection{Calculation Approach}
 
-Rate base is the present value of capital costs (build + ROW + environmental mitigation). Annual revenue requirement (utility perspective) is rate base times the allowed return rate. Revenue is assumed to start at commercial operation date (COD = delay\_years + construction\_years) and continue for \texttt{project\_lifetime} years. Present value uses real WACC and the same discounting as other CTCC PV calculations.
+Rate base is \textbf{AFUDC capital at COD} (build + ROW capital + environmental mitigation), i.e.\ the same capital that is capitalized for regulatory purposes. Annual revenue requirement (utility perspective) is rate base times the allowed return rate. Revenue is assumed to start at commercial operation date (COD) and continue for \texttt{project\_lifetime} years. Present value of the revenue stream uses real WACC and the same discounting as other CTCC PV calculations.
 
 \begin{align}
-\text{Rate Base (PV)} &= \text{build\_cost\_pv} + \text{row\_cost\_pv} + \text{env\_mitigation\_pv} \\
+\text{Rate Base (at COD)} &= \text{build\_cost\_afudc} + \text{row\_cost\_afudc} + \text{env\_mitigation\_afudc} \\
 \text{Annual Revenue} &= \text{Rate Base} \times \text{allowed\_return\_rate} \\
 \text{Total Revenue (nominal)} &= \text{Annual Revenue} \times \text{project\_lifetime} \\
 \text{Revenue (PV)} &= \sum_{t=\text{COD}}^{\text{COD}+\text{project\_lifetime}-1} \frac{\text{Annual Revenue}}{(1 + r)^t}
 \end{align}
-where $r$ is the real WACC and COD = delay\_years + construction\_years.
+where $r$ is the real WACC and COD = delay\_years + construction\_years + 1.
 
 \subsection{Inputs and Outputs}
 
@@ -38,7 +38,7 @@ where $r$ is the real WACC and COD = delay\_years + construction\_years.
 \begin{itemize}
     \item Financing data (YAML or JSON): \texttt{financial.revenue.rate\_based.enabled}, \texttt{financial.revenue.rate\_based.allowed\_return\_rate}; \texttt{financial.wacc\_nominal}, \texttt{inflation\_rate}, \texttt{base\_year} for PV.
     \item Project technical details: \texttt{delay\_years}, \texttt{construction\_years}, \texttt{project\_lifetime}.
-    \item Capital costs PV: from \texttt{batch\_summary.csv} (CSV mode) or from \texttt{json\_output\_<scenario\_id>\_build\_costs.json}, \texttt{row\_costs.json}, \texttt{environmental\_mitigation.json} (JSON mode); requires \texttt{CTCC\_SCENARIO\_ID} in JSON mode.
+    \item Rate base (AFUDC capital): from \texttt{batch\_summary.csv} columns \texttt{build\_cost\_afudc}, \texttt{row\_cost\_afudc}, \texttt{env\_mitigation\_afudc} (CSV mode) or from per-module JSON \texttt{total\_afudc} (JSON mode); requires \texttt{CTCC\_SCENARIO\_ID} in JSON mode.
 \end{itemize}
 
 \textbf{Outputs:}
@@ -71,13 +71,14 @@ Defaults: \texttt{enabled=False}, \texttt{allowed\_return\_rate=0.10}.
 
 Uses centralized \texttt{load\_project\_technical\_details} and returns \texttt{(delay\_years, construction\_years, project\_lifetime)} from the project technical details dataclass.
 
-\subsection{\texttt{get\_capital\_costs\_pv()}}
+\subsection{\texttt{get\_rate\_base()}}
 
-Returns build\_cost\_pv + row\_cost\_pv + env\_mitigation\_pv. In JSON mode (when \texttt{CTCC\_OUTPUT\_MODE=json} and \texttt{CTCC\_SCENARIO\_ID} is set), reads from \texttt{json\_output\_<scenario\_id>\_build\_costs.json}, \texttt{row\_costs.json}, \texttt{environmental\_mitigation.json} in \texttt{OUTPUTS\_DIR}. In CSV mode, reads from \texttt{batch\_summary.csv} (row matching \texttt{scenario\_id}, or last row if \texttt{scenario\_id} not set). Returns 0 if files missing or scenario not found.
+Returns rate base (AFUDC capital at COD) = build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc. In JSON mode (when \texttt{CTCC\_OUTPUT\_MODE=json} and \texttt{CTCC\_SCENARIO\_ID} is set), reads \texttt{total\_afudc} from \texttt{json\_output\_<scenario\_id>\_build\_costs.json}, \texttt{row\_costs.json}, \texttt{environmental\_mitigation.json} in \texttt{OUTPUTS\_DIR}. In CSV mode, reads from \texttt{batch\_summary.csv} (row matching \texttt{scenario\_id}, or last row if \texttt{scenario\_id} not set). Returns 0 if files missing or scenario not found.
 
 \textbf{Key logic (annual revenue and PV):}
 \begin{lstlisting}
-annual_revenue = capital_costs_pv * allowed_return_rate
+rate_base = get_rate_base()
+annual_revenue = rate_base * allowed_return_rate
 total_revenue_nominal = annual_revenue * project_lifetime
 revenue_pv = calculate_present_value(
     annual_revenue,
@@ -89,11 +90,11 @@ revenue_pv = calculate_present_value(
 
 \subsection{\texttt{main()}}
 
-Checks \texttt{load\_rate\_based\_revenue\_parameters()}; if not enabled, writes zeros via \texttt{add\_revenue} and \texttt{write\_batch\_summary} and returns. Otherwise loads details, gets \texttt{get\_capital\_costs\_pv()}, computes annual revenue, nominal total, and PV, then adds results and writes batch summary.
+Checks \texttt{load\_rate\_based\_revenue\_parameters()}; if not enabled, writes zeros via \texttt{add\_revenue} and \texttt{write\_batch\_summary} and returns. Otherwise loads details, gets \texttt{get\_rate\_base()}, computes annual revenue, nominal total, and PV, then adds results and writes batch summary.
 
 \section{Example}
 
-With \texttt{financial.revenue.rate\_based.enabled = true} and \texttt{allowed\_return\_rate = 0.10}, and capital costs PV = \$500M, project\_lifetime = 40, COD = 5:
+With \texttt{financial.revenue.rate\_based.enabled = true} and \texttt{allowed\_return\_rate = 0.10}, and rate base (AFUDC capital at COD) = \$500M, project\_lifetime = 40, COD = 5:
 \begin{itemize}
     \item Annual revenue = 500 $\times$ 0.10 = \$50M.
     \item Total revenue (nominal) = 50 $\times$ 40 = \$2000M.

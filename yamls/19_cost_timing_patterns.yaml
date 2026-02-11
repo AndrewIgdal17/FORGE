@@ -19,7 +19,7 @@ cost_timing_patterns:
   row_holding:
     during_delay: 1.0 # Holding costs occur only during delay period
     during_construction: 0.0 # No holding costs once construction starts
-    afudc_eligible: false # Operating expense, not capitalized to CWIP
+    afudc_eligible: true # Capitalized to plant cost (option fee during delay)
 
   # ROW rent costs (annual cost during operation)
   row_rent:

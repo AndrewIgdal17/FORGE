@@ -79,19 +79,27 @@
 
 ---
 
-## SECTION 4: RIGHT-OF-WAY (ROW) COSTS (Columns 33-38)
+## SECTION 4: RIGHT-OF-WAY (ROW) COSTS
 
 ### Total ROW Costs
 
-33. **row_cost_nominal** - Total ROW costs (undiscounted)
-34. **row_cost_afudc** - ROW costs with AFUDC
-35. **row_cost_pv** - ROW present value
+- **row_cost_nominal** - Total ROW costs (undiscounted; capital + rent)
+- **row_cost_afudc** - ROW capital with AFUDC (acquisition + holding only; used for rate base)
+- **row_cost_pv** - ROW total present value (capital + rent)
 
-### ROW Cost Components
+### ROW Capital vs. Operational
 
-36. **row_acquisition_nominal** - Land acquisition costs
-37. **row_holding_nominal** - Holding costs during development
-38. **row_rent_nominal** - Annual rent payments (if leasing)
+- **row_capital_pv** - ROW capital PV (acquisition + holding); included in capital costs and rate base
+- **row_rent_pv** - ROW rent PV; included in operational costs
+- **row_capital_afudc** - ROW capital AFUDC (same as row_cost_afudc)
+- **row_capital_nominal** - ROW capital nominal (acquisition + holding)
+- **row_rent_nominal** - ROW rent nominal (annual ROW payment)
+
+### ROW Cost Components (diagnostics)
+
+- **row_acquisition_nominal** - Land acquisition costs
+- **row_holding_nominal** - Holding costs during development
+- **row_rent_nominal** - Annual rent payments (if leasing)
 
 ---
 

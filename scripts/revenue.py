@@ -1,8 +1,8 @@
 # Author: Andrew Igdal
 # Date: 2025-11-XX
 # Description: Calculate rate-based revenue requirement (utility perspective).
-#              Revenue = Capital Costs PV × Allowed Return Rate, calculated annually
-#              over project lifetime and discounted to present value.
+#              Rate base = AFUDC capital (build + row capital + env) at COD.
+#              Annual revenue = Rate base × Allowed Return Rate; revenue PV = PV of that stream.
 
 from __future__ import annotations
 
@@ -66,101 +66,103 @@ def load_project_technical_details() -> Tuple[float, int, int]:
     return project_details.delay_years, project_details.construction_years, project_details.project_lifetime
 
 
-def get_capital_costs_pv() -> float:
+def get_rate_base() -> float:
     """
-    Get capital costs PV from batch_summary.csv (CSV mode) or JSON output files (JSON mode).
+    Get rate base (AFUDC capital at COD) from batch_summary.csv (CSV mode) or JSON output files (JSON mode).
 
-    Capital costs = build_cost_pv + row_cost_pv + env_mitigation_pv
+    Rate base = build_cost_afudc + row_cost_afudc + env_mitigation_afudc (nominal at COD).
+    Used for revenue requirement: annual_revenue = rate_base × allowed_return_rate.
 
     Returns:
-        float: Capital costs PV, or 0 if not found
+        float: Rate base (nominal), or 0 if not found
     """
-    # Check output mode
     output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
     scenario_id = os.environ.get("CTCC_SCENARIO_ID")
-    
+
     if output_mode == "json" and scenario_id:
-        # JSON mode: Read from individual JSON output files
         try:
             import json as json_lib
-            build_pv = 0
-            row_pv = 0
-            env_pv = 0
-            
-            # Read build costs
+            build_afudc = 0.0
+            row_afudc = 0.0
+            env_afudc = 0.0
+
             build_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_build_costs.json"
             if build_json_path.exists():
                 with open(build_json_path, "r") as f:
                     build_data = json_lib.load(f)
-                    build_pv = float(build_data.get("costs", {}).get("build", {}).get("total_pv", 0) or 0)
-            
-            # Read ROW costs
+                    build_afudc = float(
+                        build_data.get("costs", {}).get("build", {}).get("total_afudc", 0)
+                        or 0
+                    )
+
             row_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_row_costs.json"
             if row_json_path.exists():
                 with open(row_json_path, "r") as f:
                     row_data = json_lib.load(f)
-                    row_pv = float(row_data.get("costs", {}).get("row", {}).get("total_pv", 0) or 0)
-            
-            # Read environmental mitigation costs
+                    row_afudc = float(
+                        row_data.get("costs", {}).get("row", {}).get("total_afudc", 0)
+                        or 0
+                    )
+
             env_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_environmental_mitigation.json"
             if env_json_path.exists():
                 with open(env_json_path, "r") as f:
                     env_data = json_lib.load(f)
-                    env_pv = float(env_data.get("costs", {}).get("environmental", {}).get("total_pv", 0) or 0)
-            
-            total = build_pv + row_pv + env_pv
+                    env_afudc = float(
+                        env_data.get("costs", {})
+                        .get("environmental", {})
+                        .get("total_afudc", 0)
+                        or 0
+                    )
+
+            total = build_afudc + row_afudc + env_afudc
             if total > 0:
                 return total
         except Exception as e:
-            print(f"⚠️  Warning: Error reading capital costs from JSON files: {e}")
+            print(f"⚠️  Warning: Error reading AFUDC capital from JSON files: {e}")
             import traceback
             traceback.print_exc()
-    
-    # CSV mode: Read from batch_summary.csv
-    batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
+        return 0.0
 
+    batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
     if not os.path.exists(batch_summary_path):
-        return 0
+        return 0.0
 
     if not scenario_id:
         print("⚠️  Warning: CTCC_SCENARIO_ID not set. Cannot filter by scenario_id.")
         print("   Falling back to last row (may be incorrect if multiple runs exist).")
-        # Fallback to last row if scenario_id is not available
         try:
             with open(batch_summary_path, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
                 if rows:
                     latest_row = rows[-1]
-                    build_pv = float(latest_row.get("build_cost_pv", 0) or 0)
-                    row_pv = float(latest_row.get("row_cost_pv", 0) or 0)
-                    env_pv = float(latest_row.get("env_mitigation_pv", 0) or 0)
-                    return build_pv + row_pv + env_pv
+                    build_afudc = float(latest_row.get("build_cost_afudc", 0) or 0)
+                    row_afudc = float(latest_row.get("row_cost_afudc", 0) or 0)
+                    env_afudc = float(latest_row.get("env_mitigation_afudc", 0) or 0)
+                    return build_afudc + row_afudc + env_afudc
         except (ValueError, KeyError, IOError) as e:
             print(
-                f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}"
+                f"⚠️  Warning: Error reading rate base from batch_summary.csv: {e}"
             )
-        return 0
+        return 0.0
 
     try:
         with open(batch_summary_path, "r", newline="") as f:
             reader = csv.DictReader(f)
-            # Find row matching current scenario_id
             for row in reader:
                 if row.get("scenario_id") == scenario_id:
-                    build_pv = float(row.get("build_cost_pv", 0) or 0)
-                    row_pv = float(row.get("row_cost_pv", 0) or 0)
-                    env_pv = float(row.get("env_mitigation_pv", 0) or 0)
-                    return build_pv + row_pv + env_pv
-
-            # If scenario_id not found, warn and return 0
+                    build_afudc = float(row.get("build_cost_afudc", 0) or 0)
+                    row_afudc = float(row.get("row_cost_afudc", 0) or 0)
+                    env_afudc = float(row.get("env_mitigation_afudc", 0) or 0)
+                    return build_afudc + row_afudc + env_afudc
             print(
                 f"⚠️  Warning: scenario_id '{scenario_id}' not found in batch_summary.csv"
             )
-            return 0
+            return 0.0
     except (ValueError, KeyError, IOError) as e:
-        print(f"⚠️  Warning: Error reading capital costs from batch_summary.csv: {e}")
-        return 0
+        print(f"⚠️  Warning: Error reading rate base from batch_summary.csv: {e}")
+        return 0.0
 
 
 def main() -> None:
@@ -181,6 +183,7 @@ def main() -> None:
             "revenue_nominal": 0,
             "revenue_pv": 0,
             "annual_revenue": 0,
+            "rate_base": 0,
             "rate_base_pv": 0,
             "allowed_return_rate": 0,
         }
@@ -194,24 +197,19 @@ def main() -> None:
     # Load financing details
     financing = load_financing_details()
 
-    # Get capital costs PV from batch_summary.csv
-    capital_costs_pv = get_capital_costs_pv()
+    # Get rate base (AFUDC capital at COD) from batch summary or JSON outputs
+    rate_base = get_rate_base()
 
-    if capital_costs_pv == 0:
-        print("⚠️  Warning: Capital costs PV is zero. Revenue will be zero.")
+    if rate_base == 0:
+        print("⚠️  Warning: Rate base (AFUDC capital) is zero. Revenue will be zero.")
         print(
             "   Make sure build_costs.py, row_costs.py, and environmental_mitigation.py"
         )
         print("   have run before revenue.py")
 
-    # Calculate annual revenue requirement
-    # Rate Base = Capital Costs PV
-    # Annual Revenue = Rate Base × Allowed Return Rate
-    annual_revenue = capital_costs_pv * allowed_return_rate
-
+    # Revenue formula: annual_revenue = rate_base × allowed_return_rate; PV of that stream
+    annual_revenue = rate_base * allowed_return_rate
     total_revenue_nominal = annual_revenue * project_lifetime
-
-    # Calculate present value (revenue starts after construction)
     revenue_pv = calculate_present_value(
         annual_revenue,
         financing.wacc_real,
@@ -222,7 +220,7 @@ def main() -> None:
     print("=" * 60)
     print("RATE-BASED REVENUE REQUIREMENT CALCULATION")
     print("=" * 60)
-    print(f"Rate Base (Capital Costs PV): ${capital_costs_pv:,.2f}")
+    print(f"Rate Base (AFUDC capital at COD): ${rate_base:,.2f}")
     print(f"Allowed Return Rate: {allowed_return_rate:.2%}")
     print(f"Annual Revenue Requirement: ${annual_revenue:,.2f}")
     print(f"Total Revenue (Nominal): ${total_revenue_nominal:,.2f}")
@@ -239,7 +237,8 @@ def main() -> None:
         "revenue_nominal": total_revenue_nominal,
         "revenue_pv": revenue_pv,
         "annual_revenue": annual_revenue,
-        "rate_base_pv": capital_costs_pv,
+        "rate_base": rate_base,
+        "rate_base_pv": revenue_pv,
         "allowed_return_rate": allowed_return_rate,
     }
     csv_manager.add_revenue(results)

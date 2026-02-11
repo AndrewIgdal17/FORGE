@@ -31,6 +31,11 @@ BATCH_SUMMARY_FIELDS = [
     # 3. Capital Costs PV (with breakdown)
     "build_cost_pv",
     "row_cost_pv",
+    "row_capital_pv",
+    "row_rent_pv",
+    "row_capital_afudc",
+    "row_capital_nominal",
+    "row_rent_nominal",
     "env_mitigation_pv",
     "capital_costs_pv",
     # 4. Operational Costs PV (with breakdown)
@@ -666,9 +671,14 @@ class CTCCOutputManager:
                 "row_cost_nominal": results.get("total_nominal", 0),
                 "row_cost_afudc": results.get("total_afudc", 0),
                 "row_cost_pv": results.get("total_pv", 0),
+                "row_capital_pv": results.get("row_capital_pv", 0),
+                "row_rent_pv": results.get("row_rent_pv", 0),
+                "row_capital_afudc": results.get("row_capital_afudc", 0),
+                "row_capital_nominal": results.get("row_capital_nominal", 0),
+                "row_rent_nominal": results.get("row_rent_nominal", 0)
+                or results.get("rent_nominal", 0),
                 "row_acquisition_nominal": results.get("acquisition_nominal", 0),
                 "row_holding_nominal": results.get("holding_nominal", 0),
-                "row_rent_nominal": results.get("rent_nominal", 0),
             }
         )
 
@@ -677,6 +687,8 @@ class CTCCOutputManager:
             "row_type": "summary",
             "total_pv": results.get("total_pv", 0),
             "total_nominal": results.get("total_nominal", 0),
+            "row_capital_pv": results.get("row_capital_pv", 0),
+            "row_rent_pv": results.get("row_rent_pv", 0),
             "acquisition_nominal": results.get("acquisition_nominal", 0),
             "holding_nominal": results.get("holding_nominal", 0),
             "rent_nominal": results.get("rent_nominal", 0),
@@ -1207,11 +1219,11 @@ class CTCCOutputManager:
         """Calculate grand totals and add to batch summary."""
         # Load existing AFUDC values from CSV if not already in batch_summary_data
         self.load_existing_afudc_values()
-        # Capital costs (have AFUDC)
+        # Capital costs (have AFUDC) - ROW capital only (acquisition + holding), not rent
         capital_nominal = sum(
             [
                 self.batch_summary_data.get("build_cost_nominal", 0),
-                self.batch_summary_data.get("row_cost_nominal", 0),
+                self.batch_summary_data.get("row_capital_nominal", 0),
                 self.batch_summary_data.get("env_mitigation_nominal", 0),
             ]
         )
@@ -1225,16 +1237,17 @@ class CTCCOutputManager:
         capital_pv = sum(
             [
                 self.batch_summary_data.get("build_cost_pv", 0),
-                self.batch_summary_data.get("row_cost_pv", 0),
+                self.batch_summary_data.get("row_capital_pv", 0),
                 self.batch_summary_data.get("env_mitigation_pv", 0),
             ]
         )
 
-        # Operational costs (no AFUDC) - includes congestion/curtailment constraint costs
+        # Operational costs (no AFUDC) - O&M, insurance, ROW rent, congestion/curtailment constraint costs
         operational_nominal = sum(
             [
                 self.batch_summary_data.get("insurance_nominal", 0),
                 self.batch_summary_data.get("oandm_nominal", 0),
+                self.batch_summary_data.get("row_rent_nominal", 0),
                 self.batch_summary_data.get("congestion_cost_nominal", 0),
                 self.batch_summary_data.get("curtailment_cost_nominal", 0),
             ]
@@ -1243,6 +1256,7 @@ class CTCCOutputManager:
             [
                 self.batch_summary_data.get("insurance_pv", 0),
                 self.batch_summary_data.get("oandm_pv", 0),
+                self.batch_summary_data.get("row_rent_pv", 0),
                 self.batch_summary_data.get("congestion_cost_pv", 0),
                 self.batch_summary_data.get("curtailment_cost_pv", 0),
             ]

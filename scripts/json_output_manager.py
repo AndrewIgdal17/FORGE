@@ -212,10 +212,10 @@ class JSONOutputManager:
         delay = self.costs.get("delay", {})
 
         self.summary = {
-            # Capital costs
+            # Capital costs (ROW = acquisition + holding only; rent is operational)
             "total_capital_nominal": (
                 build.get("total_nominal", 0)
-                + row.get("total_nominal", 0)
+                + (row.get("row_capital_nominal", 0) or row.get("total_nominal", 0))
                 + env.get("total_nominal", 0)
             ),
             "total_capital_afudc": (
@@ -225,16 +225,19 @@ class JSONOutputManager:
             ),
             "total_capital_pv": (
                 build.get("total_pv", 0)
-                + row.get("total_pv", 0)
+                + (row.get("row_capital_pv", 0) or row.get("total_pv", 0))
                 + env.get("total_pv", 0)
             ),
-            # Operational costs (O&M + insurance only; residual exceedance is in energy/emissions)
+            # Operational costs (O&M + insurance + ROW rent; residual exceedance is in energy/emissions)
             "total_operational_nominal": (
                 insurance.get("nominal_lifetime_cost", 0)
                 + oandm.get("total_nominal", 0)
+                + row.get("row_rent_nominal", 0)
             ),
             "total_operational_pv": (
-                insurance.get("pv_total", 0) + oandm.get("total_pv", 0)
+                insurance.get("pv_total", 0)
+                + oandm.get("total_pv", 0)
+                + row.get("row_rent_pv", 0)
             ),
             # Energy/emissions costs (line losses + emissions + residual exceedance; residual added below)
             "total_energy_emissions_nominal": (

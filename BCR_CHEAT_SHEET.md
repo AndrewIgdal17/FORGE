@@ -4,7 +4,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Important Note on Revenue:** Revenue (rate-based revenue requirement) is a **transfer** from ratepayers to the utility/TSP, not a net social benefit. System/societal BCRs exclude revenue from total benefits. Revenue appears only in stakeholder BCRs where it's a benefit to utilities and a cost to ratepayers.
 
-**Cost categories:** **Operational** = O&M + insurance only. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a system/societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs).
+**Cost categories:** **Capital** = build + ROW capital (acquisition + holding) + environmental mitigation. **Operational** = O&M + insurance + ROW rent. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a system/societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs). Rate base = AFUDC capital (build + row capital + env) at COD.
 
 ---
 
@@ -293,7 +293,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 **Includes:**
 
 - **Benefits:** Revenue only (rate base recovery - what utilities actually receive)
-- **Costs:** Capital + Delay + Operational (O&M + insurance only; what utilities actually pay)
+- **Costs:** Capital + Delay + Operational (O&M + insurance + ROW rent; what utilities actually pay)
 - **Excludes:** Line losses (socialized), Emissions (externalities), Residual exceedance (system cost only; not paid by utility), Risk (may be insured/not applicable)
 
 **Use Case:**

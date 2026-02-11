@@ -290,29 +290,36 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     Returns:
         Dictionary with cost breakdown by category and total (both nominal and PV)
     """
-    # Capital costs (PV)
+    # Capital costs (PV) - ROW = capital only (acquisition + holding), not rent
     build_cost_pv = safe_get_numeric(data, "build_cost_pv")
+    row_capital_pv = safe_get_numeric(data, "row_capital_pv") or safe_get_numeric(
+        data, "row_cost_pv"
+    )
     row_cost_pv = safe_get_numeric(data, "row_cost_pv")
     env_mitigation_pv = safe_get_numeric(data, "env_mitigation_pv")
-    calculated_capital = build_cost_pv + row_cost_pv + env_mitigation_pv
+    calculated_capital = build_cost_pv + row_capital_pv + env_mitigation_pv
     capital_costs_pv = prefer_csv_subtotal(data, "capital_costs_pv", calculated_capital)
 
     # Capital costs (Nominal)
     build_cost_nominal = safe_get_numeric(data, "build_cost_nominal")
+    row_capital_nominal = safe_get_numeric(data, "row_capital_nominal") or safe_get_numeric(
+        data, "row_cost_nominal"
+    )
     row_cost_nominal = safe_get_numeric(data, "row_cost_nominal")
     env_mitigation_nominal = safe_get_numeric(data, "env_mitigation_nominal")
     calculated_capital_nominal = (
-        build_cost_nominal + row_cost_nominal + env_mitigation_nominal
+        build_cost_nominal + row_capital_nominal + env_mitigation_nominal
     )
     capital_costs_nominal = prefer_csv_subtotal(
         data, "capital_costs_nominal", calculated_capital_nominal
     )
 
-    # Operational costs (PV) - O&M and operational insurance only (residual exceedance is in energy/emissions)
+    # Operational costs (PV) - O&M, insurance, ROW rent (residual exceedance is in energy/emissions)
     oandm_pv = safe_get_numeric(data, "oandm_pv")
     insurance_pv = safe_get_numeric(data, "insurance_pv")
+    row_rent_pv = safe_get_numeric(data, "row_rent_pv")
     residual_exceedance_pv = safe_get_numeric(data, "residual_exceedance_pv")
-    calculated_operational = oandm_pv + insurance_pv
+    calculated_operational = oandm_pv + insurance_pv + row_rent_pv
     operational_costs_pv = prefer_csv_subtotal(
         data, "operational_costs_pv", calculated_operational
     )
@@ -320,8 +327,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
     # Operational costs (Nominal)
     oandm_nominal = safe_get_numeric(data, "oandm_nominal")
     insurance_nominal = safe_get_numeric(data, "insurance_nominal")
+    row_rent_nominal = safe_get_numeric(data, "row_rent_nominal")
     residual_exceedance_nominal = safe_get_numeric(data, "residual_exceedance_nominal")
-    calculated_operational_nominal = oandm_nominal + insurance_nominal
+    calculated_operational_nominal = oandm_nominal + insurance_nominal + row_rent_nominal
     operational_costs_nominal = prefer_csv_subtotal(
         data, "operational_costs_nominal", calculated_operational_nominal
     )
@@ -430,6 +438,8 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         # Capital (PV)
         "build_cost_pv": build_cost_pv,
         "row_cost_pv": row_cost_pv,
+        "row_capital_pv": row_capital_pv,
+        "row_rent_pv": row_rent_pv,
         "env_mitigation_pv": env_mitigation_pv,
         "capital_costs_pv": capital_costs_pv,
         # Operational (PV)
@@ -437,6 +447,9 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         "insurance_pv": insurance_pv,
         "residual_exceedance_pv": residual_exceedance_pv,
         "operational_costs_pv": operational_costs_pv,
+        # ROW nominals for display
+        "row_capital_nominal": row_capital_nominal,
+        "row_rent_nominal": row_rent_nominal,
         # Energy & Emissions (PV)
         "energy_losses_pv": energy_losses_pv,
         "conductor_loss_pv": conductor_loss_pv,
@@ -1058,13 +1071,16 @@ def print_bcr_summary(
     print("COSTS (Present Value):")
     print("  Capital Costs:")
     print(f"    Build:                     ${costs['build_cost_pv']:>15,.0f}")
-    print(f"    Right-of-Way:              ${costs['row_cost_pv']:>15,.0f}")
+    print(f"    Right-of-Way (capital):    ${costs['row_capital_pv']:>15,.0f}")
     print(f"    Environmental:             ${costs['env_mitigation_pv']:>15,.0f}")
     print(f"    Subtotal:                  ${costs['capital_costs_pv']:>15,.0f}")
     print()
     print("  Operational Costs:")
     print(f"    O&M:                       ${costs['oandm_pv']:>15,.0f}")
     print(f"    Insurance (operational):  ${costs['insurance_pv']:>15,.0f}")
+    row_rent_pv = costs.get("row_rent_pv", 0) or 0
+    if row_rent_pv > 0:
+        print(f"    ROW rent (operational):    ${row_rent_pv:>15,.0f}")
     print(f"    Subtotal:                  ${costs['operational_costs_pv']:>15,.0f}")
     print()
     print("  Energy & Emissions Costs:")

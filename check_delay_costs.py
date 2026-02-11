@@ -21,15 +21,16 @@ def calculate_cost_breakdown(row):
     Returns:
         dict with cost components and percentages
     """
-    # Capital costs
+    # Capital costs (ROW = capital only, i.e. acquisition + holding; rent is operational)
     build_cost_pv = row.get("build_cost_pv", 0) or 0
-    row_cost_pv = row.get("row_cost_pv", 0) or 0
+    row_capital_pv = row.get("row_capital_pv", 0) or row.get("row_cost_pv", 0) or 0
     env_mitigation_pv = row.get("env_mitigation_pv", 0) or 0
-    capital_costs_pv = build_cost_pv + row_cost_pv + env_mitigation_pv
+    capital_costs_pv = build_cost_pv + row_capital_pv + env_mitigation_pv
 
-    # Operational costs
+    # Operational costs (O&M, insurance, ROW rent; energy/emissions in energy/emissions category)
     oandm_pv = row.get("oandm_pv", 0) or 0
     insurance_pv = row.get("insurance_pv", 0) or 0
+    row_rent_pv = row.get("row_rent_pv", 0) or 0
     wildfire_liability_pv = row.get("wildfire_liability_pv", 0) or 0
     total_insurance_pv = insurance_pv + wildfire_liability_pv
     emissions_pv = row.get("emissions_cost_pv", 0) or 0
@@ -38,7 +39,7 @@ def calculate_cost_breakdown(row):
     )
     energy_losses_pv = max(0, energy_losses_pv)  # Only count as cost if positive
     operational_costs_pv = (
-        oandm_pv + total_insurance_pv + energy_losses_pv + emissions_pv
+        oandm_pv + total_insurance_pv + row_rent_pv + energy_losses_pv + emissions_pv
     )
 
     # Risk costs

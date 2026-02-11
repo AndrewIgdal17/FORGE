@@ -151,6 +151,8 @@ def main() -> None:
 
         acquisition_capitalized = 0.0
         acquisition_afudc = 0.0
+        holding_capitalized = 0.0
+        holding_afudc = 0.0
         total_holding_cost_pv = 0.0
         total_acquisition_cost_pv = 0.0
         total_rent_cost_pv = calculate_present_value(
@@ -159,6 +161,14 @@ def main() -> None:
             int(rent_total_years),
             rent_start_year,
         )
+        # Lease/license: only rent; capital is zero
+        row_capital_afudc = 0.0
+        row_capital_pv = 0.0
+        row_capital_nominal = 0.0
+        row_rent_pv = total_rent_cost_pv
+        row_rent_nominal = total_rent_cost
+        total_afudc = 0.0
+        total_pv_cost = total_rent_cost_pv
     else:
         total_holding_cost = yearly_holding_cost * project_details.delay_years
         total_rent_cost = yearly_rent_cost * (
@@ -184,6 +194,23 @@ def main() -> None:
             acquisition_capitalized = acquisition_cost_used
             acquisition_afudc = 0.0
 
+        # Holding: AFUDC-eligible (option fee during delay)
+        if (
+            afudc_setup.apply_afudc
+            and total_holding_cost > 0
+        ):
+            holding_capitalized, holding_afudc = calculate_afudc_capitalized_cost(
+                total_holding_cost,
+                afudc_setup.timing_patterns["row_holding"],
+                project_details.delay_years,
+                project_details.construction_years,
+                afudc_setup.afudc_rate,
+                afudc_setup.delay_active,
+            )
+        else:
+            holding_capitalized = total_holding_cost
+            holding_afudc = 0.0
+
         validate_discount_rate(financing.wacc_real, "wacc_real")
         total_holding_cost_pv = calculate_present_value(
             yearly_holding_cost, financing.wacc_real, int(project_details.delay_years)
@@ -199,10 +226,16 @@ def main() -> None:
             rent_start_year,
         )
 
+        # Capital = acquisition + holding only (no rent)
+        row_capital_afudc = acquisition_capitalized + holding_capitalized
+        row_capital_pv = total_acquisition_cost_pv + total_holding_cost_pv
+        row_capital_nominal = acquisition_cost_used + total_holding_cost
+        row_rent_pv = total_rent_cost_pv
+        row_rent_nominal = total_rent_cost
+        total_afudc = row_capital_afudc
+        total_pv_cost = row_capital_pv + total_rent_cost_pv
+
     # Display results
-    total_pv_cost = (
-        total_holding_cost_pv + total_acquisition_cost_pv + total_rent_cost_pv
-    )
     print("=" * 80)
     print("RIGHT-OF-WAY COST CALCULATION RESULTS")
     print("=" * 80)
@@ -228,7 +261,7 @@ def main() -> None:
     if (
         afudc_setup.apply_afudc
         and agreement_type != "lease_license_existing"
-        and acquisition_cost_used != 0
+        and (acquisition_cost_used != 0 or total_holding_cost != 0)
     ):
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         print(
@@ -240,13 +273,16 @@ def main() -> None:
         print()
         print(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
         print(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
-        print(f"  Holding Cost: ${total_holding_cost:,.2f}")
-        print(f"    (NOT AFUDC-eligible - operating expense)")
+        print(f"  Holding Cost Capitalized: ${holding_capitalized:,.2f}")
+        print(f"    AFUDC on Holding: ${holding_afudc:,.2f}")
         print(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
         print(f"    (NOT AFUDC-eligible - operational period)")
         print(f"  ---")
         print(
-            f"  TOTAL (Acquisition capitalized + holding + annual ROW payment): ${acquisition_capitalized + total_holding_cost + total_rent_cost:,.2f}"
+            f"  ROW Capital (at COD): ${row_capital_afudc:,.2f}"
+        )
+        print(
+            f"  TOTAL (Capital + annual ROW payment): ${row_capital_afudc + total_rent_cost:,.2f}"
         )
         print()
 
@@ -268,16 +304,13 @@ def main() -> None:
     csv_manager = CTCCOutputManager()
     results = {
         "total_nominal": total_nominal_cost,
-        "total_afudc": (
-            acquisition_capitalized + total_holding_cost + total_rent_cost
-            if (
-                afudc_setup.apply_afudc
-                and agreement_type != "lease_license_existing"
-                and acquisition_cost_used != 0
-            )
-            else 0
-        ),
+        "total_afudc": total_afudc,
         "total_pv": total_pv_cost,
+        "row_capital_pv": row_capital_pv,
+        "row_capital_afudc": row_capital_afudc,
+        "row_capital_nominal": row_capital_nominal,
+        "row_rent_pv": row_rent_pv,
+        "row_rent_nominal": row_rent_nominal,
         "acquisition_nominal": acquisition_cost_used,
         "holding_nominal": total_holding_cost,
         "rent_nominal": total_rent_cost,

@@ -182,19 +182,20 @@ Nominal totals (after applying the regime) are then computed for the chosen term
 \textbf{Outputs:}
 \begin{itemize}
     \item Nominal costs (acquisition, holding, annual ROW payment).
-    \item AFUDC capitalized cost (acquisition only, when applicable).
-    \item Present value costs (societal perspective).
+    \item AFUDC capitalized cost: ROW capital = acquisition + holding (when applicable); rent is excluded from capital.
+    \item Present value costs (societal perspective); \texttt{row\_capital\_pv}, \texttt{row\_rent\_pv} for aggregation.
     \item Total acres.
 \end{itemize}
 
 Legacy output keys may still use ``rent'' (e.g., \texttt{rent\_nominal}) for compatibility; conceptually the amount is ``annual ROW payment.''
 
-\section{AFUDC and Holding Cost}
+\section{AFUDC, Capital vs.\ Operational}
 
 \begin{itemize}
-    \item \textbf{Acquisition} is AFUDC-eligible when the regime includes it; the cost timing pattern \texttt{row\_acquisition} (e.g., 80\% during delay, 20\% during construction) is used to capitalize it to COD. The \textbf{cost of capital on ROW acquisition during the delay} is therefore included in AFUDC; no separate ``holding'' term is used for that.
-    \item \textbf{Holding cost} in this script is an \textbf{option fee}: an explicit annual expense during the delay period to secure the ROW. It is \textbf{not} AFUDC-eligible (operating expense).
-    \item \textbf{Annual ROW payment} is an operational expense and is not AFUDC-eligible.
+    \item \textbf{Acquisition} is AFUDC-eligible when the regime includes it; the cost timing pattern \texttt{row\_acquisition} (e.g., 80\% during delay, 20\% during construction) is used to capitalize it to COD.
+    \item \textbf{Holding cost} (option fee during delay) is \textbf{AFUDC-eligible}: it is capitalized using \texttt{row\_holding} timing (100\% during delay) so that ROW capital for rate base includes both acquisition and holding.
+    \item \textbf{Annual ROW payment} (rent) is an \textbf{operational} expense: it is not AFUDC-eligible and is included in operational costs (with O\&M and insurance), not in capital or rate base.
+    \item \textbf{ROW capital} for rate base and for cost aggregation = acquisition + holding only. \textbf{Rate base} in CTCC = AFUDC capital (build + ROW capital + environmental mitigation).
 \end{itemize}
 
 \section{Key Functions}

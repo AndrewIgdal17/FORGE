@@ -97,11 +97,17 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         or 0,
         "revenue_pv": revenue.get("revenue_pv", 0) or 0,
         "revenue_nominal": revenue.get("revenue_nominal", 0) or 0,
-        # Capital costs (PV + nominal)
+        # Capital costs (PV + nominal); ROW = capital only (acquisition + holding)
         "build_cost_pv": build.get("total_pv", 0) or 0,
         "build_cost_nominal": build.get("total_nominal", 0) or 0,
         "row_cost_pv": row.get("total_pv", 0) or 0,
         "row_cost_nominal": row.get("total_nominal", 0) or 0,
+        "row_capital_pv": row.get("row_capital_pv", 0) or row.get("total_pv", 0) or 0,
+        "row_capital_nominal": row.get("row_capital_nominal", 0)
+        or row.get("total_nominal", 0)
+        or 0,
+        "row_rent_pv": row.get("row_rent_pv", 0) or 0,
+        "row_rent_nominal": row.get("row_rent_nominal", 0) or 0,
         "env_mitigation_pv": environmental.get("total_pv", 0) or 0,
         "env_mitigation_nominal": environmental.get("total_nominal", 0) or 0,
         # Operational costs (PV + nominal)

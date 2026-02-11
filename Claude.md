@@ -227,6 +227,11 @@ else:
 - Mode switching transparent to scripts
 - Easy to add new I/O formats
 
+### Rate Base and ROW Capital vs. Operational
+
+- **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc. Revenue requirement uses this nominal rate base (not PV of capital).
+- **ROW capital** (acquisition + holding) is AFUDC-eligible and included in capital costs and rate base. **ROW rent** (annual ROW payment) is operational only (O&M + insurance + row rent); it is not in rate base or capital.
+
 ---
 
 ## Development Workflows
