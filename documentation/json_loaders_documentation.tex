@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{JSON Loaders Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{JSON Loaders Documentation}
 
 \section{Introduction}
 
@@ -45,7 +11,7 @@ The \texttt{json\_loaders.py} module loads CTCC configuration from a single comb
 \subsection{Purpose}
 
 \begin{enumerate}
-    \item Provide a singleton \texttt{JSONDataSource} that stores the combined JSON; data can be set via \texttt{set\_json_data()} or auto-loaded from \texttt{CTCC\_JSON\_DATA\_FILE} when \texttt{get\_data()} is first called.
+    \item Provide a singleton \texttt{JSONDataSource} that stores the combined JSON; data can be set via \texttt{set\_json\_data()} or auto-loaded from \texttt{CTCC\_JSON\_DATA\_FILE} when \texttt{get\_data()} is first called.
     \item Expose \texttt{get\_data(key)} to return the dict for a given top-level key (e.g.\ \texttt{03\_financing}).
     \item Provide \texttt{load\_*} functions that call \texttt{get\_data()} with the appropriate key and map the dict into the same dataclasses as \texttt{yaml\_loaders} (e.g.\ \texttt{ProjectTechnicalDetails}, \texttt{FinancingDetails}, \texttt{CongestionCurtailmentParams}).
     \item Use \texttt{calculation\_utils} and \texttt{yaml\_loaders} for normalization (e.g.\ \texttt{normalize\_capacity\_mw}, \texttt{normalize\_construction\_type}) and type definitions; \texttt{financial\_utils} for WACC when loading financing.
@@ -59,7 +25,7 @@ I/O only; no cost/benefit formulas. Keys in the combined JSON match YAML file na
 
 \textbf{Inputs:}
 \begin{itemize}
-    \item Combined JSON: either set programmatically via \texttt{set\_json_data(combined\_json)} or loaded from the file path in \texttt{CTCC\_JSON\_DATA\_FILE} when \texttt{get\_data()} is first called.
+    \item Combined JSON: set programmatically via \texttt{set\_json\_data(combined\_json)}, or loaded from the file path in \texttt{CTCC\_JSON\_DATA\_FILE} when \texttt{get\_data()} is first called.
     \item Top-level keys in the JSON correspond to YAML section names (e.g.\ \texttt{01\_project\_technical\_details}, \texttt{02\_project\_physical\_details}, \texttt{03\_financing}, \texttt{17\_congestion\_curtailment\_reductions}, \texttt{22\_primary\_bcr\_config}).
 \end{itemize}
 

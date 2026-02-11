@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Line Loss Costs/Benefits Calculation Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Line Loss Costs/Benefits Calculation Documentation}
 
 \section{Introduction}
 
@@ -148,7 +114,7 @@ Main execution function that orchestrates the line loss cost/benefit calculation
 \textbf{Workflow for Greenfield:}
 \begin{enumerate}
     \item Gets losses via \texttt{get\_total\_energy\_losses()} (line + converter)
-    \item Converts to costs (losses × \texttt{baseline\_electricity\_price}), \texttt{start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}
+    \item Converts to costs (losses * \texttt{baseline\_electricity\_price}), \texttt{start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}
     \item Calculates present value; writes results (including optional line/converter breakdown) to CSV
 \end{enumerate}
 
@@ -156,7 +122,7 @@ Main execution function that orchestrates the line loss cost/benefit calculation
 \begin{enumerate}
     \item Baseline (old) losses: \texttt{calculate\_configuration\_losses(old\_...)} + \texttt{calculate\_converter\_losses} for old config; new (primary) losses: \texttt{get\_total\_energy\_losses()}
     \item Counterfactual: old conductor at new capacity via \texttt{calculate\_configuration\_losses} with new capacity
-    \item Benefit = (baseline or counterfactual total losses − new total losses) × price; PV and CSV as benefits
+    \item Benefit = (baseline or counterfactual total losses - new total losses) * price; PV and CSV as benefits
 \end{enumerate}
 
 \section{Example}

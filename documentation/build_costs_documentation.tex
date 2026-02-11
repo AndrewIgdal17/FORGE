@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Build Costs Calculation Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Build Costs Calculation Documentation}
 
 \section{Introduction}
 
@@ -146,7 +112,9 @@ Main execution function that orchestrates the build cost calculation and output.
 \textbf{Workflow:}
 \begin{enumerate}
     \item Loads project technical details; constructs category via \texttt{build\_category\_string(project\_details)}
-    \item Determines \texttt{number\_of\_converters} from \texttt{get\_project\_data\_raw()["project"]["number\_of\_converters"]} if DC, else 0
+    \item Determines \texttt{number\_of\_converters} from\\
+    \texttt{get\_project\_data\_raw()["project"]["number\_of\_converters"]};\\
+    if DC, else 0
     \item Loads physical details, contingencies, financing; calls \texttt{load\_costs(category, total\_miles, number\_of\_converters, contingencies, project\_details.reconductoring)}
     \item Loads AFUDC setup via \texttt{load\_afudc\_setup()}; if \texttt{apply\_afudc}, calculates AFUDC capitalized cost via \texttt{calculate\_afudc\_capitalized\_cost(...)}
     \item Computes \texttt{construction\_start\_year} = \texttt{calculate\_construction\_start\_year(delay\_years)}; if \texttt{construction\_years > 0}, \texttt{annual\_build\_cost} = total with contingencies / construction\_years, \texttt{build\_cost\_pv} = \texttt{calculate\_present\_value(annual\_build\_cost, wacc\_real, construction\_years, construction\_start\_year)}; else one-time PV at \texttt{construction\_start\_year}
@@ -179,7 +147,7 @@ The following example demonstrates a typical usage of the build costs calculatio
 #   3. Structure cost = $200k/mile * 108 = $21.6M
 #   4. Converter cost = 0 (AC project)
 #   5. Total base = $76.6M
-#   6. With contingencies = $76.6M * (1 + weighted avg) ≈ $88M
+#   6. With contingencies = $76.6M * (1 + weighted avg) approx $88M
 #
 # Output:
 #   - Nominal cost: $88M

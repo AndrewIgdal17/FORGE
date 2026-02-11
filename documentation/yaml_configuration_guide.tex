@@ -1,47 +1,6 @@
-\documentclass[11pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{geometry}
-\usepackage{amsmath}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{enumitem}
-
-\geometry{margin=1in}
-
-\title{CTCC YAML Configuration Guide\\
-\large Comprehensive User Reference for All Configuration Choices}
-\author{Comprehensive Transmission Cost Calculator}
-\date{\today}
-
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    filecolor=magenta,      
-    urlcolor=cyan,
-}
-
-% Code listing style
-\lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    backgroundcolor=\color{gray!10},
-    keywordstyle=\color{blue},
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray}
-}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
-
-\tableofcontents
-\newpage
+\chapter{CTCC YAML Configuration Guide}
 
 \section{Introduction}
 
@@ -1350,11 +1309,7 @@ This file configures cost savings from reduced transmission congestion. Congesti
             \item \textbf{saturation\_factor} (float): System saturation factor
             \begin{itemize}
                 \item \textbf{Valid Values}: Non-negative numbers (typical: 0.0 to 0.3)
-                \item \textbf{Meaning}: 
-                \begin{itemize}
-                    \item 0.0 = Radial line (full benefit)
-                    \item >0.0 = Meshed system (diminishing returns)
-                \end{itemize}
+                \item \textbf{Meaning}: 0.0 = Radial line (full benefit); >0.0 = Meshed system (diminishing returns).
             \end{itemize}
         \end{itemize}
         

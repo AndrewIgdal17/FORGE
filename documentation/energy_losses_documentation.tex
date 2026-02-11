@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Energy Losses Calculation Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Energy Losses Calculation Documentation}
 
 \section{Introduction}
 
@@ -154,18 +120,18 @@ The following example demonstrates a typical usage:
 #   - Conductors per phase: 2
 #   - Number of phases: 3
 #   - Number of circuits: 1
-#   - AC resistance (75°C): 0.05 ohms/mile
+#   - AC resistance (75 C): 0.05 ohms/mile
 #   - Line utilization: 70%
 #   - Line length: 100 miles
 #   - Project lifetime: 50 years
 #
 # Calculation:
-#   Phase current = 500 MW / (√3 × 345 kV × 1) = 837 A
-#   Full load adj = 0.7² = 0.49
-#   Line loss = (837² × 0.05 × 3 × 1) × 0.49 = 51.4 MW
+#   Phase current = 500 MW / (sqrt(3) * 345 kV * 1) = 837 A
+#   Full load adj = 0.7^2 = 0.49
+#   Line loss = (837^2 * 0.05 * 3 * 1) * 0.49 = 51.4 MW
 #   Line loss % = 51.4 / 500 = 10.3%
-#   Losses MWh/year = 51.4 × 8760 = 450,000 MWh/year
-#   Lifetime losses = 450,000 × 50 = 22.5M MWh
+#   Losses MWh/year = 51.4 * 8760 = 450,000 MWh/year
+#   Lifetime losses = 450,000 * 50 = 22.5M MWh
 #
 # Output:
 #   - Line loss: 0.514 MW/mile

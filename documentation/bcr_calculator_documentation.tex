@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Benefit-Cost Ratio Calculator Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Benefit-Cost Ratio Calculator Documentation}
 
 \section{Introduction}
 
@@ -59,7 +25,7 @@ This script calculates BCR metrics by:
 The BCR calculation follows this structure:
 
 \begin{align}
-\text{Total Benefits (Conservative)} &= \text{Congestion (Haircut)} + \text{Curtailment (Haircut)} \quad \text{(line losses are costs, not benefits)} \\
+\text{Total Benefits (Conservative)} &= \text{Congestion (Haircut)} + \text{Curtailment (Haircut)} \\
 \text{Total Costs} &= \text{Capital} + \text{Operational} + \text{Energy/Emissions} + \text{Risk} + \text{Delay} \\
 \text{BCR}_{system} &= \frac{\text{Conservative Benefits}}{\text{Total Costs}} \\
 \text{BCR}_{capital} &= \frac{\text{Conservative Benefits}}{\text{Capital Costs}} \\

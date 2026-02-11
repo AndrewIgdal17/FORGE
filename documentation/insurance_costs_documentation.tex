@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Insurance Costs Calculation Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Insurance Costs Calculation Documentation}
 
 \section{Introduction}
 
@@ -99,7 +65,7 @@ This script integrates with:
 
 \section{Key Functions}
 
-\subsection{\texttt{calculate\_insurance\_costs(insurance\_yaml, conductor\_cost\_with\_contingencies, structure\_cost\_with\_contingencies, converter\_cost\_with\_contingencies, construction\_type, project\_lifetime)}}
+\subsection{\small\texttt{calculate\_insurance\_costs(insurance\_yaml, conductor\_cost\_with\_contingencies, structure\_cost\_with\_contingencies, converter\_cost\_with\_contingencies, construction\_type, project\_lifetime)}}
 
 Calculates operational insurance costs based on insurable asset value.
 
@@ -173,8 +139,10 @@ Main execution function that orchestrates the insurance cost calculation and out
 \begin{enumerate}
     \item Loads project technical details; constructs category via \texttt{build\_category\_string}; gets \texttt{number\_of\_converters} from \texttt{get\_project\_data\_raw} if DC
     \item Loads build costs via \texttt{load\_costs(category, total\_miles, number\_of\_converters, contingencies, reconductoring)}; loads insurance via \texttt{load\_insurance\_details()}
-    \item Calls \texttt{calculate\_insurance\_costs(...)} and \texttt{calculate\_wildfire\_liability\_premium(insurance\_yaml, project\_lifetime)}
-    \item \texttt{insurance\_start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}; \texttt{insurance\_pv} = \texttt{calculate\_present\_value(annual\_premium, wacc\_real, project\_lifetime, insurance\_start\_year)}; same for wildfire liability PV if enabled
+    \item Calls \texttt{calculate\_insurance\_costs(...)} and\\
+    \texttt{calculate\_wildfire\_liability\_premium(insurance\_yaml, project\_lifetime)}.
+    \item \texttt{insurance\_start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)};\\
+    \texttt{insurance\_pv} = \texttt{calculate\_present\_value(annual\_premium, wacc\_real, project\_lifetime, insurance\_start\_year)}; same for wildfire liability PV if enabled
     \item \texttt{add\_insurance\_costs(csv\_results)}; \texttt{add\_wildfire\_liability\_costs(...)} (with zeros when disabled); \texttt{write\_batch\_summary()}
 \end{enumerate}
 

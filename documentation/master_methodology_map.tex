@@ -1,0 +1,129 @@
+\documentclass[ctcc_full_documentation.tex]{subfiles}
+\begin{document}
+\chapter{Master Methodology Map}
+
+\section{Introduction}
+
+This chapter describes the CTCC method at a conceptual level: what costs and benefits are included, how they depend on one another, and how they combine into a benefit--cost comparison. The aim is a single map of the \emph{method}---no implementation details, only the ideas that define the analysis.
+
+\section{Visual Map of the Method}
+
+Figure~\ref{fig:methodology-map} shows how the main concepts of the method fit together. Two kinds of preprocessing support the rest: \textbf{terrain-adjusted distance} (distance scaled by terrain difficulty) and \textbf{energy losses} (physical losses on the line). Terrain-adjusted distance feeds into construction and insurance costs; physical energy losses feed into line loss costs and emissions. Capital costs (construction, right-of-way, environmental mitigation) are followed by the revenue requirement (the rate-based transfer from ratepayers to the utility). Risk costs---insurance, delay, wildfire, and outage---come next. Benefits are congestion reduction and curtailment reduction. Operations and maintenance costs, then emissions and line loss costs, complete the cost side. All costs and benefits are combined into a \textbf{benefit--cost ratio} (BCR), which can be computed under several perspectives (e.g.\ including or excluding certain risk or emissions components).
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.5em and 1em,
+    box/.style={rectangle, draw, fill=gray!8, rounded corners, minimum height=0.45cm, font=\small},
+    smallbox/.style={rectangle, draw, fill=gray!12, rounded corners, font=\footnotesize},
+    arrow/.style={-{Stealth[length=2mm]}, semithick},
+    dep/.style={-{Stealth[length=1.5mm]}, dashed, gray}
+]
+\node[box] (pre) {Preprocessing};
+\node[smallbox, below=0.35em of pre] (terrain) {Terrain-adjusted distance};
+\node[smallbox, right=0.25em of terrain] (losses) {Energy losses (physical)};
+
+\node[box, below=1.2em of terrain] (cap) {Capital};
+\node[smallbox, below=0.35em of cap] (build) {Construction costs};
+\node[smallbox, right=0.15em of build] (row) {Right-of-way};
+\node[smallbox, right=0.15em of row] (env) {Environmental mitigation};
+
+\node[box, below=1.1em of build] (rev) {Revenue};
+\node[smallbox, below=0.3em of rev] (revnode) {Revenue requirement};
+
+\node[box, below=1em of revnode] (risk) {Risk};
+\node[smallbox, below=0.35em of risk] (ins) {Insurance};
+\node[smallbox, right=0.12em of ins] (delay) {Delay costs};
+\node[smallbox, right=0.12em of delay] (wf) {Wildfire risk};
+\node[smallbox, right=0.12em of wf] (out) {Outage risk};
+
+\node[box, below=1.1em of ins] (ben) {Benefits};
+\node[smallbox, below=0.3em of ben] (cong) {Congestion reduction};
+\node[smallbox, right=0.15em of cong] (curt) {Curtailment reduction};
+
+\node[box, below=1em of cong] (om) {Operations \& maintenance};
+\node[smallbox, below=0.3em of om] (omnode) {O\&M costs};
+
+\node[box, below=1em of omnode] (loss) {Losses and emissions};
+\node[smallbox, below=0.35em of loss] (em) {Emissions costs};
+\node[smallbox, right=0.2em of em] (llc) {Line loss costs};
+
+\node[box, below=1.1em of em, draw=blue!60, fill=blue!5] (bcr) {Benefit--cost ratio};
+
+\draw[arrow] (pre) -- (cap);
+\draw[arrow] (cap) -- (rev);
+\draw[arrow] (rev) -- (risk);
+\draw[arrow] (risk) -- (ben);
+\draw[arrow] (ben) -- (om);
+\draw[arrow] (om) -- (loss);
+\draw[arrow] (loss) -- (bcr);
+
+\draw[dep] (terrain) -- (build);
+\draw[dep] (losses) -- (llc);
+\end{tikzpicture}%
+}
+\caption{Conceptual flow of the CTCC method. Solid arrows show the main sequence; dashed arrows show key dependencies (terrain-adjusted distance into construction costs; physical energy losses into line loss costs).}
+\label{fig:methodology-map}
+\end{figure}
+
+\section{How the Method Fits Together}
+
+\subsection{Preprocessing}
+
+The method uses two preparatory concepts. \textbf{Terrain-adjusted distance} is the line length scaled by terrain difficulty (e.g.\ mountain, river crossing). It is used to scale construction and insurance costs that are expressed per unit distance. \textbf{Energy losses (physical)} are the losses on the line and, for DC, in converters. They are computed from line and converter parameters and feed into the economic cost of losses and into emissions attributable to compensating generation.
+
+\subsection{Capital and revenue}
+
+\textbf{Capital} includes construction costs (conductors, structures, converters, adjusted for terrain and contingency), right-of-way costs, and environmental mitigation (temporary impacts and, for new build, wetland and habitat credits). These are combined with financing and timing to produce nominal, regulatory (AFUDC), and present-value measures. The \textbf{revenue requirement} is the rate-based revenue needed to recover capital and operating costs; it is a transfer between ratepayers and the utility, not a net social benefit, and is included only in stakeholder-specific benefit--cost views.
+
+\subsection{Risk}
+
+\textbf{Risk} costs include insurance (property, liability), construction and delay costs, wildfire risk (and liability where applicable), and outage risk. Each can be included or excluded depending on the perspective (e.g.\ societal vs.\ utility).
+
+\subsection{Benefits}
+
+\textbf{Benefits} are congestion reduction (value of reduced congestion from the project) and curtailment reduction (value of reduced curtailment of generation). Both can be scaled by conservative haircuts for societal BCRs. Revenue is not counted as a benefit in system-wide or societal perspectives.
+
+\subsection{Operations, losses, and emissions}
+
+\textbf{Operations and maintenance} costs cover vegetation management, conductor and structure O\&M, and converter O\&M. \textbf{Losses and emissions} include the economic cost of line losses (and converter losses for DC) and the cost of emissions from generation that compensates for those losses. Physical energy losses feed into both line loss costs and emissions.
+
+\subsection{Benefit--cost ratio}
+
+All cost categories (capital, operational, energy/emissions, risk, delay) and benefits (congestion and curtailment reduction) are combined into one or more \textbf{benefit--cost ratios}. Different BCR perspectives include or exclude specific cost or benefit components (e.g.\ wildfire, outage, emissions, line losses) so that analysts can compare full societal, risk-adjusted, or emissions-excluded views.
+
+\section{Concepts at a Glance}
+
+Table~\ref{tab:methodology-concepts} summarizes each concept and its role in the method.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}llp{5.5cm}@{}}
+\toprule
+\textbf{Concept} & \textbf{Role} & \textbf{Brief description} \\
+\midrule
+Terrain-adjusted distance & Preprocessing & Distance scaled by terrain difficulty; used to scale construction and insurance. \\
+Energy losses (physical) & Preprocessing & Line and converter losses; feed line loss costs and emissions. \\
+Construction costs & Cost & Capital cost of conductors, structures, converters (terrain- and contingency-adjusted). \\
+Right-of-way & Cost & Cost of land and easements. \\
+Environmental mitigation & Cost & Temporary impacts; wetland/habitat credits for new build. \\
+Revenue requirement & Revenue & Rate-based revenue; transfer, not net benefit. \\
+Insurance & Cost & Property and liability insurance. \\
+Delay costs & Cost & Cost of construction delays. \\
+Wildfire risk & Cost & Expected cost of wildfire risk (and liability if applicable). \\
+Outage risk & Cost & Expected cost of outage risk. \\
+Congestion reduction & Benefit & Value of reduced congestion. \\
+Curtailment reduction & Benefit & Value of reduced curtailment. \\
+O\&M costs & Cost & Operations and maintenance (vegetation, conductors, structures, converters). \\
+Emissions costs & Cost & Cost of emissions from loss-compensating generation. \\
+Line loss costs & Cost & Economic cost of line (and converter) losses. \\
+Benefit--cost ratio & Summary & Ratio of benefits to costs under chosen perspective. \\
+\bottomrule
+\end{tabular}
+\caption{Concepts in the CTCC method and their role.}
+\label{tab:methodology-concepts}
+\end{table}
+
+\end{document}

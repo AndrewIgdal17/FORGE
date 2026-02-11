@@ -1,40 +1,6 @@
-\documentclass[12pt]{article}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{geometry}
-\geometry{margin=1in}
-
-\lstset{
-    language=Python,
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
-    stepnumber=1,
-    numbersep=5pt,
-    backgroundcolor=\color{gray!10},
-    frame=single,
-    breaklines=true,
-    breakatwhitespace=false,
-    tabsize=4,
-    showstringspaces=false
-}
-
-\title{Revenue Documentation}
-\author{}
-\date{}
-
+\documentclass[ctcc_full_documentation.tex]{subfiles}
 \begin{document}
-
-\maketitle
+\chapter{Revenue Documentation}
 
 \section{Introduction}
 
@@ -95,7 +61,9 @@ where $r$ is the real WACC and COD = delay\_years + construction\_years.
 
 \subsection{\texttt{load\_rate\_based\_revenue\_parameters()}}
 
-Loads \texttt{enabled} and \texttt{allowed\_return\_rate} from \texttt{get\_financing\_data\_raw()["financial"]["revenue"]["rate\_based"]}. Defaults: \texttt{enabled=False}, \texttt{allowed\_return\_rate=0.10}.
+Loads \texttt{enabled} and \texttt{allowed\_return\_rate} from\\
+\texttt{get\_financing\_data\_raw()["financial"]["revenue"]["rate\_based"]}.\\
+Defaults: \texttt{enabled=False}, \texttt{allowed\_return\_rate=0.10}.
 
 \textbf{Returns:} \texttt{tuple: (enabled: bool, allowed\_return\_rate: float)}.
 
