@@ -113,6 +113,8 @@ total_miles = load_physical_details()
 
 The \texttt{financial\_utils.py} module provides shared financial calculation functions: present value (level and growing annuity), COD year, discount rate from config, amortization, and AFUDC capitalization.
 
+\textbf{Nominal WACC (r\_wacc,nominal):} When capital structure is present and valid (equity\_percent, debt\_percent, cost\_of\_equity, cost\_of\_debt; percentages sum to 1.0; not both costs zero), r\_wacc,nominal = equity\_percent $\times$ cost\_of\_equity + debt\_percent $\times$ cost\_of\_debt. Otherwise r\_wacc,nominal = \texttt{financial.wacc\_nominal}. This value is used for both discounting (via real WACC from the Fisher equation) and for the AFUDC rate. The helper \texttt{get\_wacc\_nominal(financing\_yaml)} returns this value.
+
 \subsection{Key Functions}
 
 \subsubsection{\texttt{get\_discount\_rate\_from\_config(config\_yaml, financing\_yaml, rate\_key="discount\_rate\_type")}}
@@ -180,6 +182,12 @@ A = P \times \frac{r(1+r)^n}{(1+r)^n - 1}
 
 where $P$ is principal, $r$ is rate, and $n$ is number of years.
 
+\subsubsection{\texttt{get\_wacc\_nominal(financing\_yaml)}}
+
+Returns nominal WACC (r\_wacc,nominal). Calls \texttt{calculate\_afudc\_rate(financing\_yaml)} and returns the rate; same logic so discounting and AFUDC use the same nominal rate when capital structure is present.
+
+\textbf{Returns:} \texttt{float} --- Nominal WACC.
+
 \subsubsection{\texttt{calculate\_afudc\_rate(financing\_yaml)}}
 
 Calculates AFUDC rate from capital structure or falls back to WACC.
@@ -206,7 +214,7 @@ else:
 
 \subsubsection{\texttt{calculate\_afudc\_capitalized\_cost(nominal\_cost, timing\_pattern, delay\_years, construction\_years, afudc\_rate, delay\_has\_active\_work)}}
 
-Capitalizes a cost using AFUDC (compounds forward to Commercial Operation Date).
+Capitalizes a cost using AFUDC (compounds forward to Commercial Operation Date). If \texttt{timing\_pattern["afudc\_eligible"]} is \texttt{False}, returns \texttt{(nominal\_cost, 0.0)} with no capitalization.
 
 \textbf{Parameters:}
 \begin{itemize}
@@ -225,21 +233,28 @@ Capitalizes a cost using AFUDC (compounds forward to Commercial Operation Date).
 
 \textbf{Key Logic:}
 \begin{lstlisting}
-# Cost during delay period
+# Cost during delay period (only if afudc_eligible)
 delay_cost = nominal_cost * timing_pattern["during_delay"]
-if delay_has_active_work:
-    # Compound from midpoint of delay to COD
-    avg_years_to_cod = total_years_to_cod - (delay_years / 2)
-    capitalized_cost += delay_cost * (1 + afudc_rate) ** avg_years_to_cod
-else:
-    # No AFUDC during delay, compound only during construction
-    capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
+if delay_cost > 0:
+    if delay_has_active_work and delay_years > 0:
+        # AFUDC during delay: uniform spending, compound from midpoint to COD
+        avg_years_to_cod = total_years_to_cod - (delay_years / 2)
+        capitalized_cost += delay_cost * (1 + afudc_rate) ** avg_years_to_cod
+    else:
+        if delay_years > 0:
+            # No active work: AFUDC suspended during delay, compound only during construction
+            capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
+        else:
+            capitalized_cost += delay_cost  # No delay period
 
 # Cost during construction period
 construction_cost = nominal_cost * timing_pattern["during_construction"]
-# Compound from midpoint of construction to COD
-avg_years_to_cod = construction_years / 2
-capitalized_cost += construction_cost * (1 + afudc_rate) ** avg_years_to_cod
+if construction_cost > 0 and construction_years > 0:
+    # Uniform spending: compound from midpoint of construction to COD
+    avg_years_to_cod = construction_years / 2
+    capitalized_cost += construction_cost * (1 + afudc_rate) ** avg_years_to_cod
+else:
+    capitalized_cost += construction_cost
 
 afudc_amount = capitalized_cost - nominal_cost
 \end{lstlisting}

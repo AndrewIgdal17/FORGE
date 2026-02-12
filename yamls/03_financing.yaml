@@ -2,7 +2,7 @@
 financial:
   inflation_rate: 0.03
   base_year: 2025
-  wacc_nominal: 0.08
+  wacc_nominal: 0.08 # Fallback when capital structure not specified or invalid
   social_discount_rate: 0.03 # for sensitivty do .02 to .07 U.S. Office of Management and Budget, Circular A-4: Regulatory Analysis (2003, reaffirmed 2023).
 
   contingencies:
@@ -10,7 +10,7 @@ financial:
     structure_contingency: .10 # % [0,1]
     converter_contingency: .10 # % [0,1]
 
-  # Capital structure (optional - if absent, WACC used as proxy for AFUDC)
+  # Capital structure (optional). When present and valid, defines r_wacc,nominal and AFUDC rate as equity_percent * cost_of_equity + debt_percent * cost_of_debt; otherwise wacc_nominal is used.
   capital_structure:
     equity_percent: 0.50 # % equity financing [0,1] (must sum with debt_percent to 1.0)
     debt_percent: 0.50 # % debt financing [0,1] (must sum with equity_percent to 1.0)
@@ -27,7 +27,8 @@ financial:
 
   # Revenue structures (firm perspective)
   revenue:
-    # Rate-based revenue requirement (return on rate base)
+    # Rate-based revenue requirement (return on rate base). Option A: real stream, real WACC.
+    # Revenue is in real terms (constant base-year $/year), discounted at real WACC; allowed_return_rate is the real return.
     rate_based:
       enabled: true # Toggle rate-based revenue calculation
-      allowed_return_rate: 0.10 # Annual return rate on capital costs (rate base)
+      allowed_return_rate: 0.10 # Real annual return on rate base (base-year $)

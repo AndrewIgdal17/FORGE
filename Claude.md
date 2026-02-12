@@ -229,7 +229,7 @@ else:
 
 ### Rate Base and ROW Capital vs. Operational
 
-- **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc. Revenue requirement uses this nominal rate base (not PV of capital).
+- **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc (nominal at COD). **Rate-based revenue** uses Option A: the nominal rate base is deflated to base year; annual revenue is constant real $/year; present value uses real WACC—consistent with real discounting elsewhere in CTCC.
 - **ROW capital** (acquisition + holding) is AFUDC-eligible and included in capital costs and rate base. **ROW rent** (annual ROW payment) is operational only (O&M + insurance + row rent); it is not in rate base or capital.
 
 ---

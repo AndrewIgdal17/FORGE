@@ -300,6 +300,28 @@ def calculate_afudc_rate(financing_yaml: Dict[str, Any]) -> Tuple[float, str]:
     return rate, source
 
 
+def get_wacc_nominal(financing_yaml: Dict[str, Any]) -> float:
+    """
+    Return nominal WACC (r_wacc,nominal) from capital structure or config fallback.
+
+    When capital structure is present and valid (equity_percent, debt_percent,
+    cost_of_equity, cost_of_debt; percentages sum to 1.0; not both costs zero),
+    returns equity_percent * cost_of_equity + debt_percent * cost_of_debt.
+    Otherwise returns financial["wacc_nominal"] (default 0.08).
+
+    Used for discounting (via real WACC) and for AFUDC rate; same logic as
+    calculate_afudc_rate so both stay consistent.
+
+    Args:
+        financing_yaml (dict): Loaded financing data (YAML or JSON shape with "financial" key).
+
+    Returns:
+        float: Nominal WACC.
+    """
+    rate, _ = calculate_afudc_rate(financing_yaml)
+    return rate
+
+
 def calculate_afudc_capitalized_cost(
     nominal_cost: float,
     timing_pattern: Dict[str, Any],

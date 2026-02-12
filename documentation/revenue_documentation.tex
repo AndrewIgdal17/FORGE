@@ -4,33 +4,43 @@
 
 \section{Introduction}
 
-The \texttt{revenue.py} script calculates the rate-based revenue requirement from a utility perspective. \textbf{Rate base} is AFUDC capital at COD (build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc). Annual revenue = rate base $\times$ allowed return rate; revenue present value is the PV of that annual stream from COD over the project lifetime. The result is written to the batch summary (CSV or JSON) and used in BCR and reporting. Revenue calculation can be disabled via \texttt{financial.revenue.rate\_based.enabled} in the financing config.
+The \texttt{revenue.py} script calculates the rate-based revenue requirement from a utility perspective using \textbf{Option A: real stream and real WACC}. The nominal rate base (AFUDC capital at COD) is deflated to base year; annual revenue is a constant real (base-year) \$/year; present value uses real WACC. \textbf{Rate base (nominal at COD)} = build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc. The result is written to the batch summary (CSV or JSON) and used in BCR and reporting. Revenue calculation can be disabled via \texttt{financial.revenue.rate\_based.enabled} in the financing config.
 
 \section{Method Overview}
 
 \subsection{Purpose}
 
 \begin{enumerate}
-    \item Load rate-based revenue parameters from financing data: \texttt{enabled} and \texttt{allowed\_return\_rate} (from \texttt{financial.revenue.rate\_based}).
+    \item Load rate-based revenue parameters from financing data: \texttt{enabled} and \texttt{allowed\_return\_rate} (from \texttt{financial.revenue.rate\_based}); \texttt{allowed\_return\_rate} is interpreted as the \emph{real} return.
     \item If not enabled: write zero revenue to the output manager and return.
-    \item Load project technical details (delay\_years, construction\_years, project\_lifetime) and financing details (WACC, base year).
-    \item Get rate base (AFUDC capital at COD) from \texttt{batch\_summary.csv} (CSV: \texttt{build\_cost\_afudc}, \texttt{row\_cost\_afudc}, \texttt{env\_mitigation\_afudc}) or from per-module JSON \texttt{total\_afudc} (JSON mode).
-    \item Compute annual revenue = rate\_base $\times$ allowed\_return\_rate; total nominal = annual $\times$ project\_lifetime.
-    \item Compute present value of revenue stream using \texttt{calculate\_present\_value} (real WACC, project\_lifetime, start\_year = COD from delay and construction years).
-    \item Write \texttt{revenue\_nominal}, \texttt{revenue\_pv}, \texttt{annual\_revenue}, \texttt{rate\_base}, \texttt{rate\_base\_pv}, \texttt{allowed\_return\_rate} to the output manager and call \texttt{write\_batch\_summary()}.
+    \item Load project technical details (delay\_years, construction\_years, project\_lifetime) and financing details (WACC real, inflation\_rate, base year).
+    \item Get rate base \emph{nominal at COD} (AFUDC capital) from \texttt{batch\_summary.csv} (CSV: \texttt{build\_cost\_afudc}, \texttt{row\_cost\_afudc}, \texttt{env\_mitigation\_afudc}) or from per-module JSON \texttt{total\_afudc} (JSON mode).
+    \item Option A: Deflate rate base to base year: rate\_base\_real = rate\_base / (1 + inflation\_rate)$^{t_{\mathrm{COD}}}$; compute annual revenue (real) = rate\_base\_real $\times$ allowed\_return\_rate; undiscounted total (real) = annual\_revenue\_real $\times$ project\_lifetime.
+    \item Compute present value of the \emph{real} annual revenue stream using \texttt{calculate\_present\_value}(annual\_revenue\_real, real WACC, project\_lifetime, start\_year = COD).
+    \item Write \texttt{revenue\_nominal} (undiscounted total in real terms), \texttt{revenue\_pv}, \texttt{annual\_revenue} (real), \texttt{rate\_base}, \texttt{rate\_base\_real}, \texttt{rate\_base\_pv}, \texttt{annual\_revenue\_real}, \texttt{allowed\_return\_rate} to the output manager and call \texttt{write\_batch\_summary()}.
 \end{enumerate}
 
-\subsection{Calculation Approach}
+\subsection{Calculation Approach (Option A: Real Stream, Real WACC)}
 
-Rate base is \textbf{AFUDC capital at COD} (build + ROW capital + environmental mitigation), i.e.\ the same capital that is capitalized for regulatory purposes. Annual revenue requirement (utility perspective) is rate base times the allowed return rate. Revenue is assumed to start at commercial operation date (COD) and continue for \texttt{project\_lifetime} years. Present value of the revenue stream uses real WACC and the same discounting as other CTCC PV calculations.
+Rate base \emph{nominal at COD} is \textbf{AFUDC capital at COD} (build + ROW capital + environmental mitigation). For the utility benefit, CTCC uses Option A: the revenue stream is defined in \textbf{real} terms (constant base-year \$/year) and discounted at \textbf{real WACC}, consistent with real discounting elsewhere in CTCC.
+
+\begin{enumerate}
+    \item \textbf{COD} (years from base): $t_{\mathrm{COD}} = \texttt{delay\_years} + \texttt{construction\_years} + 1$.
+    \item \textbf{Real rate base} (deflate nominal at COD to base year): $\mathrm{RateBase}_{\mathrm{real}} = \mathrm{RateBase}_{\mathrm{nom}} / (1+\pi)^{t_{\mathrm{COD}}}$, where $\pi$ is \texttt{inflation\_rate}.
+    \item \textbf{Real annual revenue} (constant each year in base-year \$): $\mathrm{AnnualRevenue}_{\mathrm{real}} = \mathrm{RateBase}_{\mathrm{real}} \times \texttt{allowed\_return\_rate}$ (allowed return is the real return).
+    \item \textbf{Undiscounted total} (real): $\mathrm{TotalRevenue}_{\mathrm{real}} = \mathrm{AnnualRevenue}_{\mathrm{real}} \times \texttt{project\_lifetime}$.
+    \item \textbf{Present value} of revenue (benefit to utility): PV of the constant real stream from COD over project lifetime, discounted at real WACC.
+\end{enumerate}
 
 \begin{align}
-\text{Rate Base (at COD)} &= \text{build\_cost\_afudc} + \text{row\_cost\_afudc} + \text{env\_mitigation\_afudc} \\
-\text{Annual Revenue} &= \text{Rate Base} \times \text{allowed\_return\_rate} \\
-\text{Total Revenue (nominal)} &= \text{Annual Revenue} \times \text{project\_lifetime} \\
-\text{Revenue (PV)} &= \sum_{t=\text{COD}}^{\text{COD}+\text{project\_lifetime}-1} \frac{\text{Annual Revenue}}{(1 + r)^t}
+\text{Rate Base (nominal at COD)} &= \text{build\_cost\_afudc} + \text{row\_cost\_afudc} + \text{env\_mitigation\_afudc} \\
+t_{\mathrm{COD}} &= \texttt{delay\_years} + \texttt{construction\_years} + 1 \\
+\mathrm{RateBase}_{\mathrm{real}} &= \frac{\mathrm{Rate Base}}{(1+\pi)^{t_{\mathrm{COD}}}} \\
+\mathrm{AnnualRevenue}_{\mathrm{real}} &= \mathrm{RateBase}_{\mathrm{real}} \times \texttt{allowed\_return\_rate} \\
+\mathrm{TotalRevenue}_{\mathrm{real}} &= \mathrm{AnnualRevenue}_{\mathrm{real}} \times \texttt{project\_lifetime} \\
+\text{Revenue (PV)} &= \sum_{t=t_{\mathrm{COD}}}^{t_{\mathrm{COD}}+\texttt{project\_lifetime}-1} \frac{\mathrm{AnnualRevenue}_{\mathrm{real}}}{(1 + r)^t}
 \end{align}
-where $r$ is the real WACC and COD = delay\_years + construction\_years + 1.
+where $\pi$ is \texttt{inflation\_rate} and $r$ is the real WACC.
 
 \subsection{Inputs and Outputs}
 
@@ -43,7 +53,7 @@ where $r$ is the real WACC and COD = delay\_years + construction\_years + 1.
 
 \textbf{Outputs:}
 \begin{itemize}
-    \item \texttt{revenue\_nominal}, \texttt{revenue\_pv}, \texttt{annual\_revenue}, \texttt{rate\_base\_pv}, \texttt{allowed\_return\_rate} passed to \texttt{CTCCOutputManager.add\_revenue(results)}; then \texttt{write\_batch\_summary()}. Used by BCR calculator (benefits side) and in final JSON/CSV summary.
+    \item \texttt{revenue\_nominal} (undiscounted total in real terms), \texttt{revenue\_pv}, \texttt{annual\_revenue} (real), \texttt{rate\_base}, \texttt{rate\_base\_real}, \texttt{rate\_base\_pv}, \texttt{annual\_revenue\_real}, \texttt{allowed\_return\_rate} passed to \texttt{CTCCOutputManager.add\_revenue(results)}; then \texttt{write\_batch\_summary()}. Used by BCR calculator (benefits side) and in final JSON/CSV summary.
 \end{itemize}
 
 \subsection{Integration with Other Scripts}
@@ -75,30 +85,33 @@ Uses centralized \texttt{load\_project\_technical\_details} and returns \texttt{
 
 Returns rate base (AFUDC capital at COD) = build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc. In JSON mode (when \texttt{CTCC\_OUTPUT\_MODE=json} and \texttt{CTCC\_SCENARIO\_ID} is set), reads \texttt{total\_afudc} from \texttt{json\_output\_<scenario\_id>\_build\_costs.json}, \texttt{row\_costs.json}, \texttt{environmental\_mitigation.json} in \texttt{OUTPUTS\_DIR}. In CSV mode, reads from \texttt{batch\_summary.csv} (row matching \texttt{scenario\_id}, or last row if \texttt{scenario\_id} not set). Returns 0 if files missing or scenario not found.
 
-\textbf{Key logic (annual revenue and PV):}
+\textbf{Key logic (Option A: real stream, real WACC):}
 \begin{lstlisting}
-rate_base = get_rate_base()
-annual_revenue = rate_base * allowed_return_rate
-total_revenue_nominal = annual_revenue * project_lifetime
+rate_base = get_rate_base()  # nominal at COD
+cod_year = calculate_cod_year(delay_years, construction_years)
+rate_base_real = rate_base / (1 + financing.inflation_rate) ** cod_year
+annual_revenue_real = rate_base_real * allowed_return_rate
+revenue_undiscounted_real = annual_revenue_real * project_lifetime
 revenue_pv = calculate_present_value(
-    annual_revenue,
+    annual_revenue_real,
     financing.wacc_real,
     project_lifetime,
-    start_year=calculate_cod_year(delay_years, construction_years),
+    start_year=cod_year,
 )
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
 
-Checks \texttt{load\_rate\_based\_revenue\_parameters()}; if not enabled, writes zeros via \texttt{add\_revenue} and \texttt{write\_batch\_summary} and returns. Otherwise loads details, gets \texttt{get\_rate\_base()}, computes annual revenue, nominal total, and PV, then adds results and writes batch summary.
+Checks \texttt{load\_rate\_based\_revenue\_parameters()}; if not enabled, writes zeros (including \texttt{rate\_base\_real}, \texttt{annual\_revenue\_real}) via \texttt{add\_revenue} and \texttt{write\_batch\_summary} and returns. Otherwise loads details, gets \texttt{get\_rate\_base()} (nominal at COD), computes real rate base, real annual revenue, undiscounted real total, and PV at real WACC (Option A), then adds results and writes batch summary.
 
 \section{Example}
 
-With \texttt{financial.revenue.rate\_based.enabled = true} and \texttt{allowed\_return\_rate = 0.10}, and rate base (AFUDC capital at COD) = \$500M, project\_lifetime = 40, COD = 5:
+With \texttt{financial.revenue.rate\_based.enabled = true}, \texttt{allowed\_return\_rate = 0.10} (real), \texttt{inflation\_rate = 0.03}, rate base nominal at COD = \$500M, project\_lifetime = 40, $t_{\mathrm{COD}} = 5$:
 \begin{itemize}
-    \item Annual revenue = 500 $\times$ 0.10 = \$50M.
-    \item Total revenue (nominal) = 50 $\times$ 40 = \$2000M.
-    \item Revenue PV = present value of \$50M per year for 40 years starting at year 5, discounted at real WACC.
+    \item Rate base (real) = 500 / $(1.03)^5$ $\approx$ \$430.5M (base-year \$).
+    \item Annual revenue (real) = 430.5 $\times$ 0.10 $\approx$ \$43.05M per year (constant real \$/year).
+    \item Undiscounted total (real) = 43.05 $\times$ 40 $\approx$ \$1722M.
+    \item Revenue PV = present value of \$43.05M per year (real) for 40 years starting at year 5, discounted at real WACC.
 \end{itemize}
 
 Standalone run (after capital scripts have run):

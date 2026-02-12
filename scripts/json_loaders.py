@@ -6,7 +6,7 @@
 import os
 import json
 from typing import Dict, Any, Optional
-from financial_utils import calculate_real_wacc
+from financial_utils import calculate_real_wacc, get_wacc_nominal
 from yaml_loaders import (
     ProjectTechnicalDetails,
     CongestionCurtailmentParams,
@@ -91,7 +91,7 @@ def load_financing_details() -> FinancingDetails:
     financing_data = _data_source.get_data("03_financing")
     inflation_rate = financing_data["financial"]["inflation_rate"]
     base_year = financing_data["financial"]["base_year"]
-    wacc_nominal = financing_data["financial"]["wacc_nominal"]
+    wacc_nominal = get_wacc_nominal(financing_data)
     wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
     return FinancingDetails(
         inflation_rate=inflation_rate,

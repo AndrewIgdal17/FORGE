@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
 from path_config import YAMLS_DIR
 from calculation_utils import normalize_capacity_mw
-from financial_utils import calculate_real_wacc
+from financial_utils import calculate_real_wacc, get_wacc_nominal
 
 
 @dataclass
@@ -107,7 +107,7 @@ def load_financing_details() -> FinancingDetails:
             raise KeyError("Missing 'wacc_nominal' key in financing YAML file")
         inflation_rate = financial["inflation_rate"]
         base_year = financial["base_year"]
-        wacc_nominal = financial["wacc_nominal"]
+        wacc_nominal = get_wacc_nominal(financing_data)
 
         wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
         return FinancingDetails(

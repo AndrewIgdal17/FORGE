@@ -66,6 +66,9 @@ BATCH_SUMMARY_FIELDS = [
     "congestion_benefit_pv",
     "curtailment_benefit_pv",
     "revenue_pv",
+    "rate_base",
+    "rate_base_real",
+    "annual_revenue_real",
     "congestion_benefit_haircut_pv",
     "curtailment_benefit_haircut_pv",
     "total_benefits_pv",
@@ -738,13 +741,16 @@ class CTCCOutputManager:
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
     def add_revenue(self, results: Dict[str, float]) -> None:
-        """Add revenue calculation results to batch summary."""
+        """Add revenue calculation results to batch summary (Option A: real stream, real WACC)."""
         self.append_to_batch_summary(
             {
                 "revenue_nominal": results.get("revenue_nominal", 0),
                 "revenue_pv": results.get("revenue_pv", 0),
                 "annual_revenue": results.get("annual_revenue", 0),
+                "rate_base": results.get("rate_base", 0),
+                "rate_base_real": results.get("rate_base_real", 0),
                 "rate_base_pv": results.get("rate_base_pv", 0),
+                "annual_revenue_real": results.get("annual_revenue_real", 0),
                 "allowed_return_rate": results.get("allowed_return_rate", 0),
             }
         )
@@ -756,6 +762,9 @@ class CTCCOutputManager:
             "rate_base_pv": results.get("rate_base_pv", 0),
             "annual_revenue": results.get("annual_revenue", 0),
             "nominal_total": results.get("revenue_nominal", 0),
+            "rate_base": results.get("rate_base", 0),
+            "rate_base_real": results.get("rate_base_real", 0),
+            "annual_revenue_real": results.get("annual_revenue_real", 0),
             "allowed_return_rate": results.get("allowed_return_rate", 0),
         }
         self.write_module_csv("revenue", summary_row=summary_row)
