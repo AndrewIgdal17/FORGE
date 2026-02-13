@@ -414,7 +414,7 @@ class JSONOutputManager:
 
         if state.get("benefits"):
             for key, value in state["benefits"].items():
-                if value:
+                if value is not None:
                     self.benefits[key] = value
 
         if state.get("bcr"):
