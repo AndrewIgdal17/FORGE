@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple
-from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
+from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE, TIMING_PATTERN_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
 
 
 def validate_discount_rate(
@@ -356,12 +356,23 @@ def calculate_afudc_capitalized_cost(
 
     Raises:
         ValueError: If afudc_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
+        ValueError: If AFUDC-eligible and during_delay + during_construction != 1.0 (within TIMING_PATTERN_TOLERANCE)
+
+    For AFUDC-eligible patterns, during_delay and during_construction must sum to 1.0 (within TIMING_PATTERN_TOLERANCE).
     """
     validate_discount_rate(afudc_rate, "afudc_rate")
     # Check if cost is AFUDC-eligible
     if not timing_pattern.get("afudc_eligible", False):
         # Not eligible: return nominal cost with zero AFUDC
         return nominal_cost, 0.0
+
+    theta_d = timing_pattern.get("during_delay", 0.0)
+    theta_c = timing_pattern.get("during_construction", 0.0)
+    if abs((theta_d + theta_c) - 1.0) > TIMING_PATTERN_TOLERANCE:
+        raise ValueError(
+            f"Cost timing pattern (during_delay + during_construction) must sum to 1.0 (tolerance {TIMING_PATTERN_TOLERANCE}). "
+            f"Got during_delay={theta_d}, during_construction={theta_c}, sum={theta_d + theta_c}."
+        )
 
     # Total time to COD
     total_years_to_cod = delay_years + construction_years

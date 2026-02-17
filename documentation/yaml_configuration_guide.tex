@@ -1501,6 +1501,8 @@ For each cost category, the file specifies:
     \end{itemize}
 \end{itemize}
 
+\textbf{Constraint:} For any cost type with \texttt{afudc\_eligible: true}, \texttt{during\_delay} and \texttt{during\_construction} must sum to 1.0.
+
 \subsection{Example Configuration}
 
 \begin{lstlisting}[language=yaml]

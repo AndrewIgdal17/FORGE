@@ -1,6 +1,7 @@
 # Cost Incurrence Timing for AFUDC Capitalization
 # Defines when costs hit CWIP (Account 107) during project lifecycle
 # Per FERC USoA: AFUDC applies when (i) capex incurred AND (ii) activities in progress
+# For afudc_eligible: true patterns, during_delay + during_construction must equal 1.0.
 
 cost_timing_patterns:
   # Build costs (conductor, structure, converter)

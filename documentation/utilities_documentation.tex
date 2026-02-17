@@ -219,7 +219,7 @@ Capitalizes a cost using AFUDC (compounds forward to Commercial Operation Date).
 \textbf{Parameters:}
 \begin{itemize}
     \item \texttt{nominal\_cost} (float): Total nominal cost
-    \item \texttt{timing\_pattern} (dict): Dict with \texttt{during\_delay}, \texttt{during\_construction}, \texttt{afudc\_eligible}
+    \item \texttt{timing\_pattern} (dict): Dict with \texttt{during\_delay}, \texttt{during\_construction}, \texttt{afudc\_eligible}. When \texttt{afudc\_eligible} is true, \texttt{during\_delay} and \texttt{during\_construction} must sum to 1.0 (within tolerance 0.001) so that 100\% of the cost is allocated to delay and/or construction.
     \item \texttt{delay\_years} (float): Number of delay years
     \item \texttt{construction\_years} (float): Number of construction years
     \item \texttt{afudc\_rate} (float): AFUDC rate (annual)

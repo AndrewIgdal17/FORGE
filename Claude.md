@@ -231,6 +231,7 @@ else:
 
 - **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc (nominal at COD). **Rate-based revenue** uses Option A: the nominal rate base is deflated to base year; annual revenue is constant real $/year; present value uses real WACC—consistent with real discounting elsewhere in CTCC.
 - **ROW capital** (acquisition + holding) is AFUDC-eligible and included in capital costs and rate base. **ROW rent** (annual ROW payment) is operational only (O&M + insurance + row rent); it is not in rate base or capital.
+- **Cost timing:** AFUDC-eligible cost timing patterns require `during_delay + during_construction = 1` (enforced in `calculate_afudc_capitalized_cost`).
 
 ---
 
