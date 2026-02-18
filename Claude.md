@@ -39,6 +39,16 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 - **REST API:** Programmatic access for integration
 - **CLI:** Command-line tool for batch processing
 
+### Cost categories (methodology)
+
+Costs are grouped into **5 categories** (variables, equations, and notation are in **[documentation/COST_METHODOLOGY.md](documentation/COST_METHODOLOGY.md)**; that document takes precedence):
+
+1. **Capital costs:** Build (1.a), Capital ROW—acquisition, holding (1.b), Environmental Mitigation (1.c)
+2. **Operational costs:** O&M (2.a), Operational Insurance (2.b), Operational ROW—rent (2.c)
+3. **Energy/Emissions costs:** Thermal line loss (3.a), Emissions from line losses (3.b), Residual exceedance (3.c)
+4. **Risk costs:** Wildfire liability insurance (4.a), Expected wildfire cost (4.b), Expected outage cost (4.c)
+5. **Delay costs:** Base delay (5.a), Congestion delay (5.b), Curtailment delay (5.c)
+
 ### Technology Stack
 
 - **Language:** Python 3.8+

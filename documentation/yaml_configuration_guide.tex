@@ -896,9 +896,10 @@ This file configures environmental mitigation costs, including base restoration 
             \item \texttt{estuarine}: \$100,000/acre
             \item \texttt{other}: \$25,000/acre
         \end{itemize}
-        \item \textbf{habitat} (dictionary): Habitat credit costs
+        \item \textbf{habitat} (dictionary): Habitat credit costs. May include per-terrain keys and a \texttt{default} fallback for any terrain not listed.
         \begin{itemize}
-            \item \texttt{default}: \$30,000/acre
+            \item \texttt{default}: \$30,000/acre (fallback)
+            \item \texttt{forested}, \texttt{scrubbed\_flat}, \texttt{desert\_barren}, \texttt{rolling\_hills}, \texttt{mountain}: optional \$/acre per habitat terrain
         \end{itemize}
     \end{itemize}
 \end{itemize}
@@ -914,9 +915,10 @@ This file configures environmental mitigation costs, including base restoration 
             \item \texttt{estuarine}: 2.5
             \item \texttt{other}: 1.0
         \end{itemize}
-        \item \textbf{habitat} (dictionary):
+        \item \textbf{habitat} (dictionary): Per-terrain keys and a \texttt{default} fallback.
         \begin{itemize}
-            \item \texttt{default}: 1.0
+            \item \texttt{default}: 1.0 (fallback)
+            \item \texttt{forested}, \texttt{scrubbed\_flat}, \texttt{desert\_barren}, \texttt{rolling\_hills}, \texttt{mountain}: optional ratio per habitat terrain
         \end{itemize}
     \end{itemize}
 \end{itemize}
@@ -950,6 +952,9 @@ environmental_mitigation:
       other: 25000
     habitat:
       default: 30000
+      forested: 30000
+      mountain: 30000
+  # ... (scrubbed_flat, desert_barren, rolling_hills optional)
 
   credit_ratios:
     wetlands:
@@ -958,6 +963,9 @@ environmental_mitigation:
       other: 1.0
     habitat:
       default: 1.0
+      forested: 1.0
+      mountain: 1.0
+  # ... (per-terrain optional)
 \end{lstlisting}
 
 \section{Right-of-Way Configuration}

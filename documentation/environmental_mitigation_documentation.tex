@@ -114,7 +114,17 @@ for terrain, miles in terrain_miles_dict.items():
 wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor
 habitat_impacted_acres = sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
 wetlands_credits = wetland_cost_per_acre * wetland_ratio * wetland_impacted_acres
-habitat_credits = habitat_cost_per_acre * habitat_ratio * habitat_impacted_acres
+habitat_dict = credits.get("habitat", {})
+ratios_habitat = ratios.get("habitat", {})
+default_cost, default_ratio = habitat_dict.get("default", 0.0), ratios_habitat.get("default", 1.0)
+habitat_credits = 0.0
+for terrain in habitat_terrains:
+    terrain_acres = acres_by_terrain.get(terrain, 0.0)
+    if terrain_acres > 0:
+        effective_acres = terrain_acres * uplift_factor
+        cost_per_acre = habitat_dict.get(terrain, default_cost)
+        ratio_val = ratios_habitat.get(terrain, default_ratio)
+        habitat_credits += cost_per_acre * ratio_val * effective_acres
 if reconductoring:
     wetlands_credits = 0.0
     habitat_credits = 0.0
@@ -150,7 +160,7 @@ The following example demonstrates a typical usage of the environmental mitigati
 #   - Uplift factor: 1.5x
 #   - Base cost: $2000/acre (overhead, forested), $3000/acre (overhead, wetland)
 #   - Wetland credit: $5000/acre, ratio 2.0:1
-#   - Habitat credit: $3000/acre, ratio 1.5:1
+#   - Habitat credit: $3000/acre, ratio 1.5:1 (in full implementation, cost and ratio can vary by habitat terrain)
 #   - Construction: 2 years
 #
 # Calculation:
@@ -201,7 +211,7 @@ Credit ratios represent the mitigation requirement. For example, a 2.0:1 ratio f
 
 \subsection{Habitat Terrain Classification}
 
-The script identifies habitat-impacted acres by summing natural terrain types: forested, scrubbed\_flat, desert\_barren, and rolling\_hills. This is a conservative approach that captures all potential habitat impacts.
+The script identifies habitat-impacted acres by summing natural terrain types: forested, scrubbed\_flat, desert\_barren, rolling\_hills, and mountain. This is a conservative approach that captures all potential habitat impacts. Habitat credit cost and ratio can be specified per terrain in the configuration (with a \texttt{default} fallback); the total habitat credit cost is the sum over habitat terrains of (cost\_per\_acre $\times$ ratio $\times$ effective\_acres) for each terrain.
 
 \subsection{Present Value Timing}
 

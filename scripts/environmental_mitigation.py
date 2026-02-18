@@ -102,7 +102,13 @@ def calculate_environmental_mitigation_costs(
     wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor
 
     # Habitat credits: sum relevant natural terrains (conservative approach)
-    habitat_terrains = ["forested", "scrubbed_flat", "desert_barren", "rolling_hills"]
+    habitat_terrains = [
+        "forested",
+        "scrubbed_flat",
+        "desert_barren",
+        "rolling_hills",
+        "mountain",
+    ]
     habitat_impacted_acres = (
         sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
     )
@@ -112,10 +118,19 @@ def calculate_environmental_mitigation_costs(
     wetland_ratio = ratios.get("wetlands", {}).get("other", 1.0)
     wetlands_credits = wetland_cost_per_acre * wetland_ratio * wetland_impacted_acres
 
-    # Calculate habitat credits (using "default" subtype)
-    habitat_cost_per_acre = credits.get("habitat", {}).get("default", 0.0)
-    habitat_ratio = ratios.get("habitat", {}).get("default", 1.0)
-    habitat_credits = habitat_cost_per_acre * habitat_ratio * habitat_impacted_acres
+    # Calculate habitat credits: per-terrain cost and ratio (fallback to default)
+    habitat_credits = 0.0
+    habitat_dict = credits.get("habitat", {})
+    ratios_habitat = ratios.get("habitat", {})
+    default_cost = habitat_dict.get("default", 0.0)
+    default_ratio = ratios_habitat.get("default", 1.0)
+    for terrain in habitat_terrains:
+        terrain_acres = acres_by_terrain.get(terrain, 0.0)
+        if terrain_acres > 0:
+            effective_acres = terrain_acres * uplift_factor
+            cost_per_acre = habitat_dict.get(terrain, default_cost)
+            ratio_val = ratios_habitat.get(terrain, default_ratio)
+            habitat_credits += cost_per_acre * ratio_val * effective_acres
 
     # For reconductoring projects, set credits to zero since they use existing ROW
     # and don't create new permanent environmental impacts requiring mitigation credits

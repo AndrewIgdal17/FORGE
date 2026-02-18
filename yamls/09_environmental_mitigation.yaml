@@ -52,7 +52,12 @@ environmental_mitigation:
       estuarine: 100000
       other: 25000
     habitat:
-      default: 30000
+      default: 30000  # fallback for any terrain not listed
+      forested: 30000
+      scrubbed_flat: 30000
+      desert_barren: 30000
+      rolling_hills: 30000
+      mountain: 30000
 
   # Mitigation ratios (acres required per acre impacted)
   credit_ratios:
@@ -61,4 +66,9 @@ environmental_mitigation:
       estuarine: 2.5
       other: 1.0
     habitat:
-      default: 1.0
+      default: 1.0  # fallback for any terrain not listed
+      forested: 1.0
+      scrubbed_flat: 1.0
+      desert_barren: 1.0
+      rolling_hills: 1.0
+      mountain: 1.0
