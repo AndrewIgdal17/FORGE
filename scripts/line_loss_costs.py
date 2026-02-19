@@ -37,7 +37,7 @@ from calculation_utils import (
 )
 from constants import HOURS_PER_YEAR
 from smart_loaders import (
-    load_financing_social_discount_rate,
+    load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
     get_project_data_raw,
 )
@@ -55,7 +55,7 @@ class LineLossProjectDetails:
     converter_type: str
     line_utilization_percent: float
     baseline_electricity_price: float
-    social_discount_rate: float
+    wacc_real: float
     reconductoring: bool
     delay_years: float
     construction_years: int
@@ -85,7 +85,7 @@ def load_project_details() -> LineLossProjectDetails:
             - converter_type: Converter type (for DC projects) or "NA" for AC
             - line_utilization_percent: Line utilization as decimal (0-1)
             - baseline_electricity_price: Baseline electricity price in $/MWh
-            - social_discount_rate: Social discount rate for present value calculations
+            - wacc_real: Real WACC for present value of thermal line loss cost (market-tracked)
             - reconductoring: True if reconductoring project, False for greenfield
             - delay_years: Number of years of project delay
             - construction_years: Number of years of construction
@@ -136,7 +136,8 @@ def load_project_details() -> LineLossProjectDetails:
         baseline_electricity_price = project.get(
             "baseline_electricity_price_per_mwh", 0
         )
-        social_discount_rate = load_financing_social_discount_rate()
+        financing = load_financing_details()
+        wacc_real = financing.wacc_real
 
         # Get number_of_converters if DC
         if ac_dc == "DC":
@@ -173,7 +174,7 @@ def load_project_details() -> LineLossProjectDetails:
         converter_type=converter_type,
         line_utilization_percent=line_utilization_percent,
         baseline_electricity_price=baseline_electricity_price,
-        social_discount_rate=social_discount_rate,
+        wacc_real=wacc_real,
         reconductoring=reconductoring,
         delay_years=delay_years,
         construction_years=construction_years,
@@ -423,19 +424,19 @@ def main() -> None:
             # Calculate NPVs for all three methods
             direct_npv = calculate_present_value(
                 direct_annual_cost_difference,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
             counterfactual_npv = calculate_present_value(
                 counterfactual_annual_cost_difference,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
             normalized_npv = calculate_present_value(
                 normalized_annual_cost_difference,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
@@ -487,7 +488,7 @@ def main() -> None:
             print()
             print("DISCOUNTED VALUES (NPV):")
             print(
-                f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%"
+                f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)"
             )
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${direct_npv:,.2f}")
@@ -515,7 +516,7 @@ def main() -> None:
             print()
             print("DISCOUNTED VALUES (NPV):")
             print(
-                f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%"
+                f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)"
             )
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
@@ -541,7 +542,7 @@ def main() -> None:
             print()
             print("DISCOUNTED VALUES (NPV):")
             print(
-                f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%"
+                f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)"
             )
             print(f"  Start Year: {start_year:.1f} years")
             print(f"  Net Present Value: ${normalized_npv:,.2f}")
@@ -565,7 +566,7 @@ def main() -> None:
             )
             primary_pv_loss_cost = calculate_present_value(
                 primary_annual_loss_cost,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
@@ -575,13 +576,13 @@ def main() -> None:
             primary_converter_annual = primary_converter_mwh * price
             primary_line_pv = calculate_present_value(
                 primary_line_annual,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
             primary_converter_pv = calculate_present_value(
                 primary_converter_annual,
-                project_details.social_discount_rate,
+                project_details.wacc_real,
                 project_details.project_lifetime,
                 start_year,
             )
@@ -633,19 +634,19 @@ def main() -> None:
 
         line_cost_pv = calculate_present_value(
             line_annual_cost,
-            project_details.social_discount_rate,
+            project_details.wacc_real,
             project_details.project_lifetime,
             start_year,
         )
         converter_cost_pv = calculate_present_value(
             converter_annual_cost,
-            project_details.social_discount_rate,
+            project_details.wacc_real,
             project_details.project_lifetime,
             start_year,
         )
         total_pv_loss_cost = calculate_present_value(
             total_annual_cost,
-            project_details.social_discount_rate,
+            project_details.wacc_real,
             project_details.project_lifetime,
             start_year,
         )
@@ -673,7 +674,7 @@ def main() -> None:
         print()
         print("DISCOUNTED VALUES (NPV):")
         print(
-            f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%"
+            f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)"
         )
         print(f"  Start Year: {start_year:.1f} years")
         print(f"  Net Present Value: ${total_pv_loss_cost:,.2f}")
@@ -885,19 +886,19 @@ def main() -> None:
     # Calculate NPVs for all three methods
     direct_npv = calculate_present_value(
         direct_annual_benefit,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )
     counterfactual_npv = calculate_present_value(
         counterfactual_annual_benefit,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )
     normalized_npv = calculate_present_value(
         normalized_annual_benefit,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )
@@ -934,7 +935,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${direct_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%")
+    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${direct_npv:,.2f}")
     print()
@@ -950,7 +951,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${counterfactual_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%")
+    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
     print()
@@ -966,7 +967,7 @@ def main() -> None:
     print(f"  Lifetime Benefit: ${normalized_lifetime_benefit:,.2f}")
     print()
     print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.social_discount_rate):.1f}%")
+    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
     print(f"  Start Year: {start_year:.1f} years")
     print(f"  Net Present Value: ${normalized_npv:,.2f}")
     print()
@@ -987,19 +988,19 @@ def main() -> None:
     new_lifetime_nominal_cost = new_total_annual_cost * project_details.project_lifetime
     new_line_pv = calculate_present_value(
         new_line_annual_cost,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )
     new_converter_pv = calculate_present_value(
         new_converter_annual_cost,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )
     new_pv_loss_cost = calculate_present_value(
         new_total_annual_cost,
-        project_details.social_discount_rate,
+        project_details.wacc_real,
         project_details.project_lifetime,
         start_year,
     )

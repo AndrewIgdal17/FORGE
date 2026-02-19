@@ -8,6 +8,9 @@ The \texttt{oandm.py} script calculates operations and maintenance (O\&M) costs 
 
 \section{Method Overview}
 
+\paragraph{Canonical notation.}
+The canonical variable names and equations for O\&M are defined in \texttt{COST\_METHODOLOGY.md} under ``Operational costs'' / ``O\&M (2.a)''. Structure cost is structure-only and vegetation is a separate component: $C_{\mathrm{structure,annual}}$ is piecewise (overhead vs.\ non-overhead), $C_{\mathrm{veg,annual}} = \sum_{\mathrm{terrain}} M_{\mathrm{terrain}} \times c_{\mathrm{veg}}(\mathrm{terrain})$, and $C_{\mathrm{O\&M,annual}} = C_{\mathrm{conductor,annual}} + C_{\mathrm{converter,annual}} + C_{\mathrm{structure,annual}} + C_{\mathrm{veg,annual}}$.
+
 \subsection{Purpose}
 
 This script calculates O\&M costs by:
@@ -20,12 +23,12 @@ This script calculates O\&M costs by:
 
 \subsection{Calculation Approach}
 
-The O\&M cost calculation follows this structure:
+The O\&M cost calculation follows this structure. Structure Annual is structure-only (vegetation is a separate line):
 
 \begin{align}
 \text{Conductor Annual} &= \text{Cost/Mile/Year} \times \text{Total Miles} \\
 \text{Converter Annual} &= \text{Cost/Mile/Year} \times \text{Total Miles} \quad \text{(DC only)} \\
-\text{Structure Annual} &= \begin{cases}
+\text{Structure Annual (structure only)} &= \begin{cases}
 \text{Cost/Structure/Year} \times \text{Total Structures} & \text{(Overhead)} \\
 \text{Cost/Mile/Year} \times \text{Total Miles} & \text{(Other)}
 \end{cases} \\

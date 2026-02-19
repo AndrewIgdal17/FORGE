@@ -204,7 +204,9 @@ def load_structure_om_costs(
         subsea_miles: Miles of subsea terrain
 
     Returns:
-        tuple: (variable_structure_cost_per_mile_year, variable_structure_cost_per_year, structure_dict)
+        tuple: (variable_structure_cost_per_mile_year, variable_structure_cost_per_year,
+                structure_dict, total_vegetation_management_cost_per_year).
+                variable_structure_cost_per_year is structure O&M only (vegetation is returned separately).
     """
 
     # Initialize vegetation
@@ -359,8 +361,6 @@ def load_structure_om_costs(
             + mountain_vegetation_management_cost_per_year
             + subsea_vegetation_management_cost_per_year
         )
-
-        variable_structure_cost_per_year += total_vegetation_management_cost_per_year
 
     else:
         variable_structure_cost_per_year = 0
