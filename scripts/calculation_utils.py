@@ -111,17 +111,17 @@ def calculate_phase_current(
     return numerator / denominator
 
 
-def full_load_adjusted(line_utilization_percent: float) -> float:
+def full_load_adjusted(line_utilization: float) -> float:
     """
     Calculate full load adjustment based on line utilization.
 
     Args:
-        line_utilization_percent: Line utilization as a percentage (0-100)
+        line_utilization: Line utilization as a decimal in [0, 1] (e.g. 0.70 for 70%).
 
     Returns:
         float: Full load adjustment factor
     """
-    return (line_utilization_percent + line_utilization_percent**2) / 2
+    return (line_utilization + line_utilization**2) / 2
 
 
 def calculate_line_losses(

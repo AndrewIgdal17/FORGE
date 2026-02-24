@@ -11,16 +11,17 @@ Comprehensive technical documentation for developers working on CTCC.
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Quick Start for Developers](#quick-start-for-developers)
-3. [Architecture](#architecture)
-4. [Development Workflows](#development-workflows)
-5. [API Reference](#api-reference)
-6. [File Structure](#file-structure)
-7. [Testing](#testing)
-8. [Known Issues](#known-issues)
-9. [Future Improvements](#future-improvements)
-10. [Deployment](#deployment)
-11. [Troubleshooting](#troubleshooting)
+2. [Context and information gathering](#context-and-information-gathering)
+3. [Quick Start for Developers](#quick-start-for-developers)
+4. [Architecture](#architecture)
+5. [Development Workflows](#development-workflows)
+6. [API Reference](#api-reference)
+7. [File Structure](#file-structure)
+8. [Testing](#testing)
+9. [Known Issues](#known-issues)
+10. [Future Improvements](#future-improvements)
+11. [Deployment](#deployment)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -41,7 +42,7 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 
 ### Cost categories (methodology)
 
-Costs are grouped into **5 categories** (variables, equations, and notation are in **[documentation/COST_METHODOLOGY.md](documentation/COST_METHODOLOGY.md)**; that document takes precedence):
+Costs are grouped into **5 categories** (variables, equations, and notation are in **[documentation/CTCC_METHODOLOGY.md](documentation/CTCC_METHODOLOGY.md)**; that document is the full CTCC methodology and takes precedence):
 
 1. **Capital costs:** Build (1.a), Capital ROW—acquisition, holding (1.b), Environmental Mitigation (1.c)
 2. **Operational costs:** O&M (2.a), Operational Insurance (2.b), Operational ROW—rent (2.c)
@@ -56,6 +57,88 @@ Costs are grouped into **5 categories** (variables, equations, and notation are 
 - **Data Processing:** Pandas, NumPy
 - **Configuration:** YAML (PyYAML), JSON
 - **Frontend:** Vanilla JavaScript (no frameworks)
+
+**Context optimization:** Use the "Context and information gathering" section below for where to look and how to search. Prefer `documentation/CTCC_METHODOLOGY.md` for methodology and notation. Scope searches to the relevant directory. Prefer search + targeted read for files over ~500 lines.
+
+---
+
+## Context and information gathering
+
+Use this section to reduce context burn and improve answers: start in the right place, prefer search and docs over broad file reads, and treat key docs as canonical.
+
+### Entry points and map
+
+- **Calculation logic:** `scripts/` + `documentation/CTCC_METHODOLOGY.md`
+- **API / server:** `ctcc.py` + `server/app/`
+- **Paper–appendix consistency:** `papers/paper1/` + `documentation/METHODOLOGY_CONSISTENCY.md`
+- **Config:** `yamls/` and `server/json/`; loader mappings in `scripts/yaml_loaders.py`, `scripts/json_loaders.py`
+- **Testing:** `testing/` and root-level `test_*.py`
+
+See [File Structure](#file-structure) for the full tree.
+
+### Search and read strategy
+
+- Prefer **grep** for exact names/symbols; prefer **semantic search** with a target directory.
+- Avoid loading full large files when a targeted read or search result suffices.
+- Scope searches to the relevant subtree (scripts, documentation, server, papers).
+
+### Canonical references
+
+- **Methodology (variables, equations, notation):** `documentation/CTCC_METHODOLOGY.md`
+- **Paper–appendix consistency:** `documentation/METHODOLOGY_CONSISTENCY.md` and the methodology-consistency Cursor rule
+- **Developer reference:** this file (CLAUDE.md)
+
+### Large files
+
+- **documentation/CTCC_METHODOLOGY.md** (~1850 lines): search for variable/section names, then read the specific section (offset/limit).
+- **papers/paper1/p1appendix.tex** (~1590 lines): search for notation or section names, then read the relevant block.
+- Long scripts (e.g. `ctcc.py`, `json_output_manager.py`, `yaml_loaders.py`): grep for the function or symbol first, then targeted read.
+
+### Script–cost mapping
+
+| Cost / module | Script |
+|---------------|--------|
+| Weighted miles | `weighted_miles.py` |
+| Build | `build_costs.py` |
+| ROW | `row_costs.py` |
+| Environmental | `environmental_mitigation.py` |
+| Insurance | `insurance_costs.py` |
+| Delay | `delay_costs.py` |
+| Wildfire | `wildfire_costs.py` |
+| Outage | `outage_costs.py` |
+| Benefits (congestion/curtailment) | `congestion_curtailment_reduction.py` |
+| Energy losses (preprocessing) | `energy_losses.py` |
+| Emissions | `emissions.py` |
+| Line loss cost | `line_loss_costs.py` |
+| O&M | `oandm.py` |
+| Revenue | `revenue.py` |
+| BCR | `bcr_calculator.py` |
+
+### Where to look by question type
+
+```mermaid
+flowchart LR
+  subgraph calc [Calculation or cost logic]
+    scripts[scripts/]
+    methodology[CTCC_METHODOLOGY.md]
+  end
+  subgraph api [API or server]
+    ctcc[ctcc.py]
+    server[server/app/]
+  end
+  subgraph paper [Paper or appendix]
+    paper1[papers/paper1/]
+    consistency[METHODOLOGY_CONSISTENCY.md]
+  end
+  subgraph config [Config or I/O]
+    yamls[yamls/]
+    json[server/json/]
+  end
+  subgraph test [Testing]
+    testing[testing/]
+    testRoot["test_*.py"]
+  end
+```
 
 ---
 

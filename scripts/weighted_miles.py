@@ -55,9 +55,13 @@ def calculate_weighted_miles() -> Tuple[float, float]:
             ]
         )
 
-    average_terrain_multiplier = weighted_miles / sum(
+    total_miles = sum(
         project_physical_details_df["terrain"]["terrain_miles"].values()
     )
+    if total_miles == 0:
+        average_terrain_multiplier = 0.0
+    else:
+        average_terrain_multiplier = weighted_miles / total_miles
 
     return weighted_miles, average_terrain_multiplier
 

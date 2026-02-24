@@ -2,15 +2,15 @@
 # Expected wildfire costs based on ignition rates and severity
 
 wildfire:
-  # Event severity: uninsured residual loss per event ($). Include deductibles, above limit,
-  # exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).
-  severity_per_event: 5000000000 # (>= 0)
+  # Event severity (consequence)
+  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event) (>= 0)
 
   # Risk growth (optional - wildfire risk increases over time)
   risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)
 
   # Discount rate configuration
-  discount_rate_source: "social" # Options: "social" | "wacc_real"
+  discount_rate_source: "social" # Options: "social" | "wacc_real" | "custom"
+  discount_rate_custom: 0.03 # Used only if discount_rate_source = "custom"
 
   # Base ignition rates by terrain (for overhead baseline)
   # Units: events per mile per year (>= 0)

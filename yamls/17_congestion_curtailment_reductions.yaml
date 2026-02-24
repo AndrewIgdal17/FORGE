@@ -11,7 +11,9 @@ greenfield_congestion_curtailment_reductions:
       average_exceedance: 560 # MW exceedance during binding hours (>= 0)
       # baseline congestion energy = H_b * X mwh/yr
       near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
-      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0); E_near = near_binding_hours * min(effective_capacity_relief, near_average_exceedance)
+      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
+      # near baseline congestion energy = H_n * X mwh/yr
+      near_binding_relief_factor: 0.25 # [0,1]
       saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
 
     costs:
@@ -50,7 +52,9 @@ reconductoring_congestion_curtailment_reductions:
       average_exceedance: 328 # MW exceedance during binding hours (>= 0)
       # baseline congestion energy = H_b * X mwh/yr
       near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)
-      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0); E_near = near_binding_hours * min(effective_capacity_relief, near_average_exceedance)
+      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)
+      # near baseline congestion energy = H_n * X mwh/yr
+      near_binding_relief_factor: 0.25 # [0,1]
       saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system
 
       hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT
