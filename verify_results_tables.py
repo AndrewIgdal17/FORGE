@@ -14,10 +14,12 @@ from pathlib import Path
 LABEL_TO_CSV_FIELD = {
     # Cost breakdown labels
     "Build Costs": "build_cost_pv",
-    "Right-of-Way": "row_cost_pv",
+    "ROW (capital)": "row_capital_pv",
+    "ROW (rent)": "row_rent_pv",
     "Env. Mitigation": "env_mitigation_pv",
     "O\\&M": "oandm_pv",
     "Insurance": "insurance_pv",
+    "Wildfire Liability": "wildfire_liability_insurance_pv",
     "Residual Exceedance": "residual_exceedance_pv",
     "Wildfire Risk": "wildfire_pv",
     "Outage Risk": "outage_pv",
@@ -47,8 +49,11 @@ LABEL_TO_CSV_FIELD = {
 CSV_FIELD_SOURCES = {
     "build_cost_pv": ("build_costs", "total_pv"),
     "row_cost_pv": ("row_costs", "total_pv"),
+    "row_capital_pv": ("batch_summary", "row_capital_pv"),
+    "row_rent_pv": ("batch_summary", "row_rent_pv"),
     "env_mitigation_pv": ("environmental_mitigation", "total_pv"),
-    "insurance_pv": ("insurance_costs", "pv_total"),
+    "insurance_pv": ("batch_summary", "insurance_pv"),
+    "wildfire_liability_insurance_pv": ("batch_summary", "wildfire_liability_insurance_pv"),
     "oandm_pv": ("oandm_costs", "pv_total"),
     "wildfire_pv": ("batch_summary", "wildfire_pv"),
     "outage_pv": ("batch_summary", "outage_pv"),
@@ -76,6 +81,16 @@ CSV_FIELD_SOURCES = {
     "bcr_primary": ("batch_summary", "bcr_primary"),
 }
 
+# Abbreviated BCR subscripts in results_tables.tex -> CSV field name
+BCR_SUBSCRIPT_TO_CSV_FIELD = {
+    "sys": "bcr_system",
+    "util": "bcr_utility",
+    "rp": "bcr_ratepayer",
+    "cap": "bcr_capital",
+    "cap+del": "bcr_capital_and_delay",
+    "primary": "bcr_primary",
+}
+
 
 def parse_latex_file(latex_path):
     """Parse LaTeX file and extract values for each scenario."""
@@ -85,8 +100,8 @@ def parse_latex_file(latex_path):
     scenarios = {}
     current_scenario = None
 
-    # Find all scenario sections
-    scenario_pattern = r"\\section\{Scenario (\d+):"
+    # Find all scenario subsections (current results_tables.tex uses \subsection)
+    scenario_pattern = r"\\subsection\{Scenario (\d+):"
     matches = list(re.finditer(scenario_pattern, content))
 
     for i, match in enumerate(matches):
@@ -103,27 +118,38 @@ def parse_latex_file(latex_path):
 
         scenario_content = content[start_pos:end_pos]
 
-        # Extract cost breakdown values
-        # Pattern: \quad Label & value \\ or \textbf{Label} & \textbf{value} \\
-        # Handle both regular and bold entries
-        cost_pattern = r"\\quad\s+([^&]+?)\s*&\s*([0-9,.-]+)\s*\\\\"
-        for cost_match in re.finditer(cost_pattern, scenario_content):
-            label = cost_match.group(1).strip()
-            # Remove LaTeX formatting
+        def _set_cost_if_mapped(label, value_float):
+            """Map label to CSV field and set if in LABEL_TO_CSV_FIELD."""
+            label = label.strip()
             label = re.sub(r"\\textbf\{([^}]+)\}", r"\1", label)
             label = re.sub(r"\\textit\{([^}]+)\}", r"\1", label)
+            if label in LABEL_TO_CSV_FIELD:
+                scenarios[current_scenario][LABEL_TO_CSV_FIELD[label]] = value_float
+
+        # Extract cost breakdown values
+        # One-column format: \quad Label: value \\
+        cost_pattern_onecol = r"\\quad\s+([^:]+):\s*([0-9,.-]+)\s*\\\\"
+        for cost_match in re.finditer(cost_pattern_onecol, scenario_content):
+            label = cost_match.group(1)
             value_str = cost_match.group(2).replace(",", "").strip()
             try:
                 value = float(value_str)
-                # Map label to CSV field
-                if label in LABEL_TO_CSV_FIELD:
-                    csv_field = LABEL_TO_CSV_FIELD[label]
-                    scenarios[current_scenario][csv_field] = value
+                _set_cost_if_mapped(label, value)
+            except ValueError:
+                pass
+        # Two-column format (backward compat): \quad Label & value \\
+        cost_pattern_twocol = r"\\quad\s+([^&]+?)\s*&\s*([0-9,.-]+)\s*\\\\"
+        for cost_match in re.finditer(cost_pattern_twocol, scenario_content):
+            label = cost_match.group(1)
+            value_str = cost_match.group(2).replace(",", "").strip()
+            try:
+                value = float(value_str)
+                _set_cost_if_mapped(label, value)
             except ValueError:
                 pass
 
-        # Extract bold Total Costs
-        total_costs_pattern = r"\\textbf\{Total Costs\}\s*&\s*\\textbf\{([0-9,.-]+)\}"
+        # Extract Total Costs (inline form: \textbf{Total Costs: value})
+        total_costs_pattern = r"\\textbf\{Total Costs:\s*([0-9,.-]+)\}"
         total_match = re.search(total_costs_pattern, scenario_content)
         if total_match:
             value_str = total_match.group(1).replace(",", "").strip()
@@ -133,31 +159,27 @@ def parse_latex_file(latex_path):
             except ValueError:
                 pass
 
-        # Extract bold Net Lifetime Cost/Benefit
-        net_pattern = (
-            r"\\textbf\{Net Lifetime (Cost|Benefit)\}\s*&\s*\\textbf\{([0-9,.-]+)\}"
-        )
+        # Extract Net Lifetime Cost/Benefit (inline form: \textbf{Net Lifetime Benefit: value})
+        net_pattern = r"\\textbf\{Net Lifetime (?:Cost|Benefit):\s*([0-9,.-]+)\}"
         net_match = re.search(net_pattern, scenario_content)
         if net_match:
-            value_str = net_match.group(2).replace(",", "").strip()
+            value_str = net_match.group(1).replace(",", "").strip()
             try:
                 value = float(value_str)
                 scenarios[current_scenario]["net_benefit_pv"] = value
             except ValueError:
                 pass
 
-        # Extract BCR values
-        # Pattern: BCR\textsubscript{...} & value \\
-        bcr_pattern = r"BCR\\textsubscript\{([^}]+)\}\s*&\s*([0-9.]+)\s*\\\\"
+        # Extract BCR values (format: BCR\textsubscript{xxx}: value)
+        # Normal lines: BCR\textsubscript{sys}: 0.0111 & BCR\textsubscript{util}: 0 \\
+        bcr_pattern = r"BCR\\textsubscript\{([^}]+)\}:\s*([0-9.]+)"
         for bcr_match in re.finditer(bcr_pattern, scenario_content):
-            bcr_type = bcr_match.group(1)
+            bcr_subscript = bcr_match.group(1).strip()
             value_str = bcr_match.group(2).strip()
             try:
                 value = float(value_str)
-                # Map BCR type to CSV field
-                bcr_label = f"BCR\\textsubscript{{{bcr_type}}}"
-                if bcr_label in LABEL_TO_CSV_FIELD:
-                    csv_field = LABEL_TO_CSV_FIELD[bcr_label]
+                if bcr_subscript in BCR_SUBSCRIPT_TO_CSV_FIELD:
+                    csv_field = BCR_SUBSCRIPT_TO_CSV_FIELD[bcr_subscript]
                     scenarios[current_scenario][csv_field] = value
             except ValueError:
                 pass
@@ -255,16 +277,19 @@ def main():
         "emissions_costs": load_csv_data(outputs_dir / "emissions_costs.csv"),
     }
 
-    # Map scenario IDs to project names
+    # Map scenario IDs to project names (must match batch_summary.csv project_name)
     scenario_map = {
         "S1": "S1_California_Rural_Overhead_AC_657MW",
-        "S2": "S2_California_Highway_Route_AC_657MW",
+        "S2": "S2_California_Highway_Route_AC_1792MW",
         "S3": "S3_California_Underground_AC_657MW",
-        "S4": "S4_LongDistance_HVDC_1500MW",
-        "S5": "S5_LongDistance_HVDC_1500MW_LCC",
-        "S6": "S6_LongDistance_AC_1792MW",
+        "S4": "S4_LongDistance_HVDC_6000MW_StandardAluminumConductor_VSC",
+        "S5": "S5_LongDistance_HVDC_6000MW_AdvancedAluminumConductor_VSC",
+        "S6": "S6_LongDistance_AC_6500MW",
         "S7": "S7_Reconductoring_329to657MW",
         "S8": "S8_Greenfield_657MW_StandardAC",
+        "S9": "S9_PointToPoint_HVDC_2400MW_StandardAluminumConductor_VSC",
+        "S10": "S10_PointToPoint_HVDC_2400MW_AdvancedAluminumConductor_VSC",
+        "S11": "S11_PointToPoint_AC_2598MW",
     }
 
     errors = []

@@ -330,6 +330,32 @@ else:
 
 ## Development Workflows
 
+### Refreshing paper results
+
+After methodology or input changes, refresh the paper's results and LaTeX tables with this pipeline. Run all commands from the **project root** with the CLI venv activated.
+
+1. **Run batch scenarios**  
+   `python papers/batch_craft/run_scenarios.py papers/paper1/scenarios_for_paper_1_formatted.tex`  
+   Appends results to `outputs/*.csv` (e.g. `outputs/batch_summary.csv`, `build_costs.csv`, etc.).
+
+2. **Convert CSVs to Markdown**  
+   `python papers/convert_results_to_md.py paper1`  
+   Writes `papers/paper1/outputs_md/batch_summary.md` (and other `.md`). If `outputs_md` already exists, the script may prompt to overwrite, use a new folder (e.g. `outputs_md2`), or cancel.
+
+3. **Update LaTeX results tables**  
+   `python papers/update_results_tables.py paper1`  
+   Reads `papers/paper1/outputs_md/batch_summary.md` and overwrites `papers/paper1/results_tables.tex` with per-scenario cost/BCR tables and all-scenarios summary tables.
+
+4. **Verify**  
+   `python verify_results_tables.py`  
+   Compares LaTeX values to the CSV source of truth. Expect "Found 11 scenarios" and no errors (or only rounding notes).
+
+5. **Generate paper figures (optional)**  
+   `python papers/paper1/generate_figures.py`  
+   Reads `outputs/batch_summary.csv` and writes stacked bar charts (one per case study) and pie charts (cost mix by scenario, one combo figure per case study) to `papers/paper1/figures/`. Run after the batch pipeline so the charts match the tables. Requires `matplotlib` (in project `requirements.txt`).
+
+**Key artifacts:** `papers/paper1/scenarios_for_paper_1_formatted.tex` (scenario definitions), `papers/paper1/results_tables.tex` (updated tables), `papers/paper1/figures/` (generated PDFs). To run the full pipeline in one go, use `papers/refresh_paper1_results.sh` from the project root (see script for non-interactive behavior of step 2).
+
 ### Adding a New Cost Module
 
 #### Step 1: Create Calculation Script

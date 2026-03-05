@@ -38,6 +38,9 @@ BATCH_SUMMARY_FIELDS = [
     "row_rent_nominal",
     "env_mitigation_pv",
     "capital_costs_pv",
+    "build_cost_afudc",
+    "row_cost_afudc",
+    "env_mitigation_afudc",
     # 4. Operational Costs PV (with breakdown)
     "insurance_pv",
     "oandm_pv",
