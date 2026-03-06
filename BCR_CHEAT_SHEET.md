@@ -18,7 +18,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (with conservative haircuts; excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (with conservative haircuts on congestion/curtailment; excludes revenue transfer)
 - **Costs:** Capital + Operational (O&M + insurance only) + Energy/Emissions (line losses + emissions + residual exceedance) + Risk + Delay (everything)
 
 **Use Case:** Complete societal cost-benefit analysis including all externalities and risks
@@ -33,7 +33,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Energy/Emissions + Delay (excludes wildfire + wildfire liability + outage)
 
 **Use Case:** Analysis when both wildfire and outage risk costs may be insured, managed separately, or contextually inappropriate.
@@ -48,7 +48,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Risk + Delay + Line Losses (excludes emissions only)
 
 **Use Case:** Analysis focusing on transmission project economics without emissions externalities, but including line losses
@@ -63,7 +63,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Risk + Delay + Emissions (excludes line losses only)
 
 **Use Case:** Analysis focusing on transmission project economics without line loss costs, but including emissions
@@ -78,7 +78,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Risk + Delay (excludes emissions + line losses)
 
 **Use Case:** Analysis focusing on transmission project economics without energy/emissions externalities
@@ -93,7 +93,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Energy/Emissions + Delay + Outage Risk (excludes wildfire + wildfire liability)
 
 **Use Case:** Analysis for regions where wildfire risk is contextually inappropriate (e.g., Virginia scenarios with California-calibrated wildfire parameters), but outage risk should be included
@@ -108,7 +108,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Energy/Emissions + Delay + Wildfire Risk (excludes outage)
 
 **Use Case:** Analysis when outage risk may be insured or managed separately, but wildfire risk should be included
@@ -123,7 +123,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Line Losses + Outage Risk (excludes emissions + wildfire)
 
 **Use Case:** Core project economics excluding emissions externalities and wildfire risk, but including line losses and outage risk
@@ -138,7 +138,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Line Losses + Wildfire Risk (excludes emissions + outage)
 
 **Use Case:** Core project economics excluding emissions externalities and outage risk, but including line losses and wildfire risk
@@ -153,7 +153,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Emissions + Outage Risk (excludes line losses + wildfire)
 
 **Use Case:** Core project economics excluding line losses and wildfire risk, but including emissions and outage risk
@@ -168,7 +168,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Emissions + Wildfire Risk (excludes line losses + outage)
 
 **Use Case:** Core project economics excluding line losses and outage risk, but including emissions and wildfire risk
@@ -183,7 +183,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Outage Risk only
 
 **Use Case:** Core project economics excluding emissions, line losses, and wildfire risk, but including outage risk
@@ -198,7 +198,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Wildfire Risk only
 
 **Use Case:** Core project economics excluding emissions, line losses, and outage risk, but including wildfire risk
@@ -213,7 +213,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Line Losses (excludes emissions + wildfire + outage)
 
 **Use Case:** Core project economics from societal perspective, excluding emissions externalities and both probabilistic risks, but including line losses.
@@ -228,7 +228,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay + Emissions (excludes line losses + wildfire + outage)
 
 **Use Case:** Core project economics from societal perspective, excluding line losses and both probabilistic risks, but including emissions.
@@ -243,7 +243,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational + Delay only
 
 **Use Case:** Core project economics from societal perspective, excluding all externalities and both probabilistic risks.
@@ -260,7 +260,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital costs only (build + ROW + environmental)
 
 **Use Case:** Quick assessment of capital investment attractiveness from societal perspective
@@ -275,7 +275,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Delay costs (construction delay + congestion delay + curtailment delay)
 
 **Use Case:** Capital investment analysis accounting for project delays and time value of money from societal perspective
@@ -308,13 +308,13 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_ratepayer`
 
-**Equation:** `(Congestion Benefits + Curtailment Benefits) / (Revenue + Line Loss Costs)`
+**Equation:** `(Congestion + Curtailment + Delivered energy Benefits) / (Revenue + Line Loss Costs)`
 
 **Perspective:** Ratepayer/consumer perspective
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction (what ratepayers receive)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (what ratepayers receive)
 - **Costs:** Revenue (rate base) + Line losses (what ratepayers pay through rates)
 - **Excludes:** Capital/O&M as separate line items (recovered via Revenue)
 
@@ -324,7 +324,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 - Public utility commission ratepayer impact assessment
 - Understanding ratepayer opposition (benefits may not exceed revenue + line loss costs they pay)
 
-**Key Insight:** Ratepayers receive congestion/curtailment relief but pay for the project (revenue/rate base) and line losses through rates. Full ratepayer BCR compares those benefits to total ratepayer cost.
+**Key Insight:** Ratepayers receive congestion, curtailment, and delivered-energy benefits but pay for the project (revenue/rate base) and line losses through rates. Full ratepayer BCR compares those benefits to total ratepayer cost.
 
 ---
 
@@ -336,7 +336,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Includes:**
 
-- **Benefits:** Congestion (optional) + Curtailment (optional) [excludes revenue transfer]
+- **Benefits:** Congestion (optional) + Curtailment (optional) + Delivered energy (always) [excludes revenue transfer]
 - **Costs:** Capital + Delay (always) + O&M (optional) + Insurance (optional) + Wildfire (optional) + Outage (optional) + Line Losses (optional) + Emissions (optional)
 
 **Use Case:** Custom analysis with specific module inclusions/exclusions via command-line flags from societal perspective
@@ -365,7 +365,7 @@ All BCRs have corresponding net benefit calculations (Present Value unless noted
 ### Stakeholder-Specific Net Benefits
 
 - `net_benefit_utility_pv = Revenue - (Capital Costs + Delay Costs + Operational Costs)`
-- `net_benefit_ratepayer_pv = (Congestion Benefits + Curtailment Benefits) - (Revenue + Line Loss Costs)`
+- `net_benefit_ratepayer_pv = (Congestion + Curtailment + Delivered energy Benefits) - (Revenue + Line Loss Costs)`
 
 ### Partial Exclusion Net Benefits (All 16 Combinations)
 
@@ -390,7 +390,7 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 | No               | Yes            | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv`                   | `Total Benefits - (Total Costs - Emissions - Line Losses - Outage Risk)`                                       |
 | Yes              | Yes            | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv` | `Total Benefits - (Total Costs - Emissions - Line Losses - Wildfire Risk - Outage Risk)` _(excludes all four)_ |
 
-**Note:** All use societal perspective (benefits: congestion + curtailment; excludes revenue transfer)
+**Note:** All use societal perspective (benefits: congestion + curtailment + delivered energy; excludes revenue transfer)
 
 **Interpretation:** Positive = benefits exceed costs, Negative = costs exceed benefits
 
@@ -420,7 +420,7 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 
 ## Important Notes
 
-1. **Haircut Benefits:** Most BCRs use conservative "haircut" benefits (saturation factors applied to congestion/curtailment)
+1. **Haircut Benefits:** Most BCRs use conservative "haircut" benefits (saturation factors applied to congestion/curtailment; delivered energy is included in total benefits with no haircut)
 2. **Present Value:** All values are in present value (PV) terms, discounted to base year
 3. **Context Matters:**
    - Wildfire costs assume California-style catastrophic events ($5B/event)

@@ -18,7 +18,7 @@ from typing import Dict, Any, Tuple
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
-from constants import MIN_DISCOUNT_RATE
+from constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
 from financial_utils import calculate_present_value, calculate_cod_year
 from smart_loaders import (
     load_congestion_curtailment_reductions,
@@ -628,6 +628,49 @@ def main() -> None:
     print("=" * 60)
 
     # ========================================================================
+    # Benefit of delivered energy
+    # ========================================================================
+    # E_delivered_annual = Delta_C_effective * u * H; B_delivered_annual = E * gamma_electricity;
+    # Nominal lifetime = B_annual * T_lifetime; PV from COD at real WACC.
+    project_data = get_project_data_raw()
+    project = project_data.get("project", {})
+    line_utilization = float(project.get("line_utilization", 0.0))
+    baseline_electricity_price_per_mwh = float(
+        project.get("baseline_electricity_price_per_mwh", 0.0)
+    )
+    delta_c_effective = congestion_results.effective_capacity_relief
+    energy_delivered_annual_mwh_yr = (
+        delta_c_effective * line_utilization * HOURS_PER_YEAR
+    )
+    delivered_benefit_annual = (
+        energy_delivered_annual_mwh_yr * baseline_electricity_price_per_mwh
+    )
+    delivered_benefit_nominal = (
+        delivered_benefit_annual * project_details_cc.project_lifetime
+    )
+    cod_year = calculate_cod_year(
+        project_details_cc.delay_years, project_details_cc.construction_years
+    )
+    delivered_benefit_pv = calculate_present_value(
+        delivered_benefit_annual,
+        financing.wacc_real,
+        project_details_cc.project_lifetime,
+        start_year=cod_year,
+    )
+
+    print()
+    print("=" * 60)
+    print("BENEFIT OF DELIVERED ENERGY")
+    print("=" * 60)
+    print(
+        f"Energy delivered (annual): {energy_delivered_annual_mwh_yr:,.2f} MWh/yr"
+    )
+    print(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
+    print(f"Lifetime benefit (nominal): ${delivered_benefit_nominal:,.2f}")
+    print(f"Lifetime benefit (PV): ${delivered_benefit_pv:,.2f}")
+    print("=" * 60)
+
+    # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
 
@@ -651,6 +694,11 @@ def main() -> None:
         "curtailment_benefit_haircut_annual": congestion_results.annual_curtailment_benefit_haircut,
         "curtailment_benefit_haircut_nominal": congestion_results.lifetime_curtailment_benefit_haircut,
         "curtailment_benefit_haircut_pv": congestion_results.lifetime_curtailment_benefit_haircut_pv,
+        # BENEFITS - Delivered energy (throughput value at electricity price)
+        "delivered_benefit_annual": delivered_benefit_annual,
+        "delivered_benefit_nominal": delivered_benefit_nominal,
+        "delivered_benefit_pv": delivered_benefit_pv,
+        "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
         # COSTS - Delay/construction opportunity costs
         "congestion_delay_cost_nominal": congestion_results.lifetime_congestion_during_delay_and_construction_cost,
         "congestion_delay_cost_pv": congestion_results.lifetime_congestion_during_delay_and_construction_pv,

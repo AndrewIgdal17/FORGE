@@ -22,7 +22,7 @@ Order below matches the per-scenario and all-scenarios BCR tables in \texttt{res
 
 \textbf{Includes:}
 \begin{itemize}
-\item \textbf{Benefits:} Congestion reduction + Curtailment reduction (with conservative haircuts; excludes revenue transfer)
+\item \textbf{Benefits:} Congestion reduction + Curtailment reduction + Delivered energy (with conservative haircuts on congestion/curtailment; excludes revenue transfer)
 \item \textbf{Costs:} Capital + Operational (O\&M + insurance only) + Energy/Emissions (line losses + emissions + residual exceedance) + Risk + Delay (everything)
 \end{itemize}
 
@@ -36,9 +36,9 @@ Order below matches the per-scenario and all-scenarios BCR tables in \texttt{res
 
 \subsection{\texttt{bcr\_ratepayer}}
 
-\textbf{Equation:} (Congestion Benefits + Curtailment Benefits) / (Revenue + Line Loss Costs). Benefits: Congestion + Curtailment. Costs: Revenue + Line losses. Excludes: Capital/O\&M as separate line items (recovered via Revenue).
+\textbf{Equation:} (Congestion + Curtailment + Delivered energy Benefits) / (Revenue + Line Loss Costs). Benefits: Congestion + Curtailment + Delivered energy. Costs: Revenue + Line losses. Excludes: Capital/O\&M as separate line items (recovered via Revenue).
 
-\textbf{Key Insight:} Ratepayers receive congestion/curtailment relief but pay revenue/rate base and line losses through rates.
+\textbf{Key Insight:} Ratepayers receive congestion, curtailment, and delivered-energy benefits but pay revenue/rate base and line losses through rates.
 
 \subsection{\texttt{bcr\_capital}}
 
@@ -50,7 +50,7 @@ Order below matches the per-scenario and all-scenarios BCR tables in \texttt{res
 
 \subsection{\texttt{bcr\_primary}}
 
-\textbf{Equation:} Primary Benefits / Primary Costs (customizable via flags). Benefits: Congestion (optional) + Curtailment (optional). Costs: Capital + Delay (always) + O\&M, Insurance, Wildfire, Outage, Line Losses, Emissions (optional). If no flags are set, equals \texttt{bcr\_system}.
+\textbf{Equation:} Primary Benefits / Primary Costs (customizable via flags). Benefits: Congestion (optional) + Curtailment (optional) + Delivered energy. Costs: Capital + Delay (always) + O\&M, Insurance, Wildfire, Outage, Line Losses, Emissions (optional). If no flags are set, equals \texttt{bcr\_system}.
 
 \subsection{\texttt{bcr\_excluding\_wildfire\_risk\_and\_outage\_risk}}
 
@@ -58,7 +58,7 @@ Order below matches the per-scenario and all-scenarios BCR tables in \texttt{res
 
 \textbf{Perspective:} Societal perspective excluding both wildfire and outage risk costs.
 
-\textbf{Includes:} Benefits: Congestion + Curtailment (excludes revenue). Costs: Capital + Operational + Energy/Emissions + Delay (excludes wildfire + wildfire liability + outage).
+\textbf{Includes:} Benefits: Congestion + Curtailment + Delivered energy (excludes revenue). Costs: Capital + Operational + Energy/Emissions + Delay (excludes wildfire + wildfire liability + outage).
 
 \textbf{Use Case:} Analysis when both wildfire and outage risk costs may be insured, managed separately, or contextually inappropriate.
 
@@ -137,12 +137,12 @@ All BCRs have corresponding net benefit calculations (Present Value unless noted
 \subsection{Stakeholder Net Benefits}
 \begin{itemize}
 \item \texttt{net\_benefit\_utility\_pv} = Revenue - (Capital + Delay + Operational Costs)
-\item \texttt{net\_benefit\_ratepayer\_pv} = (Congestion + Curtailment Benefits) - (Revenue + Line Loss Costs)
+\item \texttt{net\_benefit\_ratepayer\_pv} = (Congestion + Curtailment + Delivered energy Benefits) - (Revenue + Line Loss Costs)
 \end{itemize}
 
 \subsection{Partial Exclusion Net Benefits (16 Combinations)}
 
-Systematic exploration of all combinations excluding emissions, line losses, wildfire risk, and outage risk. All use societal perspective (benefits: congestion + curtailment; excludes revenue transfer). Positive = benefits exceed costs; Negative = costs exceed benefits.
+Systematic exploration of all combinations excluding emissions, line losses, wildfire risk, and outage risk. All use societal perspective (benefits: congestion + curtailment + delivered energy; excludes revenue transfer). Positive = benefits exceed costs; Negative = costs exceed benefits.
 
 \scriptsize
 \noindent\resizebox{\textwidth}{!}{%

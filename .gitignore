@@ -90,7 +90,7 @@ venv.bak/
 outputs/
 oat_results/
 sensitivity_results/
-
+orgnotes/
 # Papers directory
 papers/
 

@@ -1,0 +1,65 @@
+\documentclass[ctcc_full_documentation.tex]{subfiles}
+\begin{document}
+\chapter{Benefit of Delivered Energy}
+
+\section{Introduction}
+
+The benefit of delivered energy is the societal value of the energy the project enables to be delivered each year. For greenfield projects, deliverable capacity equals effective capacity (flow factor times nameplate). For reconductoring, deliverable capacity is the additional capacity the upgrade enables (new minus old), capturing the value of additional energy the upgrade enables, including any headroom beyond clearing the constraint. This benefit is not double-counted with congestion or curtailment: those value relief of constraints; this values throughput. It is not part of rate base or AFUDC.
+
+\section{Method}
+
+\subsection{Variables}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{@{}llp{5.5cm}@{}}
+\toprule
+\textbf{Variable} & \textbf{Meaning / units} & \textbf{Notes} \\
+\midrule
+$\Delta C_{\text{effective}}$ & Effective capacity relief, (MW) & From system constraints. Greenfield: $\phi C_{\text{new}}$; reconductoring: $C_{\text{new}} - C_{\text{old}}$. \\
+$u$ & Line utilization, (dimensionless) & $0 \le u \le 1$. \\
+$H$ & Hours per year, (h/year) & e.g.\ 8760. \\
+$\gamma_{\text{electricity}}$ & Electricity price, (\$/MWh) & e.g.\ baseline or market price. \\
+$E_{\text{delivered,annual}}$ & Deliverable energy per year, (MWh/year) & \\
+$B_{\text{delivered,annual}}$ & Annual benefit from delivered energy, (\$/year) & \\
+$T_{\text{lifetime}}$ & Project lifetime, (years) & \\
+$T_{\text{COD}}$ & Commercial operation date (year index), (years) & First year of operation; benefit stream starts here. \\
+$r_{\text{WACC,real}}$ & Real WACC, (decimal) & Used to discount benefits. \\
+$B_{\text{delivered,lifetime,nominal}}$ & Nominal lifetime benefit from delivered energy, (\$) & \\
+$B_{\text{delivered,lifetime,real}}$ & Real (PV) lifetime benefit from delivered energy, (\$) & \\
+\bottomrule
+\end{tabular}
+\caption{Variables for the benefit of delivered energy.}
+\end{table}
+
+\subsection{Equations}
+
+\paragraph{1. Deliverable energy (annual).}
+Deliverable energy per year is deliverable capacity times line utilization times hours per year:
+\begin{equation*}
+E_{\text{delivered,annual}} = \Delta C_{\text{effective}} \times u \times H.
+\end{equation*}
+
+\paragraph{2. Annual benefit.}
+Annual benefit is deliverable energy valued at the electricity price:
+\begin{equation*}
+B_{\text{delivered,annual}} = E_{\text{delivered,annual}} \times \gamma_{\text{electricity}}.
+\end{equation*}
+
+\paragraph{3. Nominal lifetime benefit.}
+\begin{equation*}
+B_{\text{delivered,lifetime,nominal}} = B_{\text{delivered,annual}} \times T_{\text{lifetime}}.
+\end{equation*}
+
+\paragraph{4. Real (present value) lifetime benefit.}
+Level annual benefit from $T_{\text{COD}}$ for $T_{\text{lifetime}}$ years, discounted at $r_{\text{WACC,real}}$:
+\begin{equation*}
+B_{\text{delivered,lifetime,real}} = \sum_{t=0}^{T_{\text{lifetime}}-1} \frac{B_{\text{delivered,annual}}}{(1+r_{\text{WACC,real}})^{T_{\text{COD}}+t}}.
+\end{equation*}
+
+\section{Implementation}
+
+This benefit is implemented as a distinct block in the same script that computes congestion and curtailment benefits. It is reported as its own line item in CSV and JSON outputs and is included in total benefits. Full notation and definitions are in the paper appendix, Section~10 (Benefit of delivered energy).
+
+\end{document}

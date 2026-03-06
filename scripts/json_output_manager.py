@@ -169,7 +169,8 @@ class JSONOutputManager:
         self.costs["line_loss"] = results
 
     def add_congestion_curtailment(self, results: Dict[str, Any]):
-        """Add congestion and curtailment reduction benefits."""
+        """Add congestion, curtailment, and delivered-energy benefits.
+        results includes delivered_benefit_annual, delivered_benefit_nominal, delivered_benefit_pv as own keys."""
         self.benefits["congestion_curtailment"] = results
 
     def add_revenue(self, results: Dict[str, Any]):

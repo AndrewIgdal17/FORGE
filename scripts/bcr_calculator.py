@@ -208,6 +208,7 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     System total benefits (societal) include only real resource benefits:
       - Congestion reduction savings
       - Curtailment reduction savings
+      - Benefit of delivered energy (throughput value at electricity price)
     Revenue (rate-based revenue requirement) is a transfer, not a net social
     benefit; it is excluded from system totals but still returned in the dict
     for Utility/Ratepayer BCRs.
@@ -224,10 +225,12 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     # Present value benefits
     congestion_benefit_pv = safe_get_numeric(data, "congestion_benefit_pv")
     curtailment_benefit_pv = safe_get_numeric(data, "curtailment_benefit_pv")
+    delivered_benefit_pv = safe_get_numeric(data, "delivered_benefit_pv")
 
     # Nominal benefits
     congestion_benefit_nominal = safe_get_numeric(data, "congestion_benefit_nominal")
     curtailment_benefit_nominal = safe_get_numeric(data, "curtailment_benefit_nominal")
+    delivered_benefit_nominal = safe_get_numeric(data, "delivered_benefit_nominal")
 
     # Line losses are now always costs, never benefits
     # (Both greenfield and reconductoring report absolute losses as positive costs)
@@ -236,25 +239,29 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     revenue_pv = safe_get_numeric(data, "revenue_pv")
     revenue_nominal = safe_get_numeric(data, "revenue_nominal")
 
-    calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv
+    calculated_total_benefits = (
+        congestion_benefit_pv + curtailment_benefit_pv + delivered_benefit_pv
+    )
     total_benefits_pv = prefer_csv_subtotal(
         data, "total_benefits_pv", calculated_total_benefits
     )
     calculated_total_benefits_nominal = (
-        congestion_benefit_nominal + curtailment_benefit_nominal
+        congestion_benefit_nominal
+        + curtailment_benefit_nominal
+        + delivered_benefit_nominal
     )
     total_benefits_nominal = prefer_csv_subtotal(
         data, "total_benefits_nominal", calculated_total_benefits_nominal
     )
 
     # Also calculate haircut benefits (conservative estimate)
-    # Haircut applies conservative multipliers to uncertain benefits (congestion/curtailment)
+    # Haircut applies to congestion/curtailment only; delivered energy has no haircut
     congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
     curtailment_benefit_haircut = safe_get_numeric(
         data, "curtailment_benefit_haircut_pv"
     )
     calculated_total_benefits_haircut = (
-        congestion_benefit_haircut + curtailment_benefit_haircut
+        congestion_benefit_haircut + curtailment_benefit_haircut + delivered_benefit_pv
     )
     total_benefits_haircut_pv = prefer_csv_subtotal(
         data, "total_benefits_haircut_pv", calculated_total_benefits_haircut
@@ -263,6 +270,8 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     return {
         "congestion_benefit_pv": congestion_benefit_pv,
         "curtailment_benefit_pv": curtailment_benefit_pv,
+        "delivered_benefit_pv": delivered_benefit_pv,
+        "delivered_benefit_nominal": delivered_benefit_nominal,
         "congestion_benefit_haircut_pv": congestion_benefit_haircut,
         "curtailment_benefit_haircut_pv": curtailment_benefit_haircut,
         "line_loss_benefit_pv": 0,  # Line losses are always costs, never benefits
@@ -522,6 +531,7 @@ def calculate_bcr_metrics(
     curtailment_benefit_pv = safe_get_numeric(
         benefits, "curtailment_benefit_haircut_pv"
     )
+    delivered_benefit_pv = safe_get_numeric(benefits, "delivered_benefit_pv")
     revenue_pv = safe_get_numeric(benefits, "revenue_pv")
 
     # Nominal metrics
@@ -676,8 +686,10 @@ def calculate_bcr_metrics(
     net_benefit_utility_pv = utility_benefits_pv - utility_costs_pv
 
     # Ratepayer Perspective
-    # Benefits: What ratepayers receive (congestion + curtailment)
-    ratepayer_benefits_pv = congestion_benefit_pv + curtailment_benefit_pv
+    # Benefits: What ratepayers receive (congestion + curtailment + delivered energy)
+    ratepayer_benefits_pv = (
+        congestion_benefit_pv + curtailment_benefit_pv + delivered_benefit_pv
+    )
     # Costs: What ratepayers pay (revenue/rate base + energy losses socialized through rates)
     ratepayer_costs_pv = revenue_pv + energy_losses_pv
     bcr_ratepayer = safe_divide(ratepayer_benefits_pv, ratepayer_costs_pv)
@@ -756,13 +768,14 @@ def calculate_bcr_metrics(
     # Calculate Primary BCR
     # Always calculate from flags - if no flags are set (all False), calculation includes everything = System BCR
     # If flags are set, calculation excludes disabled modules = Custom BCR
-    # Primary benefits = congestion + curtailment only (per config). Revenue is excluded as a transfer.
+    # Primary benefits = congestion + curtailment + delivered energy (per config). Revenue is excluded as a transfer.
 
     primary_benefits_pv = 0.0
     if not config.no_congestion:
         primary_benefits_pv += congestion_benefit_pv
     if not config.no_curtailment:
         primary_benefits_pv += curtailment_benefit_pv
+    primary_benefits_pv += delivered_benefit_pv
 
     # Costs included:
     # - Capital costs (always: build, ROW, environmental)

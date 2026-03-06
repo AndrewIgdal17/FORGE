@@ -8,7 +8,7 @@ This chapter describes the CTCC method at a conceptual level: what costs and ben
 
 \section{Visual Map of the Method}
 
-Figure~\ref{fig:methodology-map} shows how the main concepts of the method fit together. Two kinds of preprocessing support the rest: \textbf{terrain-adjusted distance} (distance scaled by terrain difficulty) and \textbf{energy losses} (physical losses on the line). Terrain-adjusted distance feeds into construction and insurance costs; physical energy losses feed into line loss costs and emissions. Capital costs (construction, right-of-way, environmental mitigation) are followed by the revenue requirement (the rate-based transfer from ratepayers to the utility). Risk costs---insurance, delay, wildfire, and outage---come next. Benefits are congestion reduction and curtailment reduction. Operations and maintenance costs, then emissions and line loss costs, complete the cost side. All costs and benefits are combined into a \textbf{benefit--cost ratio} (BCR), which can be computed under several perspectives (e.g.\ including or excluding certain risk or emissions components).
+Figure~\ref{fig:methodology-map} shows how the main concepts of the method fit together. Two kinds of preprocessing support the rest: \textbf{terrain-adjusted distance} (distance scaled by terrain difficulty) and \textbf{energy losses} (physical losses on the line). Terrain-adjusted distance feeds into construction and insurance costs; physical energy losses feed into line loss costs and emissions. Capital costs (construction, right-of-way, environmental mitigation) are followed by the revenue requirement (the rate-based transfer from ratepayers to the utility). Risk costs---insurance, delay, wildfire, and outage---come next. Benefits are congestion reduction, curtailment reduction, and delivered energy. Operations and maintenance costs, then emissions and line loss costs, complete the cost side. All costs and benefits are combined into a \textbf{benefit--cost ratio} (BCR), which can be computed under several perspectives (e.g.\ including or excluding certain risk or emissions components).
 
 \begin{figure}[htbp]
 \centering
@@ -41,6 +41,7 @@ Figure~\ref{fig:methodology-map} shows how the main concepts of the method fit t
 \node[box, below=1.1em of ins] (ben) {Benefits};
 \node[smallbox, below=0.3em of ben] (cong) {Congestion reduction};
 \node[smallbox, right=0.15em of cong] (curt) {Curtailment reduction};
+\node[smallbox, right=0.15em of curt] (deliv) {Delivered energy};
 
 \node[box, below=1em of cong] (om) {Operations \& maintenance};
 \node[smallbox, below=0.3em of om] (omnode) {O\&M costs};
@@ -83,7 +84,7 @@ The method uses two preparatory concepts. \textbf{Terrain-adjusted distance} is 
 
 \subsection{Benefits}
 
-\textbf{Benefits} are congestion reduction (value of reduced congestion from the project) and curtailment reduction (value of reduced curtailment of generation). Both can be scaled by conservative haircuts for societal BCRs. Revenue is not counted as a benefit in system-wide or societal perspectives.
+\textbf{Benefits} are congestion reduction (value of reduced congestion from the project), curtailment reduction (value of reduced curtailment of generation), and the benefit of delivered energy (value of energy the line enables to be delivered each year, valued at an electricity price). Congestion and curtailment benefits can be scaled by conservative haircuts for societal BCRs. Revenue is not counted as a benefit in system-wide or societal perspectives.
 
 \subsection{Operations, losses, and emissions}
 
@@ -91,7 +92,7 @@ The method uses two preparatory concepts. \textbf{Terrain-adjusted distance} is 
 
 \subsection{Benefit--cost ratio}
 
-All cost categories (capital, operational, energy/emissions, risk, delay) and benefits (congestion and curtailment reduction) are combined into one or more \textbf{benefit--cost ratios}. Different BCR perspectives include or exclude specific cost or benefit components (e.g.\ wildfire, outage, emissions, line losses) so that analysts can compare full societal, risk-adjusted, or emissions-excluded views.
+All cost categories (capital, operational, energy/emissions, risk, delay) and benefits (congestion reduction, curtailment reduction, and delivered energy) are combined into one or more \textbf{benefit--cost ratios}. Different BCR perspectives include or exclude specific cost or benefit components (e.g.\ wildfire, outage, emissions, line losses) so that analysts can compare full societal, risk-adjusted, or emissions-excluded views.
 
 \section{Concepts at a Glance}
 
@@ -116,6 +117,7 @@ Wildfire risk & Cost & Expected cost of wildfire risk (and liability if applicab
 Outage risk & Cost & Expected cost of outage risk. \\
 Congestion reduction & Benefit & Value of reduced congestion. \\
 Curtailment reduction & Benefit & Value of reduced curtailment. \\
+Benefit of delivered energy & Benefit & Value of energy the line enables to be delivered (throughput). \\
 O\&M costs & Cost & Operations and maintenance (vegetation, conductors, structures, converters). \\
 Emissions costs & Cost & Cost of emissions from loss-compensating generation. \\
 Line loss costs & Cost & Economic cost of line (and converter) losses. \\

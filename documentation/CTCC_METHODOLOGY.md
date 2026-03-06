@@ -4,7 +4,7 @@
 
 ---
 
-This document is the **complete methodology** for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction), and revenue. It is the single source of truth for the method so that the entirety can be transferred consistently into the LaTeX paper. **This methodology takes precedence** for categorization and notation.
+This document is the **complete methodology** for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue. It is the single source of truth for the method so that the entirety can be transferred consistently into the LaTeX paper. **This methodology takes precedence** for categorization and notation.
 
 ---
 
@@ -35,6 +35,7 @@ This document is the **complete methodology** for the Comprehensive Transmission
   - [Curtailment delay costs (5.c)](#curtailment-delay-costs-5c)
 - [Benefits](#benefits)
   - [Congestion and Curtailment Reduction Benefits](#congestion-and-curtailment-reduction-benefits)
+  - [Benefit of Delivered Energy](#benefit-of-delivered-energy)
 - [Revenue (Benefit to Utility / Cost to Ratepayers)](#revenue-benefit-to-utility--cost-to-ratepayers)
 
 ---
@@ -1605,7 +1606,7 @@ Congestion hours and curtailment hours can overlap. An overlap fraction $\theta$
 Curtailment relief (MWh/yr) is valued at $\gamma_{curtailment}$ ($/MWh); congestion relief at $\gamma_{congestion}$ ($/MWh). Conservative haircuts ($\sigma*{curtailment}$, $\sigma*{congestion}$) can be applied so benefits are $(1 - \sigma) \times \text{energy} \times \text{price}$. Annual benefits are then summed over the project lifetime in nominal terms, or discounted to present value at real WACC from the commercial operation date ($T_{COD}$).
 
 **Summary**
-Benefits = value of the congestion and curtailment that the project removes. Effective capacity relief is computed (greenfield vs reconductoring); curtailment is relieved first, then congestion, with overlap handled so the same MW isn't double-counted. One number summarizes the societal benefit from reduced congestion and curtailment, in nominal or real (PV) terms.
+Benefits = value of the congestion and curtailment that the project removes, plus the benefit of delivered energy (see below). Effective capacity relief is computed (greenfield vs reconductoring); curtailment is relieved first, then congestion, with overlap handled so the same MW isn't double-counted. Total benefits in the calculator sum congestion, curtailment, and delivered-energy benefits, in nominal or real (PV) terms. The ratepayer perspective includes all three benefits (congestion, curtailment, and delivered energy) in ratepayer benefits for `bcr_ratepayer` and `net_benefit_ratepayer_pv`.
 
 **Variables**
 
@@ -1749,6 +1750,39 @@ $$
 B_{congestion,lifetime,PV} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{congestion,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}
 
 
+$$
+
+### Benefit of Delivered Energy
+
+The benefit of delivered energy is the societal value of the energy the project enables to be delivered each year. For greenfield, deliverable capacity equals effective capacity ($\Delta C_{effective} = \phi \times C_{new}$). For reconductoring, deliverable capacity is the additional capacity the upgrade enables ($C_{new} - C_{old}$, same as $\Delta C_{effective}$ for reconductoring), including any headroom beyond clearing the constraint. Deliverable energy per year is deliverable capacity × line utilization × hours per year (MWh/year), valued at electricity price $\gamma_{electricity}$ (\$/MWh). Level annual benefit from COD, discounted at real WACC. This benefit is not double-counted with congestion or curtailment (those value constraint relief; this values throughput). The appendix is the source of truth for notation and full definitions.
+
+**Variables**
+
+| Variable | Meaning / units | Notes |
+| -------- | --------------- | ----- |
+| $\Delta C_{effective}$ | Effective capacity relief, MW | From system constraints. Greenfield: $\phi C_{new}$; reconductoring: $C_{new} - C_{old}$. |
+| $u$ | Line utilization, dimensionless | $0 \le u \le 1$. |
+| $H$ | Hours per year, h/yr | e.g. 8760. |
+| $\gamma_{electricity}$ | Electricity price, \$/MWh | e.g. baseline or market price. |
+| $E_{delivered,annual}$ | Deliverable energy per year, MWh/yr | |
+| $B_{delivered,annual}$ | Annual benefit from delivered energy, \$/yr | |
+| $T_{lifetime}$ | Project lifetime, years | |
+| $T_{COD}$ | Commercial operation date (year index), years | First year of operation; benefit stream starts here. |
+| $r_{WACC,real}$ | Real WACC, decimal | Used to discount benefits. |
+| $B_{delivered,lifetime,nominal}$ | Nominal lifetime benefit from delivered energy, $ | |
+| $B_{delivered,lifetime,real}$ | Real (PV) lifetime benefit from delivered energy, $ | |
+
+**Equations**
+
+1. Deliverable energy (annual): $E_{delivered,annual} = \Delta C_{effective} \times u \times H$.
+
+2. Annual benefit: $B_{delivered,annual} = E_{delivered,annual} \times \gamma_{electricity}$.
+
+3. Nominal lifetime benefit: $B_{delivered,lifetime,nominal} = B_{delivered,annual} \times T_{lifetime}$.
+
+4. Real (PV) lifetime benefit: level annual benefit from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{WACC,real}$:
+$$
+B_{delivered,lifetime,real} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{delivered,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}.
 $$
 
 ---

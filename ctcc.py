@@ -95,6 +95,9 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
             "curtailment_benefit_haircut_pv", 0
         )
         or 0,
+        "delivered_benefit_pv": congestion.get("delivered_benefit_pv", 0) or 0,
+        "delivered_benefit_nominal": congestion.get("delivered_benefit_nominal", 0)
+        or 0,
         "revenue_pv": revenue.get("revenue_pv", 0) or 0,
         "revenue_nominal": revenue.get("revenue_nominal", 0) or 0,
         # Capital costs (PV + nominal); ROW = capital only (acquisition + holding)

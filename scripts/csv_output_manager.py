@@ -68,6 +68,9 @@ BATCH_SUMMARY_FIELDS = [
     # 9. Benefits PV (with breakdown)
     "congestion_benefit_pv",
     "curtailment_benefit_pv",
+    "delivered_benefit_annual",
+    "delivered_benefit_nominal",
+    "delivered_benefit_pv",
     "revenue_pv",
     "rate_base",
     "rate_base_real",
@@ -1032,6 +1035,7 @@ class CTCCOutputManager:
         Benefits (reduce system cost):
         - Congestion reduction benefit (operational, full + haircut)
         - Curtailment reduction benefit (operational, full + haircut)
+        - Delivered energy benefit (throughput value at electricity price)
 
         Costs (increase system cost):
         - Congestion during delay/construction (opportunity cost)
@@ -1062,6 +1066,13 @@ class CTCCOutputManager:
                 "curtailment_benefit_haircut_pv": results.get(
                     "curtailment_benefit_haircut_pv", 0
                 ),
+                "delivered_benefit_annual": results.get(
+                    "delivered_benefit_annual", 0
+                ),
+                "delivered_benefit_nominal": results.get(
+                    "delivered_benefit_nominal", 0
+                ),
+                "delivered_benefit_pv": results.get("delivered_benefit_pv", 0),
                 # COSTS (increase system cost)
                 "congestion_delay_cost_nominal": results.get(
                     "congestion_delay_cost_nominal", 0
@@ -1129,6 +1140,16 @@ class CTCCOutputManager:
                 "annual": results.get("curtailment_benefit_haircut_annual", 0),
                 "nominal": results.get("curtailment_benefit_haircut_nominal", 0),
             },
+            # BENEFITS - Delivered energy (throughput value)
+            {
+                "row_type": "detail",
+                "benefit_or_cost": "benefit",
+                "constraint_type": "delivered_energy",
+                "value_type": "full",
+                "pv": results.get("delivered_benefit_pv", 0),
+                "annual": results.get("delivered_benefit_annual", 0),
+                "nominal": results.get("delivered_benefit_nominal", 0),
+            },
             # COSTS - Congestion during delay/construction (opportunity cost)
             {
                 "row_type": "detail",
@@ -1159,15 +1180,21 @@ class CTCCOutputManager:
             },
         ]
 
-        # Calculate summary totals
-        total_benefits_annual = results.get(
-            "congestion_benefit_annual", 0
-        ) + results.get("curtailment_benefit_annual", 0)
-        total_benefits_nominal = results.get(
-            "congestion_benefit_nominal", 0
-        ) + results.get("curtailment_benefit_nominal", 0)
-        total_benefits_pv = results.get("congestion_benefit_pv", 0) + results.get(
-            "curtailment_benefit_pv", 0
+        # Calculate summary totals (congestion + curtailment + delivered energy)
+        total_benefits_annual = (
+            results.get("congestion_benefit_annual", 0)
+            + results.get("curtailment_benefit_annual", 0)
+            + results.get("delivered_benefit_annual", 0)
+        )
+        total_benefits_nominal = (
+            results.get("congestion_benefit_nominal", 0)
+            + results.get("curtailment_benefit_nominal", 0)
+            + results.get("delivered_benefit_nominal", 0)
+        )
+        total_benefits_pv = (
+            results.get("congestion_benefit_pv", 0)
+            + results.get("curtailment_benefit_pv", 0)
+            + results.get("delivered_benefit_pv", 0)
         )
 
         total_costs_nominal = (
