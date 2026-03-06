@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>CTCC API Server</title>
+    <title>Transmission Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
@@ -121,6 +121,7 @@
         border-radius: 0.5rem;
         flex: 1;
         overflow-y: auto;
+        min-height: 0;
       }
       .tab-content.active {
         display: block;
@@ -746,6 +747,21 @@
       /* Results Display Styles */
       .results-container {
         max-width: 1400px;
+        min-width: 0;
+        white-space: normal;
+        font-family: inherit;
+        background: white;
+        padding: 0;
+      }
+      .results-sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+        padding-bottom: 0.5rem;
+        padding-right: 1rem;
+      }
+      .results-tabs-container {
       }
       .results-header {
         padding: 1.5rem 0;
@@ -816,6 +832,8 @@
         padding: 1.5rem;
         display: grid;
         gap: 1.5rem;
+        min-width: 0;
+        overflow: hidden;
       }
       .results-category.collapsed .results-category-content {
         display: none;
@@ -897,6 +915,10 @@
         padding-bottom: 0.35rem;
         align-items: baseline;
       }
+      .results-item.paired {
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 0;
+      }
       .results-item-label {
         font-weight: 500;
         color: rgba(0, 0, 0, 0.7);
@@ -904,7 +926,7 @@
         word-wrap: break-word;
       }
       .results-item-value {
-        font-weight: 600;
+        font-weight: 400;
         color: #000;
         font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
         font-size: 0.9rem;
@@ -912,10 +934,45 @@
         white-space: nowrap;
       }
       .results-item-value.currency {
-        color: #0a7c0a;
+        color: #000;
       }
       .results-item-value.negative {
         color: #b00020;
+      }
+      .phys-metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 0.1rem 0.5rem;
+        align-items: baseline;
+      }
+      .phys-metrics-grid .phys-label {
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 0.9rem;
+        padding: 0.35rem 0;
+      }
+      .phys-metrics-grid .phys-value {
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        font-size: 0.9rem;
+        font-weight: 400;
+        color: #000;
+        text-align: right;
+        white-space: nowrap;
+        padding: 0.35rem 0;
+      }
+      .phys-metrics-grid .phys-unit {
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.4);
+        text-align: left;
+        white-space: nowrap;
+        padding: 0.35rem 0;
+      }
+      .phys-metrics-grid.emissions-amounts .phys-label {
+        color: #000;
+        font-size: 0.9rem;
+      }
+      .phys-metrics-grid.emissions-amounts .phys-unit {
+        color: rgba(0, 0, 0, 0.6);
       }
       .results-summary-grid {
         display: grid;
@@ -929,15 +986,16 @@
         }
       }
       .results-summary-card {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: #f8f9fa;
         padding: 1.25rem;
         border-radius: 0.5rem;
-        border: 2px solid rgba(0, 100, 200, 0.2);
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
         min-width: 0;
       }
       .results-summary-card.highlight {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-color: #0066cc;
+        background: #e3f2fd;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
       }
       .results-summary-label {
         font-size: clamp(0.65rem, 0.9vw, 0.85rem);
@@ -956,6 +1014,256 @@
       }
       .results-summary-value.large {
         font-size: clamp(1.1rem, 1.8vw, 1.8rem);
+      }
+      .results-section-heading {
+        margin-top: 1.25rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+      .results-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #222;
+      }
+      .results-section-subtitle {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.45);
+      }
+      /* Structured output styles */
+      .results-metadata-line {
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.5);
+        margin-bottom: 0.5rem;
+      }
+      .project-params-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.25rem;
+        padding: 0.75rem 1rem;
+        background: rgba(0, 100, 200, 0.04);
+        border-radius: 0.375rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+      }
+      .project-params-bar .param-chip {
+        display: inline-flex;
+        gap: 0.3rem;
+        align-items: baseline;
+      }
+      .project-params-bar .param-label {
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.5);
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.04em;
+      }
+      .project-params-bar .param-value {
+        font-weight: 600;
+        color: #333;
+      }
+      .results-subtotal {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
+        padding: 0.6rem 0 0.35rem 0;
+        margin-top: 0.5rem;
+        border-top: 2px solid rgba(0, 100, 200, 0.3);
+        align-items: baseline;
+      }
+      .results-subtotal.paired {
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 0;
+      }
+      .results-subtotal .results-item-label {
+        font-weight: 700;
+        color: #0066cc;
+      }
+      .results-subtotal .results-item-value {
+        font-weight: 700;
+      }
+      .results-note {
+        font-size: 0.8rem;
+        font-style: italic;
+        color: rgba(0, 0, 0, 0.45);
+        margin: 0.5rem 0;
+        line-height: 1.4;
+      }
+      .persp-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0;
+        margin: 0.5rem 0;
+        font-size: 0.85rem;
+        max-width: 100%;
+        overflow: hidden;
+      }
+      .persp-grid .persp-hdr {
+        background: rgba(0, 100, 200, 0.1);
+        color: #0066cc;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.5rem 0.5rem;
+        text-align: right;
+        border-bottom: 2px solid rgba(0, 100, 200, 0.2);
+        min-width: 0;
+      }
+      .persp-grid .persp-hdr:first-child {
+        text-align: left;
+      }
+      .persp-grid .persp-cell {
+        padding: 0.5rem 0.5rem;
+        text-align: right;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        min-width: 0;
+      }
+      .persp-grid .persp-cell.persp-label {
+        text-align: left;
+        font-weight: 600;
+        font-family: inherit;
+        color: #333;
+      }
+      .persp-grid .persp-cell.negative {
+        color: #b00020;
+      }
+      .persp-grid .persp-row-even {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .results-item.row-even {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      .sensitivity-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        margin: 0.5rem 0;
+      }
+      .sensitivity-table th {
+        background: rgba(0, 100, 200, 0.06);
+        color: #0066cc;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.5rem 0.75rem;
+        text-align: right;
+        border-bottom: 2px solid rgba(0, 100, 200, 0.15);
+      }
+      .sensitivity-table th:first-child { text-align: left; }
+      .sensitivity-table td {
+        padding: 0.45rem 0.75rem;
+        text-align: right;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+        font-size: 0.8rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      }
+      .sensitivity-table td:first-child {
+        text-align: left;
+        font-family: inherit;
+        font-weight: 500;
+        color: #555;
+      }
+      .collapsible-trigger {
+        cursor: pointer;
+        color: #0066cc;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.5rem 0;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .collapsible-trigger:hover { text-decoration: underline; }
+      .collapsible-trigger .arrow {
+        display: inline-block;
+        transition: transform 0.2s;
+        font-size: 0.7rem;
+      }
+      .collapsible-trigger.open .arrow { transform: rotate(90deg); }
+      .collapsible-content { display: none; }
+      .collapsible-content.open { display: block; }
+      .custom-bcr-toggles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.5rem;
+        margin: 0.75rem 0;
+      }
+      .custom-bcr-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        user-select: none;
+      }
+      .custom-bcr-toggle input[type="checkbox"] {
+        accent-color: #0066cc;
+        width: 1rem;
+        height: 1rem;
+      }
+      .custom-bcr-result {
+        display: flex;
+        gap: 2rem;
+        margin-top: 0.75rem;
+        padding: 1rem 1.25rem;
+        background: #e3f2fd;
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .custom-bcr-metric {
+        display: flex;
+        flex-direction: column;
+      }
+      .custom-bcr-metric .label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(0, 0, 0, 0.5);
+      }
+      .custom-bcr-metric .value {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #0066cc;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      }
+      .bcr-headline-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .bcr-headline-card {
+        background: #e3f2fd;
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .bcr-headline-card .label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(0, 0, 0, 0.5);
+        margin-bottom: 0.3rem;
+      }
+      .bcr-headline-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0066cc;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      }
+      .cost-section-items {
+        display: flex;
+        flex-direction: column;
       }
       /* Prominent toggle fields (reconductoring, uses_existing_row) */
       .prominent-toggles-container {
@@ -2836,7 +3144,7 @@
       }
 
       // Format numbers for display
-      function formatNumber(value, decimals = 2) {
+      function formatNumber(value, decimals = 0) {
         if (value === null || value === undefined) return 'N/A';
         const num = Number(value);
         if (isNaN(num)) return String(value);
@@ -2846,7 +3154,7 @@
         });
       }
 
-      function formatCurrency(value, decimals = 2) {
+      function formatCurrency(value, decimals = 0) {
         if (value === null || value === undefined) return 'N/A';
         const num = Number(value);
         if (isNaN(num)) return String(value);
@@ -2872,6 +3180,128 @@
           .replace(/Nox\b/g, 'NOx')
           .replace(/Eal\b/g, 'EAL')
           .replace(/Eac\b/g, 'EAC');
+      }
+
+      // --- Structured output helpers ---
+      function safeGet(obj, path, defaultVal = 0) {
+        return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : defaultVal), obj);
+      }
+
+      function createSubtotalRow(label, value) {
+        const row = document.createElement('div');
+        row.className = 'results-subtotal';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'results-item-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('span');
+        valueEl.className = 'results-item-value currency';
+        const num = Number(value);
+        valueEl.textContent = formatCurrency(num, 0);
+        if (num < 0) valueEl.classList.add('negative');
+        row.appendChild(labelEl);
+        row.appendChild(valueEl);
+        return row;
+      }
+
+      function createNote(text) {
+        const note = document.createElement('div');
+        note.className = 'results-note';
+        note.textContent = text;
+        return note;
+      }
+
+      function currencyItem(label, value) {
+        return createResultItem(label, value, true);
+      }
+
+      function currencyPairItem(label, nominal, pv) {
+        const item = document.createElement('div');
+        item.className = 'results-item paired';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'results-item-label';
+        labelEl.textContent = label;
+        const nomEl = document.createElement('span');
+        nomEl.className = 'results-item-value currency';
+        const nomNum = Number(nominal);
+        nomEl.textContent = formatCurrency(nomNum, 0);
+        if (nomNum < 0) nomEl.classList.add('negative');
+        const pvEl = document.createElement('span');
+        pvEl.className = 'results-item-value currency';
+        const pvNum = Number(pv);
+        pvEl.textContent = formatCurrency(pvNum, 0);
+        if (pvNum < 0) pvEl.classList.add('negative');
+        item.appendChild(labelEl);
+        item.appendChild(nomEl);
+        item.appendChild(pvEl);
+        return item;
+      }
+
+      function subtotalPairRow(label, nominal, pv) {
+        const row = document.createElement('div');
+        row.className = 'results-subtotal paired';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'results-item-label';
+        labelEl.textContent = label;
+        const nomEl = document.createElement('span');
+        nomEl.className = 'results-item-value currency';
+        const nomNum = Number(nominal);
+        nomEl.textContent = formatCurrency(nomNum, 0);
+        if (nomNum < 0) nomEl.classList.add('negative');
+        const pvEl = document.createElement('span');
+        pvEl.className = 'results-item-value currency';
+        const pvNum = Number(pv);
+        pvEl.textContent = formatCurrency(pvNum, 0);
+        if (pvNum < 0) pvEl.classList.add('negative');
+        row.appendChild(labelEl);
+        row.appendChild(nomEl);
+        row.appendChild(pvEl);
+        return row;
+      }
+
+      function pairHeader() {
+        const hdr = document.createElement('div');
+        hdr.className = 'results-item paired';
+        hdr.style.borderBottom = '1px solid rgba(0,0,0,0.1)';
+        hdr.style.paddingBottom = '0.25rem';
+        hdr.style.marginBottom = '0.25rem';
+        const spacer = document.createElement('span');
+        const nomLabel = document.createElement('span');
+        nomLabel.className = 'results-item-label';
+        nomLabel.textContent = 'Nominal';
+        nomLabel.style.textAlign = 'right';
+        nomLabel.style.fontSize = '0.75rem';
+        nomLabel.style.textTransform = 'uppercase';
+        nomLabel.style.letterSpacing = '0.04em';
+        const pvLabel = document.createElement('span');
+        pvLabel.className = 'results-item-label';
+        pvLabel.textContent = 'Present Value';
+        pvLabel.style.textAlign = 'right';
+        pvLabel.style.fontSize = '0.75rem';
+        pvLabel.style.textTransform = 'uppercase';
+        pvLabel.style.letterSpacing = '0.04em';
+        hdr.appendChild(spacer);
+        hdr.appendChild(nomLabel);
+        hdr.appendChild(pvLabel);
+        return hdr;
+      }
+
+      function numberItem(label, value) {
+        return createResultItem(label, value, false);
+      }
+
+      function appendPhysMetric(grid, label, value, unit) {
+        const labelEl = document.createElement('div');
+        labelEl.className = 'phys-label';
+        labelEl.textContent = label;
+        const valueEl = document.createElement('div');
+        valueEl.className = 'phys-value';
+        valueEl.textContent = typeof value === 'number' ? formatNumber(value) : String(value);
+        const unitEl = document.createElement('div');
+        unitEl.className = 'phys-unit';
+        unitEl.textContent = unit || '';
+        grid.appendChild(labelEl);
+        grid.appendChild(valueEl);
+        grid.appendChild(unitEl);
       }
 
       function createResultItem(label, value, isCurrency = false) {
@@ -3001,197 +3431,874 @@
         return category;
       }
 
+      // ===== Costs Tab Renderers =====
+
+      function renderCostOverview(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        container.style.marginBottom = '1.5rem';
+        container.style.paddingBottom = '1rem';
+        container.style.borderBottom = '2px solid rgba(0,0,0,0.1)';
+
+        const delay = results.costs?.delay || {};
+        const cc = results.benefits?.congestion_curtailment || {};
+        const summary = results.summary || {};
+        const build = results.costs?.build || {};
+        const row = results.costs?.row || {};
+        const env = results.costs?.environmental || {};
+        const om = results.costs?.oandm || {};
+        const ins = results.costs?.insurance || {};
+        const ll = results.costs?.line_loss || {};
+        const wf = results.costs?.wildfire || {};
+        const wfl = results.costs?.wildfire_liability || {};
+        const out = results.costs?.outage || {};
+        const em = results.costs?.emissions || {};
+
+        // Delay PV subtotal
+        const delayPV = (delay.total_pv || 0) + (cc.congestion_delay_cost_pv || 0) + (cc.curtailment_delay_cost_pv || 0);
+        // Capital PV
+        const capitalPV = summary.total_capital_pv || ((build.total_pv || 0) + (row.row_capital_pv || row.total_pv || 0) + (env.total_pv || 0));
+        // Operational breakdown PVs
+        const rowRentPV = row.row_rent_pv || 0;
+        const vegPV = om.vegetation_pv || 0;
+        const isAC = results.technical_parameters?.ac_dc === 'AC';
+        const maintPV = (om.structure_pv || 0) + (om.conductor_pv || 0) + (isAC ? 0 : (om.converter_pv || 0));
+        const insPV = ins.pv_total || 0;
+        const operationalPV = summary.total_operational_pv || (rowRentPV + vegPV + maintPV + insPV);
+        // Energy losses + residual exceedance
+        const energyLossPV = (ll.total_pv || 0) + (cc.residual_exceedance_pv || 0);
+        // Wildfire
+        const wildfirePV = (wf.pv_cost || 0) + (wfl.pv_total || 0);
+        // Outage
+        const outagePV = out.pv_cost || 0;
+        // Emissions
+        const emissionsPV = em.total_pv || 0;
+        // Grand total
+        const totalPV = summary.grand_total_cost_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
+
+        const heading = document.createElement('div');
+        heading.className = 'results-section-heading';
+        heading.style.marginBottom = '0.5rem';
+        const title = document.createElement('span');
+        title.className = 'results-section-title';
+        title.textContent = 'Cost Summary';
+        const subtitle = document.createElement('span');
+        subtitle.className = 'results-section-subtitle';
+        subtitle.textContent = 'Present Value';
+        heading.appendChild(title);
+        heading.appendChild(subtitle);
+        container.appendChild(heading);
+
+        const items = [
+          { label: 'Delay Costs', value: delayPV },
+          { label: 'Capital Costs', value: capitalPV },
+          { label: 'ROW Rent', value: rowRentPV },
+          { label: 'Vegetation Management', value: vegPV },
+          { label: 'Maintenance Costs', value: maintPV },
+          { label: 'Insurance', value: insPV },
+          { label: 'Energy Losses', value: energyLossPV },
+          { label: 'Wildfire Risk', value: wildfirePV },
+          { label: 'Outage Risk', value: outagePV },
+          { label: 'Emissions Cost to Society', value: emissionsPV },
+        ];
+        items.sort((a, b) => b.value - a.value);
+        items.forEach((item, idx) => {
+          const el = currencyItem(item.label, item.value);
+          if (idx % 2 === 1) el.classList.add('row-even');
+          container.appendChild(el);
+        });
+        container.appendChild(createSubtotalRow('Total', totalPV));
+
+        return container;
+      }
+
+      function renderDelayCosts(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const delay = results.costs?.delay || {};
+        const cc = results.benefits?.congestion_curtailment || {};
+
+        const baseNom = delay.total_nominal || 0;
+        const basePV = delay.total_pv || 0;
+        const congNom = cc.congestion_delay_cost_nominal || 0;
+        const congPV = cc.congestion_delay_cost_pv || 0;
+        const curtNom = cc.curtailment_delay_cost_nominal || 0;
+        const curtPV = cc.curtailment_delay_cost_pv || 0;
+
+        const delayYears = results.technical_parameters?.delay_years;
+        if (delayYears !== undefined) {
+          const dyNote = document.createElement('div');
+          dyNote.className = 'results-note';
+          dyNote.style.marginBottom = '0.5rem';
+          dyNote.textContent = 'Delay Years: ' + delayYears;
+          container.appendChild(dyNote);
+        }
+        container.appendChild(pairHeader());
+        container.appendChild(currencyPairItem('Base Delay', baseNom, basePV));
+        container.appendChild(currencyPairItem('Congestion Delay', congNom, congPV));
+        container.appendChild(currencyPairItem('Curtailment Delay', curtNom, curtPV));
+        container.appendChild(subtotalPairRow('Subtotal', baseNom + congNom + curtNom, basePV + congPV + curtPV));
+        return container;
+      }
+
+      function renderCapitalCosts(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const build = results.costs?.build || {};
+        const row = results.costs?.row || {};
+        const env = results.costs?.environmental || {};
+        const summary = results.summary || {};
+
+        const buildAFUDC = build.total_afudc || 0;
+        const rowCapAFUDC = row.row_capital_afudc || row.total_afudc || 0;
+        const envAFUDC = env.total_afudc || 0;
+        const totalCapAFUDC = summary.total_capital_afudc || (buildAFUDC + rowCapAFUDC + envAFUDC);
+
+        // Utility Perspective (AFUDC at COD)
+        const utilTitle = document.createElement('div');
+        utilTitle.className = 'results-subcategory-title';
+        utilTitle.textContent = 'Utility Perspective (AFUDC at COD)';
+        container.appendChild(utilTitle);
+        container.appendChild(currencyItem('Build', buildAFUDC));
+        container.appendChild(currencyItem('ROW Capital (Acquisition + Holding)', rowCapAFUDC));
+        container.appendChild(currencyItem('Environmental Mitigation', envAFUDC));
+        container.appendChild(createSubtotalRow('Total Capital at COD', totalCapAFUDC));
+
+        // Societal Perspective (PV)
+        const socTitle = document.createElement('div');
+        socTitle.className = 'results-subcategory-title';
+        socTitle.style.marginTop = '1.25rem';
+        socTitle.textContent = 'Societal Perspective (Present Value)';
+        container.appendChild(socTitle);
+        container.appendChild(currencyItem('Build', build.total_pv || 0));
+        container.appendChild(currencyItem('ROW Capital', row.row_capital_pv || 0));
+        container.appendChild(currencyItem('Environmental Mitigation', env.total_pv || 0));
+        container.appendChild(createSubtotalRow('Total Capital PV', summary.total_capital_pv || 0));
+
+        return container;
+      }
+
+      function renderOperationalCosts(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const row = results.costs?.row || {};
+        const om = results.costs?.oandm || {};
+        const ins = results.costs?.insurance || {};
+        const summary = results.summary || {};
+        const isAC = results.technical_parameters?.ac_dc === 'AC';
+
+        const lifetime = results.technical_parameters?.project_lifetime_years || 1;
+        const rowRentAnnual = (row.row_rent_nominal || 0) / lifetime;
+        container.appendChild(pairHeader());
+        container.appendChild(currencyItem('ROW Rent — Annual', rowRentAnnual));
+        container.appendChild(currencyPairItem('ROW Rent', row.row_rent_nominal || 0, row.row_rent_pv || 0));
+
+        const vegTitle = document.createElement('div');
+        vegTitle.className = 'results-subcategory-title';
+        vegTitle.style.marginTop = '1rem';
+        vegTitle.textContent = 'Vegetation Management';
+        container.appendChild(vegTitle);
+        container.appendChild(currencyItem('Annual', om.vegetation_annual || 0));
+        container.appendChild(currencyPairItem('Vegetation', om.vegetation_nominal || 0, om.vegetation_pv || 0));
+
+        const maintTitle = document.createElement('div');
+        maintTitle.className = 'results-subcategory-title';
+        maintTitle.style.marginTop = '1rem';
+        maintTitle.textContent = 'Maintenance';
+        container.appendChild(maintTitle);
+
+        container.appendChild(currencyItem('Structure — Annual', om.structure_annual || 0));
+        container.appendChild(currencyPairItem('Structure', om.structure_nominal || 0, om.structure_pv || 0));
+        container.appendChild(currencyItem('Conductor — Annual', om.conductor_annual || 0));
+        container.appendChild(currencyPairItem('Conductor', om.conductor_nominal || 0, om.conductor_pv || 0));
+
+        if (!isAC) {
+          container.appendChild(currencyItem('Converter — Annual', om.converter_annual || 0));
+          container.appendChild(currencyPairItem('Converter', om.converter_nominal || 0, om.converter_pv || 0));
+        }
+
+        const maintNom = (om.structure_nominal || 0) + (om.conductor_nominal || 0) + (isAC ? 0 : (om.converter_nominal || 0));
+        const maintPV = (om.structure_pv || 0) + (om.conductor_pv || 0) + (isAC ? 0 : (om.converter_pv || 0));
+        container.appendChild(subtotalPairRow('Maintenance Subtotal', maintNom, maintPV));
+
+        const insTitle = document.createElement('div');
+        insTitle.className = 'results-subcategory-title';
+        insTitle.style.marginTop = '1rem';
+        insTitle.textContent = 'Operational Insurance';
+        container.appendChild(insTitle);
+        container.appendChild(currencyItem('Annual Premium', ins.annual_premium || 0));
+        container.appendChild(currencyPairItem('Insurance', ins.nominal_lifetime_cost || 0, ins.pv_total || 0));
+
+        const opNom = summary.total_operational_nominal || ((ins.nominal_lifetime_cost || 0) + (om.total_nominal || 0) + (row.row_rent_nominal || 0));
+        container.appendChild(subtotalPairRow('Subtotal', opNom, summary.total_operational_pv || 0));
+        return container;
+      }
+
+      function renderEnergyLosses(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const ll = results.costs?.line_loss || {};
+        const cc = results.benefits?.congestion_curtailment || {};
+        const isAC = results.technical_parameters?.ac_dc === 'AC';
+
+        const lineTitle = document.createElement('div');
+        lineTitle.className = 'results-subcategory-title';
+        lineTitle.textContent = 'Line Losses';
+        container.appendChild(lineTitle);
+        container.appendChild(pairHeader());
+        container.appendChild(numberItem('MWh/yr', ll.line_loss_mwh_yr || 0));
+        container.appendChild(currencyItem('Annual Cost', ll.line_annual_cost || 0));
+        container.appendChild(currencyPairItem('Line Losses', ll.line_nominal_total || 0, ll.line_cost_pv || 0));
+
+        if (!isAC) {
+          const convTitle = document.createElement('div');
+          convTitle.className = 'results-subcategory-title';
+          convTitle.style.marginTop = '1rem';
+          convTitle.textContent = 'Converter Losses';
+          container.appendChild(convTitle);
+          container.appendChild(numberItem('MWh/yr', ll.converter_loss_mwh_yr || 0));
+          container.appendChild(currencyItem('Annual Cost', ll.converter_annual_cost || 0));
+          container.appendChild(currencyPairItem('Converter Losses', ll.converter_nominal_total || 0, ll.converter_cost_pv || 0));
+        }
+
+        container.appendChild(numberItem('Total MWh/yr', ll.total_loss_mwh_yr || 0));
+        container.appendChild(subtotalPairRow('Total Energy Losses', ll.total_nominal || 0, ll.total_pv || 0));
+
+        const resTitle = document.createElement('div');
+        resTitle.className = 'results-subcategory-title';
+        resTitle.style.marginTop = '1rem';
+        resTitle.textContent = 'Residual Exceedance';
+        container.appendChild(resTitle);
+        container.appendChild(currencyItem('Annual', cc.residual_exceedance_annual || 0));
+        container.appendChild(currencyPairItem('Residual Exceedance', cc.residual_exceedance_nominal || 0, cc.residual_exceedance_pv || 0));
+
+        return container;
+      }
+
+      function renderRiskCosts(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const wf = results.costs?.wildfire || {};
+        const wfl = results.costs?.wildfire_liability || {};
+        const out = results.costs?.outage || {};
+        const summary = results.summary || {};
+
+        const wfTitle = document.createElement('div');
+        wfTitle.className = 'results-subcategory-title';
+        wfTitle.textContent = 'Wildfire';
+        container.appendChild(wfTitle);
+
+        container.appendChild(pairHeader());
+        container.appendChild(currencyPairItem('EAL (Expected Annual Loss)', wf.nominal_total || 0, wf.pv_cost || 0));
+        container.appendChild(currencyItem('Liability — Annual Premium', wfl.annual_premium || 0));
+        container.appendChild(currencyPairItem('Liability Insurance', wfl.nominal_lifetime_cost || 0, wfl.pv_total || 0));
+
+        const wfSubNom = (wf.nominal_total || 0) + (wfl.nominal_lifetime_cost || 0);
+        const wfSubPV = (wf.pv_cost || 0) + (wfl.pv_total || 0);
+        container.appendChild(subtotalPairRow('Wildfire Subtotal', wfSubNom, wfSubPV));
+
+        const outTitle = document.createElement('div');
+        outTitle.className = 'results-subcategory-title';
+        outTitle.style.marginTop = '1rem';
+        outTitle.textContent = 'Outage';
+        container.appendChild(outTitle);
+        container.appendChild(currencyPairItem('Outage', out.nominal_total || 0, out.pv_cost || 0));
+
+        const riskNom = summary.total_risk_nominal || ((wf.nominal_total || 0) + (wfl.nominal_lifetime_cost || 0) + (out.nominal_total || 0));
+        container.appendChild(subtotalPairRow('Total Risk', riskNom, summary.total_risk_pv || 0));
+        return container;
+      }
+
+      function renderEmissionsCosts(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const em = results.costs?.emissions || {};
+
+        // Costs by pollutant
+        const costTitle = document.createElement('div');
+        costTitle.className = 'results-subcategory-title';
+        costTitle.textContent = 'Costs ($)';
+        container.appendChild(costTitle);
+        container.appendChild(pairHeader());
+        container.appendChild(currencyPairItem('CO\u2082', em.co2_cost_nominal || 0, em.co2_cost_pv || 0));
+        container.appendChild(currencyPairItem('SO\u2093', em.sox_cost_nominal || 0, em.sox_cost_pv || 0));
+        container.appendChild(currencyPairItem('NO\u2093', em.nox_cost_nominal || 0, em.nox_cost_pv || 0));
+        container.appendChild(currencyItem('Annual', em.annual_cost || 0));
+        container.appendChild(subtotalPairRow('Total Emissions', em.total_nominal || 0, em.total_pv || 0));
+
+        // Amounts by pollutant
+        const amtTitle = document.createElement('div');
+        amtTitle.className = 'results-subcategory-title';
+        amtTitle.style.marginTop = '1rem';
+        amtTitle.textContent = 'Amount';
+        container.appendChild(amtTitle);
+        const amtGrid = document.createElement('div');
+        amtGrid.className = 'phys-metrics-grid emissions-amounts';
+        appendPhysMetric(amtGrid, 'CO\u2082', em.co2_emissions_kg || 0, 'kg');
+        appendPhysMetric(amtGrid, 'SO\u2093', em.sox_emissions_kg || 0, 'kg');
+        appendPhysMetric(amtGrid, 'NO\u2093', em.nox_emissions_kg || 0, 'kg');
+        container.appendChild(amtGrid);
+
+        return container;
+      }
+
+      // ===== Benefits Tab Renderer =====
+
+      function renderBenefitsTab(results) {
+        const container = document.createElement('div');
+        const cc = results.benefits?.congestion_curtailment || {};
+        const rev = results.benefits?.revenue || {};
+        const bcr = results.bcr || {};
+
+        // Total Benefits
+        const totalBenefitsHaircutNom = (cc.congestion_benefit_haircut_nominal || 0) + (cc.curtailment_benefit_haircut_nominal || 0);
+        const totalBenefitsNom = (cc.congestion_benefit_nominal || 0) + (cc.curtailment_benefit_nominal || 0);
+        const totalSection = document.createElement('div');
+        totalSection.className = 'cost-section-items';
+        totalSection.appendChild(pairHeader());
+        totalSection.appendChild(currencyPairItem('Total Benefits (Conservative)', totalBenefitsHaircutNom, bcr.total_benefits_haircut_pv || 0));
+        totalSection.appendChild(currencyPairItem('Total Benefits (Raw)', totalBenefitsNom, bcr.total_benefits_pv || 0));
+        container.appendChild(createCategory('Total Benefits', totalSection));
+
+        // Congestion Benefits
+        const congSection = document.createElement('div');
+        congSection.className = 'cost-section-items';
+        congSection.appendChild(pairHeader());
+        congSection.appendChild(currencyItem('Annual', cc.congestion_benefit_haircut_annual || cc.congestion_benefit_annual || 0));
+        congSection.appendChild(currencyPairItem('Congestion Benefit (Conservative)', cc.congestion_benefit_haircut_nominal || 0, cc.congestion_benefit_haircut_pv || 0));
+        congSection.appendChild(currencyPairItem('Congestion Benefit (Raw)', cc.congestion_benefit_nominal || 0, cc.congestion_benefit_pv || 0));
+        container.appendChild(createCategory('Congestion Benefits', congSection));
+
+        // Curtailment Benefits
+        const curtSection = document.createElement('div');
+        curtSection.className = 'cost-section-items';
+        curtSection.appendChild(pairHeader());
+        curtSection.appendChild(currencyItem('Annual', cc.curtailment_benefit_haircut_annual || cc.curtailment_benefit_annual || 0));
+        curtSection.appendChild(currencyPairItem('Curtailment Benefit (Conservative)', cc.curtailment_benefit_haircut_nominal || 0, cc.curtailment_benefit_haircut_pv || 0));
+        curtSection.appendChild(currencyPairItem('Curtailment Benefit (Raw)', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
+        container.appendChild(createCategory('Curtailment Benefits', curtSection));
+
+        // Revenue
+        const revSection = document.createElement('div');
+        revSection.className = 'cost-section-items';
+        revSection.appendChild(pairHeader());
+        if (rev.annual_revenue) {
+          revSection.appendChild(currencyItem('Annual Revenue', rev.annual_revenue || 0));
+        }
+        revSection.appendChild(currencyPairItem('Revenue', rev.revenue_nominal || 0, bcr.revenue_pv || rev.revenue_pv || 0));
+        container.appendChild(createCategory('Revenue', revSection));
+
+        // Physical Metrics
+        const physGrid = document.createElement('div');
+        physGrid.className = 'phys-metrics-grid';
+        let hasPhys = false;
+        if (cc.effective_capacity_relief_mw !== undefined) { appendPhysMetric(physGrid, 'Effective Capacity Relief', cc.effective_capacity_relief_mw, 'MW'); hasPhys = true; }
+        if (cc.energy_congestion_reduction_mwh_yr !== undefined) { appendPhysMetric(physGrid, 'Congestion Reduction', cc.energy_congestion_reduction_mwh_yr, 'MWh/yr'); hasPhys = true; }
+        if (cc.energy_curtailment_reduction_mwh_yr !== undefined) { appendPhysMetric(physGrid, 'Curtailment Reduction', cc.energy_curtailment_reduction_mwh_yr, 'MWh/yr'); hasPhys = true; }
+        if (cc.energy_residual_exceedance_mwh_yr !== undefined) { appendPhysMetric(physGrid, 'Residual Exceedance', cc.energy_residual_exceedance_mwh_yr, 'MWh/yr'); hasPhys = true; }
+        if (cc.remaining_capacity_mw !== undefined) { appendPhysMetric(physGrid, 'Remaining Capacity', cc.remaining_capacity_mw, 'MW'); hasPhys = true; }
+        if (cc.theta_overlap !== undefined) { appendPhysMetric(physGrid, 'Theta Overlap', cc.theta_overlap, ''); hasPhys = true; }
+        if (cc.binding_hours_overlap !== undefined) { appendPhysMetric(physGrid, 'Binding Hours (Overlap)', cc.binding_hours_overlap, ''); hasPhys = true; }
+        if (cc.binding_hours_non_overlap !== undefined) { appendPhysMetric(physGrid, 'Binding Hours (Non-Overlap)', cc.binding_hours_non_overlap, ''); hasPhys = true; }
+        if (hasPhys) {
+          container.appendChild(createCategory('Physical Metrics', physGrid));
+        }
+
+        return container;
+      }
+
+      // ===== BCR Tab Renderers =====
+
+      function renderBCRHeadline(results) {
+        const container = document.createElement('div');
+        const bcr = results.bcr || {};
+
+        const cards = document.createElement('div');
+        cards.className = 'bcr-headline-cards';
+
+        const metrics = [
+          { label: 'Net Benefit (PV)', value: bcr.net_benefit_pv, currency: true },
+          { label: 'Capital BCR', value: bcr.bcr_capital, currency: false },
+          { label: 'Capital + Delay BCR', value: bcr.bcr_capital_and_delay, currency: false },
+        ];
+
+        metrics.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'bcr-headline-card';
+          const lbl = document.createElement('div');
+          lbl.className = 'label';
+          lbl.textContent = m.label;
+          const val = document.createElement('div');
+          val.className = 'value';
+          const num = Number(m.value || 0);
+          val.textContent = m.currency ? formatCurrency(num, 0) : formatNumber(num, 3);
+          if (num < 0) val.style.color = '#b00020';
+          card.appendChild(lbl);
+          card.appendChild(val);
+          cards.appendChild(card);
+        });
+
+        container.appendChild(cards);
+        container.appendChild(createNote('Benefits = congestion + curtailment (conservative). Revenue is a transfer and excluded from system benefits.'));
+        return container;
+      }
+
+      function renderPerspectivesTable(results) {
+        const container = document.createElement('div');
+        const bcr = results.bcr || {};
+
+        const grid = document.createElement('div');
+        grid.className = 'persp-grid';
+
+        // Header row
+        ['Perspective', 'Benefits (PV)', 'Costs (PV)', 'BCR', 'Net Benefit (PV)'].forEach((h, i) => {
+          const cell = document.createElement('div');
+          cell.className = 'persp-hdr';
+          cell.textContent = h;
+          grid.appendChild(cell);
+        });
+
+        // Utility costs = capital + delay + operational
+        const utilityCosts = (bcr.capital_costs_pv || 0) + (bcr.delay_costs_pv || 0) + (bcr.operational_costs_pv || 0);
+        // Ratepayer benefits = congestion + curtailment haircut
+        const ratepayerBenefits = (bcr.congestion_benefit_haircut_pv || 0) + (bcr.curtailment_benefit_haircut_pv || 0);
+        // Ratepayer costs = revenue + energy losses
+        const ratepayerCosts = (bcr.revenue_pv || 0) + (bcr.energy_losses_pv || 0);
+
+        const rows = [
+          { name: 'System (Societal)', benefits: bcr.total_benefits_haircut_pv || 0, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
+          { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0 },
+          { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0 },
+        ];
+
+        rows.forEach((r, idx) => {
+          const evenClass = idx % 2 === 1 ? ' persp-row-even' : '';
+          const vals = [
+            { text: r.name, isLabel: true },
+            { text: formatCurrency(r.benefits, 0) },
+            { text: formatCurrency(r.costs, 0) },
+            { text: formatNumber(r.bcrVal, 3) },
+            { text: formatCurrency(r.netBenefit, 0), negative: r.netBenefit < 0 },
+          ];
+          vals.forEach(v => {
+            const cell = document.createElement('div');
+            cell.className = 'persp-cell' + evenClass + (v.isLabel ? ' persp-label' : '') + (v.negative ? ' negative' : '');
+            cell.textContent = v.text;
+            grid.appendChild(cell);
+          });
+        });
+
+        container.appendChild(grid);
+        container.appendChild(createNote('System: societal welfare (all real resource costs). Utility / Transm. Service Provider: revenue vs costs borne by the transmission service provider. Ratepayer: benefits received vs costs passed through (revenue + energy losses).'));
+        return container;
+      }
+
+      function renderSensitivityExclusions(results) {
+        const container = document.createElement('div');
+        const bcr = results.bcr || {};
+
+        const totalCostsPV = bcr.total_costs_pv || 0;
+
+        function sensRow(label, bcrKey, nbKey, costExclKey) {
+          const exclCosts = bcr[costExclKey] || 0;
+          const excluded = totalCostsPV - exclCosts;
+          return { label, bcr: bcr[bcrKey] || 0, nb: bcr[nbKey] || 0, excluded };
+        }
+
+        // Main 7 rows
+        const mainRows = [
+          sensRow('Exclude Risk (Wildfire + Outage)', 'bcr_excluding_wildfire_risk_and_outage_risk', 'net_benefit_excluding_wildfire_risk_and_outage_risk_pv', 'total_costs_excluding_wildfire_risk_and_outage_risk_pv'),
+          sensRow('Exclude Emissions', 'bcr_excluding_emissions', 'net_benefit_excluding_emissions_pv', 'total_costs_excluding_emissions_pv'),
+          sensRow('Exclude Energy Losses', 'bcr_excluding_linelosses', 'net_benefit_excluding_linelosses_pv', 'total_costs_excluding_linelosses_pv'),
+          sensRow('Exclude Emissions + Energy Losses', 'bcr_excluding_emissions_and_linelosses', 'net_benefit_excluding_emissions_and_linelosses_pv', 'total_costs_excluding_emissions_and_linelosses_pv'),
+          sensRow('Exclude Emissions + Risk', 'bcr_excluding_emissions_and_wildfire_risk_and_outage_risk', 'net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv', 'total_costs_excluding_emissions_and_wildfire_risk_and_outage_risk_pv'),
+          sensRow('Exclude Energy Losses + Risk', 'bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk', 'net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv', 'total_costs_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv'),
+          sensRow('Exclude Emissions + Energy Losses + Risk', 'bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', 'net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv', 'total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv'),
+        ];
+
+        function buildSensTable(rows) {
+          const table = document.createElement('table');
+          table.className = 'sensitivity-table';
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr><th>Exclusion</th><th>BCR</th><th>Net Benefit (PV)</th><th>Excluded $ (PV)</th></tr>';
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          rows.forEach(r => {
+            const tr = document.createElement('tr');
+            const tdLabel = document.createElement('td');
+            tdLabel.textContent = r.label;
+            const tdBCR = document.createElement('td');
+            tdBCR.textContent = formatNumber(r.bcr, 3);
+            const tdNB = document.createElement('td');
+            tdNB.textContent = formatCurrency(r.nb, 0);
+            if (r.nb < 0) tdNB.className = 'negative';
+            const tdExcl = document.createElement('td');
+            tdExcl.textContent = formatCurrency(r.excluded, 0);
+            tr.appendChild(tdLabel);
+            tr.appendChild(tdBCR);
+            tr.appendChild(tdNB);
+            tr.appendChild(tdExcl);
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          return table;
+        }
+
+        container.appendChild(buildSensTable(mainRows));
+
+        // Collapsible "More Sensitivity" section
+        const trigger = document.createElement('div');
+        trigger.className = 'collapsible-trigger';
+        trigger.innerHTML = '<span class="arrow">&#9654;</span> More Sensitivity (By Risk Type)';
+        const moreContent = document.createElement('div');
+        moreContent.className = 'collapsible-content';
+
+        trigger.addEventListener('click', () => {
+          trigger.classList.toggle('open');
+          moreContent.classList.toggle('open');
+        });
+
+        const moreRows = [
+          sensRow('Exclude Wildfire Only', 'bcr_excluding_wildfire_risk', 'net_benefit_excluding_wildfire_risk_pv', 'total_costs_excluding_wildfire_risk_pv'),
+          sensRow('Exclude Wildfire + Emissions', 'bcr_excluding_emissions_and_wildfire_risk', 'net_benefit_excluding_emissions_and_wildfire_risk_pv', 'total_costs_excluding_emissions_and_wildfire_risk_pv'),
+          sensRow('Exclude Wildfire + Energy Losses', 'bcr_excluding_linelosses_and_wildfire_risk', 'net_benefit_excluding_linelosses_and_wildfire_risk_pv', 'total_costs_excluding_linelosses_and_wildfire_risk_pv'),
+          sensRow('Exclude Wildfire + Emissions + Energy Losses', 'bcr_excluding_emissions_and_linelosses_and_wildfire_risk', 'net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv', 'total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv'),
+          sensRow('Exclude Outage Only', 'bcr_excluding_outage_risk', 'net_benefit_excluding_outage_risk_pv', 'total_costs_excluding_outage_risk_pv'),
+          sensRow('Exclude Outage + Emissions', 'bcr_excluding_emissions_and_outage_risk', 'net_benefit_excluding_emissions_and_outage_risk_pv', 'total_costs_excluding_emissions_and_outage_risk_pv'),
+          sensRow('Exclude Outage + Energy Losses', 'bcr_excluding_linelosses_and_outage_risk', 'net_benefit_excluding_linelosses_and_outage_risk_pv', 'total_costs_excluding_linelosses_and_outage_risk_pv'),
+          sensRow('Exclude Outage + Emissions + Energy Losses', 'bcr_excluding_emissions_and_linelosses_and_outage_risk', 'net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv', 'total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv'),
+        ];
+
+        moreContent.appendChild(buildSensTable(moreRows));
+        container.appendChild(trigger);
+        container.appendChild(moreContent);
+
+        return container;
+      }
+
+      function renderCustomBCR(results) {
+        const container = document.createElement('div');
+        const bcr = results.bcr || {};
+
+        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalCostsPV = bcr.total_costs_pv || 0;
+        const emissionsPV = bcr.emissions_cost_pv || 0;
+        const energyLossesPV = bcr.energy_losses_pv || 0;
+        const wildfirePV = (bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0);
+        const outagePV = bcr.outage_pv || 0;
+
+        const toggles = [
+          { id: 'custom-exc-emissions', label: 'Exclude Emissions', pv: emissionsPV },
+          { id: 'custom-exc-linelosses', label: 'Exclude Energy Losses', pv: energyLossesPV },
+          { id: 'custom-exc-wildfire', label: 'Exclude Wildfire Risk', pv: wildfirePV },
+          { id: 'custom-exc-outage', label: 'Exclude Outage Risk', pv: outagePV },
+        ];
+
+        const togglesDiv = document.createElement('div');
+        togglesDiv.className = 'custom-bcr-toggles';
+
+        toggles.forEach(t => {
+          const lbl = document.createElement('label');
+          lbl.className = 'custom-bcr-toggle';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.id = t.id;
+          lbl.appendChild(cb);
+          lbl.appendChild(document.createTextNode(t.label));
+          togglesDiv.appendChild(lbl);
+        });
+
+        container.appendChild(togglesDiv);
+
+        // Result display
+        const resultBox = document.createElement('div');
+        resultBox.className = 'custom-bcr-result';
+
+        const bcrMetric = document.createElement('div');
+        bcrMetric.className = 'custom-bcr-metric';
+        bcrMetric.innerHTML = '<div class="label">Custom BCR</div><div class="value" id="custom-bcr-value">' + formatNumber(totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0, 3) + '</div>';
+
+        const nbMetric = document.createElement('div');
+        nbMetric.className = 'custom-bcr-metric';
+        nbMetric.innerHTML = '<div class="label">Custom Net Benefit (PV)</div><div class="value" id="custom-nb-value">' + formatCurrency(totalBenefitsPV - totalCostsPV, 0) + '</div>';
+
+        resultBox.appendChild(bcrMetric);
+        resultBox.appendChild(nbMetric);
+        container.appendChild(resultBox);
+
+        // Recompute on toggle change
+        function recompute() {
+          let customCosts = totalCostsPV;
+          toggles.forEach(t => {
+            const cb = document.getElementById(t.id);
+            if (cb && cb.checked) customCosts -= t.pv;
+          });
+          const customBCR = customCosts > 0 ? totalBenefitsPV / customCosts : 0;
+          const customNB = totalBenefitsPV - customCosts;
+          const bcrEl = document.getElementById('custom-bcr-value');
+          const nbEl = document.getElementById('custom-nb-value');
+          if (bcrEl) bcrEl.textContent = formatNumber(customBCR, 3);
+          if (nbEl) {
+            nbEl.textContent = formatCurrency(customNB, 0);
+            nbEl.style.color = customNB < 0 ? '#b00020' : '#0066cc';
+          }
+        }
+
+        toggles.forEach(t => {
+          const cb = document.getElementById(t.id);
+          if (cb) cb.addEventListener('change', recompute);
+        });
+
+        // Defer event listener attachment since elements are added to DOM later
+        setTimeout(() => {
+          toggles.forEach(t => {
+            const cb = document.getElementById(t.id);
+            if (cb) cb.addEventListener('change', recompute);
+          });
+        }, 0);
+
+        return container;
+      }
+
       function renderCTCCResults(results) {
         resultEl.innerHTML = '';
         resultEl.className = 'results-container';
 
-        // Header with metadata
-        const header = document.createElement('div');
-        header.className = 'results-header';
+        // Sticky header: metadata + summary + tab buttons
+        const stickyHeader = document.createElement('div');
+        stickyHeader.className = 'results-sticky-header';
 
-        if (results.scenario_id || results.timestamp || results.input_mode) {
-          const metadata = document.createElement('div');
-          metadata.className = 'results-metadata';
+        // Compact metadata line
+        const metaLine = document.createElement('div');
+        metaLine.className = 'results-metadata-line';
+        const parts = [];
+        if (results.scenario_id) parts.push('Scenario: ' + results.scenario_id);
+        if (results.timestamp) parts.push(new Date(results.timestamp).toLocaleString());
+        if (results.technical_parameters?.project_name) parts.push(results.technical_parameters.project_name);
+        metaLine.textContent = parts.join(' | ');
+        stickyHeader.appendChild(metaLine);
 
-          if (results.scenario_id) {
-            const item = document.createElement('div');
-            item.className = 'results-metadata-item';
-            item.innerHTML = `<span class="results-metadata-label">Scenario ID</span><span>${results.scenario_id}</span>`;
-            metadata.appendChild(item);
+        // Project parameters bar
+        const tp = results.technical_parameters || {};
+        const paramsBar = document.createElement('div');
+        paramsBar.className = 'project-params-bar';
+        const paramEntries = [
+          { label: 'Project', value: tp.project_name },
+          { label: 'Type', value: tp.construction_type },
+          { label: 'AC/DC', value: tp.ac_dc },
+          { label: 'Capacity', value: tp.capacity_mw ? formatNumber(tp.capacity_mw, 0) + ' MW' : null },
+          { label: 'Length', value: tp.line_length_miles ? formatNumber(tp.line_length_miles, 1) + ' mi' : null },
+          { label: 'Lifetime', value: tp.project_lifetime_years ? tp.project_lifetime_years + ' yr' : null },
+          { label: 'Delay', value: tp.delay_years !== undefined ? tp.delay_years + ' yr' : null },
+        ];
+        paramEntries.forEach(p => {
+          if (p.value) {
+            const chip = document.createElement('span');
+            chip.className = 'param-chip';
+            chip.innerHTML = `<span class="param-label">${p.label}</span> <span class="param-value">${p.value}</span>`;
+            paramsBar.appendChild(chip);
           }
+        });
+        stickyHeader.appendChild(paramsBar);
 
-          if (results.timestamp) {
-            const item = document.createElement('div');
-            item.className = 'results-metadata-item';
-            const date = new Date(results.timestamp);
-            item.innerHTML = `<span class="results-metadata-label">Timestamp</span><span>${date.toLocaleString()}</span>`;
-            metadata.appendChild(item);
-          }
+        // Tabs: Summary | Benefits | Costs | BCR
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'results-tabs-container';
 
-          if (results.input_mode) {
-            const item = document.createElement('div');
-            item.className = 'results-metadata-item';
-            item.innerHTML = `<span class="results-metadata-label">Input Mode</span><span>${results.input_mode.toUpperCase()}</span>`;
-            metadata.appendChild(item);
-          }
+        const tabButtons = document.createElement('div');
+        tabButtons.className = 'tabs';
+        stickyHeader.appendChild(tabButtons);
 
-          header.appendChild(metadata);
-        }
+        resultEl.appendChild(stickyHeader);
 
-        resultEl.appendChild(header);
+        const tabContents = document.createElement('div');
+        tabContents.className = 'results-tab-contents';
 
-        // BCR Summary Cards (if present)
-        if (results.bcr && Object.keys(results.bcr).length > 0) {
-          const summaryGrid = document.createElement('div');
-          summaryGrid.className = 'results-summary-grid';
+        const tabs = [
+          { id: 'summary', label: 'Summary' },
+          { id: 'costs', label: 'Costs' },
+          { id: 'benefits', label: 'Benefits' },
+          { id: 'bcr', label: 'Benefit-Cost Ratio' },
+        ];
 
-          // Key BCR metrics
-          const keyMetrics = [
-            { key: 'bcr_system', label: 'System BCR', highlight: true },
-            { key: 'bcr_capital', label: 'Capital BCR', highlight: true },
-            { key: 'net_benefit_pv', label: 'Net Benefit (PV)', currency: true },
-            { key: 'total_benefits_pv', label: 'Total Benefits (PV)', currency: true },
-            { key: 'total_costs_pv', label: 'Total Costs (PV)', currency: true }
-          ];
+        tabs.forEach((tab, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'tab-button';
+          if (index === 0) button.classList.add('active');
+          button.textContent = tab.label;
+          button.dataset.tabId = tab.id;
 
-          keyMetrics.forEach(metric => {
-            if (results.bcr[metric.key] !== undefined) {
+          button.addEventListener('click', () => {
+            const scrollContainer = document.getElementById('main-tab-results');
+            tabButtons.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+            tabContents.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const content = tabContents.querySelector(`[data-tab-id="${tab.id}"]`);
+            if (content) {
+              content.classList.add('active');
+              if (scrollContainer) {
+                scrollContainer._restoringScroll = true;
+                requestAnimationFrame(() => {
+                  scrollContainer.scrollTop = content._savedScrollTop || 0;
+                  scrollContainer._restoringScroll = false;
+                });
+              }
+            }
+          });
+
+          tabButtons.appendChild(button);
+
+          const content = document.createElement('div');
+          content.className = 'tab-content';
+          if (index === 0) content.classList.add('active');
+          content.dataset.tabId = tab.id;
+          content.style.padding = '1.5rem';
+
+          if (tab.id === 'summary') {
+            // Total Costs cards
+            const summary = results.summary || {};
+            const costsHeading = document.createElement('div');
+            costsHeading.className = 'results-section-heading';
+            const costsTitle = document.createElement('div');
+            costsTitle.className = 'results-section-title';
+            costsTitle.textContent = 'Total Costs';
+            const costsSubtitle = document.createElement('div');
+            costsSubtitle.className = 'results-section-subtitle';
+            costsSubtitle.textContent = 'Present Value';
+            costsHeading.appendChild(costsTitle);
+            costsHeading.appendChild(costsSubtitle);
+            content.appendChild(costsHeading);
+
+            const summaryGrid = document.createElement('div');
+            summaryGrid.className = 'results-summary-grid';
+            const summaryMetrics = [
+              { label: 'Capital', value: summary.total_capital_pv },
+              { label: 'Operational', value: summary.total_operational_pv },
+              { label: 'Energy / Emissions', value: summary.total_energy_emissions_pv },
+              { label: 'Risk', value: summary.total_risk_pv },
+              { label: 'Total Costs', value: summary.grand_total_cost_pv || summary.total_costs_pv, highlight: true },
+            ];
+            summaryMetrics.forEach(m => {
               const card = document.createElement('div');
               card.className = 'results-summary-card';
-              if (metric.highlight) card.classList.add('highlight');
-
-              const label = document.createElement('div');
-              label.className = 'results-summary-label';
-              label.textContent = metric.label;
-
-              const value = document.createElement('div');
-              value.className = 'results-summary-value';
-              if (metric.highlight) value.classList.add('large');
-
-              const numValue = Number(results.bcr[metric.key]);
-              if (metric.currency) {
-                value.textContent = formatCurrency(numValue, 0);
-                if (numValue < 0) value.style.color = '#b00020';
-              } else {
-                value.textContent = formatNumber(numValue, 3);
-              }
-
-              card.appendChild(label);
-              card.appendChild(value);
+              if (m.highlight) card.classList.add('highlight');
+              const lbl = document.createElement('div');
+              lbl.className = 'results-summary-label';
+              lbl.textContent = m.label;
+              const val = document.createElement('div');
+              val.className = 'results-summary-value';
+              const num = Number(m.value || 0);
+              val.textContent = formatCurrency(num, 0);
+              if (num < 0) val.style.color = '#b00020';
+              card.appendChild(lbl);
+              card.appendChild(val);
               summaryGrid.appendChild(card);
-            }
-          });
-
-          resultEl.appendChild(summaryGrid);
-        }
-
-        // Create tabs for different sections
-        const sections = [];
-
-        // Collect available sections
-        if (results.technical_parameters || results.technical_details) {
-          const techData = results.technical_parameters || results.technical_details;
-          sections.push({
-            id: 'technical',
-            label: 'Technical Parameters',
-            data: techData,
-            isCurrency: false
-          });
-        }
-
-        if (results.costs && Object.keys(results.costs).length > 0) {
-          sections.push({
-            id: 'costs',
-            label: 'Costs',
-            data: results.costs,
-            isCurrency: true
-          });
-        }
-
-        if (results.benefits && Object.keys(results.benefits).length > 0) {
-          sections.push({
-            id: 'benefits',
-            label: 'Benefits',
-            data: results.benefits,
-            isCurrency: true
-          });
-        }
-
-        if (results.summary && Object.keys(results.summary).length > 0) {
-          sections.push({
-            id: 'summary',
-            label: 'Summary',
-            data: results.summary,
-            isCurrency: true
-          });
-        }
-
-        if (results.bcr && Object.keys(results.bcr).length > 0) {
-          sections.push({
-            id: 'bcr',
-            label: 'BCR Details',
-            data: results.bcr,
-            isCurrency: true
-          });
-        }
-
-        // Create tabs container
-        if (sections.length > 0) {
-          const tabsContainer = document.createElement('div');
-          tabsContainer.style.marginTop = '2rem';
-
-          // Tab buttons
-          const tabButtons = document.createElement('div');
-          tabButtons.className = 'tabs';
-
-          // Tab contents
-          const tabContents = document.createElement('div');
-
-          sections.forEach((section, index) => {
-            // Create tab button
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'tab-button';
-            if (index === 0) button.classList.add('active');
-            button.textContent = section.label;
-            button.dataset.tabId = section.id;
-
-            button.addEventListener('click', () => {
-              // Update active tab button
-              tabButtons.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-              button.classList.add('active');
-
-              // Update active tab content
-              tabContents.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-              const content = tabContents.querySelector(`[data-tab-id="${section.id}"]`);
-              if (content) content.classList.add('active');
             });
+            content.appendChild(summaryGrid);
 
-            tabButtons.appendChild(button);
+            // Net Benefits heading + Three Perspectives table
+            const benefitsHeading = document.createElement('div');
+            benefitsHeading.className = 'results-section-heading';
+            benefitsHeading.style.marginTop = '2rem';
+            const benefitsTitle = document.createElement('div');
+            benefitsTitle.className = 'results-section-title';
+            benefitsTitle.textContent = 'Net Benefits';
+            const benefitsSubtitle = document.createElement('div');
+            benefitsSubtitle.className = 'results-section-subtitle';
+            benefitsSubtitle.textContent = 'Present Value';
+            benefitsHeading.appendChild(benefitsTitle);
+            benefitsHeading.appendChild(benefitsSubtitle);
+            content.appendChild(benefitsHeading);
+            content.appendChild(renderPerspectivesTable(results));
 
-            // Create tab content
-            const content = document.createElement('div');
-            content.className = 'tab-content';
-            if (index === 0) content.classList.add('active');
-            content.dataset.tabId = section.id;
+            // Total Benefits cards
+            const cc = results.benefits?.congestion_curtailment || {};
+            const bcr = results.bcr || {};
+            const tbHeading = document.createElement('div');
+            tbHeading.className = 'results-section-heading';
+            tbHeading.style.marginTop = '2rem';
+            const tbTitle = document.createElement('div');
+            tbTitle.className = 'results-section-title';
+            tbTitle.textContent = 'Total Benefits';
+            const tbSubtitle = document.createElement('div');
+            tbSubtitle.className = 'results-section-subtitle';
+            tbSubtitle.textContent = 'Conservative, Present Value';
+            tbHeading.appendChild(tbTitle);
+            tbHeading.appendChild(tbSubtitle);
+            content.appendChild(tbHeading);
 
-            if (section.id === 'technical') {
-              // Technical parameters use simple grid
-              content.className += ' results-grid';
-              content.style.padding = '1.5rem';
-              renderObjectAsResults(section.data, content, section.isCurrency);
-            } else {
-              // Other sections render with subcategories
-              content.style.padding = '1.5rem';
-              renderObjectAsResults(section.data, content, section.isCurrency);
+            const tbGrid = document.createElement('div');
+            tbGrid.style.display = 'grid';
+            tbGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            tbGrid.style.gap = '1rem';
+            tbGrid.style.marginTop = '1rem';
+            const tbMetrics = [
+              { label: 'Congestion', value: bcr.congestion_benefit_haircut_pv || cc.congestion_benefit_haircut_pv || 0 },
+              { label: 'Curtailment', value: bcr.curtailment_benefit_haircut_pv || cc.curtailment_benefit_haircut_pv || 0 },
+              { label: 'Total Benefits', value: bcr.total_benefits_haircut_pv || 0, highlight: true },
+            ];
+            tbMetrics.forEach(m => {
+              const card = document.createElement('div');
+              card.className = 'results-summary-card';
+              if (m.highlight) card.classList.add('highlight');
+              const lbl = document.createElement('div');
+              lbl.className = 'results-summary-label';
+              lbl.textContent = m.label;
+              const val = document.createElement('div');
+              val.className = 'results-summary-value';
+              val.textContent = formatCurrency(Number(m.value || 0), 0);
+              card.appendChild(lbl);
+              card.appendChild(val);
+              tbGrid.appendChild(card);
+            });
+            content.appendChild(tbGrid);
+
+            const bcrHeading = document.createElement('div');
+            bcrHeading.className = 'results-section-heading';
+            bcrHeading.style.marginTop = '2rem';
+            const bcrTitle = document.createElement('div');
+            bcrTitle.className = 'results-section-title';
+            bcrTitle.textContent = 'Capital Benefit-Cost Ratio';
+            bcrHeading.appendChild(bcrTitle);
+            content.appendChild(bcrHeading);
+            content.appendChild(renderBCRHeadline(results));
+
+          } else if (tab.id === 'benefits') {
+            content.appendChild(renderBenefitsTab(results));
+
+          } else if (tab.id === 'costs') {
+            // Cost overview table
+            content.appendChild(renderCostOverview(results));
+            // 6 Cost sections
+            content.appendChild(createCategory('1. Delay Costs', renderDelayCosts(results)));
+            content.appendChild(createCategory('2. Capital Costs', renderCapitalCosts(results)));
+            content.appendChild(createCategory('3. Operational Costs', renderOperationalCosts(results)));
+            content.appendChild(createCategory('4. Energy Losses', renderEnergyLosses(results)));
+            content.appendChild(createCategory('5. Risk Costs', renderRiskCosts(results)));
+            content.appendChild(createCategory('6. Emissions', renderEmissionsCosts(results)));
+          } else if (tab.id === 'bcr') {
+            content.appendChild(renderBCRHeadline(results));
+            content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityExclusions(results)));
+            content.appendChild(createCategory('Custom BCR', renderCustomBCR(results)));
+          }
+
+          tabContents.appendChild(content);
+        });
+
+        tabsContainer.appendChild(tabContents);
+        resultEl.appendChild(tabsContainer);
+
+        // Continuously save scroll position for the active results tab
+        const scrollContainer = document.getElementById('main-tab-results');
+        if (scrollContainer) {
+          scrollContainer.addEventListener('scroll', () => {
+            if (scrollContainer._restoringScroll) return;
+            const activeContent = tabContents.querySelector('.tab-content.active');
+            if (activeContent) {
+              activeContent._savedScrollTop = scrollContainer.scrollTop;
             }
-
-            tabContents.appendChild(content);
           });
-
-          tabsContainer.appendChild(tabButtons);
-          tabsContainer.appendChild(tabContents);
-          resultEl.appendChild(tabsContainer);
         }
       }
 
