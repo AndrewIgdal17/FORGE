@@ -1,0 +1,1885 @@
+#!/usr/bin/env python3
+"""
+LHS Sensitivity Analysis for Comprehensive Transmission Cost Calculator (CTCC)
+
+This script performs Latin Hypercube Sampling (LHS) to systematically vary
+parameters and analyze their impact on project economics (BCR, costs, benefits).
+
+Usage:
+    python sensitivity_analysis.py --scenario "1.1_rural_overhead" --n_samples 300 --seed 42
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+import shutil
+import subprocess
+import yaml
+import numpy as np
+import pandas as pd
+from scipy.stats import qmc
+from scipy.stats import spearmanr
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Any, List, Tuple, Optional, Callable
+
+from scripts.sensitivity_utils import (
+    BCR_COLUMNS,
+    run_ctcc_with_temp_yamls as _run_ctcc_with_temp_yamls_utils,
+    deep_copy_yamls,
+    validate_bcr_results,
+)
+
+
+# ============================================================================
+# PARAMETER DEFINITIONS
+# ============================================================================
+
+PARAM_DEFINITIONS = {
+    # Core Economic/Technical (10)
+    "real_wacc_mult": {
+        "type": "linear",
+        "range": (0.7, 1.4),
+        "yaml_file": "03_financing.yaml",
+        "yaml_path": [
+            "financial",
+            "wacc_nominal",
+        ],  # Will calculate real WACC from nominal
+        "description": "Real WACC multiplier",
+    },
+    "delay_years": {
+        "type": "integer",
+        "range": (0, 20),
+        "yaml_file": "01_project_technical_details.yaml",
+        "yaml_path": ["timeline", "delay_years"],
+        "description": "Permitting/regulatory delay (years)",
+    },
+    "construction_years": {
+        "type": "linear",
+        "range": (0.5, 3.0),
+        "yaml_file": "01_project_technical_details.yaml",
+        "yaml_path": ["timeline", "construction_years"],
+        "description": "Construction duration (years)",
+    },
+    "line_utilization_mult": {
+        "type": "linear",
+        "range": (0.8, 1.1),
+        "yaml_file": "01_project_technical_details.yaml",
+        "yaml_path": ["project", "line_utilization"],
+        "description": "Line utilization multiplier",
+        "final_value_bounds": (
+            0.0,
+            1.0,
+        ),  # Physical constraint: utilization must be [0, 1]
+    },
+    "wildfire_ignition_rate_mult": {
+        "type": "log",
+        "range": (0.3, 3.0),
+        "yaml_file": "06_wildfire_costs.yaml",
+        "yaml_path": ["wildfire", "ignition_rates_by_terrain"],
+        "description": "Wildfire ignition rate multiplier (all terrains)",
+    },
+    "congestion_price_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "costs",
+            "average_congestion_price",
+        ],
+        "description": "Congestion price multiplier",
+    },
+    "congestion_flow_factor_mult": {
+        "type": "linear",
+        "range": (0.5, 1.2),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "flow_factor",
+        ],
+        "description": "Flow factor multiplier (affects effective capacity relief)",
+        "final_value_bounds": (
+            0.0,
+            1.0,
+        ),  # Physical constraint: flow factor must be [0, 1]
+    },
+    "congestion_binding_hours_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "binding_hours",
+        ],
+        "description": "Binding hours multiplier (hours per year line is binding)",
+    },
+    "congestion_average_exceedance_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "average_exceedance",
+        ],
+        "description": "Average exceedance multiplier (MW exceedance during binding hours)",
+    },
+    "congestion_near_binding_hours_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "near_binding_hours",
+        ],
+        "description": "Near binding hours multiplier",
+    },
+    "congestion_saturation_factor_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "17_congestion_reductions.yaml",
+        "yaml_path": [
+            "greenfield_congestion_reductions",
+            "constraints",
+            "saturation_factor",
+        ],
+        "description": "Saturation factor multiplier (affects congestion benefit haircut)",
+    },
+    "electricity_price_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "01_project_technical_details.yaml",
+        "yaml_path": ["project", "baseline_electricity_price_per_mwh"],
+        "description": "Electricity price multiplier",
+    },
+    "environmental_mitigation_cost_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "09_environmental_mitigation.yaml",
+        "yaml_path": ["environmental_mitigation", "base_mitigation_cost_per_acre"],
+        "description": "Environmental mitigation cost multiplier (all construction types and terrains)",
+    },
+    "project_lifetime": {
+        "type": "integer",
+        "range": (40, 60),
+        "yaml_file": "01_project_technical_details.yaml",
+        "yaml_path": ["timeline", "project_lifetime"],
+        "description": "Project lifetime (years)",
+    },
+    "social_discount_rate_mult": {
+        "type": "linear",
+        "range": (0.7, 1.4),
+        "yaml_file": "03_financing.yaml",
+        "yaml_path": ["financial", "social_discount_rate"],
+        "description": "Social discount rate multiplier",
+    },
+    "wacc_nominal_mult": {
+        "type": "linear",
+        "range": (0.7, 1.4),
+        "yaml_file": "03_financing.yaml",
+        "yaml_path": ["financial", "wacc_nominal"],
+        "description": "WACC nominal multiplier",
+    },
+    "inflation_rate_mult": {
+        "type": "linear",
+        "range": (0.7, 1.4),
+        "yaml_file": "03_financing.yaml",
+        "yaml_path": ["financial", "inflation_rate"],
+        "description": "Inflation rate multiplier",
+    },
+    # ROW Cost Multipliers (3) - apply to all zones 1-15
+    "row_acquisition_cost_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "11_project_row_details.yaml",
+        "yaml_path": ["right_of_way"],
+        "target_fields": [
+            "acquisition_cost"
+        ],  # Only multiply acquisition_cost across all zones
+        "description": "ROW acquisition cost multiplier (all zones)",
+    },
+    "row_rent_cost_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "11_project_row_details.yaml",
+        "yaml_path": ["right_of_way"],
+        "target_fields": ["rent_cost"],  # Only multiply rent_cost across all zones
+        "description": "ROW rent cost multiplier (all zones)",
+    },
+    "row_hold_cost_mult": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "11_project_row_details.yaml",
+        "yaml_path": ["right_of_way"],
+        "target_fields": ["hold_cost"],  # Only multiply hold_cost across all zones
+        "description": "ROW hold cost multiplier (all zones)",
+    },
+    # Terrain Multipliers (9) - from 02_project_physical_details.yaml
+    "terrain_mult_forested": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "forested"],
+        "description": "Terrain multiplier (forested)",
+    },
+    "terrain_mult_scrubbed_flat": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "scrubbed_flat"],
+        "description": "Terrain multiplier (scrubbed flat)",
+    },
+    "terrain_mult_wetland": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "wetland"],
+        "description": "Terrain multiplier (wetland)",
+    },
+    "terrain_mult_farmland": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "farmland"],
+        "description": "Terrain multiplier (farmland)",
+    },
+    "terrain_mult_desert_barren": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "desert_barren"],
+        "description": "Terrain multiplier (desert barren)",
+    },
+    "terrain_mult_urban": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "urban"],
+        "description": "Terrain multiplier (urban)",
+    },
+    "terrain_mult_rolling_hills": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "rolling_hills"],
+        "description": "Terrain multiplier (rolling hills)",
+    },
+    "terrain_mult_mountain": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "mountain"],
+        "description": "Terrain multiplier (mountain)",
+    },
+    "terrain_mult_subsea": {
+        "type": "linear",
+        "range": (0.7, 1.5),
+        "yaml_file": "02_project_physical_details.yaml",
+        "yaml_path": ["terrain", "terrain_multipliers", "subsea"],
+        "description": "Terrain multiplier (subsea)",
+    },
+    # Operational/Risk (5)
+    "outage_rate_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "07_outage_costs.yaml",
+        "yaml_path": ["outage", "outage_rates"],
+        "description": "Outage rate multiplier (all construction types and terrains)",
+    },
+    "veg_om_per_mile_mult": {
+        "type": "linear",
+        "range": (0.6, 1.6),
+        "yaml_file": "12_project_om_vegetation_management.yaml",
+        "yaml_path": ["vegetation_management_om_costs"],
+        "description": "Vegetation O&M cost multiplier (all construction types and terrains)",
+    },
+    "labor_cost_mult": {
+        "type": "linear",
+        "range": (0.8, 1.3),
+        "yaml_file": "10_project_category_build_costs.yaml",
+        "yaml_path": ["project_categories_build_costs"],
+        "description": "Labor cost multiplier (affects structure costs via build costs)",
+    },
+    "materials_cost_mult": {
+        "type": "linear",
+        "range": (0.8, 1.3),
+        "yaml_file": "10_project_category_build_costs.yaml",
+        "yaml_path": ["project_categories_build_costs"],
+        "description": "Materials cost multiplier (affects conductor costs via build costs)",
+    },
+    "outage_growth_rate_mult": {
+        "type": "linear",
+        "range": (0.5, 2.0),
+        "yaml_file": "07_outage_costs.yaml",
+        "yaml_path": ["outage", "risk_growth_rate"],
+        "description": "Outage risk growth rate multiplier",
+    },
+}
+
+
+# ============================================================================
+# LHS SAMPLING
+# ============================================================================
+
+
+def generate_lhs_samples(
+    n_samples: int, param_definitions: Dict[str, Any], seed: int = 42
+) -> pd.DataFrame:
+    """
+    Generate Latin Hypercube samples for all parameters.
+
+    Args:
+        n_samples: Number of samples to generate
+        param_definitions: Dictionary of parameter definitions
+        seed: Random seed for reproducibility
+
+    Returns:
+        DataFrame with N samples × d parameters (values in [0,1])
+    """
+    n_params = len(param_definitions)
+    param_names = list(param_definitions.keys())
+
+    # Generate LHS samples in [0,1]
+    sampler = qmc.LatinHypercube(d=n_params, seed=seed)
+    samples = sampler.random(n=n_samples)
+
+    # Create DataFrame
+    df = pd.DataFrame(samples, columns=param_names)
+    return df
+
+
+def map_samples_to_ranges(
+    samples_df: pd.DataFrame, param_definitions: Dict[str, Any]
+) -> pd.DataFrame:
+    """
+    Map LHS samples from [0,1] to actual parameter ranges.
+
+    Args:
+        samples_df: DataFrame with samples in [0,1]
+        param_definitions: Dictionary of parameter definitions
+
+    Returns:
+        DataFrame with actual parameter values
+    """
+    mapped_df = samples_df.copy()
+
+    for param_name, param_def in param_definitions.items():
+        sample_values = mapped_df[param_name].values
+        min_val, max_val = param_def["range"]
+
+        if param_def["type"] == "linear":
+            # Linear mapping: [0,1] -> [min_val, max_val]
+            mapped_values = min_val + sample_values * (max_val - min_val)
+        elif param_def["type"] == "log":
+            # Log scale: sample uniformly in log space
+            log_min = np.log10(min_val)
+            log_max = np.log10(max_val)
+            log_values = log_min + sample_values * (log_max - log_min)
+            mapped_values = 10**log_values
+        elif param_def["type"] == "integer":
+            # Integer: round after linear mapping
+            mapped_values = min_val + sample_values * (max_val - min_val)
+            mapped_values = np.round(mapped_values).astype(int)
+        else:
+            raise ValueError(f"Unknown parameter type: {param_def['type']}")
+
+        mapped_df[param_name] = mapped_values
+
+    return mapped_df
+
+
+def create_baseline_sample(
+    param_definitions: Dict[str, Any], yaml_files: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Create a baseline sample dictionary with all parameters at their baseline values.
+
+    Args:
+        param_definitions: Dictionary of parameter definitions
+        yaml_files: Dictionary of loaded YAML data
+
+    Returns:
+        Dictionary with parameter_name: baseline_value pairs
+    """
+    baseline_sample = {}
+
+    for param_name, param_def in param_definitions.items():
+        # Check if this is a multiplier parameter
+        is_multiplier = param_name.endswith("_mult")
+
+        if is_multiplier:
+            # For multipliers, baseline value is always 1.0
+            baseline_sample[param_name] = 1.0
+        else:
+            # For non-multiplier parameters, read baseline value from YAML
+            yaml_file_name = param_def["yaml_file"]
+            if yaml_file_name in yaml_files:
+                baseline_value = get_nested_value(
+                    yaml_files[yaml_file_name], param_def["yaml_path"]
+                )
+                if baseline_value is not None:
+                    baseline_sample[param_name] = baseline_value
+                else:
+                    # If value not found, use midpoint of range as fallback
+                    min_val, max_val = param_def["range"]
+                    if param_def["type"] == "integer":
+                        baseline_sample[param_name] = int((min_val + max_val) / 2)
+                    else:
+                        baseline_sample[param_name] = (min_val + max_val) / 2
+            else:
+                # If YAML file not found, use midpoint of range as fallback
+                min_val, max_val = param_def["range"]
+                if param_def["type"] == "integer":
+                    baseline_sample[param_name] = int((min_val + max_val) / 2)
+                else:
+                    baseline_sample[param_name] = (min_val + max_val) / 2
+
+    return baseline_sample
+
+
+# ============================================================================
+# YAML MANIPULATION
+# ============================================================================
+
+
+def resample_multiplier_within_bounds(
+    baseline_value: float,
+    original_multiplier: float,
+    multiplier_range: Tuple[float, float],
+    final_value_bounds: Tuple[float, float],
+    param_type: str,
+    max_attempts: int = 5,
+    random_state: Optional[np.random.RandomState] = None,
+) -> Tuple[float, bool]:
+    """
+    Attempt to resample a multiplier that keeps final value within bounds.
+
+    Args:
+        baseline_value: Baseline parameter value
+        original_multiplier: Original multiplier from LHS sample
+        multiplier_range: Allowed range for multipliers (min, max)
+        final_value_bounds: Required bounds for final value (min, max)
+        param_type: Parameter type ("linear", "log", "integer")
+        max_attempts: Maximum number of resampling attempts
+        random_state: Optional random state for reproducibility
+
+    Returns:
+        (new_multiplier, success): success=True if valid multiplier found
+    """
+    # Handle edge case: baseline is zero or very small
+    if abs(baseline_value) < 1e-10:
+        return (original_multiplier, False)
+
+    # Calculate required multiplier range to keep final value within bounds
+    v_min, v_max = final_value_bounds
+    m_min_required = v_min / baseline_value
+    m_max_required = v_max / baseline_value
+
+    # Ensure min < max (handle negative baselines if any)
+    if m_min_required > m_max_required:
+        m_min_required, m_max_required = m_max_required, m_min_required
+
+    # Intersect with original multiplier range
+    m_min_orig, m_max_orig = multiplier_range
+    valid_min = max(m_min_orig, m_min_required)
+    valid_max = min(m_max_orig, m_max_required)
+
+    # If intersection is empty, cannot resample
+    if valid_min >= valid_max:
+        return (original_multiplier, False)
+
+    # Initialize random state if not provided
+    if random_state is None:
+        random_state = np.random.RandomState()
+
+    # Resample from valid range
+    for attempt in range(max_attempts):
+        if param_type == "log":
+            # Log scale sampling
+            log_min = np.log10(max(valid_min, 1e-10))
+            log_max = np.log10(valid_max)
+            log_value = log_min + random_state.random() * (log_max - log_min)
+            new_multiplier = 10**log_value
+        else:
+            # Linear sampling
+            new_multiplier = valid_min + random_state.random() * (valid_max - valid_min)
+
+        # Verify the resampled multiplier produces a valid final value
+        final_value = baseline_value * new_multiplier
+        if v_min <= final_value <= v_max:
+            return (new_multiplier, True)
+
+    # All attempts failed
+    return (original_multiplier, False)
+
+
+def load_baseline_yamls(yaml_dir: Path | str) -> Dict[str, Any]:
+    """Load all baseline YAML files."""
+    yaml_files = {}
+    yaml_path = Path(yaml_dir)
+
+    for yaml_file in yaml_path.glob("*.yaml"):
+        try:
+            with open(yaml_file, "r") as f:
+                data = yaml.safe_load(f)
+            if data is None:
+                raise ValueError(f"YAML file {yaml_file.name} is empty or invalid")
+            yaml_files[yaml_file.name] = data
+        except FileNotFoundError:
+            raise FileNotFoundError(f"YAML file not found: {yaml_file}")
+        except yaml.YAMLError as e:
+            raise ValueError(f"Error parsing YAML file {yaml_file.name}: {e}")
+
+    return yaml_files
+
+
+def apply_multiplier_to_nested_dict(
+    data: Dict[str, Any], path: List[str], multiplier: float, is_baseline: bool = False
+) -> None:
+    """
+    Apply multiplier to a nested dictionary value.
+
+    Args:
+        data: Nested dictionary
+        path: List of keys to traverse (e.g., ['project', 'line_utilization'])
+        multiplier: Multiplier to apply
+        is_baseline: If True, store baseline value first (for nested dicts like wildfire rates)
+    """
+    current = data
+    for key in path[:-1]:
+        if key not in current:
+            current[key] = {}
+        current = current[key]
+
+    final_key = path[-1]
+
+    # Handle special cases
+    if isinstance(current.get(final_key), dict):
+        # If it's a dictionary (like ignition_rates_by_terrain), multiply all values
+        for subkey in current[final_key]:
+            if isinstance(current[final_key][subkey], (int, float)):
+                if is_baseline:
+                    # Store baseline on first call
+                    if f"_baseline_{subkey}" not in current[final_key]:
+                        current[final_key][f"_baseline_{subkey}"] = current[final_key][
+                            subkey
+                        ]
+                    base_val = current[final_key][f"_baseline_{subkey}"]
+                else:
+                    base_val = current[final_key].get(
+                        f"_baseline_{subkey}", current[final_key][subkey]
+                    )
+                current[final_key][subkey] = base_val * multiplier
+    elif isinstance(current.get(final_key), list):
+        # If it's a list (like outage_rates.overhead), multiply all values
+        for item in current[final_key]:
+            if isinstance(item, dict):
+                for subkey in item:
+                    if isinstance(item[subkey], (int, float)):
+                        if is_baseline:
+                            item[f"_baseline_{subkey}"] = item[subkey]
+                        base_val = item.get(f"_baseline_{subkey}", item[subkey])
+                        item[subkey] = base_val * multiplier
+    else:
+        # Simple value
+        if is_baseline:
+            if f"_baseline_{final_key}" not in current:
+                current[f"_baseline_{final_key}"] = current.get(final_key, 0)
+            base_val = current[f"_baseline_{final_key}"]
+        else:
+            base_val = current.get(f"_baseline_{final_key}", current.get(final_key, 0))
+        current[final_key] = base_val * multiplier
+
+
+def get_nested_value(data: Dict[str, Any], path: List[str]) -> Any:
+    """Get value from nested dictionary using path."""
+    current = data
+    for key in path:
+        if key in current:
+            current = current[key]
+        else:
+            return None
+    return current
+
+
+def set_nested_value(data: Dict[str, Any], path: List[str], value: Any) -> None:
+    """Set value in nested dictionary using path."""
+    current = data
+    for key in path[:-1]:
+        if key not in current:
+            current[key] = {}
+        current = current[key]
+    current[path[-1]] = value
+
+
+def store_baseline_values(
+    yaml_files: Dict[str, Any], param_definitions: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Store baseline values for all multiplier parameters.
+    This should be called once before applying any samples.
+    """
+    baselines = {}
+
+    for param_name, param_def in param_definitions.items():
+        if not param_name.endswith("_mult"):
+            continue
+
+        yaml_file_name = param_def["yaml_file"]
+        if yaml_file_name not in yaml_files:
+            continue
+
+        current_value = get_nested_value(
+            yaml_files[yaml_file_name], param_def["yaml_path"]
+        )
+
+        if current_value is not None:
+            if isinstance(current_value, dict):
+                # Check if target_fields is specified (for field-specific multipliers)
+                target_fields = param_def.get("target_fields")
+
+                if target_fields:
+                    # Store only the target fields for each zone/key
+                    baseline_dict = {}
+                    for zone_key, zone_dict in current_value.items():
+                        if isinstance(zone_dict, dict):
+                            baseline_dict[zone_key] = {}
+                            for field_name in target_fields:
+                                if field_name in zone_dict and isinstance(
+                                    zone_dict[field_name], (int, float)
+                                ):
+                                    baseline_dict[zone_key][field_name] = zone_dict[
+                                        field_name
+                                    ]
+                    baselines[param_name] = baseline_dict
+                else:
+                    # For nested dicts, store the entire structure
+                    try:
+                        dumped = yaml.dump(current_value)
+                        if not dumped:
+                            raise ValueError(
+                                f"Failed to dump YAML data for {param_name}"
+                            )
+                        baselines[param_name] = yaml.safe_load(dumped)  # Deep copy
+                    except yaml.YAMLError as e:
+                        raise ValueError(
+                            f"Error processing YAML data for {param_name}: {e}"
+                        )
+            else:
+                baselines[param_name] = current_value
+
+    return baselines
+
+
+def apply_sample_to_yamls(
+    yaml_files: Dict[str, Any],
+    sample_dict: Dict[str, Any],
+    param_definitions: Dict[str, Any],
+    baselines: Dict[str, Any],
+) -> None:
+    """
+    Apply a sample's parameter values to YAML files.
+
+    Args:
+        yaml_files: Dictionary of loaded YAML data
+        sample_dict: Dictionary of parameter: value for this sample
+        param_definitions: Parameter definitions
+        baselines: Dictionary of baseline values for multiplier parameters
+    """
+
+    def validate_and_adjust_multiplier(
+        param_name: str,
+        baseline_value: float,
+        multiplier: float,
+        param_def: Dict[str, Any],
+        original_multiplier: float,
+    ) -> Tuple[float, bool, bool]:
+        """
+        Validate multiplier and adjust if needed to keep final value within bounds.
+
+        Args:
+            param_name: Name of the parameter
+            baseline_value: Baseline parameter value
+            multiplier: Current multiplier to check
+            param_def: Parameter definition dictionary
+            original_multiplier: Original multiplier from LHS sample
+
+        Returns:
+            (adjusted_multiplier_or_value, was_resampled, was_clamped)
+        """
+        # Check if parameter has final_value_bounds
+        final_value_bounds = param_def.get("final_value_bounds")
+        if final_value_bounds is None:
+            # No bounds constraint, return as-is
+            return (multiplier, False, False)
+
+        v_min, v_max = final_value_bounds
+        final_value = baseline_value * multiplier
+
+        # Check if final value is within bounds
+        if v_min <= final_value <= v_max:
+            return (multiplier, False, False)
+
+        # Out of bounds - try to resample multiplier
+        multiplier_range = param_def["range"]
+        param_type = param_def.get("type", "linear")
+
+        new_multiplier, resampled = resample_multiplier_within_bounds(
+            baseline_value=baseline_value,
+            original_multiplier=original_multiplier,
+            multiplier_range=multiplier_range,
+            final_value_bounds=final_value_bounds,
+            param_type=param_type,
+            max_attempts=5,
+        )
+
+        if resampled:
+            # Resampling succeeded - use new multiplier
+            print(
+                f"Warning: Resampled {param_name} multiplier from {original_multiplier:.4f} to {new_multiplier:.4f} "
+                f"to keep final value within bounds [{(baseline_value * original_multiplier):.4f} -> {(baseline_value * new_multiplier):.4f}]"
+            )
+            return (new_multiplier, True, False)
+
+        # Resampling failed - clamp final value
+        clamped_value = max(v_min, min(v_max, final_value))
+        print(
+            f"Warning: Clamped {param_name} final value from {final_value:.4f} to {clamped_value:.4f} "
+            f"(bounds: [{v_min}, {v_max}], baseline: {baseline_value:.4f}, multiplier: {multiplier:.4f})"
+        )
+        # Return the clamped final value (not multiplier) - caller will use this directly
+        return (clamped_value, False, True)
+
+    def apply_bounds_check(param_name: str, value: float) -> float:
+        """
+        Apply bounds checking for parameters with logical constraints.
+        Legacy function for backward compatibility - now just clamps.
+
+        Args:
+            param_name: Name of the parameter
+            value: The calculated value to check
+
+        Returns:
+            Clamped value if bounds exist, otherwise original value
+        """
+        # Parameters that must be in [0, 1]
+        zero_one_params = {
+            "line_utilization_mult",
+            "congestion_flow_factor_mult",
+        }
+
+        # Check if this parameter has [0, 1] bounds
+        if param_name in zero_one_params:
+            return max(0.0, min(1.0, value))
+
+        return value
+
+    # Apply values
+    for param_name, param_value in sample_dict.items():
+        if param_name not in param_definitions:
+            continue
+
+        param_def = param_definitions[param_name]
+        yaml_file_name = param_def["yaml_file"]
+
+        if yaml_file_name not in yaml_files:
+            print(f"Warning: YAML file {yaml_file_name} not found")
+            continue
+
+        # Check if this is a multiplier parameter or direct value
+        is_multiplier = param_name.endswith("_mult")
+
+        if is_multiplier:
+            # Apply multiplier to baseline value(s)
+            if param_name in baselines:
+                baseline_value = baselines[param_name]
+
+                if isinstance(baseline_value, dict):
+                    # Check if target_fields is specified (for field-specific multiplication)
+                    target_fields = param_def.get("target_fields")
+
+                    if target_fields:
+                        # Field-specific multiplication: only multiply specified fields
+                        # Get target dict
+                        current = yaml_files[yaml_file_name]
+                        for key in param_def["yaml_path"]:
+                            if key in current:
+                                current = current[key]
+                            else:
+                                current = None
+                                break
+
+                        if current is not None:
+                            # Iterate through all zones/keys in the dict
+                            for zone_key, zone_dict in current.items():
+                                if isinstance(zone_dict, dict):
+                                    # For each target field, multiply if it exists
+                                    for field_name in target_fields:
+                                        if field_name in zone_dict and isinstance(
+                                            zone_dict[field_name], (int, float)
+                                        ):
+                                            # Get baseline value for this field
+                                            baseline_field_value = baseline_value.get(
+                                                zone_key, {}
+                                            ).get(field_name)
+                                            if baseline_field_value is not None:
+                                                # Validate and potentially resample/clamp multiplier
+                                                (
+                                                    adjusted_value,
+                                                    was_resampled,
+                                                    was_clamped,
+                                                ) = validate_and_adjust_multiplier(
+                                                    param_name=param_name,
+                                                    baseline_value=baseline_field_value,
+                                                    multiplier=param_value,
+                                                    param_def=param_def,
+                                                    original_multiplier=param_value,
+                                                )
+
+                                                if was_clamped:
+                                                    # Clamped value is the final value, use it directly
+                                                    zone_dict[field_name] = (
+                                                        adjusted_value
+                                                    )
+                                                else:
+                                                    # Use adjusted multiplier (might be resampled or original)
+                                                    zone_dict[field_name] = (
+                                                        baseline_field_value
+                                                        * adjusted_value
+                                                    )
+                    else:
+                        # For nested dicts, multiply all values recursively (original behavior)
+                        # First, validate multiplier once (use first baseline value found)
+                        # We'll use the same multiplier for all nested values
+                        first_baseline = None
+                        if isinstance(baseline_value, dict):
+
+                            def find_first_numeric(
+                                d: Dict[str, Any],
+                            ) -> Optional[float]:
+                                """Find first numeric value in nested dict."""
+                                for v in d.values():
+                                    if isinstance(v, (int, float)):
+                                        return float(v)
+                                    elif isinstance(v, dict):
+                                        result = find_first_numeric(v)
+                                        if result is not None:
+                                            return result
+                                return None
+
+                            first_baseline = find_first_numeric(baseline_value)
+
+                        # Validate multiplier if we have a baseline and bounds
+                        validated_multiplier = param_value
+                        if (
+                            first_baseline is not None
+                            and param_def.get("final_value_bounds") is not None
+                        ):
+                            adjusted_value, was_resampled, was_clamped = (
+                                validate_and_adjust_multiplier(
+                                    param_name=param_name,
+                                    baseline_value=first_baseline,
+                                    multiplier=param_value,
+                                    param_def=param_def,
+                                    original_multiplier=param_value,
+                                )
+                            )
+                            if not was_clamped:
+                                validated_multiplier = adjusted_value
+
+                        def multiply_nested_dict(
+                            base_dict: Dict[str, Any],
+                            mult: float,
+                            target_dict: Dict[str, Any],
+                            param_name: str,
+                            param_def: Dict[str, Any],
+                        ) -> None:
+                            """Multiply all numeric values in nested dict structure."""
+                            for key, value in base_dict.items():
+                                if isinstance(value, dict):
+                                    if key not in target_dict:
+                                        target_dict[key] = {}
+                                    multiply_nested_dict(
+                                        value,
+                                        mult,
+                                        target_dict[key],
+                                        param_name,
+                                        param_def,
+                                    )
+                                elif isinstance(value, (int, float)):
+                                    # For nested dicts, we validate once and use the same multiplier
+                                    # But still need to check final value bounds for each
+                                    final_value = value * mult
+                                    final_value_bounds = param_def.get(
+                                        "final_value_bounds"
+                                    )
+                                    if final_value_bounds is not None:
+                                        v_min, v_max = final_value_bounds
+                                        if not (v_min <= final_value <= v_max):
+                                            # Clamp if out of bounds
+                                            target_dict[key] = max(
+                                                v_min, min(v_max, final_value)
+                                            )
+                                        else:
+                                            target_dict[key] = final_value
+                                    else:
+                                        target_dict[key] = final_value
+
+                        # Get target dict
+                        current = yaml_files[yaml_file_name]
+                        for key in param_def["yaml_path"]:
+                            if key in current:
+                                current = current[key]
+                            else:
+                                current = None
+                                break
+
+                        if current is not None:
+                            multiply_nested_dict(
+                                baseline_value,
+                                validated_multiplier,
+                                current,
+                                param_name,
+                                param_def,
+                            )
+                else:
+                    # Simple numeric value
+                    # Validate and potentially resample/clamp multiplier
+                    adjusted_value, was_resampled, was_clamped = (
+                        validate_and_adjust_multiplier(
+                            param_name=param_name,
+                            baseline_value=baseline_value,
+                            multiplier=param_value,
+                            param_def=param_def,
+                            original_multiplier=param_value,
+                        )
+                    )
+
+                    if was_clamped:
+                        # Clamped value is the final value, use it directly
+                        new_value = adjusted_value
+                    else:
+                        # Use adjusted multiplier (might be resampled or original)
+                        new_value = baseline_value * adjusted_value
+
+                    set_nested_value(
+                        yaml_files[yaml_file_name], param_def["yaml_path"], new_value
+                    )
+            else:
+                print(f"Warning: Baseline not found for {param_name}")
+        else:
+            # Direct value replacement (e.g., delay_years, project_lifetime)
+            set_nested_value(
+                yaml_files[yaml_file_name], param_def["yaml_path"], param_value
+            )
+
+
+def save_yamls_to_temp(yaml_files: Dict[str, Any], temp_dir: Path | str) -> None:
+    """Save modified YAML files to temporary directory."""
+    temp_path = Path(temp_dir)
+    temp_path.mkdir(parents=True, exist_ok=True)
+
+    for yaml_file_name, yaml_data in yaml_files.items():
+        # Clean up baseline markers before saving
+        cleaned_data = remove_baseline_markers(yaml_data)
+
+        output_path = temp_path / yaml_file_name
+        with open(output_path, "w") as f:
+            yaml.dump(cleaned_data, f, default_flow_style=False, sort_keys=False)
+
+
+def remove_baseline_markers(data: Any) -> Any:
+    """Recursively remove baseline marker keys from dictionary."""
+    if isinstance(data, dict):
+        cleaned = {}
+        for key, value in data.items():
+            if not key.startswith("_baseline_"):
+                cleaned[key] = remove_baseline_markers(value)
+        return cleaned
+    elif isinstance(data, list):
+        return [remove_baseline_markers(item) for item in data]
+    else:
+        return data
+
+
+# ============================================================================
+# CTCC RUNNER
+# ============================================================================
+
+
+def read_results_by_scenario_id(
+    batch_summary_path: Path, scenario_id: str
+) -> Optional[Dict[str, Any]]:
+    """
+    Read results from batch_summary.csv by matching scenario_id.
+
+    Args:
+        batch_summary_path: Path to batch_summary.csv
+        scenario_id: Scenario ID to search for
+
+    Returns:
+        Dictionary of results if found, None otherwise
+    """
+    if not batch_summary_path.exists():
+        return None
+
+    try:
+        df = pd.read_csv(batch_summary_path)
+        if len(df) == 0:
+            return None
+
+        # Find row with matching scenario_id
+        matching_rows = df[df["scenario_id"] == scenario_id]
+        if len(matching_rows) > 0:
+            return matching_rows.iloc[-1].to_dict()  # Take last if multiple matches
+        else:
+            return None
+    except Exception as e:
+        return None
+
+
+# run_ctcc_with_temp_yamls is now imported from scripts.sensitivity_utils
+# Create a wrapper that matches the original function signature
+def run_ctcc_with_temp_yamls(
+    temp_yaml_dir: Path | str, base_dir: Path | str, scenario_id: str
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Wrapper for run_ctcc_with_temp_yamls that provides the function signature
+    expected by sensitivity_analysis.py.
+    """
+    return _run_ctcc_with_temp_yamls_utils(
+        temp_yaml_dir,
+        base_dir,
+        scenario_id,
+        ctcc_args=None,
+        use_env_dict=True,
+        read_results_by_scenario_id_func=read_results_by_scenario_id,
+    )
+
+
+# ============================================================================
+# SAMPLE PROCESSING FUNCTION
+# ============================================================================
+
+
+def process_single_sample(
+    args_tuple: Tuple[
+        int, Dict[str, Any], str, Dict[str, Any], Dict[str, Any], Dict[str, Any]
+    ],
+) -> Tuple[str, Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Process a single sample.
+
+    Args:
+        args_tuple: Tuple containing:
+            - sample_idx: Index of the sample
+            - sample_dict: Dictionary of parameter values
+            - base_dir: Base directory path (as string)
+            - baseline_yamls: Dictionary of baseline YAML data
+            - param_definitions: Parameter definitions
+            - baselines: Baseline values for multipliers
+
+    Returns:
+        Tuple of (sample_id, result_dict, error_message)
+        If successful: (sample_id, result_dict, None)
+        If failed: (sample_id, None, error_message)
+    """
+    (
+        sample_idx,
+        sample_dict,
+        base_dir_str,
+        baseline_yamls,
+        param_definitions,
+        baselines,
+    ) = args_tuple
+
+    base_dir = Path(base_dir_str)
+    sample_id = f"sample_{sample_idx + 1:04d}"
+    # Generate unique scenario_id for this sample
+    scenario_id = f"sample_{sample_idx}_{int(time.time() * 1000000)}"
+
+    try:
+        # Create unique temporary YAML directory for this sample
+        temp_yaml_dir = base_dir / f"yamls_temp_sample_{sample_idx}"
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+
+        # Deep copy baseline YAMLs
+        yaml_files_copy = deep_copy_yamls(baseline_yamls)
+
+        # Apply sample to YAMLs
+        apply_sample_to_yamls(
+            yaml_files_copy, sample_dict, param_definitions, baselines
+        )
+
+        # Save to temp directory
+        save_yamls_to_temp(yaml_files_copy, temp_yaml_dir)
+
+        # Run CTCC
+        result_dict, error = run_ctcc_with_temp_yamls(
+            temp_yaml_dir, base_dir, scenario_id
+        )
+
+        # Cleanup temp YAML directory
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+
+        if result_dict:
+            # Combine inputs and outputs
+            combined = {**sample_dict, **result_dict}
+            combined["sample_id"] = sample_id
+            return (sample_id, combined, None)
+        else:
+            return (sample_id, None, error)
+
+    except Exception as e:
+        # Cleanup on error
+        temp_yaml_dir = base_dir / f"yamls_temp_sample_{sample_idx}"
+        if temp_yaml_dir.exists():
+            shutil.rmtree(temp_yaml_dir)
+        return (sample_id, None, str(e))
+
+
+# ============================================================================
+# SENSITIVITY ANALYSIS
+# ============================================================================
+
+
+def calculate_prcc(inputs_df: pd.DataFrame, outputs_series: pd.Series) -> pd.Series:
+    """
+    Calculate Partial Rank Correlation Coefficients (PRCC).
+
+    Args:
+        inputs_df: DataFrame of input parameters (N samples × d parameters)
+        outputs_series: Series of output values (N samples)
+
+    Returns:
+        Series of PRCC values for each parameter
+    """
+    # Rank transform inputs and output
+    inputs_ranked = inputs_df.rank()
+    output_ranked = outputs_series.rank()
+
+    prcc_values = {}
+
+    for param in inputs_df.columns:
+        # Calculate partial correlation: corr(X, Y | all other X)
+        other_params = [p for p in inputs_df.columns if p != param]
+
+        if len(other_params) > 0:
+            # Partial correlation via residuals
+            X_param = inputs_ranked[param].values
+            X_others = inputs_ranked[other_params].values
+            Y = output_ranked.values
+
+            # Residuals of param on others
+            try:
+                from sklearn.linear_model import LinearRegression
+
+                reg_param = LinearRegression().fit(X_others, X_param)
+                residuals_param = X_param - reg_param.predict(X_others)
+
+                # Residuals of output on others
+                reg_output = LinearRegression().fit(X_others, Y)
+                residuals_output = Y - reg_output.predict(X_others)
+
+                # Correlation of residuals = partial correlation
+                prcc, _ = spearmanr(residuals_param, residuals_output)
+                prcc_values[param] = prcc
+            except ImportError:
+                # Fallback: use simple rank correlation
+                prcc, _ = spearmanr(X_param, Y)
+                prcc_values[param] = prcc
+        else:
+            # Only one parameter
+            prcc, _ = spearmanr(inputs_ranked[param], output_ranked)
+            prcc_values[param] = prcc
+
+    return pd.Series(prcc_values)
+
+
+# ============================================================================
+# PLOTTING
+# ============================================================================
+
+
+def generate_tornado_plot(
+    prcc_values: pd.Series,
+    output_path: Path | str,
+    bcr_metric_name: Optional[str] = None,
+) -> None:
+    """Generate tornado diagram showing PRCC values.
+
+    Args:
+        prcc_values: Series of PRCC values
+        output_path: Path to save the plot
+        bcr_metric_name: Name of the BCR metric (for title)
+    """
+    # Sort by absolute value
+    prcc_sorted = prcc_values.reindex(
+        prcc_values.abs().sort_values(ascending=False).index
+    )
+
+    fig, ax = plt.subplots(figsize=(10, max(8, len(prcc_sorted) * 0.5)))
+
+    colors = ["red" if x < 0 else "green" for x in prcc_sorted.values]
+    ax.barh(range(len(prcc_sorted)), prcc_sorted.values, color=colors)
+    ax.set_yticks(range(len(prcc_sorted)))
+    ax.set_yticklabels(prcc_sorted.index, fontsize=9)
+    ax.set_xlabel("Partial Rank Correlation Coefficient (PRCC)", fontsize=11)
+
+    # Use metric name in title if provided
+    if bcr_metric_name:
+        title = f"Tornado Diagram: Parameter Sensitivity on {bcr_metric_name}"
+    else:
+        title = "Tornado Diagram: Parameter Sensitivity on BCR_system"
+
+    ax.set_title(title, fontsize=12, fontweight="bold")
+    ax.axvline(x=0, color="black", linestyle="-", linewidth=0.5)
+    ax.grid(axis="x", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+def generate_scatter_plots(
+    results_df: pd.DataFrame,
+    top_params: List[str],
+    bcr_col: str,
+    output_path: Path | str,
+) -> None:
+    """Generate scatter plots for top N parameters vs a specific BCR metric.
+
+    Args:
+        results_df: DataFrame with all results
+        top_params: List of top parameter names to include
+        bcr_col: BCR column name to plot against
+        output_path: Path to save the plot
+    """
+    n_params = len(top_params)
+    n_cols = 3
+    n_rows = (n_params + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
+    axes = axes.flatten() if n_params > 1 else [axes]
+
+    # Identify baseline row (first row or sample_0001)
+    if "sample_id" in results_df.columns:
+        baseline_mask = results_df["sample_id"] == "sample_0001"
+    else:
+        # Fallback: assume first row is baseline
+        baseline_mask = pd.Series(
+            [True] + [False] * (len(results_df) - 1), index=results_df.index
+        )
+
+    baseline_df = results_df[baseline_mask]
+    other_df = results_df[~baseline_mask]
+
+    for idx, param in enumerate(top_params):
+        ax = axes[idx]
+
+        # Plot non-baseline points first (blue dots, as before)
+        if len(other_df) > 0:
+            ax.scatter(
+                other_df[param],
+                other_df[bcr_col],
+                alpha=0.5,
+                s=20,
+                color="blue",
+                label="LHS samples" if idx == 0 else "",
+            )
+
+        # Plot baseline point with red star marker
+        if len(baseline_df) > 0:
+            ax.scatter(
+                baseline_df[param],
+                baseline_df[bcr_col],
+                color="red",
+                marker="*",
+                s=200,
+                edgecolors="darkred",
+                linewidths=1.5,
+                zorder=5,
+                label="Baseline" if idx == 0 else "",
+            )
+
+        ax.set_xlabel(param, fontsize=9)
+        ax.set_ylabel(bcr_col, fontsize=9)
+        ax.grid(alpha=0.3)
+        ax.set_title(f"{param} vs {bcr_col}", fontsize=10)
+
+        # Add legend only to first subplot
+        if idx == 0:
+            ax.legend(loc="best", fontsize=8)
+
+    # Hide unused subplots
+    for idx in range(n_params, len(axes)):
+        axes[idx].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+def generate_prcc_heatmap(
+    prcc_all: pd.DataFrame, output_path: Path | str, top_n: int = 20
+) -> None:
+    """
+    Generate heatmap showing PRCC values across all BCR metrics.
+
+    Args:
+        prcc_all: DataFrame with PRCC values (index=parameters, columns=BCR metrics)
+        output_path: Path to save the plot
+        top_n: Number of top parameters to show (by average absolute PRCC)
+    """
+    # Calculate average absolute PRCC across all metrics to rank parameters
+    prcc_all_copy = prcc_all.copy()
+    prcc_all_copy["avg_abs_prcc"] = prcc_all_copy.abs().mean(axis=1)
+
+    # Select top N parameters
+    top_params = prcc_all_copy.nlargest(top_n, "avg_abs_prcc").index.tolist()
+    heatmap_data = prcc_all_copy.loc[top_params].drop("avg_abs_prcc", axis=1)
+
+    # Create figure
+    fig, ax = plt.subplots(
+        figsize=(max(8, len(heatmap_data.columns) * 2), max(10, len(top_params) * 0.4))
+    )
+
+    # Create heatmap with custom colormap
+    # Use diverging colormap: red (negative) -> white (zero) -> blue (positive)
+    sns.heatmap(
+        heatmap_data,
+        annot=True,  # Show PRCC values in cells
+        fmt=".2f",  # Format to 2 decimal places
+        cmap="RdBu_r",  # Red-Blue reversed (red=negative, blue=positive)
+        center=0,  # Center colormap at zero
+        vmin=-1,  # Min value
+        vmax=1,  # Max value
+        cbar_kws={"label": "PRCC"},
+        linewidths=0.5,
+        linecolor="gray",
+        ax=ax,
+    )
+
+    ax.set_title(
+        "PRCC Heatmap: Parameter Sensitivity Across BCR Metrics",
+        fontsize=12,
+        fontweight="bold",
+        pad=20,
+    )
+    ax.set_xlabel("BCR Metric", fontsize=10)
+    ax.set_ylabel("Parameter", fontsize=10)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=8)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+def generate_parallel_coordinates_plot(
+    results_df: pd.DataFrame,
+    top_params: List[str],
+    bcr_col: str,
+    output_path: Path | str,
+    n_samples_to_plot: int = 300,
+) -> None:
+    """
+    Generate parallel coordinates plot showing parameter combinations and BCR outcomes.
+
+    Args:
+        results_df: DataFrame with all results
+        top_params: List of top parameter names to include
+        bcr_col: BCR column name to use for coloring
+        output_path: Path to save the plot
+        n_samples_to_plot: Number of samples to plot (for readability, default all)
+    """
+    # Select top parameters + BCR
+    plot_cols = top_params + [bcr_col]
+
+    # Subset data
+    plot_data = results_df[plot_cols].copy()
+
+    # Limit number of samples if too many (for readability)
+    if len(plot_data) > n_samples_to_plot:
+        plot_data = plot_data.sample(n=n_samples_to_plot, random_state=42)
+
+    # Normalize all columns to [0, 1] for parallel coordinates
+    normalized_data = plot_data.copy()
+    for col in plot_cols:
+        col_min = normalized_data[col].min()
+        col_max = normalized_data[col].max()
+        if col_max > col_min:
+            normalized_data[col] = (normalized_data[col] - col_min) / (
+                col_max - col_min
+            )
+        else:
+            normalized_data[col] = 0.5  # Constant value
+
+    # Create figure
+    fig, ax = plt.subplots(figsize=(max(12, len(plot_cols) * 1.5), 8))
+
+    # Color by BCR value
+    bcr_values = plot_data[bcr_col].values
+    bcr_normalized = normalized_data[bcr_col].values
+
+    # Use a colormap (green for high BCR, red for low BCR)
+    cmap = plt.cm.get_cmap("RdYlGn")  # Red-Yellow-Green
+    colors = cmap(bcr_normalized)
+
+    # Plot parallel coordinates manually for better control
+    n_samples = len(normalized_data)
+    n_axes = len(plot_cols)
+
+    # Create positions for axes
+    positions = np.linspace(0, 1, n_axes)
+
+    # Plot lines
+    for idx in range(n_samples):
+        values = normalized_data.iloc[idx].values
+        ax.plot(positions, values, alpha=0.3, color=colors[idx], linewidth=0.5)
+
+    # Set axis labels and positions
+    ax.set_xticks(positions)
+    ax.set_xticklabels(plot_cols, rotation=45, ha="right", fontsize=9)
+    ax.set_ylabel("Normalized Value", fontsize=10)
+    ax.set_title(
+        f"Parallel Coordinates: Parameter Combinations → {bcr_col}",
+        fontsize=12,
+        fontweight="bold",
+        pad=20,
+    )
+    ax.grid(True, alpha=0.3, axis="y")
+
+    # Add colorbar
+    sm = plt.cm.ScalarMappable(
+        cmap=cmap, norm=plt.Normalize(vmin=bcr_values.min(), vmax=bcr_values.max())
+    )
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax, pad=0.02)
+    cbar.set_label(bcr_col, fontsize=10, rotation=270, labelpad=15)
+
+    # Add min/max labels on right side of each axis
+    for i, col in enumerate(plot_cols):
+        col_min = plot_data[col].min()
+        col_max = plot_data[col].max()
+        ax.text(
+            positions[i],
+            -0.05,
+            f"{col_min:.2f}",
+            ha="center",
+            va="top",
+            fontsize=7,
+            transform=ax.get_xaxis_transform(),
+        )
+        ax.text(
+            positions[i],
+            1.05,
+            f"{col_max:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=7,
+            transform=ax.get_xaxis_transform(),
+        )
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+
+# ============================================================================
+# MAIN WORKFLOW
+# ============================================================================
+
+
+def generate_all_plots(
+    results_df: pd.DataFrame,
+    output_dir: Path | str,
+    scenario: str,
+    total_runs: Optional[int] = None,
+    successful_runs: Optional[int] = None,
+    failed_runs: Optional[int] = None,
+    n_samples: Optional[int] = None,
+) -> None:
+    """
+    Generate all plots and analysis outputs from results DataFrame.
+
+    Args:
+        results_df: DataFrame with all results
+        output_dir: Output directory path
+        scenario: Scenario name
+        total_runs: Total number of runs (for summary)
+        successful_runs: Number of successful runs (for summary)
+        failed_runs: Number of failed runs (for summary)
+        n_samples: Number of LHS samples (for summary)
+    """
+    output_dir = Path(output_dir)
+
+    # Step 5: Calculate PRCC and generate plots for all BCR metrics
+    available_bcr_columns = [col for col in BCR_COLUMNS if col in results_df.columns]
+
+    if available_bcr_columns:
+        print("Calculating PRCC values for all BCR metrics...")
+        inputs_df = results_df[
+            [p for p in PARAM_DEFINITIONS.keys() if p in results_df.columns]
+        ]
+
+        # Calculate PRCC for each BCR metric
+        prcc_all = pd.DataFrame(index=inputs_df.columns)
+
+        for bcr_col in available_bcr_columns:
+            outputs_series = results_df[bcr_col]
+            prcc_values = calculate_prcc(inputs_df, outputs_series)
+            prcc_all[bcr_col] = prcc_values
+
+        # Save PRCC values (all BCRs in one file)
+        prcc_path = output_dir / "prcc_values.csv"
+        prcc_all.to_csv(prcc_path)
+        print(f"Saved PRCC values to {prcc_path}")
+        print(f"  Columns: {', '.join(available_bcr_columns)}")
+        print()
+
+        # Generate PRCC heatmap
+        print("Generating PRCC heatmap...")
+        heatmap_path = output_dir / "prcc_heatmap.png"
+        generate_prcc_heatmap(prcc_all, heatmap_path, top_n=25)
+        print(f"  Saved PRCC heatmap: {heatmap_path}")
+        print()
+
+        # Generate tornado plots for each BCR metric
+        print("Generating tornado diagrams...")
+        for bcr_col in available_bcr_columns:
+            prcc_values = prcc_all[bcr_col]
+            tornado_path = output_dir / f"tornado_{bcr_col}.png"
+            generate_tornado_plot(prcc_values, tornado_path, bcr_metric_name=bcr_col)
+            print(f"  Saved tornado diagram: {tornado_path}")
+        print()
+
+        # Generate scatter plots for each BCR metric
+        print("Generating scatter plots...")
+        for bcr_col in available_bcr_columns:
+            prcc_values = prcc_all[bcr_col]
+            top_6_params = prcc_values.abs().nlargest(6).index.tolist()
+            scatter_path = output_dir / f"scatter_top6_{bcr_col}.png"
+            generate_scatter_plots(results_df, top_6_params, bcr_col, scatter_path)
+            print(f"  Saved scatter plots: {scatter_path}")
+        print()
+
+        # Generate parallel coordinates plot using bcr_system (most important one)
+        if "bcr_system" in available_bcr_columns:
+            print("Generating parallel coordinates plot...")
+            prcc_values_system = prcc_all["bcr_system"]
+            top_8_params = prcc_values_system.abs().nlargest(8).index.tolist()
+            parallel_path = output_dir / "parallel_coordinates_bcr_system.png"
+            generate_parallel_coordinates_plot(
+                results_df, top_8_params, "bcr_system", parallel_path
+            )
+            print(f"  Saved parallel coordinates plot: {parallel_path}")
+            print()
+
+        # Summary statistics for all BCR metrics
+        print("Summary Statistics:")
+        print("-" * 80)
+        for bcr_col in available_bcr_columns:
+            print(f"{bcr_col}:")
+            print(f"  Mean: {results_df[bcr_col].mean():.4f}")
+            print(f"  Median (P50): {results_df[bcr_col].median():.4f}")
+            print(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}")
+            print(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}")
+            print()
+
+        # Save summary
+        summary_path = output_dir / "summary_stats.txt"
+        with open(summary_path, "w") as f:
+            f.write("LHS Sensitivity Analysis Summary\n")
+            f.write("=" * 80 + "\n")
+            f.write(f"Scenario: {scenario}\n")
+            if total_runs is not None and n_samples is not None:
+                f.write(
+                    f"Total runs: {total_runs} (1 baseline + {n_samples} LHS samples)\n"
+                )
+            if successful_runs is not None:
+                f.write(f"Successful runs: {successful_runs}\n")
+            if failed_runs is not None:
+                f.write(f"Failed runs: {failed_runs}\n")
+            f.write("\n")
+
+            for bcr_col in available_bcr_columns:
+                f.write(f"{bcr_col} Statistics:\n")
+                f.write(f"  Mean: {results_df[bcr_col].mean():.4f}\n")
+                f.write(f"  Median (P50): {results_df[bcr_col].median():.4f}\n")
+                f.write(f"  P95: {results_df[bcr_col].quantile(0.95):.4f}\n")
+                f.write(f"  P5: {results_df[bcr_col].quantile(0.05):.4f}\n")
+                f.write(f"  Std: {results_df[bcr_col].std():.4f}\n")
+                f.write("\n")
+
+        print(f"Saved summary to {summary_path}")
+    else:
+        print("Warning: No BCR columns found in results")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="LHS Sensitivity Analysis for CTCC",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--scenario", required=True, help='Scenario name (e.g., "1.1_rural_overhead")'
+    )
+    parser.add_argument(
+        "--n_samples", type=int, default=300, help="Number of LHS samples"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Random seed for reproducibility"
+    )
+    parser.add_argument(
+        "--output_dir", default="sensitivity_results", help="Output directory"
+    )
+    parser.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=50,
+        help="Save checkpoint every N runs",
+    )
+    parser.add_argument(
+        "--plot_only",
+        action="store_true",
+        help="Only regenerate plots from existing results.csv (skip analysis)",
+    )
+
+    args = parser.parse_args()
+
+    # Setup directories
+    base_dir = Path(__file__).parent
+    yaml_dir = base_dir / "yamls"
+    output_dir = base_dir / args.output_dir / f"scenario_{args.scenario}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Handle --plot_only mode
+    if args.plot_only:
+        print("=" * 80)
+        print("PLOT-ONLY MODE: Regenerating plots from existing results.csv")
+        print("=" * 80)
+        print(f"Scenario: {args.scenario}")
+        print(f"Output: {output_dir}")
+        print("=" * 80)
+        print()
+
+        # Verify results.csv exists
+        results_path = output_dir / "results.csv"
+        if not results_path.exists():
+            print(f"ERROR: results.csv not found at {results_path}")
+            print(
+                "Please run the full sensitivity analysis first (without --plot_only)"
+            )
+            sys.exit(1)
+
+        # Load results
+        print(f"Loading results from {results_path}...")
+        try:
+            results_df = pd.read_csv(results_path)
+            print(f"Loaded {len(results_df)} rows from results.csv")
+            print()
+
+            # Validate required columns
+            required_params = [
+                p for p in PARAM_DEFINITIONS.keys() if p in results_df.columns
+            ]
+            if len(required_params) == 0:
+                print(
+                    "ERROR: results.csv does not contain any expected parameter columns"
+                )
+                sys.exit(1)
+
+            # Generate plots
+            generate_all_plots(
+                results_df=results_df,
+                output_dir=output_dir,
+                scenario=args.scenario,
+            )
+
+            print()
+            print("=" * 80)
+            print("✅ Plot regeneration complete!")
+            print("=" * 80)
+            return
+
+        except Exception as e:
+            print(f"ERROR: Failed to load or process results.csv: {e}")
+            sys.exit(1)
+
+    # Normal mode: Run full analysis
+    print("=" * 80)
+    print("LHS SENSITIVITY ANALYSIS FOR CTCC")
+    print("=" * 80)
+    print(f"Scenario: {args.scenario}")
+    print(f"Samples: {args.n_samples}")
+    print(f"Parameters: {len(PARAM_DEFINITIONS)}")
+    print(f"Seed: {args.seed}")
+    print(f"Output: {output_dir}")
+    print("=" * 80)
+    print()
+
+    # Step 1: Load baseline YAMLs
+    print("Loading baseline YAML files...")
+    baseline_yamls = load_baseline_yamls(yaml_dir)
+    print(f"Loaded {len(baseline_yamls)} YAML files")
+
+    # Store baseline values for multiplier parameters
+    print("Storing baseline values...")
+    baselines = store_baseline_values(baseline_yamls, PARAM_DEFINITIONS)
+    print(f"Stored baselines for {len(baselines)} multiplier parameters")
+    print()
+
+    # Step 2: Generate LHS samples
+    print("Generating LHS samples...")
+    samples_uniform = generate_lhs_samples(
+        args.n_samples, PARAM_DEFINITIONS, seed=args.seed
+    )
+    samples_mapped = map_samples_to_ranges(samples_uniform, PARAM_DEFINITIONS)
+
+    # Create baseline sample and prepend it to samples
+    print("Creating baseline sample...")
+    baseline_sample = create_baseline_sample(PARAM_DEFINITIONS, baseline_yamls)
+    baseline_df = pd.DataFrame([baseline_sample])
+    samples_mapped = pd.concat([baseline_df, samples_mapped], ignore_index=True)
+    total_runs = args.n_samples + 1
+    print(f"Including baseline run as sample_0001 (total runs: {total_runs})")
+    print()
+
+    # Save LHS samples (includes baseline as first row)
+    samples_path = output_dir / "lhs_samples.csv"
+    samples_mapped.to_csv(samples_path, index=False)
+    print(f"Saved samples (1 baseline + {args.n_samples} LHS) to {samples_path}")
+    print()
+
+    # Step 3: Run CTCC for each sample
+    print(
+        f"Running CTCC for each sample (1 baseline + {args.n_samples} LHS samples)..."
+    )
+    print("-" * 80)
+
+    results_list = []
+    failed_samples = []
+    start_time = time.time()
+
+    # Process samples sequentially
+    for sample_idx in range(total_runs):
+        sample_dict = samples_mapped.iloc[sample_idx].to_dict()
+        sample_id = f"sample_{sample_idx + 1:04d}"
+        scenario_id = f"sample_{sample_idx}_{int(time.time() * 1000000)}"
+
+        try:
+            # Create temporary YAML directory
+            temp_yaml_dir = base_dir / "yamls_temp"
+            if temp_yaml_dir.exists():
+                shutil.rmtree(temp_yaml_dir)
+
+            # Copy baseline YAMLs
+            yaml_files_copy = deep_copy_yamls(baseline_yamls)
+
+            # Apply sample to YAMLs
+            apply_sample_to_yamls(
+                yaml_files_copy, sample_dict, PARAM_DEFINITIONS, baselines
+            )
+
+            # Save to temp directory
+            save_yamls_to_temp(yaml_files_copy, temp_yaml_dir)
+
+            # Run CTCC
+            result_dict, error = run_ctcc_with_temp_yamls(
+                temp_yaml_dir, base_dir, scenario_id
+            )
+
+            if result_dict:
+                # Combine inputs and outputs
+                combined = {**sample_dict, **result_dict}
+                combined["sample_id"] = sample_id
+                results_list.append(combined)
+
+                # Progress update
+                if (sample_idx + 1) % 10 == 0:
+                    elapsed = time.time() - start_time
+                    avg_time = elapsed / (sample_idx + 1)
+                    remaining = (total_runs - sample_idx - 1) * avg_time
+
+                    bcr = result_dict.get("bcr_system", "N/A")
+                    bcr_str = (
+                        f"{bcr:.4f}" if isinstance(bcr, (int, float)) else str(bcr)
+                    )
+                    sample_type = "baseline" if sample_idx == 0 else "LHS"
+                    print(
+                        f"[{sample_idx + 1}/{total_runs}] {sample_id} complete ({sample_type}). "
+                        f"BCR_system: {bcr_str}. "
+                        f"Est. time remaining: {remaining/60:.1f} min"
+                    )
+
+                # Checkpoint
+                if (sample_idx + 1) % args.checkpoint_interval == 0:
+                    checkpoint_df = pd.DataFrame(results_list)
+                    checkpoint_path = output_dir / "results_checkpoint.csv"
+                    checkpoint_df.to_csv(checkpoint_path, index=False)
+                    print(f"  Checkpoint saved: {checkpoint_path}")
+            else:
+                failed_samples.append((sample_id, error))
+                print(f"[{sample_idx + 1}/{total_runs}] {sample_id} FAILED: {error}")
+
+        except Exception as e:
+            failed_samples.append((sample_id, str(e)))
+            print(f"[{sample_idx + 1}/{total_runs}] {sample_id} ERROR: {e}")
+
+    print()
+    print("=" * 80)
+    print(f"Completed: {len(results_list)}/{total_runs} successful")
+    if failed_samples:
+        print(f"Failed: {len(failed_samples)} samples")
+        print("Failed samples:")
+        for sample_id, error in failed_samples[:10]:  # Show first 10
+            print(f"  {sample_id}: {error}")
+        if len(failed_samples) > 10:
+            print(f"  ... and {len(failed_samples) - 10} more")
+    print()
+
+    # Step 4: Save results
+    if results_list:
+        # Sort results by sample_id for consistency
+        results_list_sorted = sorted(results_list, key=lambda x: x.get("sample_id", ""))
+        results_df = pd.DataFrame(results_list_sorted)
+        results_path = output_dir / "results.csv"
+        results_df.to_csv(results_path, index=False)
+        print(f"Saved results to {results_path}")
+        print()
+
+        # Step 5: Calculate PRCC and generate plots for all BCR metrics
+        generate_all_plots(
+            results_df=results_df,
+            output_dir=output_dir,
+            scenario=args.scenario,
+            total_runs=total_runs,
+            successful_runs=len(results_list),
+            failed_runs=len(failed_samples),
+            n_samples=args.n_samples,
+        )
+    else:
+        print("Error: No successful runs!")
+        sys.exit(1)
+
+    print()
+    print("=" * 80)
+    print("✅ Sensitivity analysis complete!")
+    print("=" * 80)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,81 @@
+flowchart TD
+    Start["python ctcc.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
+    
+    ParseArgs --> LoadYAML{"Load YAML Config<br/>Primary BCR Settings"}
+    LoadYAML -->|"Config exists"| MergeFlags["Merge YAML config with CLI flags<br/>YAML overrides CLI"]
+    LoadYAML -->|"No config"| SetEnvVars
+    MergeFlags --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE, CTCC_OUTPUT_MODE<br/>CTCC_JSON_DATA_FILE, CTCC_SCENARIO_ID<br/>CTCC_NO_WILDFIRE, etc."]
+    
+    SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
+    
+    GenScenarioID --> CheckCapitalOnly{"--capital_only flag?"}
+    
+    CheckCapitalOnly -->|"Yes"| CapitalScripts["Build Capital-Only Script List"]
+    CheckCapitalOnly -->|"No"| FullScripts["Build Full Script List"]
+    
+    CapitalScripts --> ScriptList1["Scripts: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py"]
+    
+    FullScripts --> ScriptList2["Always: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py<br/>revenue.py"]
+    
+    ScriptList2 --> Conditional1{"--no_insurance?"}
+    Conditional1 -->|"No"| AddInsurance["Add: insurance_costs.py"]
+    Conditional1 -->|"Yes"| Conditional2
+    AddInsurance --> Conditional2{"--no_delay_costs?"}
+    Conditional2 -->|"No"| AddDelay["Add: delay_costs.py"]
+    Conditional2 -->|"Yes"| Conditional3
+    AddDelay --> Conditional3{"--no_wildfire?"}
+    Conditional3 -->|"No"| AddWildfire["Add: wildfire_costs.py"]
+    Conditional3 -->|"Yes"| Conditional4
+    AddWildfire --> Conditional4{"--no_outages?"}
+    Conditional4 -->|"No"| AddOutage["Add: outage_costs.py"]
+    Conditional4 -->|"Yes"| AlwaysBenefits
+    AddOutage --> AlwaysBenefits["Always: congestion_curtailment_reduction.py"]
+    
+    AlwaysBenefits --> AlwaysEnergy["Always: energy_losses.py"]
+    
+    AlwaysEnergy --> Conditional5{"--no_oandm?"}
+    Conditional5 -->|"No"| AddOandM["Add: oandm.py"]
+    Conditional5 -->|"Yes"| Conditional6
+    AddOandM --> Conditional6{"--no_emissions?"}
+    Conditional6 -->|"No"| AddEmissions["Add: emissions.py"]
+    Conditional6 -->|"Yes"| Conditional7
+    AddEmissions --> Conditional7{"--no_linelosses?"}
+    Conditional7 -->|"No"| AddLineLosses["Add: line_loss_costs.py"]
+    Conditional7 -->|"Yes"| ExecuteLoop
+    
+    ScriptList1 --> ExecuteLoop["Execute Scripts Sequentially"]
+    
+    ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
+    
+    RunScript --> Subprocess["Run as subprocess<br/>cwd=scripts/<br/>env=os.environ.copy()"]
+    
+    Subprocess --> ScriptLoad["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+    
+    ScriptLoad --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
+    
+    ScriptCalc --> ScriptOutput["Script: Write Output<br/>via smart_output<br/>(CSV or JSON)"]
+    
+    ScriptOutput --> MoreScripts{"More scripts?"}
+    MoreScripts -->|"Yes"| RunScript
+    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
+    
+    CheckSuccess -->|"No"| EndError["End: Show error message"]
+    CheckSuccess -->|"Yes"| CheckOutputMode{"Check CTCC_OUTPUT_MODE"}
+    
+    CheckOutputMode -->|"csv"| CSVMode["CSV Output Mode"]
+    CheckOutputMode -->|"json"| JSONMode["JSON Output Mode"]
+    
+    CSVMode --> CalcBCR_CSV["Calculate BCR from<br/>batch_summary.csv"]
+    CalcBCR_CSV --> UpdateCSV["Update batch_summary.csv<br/>with BCR metrics"]
+    UpdateCSV --> EndCSV["End: CSV files in outputs/"]
+    
+    JSONMode --> AggregateJSON["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
+    AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
+    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>ctcc_results_{id}.json"]
+    WriteFinalJSON --> CleanupJSON["Clean up intermediate<br/>JSON files"]
+    CleanupJSON --> EndJSON["End: JSON file in outputs/"]
+    
+    EndCSV --> End
+    EndJSON --> End
+    EndError --> End["Complete"]
+

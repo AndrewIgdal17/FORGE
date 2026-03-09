@@ -1,0 +1,71 @@
+@echo off
+REM Run CTCC in YAML input -> CSV output mode (traditional mode)
+
+setlocal enabledelayedexpansion
+
+cd /d "%~dp0"
+
+REM Determine Python binary
+set PYTHON_BIN=
+where python >nul 2>&1
+if %errorlevel% equ 0 (
+    set PYTHON_BIN=python
+) else (
+    where python3 >nul 2>&1
+    if !errorlevel! equ 0 (
+        set PYTHON_BIN=python3
+    ) else (
+        where py >nul 2>&1
+        if !errorlevel! equ 0 (
+            set PYTHON_BIN=py -3
+        ) else (
+            echo Python interpreter not found. Please install Python 3.8+ from python.org
+            echo Make sure to check "Add Python to PATH" during installation.
+            pause
+            exit /b 1
+        )
+    )
+)
+
+REM Create virtual environment if it doesn't exist
+if not exist "venv\" (
+    echo Creating virtual environment at venv
+    %PYTHON_BIN% -m venv venv
+    if errorlevel 1 (
+        echo Failed to create virtual environment
+        exit /b 1
+    )
+)
+
+REM Activate virtual environment
+call venv\Scripts\activate.bat
+if errorlevel 1 (
+    echo Failed to activate virtual environment
+    exit /b 1
+)
+
+REM Install/update dependencies
+if exist "requirements.txt" (
+    echo Installing/updating dependencies...
+    python -m pip install --upgrade pip >nul 2>&1
+    python -m pip install -r requirements.txt
+    if errorlevel 1 (
+        echo Failed to install dependencies
+        exit /b 1
+    )
+) else (
+    echo requirements.txt not found; skipping dependency installation.
+)
+
+echo.
+echo Starting CTCC: YAML -^> CSV mode...
+echo.
+
+REM Run ctcc.py (default mode is YAML -> CSV, no flags needed)
+python ctcc.py
+
+echo.
+echo CTCC execution complete.
+echo CSV files saved to: outputs\
+
+endlocal
