@@ -3778,6 +3778,14 @@
         curtSection.appendChild(currencyPairItem('Curtailment Benefit (Raw)', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
         container.appendChild(createCategory('Curtailment Benefits', curtSection));
 
+        // Benefit from Delivered Electricity (same style, no conservative row)
+        const delivSection = document.createElement('div');
+        delivSection.className = 'cost-section-items';
+        delivSection.appendChild(pairHeader());
+        delivSection.appendChild(currencyItem('Annual', cc.delivered_benefit_annual || 0));
+        delivSection.appendChild(currencyPairItem('Benefit from Delivered Electricity', cc.delivered_benefit_nominal || 0, cc.delivered_benefit_pv || 0));
+        container.appendChild(createCategory('Benefit from Delivered Electricity', delivSection));
+
         // Revenue
         const revSection = document.createElement('div');
         revSection.className = 'cost-section-items';
@@ -3846,6 +3854,7 @@
       function renderPerspectivesTable(results) {
         const container = document.createElement('div');
         const bcr = results.bcr || {};
+        const cc = results.benefits?.congestion_curtailment || {};
 
         const grid = document.createElement('div');
         grid.className = 'persp-grid';
@@ -3860,8 +3869,8 @@
 
         // Utility costs = capital + delay + operational
         const utilityCosts = (bcr.capital_costs_pv || 0) + (bcr.delay_costs_pv || 0) + (bcr.operational_costs_pv || 0);
-        // Ratepayer benefits = congestion + curtailment haircut
-        const ratepayerBenefits = (bcr.congestion_benefit_haircut_pv || 0) + (bcr.curtailment_benefit_haircut_pv || 0);
+        // Ratepayer benefits = congestion + curtailment (haircut) + delivered electricity
+        const ratepayerBenefits = (bcr.congestion_benefit_haircut_pv || 0) + (bcr.curtailment_benefit_haircut_pv || 0) + (cc.delivered_benefit_pv || 0);
         // Ratepayer costs = revenue + energy losses
         const ratepayerCosts = (bcr.revenue_pv || 0) + (bcr.energy_losses_pv || 0);
 
@@ -4230,12 +4239,13 @@
 
             const tbGrid = document.createElement('div');
             tbGrid.style.display = 'grid';
-            tbGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            tbGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
             tbGrid.style.gap = '1rem';
             tbGrid.style.marginTop = '1rem';
             const tbMetrics = [
               { label: 'Congestion', value: bcr.congestion_benefit_haircut_pv || cc.congestion_benefit_haircut_pv || 0 },
               { label: 'Curtailment', value: bcr.curtailment_benefit_haircut_pv || cc.curtailment_benefit_haircut_pv || 0 },
+              { label: 'Delivered Electricity', value: cc.delivered_benefit_pv || 0 },
               { label: 'Total Benefits', value: bcr.total_benefits_haircut_pv || 0, highlight: true },
             ];
             tbMetrics.forEach(m => {
