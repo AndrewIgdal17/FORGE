@@ -20,5 +20,5 @@ insurance:
   # Wildfire liability insurance (optional)
   wildfire_liability:
     enabled: true # Set to false to disable
-    liability_limit: 1000000000 # $1B liability limit (>= 0)
+    liability_limit: 5400000 # $1B liability limit (>= 0)
     rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)

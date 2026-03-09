@@ -1145,13 +1145,15 @@ $\Delta C_{effective}$, $H_{congestion}$, $H_{curtailment}$, $X_{congestion}$, a
 
 Wildfire liability insurance is the **annual premium** the utility pays for coverage of wildfire liability up to a **liability limit**. The premium is **rate-on-line (ROL)** × **liability limit**: a level annual cost over the project's operating life, starting at commercial operation date (COD). It is an **operational/risk** cost (no AFUDC): not capitalized, not in rate base. It is optional; when disabled, all values are zero. Present value uses **real WACC** (utility/private perspective).
 
+**Interpretation of the liability limit:** The input **liability limit** is the **project-allocable** limit—the portion of coverage (or exposure) attributable to *this* project—not the utility's total portfolio or policy limit. In practice, a utility (e.g. a California IOU) may have one or a few portfolio-level policies or a wildfire fund backstop covering the whole transmission system. Using that full portfolio limit in the formula would overstate this project's incremental cost. Users should allocate: e.g. by transmission miles (project miles / portfolio transmission miles × portfolio limit), by exposure, or by asset value. **Calibration example:** If the portfolio reference is on the order of $1B over the utility's transmission system (e.g. California Wildfire Fund threshold), and the utility has roughly 18,500 transmission miles (PG&E-scale), then a simple per-mile allocation is about **$54,000 per transmission mile** ($1B ÷ 18,500). For a 100-mile project, use an allocable limit of about $5.4M; for 230 miles, about $12.4M. The appendix is the source of truth for notation.
+
 **Conceptually:** Wildfire liability insurance (4.a) is the **insured** portion of wildfire risk—the premium paid to transfer that risk to insurers. The expected cost of wildfires (4.b) is the **uninsured** portion (e.g. deductibles, amounts above the limit, exclusions, societal damages). Defining 4.b as uninsured ensures that including both 4.a and 4.b does not double-count.
 
 **Variables**
 
 | Variable              | Meaning / units                               | Notes                                                               |
 | --------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
-| $L_{limit}$           | Liability limit, $                            | Policy maximum (covered liability cap).                             |
+| $L_{limit}$           | Liability limit, $                            | Project-allocable limit (see interpretation above); not utility-wide. |
 | $\rho_{ROL}$          | Rate-on-line (ROL), decimal                   | Annual premium as fraction of liability limit; e.g. 0.30 = 30% ROL. |
 | $C_{wf,liab,annual}$  | Wildfire liability premium (annual), $/yr     | Level annual premium.                                               |
 | $T_{lifetime}$        | Project lifetime, years                       |                                                                     |

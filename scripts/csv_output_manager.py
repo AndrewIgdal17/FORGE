@@ -1073,6 +1073,17 @@ class CTCCOutputManager:
                     "delivered_benefit_nominal", 0
                 ),
                 "delivered_benefit_pv": results.get("delivered_benefit_pv", 0),
+                # Total benefits (so batch summary has correct total before BCR run)
+                "total_benefits_pv": (
+                    results.get("congestion_benefit_pv", 0)
+                    + results.get("curtailment_benefit_pv", 0)
+                    + results.get("delivered_benefit_pv", 0)
+                ),
+                "total_benefits_haircut_pv": (
+                    results.get("congestion_benefit_haircut_pv", 0)
+                    + results.get("curtailment_benefit_haircut_pv", 0)
+                    + results.get("delivered_benefit_pv", 0)
+                ),
                 # COSTS (increase system cost)
                 "congestion_delay_cost_nominal": results.get(
                     "congestion_delay_cost_nominal", 0

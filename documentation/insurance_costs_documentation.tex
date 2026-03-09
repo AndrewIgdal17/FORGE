@@ -4,7 +4,7 @@
 
 \section{Introduction}
 
-The \texttt{insurance\_costs.py} script calculates operational insurance costs and, when enabled, wildfire liability insurance costs for transmission line assets. Operational premiums are based on insurable asset value (conductors, structures, converters) and are paid annually over the project lifetime. Wildfire liability uses a rate-on-line (ROL) formula: annual premium = ROL $\times$ liability limit. Both are written to the batch summary (operational via \texttt{add\_insurance\_costs}; wildfire liability via \texttt{add\_wildfire\_liability\_costs}, with zeros when disabled).
+The \texttt{insurance\_costs.py} script calculates operational insurance costs and, when enabled, wildfire liability insurance costs for transmission line assets. Operational premiums are based on insurable asset value (conductors, structures, converters) and are paid annually over the project lifetime. Wildfire liability uses a rate-on-line (ROL) formula: annual premium = ROL $\times$ liability limit. The liability limit is interpreted as the \textbf{project-allocable} limit (the portion attributable to this project), not the utility's total portfolio or policy limit; see CTCC\_METHODOLOGY.md for calibration (e.g.\ per transmission mile). Both are written to the batch summary (operational via \texttt{add\_insurance\_costs}; wildfire liability via \texttt{add\_wildfire\_liability\_costs}, with zeros when disabled).
 
 \section{Method Overview}
 
@@ -36,7 +36,7 @@ The insurance cost calculation follows this structure:
 \end{align}
 where $T$ is the project lifetime, $r$ is the real WACC discount rate. The first payment year is COD (Commercial Operation Date) = delay\_years + construction\_years + 1, i.e.\ the first year after construction ends.
 
-\textbf{Wildfire liability (when enabled):} Annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}; nominal lifetime cost = annual premium $\times$ project\_lifetime; PV same as above starting at COD. Returns \texttt{None} if \texttt{wildfire\_liability.enabled} is false or parameters invalid.
+\textbf{Wildfire liability (when enabled):} Annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}; nominal lifetime cost = annual premium $\times$ project\_lifetime; PV same as above starting at COD. The \texttt{liability\_limit} is the project-allocable limit (not the utility's total policy limit). Returns \texttt{None} if \texttt{wildfire\_liability.enabled} is false or parameters invalid.
 
 \subsection{Inputs and Outputs}
 
