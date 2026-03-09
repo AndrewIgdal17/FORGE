@@ -76,7 +76,7 @@ class CongestionReductionResults:
     theta_overlap: float
     H_bc: float
     H_bnon: float
-    ΔC_rem: float
+    delta_C_rem: float
 
 
 def _get_old_capacity_mw() -> int:
@@ -122,7 +122,7 @@ def load_project_technical_details() -> CongestionProjectDetails:
 
 
 def allocate_curtailment_then_congestion(
-    ΔC_eff_mw: float,
+    delta_C_eff_mw: float,
     # binding inputs
     binding_hours_total: float,
     average_exceedance_mw: float,
@@ -147,7 +147,7 @@ def allocate_curtailment_then_congestion(
     5. Return remaining capacity for congestion relief allocation
 
     Args:
-        ΔC_eff_mw: Effective capacity relief in MW (available to address constraints)
+        delta_C_eff_mw: Effective capacity relief in MW (available to address constraints)
         binding_hours_total: Total hours per year when transmission constraints are binding
         average_exceedance_mw: Average MW by which constraints are exceeded during binding hours
         curtailment_hours_total: Total hours per year with curtailment events
@@ -161,19 +161,19 @@ def allocate_curtailment_then_congestion(
             - "theta_overlap": Temporal overlap fraction between binding and curtailment hours (0-1)
             - "H_bc": Binding hours that overlap with curtailment hours
             - "H_bnon": Binding hours that don't overlap with curtailment hours
-            - "ΔC_used_bc_mw": Capacity consumed by curtailment in overlap hours (MW)
-            - "ΔC_remain_bc_mw": Remaining capacity available for congestion relief after curtailment (MW)
+            - "delta_C_used_bc_mw": Capacity consumed by curtailment in overlap hours (MW)
+            - "delta_C_remain_bc_mw": Remaining capacity available for congestion relief after curtailment (MW)
     """
     Hb = max(0.0, float(binding_hours_total))
     X = max(0.0, float(average_exceedance_mw))
     Hc = max(0.0, float(curtailment_hours_total))
-    ΔC = max(0.0, float(ΔC_eff_mw))
+    delta_C = max(0.0, float(delta_C_eff_mw))
     Cc = max(0.0, float(average_curtailment_mw))
-    λc = max(0.0, float(average_curtailment_price))
+    lambda_curt = max(0.0, float(average_curtailment_price))
 
     # Curtailment relief (MWh/yr); if Hc==0 or Cc==0, this is zero.
-    E_curt = Hc * min(ΔC, Cc)
-    curt_benefit = E_curt * λc
+    E_curt = Hc * min(delta_C, Cc)
+    curt_benefit = E_curt * lambda_curt
 
     if Hb <= 0:
         # No binding hours; nothing to value under congestion.
@@ -183,8 +183,8 @@ def allocate_curtailment_then_congestion(
             "theta_overlap": 0.0,
             "H_bc": 0.0,
             "H_bnon": 0.0,
-            "ΔC_used_bc_mw": 0.0,
-            "ΔC_remain_bc_mw": ΔC,
+            "delta_C_used_bc_mw": 0.0,
+            "delta_C_remain_bc_mw": delta_C,
         }
 
     # Overlap proxy between binding and curtailment time
@@ -193,8 +193,8 @@ def allocate_curtailment_then_congestion(
     H_bnon = (1.0 - theta) * Hb
 
     # Headroom consumed by curtailment in overlap hours (MW basis)
-    ΔC_used_bc = min(ΔC, Cc)
-    ΔC_remain_bc = max(0.0, ΔC - ΔC_used_bc)
+    delta_C_used_bc = min(delta_C, Cc)
+    delta_C_remain_bc = max(0.0, delta_C - delta_C_used_bc)
 
     return {
         "E_curt_mwh_yr": E_curt,
@@ -202,8 +202,8 @@ def allocate_curtailment_then_congestion(
         "theta_overlap": theta,
         "H_bc": H_bc,
         "H_bnon": H_bnon,
-        "ΔC_used_bc_mw": ΔC_used_bc,
-        "ΔC_remain_bc_mw": ΔC_remain_bc,
+        "delta_C_used_bc_mw": delta_C_used_bc,
+        "delta_C_remain_bc_mw": delta_C_remain_bc,
     }
 
 
@@ -240,7 +240,7 @@ def calculate_congestion_reduction_costs(
     1. Calculates effective capacity relief (greenfield: flow_factor * capacity; reconductoring: capacity - old_capacity)
     2. Allocates capacity relief between curtailment and congestion using allocate_curtailment_then_congestion()
     3. Calculates congestion reduction energy (MWh/yr) for binding hours, near-binding hours, and residual
-    4. Residual exceedance energy is the sum of (1) congestion residual (total_binding_hours × max(0, average_exceedance − effective_capacity_relief)) and (2) curtailment residual (curtailment_hours_total × max(0, average_curtailment_mw − effective_capacity_relief)); one price (residual_exceedance_value or average_congestion_price) is applied.
+    4. Residual exceedance energy is the sum of (1) congestion residual (total_binding_hours x max(0, average_exceedance - effective_capacity_relief)) and (2) curtailment residual (curtailment_hours_total x max(0, average_curtailment_mw - effective_capacity_relief)); one price (residual_exceedance_value or average_congestion_price) is applied.
     5. Applies saturation factors to monetized values (conservative estimates)
     6. Calculates present values using real WACC, starting after construction completion
     7. Calculates opportunity costs during delay/construction periods
@@ -294,7 +294,7 @@ def calculate_congestion_reduction_costs(
             - theta_overlap: Overlap fraction between binding and curtailment hours (0-1)
             - H_bc: Binding hours that overlap with curtailment hours
             - H_bnon: Binding hours that don't overlap with curtailment hours
-            - ΔC_rem: Remaining capacity relief after curtailment allocation (MW)
+            - delta_C_rem: Remaining capacity relief after curtailment allocation (MW)
     """
     if reconductoring == False:
         effective_capacity_relief = max(0, flow_factor * capacity_mw)
@@ -303,7 +303,7 @@ def calculate_congestion_reduction_costs(
 
     # Allocate capacity relief between curtailment and congestion
     alloc = allocate_curtailment_then_congestion(
-        ΔC_eff_mw=effective_capacity_relief,
+        delta_C_eff_mw=effective_capacity_relief,
         binding_hours_total=binding_hours,
         average_exceedance_mw=average_exceedance,
         curtailment_hours_total=curtailment_hours_total,
@@ -318,10 +318,10 @@ def calculate_congestion_reduction_costs(
     # Congestion split with no double counting
     H_bc = alloc["H_bc"]
     H_bnon = alloc["H_bnon"]
-    ΔC_rem = alloc["ΔC_remain_bc_mw"]
+    delta_C_rem = alloc["delta_C_remain_bc_mw"]
 
     # Congestion relief energy (MWh/yr) on overlap & non-overlap binding hours
-    E_cong_bc = H_bc * min(ΔC_rem, average_exceedance)
+    E_cong_bc = H_bc * min(delta_C_rem, average_exceedance)
     E_cong_non = H_bnon * min(effective_capacity_relief, average_exceedance)
 
     # Near-binding: same structure as binding hours (relief capped by exceedance)
@@ -341,12 +341,12 @@ def calculate_congestion_reduction_costs(
     ) * annual_congestion_reduction_cost_raw
 
     # Residual exceedance energy (MWh/yr): one number from congestion and/or curtailment
-    # Congestion contribution: binding hours × residual MW when relief < exceedance
+    # Congestion contribution: binding hours x residual MW when relief < exceedance
     total_binding_hours = H_bc + H_bnon
     energy_residual_congestion = total_binding_hours * max(
         0.0, average_exceedance - effective_capacity_relief
     )
-    # Curtailment contribution: curtailment hours × residual MW when relief < curtailment
+    # Curtailment contribution: curtailment hours x residual MW when relief < curtailment
     residual_curtailment_mw = max(
         0.0, average_curtailment_mw - effective_capacity_relief
     )
@@ -482,7 +482,7 @@ def calculate_congestion_reduction_costs(
         theta_overlap=alloc["theta_overlap"],
         H_bc=H_bc,
         H_bnon=H_bnon,
-        ΔC_rem=ΔC_rem,
+        delta_C_rem=delta_C_rem,
     )
 
 
@@ -562,7 +562,7 @@ def main() -> None:
     print(f"Overlap factor (theta): {congestion_results.theta_overlap:.3f}")
     print(f"Binding hours (overlap): {congestion_results.H_bc:,.0f} hrs/yr")
     print(f"Binding hours (non-overlap): {congestion_results.H_bnon:,.0f} hrs/yr")
-    print(f"Remaining capacity for congestion: {congestion_results.ΔC_rem:,.2f} MW")
+    print(f"Remaining capacity for congestion: {congestion_results.delta_C_rem:,.2f} MW")
 
     print()
     print("=" * 60)
@@ -716,7 +716,7 @@ def main() -> None:
         "theta_overlap": congestion_results.theta_overlap,
         "binding_hours_overlap": congestion_results.H_bc,
         "binding_hours_non_overlap": congestion_results.H_bnon,
-        "remaining_capacity_mw": congestion_results.ΔC_rem,
+        "remaining_capacity_mw": congestion_results.delta_C_rem,
     }
 
     # Write to CSV/JSON

@@ -227,7 +227,7 @@ def main() -> None:
     print(f"Construction Type: {project_details.construction_type}")
     print(f"Project Capacity: {project_details.capacity_mw} MW")
     print(
-        f"Capacity at Risk: {results['capacity_at_risk']*100:.1f}% (φ = {results['capacity_at_risk']:.2f})"
+        f"Capacity at Risk: {results['capacity_at_risk']*100:.1f}% (phi = {results['capacity_at_risk']:.2f})"
     )
     print()
 
@@ -239,7 +239,7 @@ def main() -> None:
         print(f"    Outage Rate: {data['outage_rate']:.4f} outages/mi/yr")
         print(f"    Outages/Year: {data['outages_per_year']:.4f}")
         print(
-            f"    Duration: {data['duration_base']:.1f}h (base) × {data['duration_multiplier']:.1f} = {data['duration_effective']:.1f}h"
+            f"    Duration: {data['duration_base']:.1f}h (base) x {data['duration_multiplier']:.1f} = {data['duration_effective']:.1f}h"
         )
         print(f"    Unserved Energy/Event: {data['unserved_mwh_per_event']:,.0f} MWh")
         print(f"    Cost/Event (piecewise VoLL): ${data['cost_per_event']:,.0f}")

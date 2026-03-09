@@ -1,4 +1,6 @@
-pyyaml
+pyyaml>=6.0.0
 pandas
 numpy
 matplotlib
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0

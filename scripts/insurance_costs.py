@@ -95,7 +95,7 @@ def calculate_wildfire_liability_premium(
     Calculate wildfire liability insurance premium using rate-on-line (ROL).
 
     ROL is the annual premium as a fraction of the liability limit.
-    Premium = ROL × Liability Limit (annual)
+    Premium = ROL x Liability Limit (annual)
 
     Args:
         insurance_yaml: Loaded insurance YAML data
@@ -123,7 +123,7 @@ def calculate_wildfire_liability_premium(
     # Calculate annual premium
     annual_premium = rate_on_line * liability_limit
 
-    # Calculate lifetime cost (annual premium × project lifetime)
+    # Calculate lifetime cost (annual premium x project lifetime)
     nominal_lifetime_cost = annual_premium * project_lifetime
 
     return {

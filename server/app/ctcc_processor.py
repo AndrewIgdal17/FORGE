@@ -92,90 +92,6 @@ def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str,
     return merged
 
 
-def ensure_cli_venv() -> str:
-    """
-    Ensure CLI virtual environment exists and has dependencies installed.
-    Returns the path to the venv Python executable.
-    """
-    import subprocess
-
-    venv_dir = CTCC_ROOT / "venv"
-    requirements_file = CTCC_ROOT / "requirements.txt"
-
-    # If venv doesn't exist, create it
-    if not venv_dir.exists():
-        print(f"Creating CLI virtual environment at {venv_dir}")
-        subprocess.run(
-            [sys.executable, "-m", "venv", str(venv_dir)],
-            check=True,
-            cwd=str(CTCC_ROOT)
-        )
-
-    # Find the Python executable in the venv (try common names)
-    possible_pythons = [
-        venv_dir / "bin" / "python3",
-        venv_dir / "bin" / "python",
-        venv_dir / "Scripts" / "python.exe",  # Windows
-        venv_dir / "Scripts" / "python3.exe"  # Windows
-    ]
-    
-    venv_python = None
-    for python_path in possible_pythons:
-        if python_path.exists():
-            venv_python = python_path
-            break
-    
-    if venv_python is None:
-        # If no venv python found, remove and recreate the venv
-        print(f"Virtual environment at {venv_dir} appears broken, recreating...")
-        import shutil
-        shutil.rmtree(venv_dir)
-        subprocess.run(
-            [sys.executable, "-m", "venv", str(venv_dir)],
-            check=True,
-            cwd=str(CTCC_ROOT)
-        )
-        # Try again to find python
-        for python_path in possible_pythons:
-            if python_path.exists():
-                venv_python = python_path
-                break
-        
-        if venv_python is None:
-            raise RuntimeError(f"Virtual environment creation failed: no Python executable found in {venv_dir}")
-
-    # Test if the Python executable actually works
-    try:
-        subprocess.run([str(venv_python), "--version"], capture_output=True, check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        raise RuntimeError(f"Virtual environment Python executable is not working: {venv_python}")
-
-    # Install/update dependencies if requirements.txt exists
-    if requirements_file.exists():
-        print(f"Installing/updating CLI dependencies from {requirements_file}")
-        subprocess.run(
-            [str(venv_python), "-m", "pip", "install", "--upgrade", "pip"],
-            capture_output=True,
-            cwd=str(CTCC_ROOT)
-        )
-        result = subprocess.run(
-            [str(venv_python), "-m", "pip", "install", "-r", str(requirements_file)],
-            capture_output=True,
-            text=True,
-            cwd=str(CTCC_ROOT)
-        )
-        # Only raise if pip failed AND packages are actually missing
-        # Exit code 120 can be a warning, not necessarily a failure
-        if result.returncode not in [0, 120]:
-            raise RuntimeError(
-                f"Failed to install dependencies (exit code {result.returncode}):\n"
-                f"stdout: {result.stdout}\n"
-                f"stderr: {result.stderr}"
-            )
-
-    return str(venv_python)
-
-
 def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Run complete CTCC calculations based on input payload.
@@ -236,11 +152,8 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             # Build command-line arguments for ctcc.py
             import subprocess
 
-            # Ensure CLI venv exists and has dependencies
-            python_exe = ensure_cli_venv()
-
-            # Build command - ctcc.py uses environment variables for mode configuration
-            cmd = [python_exe, "ctcc.py"]
+            # Build command - use same Python as server (single venv at repo root)
+            cmd = [sys.executable, "ctcc.py"]
 
             # Set up environment variables for the subprocess
             env = os.environ.copy()

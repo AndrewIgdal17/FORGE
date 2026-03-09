@@ -6,16 +6,16 @@ import json
 import yaml
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 
-from .processor import generate_result
 from .ctcc_processor import run_ctcc_calculation
+from .models import CTCCInputPayload, CTCCOutputPayload, InputPayload, OutputPayload
+from .processor import generate_result
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -75,44 +75,6 @@ def _refresh_final_combined() -> None:
         handle.write("\n")
 
 
-class InputPayload(BaseModel):
-    mode: Literal["simple", "bulk"] = "simple"
-    message: str = ""
-    values: List[float] = Field(default_factory=list)
-    combinedData: Optional[Dict[str, Any]] = None
-
-
-class OutputPayload(BaseModel):
-    mode: Literal["simple", "bulk"]
-    originalMessage: Optional[str] = None
-    characterCount: Optional[int] = None
-    valuesProvided: Optional[int] = None
-    sum: Optional[float] = None
-    average: Optional[float] = None
-    entries: Optional[int] = None
-    lines: Optional[List[str]] = None
-    text: Optional[str] = None
-
-
-class CTCCInputPayload(BaseModel):
-    mode: Literal["calculate"] = "calculate"
-    input_mode: Literal["json", "yaml"] = "json"
-    output_mode: Literal["json", "csv"] = "json"
-    combined_data: Optional[Dict[str, Any]] = None
-    scenario_id: Optional[str] = None
-
-
-class CTCCOutputPayload(BaseModel):
-    success: bool
-    scenario_id: str
-    timestamp: str
-    input_mode: str
-    output_mode: str
-    error: Optional[str] = None
-    results: Optional[Dict[str, Any]] = None
-    csv_files: Optional[List[str]] = None
-
-
 @app.get("/", response_class=FileResponse)
 async def serve_index() -> FileResponse:
     """Serve the template HTML page."""
@@ -159,16 +121,16 @@ def _sanitize_for_json(obj):
     return obj
 
 
-@app.post("/api/process", response_class=JSONResponse, response_model=OutputPayload)
-async def process_payload(payload: InputPayload) -> JSONResponse:
-    """Receive JSON payload, invoke processor, and return the generated JSON result."""
+@app.post("/api/process", response_model=OutputPayload)
+async def process_payload(payload: InputPayload) -> OutputPayload:
+    """Receive JSON payload, invoke processor, and return the generated result."""
     payload_dict = payload.model_dump()
     result = generate_result(payload_dict)
-    return JSONResponse(result)
+    return OutputPayload.model_validate(result)
 
 
-@app.post("/api/ctcc/calculate", response_class=JSONResponse)
-async def calculate_ctcc(payload: CTCCInputPayload) -> JSONResponse:
+@app.post("/api/ctcc/calculate", response_model=CTCCOutputPayload)
+async def calculate_ctcc(payload: CTCCInputPayload) -> CTCCOutputPayload:
     """
     Run CTCC calculations with JSON input and configurable output.
 
@@ -199,7 +161,7 @@ async def calculate_ctcc(payload: CTCCInputPayload) -> JSONResponse:
             ) from exc
 
     result = run_ctcc_calculation(payload_dict)
-    return JSONResponse(result)
+    return CTCCOutputPayload.model_validate(_sanitize_for_json(result))
 
 
 @app.get("/api/outputs/{filename}")

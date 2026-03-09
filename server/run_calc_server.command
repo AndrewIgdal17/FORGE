@@ -4,6 +4,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CODE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+VENV_DIR="$CODE_ROOT/venv"
+REQUIREMENTS="$CODE_ROOT/requirements.txt"
 cd "$SCRIPT_DIR"
 
 PORT="${PORT:-8000}"
@@ -23,26 +26,26 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   fi
 fi
 
-if [[ ! -d ".venv" ]]; then
-  echo "Creating virtual environment at .venv"
-  "$PYTHON_BIN" -m venv .venv
+if [[ ! -d "$VENV_DIR" ]]; then
+  echo "Creating virtual environment at $VENV_DIR"
+  "$PYTHON_BIN" -m venv "$VENV_DIR"
 fi
 
 # shellcheck disable=SC1091
-source ".venv/bin/activate"
+source "$VENV_DIR/bin/activate"
 VENV_PYTHON="$(command -v python)"
 
 if [[ -z "$VENV_PYTHON" ]]; then
-  echo "Failed to locate python inside .venv" >&2
+  echo "Failed to locate python inside venv" >&2
   exit 1
 fi
 
-if [[ -f "requirements.txt" ]]; then
+if [[ -f "$REQUIREMENTS" ]]; then
   echo "Installing/updating dependencies..."
   "$VENV_PYTHON" -m pip install --upgrade pip >/dev/null 2>&1 || true
-  "$VENV_PYTHON" -m pip install -r requirements.txt
+  "$VENV_PYTHON" -m pip install -r "$REQUIREMENTS"
 else
-  echo "requirements.txt not found; skipping dependency installation."
+  echo "requirements.txt not found at $REQUIREMENTS; skipping dependency installation."
 fi
 
 if ! command -v uvicorn >/dev/null 2>&1; then

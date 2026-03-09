@@ -145,7 +145,7 @@ def calculate_emissions_by_year(
         intensity_key = intensity_key_map[pollutant]
         intensity_dict = emission_intensities.get(intensity_key, {})
 
-        # Calculate emissions: E_k = TEC × Σ_j (p_j × I_{j,k})
+        # Calculate emissions: E_k = TEC x sum_j (p_j x I_{j,k})
         for source in sources:
             p_j = energy_mix.get(source, 0.0)
             I_jk = intensity_dict.get(source, 0.0)
@@ -200,7 +200,7 @@ def calculate_lifetime_emissions(
         )
         yearly_emissions.append(emissions)
 
-        # Calculate costs for this year: C_k = E_k × c_k
+        # Calculate costs for this year: C_k = E_k x c_k
         year_cost = 0.0
         for pollutant, emissions_kg in emissions.items():
             cost_per_kg = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
@@ -270,7 +270,7 @@ def print_emissions_results(
     print("=" * 60)
     print("COMPENSATION CONFIGURATION")
     print("=" * 60)
-    print(f"Compensation percentage (α): {compensation_percent:.1%}")
+    print(f"Compensation percentage (alpha): {compensation_percent:.1%}")
     print(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
     print(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
     print()

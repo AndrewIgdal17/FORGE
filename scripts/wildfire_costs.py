@@ -75,7 +75,7 @@ def calculate_wildfire_costs(
     construction_multiplier = ignition_rate_multiplier.get(yaml_construction_type, 1.0)
 
     # Step 1 & 2: Calculate segment-specific and total event rates
-    # Using multiplicative model: effective_rate = base_rate × construction_multiplier
+    # Using multiplicative model: effective_rate = base_rate x construction_multiplier
     lambda_by_terrain = {}
     lambda_total = 0.0
 
@@ -175,9 +175,9 @@ def main() -> None:
         print(
             f"    Base Rate: {data['base_rate']:.6f} events/mi/yr (overhead baseline)"
         )
-        print(f"    Construction Multiplier: {data['construction_multiplier']:.2f}×")
+        print(f"    Construction Multiplier: {data['construction_multiplier']:.2f}x")
         print(
-            f"    Effective Rate: {data['rate_per_mile']:.6f} events/mi/yr ({data['base_rate']:.6f} × {data['construction_multiplier']:.2f})"
+            f"    Effective Rate: {data['rate_per_mile']:.6f} events/mi/yr ({data['base_rate']:.6f} x {data['construction_multiplier']:.2f})"
         )
         print(f"    Events/Year: {data['events_per_year']:.6f}")
         print()
@@ -190,7 +190,7 @@ def main() -> None:
     print()
 
     print("EXPECTED ANNUAL LOSS:")
-    print(f"  EAL = λ × S: ${results['EAL']:,.2f}/year")
+    print(f"  EAL = lambda * S: ${results['EAL']:,.2f}/year")
     print()
 
     print("[NOMINAL VALUES]")

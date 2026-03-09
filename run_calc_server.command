@@ -5,7 +5,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVER_DIR="$SCRIPT_DIR/server"
-cd "$SERVER_DIR"
+CODE_ROOT="$SCRIPT_DIR"
+VENV_DIR="$CODE_ROOT/venv"
+REQUIREMENTS="$CODE_ROOT/requirements.txt"
 
 PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
@@ -24,30 +26,27 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   fi
 fi
 
-# Check if .venv exists and is valid, recreate if necessary
-if [[ ! -d ".venv" ]]; then
-  echo "Creating virtual environment at .venv"
-  "$PYTHON_BIN" -m venv .venv
+if [[ ! -d "$VENV_DIR" ]]; then
+  echo "Creating virtual environment at $VENV_DIR"
+  "$PYTHON_BIN" -m venv "$VENV_DIR"
 else
-  # Test if the existing venv is functional
-  if ! ".venv/bin/python" --version >/dev/null 2>&1; then
+  if ! "$VENV_DIR/bin/python" --version >/dev/null 2>&1; then
     echo "Existing virtual environment is broken, recreating..."
-    rm -rf ".venv"
-    "$PYTHON_BIN" -m venv .venv
+    rm -rf "$VENV_DIR"
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
   fi
 fi
 
 # shellcheck disable=SC1091
-source ".venv/bin/activate"
+source "$VENV_DIR/bin/activate"
 VENV_PYTHON="$(command -v python)"
 
-# Verify the virtual environment is working correctly
 if [[ -z "$VENV_PYTHON" ]] || ! "$VENV_PYTHON" --version >/dev/null 2>&1; then
   echo "Virtual environment activation failed. Recreating..."
   deactivate 2>/dev/null || true
-  rm -rf ".venv"
-  "$PYTHON_BIN" -m venv .venv
-  source ".venv/bin/activate"
+  rm -rf "$VENV_DIR"
+  "$PYTHON_BIN" -m venv "$VENV_DIR"
+  source "$VENV_DIR/bin/activate"
   VENV_PYTHON="$(command -v python)"
   if [[ -z "$VENV_PYTHON" ]]; then
     echo "Failed to create working virtual environment" >&2
@@ -55,22 +54,14 @@ if [[ -z "$VENV_PYTHON" ]] || ! "$VENV_PYTHON" --version >/dev/null 2>&1; then
   fi
 fi
 
-if [[ -f "requirements.txt" ]]; then
+if [[ -f "$REQUIREMENTS" ]]; then
   echo "Installing/updating dependencies..."
-  # Ensure we're using the correct pip from the venv
-  VENV_PIP="$("$VENV_PYTHON" -m pip --version 2>/dev/null && echo "$VENV_PYTHON -m pip" || echo "")"
-  if [[ -z "$VENV_PIP" ]]; then
-    echo "pip not found in virtual environment, installing..." >&2
-    "$VENV_PYTHON" -m ensurepip --default-pip 2>/dev/null || true
-  fi
-  
   "$VENV_PYTHON" -m pip install --upgrade pip >/dev/null 2>&1 || true
-  "$VENV_PYTHON" -m pip install -r requirements.txt
+  "$VENV_PYTHON" -m pip install -r "$REQUIREMENTS"
 else
-  echo "requirements.txt not found; skipping dependency installation."
+  echo "requirements.txt not found at $REQUIREMENTS; skipping dependency installation."
 fi
 
-# Verify uvicorn is available in the venv
 if ! "$VENV_PYTHON" -c "import uvicorn" >/dev/null 2>&1; then
   echo "uvicorn is unavailable even after installation. Verify requirements.txt includes uvicorn." >&2
   exit 1
@@ -166,5 +157,6 @@ echo
 # Open browser after a short delay
 (sleep 2 && open "$LOCAL_ADDRESS") &
 
-# Use the venv's python to run uvicorn to ensure we're using the right environment
+# Run uvicorn from server directory so app.main:app resolves
+cd "$SERVER_DIR"
 "$VENV_PYTHON" -m uvicorn app.main:app --host "$HOST" --port "$PORT" --reload --access-log 2>&1 | tee -a "$LOG_FILE"

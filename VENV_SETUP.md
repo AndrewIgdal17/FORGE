@@ -5,8 +5,8 @@ This document explains how CTCC automatically sets up virtual environments for f
 ## Problem Statement
 
 When a colleague clones the CTCC repository:
-- `venv/` and `server/.venv/` are not in git (ignored by `.gitignore`)
-- Without these, calculations fail with "ModuleNotFoundError"
+- `venv/` is not in git (ignored by `.gitignore`)
+- Without it, calculations fail with "ModuleNotFoundError"
 - Manual setup is error-prone and time-consuming
 
 ## Solution
@@ -23,17 +23,14 @@ When you run any of these:
 
 They automatically:
 1. Check if `venv/` exists, create if missing
-2. Install dependencies from `requirements.txt` (pyyaml, pandas, numpy)
+2. Install dependencies from `requirements.txt` (pyyaml, pandas, numpy, fastapi, uvicorn, etc.)
 3. Run calculations using the venv Python
 
 ### API Server
 When you run:
-- `server/run_calc_server.command`
+- `server/run_calc_server.command` or `run_calc_server.command` (from repo root)
 
-It automatically:
-1. Checks if `server/.venv/` exists, create if missing
-2. Installs dependencies from `server/requirements.txt` (FastAPI, uvicorn, etc.)
-3. **Also ensures `venv/` exists** before running calculations via ctcc.py
+The script activates the **same root venv** (`venv/`), installs from root `requirements.txt`, then runs uvicorn from the server directory. The server runs `ctcc.py` in a subprocess using the same Python (`sys.executable`), so one venv serves both CLI and API.
 
 ## Fresh Clone Workflow
 
@@ -52,28 +49,19 @@ No manual venv setup required!
 
 ## Technical Details
 
-### Two Separate Virtual Environments
+### Single environment
 
-**CLI venv (`venv/`):**
-- Used by: `ctcc.py` and all calculation scripts
-- Dependencies: pyyaml, pandas, numpy
-- Location: `CTCC/venv/`
+One virtual environment at **repo root** (`venv/`) is used by both the CLI and the API server:
 
-**Server venv (`server/.venv/`):**
-- Used by: FastAPI web server
-- Dependencies: fastapi, uvicorn, pydantic
-- Location: `CTCC/server/.venv/`
-
-### Why Two Environments?
-
-1. **Separation of concerns:** Web server dependencies vs calculation dependencies
-2. **Smaller footprint:** CLI doesn't need FastAPI, server doesn't need full pandas stack
-3. **Independent updates:** Can update one without affecting the other
+- **Location:** `CTCC/venv/` (repo root, i.e. the directory containing `ctcc.py` and `server/`)
+- **Dependencies:** One `requirements.txt` at repo root (pyyaml, pandas, numpy, matplotlib, fastapi, uvicorn, etc.)
+- **CLI:** Run scripts create/activate `venv/` and run `ctcc.py` with that Python
+- **Server:** `server/run_calc_server.command` (or root `run_calc_server.command`) creates/activates the same root `venv/`, installs from root `requirements.txt`, then runs uvicorn from `server/`. When the API runs a calculation, it invokes `ctcc.py` via `sys.executable` (the same Python as the server), so no second venv is needed.
 
 ### Auto-Setup Logic
 
 #### CLI Commands
-Each `.command` file includes:
+Each `.command` file at repo root includes:
 ```bash
 # Determine Python binary
 PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -92,23 +80,7 @@ python ctcc.py [flags]
 ```
 
 #### API Server
-`server/run_calc_server.command` sets up `server/.venv/`, and `server/app/ctcc_processor.py` includes:
-```python
-def ensure_cli_venv() -> str:
-    """Ensure CLI venv exists and has dependencies."""
-    venv_dir = CTCC_ROOT / "venv"
-
-    # Create if missing
-    if not venv_dir.exists():
-        subprocess.run([sys.executable, "-m", "venv", str(venv_dir)])
-
-    # Install dependencies
-    subprocess.run([venv_python, "-m", "pip", "install", "-r", "requirements.txt"])
-
-    return str(venv_python)
-```
-
-This ensures when the API calls `ctcc.py`, the CLI venv is ready.
+`server/run_calc_server.command` (and root `run_calc_server.command`) sets `VENV_DIR` to the repo root `venv/`, creates/activates it if missing, runs `pip install -r requirements.txt` from repo root, then runs uvicorn from the server directory. The server uses `sys.executable` to run `ctcc.py`, so the same venv is used for both.
 
 ## Verification
 
@@ -131,16 +103,14 @@ To verify auto-setup works:
 
 3. **Simulated fresh clone:**
    ```bash
-   # Backup and remove venvs
+   # Backup and remove venv
    mv venv venv.backup
-   mv server/.venv server/.venv.backup
 
    # Test auto-setup
    ./run_json_json.command
 
    # Restore
    mv venv.backup venv
-   mv server/.venv.backup server/.venv
    ```
 
 ## What's in .gitignore
@@ -174,7 +144,7 @@ chmod +x server/*.command
 
 **Solution:** Delete and let it recreate:
 ```bash
-rm -rf venv server/.venv
+rm -rf venv
 ./run_json_json.command  # Auto-creates fresh venv
 ```
 
@@ -187,8 +157,7 @@ rm -rf venv server/.venv
 
 ✅ **No manual venv setup required**
 ✅ **Works on fresh clone immediately**
-✅ **Both CLI and API auto-configure**
-✅ **Dependencies auto-install**
-✅ **Proper isolation between CLI and server**
+✅ **Single venv for CLI and API**
+✅ **Dependencies auto-install from one requirements.txt**
 
 Your colleague can clone, run, and calculate without any Python environment setup!
