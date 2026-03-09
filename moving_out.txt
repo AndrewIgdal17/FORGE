@@ -1,0 +1,186 @@
+================================================================================
+CLEAN BRANCH PLAN: CTCC + full documentation + server + root run_calc_server
+================================================================================
+
+GOAL
+----
+Create a branch that contains only:
+  • Core CTCC (calculator)
+  • The entire documentation/ folder
+  • The server (web app)
+  • The root run_calc_server.command launcher
+
+No academic content (papers, methodology_docs), no root clutter (one-off scripts,
+extra .md files), no duplicate or archive cruft. Repository layout must stay as
+assumed by the code so nothing breaks.
+
+--------------------------------------------------------------------------------
+ASSUMED REPO LAYOUT (do not change)
+--------------------------------------------------------------------------------
+
+The code assumes this layout. Do not move core pieces into subfolders.
+
+  1. ctcc.py
+     • Lives at repo root.
+     • Adds scripts/ to sys.path and runs subprocesses with cwd="scripts".
+     • Imports: bcr_calculator, csv_output_manager from scripts.
+
+  2. scripts/
+     • Direct sibling of ctcc.py at root.
+     • Contains all calculation modules, smart_loaders, smart_output,
+       yaml_loaders, json_loaders, *_output_manager, financial_utils, etc.
+
+  3. server/
+     • Direct child of repo root (server/app/, server/static/, etc.).
+     • ctcc_processor.py sets:
+         CTCC_ROOT = Path(__file__).parent.parent.parent
+       i.e. repo root. It runs ctcc.py with cwd=CTCC_ROOT and expects:
+         • CTCC_ROOT/venv/       (CLI venv)
+         • CTCC_ROOT/requirements.txt
+         • CTCC_ROOT/outputs/    (for JSON/CSV results)
+
+  4. Root run_calc_server.command
+     • Run from repo root. Sets SCRIPT_DIR=root, SERVER_DIR=$SCRIPT_DIR/server,
+       then "cd $SERVER_DIR" and runs the server from server/ (using server's
+       .venv and server/requirements.txt). So root and server both stay where
+       they are.
+
+If you move ctcc.py or scripts/ into a subfolder (e.g. ctcc/), or move server/
+elsewhere, you must update ctcc.py (path and cwd) and ctcc_processor.py
+(CTCC_ROOT). This plan keeps layout unchanged to avoid those changes.
+
+--------------------------------------------------------------------------------
+WHAT THE CLEAN BRANCH INCLUDES
+--------------------------------------------------------------------------------
+
+  At repo root:
+    • ctcc.py
+    • requirements.txt
+    • README.md
+    • .gitignore
+    • run_calc_server.command
+
+  Directories (full contents):
+    • scripts/
+    • yamls/
+    • documentation/   (entire folder: CTCC_METHODOLOGY.md, *.tex, *.pdf, etc.)
+    • server/          (app/, static/, json/, run_calc_server.command,
+                        convert_yamls.command, regenerate_json_from_yaml.command,
+                        requirements.txt, etc. Optionally exclude server/archive/
+                        and server/docs/ if you want minimal server.)
+
+  Generated / ignored (keep in .gitignore, do not track):
+    • outputs/
+    • venv/
+    • server/.venv/
+    • server/logs/
+    • server/json/     (if you ignore generated JSON; or keep template JSON)
+
+--------------------------------------------------------------------------------
+WHAT IS EXCLUDED (not in the clean branch)
+--------------------------------------------------------------------------------
+
+  • papers/                  (already in .gitignore; paper LaTeX, batch, figures)
+  • methodology_docs/        (conductor_om.tex, to_do.tex, etc.)
+  • docs/                    (yaml_input_explorer, ctcc_execution_workflow, etc.)
+  • Root one-off / analysis scripts:
+      oat_analysis.py
+      sensitivity_analysis.py
+      remove_scenario.py
+      check_delay_costs.py
+      verify_results_tables.py
+      generate_yaml_docs.py
+  • Root clutter .md (optional; remove for “no clutter”):
+      BCR_CHEAT_SHEET.md
+      MODE_FLOW_DIAGRAM.md
+      SCENARIO_ANALYSIS_FRAMEWORK.md
+      BATCH_SUMMARY_COLUMN_REFERENCE.md
+      WINDOWS_SETUP.md
+      VENV_SETUP.md
+      User Inputs March 2 Updates.md
+      CTCC Web App Outputs.md
+      Claude.md
+  • Root yaml_to_json.py     (server has its own; only needed if you keep
+                              testing/ and tests that call root yaml_to_json.py)
+  • testing/                 (optional exclude for minimal branch)
+  • test_*.py at root        (test_api_vs_cli.py, test_ctcc_processor.py, etc.)
+  • LaTeX build artifacts at root (Generalized_CTCC_Equation.*, etc.)
+  • server/archive/          (old .bat/.command; redundant)
+  • server/docs/             (e.g. port-forwarding notes; optional exclude)
+
+--------------------------------------------------------------------------------
+STEPS TO CREATE THE CLEAN BRANCH
+--------------------------------------------------------------------------------
+
+  1. Create a new branch from current state (so history is preserved for
+     the files you keep):
+
+       git checkout -b clean-ctcc
+
+  2. Remove excluded items (only those that are tracked by git). Do not
+     remove documentation/ or server/ or scripts/ or yamls/ or ctcc.py or
+     run_calc_server.command.
+
+     For example (run from repo root):
+
+       # Optional: remove methodology_docs and docs if tracked
+       git rm -r --cached methodology_docs/ 2>/dev/null || true
+       git rm -r --cached docs/              2>/dev/null || true
+
+       # Root one-off scripts
+       git rm -f oat_analysis.py sensitivity_analysis.py remove_scenario.py \
+                 check_delay_costs.py verify_results_tables.py \
+                 generate_yaml_docs.py 2>/dev/null || true
+
+       # Root clutter .md (optional)
+       git rm -f BCR_CHEAT_SHEET.md MODE_FLOW_DIAGRAM.md \
+                 SCENARIO_ANALYSIS_FRAMEWORK.md BATCH_SUMMARY_COLUMN_REFERENCE.md \
+                 WINDOWS_SETUP.md VENV_SETUP.md \
+                 "User Inputs March 2 Updates.md" "CTCC Web App Outputs.md" \
+                 Claude.md 2>/dev/null || true
+
+       # Root yaml_to_json and tests (optional)
+       git rm -f yaml_to_json.py 2>/dev/null || true
+       git rm -r --cached testing/ 2>/dev/null || true
+       git rm -f test_*.py 2>/dev/null || true
+
+       # Server archive and server docs (optional)
+       git rm -r --cached server/archive/ 2>/dev/null || true
+       git rm -r --cached server/docs/    2>/dev/null || true
+
+     Note: papers/ is already gitignored, so you don’t need to git rm it.
+     If any path is not tracked, git rm will fail; that’s why we use
+     "2>/dev/null || true". Adjust list to what actually exists and is tracked.
+
+  3. Update .gitignore if needed (e.g. ensure outputs/, venv/, server/logs/,
+     server/json/ are ignored). Do not add documentation/ or server/ to
+     .gitignore.
+
+  4. Commit:
+
+       git add -A
+       git status   # verify only intended files remain
+       git commit -m "Clean branch: CTCC core + documentation + server + root run_calc_server"
+
+  5. Verify layout and run:
+
+       • From repo root: run ./run_calc_server.command (should cd to server/
+         and start FastAPI).
+       • From repo root with venv: python ctcc.py (YAML→CSV) or
+         python ctcc.py -j -o --id test (JSON→JSON) if you have server/json/
+         or a combined JSON.
+
+--------------------------------------------------------------------------------
+CHECKLIST BEFORE COMMITTING
+--------------------------------------------------------------------------------
+
+  [ ] ctcc.py and scripts/ remain at repo root (scripts/ next to ctcc.py).
+  [ ] server/ remains at repo root (path server/app/...).
+  [ ] Root run_calc_server.command is present and runs from root, cd's into server/.
+  [ ] documentation/ is present in full.
+  [ ] yamls/ and requirements.txt are present.
+  [ ] .gitignore still ignores outputs/, venv/, and any generated paths.
+  [ ] No papers/, methodology_docs/, or root clutter in the branch (or only
+      the optional keeps you chose).
+
+================================================================================
