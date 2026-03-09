@@ -15,7 +15,7 @@ from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from bcr_calculator import calculate_and_display_bcr, BCRConfig
+from bcr_calculator import calculate_and_display_bcr, BCRConfig, BCRInputData
 from csv_output_manager import (
     CTCCOutputManager as CSVOutputManager,
     BATCH_SUMMARY_FIELDS,
@@ -59,7 +59,7 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         return False
 
 
-def build_bcr_data_from_json(json_results: dict) -> dict:
+def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
     """Build a flat dict for BCR calculations from JSON results."""
     costs = json_results.get("costs", {}) or {}
     benefits = json_results.get("benefits", {}) or {}
@@ -79,7 +79,7 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
     emissions = costs.get("emissions", {}) or {}
     line_loss = costs.get("line_loss", {}) or {}
 
-    return {
+    flat_dict = {
         # Benefits (PV + nominal)
         "congestion_benefit_pv": congestion.get("congestion_benefit_pv", 0) or 0,
         "curtailment_benefit_pv": congestion.get("curtailment_benefit_pv", 0) or 0,
@@ -152,10 +152,13 @@ def build_bcr_data_from_json(json_results: dict) -> dict:
         "residual_exceedance_nominal": congestion.get("residual_exceedance_nominal", 0)
         or 0,
     }
+    return BCRInputData.model_validate(flat_dict)
 
 
 def build_csv_equivalent(
-    json_results: dict, bcr_results: dict | None, bcr_data: dict | None
+    json_results: dict,
+    bcr_results: dict | None,
+    bcr_data: dict | BCRInputData | None,
 ) -> dict:
     """Build a flat CSV-equivalent dict using current CSV schema."""
     technical = json_results.get("technical_parameters", {}) or {}
@@ -171,8 +174,10 @@ def build_csv_equivalent(
     }
 
     merged = {**base_fields}
-    if bcr_data:
-        merged.update(bcr_data)
+    if bcr_data is not None:
+        merged.update(
+            bcr_data.model_dump() if hasattr(bcr_data, "model_dump") else bcr_data
+        )
     if bcr_results:
         merged.update(bcr_results)
 
@@ -372,12 +377,15 @@ def main() -> None:
             source = "YAML"
 
         bcr_config = load_primary_bcr_config()
+        bcr_config_dict = (
+            bcr_config.model_dump() if hasattr(bcr_config, "model_dump") else bcr_config
+        )
 
         # Debug: Log what we loaded (always log for JSON mode to help diagnose issues)
         if input_mode == "json":
             line_losses_enabled = (
-                bcr_config.get("energy", {}).get("line_losses", True)
-                if bcr_config
+                bcr_config_dict.get("energy", {}).get("line_losses", True)
+                if bcr_config_dict
                 else True
             )
             print(
@@ -390,32 +398,32 @@ def main() -> None:
             )
 
         # BCR config overrides command-line flags
-        if bcr_config:
+        if bcr_config_dict:
             # Convert BCR config enabled flags to ctcc.py flags (invert logic)
             # Operational
-            if not bcr_config.get("operational", {}).get("oandm", True):
+            if not bcr_config_dict.get("operational", {}).get("oandm", True):
                 args.no_oandm = True
-            if not bcr_config.get("operational", {}).get("insurance", True):
+            if not bcr_config_dict.get("operational", {}).get("insurance", True):
                 args.no_insurance = True
-            if not bcr_config.get("operational", {}).get("delay_costs", True):
+            if not bcr_config_dict.get("operational", {}).get("delay_costs", True):
                 args.no_delay_costs = True
 
             # Risk
-            if not bcr_config.get("risk", {}).get("wildfire", True):
+            if not bcr_config_dict.get("risk", {}).get("wildfire", True):
                 args.no_wildfire = True
-            if not bcr_config.get("risk", {}).get("outages", True):
+            if not bcr_config_dict.get("risk", {}).get("outages", True):
                 args.no_outages = True
 
             # Energy
-            if not bcr_config.get("energy", {}).get("line_losses", True):
+            if not bcr_config_dict.get("energy", {}).get("line_losses", True):
                 args.no_linelosses = True
-            if not bcr_config.get("energy", {}).get("emissions", True):
+            if not bcr_config_dict.get("energy", {}).get("emissions", True):
                 args.no_emissions = True
 
             # Benefits
-            if not bcr_config.get("benefits", {}).get("congestion", True):
+            if not bcr_config_dict.get("benefits", {}).get("congestion", True):
                 args.no_congestion = True
-            if not bcr_config.get("benefits", {}).get("curtailment", True):
+            if not bcr_config_dict.get("benefits", {}).get("curtailment", True):
                 args.no_curtailment = True
     except (FileNotFoundError, ImportError):
         # Config file doesn't exist or can't be loaded - use command-line flags only

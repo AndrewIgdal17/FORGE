@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterator, List, Tuple
 
+from .models import InputPayload
 
-def generate_result(payload: Dict[str, Any]) -> Dict[str, Any]:
+
+def generate_result(payload: InputPayload) -> Dict[str, Any]:
     """Generate a derived JSON response based on the incoming payload."""
-    mode = str(payload.get("mode", "simple")).lower()
-    if mode == "bulk":
-        combined = payload.get("combinedData") or {}
+    if payload.mode == "bulk":
+        combined = payload.combinedData or {}
         flattened = list(_flatten_items(combined))
         lines = [f"{key}: {value}" for key, value in flattened]
         return {
@@ -19,12 +20,8 @@ def generate_result(payload: Dict[str, Any]) -> Dict[str, Any]:
             "text": "\n".join(lines),
         }
 
-    message = str(payload.get("message", ""))
-    numbers: List[float] = [
-        float(value)
-        for value in payload.get("values", [])
-        if _is_number(value)
-    ]
+    message = payload.message
+    numbers = list(payload.values)
 
     return {
         "mode": "simple",
@@ -50,12 +47,3 @@ def _flatten_items(item: Any, prefix: str | None = None) -> Iterator[Tuple[str, 
         if prefix is None:
             prefix = ""
         yield prefix, item
-
-
-def _is_number(value: Any) -> bool:
-    """Determine whether value can be interpreted as a float."""
-    try:
-        float(value)
-    except (TypeError, ValueError):
-        return False
-    return True

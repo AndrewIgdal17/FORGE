@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Dict
 from datetime import datetime
 
+from .models import UserMergeInput
+
 # Add CTCC root directory to path
 CTCC_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(CTCC_ROOT))
@@ -132,9 +134,11 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 if template_file.exists():
                     with open(template_file, 'r') as f:
                         full_template = json.load(f)
-                    
-                    # Merge user data with template
-                    merged_data = merge_user_data_with_template(combined_data, full_template)
+
+                    user_input = UserMergeInput.model_validate(combined_data)
+                    merged_data = merge_user_data_with_template(
+                        user_input.model_dump(exclude_none=True), full_template
+                    )
                 else:
                     # Fallback to user data if template not found
                     merged_data = combined_data

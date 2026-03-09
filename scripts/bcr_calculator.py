@@ -9,8 +9,9 @@ import csv
 import os
 import yaml
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Union
 from path_config import OUTPUTS_DIR, YAMLS_DIR
+from pydantic import BaseModel, ConfigDict
 
 # BCR viability threshold
 BCR_VIABILITY_THRESHOLD = 1.0
@@ -39,6 +40,93 @@ class BCRConfig:
     def default(cls) -> "BCRConfig":
         """Create default config (all modules included)."""
         return cls()
+
+
+class BCRInputData(BaseModel):
+    """Flat BCR input: keys from build_bcr_data_from_json plus CSV subtotal/fallback keys."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    # Benefits (PV + nominal)
+    congestion_benefit_pv: float = 0.0
+    curtailment_benefit_pv: float = 0.0
+    congestion_benefit_nominal: float = 0.0
+    curtailment_benefit_nominal: float = 0.0
+    congestion_benefit_haircut_pv: float = 0.0
+    curtailment_benefit_haircut_pv: float = 0.0
+    delivered_benefit_pv: float = 0.0
+    delivered_benefit_nominal: float = 0.0
+    revenue_pv: float = 0.0
+    revenue_nominal: float = 0.0
+    total_benefits_pv: float = 0.0
+    total_benefits_nominal: float = 0.0
+    total_benefits_haircut_pv: float = 0.0
+    # Capital costs
+    build_cost_pv: float = 0.0
+    build_cost_nominal: float = 0.0
+    row_cost_pv: float = 0.0
+    row_cost_nominal: float = 0.0
+    row_capital_pv: float = 0.0
+    row_capital_nominal: float = 0.0
+    row_rent_pv: float = 0.0
+    row_rent_nominal: float = 0.0
+    env_mitigation_pv: float = 0.0
+    env_mitigation_nominal: float = 0.0
+    capital_costs_pv: float = 0.0
+    capital_costs_nominal: float = 0.0
+    # Operational costs
+    oandm_pv: float = 0.0
+    oandm_nominal: float = 0.0
+    insurance_pv: float = 0.0
+    insurance_nominal: float = 0.0
+    residual_exceedance_pv: float = 0.0
+    residual_exceedance_nominal: float = 0.0
+    operational_costs_pv: float = 0.0
+    operational_costs_nominal: float = 0.0
+    # Energy & emissions
+    energy_losses_pv: float = 0.0
+    energy_losses_nominal: float = 0.0
+    conductor_loss_pv: float = 0.0
+    converter_loss_pv: float = 0.0
+    emissions_cost_pv: float = 0.0
+    emissions_cost_nominal: float = 0.0
+    energy_emissions_costs_pv: float = 0.0
+    energy_emissions_costs_nominal: float = 0.0
+    line_loss_cost_pv: float = 0.0
+    line_loss_cost_nominal: float = 0.0
+    # Risk costs
+    wildfire_pv: float = 0.0
+    wildfire_nominal: float = 0.0
+    outage_pv: float = 0.0
+    outage_nominal: float = 0.0
+    wildfire_liability_pv: float = 0.0
+    wildfire_liability_nominal: float = 0.0
+    wildfire_liability_insurance_pv: float = 0.0
+    risk_costs_pv: float = 0.0
+    risk_costs_nominal: float = 0.0
+    # Delay costs
+    delay_cost_pv: float = 0.0
+    delay_cost_nominal: float = 0.0
+    congestion_delay_cost_pv: float = 0.0
+    congestion_delay_cost_nominal: float = 0.0
+    curtailment_delay_cost_pv: float = 0.0
+    curtailment_delay_cost_nominal: float = 0.0
+    delay_costs_pv: float = 0.0
+    delay_costs_nominal: float = 0.0
+    # Totals
+    total_costs_pv: float = 0.0
+    total_costs_nominal: float = 0.0
+
+
+def _prefer_subtotal(d: BCRInputData, key: str, calculated: float) -> float:
+    """Prefer CSV/subtotal value if present and valid, else use calculated. Used only in calculate_benefits/calculate_costs."""
+    val = getattr(d, key, 0.0)
+    if val is None or val == "" or val == 0.0:
+        return calculated
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return calculated
 
 
 def safe_divide(numerator: float, denominator: float) -> float:
@@ -201,7 +289,7 @@ def prefer_csv_subtotal(
         return calculated_value
 
 
-def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
+def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, float]:
     """
     Calculate total benefits from scenario data.
 
@@ -217,32 +305,34 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     greenfield and reconductoring projects.
 
     Args:
-        data: Dictionary with scenario data
+        data: Dictionary or BCRInputData with scenario data
 
     Returns:
         Dictionary with benefit breakdown and total (both nominal and PV)
     """
+    if isinstance(data, dict):
+        data = BCRInputData.model_validate(data)
     # Present value benefits
-    congestion_benefit_pv = safe_get_numeric(data, "congestion_benefit_pv")
-    curtailment_benefit_pv = safe_get_numeric(data, "curtailment_benefit_pv")
-    delivered_benefit_pv = safe_get_numeric(data, "delivered_benefit_pv")
+    congestion_benefit_pv = data.congestion_benefit_pv
+    curtailment_benefit_pv = data.curtailment_benefit_pv
+    delivered_benefit_pv = data.delivered_benefit_pv
 
     # Nominal benefits
-    congestion_benefit_nominal = safe_get_numeric(data, "congestion_benefit_nominal")
-    curtailment_benefit_nominal = safe_get_numeric(data, "curtailment_benefit_nominal")
-    delivered_benefit_nominal = safe_get_numeric(data, "delivered_benefit_nominal")
+    congestion_benefit_nominal = data.congestion_benefit_nominal
+    curtailment_benefit_nominal = data.curtailment_benefit_nominal
+    delivered_benefit_nominal = data.delivered_benefit_nominal
 
     # Line losses are now always costs, never benefits
     # (Both greenfield and reconductoring report absolute losses as positive costs)
 
     # Add revenue (rate-based revenue requirement)
-    revenue_pv = safe_get_numeric(data, "revenue_pv")
-    revenue_nominal = safe_get_numeric(data, "revenue_nominal")
+    revenue_pv = data.revenue_pv
+    revenue_nominal = data.revenue_nominal
 
     calculated_total_benefits = (
         congestion_benefit_pv + curtailment_benefit_pv + delivered_benefit_pv
     )
-    total_benefits_pv = prefer_csv_subtotal(
+    total_benefits_pv = _prefer_subtotal(
         data, "total_benefits_pv", calculated_total_benefits
     )
     calculated_total_benefits_nominal = (
@@ -250,20 +340,18 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
         + curtailment_benefit_nominal
         + delivered_benefit_nominal
     )
-    total_benefits_nominal = prefer_csv_subtotal(
+    total_benefits_nominal = _prefer_subtotal(
         data, "total_benefits_nominal", calculated_total_benefits_nominal
     )
 
     # Also calculate haircut benefits (conservative estimate)
     # Haircut applies to congestion/curtailment only; delivered energy has no haircut
-    congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
-    curtailment_benefit_haircut = safe_get_numeric(
-        data, "curtailment_benefit_haircut_pv"
-    )
+    congestion_benefit_haircut = data.congestion_benefit_haircut_pv
+    curtailment_benefit_haircut = data.curtailment_benefit_haircut_pv
     calculated_total_benefits_haircut = (
         congestion_benefit_haircut + curtailment_benefit_haircut + delivered_benefit_pv
     )
-    total_benefits_haircut_pv = prefer_csv_subtotal(
+    total_benefits_haircut_pv = _prefer_subtotal(
         data, "total_benefits_haircut_pv", calculated_total_benefits_haircut
     )
 
@@ -282,7 +370,7 @@ def calculate_benefits(data: Dict[str, Any]) -> Dict[str, float]:
     }
 
 
-def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
+def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, float]:
     """
     Calculate total costs from scenario data.
 
@@ -294,132 +382,114 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
       - Delay: construction delay, congestion/curtailment delay, residual congestion
 
     Args:
-        data: Dictionary with scenario data
+        data: Dictionary or BCRInputData with scenario data
 
     Returns:
         Dictionary with cost breakdown by category and total (both nominal and PV)
     """
+    if isinstance(data, dict):
+        data = BCRInputData.model_validate(data)
     # Capital costs (PV) - ROW = capital only (acquisition + holding), not rent
-    build_cost_pv = safe_get_numeric(data, "build_cost_pv")
-    row_capital_pv = safe_get_numeric(data, "row_capital_pv") or safe_get_numeric(
-        data, "row_cost_pv"
-    )
-    row_cost_pv = safe_get_numeric(data, "row_cost_pv")
-    env_mitigation_pv = safe_get_numeric(data, "env_mitigation_pv")
+    build_cost_pv = data.build_cost_pv
+    row_capital_pv = data.row_capital_pv or data.row_cost_pv
+    row_cost_pv = data.row_cost_pv
+    env_mitigation_pv = data.env_mitigation_pv
     calculated_capital = build_cost_pv + row_capital_pv + env_mitigation_pv
-    capital_costs_pv = prefer_csv_subtotal(data, "capital_costs_pv", calculated_capital)
+    capital_costs_pv = _prefer_subtotal(data, "capital_costs_pv", calculated_capital)
 
     # Capital costs (Nominal)
-    build_cost_nominal = safe_get_numeric(data, "build_cost_nominal")
-    row_capital_nominal = safe_get_numeric(data, "row_capital_nominal") or safe_get_numeric(
-        data, "row_cost_nominal"
-    )
-    row_cost_nominal = safe_get_numeric(data, "row_cost_nominal")
-    env_mitigation_nominal = safe_get_numeric(data, "env_mitigation_nominal")
+    build_cost_nominal = data.build_cost_nominal
+    row_capital_nominal = data.row_capital_nominal or data.row_cost_nominal
+    row_cost_nominal = data.row_cost_nominal
+    env_mitigation_nominal = data.env_mitigation_nominal
     calculated_capital_nominal = (
         build_cost_nominal + row_capital_nominal + env_mitigation_nominal
     )
-    capital_costs_nominal = prefer_csv_subtotal(
+    capital_costs_nominal = _prefer_subtotal(
         data, "capital_costs_nominal", calculated_capital_nominal
     )
 
     # Operational costs (PV) - O&M, insurance, ROW rent (residual exceedance is in energy/emissions)
-    oandm_pv = safe_get_numeric(data, "oandm_pv")
-    insurance_pv = safe_get_numeric(data, "insurance_pv")
-    row_rent_pv = safe_get_numeric(data, "row_rent_pv")
-    residual_exceedance_pv = safe_get_numeric(data, "residual_exceedance_pv")
+    oandm_pv = data.oandm_pv
+    insurance_pv = data.insurance_pv
+    row_rent_pv = data.row_rent_pv
+    residual_exceedance_pv = data.residual_exceedance_pv
     calculated_operational = oandm_pv + insurance_pv + row_rent_pv
-    operational_costs_pv = prefer_csv_subtotal(
+    operational_costs_pv = _prefer_subtotal(
         data, "operational_costs_pv", calculated_operational
     )
 
     # Operational costs (Nominal)
-    oandm_nominal = safe_get_numeric(data, "oandm_nominal")
-    insurance_nominal = safe_get_numeric(data, "insurance_nominal")
-    row_rent_nominal = safe_get_numeric(data, "row_rent_nominal")
-    residual_exceedance_nominal = safe_get_numeric(data, "residual_exceedance_nominal")
+    oandm_nominal = data.oandm_nominal
+    insurance_nominal = data.insurance_nominal
+    row_rent_nominal = data.row_rent_nominal
+    residual_exceedance_nominal = data.residual_exceedance_nominal
     calculated_operational_nominal = oandm_nominal + insurance_nominal + row_rent_nominal
-    operational_costs_nominal = prefer_csv_subtotal(
+    operational_costs_nominal = _prefer_subtotal(
         data, "operational_costs_nominal", calculated_operational_nominal
     )
 
     # Energy & Emissions costs (PV) - Energy losses, emissions, and residual exceedance (system cost only)
-    emissions_pv = safe_get_numeric(data, "emissions_cost_pv")
-    energy_losses_pv = safe_get_numeric(data, "energy_losses_pv") or safe_get_numeric(
-        data, "line_loss_cost_pv"
-    )
+    emissions_pv = data.emissions_cost_pv
+    energy_losses_pv = data.energy_losses_pv or data.line_loss_cost_pv
     energy_losses_pv = max(0, energy_losses_pv)
-    conductor_loss_pv = safe_get_numeric(data, "conductor_loss_pv")
-    converter_loss_pv = safe_get_numeric(data, "converter_loss_pv")
+    conductor_loss_pv = data.conductor_loss_pv
+    converter_loss_pv = data.converter_loss_pv
     calculated_energy_emissions = (
         energy_losses_pv + emissions_pv + residual_exceedance_pv
     )
-    energy_emissions_costs_pv = prefer_csv_subtotal(
+    energy_emissions_costs_pv = _prefer_subtotal(
         data, "energy_emissions_costs_pv", calculated_energy_emissions
     )
 
     # Energy & Emissions costs (Nominal) - includes residual exceedance
-    emissions_nominal = safe_get_numeric(data, "emissions_cost_nominal")
-    energy_losses_nominal = safe_get_numeric(
-        data, "energy_losses_nominal"
-    ) or safe_get_numeric(data, "line_loss_cost_nominal")
+    emissions_nominal = data.emissions_cost_nominal
+    energy_losses_nominal = data.energy_losses_nominal or data.line_loss_cost_nominal
     energy_losses_nominal = max(0, energy_losses_nominal)
     calculated_energy_emissions_nominal = (
         energy_losses_nominal + emissions_nominal + residual_exceedance_nominal
     )
-    energy_emissions_costs_nominal = prefer_csv_subtotal(
+    energy_emissions_costs_nominal = _prefer_subtotal(
         data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal
     )
 
     # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
-    wildfire_pv = safe_get_numeric(data, "wildfire_pv")
-    outage_pv = safe_get_numeric(data, "outage_pv")
-    wildfire_liability_insurance_pv = safe_get_numeric(
-        data, "wildfire_liability_insurance_pv"
-    )
+    wildfire_pv = data.wildfire_pv
+    outage_pv = data.outage_pv
+    wildfire_liability_insurance_pv = data.wildfire_liability_insurance_pv
     # Backward compatibility for older CSVs (pre-rename)
     if wildfire_liability_insurance_pv == 0:
-        wildfire_liability_insurance_pv = safe_get_numeric(
-            data, "wildfire_liability_pv"
-        )
+        wildfire_liability_insurance_pv = data.wildfire_liability_pv
 
     calculated_risk = wildfire_pv + outage_pv + wildfire_liability_insurance_pv
-    risk_costs_pv = prefer_csv_subtotal(data, "risk_costs_pv", calculated_risk)
+    risk_costs_pv = _prefer_subtotal(data, "risk_costs_pv", calculated_risk)
 
     # Risk costs (Nominal)
-    wildfire_nominal = safe_get_numeric(data, "wildfire_nominal")
-    outage_nominal = safe_get_numeric(data, "outage_nominal")
-    wildfire_liability_nominal = safe_get_numeric(data, "wildfire_liability_nominal")
+    wildfire_nominal = data.wildfire_nominal
+    outage_nominal = data.outage_nominal
+    wildfire_liability_nominal = data.wildfire_liability_nominal
     calculated_risk_nominal = (
         wildfire_nominal + outage_nominal + wildfire_liability_nominal
     )
-    risk_costs_nominal = prefer_csv_subtotal(
+    risk_costs_nominal = _prefer_subtotal(
         data, "risk_costs_nominal", calculated_risk_nominal
     )
 
     # Delay costs (PV)
-    delay_cost_pv = safe_get_numeric(data, "delay_cost_pv")
-    congestion_delay_pv = safe_get_numeric(data, "congestion_delay_cost_pv")
-    curtailment_delay_pv = safe_get_numeric(data, "curtailment_delay_cost_pv")
+    delay_cost_pv = data.delay_cost_pv
+    congestion_delay_pv = data.congestion_delay_cost_pv
+    curtailment_delay_pv = data.curtailment_delay_cost_pv
     calculated_delay = delay_cost_pv + congestion_delay_pv + curtailment_delay_pv
-    delay_costs_pv = (
-        data["delay_costs_pv"]
-        if (
-            "delay_costs_pv" in data
-            and data["delay_costs_pv"] != ""
-            and data["delay_costs_pv"] != 0.0
-        )
-        else calculated_delay
-    )
+    delay_costs_pv = _prefer_subtotal(data, "delay_costs_pv", calculated_delay)
 
     # Delay costs (Nominal)
-    delay_cost_nominal = safe_get_numeric(data, "delay_cost_nominal")
-    congestion_delay_nominal = safe_get_numeric(data, "congestion_delay_cost_nominal")
-    curtailment_delay_nominal = safe_get_numeric(data, "curtailment_delay_cost_nominal")
+    delay_cost_nominal = data.delay_cost_nominal
+    congestion_delay_nominal = data.congestion_delay_cost_nominal
+    curtailment_delay_nominal = data.curtailment_delay_cost_nominal
     calculated_delay_nominal = (
         delay_cost_nominal + congestion_delay_nominal + curtailment_delay_nominal
     )
-    delay_costs_nominal = prefer_csv_subtotal(
+    delay_costs_nominal = _prefer_subtotal(
         data, "delay_costs_nominal", calculated_delay_nominal
     )
 
@@ -431,7 +501,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         + risk_costs_pv
         + delay_costs_pv
     )
-    total_costs_pv = prefer_csv_subtotal(data, "total_costs_pv", calculated_total)
+    total_costs_pv = _prefer_subtotal(data, "total_costs_pv", calculated_total)
     calculated_total_nominal = (
         capital_costs_nominal
         + operational_costs_nominal
@@ -439,7 +509,7 @@ def calculate_costs(data: Dict[str, Any]) -> Dict[str, float]:
         + risk_costs_nominal
         + delay_costs_nominal
     )
-    total_costs_nominal = prefer_csv_subtotal(
+    total_costs_nominal = _prefer_subtotal(
         data, "total_costs_nominal", calculated_total_nominal
     )
 

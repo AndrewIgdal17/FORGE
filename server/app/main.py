@@ -14,7 +14,13 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .ctcc_processor import run_ctcc_calculation
-from .models import CTCCInputPayload, CTCCOutputPayload, InputPayload, OutputPayload
+from .models import (
+    CTCCInputPayload,
+    CTCCOutputPayload,
+    InputPayload,
+    OutputPayload,
+    sanitize_for_json,
+)
 from .processor import generate_result
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -97,35 +103,17 @@ async def get_final_combined() -> JSONResponse:
 
     try:
         content = json.loads(FINAL_COMBINED_FILE.read_text(encoding="utf-8"))
-        # Convert infinity and NaN values to strings for JSON compliance
-        content = _sanitize_for_json(content)
+        content = sanitize_for_json(content)
     except JSONDecodeError as exc:
         raise HTTPException(status_code=500, detail="final_combined.json is invalid JSON") from exc
 
     return JSONResponse(content)
 
 
-def _sanitize_for_json(obj):
-    """Recursively convert inf/nan values to JSON-compliant strings."""
-    import math
-
-    if isinstance(obj, dict):
-        return {k: _sanitize_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [_sanitize_for_json(item) for item in obj]
-    elif isinstance(obj, float):
-        if math.isinf(obj):
-            return "Infinity" if obj > 0 else "-Infinity"
-        elif math.isnan(obj):
-            return "NaN"
-    return obj
-
-
 @app.post("/api/process", response_model=OutputPayload)
 async def process_payload(payload: InputPayload) -> OutputPayload:
     """Receive JSON payload, invoke processor, and return the generated result."""
-    payload_dict = payload.model_dump()
-    result = generate_result(payload_dict)
+    result = generate_result(payload)
     return OutputPayload.model_validate(result)
 
 
@@ -161,7 +149,7 @@ async def calculate_ctcc(payload: CTCCInputPayload) -> CTCCOutputPayload:
             ) from exc
 
     result = run_ctcc_calculation(payload_dict)
-    return CTCCOutputPayload.model_validate(_sanitize_for_json(result))
+    return CTCCOutputPayload.model_validate(result)
 
 
 @app.get("/api/outputs/{filename}")
