@@ -2,8 +2,8 @@
 
 Comprehensive technical documentation for developers working on CTCC.
 
-**Last Updated:** 2025-11-10
-**Version:** 2.0
+**Last Updated:** 2026-03-11
+**Version:** 3.0
 **Status:** Production-ready
 
 ---
@@ -33,8 +33,8 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 
 ### Key Features
 
-- **Flexible I/O:** YAML or JSON input, CSV or JSON output
-- **13 Cost Modules:** Build, ROW, environmental, O&M, risk, benefits, etc.
+- **Single I/O contract:** Calculator is YAML in, JSON out (input: `yamls/` or `CTCC_YAMLS_DIR`; output: `ctcc_results_{scenario_id}.json`). The API still accepts and returns JSON; the server converts client JSON to a temp YAML directory before invoking the calculator.
+- **14 calculation scripts:** Build, ROW, environmental, revenue, O&M, risk, benefits, etc.
 - **3 Financial Perspectives:** Nominal, AFUDC (regulatory), Present Value (societal)
 - **Web UI:** Browser-based interface for editing and running calculations
 - **REST API:** Programmatic access for integration
@@ -55,7 +55,7 @@ Costs are grouped into **5 categories** (variables, equations, and notation are 
 - **Language:** Python 3.8+
 - **Web Framework:** FastAPI + Uvicorn
 - **Data Processing:** Pandas, NumPy
-- **Configuration:** YAML (PyYAML), JSON
+- **Configuration:** YAML (PyYAML), JSON. The calculator reads only YAML (from a directory); JSON is used at the API boundary and in server templates.
 - **Frontend:** Vanilla JavaScript (no frameworks)
 
 **Context optimization:** Use the "Context and information gathering" section below for where to look and how to search. Prefer `documentation/CTCC_METHODOLOGY.md` for methodology and notation. Scope searches to the relevant directory. Prefer search + targeted read for files over ~500 lines.
@@ -71,7 +71,7 @@ Use this section to reduce context burn and improve answers: start in the right 
 - **Calculation logic:** `scripts/` + `documentation/CTCC_METHODOLOGY.md`
 - **API / server:** `ctcc.py` + `server/app/`
 - **Paper–appendix consistency:** `papers/paper1/` + `documentation/METHODOLOGY_CONSISTENCY.md`
-- **Config:** `yamls/` and `server/json/`; loader mappings in `scripts/yaml_loaders.py`, `scripts/json_loaders.py`
+- **Config:** `yamls/` (or directory set by `CTCC_YAMLS_DIR`); loader mappings in `scripts/yaml_loaders.py`. Server template/merge uses `server/json/`; the merged request is written as a temp YAML directory for the calculator. `json_loaders.py` exists for server-side use; the calculator does not use it.
 - **Testing:** `testing/` and root-level `test_*.py`
 
 See [File Structure](#file-structure) for the full tree.
@@ -165,14 +165,14 @@ pip install -r requirements.txt
 ### Run Calculations (CLI)
 
 ```bash
-# Default YAML→CSV
-venv/bin/python3 ctcc.py
+# Default: read yamls/, write outputs/ctcc_results_{scenario_id}.json
+python ctcc.py
 
-# JSON→JSON
-venv/bin/python3 ctcc.py -j -o --id test
+# With overrides
+CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=my_id python ctcc.py
 
-# JSON→CSV
-venv/bin/python3 ctcc.py -j
+# Legacy: run each script as subprocess
+python ctcc.py --subprocess
 ```
 
 ### Start Web Server
@@ -192,53 +192,51 @@ cd server
 # Output: server/json/final_combined.json
 ```
 
+The calculator does not take JSON input; conversion from client JSON to YAML happens only at the API boundary (server writes a temp YAML dir before invoking ctcc). This tool is for refreshing server templates.
+
 ---
 
 ## Architecture
 
 ### High-Level Design
 
-CTCC follows a **subprocess-based architecture** where:
+CTCC uses a single calculator contract and two entry points:
 
-1. Entry point (`ctcc.py` or `ctcc_processor.py`) receives request
-2. Environment variables set to specify modes
-3. 13 calculation scripts run as subprocesses
-4. Scripts use smart loaders/output to abstract I/O
-5. Results aggregated and returned
+1. Entry point (`ctcc.py` or `ctcc_processor.py`) receives the request.
+2. **14 calculation scripts** run **in-process by default** (or as subprocesses with `--subprocess`); they use **yaml_loaders only** and **JSON output only**.
+3. ctcc.py aggregates results and writes one JSON file (`ctcc_results_{scenario_id}.json`).
+4. Server path: merges request with template, writes **temp YAML directory**, sets `CTCC_YAMLS_DIR`, invokes ctcc, reads the JSON result, returns the response.
 
 ### Design Principles
 
-1. **Single Responsibility:** Each script calculates one cost category
-2. **Mode Abstraction:** Scripts don't know their I/O mode
-3. **Environment-Based Configuration:** Modes set via env vars
-4. **Delegation Over Duplication:** Server delegates to CLI
-5. **Backwards Compatibility:** YAML→CSV mode preserved
+1. **Single Responsibility:** Each script calculates one cost category.
+2. **Single input path (YAML dir):** Calculator reads only from a YAML directory (`yamls/` or `CTCC_YAMLS_DIR`).
+3. **Single output path (JSON):** Calculator writes only one JSON result file.
+4. **Delegation:** Server delegates to `ctcc.py`; it does not duplicate calculation logic.
+5. **Environment:** Optional overrides via `CTCC_YAMLS_DIR` and `CTCC_SCENARIO_ID`.
 
 ### Entry Points
 
 #### 1. CLI: `ctcc.py`
 
-**Purpose:** Direct command-line calculations
+**Purpose:** Direct command-line calculations.
 
 **Key Functions:**
 
-- `parse_arguments()` - Parse command-line flags
-- `run_script(script, env)` - Run calculation subprocess
-- `main()` - Orchestrate entire calculation flow
+- `parse_arguments()` - Parse command-line flags (e.g. `--simple`, `--subprocess`, feature toggles)
+- `main()` - Orchestrate entire calculation flow (load BCR config, run 14 scripts, aggregate JSON, write output)
 
 **Usage:**
 
 ```bash
-venv/bin/python3 ctcc.py [-j] [-o] [--id SCENARIO_ID]
+python ctcc.py
+# Optional env overrides:
+CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=my_id python ctcc.py
+# Legacy subprocess mode:
+python ctcc.py --subprocess
 ```
 
-**Important Note on Environment Variables:**
-When running in JSON input mode, `ctcc.py` sets `CTCC_JSON_DATA_FILE` in two places:
-
-1. In the `env` dict passed to subprocess scripts (for calculation modules)
-2. In `os.environ` for the parent process (for BCR calculation and JSON aggregation)
-
-This is necessary because `json_output_manager.py` runs in the parent process during result aggregation and needs access to the JSON data file.
+**Flow:** Parse args; load BCR config from YAML; set or generate `CTCC_SCENARIO_ID`; run 14 scripts in-process (or subprocess); aggregate JSON, compute BCR; write `outputs/ctcc_results_{scenario_id}.json`.
 
 #### 2. API: `server/app/ctcc_processor.py`
 
@@ -250,13 +248,11 @@ This is necessary because `json_output_manager.py` runs in the parent process du
 
 **How it works:**
 
-1. Receives JSON payload with configuration
-2. Writes `combined_data` to temp file (JSON mode)
-3. Sets environment variables
-4. Calls `ctcc.py` via subprocess
-5. Reads output file (JSON or CSV list)
-6. Returns structured response
-7. Cleans up temp files
+1. Receives JSON payload with `combined_data` (and optional `scenario_id`).
+2. Merges with template if simplified format; writes merged data to a **temp YAML directory** (one file per key), sets **CTCC_YAMLS_DIR**.
+3. Invokes `ctcc.py` via subprocess (no temp JSON input file).
+4. Reads `ctcc_results_{scenario_id}.json`; removes temp YAML dir.
+5. Returns structured JSON response (always JSON; no CSV path).
 
 **Why delegate to ctcc.py?**
 
@@ -267,58 +263,32 @@ This is necessary because `json_output_manager.py` runs in the parent process du
 ### Data Flow
 
 ```
-Input (YAML/JSON)
+YAML directory (yamls/ or CTCC_YAMLS_DIR)
     ↓
-Environment Variables
+Environment (CTCC_YAMLS_DIR, CTCC_SCENARIO_ID)
     ↓
-ctcc.py (sets modes)
+ctcc.py
     ↓
-13 Scripts (subprocesses)
+14 scripts (in-process by default)
     ↓
-smart_loaders → yaml_loaders | json_loaders
+smart_loaders → yaml_loaders only
     ↓
-Calculation Logic
+Calculation logic
     ↓
-smart_output → csv_output_manager | json_output_manager
+smart_output → json_output_manager only
     ↓
-Output (CSV/JSON)
+Output: ctcc_results_{scenario_id}.json
 ```
 
 ### Smart Loaders & Output
 
-**Purpose:** Abstract I/O mode from calculation scripts
+**Purpose:** Provide a single loader/output API to calculation scripts. The calculator has one input path and one output path.
 
-**smart_loaders.py:**
+**smart_loaders.py:** Always uses `yaml_loaders`. Scripts read from `YAMLS_DIR` (from `path_config`; overridable via `CTCC_YAMLS_DIR`). There is no branching on input mode; the calculator does not use `json_loaders`.
 
-```python
-import os
+**smart_output.py:** Always uses `JSONOutputManager` (or the shared aggregator when in-process). There is no CSV branch; scripts always write to the JSON aggregator.
 
-input_mode = os.getenv('CTCC_INPUT_MODE', 'yaml')
-
-if input_mode == 'json':
-    from json_loaders import *
-else:
-    from yaml_loaders import *
-```
-
-**smart_output.py:**
-
-```python
-import os
-
-output_mode = os.getenv('CTCC_OUTPUT_MODE', 'csv')
-
-if output_mode == 'json':
-    from json_output_manager import JSONOutputManager as CTCCOutputManager
-else:
-    from csv_output_manager import CSVOutputManager as CTCCOutputManager
-```
-
-**Benefits:**
-
-- Scripts use generic imports: `from smart_loaders import load_...`
-- Mode switching transparent to scripts
-- Easy to add new I/O formats
+**Benefits:** Scripts use generic imports (`from smart_loaders import load_...`, `from smart_output import CTCCOutputManager`). Single I/O contract; adding a new source (e.g. a database) would be a single adapter that produces a YAML dir or is used at the server boundary.
 
 ### Rate Base and ROW Capital vs. Operational
 
@@ -334,9 +304,11 @@ else:
 
 After methodology or input changes, refresh the paper's results and LaTeX tables with this pipeline. Run all commands from the **project root** with the CLI venv activated.
 
+**Note:** The calculator output is JSON only (`ctcc_results_*.json`). If the paper pipeline expects CSV (e.g. `outputs/batch_summary.csv`), it may require a separate export-from-JSON step or a batch runner that writes CSV; align with the current batch scripts.
+
 1. **Run batch scenarios**  
    `python papers/batch_craft/run_scenarios.py papers/paper1/scenarios_for_paper_1_formatted.tex`  
-   Appends results to `outputs/*.csv` (e.g. `outputs/batch_summary.csv`, `build_costs.csv`, etc.).
+   Appends results to `outputs/*.csv` (e.g. `outputs/batch_summary.csv`, `build_costs.csv`, etc.), if the batch pipeline produces CSV.
 
 2. **Convert CSVs to Markdown**  
    `python papers/convert_results_to_md.py paper1`  
@@ -396,16 +368,7 @@ if __name__ == "__main__":
 
 #### Step 2: Add Output Methods
 
-**csv_output_manager.py:**
-
-```python
-def add_new_module_costs(self, results):
-    """Add new module results to CSV batch summary."""
-    self.new_module_costs = results
-    # Update batch_summary fields
-```
-
-**json_output_manager.py:**
+For the calculator path, add the new module to **json_output_manager.py** (the calculator writes JSON only):
 
 ```python
 def add_new_module_costs(self, results):
@@ -427,15 +390,15 @@ scripts = [
 #### Step 4: Test
 
 ```bash
-# Test individual script
-export CTCC_INPUT_MODE=json
-export CTCC_OUTPUT_MODE=json
-export CTCC_JSON_DATA_FILE=server/json/final_combined.json
+# Test individual script (point at a YAML dir and scenario)
+export CTCC_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
 export CTCC_SCENARIO_ID=test
 python3 scripts/new_module.py
 
 # Test via ctcc.py
-venv/bin/python3 ctcc.py -j -o --id test
+python ctcc.py
+# Or with overrides:
+CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=test python ctcc.py
 
 # Test via API
 curl -X POST http://localhost:8000/api/ctcc/calculate \
@@ -460,48 +423,18 @@ curl -X POST http://localhost:8000/api/ctcc/calculate \
 
 ### Adding New Input Format
 
-#### Step 1: Create Loader
+The calculator has a **single input contract**: it reads only from a YAML directory. To support a new source (e.g. a database or XML):
 
-```python
-# scripts/xml_loaders.py
-import xml.etree.ElementTree as ET
+- **Option A:** Build an **adapter** that produces a YAML directory (e.g. export DB → YAML files), then point `CTCC_YAMLS_DIR` at that directory.
+- **Option B:** Use the new source at the **server boundary**: the API can accept the new format, merge it into the request, and write the merged data to the temp YAML directory before invoking ctcc.
 
-def load_project_technical_details():
-    """Load from XML file."""
-    tree = ET.parse(os.getenv('CTCC_XML_FILE'))
-    root = tree.getroot()
-    # Parse XML and return dict
-    return {...}
-```
-
-#### Step 2: Update Smart Loaders
-
-```python
-# scripts/smart_loaders.py
-input_mode = os.getenv('CTCC_INPUT_MODE', 'yaml')
-
-if input_mode == 'xml':
-    from xml_loaders import *
-elif input_mode == 'json':
-    from json_loaders import *
-else:
-    from yaml_loaders import *
-```
-
-#### Step 3: Update ctcc.py
-
-```python
-# Add XML mode handling
-if input_mode == 'xml':
-    xml_file = os.getenv('CTCC_XML_FILE')
-    if not xml_file:
-        print("Error: XML mode requires CTCC_XML_FILE")
-        sys.exit(1)
-```
+The calculator does not branch on input format; `smart_loaders` always uses `yaml_loaders`.
 
 ### Adding New Output Format
 
-Similar process as adding input format, but for `*_output_manager.py` and `smart_output.py`.
+The calculator has a **single output**: one JSON file per run (`ctcc_results_{scenario_id}.json`). To produce another format (e.g. CSV):
+
+- Add a **post-step** that reads `ctcc_results_*.json` and exports to CSV (or another format). Do not change the calculator's output contract.
 
 ---
 
@@ -535,29 +468,26 @@ Returns combined JSON configuration
 
 #### POST `/api/ctcc/calculate`
 
-Runs CTCC calculations
+Runs CTCC calculations. The API always returns JSON results; the server writes merged data to a temp YAML directory, sets `CTCC_YAMLS_DIR`, invokes ctcc, and returns the JSON from `ctcc_results_{scenario_id}.json`.
 
 **Request:**
 
 ```json
 {
-  "input_mode": "json",
-  "output_mode": "json",
   "scenario_id": "test",
   "combined_data": {...}
 }
 ```
 
-**Response (JSON output):**
+`input_mode` and `output_mode` may be accepted for backwards compatibility but are ignored; the calculator always uses YAML input and JSON output.
+
+**Response:**
 
 ```json
 {
   "success": true,
   "scenario_id": "test",
   "timestamp": "2025-11-10T12:00:00",
-  "input_mode": "json",
-  "output_mode": "json",
-  "csv_files": null,
   "results": {
     "scenario_id": "test",
     "technical_parameters": {...},
@@ -576,31 +506,11 @@ Runs CTCC calculations
 }
 ```
 
-**Response (CSV output):**
-
-```json
-{
-  "success": true,
-  "scenario_id": "test",
-  "timestamp": "2025-11-10T12:00:00",
-  "input_mode": "json",
-  "output_mode": "csv",
-  "csv_files": [
-    "batch_summary.csv",
-    "build_costs.csv",
-    ...
-  ],
-  "results": null,
-  "output_dir": "/path/to/outputs",
-  "error": null
-}
-```
-
 ---
 
 #### GET `/api/outputs/{filename}`
 
-Downloads CSV output file
+Downloads output file (e.g. CSV). Legacy/optional: the calculator writes JSON only; this endpoint is for any server-exposed outputs (e.g. CSV exported from JSON or from batch runs).
 
 **Query Parameters:**
 
@@ -630,19 +540,16 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
 ```
 CTCC/
 ├── ctcc.py                       # CLI entry point
-├── yaml_to_json.py               # YAML→JSON converter
+├── yaml_to_json.py               # YAML→JSON converter (server/template use)
 ├── cleanup_ctcc.sh               # Cleanup script
-├── run_yaml_csv.command          # YAML→CSV runner
-├── run_json_csv.command          # JSON→CSV runner
-├── run_json_json.command         # JSON→JSON runner
 │
-├── scripts/                      # Calculation modules
-│   ├── smart_loaders.py          # Input abstraction
-│   ├── smart_output.py           # Output abstraction
-│   ├── yaml_loaders.py           # YAML input
-│   ├── json_loaders.py           # JSON input
-│   ├── csv_output_manager.py    # CSV output
-│   ├── json_output_manager.py   # JSON output
+├── scripts/                      # Calculation modules (14 scripts)
+│   ├── smart_loaders.py          # Always yaml_loaders
+│   ├── smart_output.py           # Always JSON output
+│   ├── yaml_loaders.py           # YAML input (calculator path)
+│   ├── json_loaders.py           # JSON input (server-side only; calculator does not use)
+│   ├── csv_output_manager.py    # Optional/legacy (e.g. batch export)
+│   ├── json_output_manager.py   # JSON output (calculator path)
 │   ├── financial_utils.py       # AFUDC, PV calculations
 │   ├── bcr_calculator.py        # Benefit-cost ratio
 │   │
@@ -659,7 +566,9 @@ CTCC/
 │   ├── energy_losses.py         # 10. Preprocessing
 │   ├── emissions.py             # 11. Emissions
 │   ├── line_loss_costs.py       # 12. Line losses
-│   └── oandm.py                 # 13. O&M
+│   ├── oandm.py                 # 13. O&M
+│   ├── revenue.py               # 14. Revenue
+│   └── ...                      # (bcr_calculator invoked from ctcc.py)
 │
 ├── yamls/                        # YAML configuration (22 files)
 │   ├── 01_project_technical_details.yaml
@@ -667,8 +576,8 @@ CTCC/
 │   └── ...
 │
 ├── outputs/                      # Calculation results
-│   ├── *.csv                     # CSV outputs
-│   └── ctcc_results_*.json       # JSON outputs
+│   ├── ctcc_results_*.json      # Primary output (one per scenario)
+│   └── json_output_*.json       # Optional temp files when using --subprocess
 │
 ├── server/                       # FastAPI web server
 │   ├── app/
@@ -707,14 +616,13 @@ CTCC/
 #### Test CLI
 
 ```bash
-# YAML→CSV (default)
-venv/bin/python3 ctcc.py
+# Default: YAML dir → JSON output
+python ctcc.py
 
-# JSON→CSV
-venv/bin/python3 ctcc.py -j
-
-# JSON→JSON
-venv/bin/python3 ctcc.py -j -o --id test
+# With overrides
+CTCC_SCENARIO_ID=test python ctcc.py
+# Or:
+CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=test python ctcc.py
 ```
 
 #### Test API
@@ -736,9 +644,7 @@ curl -X POST http://localhost:8000/api/ctcc/calculate \
 #### Test Individual Script
 
 ```bash
-export CTCC_INPUT_MODE=json
-export CTCC_OUTPUT_MODE=json
-export CTCC_JSON_DATA_FILE=server/json/final_combined.json
+export CTCC_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
 export CTCC_SCENARIO_ID=test
 python3 scripts/build_costs.py
 ```
@@ -747,13 +653,10 @@ python3 scripts/build_costs.py
 
 ```bash
 # API vs CLI comparison
-venv/bin/python3 test_api_vs_cli.py
+python test_api_vs_cli.py
 
 # CTCC processor test
-venv/bin/python3 test_ctcc_processor.py
-
-# Mode comparison
-venv/bin/python3 test_mode_comparison.py
+python test_ctcc_processor.py
 ```
 
 ### Unit Testing
@@ -793,32 +696,19 @@ tests/
 
 **Solution:** Refactored to delegate to `ctcc.py` via subprocess (189 lines, 58% reduction).
 
-### Issue 3: JSON Data Loading in Parent Process (FIXED)
+### Issue 3: JSON Data Loading in Parent Process (OBSOLETE)
 
-**Status:** ✅ Resolved in v2.0
+**Status:** Obsolete in v3.0
 
-**Problem:** `json_output_manager.py` failed to load technical details with error "JSON data not set" when running in the parent `ctcc.py` process during result aggregation.
-
-**Root Cause:** `CTCC_JSON_DATA_FILE` environment variable was only set for subprocess scripts, not for the parent process. When `JSONOutputManager` initialized during aggregation (line 256 in ctcc.py), it couldn't access the JSON data file.
-
-**Solution:** Modified `ctcc.py` line 202 to set `os.environ['CTCC_JSON_DATA_FILE']` for the parent process in addition to the subprocess `env` dict. Also simplified `json_loaders.py` to automatically load from the environment variable when `get_data()` is called.
-
-**Files Modified:**
-
-- `ctcc.py:202` - Added `os.environ['CTCC_JSON_DATA_FILE'] = json_file_path`
-- `json_loaders.py:32-36` - Auto-load from env var in `get_data()` method
+The calculator no longer has a JSON input mode. All input is via a YAML directory; the server converts client JSON to a temp YAML dir at the API boundary. This issue no longer applies.
 
 ### Issue 4: Module-Specific CSV Files Not Generated
 
 **Status:** ⚠️ Known limitation
 
-**Problem:** Only `batch_summary.csv` is generated, not individual module CSVs.
+**Problem:** The calculator output is **JSON only** (`ctcc_results_*.json`). There is no CSV output from the calculator.
 
-**Root Cause:** Scripts call `write_batch_summary()` but not `write_module_csv()`.
-
-**Workaround:** Use JSON output mode for complete detailed results.
-
-**Fix Required:** Update each script to call `write_module_csv()` with module-specific data.
+**Workaround:** For CSV or per-module files, add a separate export step that reads `ctcc_results_*.json` and writes the desired CSV(s). Do not expect the calculator to produce CSV directly.
 
 ### Issue 5: Reconductoring Environmental Mitigation Credits (RESOLVED)
 
@@ -862,8 +752,8 @@ Planned or desired improvements that are intentionally deferred are documented i
 - [ ] Set up monitoring
 - [ ] Configure file permissions
 - [ ] Set resource limits (timeout, memory)
-- [ ] Test all mode combinations
-- [ ] Verify CSV downloads work
+- [ ] Test CLI (YAML dir → JSON) and API (JSON request → JSON response)
+- [ ] Verify JSON results returned
 - [ ] Test with realistic data sizes
 
 ### Environment Setup
@@ -936,7 +826,7 @@ cd server
 
 ### Environment Variables Not Set
 
-**Error:** Scripts use wrong mode
+**Error:** Scripts can't find YAML dir or scenario ID
 
 **Solution:**
 
@@ -944,10 +834,11 @@ cd server
 # Check environment
 env | grep CTCC
 
+# Required for overrides (defaults: yamls/ and generated scenario ID)
+# CTCC_YAMLS_DIR  - path to YAML config directory
+# CTCC_SCENARIO_ID - scenario identifier for output filename
 # Clear if needed
-unset CTCC_INPUT_MODE
-unset CTCC_OUTPUT_MODE
-unset CTCC_JSON_DATA_FILE
+unset CTCC_YAMLS_DIR
 unset CTCC_SCENARIO_ID
 ```
 
@@ -1018,6 +909,16 @@ pip install -r requirements.txt
 
 ## Version History
 
+### v3.0 (2026-03-11)
+
+**Single calculator contract (YAML in, JSON out):**
+
+- Calculator reads only from a YAML directory (`yamls/` or `CTCC_YAMLS_DIR`); writes only JSON (`ctcc_results_{scenario_id}.json`).
+- Server writes merged request to a temp YAML directory and sets `CTCC_YAMLS_DIR`; no temp JSON input file.
+- Calculator always uses `yaml_loaders` and `JSONOutputManager`; no `-j`/`-o`/`--id` flags; scenario via `CTCC_SCENARIO_ID`.
+- Scripts run in-process by default; `--subprocess` remains for legacy.
+- See [audit/refactor51126.md](../audit/refactor51126.md) and [MODE_FLOW_DIAGRAM.md](MODE_FLOW_DIAGRAM.md).
+
 ### v2.0 (2025-11-10)
 
 **Major Changes:**
@@ -1054,12 +955,14 @@ University of Texas at Austin
 
 ---
 
-## Support
+## Support and Related
 
 For questions or issues:
 
 - Check README.md for user documentation
-- Check MODE_FLOW_DIAGRAM.md for architecture
+- Check [MODE_FLOW_DIAGRAM.md](MODE_FLOW_DIAGRAM.md) for architecture
+- Review [codebase.md](../codebase.md) for file/flow reference
+- Review [audit/refactor51126.md](../audit/refactor51126.md) for v3.0 refactor details
 - Review code comments in calculation scripts
 - Test with known-good YAML files
 
