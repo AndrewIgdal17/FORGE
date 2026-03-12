@@ -107,7 +107,7 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         payload: Dictionary containing:
             - combined_data: Full or simplified configuration JSON (merged with template if simplified)
             - scenario_id: Optional scenario identifier
-            - input_mode / output_mode: Ignored for calculator; response may still include them for API contract
+            - input_mode: Accepted for backwards compatibility but ignored; calculator always uses YAML
 
     Returns:
         Dictionary containing calculation results (JSON) or error information
@@ -115,7 +115,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     import subprocess
 
     input_mode = payload.get("input_mode", "json")
-    output_mode = "json"
     scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
     combined_data = payload.get("combined_data")
     temp_yaml_dir = None
@@ -184,8 +183,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "scenario_id": scenario_id,
                 "timestamp": results.get("timestamp", datetime.now().isoformat()),
                 "input_mode": input_mode,
-                "output_mode": "json",
-                "csv_files": None,
                 "results": results,
                 "error": result.stderr[:500] if result.returncode != 0 else None,
             }
@@ -194,8 +191,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             "scenario_id": scenario_id,
             "timestamp": datetime.now().isoformat(),
             "input_mode": input_mode,
-            "output_mode": "json",
-            "csv_files": None,
             "results": None,
             "error": f"JSON output file not found. stderr: {result.stderr[:500]}",
         }
@@ -206,8 +201,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             "scenario_id": scenario_id,
             "timestamp": datetime.now().isoformat(),
             "input_mode": input_mode,
-            "output_mode": "json",
-            "csv_files": None,
             "results": None,
             "error": "Calculation timeout after 10 minutes",
         }
@@ -218,8 +211,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             "scenario_id": payload.get("scenario_id", "unknown"),
             "timestamp": datetime.now().isoformat(),
             "input_mode": payload.get("input_mode", "json"),
-            "output_mode": "json",
-            "csv_files": None,
             "results": None,
             "error": str(e),
         }

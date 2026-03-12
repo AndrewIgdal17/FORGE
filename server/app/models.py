@@ -63,7 +63,7 @@ class OutputPayload(BaseModel):
 class CTCCInputPayload(BaseModel):
     mode: Literal["calculate"] = "calculate"
     input_mode: Literal["json", "yaml"] = "json"
-    output_mode: Literal["json", "csv"] = "json"
+    output_mode: Literal["json"] = "json"
     combined_data: Optional[Dict[str, Any]] = None
     scenario_id: Optional[str] = None
 
@@ -114,7 +114,6 @@ class CTCCResults(BaseModel):
     benefits: Optional[Dict[str, Any]] = None
     summary: Optional[Dict[str, Any]] = None
     bcr: Optional[Dict[str, Any]] = None
-    csv_equivalent: Optional[Dict[str, Any]] = None
 
 
 class CTCCOutputPayload(BaseModel):
@@ -122,10 +121,8 @@ class CTCCOutputPayload(BaseModel):
     scenario_id: str
     timestamp: str
     input_mode: str
-    output_mode: str
     error: Optional[str] = None
     results: Optional[CTCCResults] = None
-    csv_files: Optional[List[str]] = None
 
     @model_serializer(mode="wrap")
     def _serialize_json_safe(self, handler: Any) -> Any:
