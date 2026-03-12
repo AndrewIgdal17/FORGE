@@ -120,11 +120,10 @@ async def process_payload(payload: InputPayload) -> OutputPayload:
 @app.post("/api/ctcc/calculate", response_model=CTCCOutputPayload)
 async def calculate_ctcc(payload: CTCCInputPayload) -> CTCCOutputPayload:
     """
-    Run CTCC calculations with JSON input and configurable output.
+    Run CTCC calculations with JSON input and output.
 
-    Supports dual input modes (json/yaml) and dual output modes (json/csv).
-    When output_mode='json', returns calculation results as JSON.
-    When output_mode='csv', writes CSV files to local folder and returns file list.
+    Accepts a JSON payload, runs the calculator (YAML-in, JSON-out internally),
+    and returns the calculation results as JSON.
     """
     payload_dict = payload.model_dump()
     if payload_dict.get("input_mode") == "json" and not payload_dict.get("combined_data"):
