@@ -66,10 +66,15 @@ def calculate_weighted_miles() -> Tuple[float, float]:
     return weighted_miles, average_terrain_multiplier
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for orchestrator or standalone run."""
     weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
     print(weighted_miles)
     print(average_terrain_multiplier)
+
+
+if __name__ == "__main__":
+    main()
 
 
 # =============================================================================

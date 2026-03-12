@@ -522,10 +522,12 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
                     f"Missing '{key}' key in curtailment section of YAML file"
                 )
 
-        # Get residual_exceedance_value (can be None)
+        # Get residual_exceedance_value (can be None or empty string)
         residual_exceedance_value = costs.get("residual_exceedance_value")
-        if residual_exceedance_value is not None:
+        if residual_exceedance_value not in (None, ""):
             residual_exceedance_value = float(residual_exceedance_value)
+        else:
+            residual_exceedance_value = None
 
         return CongestionCurtailmentParams(
             flow_factor=float(flow_factor),

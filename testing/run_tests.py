@@ -132,106 +132,85 @@ class TestRunner:
     # Test Category 1: CLI Mode Tests (P0)
     # ========================================
 
-    def test_1_1_1_yaml_csv_mode(self):
-        """Test 1.1.1: Default YAML→CSV mode"""
+    def test_1_1_1_yaml_json_mode(self):
+        """Test 1.1.1: YAML→JSON mode (calculator is YAML-in, JSON-out)"""
         test_id = "1.1.1"
+        scenario_id = f"test_yaml_json_{int(time.time())}"
         start_time = time.time()
 
         cmd = [str(self.venv_python), "ctcc.py", "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
+        env = {"CTCC_SCENARIO_ID": scenario_id}
+        success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
 
         if not success:
-            self.add_result(test_id, "YAML→CSV mode", "fail", duration,
+            self.add_result(test_id, "YAML→JSON mode", "fail", duration,
                           f"Command failed: {stderr[:200]}")
             return False
 
-        # Check that batch_summary.csv exists
-        batch_summary = self.outputs_dir / "batch_summary.csv"
-        if not batch_summary.exists():
-            self.add_result(test_id, "YAML→CSV mode", "fail", duration,
-                          "batch_summary.csv not created")
+        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        self.temp_files.append(json_output)
+        if not json_output.exists():
+            self.add_result(test_id, "YAML→JSON mode", "fail", duration,
+                          "ctcc_results_*.json not created")
             return False
 
-        # Check for expected output indicators
-        if "Input Mode: YAML" not in stdout or "Output Mode: CSV" not in stdout:
-            self.add_result(test_id, "YAML→CSV mode", "warning", duration,
-                          "Mode indicators not found in output")
-            return False
-
-        self.add_result(test_id, "YAML→CSV mode", "pass", duration)
+        self.add_result(test_id, "YAML→JSON mode", "pass", duration)
         return True
 
     def test_1_1_2_json_csv_mode(self):
-        """Test 1.1.2: JSON→CSV mode"""
+        """Test 1.1.2: JSON→CSV mode (skipped: calculator is YAML-in, JSON-out only)"""
         test_id = "1.1.2"
         start_time = time.time()
-
-        cmd = [str(self.venv_python), "ctcc.py", "-j", "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
-
         duration = time.time() - start_time
-
-        if not success:
-            self.add_result(test_id, "JSON→CSV mode", "fail", duration,
-                          f"Command failed: {stderr[:200]}")
-            return False
-
-        # Check mode indicators
-        if "Input Mode: JSON" not in stdout or "Output Mode: CSV" not in stdout:
-            self.add_result(test_id, "JSON→CSV mode", "fail", duration,
-                          "Incorrect mode detected")
-            return False
-
-        self.add_result(test_id, "JSON→CSV mode", "pass", duration)
+        self.add_result(test_id, "JSON→CSV mode", "skip", duration,
+                      "Calculator is YAML-in, JSON-out; API converts JSON at boundary")
         return True
 
-    def test_1_1_3_json_json_mode(self):
-        """Test 1.1.3: JSON→JSON mode"""
+    def test_1_1_3_yaml_json_mode(self):
+        """Test 1.1.3: YAML→JSON mode with custom scenario ID"""
         test_id = "1.1.3"
         scenario_id = f"test_{int(time.time())}"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "-j", "-o", "--id", scenario_id, "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
+        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
+        env = {"CTCC_SCENARIO_ID": scenario_id}
+        success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
 
         if not success:
-            self.add_result(test_id, "JSON→JSON mode", "fail", duration,
+            self.add_result(test_id, "YAML→JSON mode (custom ID)", "fail", duration,
                           f"Command failed: {stderr[:200]}")
             return False
 
-        # Check that JSON output file was created
         json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
         self.temp_files.append(json_output)
 
         if not json_output.exists():
-            self.add_result(test_id, "JSON→JSON mode", "fail", duration,
+            self.add_result(test_id, "YAML→JSON mode (custom ID)", "fail", duration,
                           f"Output file not created: {json_output}")
             return False
 
-        # Validate JSON structure
         try:
             with open(json_output, 'r') as f:
                 data = json.load(f)
 
-            # Check for required keys
             required_keys = ['scenario_id', 'costs', 'technical_parameters']
             missing_keys = [k for k in required_keys if k not in data]
 
             if missing_keys:
-                self.add_result(test_id, "JSON→JSON mode", "fail", duration,
+                self.add_result(test_id, "YAML→JSON mode (custom ID)", "fail", duration,
                               f"Missing keys in JSON: {missing_keys}")
                 return False
 
         except json.JSONDecodeError as e:
-            self.add_result(test_id, "JSON→JSON mode", "fail", duration,
+            self.add_result(test_id, "YAML→JSON mode (custom ID)", "fail", duration,
                           f"Invalid JSON output: {e}")
             return False
 
-        self.add_result(test_id, "JSON→JSON mode", "pass", duration,
+        self.add_result(test_id, "YAML→JSON mode (custom ID)", "pass", duration,
                       f"Output size: {json_output.stat().st_size / 1024:.1f} KB")
         return True
 
@@ -260,13 +239,14 @@ class TestRunner:
         return True
 
     def test_1_2_6_custom_scenario_id(self):
-        """Test 1.2.6: Custom scenario ID"""
+        """Test 1.2.6: Custom scenario ID (via CTCC_SCENARIO_ID)"""
         test_id = "1.2.6"
         scenario_id = "custom_test_123"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "-j", "-o", "--id", scenario_id, "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
+        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
+        env = {"CTCC_SCENARIO_ID": scenario_id}
+        success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
 
@@ -339,52 +319,41 @@ class TestRunner:
         test_id = "5.2.1"
         start_time = time.time()
 
-        # Step 1: Run YAML→CSV
-        scenario_a = f"roundtrip_yaml_{int(time.time())}"
+        # Step 1: Run YAML→JSON (calculator is YAML-in, JSON-out)
+        scenario_id = f"roundtrip_yaml_{int(time.time())}"
         cmd1 = [str(self.venv_python), "ctcc.py", "--simple"]
-        success1, stdout1, stderr1 = self.run_command(cmd1, timeout=180)
+        success1, stdout1, stderr1 = self.run_command(cmd1, timeout=180, env={"CTCC_SCENARIO_ID": scenario_id})
 
         if not success1:
             duration = time.time() - start_time
             self.add_result(test_id, "Round-trip test", "fail", duration,
-                          "YAML→CSV failed")
+                          "YAML→JSON failed")
             return False
 
-        # Get batch_summary for comparison
-        batch_yaml = self.outputs_dir / "batch_summary.csv"
-        if not batch_yaml.exists():
+        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        self.temp_files.append(json_output)
+        if not json_output.exists():
             duration = time.time() - start_time
             self.add_result(test_id, "Round-trip test", "fail", duration,
-                          "YAML batch_summary not created")
+                          "ctcc_results_*.json not created")
             return False
 
-        yaml_content = batch_yaml.read_text()
-
-        # Step 2: Run JSON→CSV
-        time.sleep(1)  # Ensure different timestamp
-        cmd2 = [str(self.venv_python), "ctcc.py", "-j", "--simple"]
-        success2, stdout2, stderr2 = self.run_command(cmd2, timeout=180)
+        try:
+            data = json.loads(json_output.read_text())
+            if "costs" not in data or "scenario_id" not in data:
+                duration = time.time() - start_time
+                self.add_result(test_id, "Round-trip test", "fail", duration,
+                              "JSON missing required keys")
+                return False
+        except json.JSONDecodeError as e:
+            duration = time.time() - start_time
+            self.add_result(test_id, "Round-trip test", "fail", duration,
+                          f"Invalid JSON: {e}")
+            return False
 
         duration = time.time() - start_time
-
-        if not success2:
-            self.add_result(test_id, "Round-trip test", "fail", duration,
-                          "JSON→CSV failed")
-            return False
-
-        # Compare outputs (ignore scenario_id and timestamp lines)
-        json_content = batch_yaml.read_text()
-
-        # Simple comparison: check if key numbers are present in both
-        # (Full comparison would need to parse CSV and ignore timestamps)
-        if len(yaml_content) > 0 and len(json_content) > 0:
-            self.add_result(test_id, "Round-trip test", "pass", duration,
-                          "Both modes produced output")
-        else:
-            self.add_result(test_id, "Round-trip test", "fail", duration,
-                          "Output comparison failed")
-            return False
-
+        self.add_result(test_id, "Round-trip test", "pass", duration,
+                      "YAML→JSON produced valid output")
         return True
 
     # ========================================
@@ -397,8 +366,9 @@ class TestRunner:
         start_time = time.time()
 
         scenario_id = f"bcr_test_{int(time.time())}"
-        cmd = [str(self.venv_python), "ctcc.py", "-j", "-o", "--id", scenario_id, "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
+        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
+        env = {"CTCC_SCENARIO_ID": scenario_id}
+        success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
 
@@ -513,8 +483,8 @@ class TestRunner:
         self.log(f"{Colors.HEADER}{'='*70}{Colors.ENDC}\n")
 
         tests = [
-            ("CLI Check", self.test_1_1_1_yaml_csv_mode),
-            ("JSON Mode", self.test_1_1_3_json_json_mode),
+            ("CLI Check", self.test_1_1_1_yaml_json_mode),
+            ("JSON Mode", self.test_1_1_3_yaml_json_mode),
         ]
 
         for name, test_func in tests:
@@ -534,9 +504,9 @@ class TestRunner:
         self.log(f"{Colors.HEADER}{'='*70}{Colors.ENDC}\n")
 
         tests = [
-            ("1.1.1: YAML→CSV Mode", self.test_1_1_1_yaml_csv_mode),
-            ("1.1.2: JSON→CSV Mode", self.test_1_1_2_json_csv_mode),
-            ("1.1.3: JSON→JSON Mode", self.test_1_1_3_json_json_mode),
+            ("1.1.1: YAML→JSON Mode", self.test_1_1_1_yaml_json_mode),
+            ("1.1.2: JSON→CSV (skipped)", self.test_1_1_2_json_csv_mode),
+            ("1.1.3: YAML→JSON (custom ID)", self.test_1_1_3_yaml_json_mode),
             ("1.2.1: --norisk Flag", self.test_1_2_1_norisk_flag),
             ("1.2.6: Custom Scenario ID", self.test_1_2_6_custom_scenario_id),
             ("5.1.1: YAML→JSON Converter", self.test_5_1_1_yaml_to_json_converter),

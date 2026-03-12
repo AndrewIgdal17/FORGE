@@ -1,12 +1,15 @@
 """
 CTCC calculation processor for FastAPI.
 Delegates to the main ctcc.py for all calculations to maintain consistency.
+Server converts client JSON to YAML at the boundary; calculator is YAML-in, JSON-out.
 """
 
 import sys
 import os
 import json
+import shutil
 import tempfile
+import yaml
 from pathlib import Path
 from typing import Any, Dict
 from datetime import datetime
@@ -97,181 +100,105 @@ def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str,
 def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Run complete CTCC calculations based on input payload.
-
-    This function delegates to the main ctcc.py implementation to ensure
-    all updates to ctcc.py automatically benefit the API server.
+    Server converts client JSON to YAML; calculator is YAML-in, JSON-out.
+    API still accepts and returns JSON.
 
     Args:
         payload: Dictionary containing:
-            - input_mode: "json" or "yaml"
-            - output_mode: "json" or "csv"
-            - combined_data: Full configuration JSON (if input_mode="json")
+            - combined_data: Full or simplified configuration JSON (merged with template if simplified)
             - scenario_id: Optional scenario identifier
+            - input_mode / output_mode: Ignored for calculator; response may still include them for API contract
 
     Returns:
-        Dictionary containing calculation results or error information
+        Dictionary containing calculation results (JSON) or error information
     """
-    try:
-        # Extract parameters
-        input_mode = payload.get("input_mode", "json")
-        output_mode = payload.get("output_mode", "json")
-        scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
-        combined_data = payload.get("combined_data")
+    import subprocess
 
-        # For JSON input mode, we need to merge user input with the full template
-        temp_json_file = None
-        if input_mode == "json" and combined_data:
-            # Check if combined_data is already in full CTCC format (has numbered keys like "01_project_technical_details")
-            # The web app sends the full structure, so we should use it directly
-            is_full_format = any(key.startswith(('0', '1')) and '_' in key for key in combined_data.keys())
-            
+    input_mode = payload.get("input_mode", "json")
+    output_mode = "json"
+    scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
+    combined_data = payload.get("combined_data")
+    temp_yaml_dir = None
+
+    try:
+        env = os.environ.copy()
+        env["CTCC_SCENARIO_ID"] = scenario_id
+        env["CTCC_OUTPUT_MODE"] = "json"
+
+        if combined_data:
+            # Merge with template if simplified format
+            is_full_format = any(
+                key.startswith(("0", "1")) and "_" in key for key in combined_data.keys()
+            )
             if is_full_format:
-                # Already in full CTCC format - use directly
                 merged_data = combined_data
             else:
-                # Simplified format - merge with template
                 template_file = Path(__file__).parent.parent / "json" / "final_combined.json"
                 if template_file.exists():
-                    with open(template_file, 'r') as f:
+                    with open(template_file, "r") as f:
                         full_template = json.load(f)
-
                     user_input = UserMergeInput.model_validate(combined_data)
                     merged_data = merge_user_data_with_template(
                         user_input.model_dump(exclude_none=True), full_template
                     )
                 else:
-                    # Fallback to user data if template not found
                     merged_data = combined_data
-            
-            temp_json_file = tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix='.json',
-                prefix=f'ctcc_api_{scenario_id}_',
-                delete=False
-            )
-            json.dump(merged_data, temp_json_file)
-            temp_json_file.close()
 
-        try:
-            # Build command-line arguments for ctcc.py
-            import subprocess
+            # Write merged data to temp YAML dir (one file per key)
+            temp_yaml_dir = tempfile.mkdtemp(prefix=f"ctcc_yaml_{scenario_id}_")
+            for key, value in merged_data.items():
+                yaml_path = os.path.join(temp_yaml_dir, f"{key}.yaml")
+                with open(yaml_path, "w") as f:
+                    yaml.dump(value, f, default_flow_style=False, sort_keys=False)
+            env["CTCC_YAMLS_DIR"] = os.path.abspath(temp_yaml_dir)
 
-            # Build command - use same Python as server (single venv at repo root)
-            cmd = [sys.executable, "ctcc.py"]
+        cmd = [sys.executable, "ctcc.py"]
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(CTCC_ROOT),
+            env=env,
+            timeout=600,
+        )
 
-            # Set up environment variables for the subprocess
-            env = os.environ.copy()
-            env["CTCC_INPUT_MODE"] = input_mode
-            env["CTCC_OUTPUT_MODE"] = output_mode
-            env["CTCC_SCENARIO_ID"] = scenario_id
+        if result.stdout:
+            for line in result.stdout.split("\n"):
+                if "DEBUG:" in line or "Warning:" in line:
+                    print(f"[CTCC Subprocess] {line}", flush=True)
+        if result.stderr:
+            for line in result.stderr.split("\n"):
+                if line.strip():
+                    print(f"[CTCC Subprocess STDERR] {line}", flush=True)
 
-            # Add JSON file path if available (use absolute path for subprocess scripts)
-            if temp_json_file:
-                # Convert to absolute path so subprocess scripts can find it regardless of working directory
-                json_file_path = os.path.abspath(temp_json_file.name)
-                env["CTCC_JSON_DATA_FILE"] = json_file_path
-
-            # Run ctcc.py as subprocess with environment variables
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=str(CTCC_ROOT),
-                env=env,
-                timeout=600  # 10 minute timeout
-            )
-
-            # Log subprocess output for debugging (especially BCR config loading)
-            if result.stdout:
-                # Look for DEBUG messages
-                for line in result.stdout.split('\n'):
-                    if 'DEBUG:' in line or 'Warning:' in line:
-                        print(f"[CTCC Subprocess] {line}", flush=True)
-            if result.stderr:
-                # Log any errors
-                for line in result.stderr.split('\n'):
-                    if line.strip():  # Only log non-empty lines
-                        print(f"[CTCC Subprocess STDERR] {line}", flush=True)
-
-            # Parse results based on output mode
-            if output_mode == "json":
-                # Read the JSON output file
-                json_output_file = CTCC_ROOT / "outputs" / f"ctcc_results_{scenario_id}.json"
-                
-                if json_output_file.exists():
-                    with open(json_output_file, 'r') as f:
-                        results = json.load(f)
-
-                    # Clean up the output file
-                    try:
-                        json_output_file.unlink()
-                    except Exception:
-                        pass
-
-                    return {
-                        "success": result.returncode == 0,
-                        "scenario_id": scenario_id,
-                        "timestamp": results.get("timestamp", datetime.now().isoformat()),
-                        "input_mode": input_mode,
-                        "output_mode": "json",
-                        "csv_files": None,
-                        "results": results,
-                        "error": result.stderr[:500] if result.returncode != 0 else None
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "scenario_id": scenario_id,
-                        "timestamp": datetime.now().isoformat(),
-                        "input_mode": input_mode,
-                        "output_mode": "json",
-                        "csv_files": None,
-                        "results": None,
-                        "error": f"JSON output file not found. stderr: {result.stderr[:500]}"
-                    }
-
-            else:  # CSV mode
-                # Check which CSV files were created
-                csv_files = [
-                    "batch_summary.csv",
-                    "build_costs.csv",
-                    "row_costs.csv",
-                    "environmental_mitigation.csv",
-                    "delay_costs.csv",
-                    "insurance_costs.csv",
-                    "wildfire_costs.csv",
-                    "outage_costs.csv",
-                    "congestion_curtailment.csv",
-                    "emissions_costs.csv",
-                    "line_loss_costs.csv",
-                    "oandm_costs.csv",
-                ]
-
-                outputs_dir = CTCC_ROOT / "outputs"
-                existing_csv_files = [
-                    csv_file for csv_file in csv_files
-                    if (outputs_dir / csv_file).exists()
-                ]
-
-                return {
-                    "success": result.returncode == 0 and len(existing_csv_files) > 0,
-                    "scenario_id": scenario_id,
-                    "timestamp": datetime.now().isoformat(),
-                    "input_mode": input_mode,
-                    "output_mode": "csv",
-                    "csv_files": existing_csv_files,
-                    "results": None,
-                    "error": result.stderr[:500] if result.returncode != 0 else None,
-                    "output_dir": str(outputs_dir)
-                }
-
-        finally:
-            # Clean up temporary JSON input file
-            if temp_json_file and os.path.exists(temp_json_file.name):
-                try:
-                    os.unlink(temp_json_file.name)
-                except Exception:
-                    pass  # Ignore cleanup errors
+        json_output_file = CTCC_ROOT / "outputs" / f"ctcc_results_{scenario_id}.json"
+        if json_output_file.exists():
+            with open(json_output_file, "r") as f:
+                results = json.load(f)
+            try:
+                json_output_file.unlink()
+            except Exception:
+                pass
+            return {
+                "success": result.returncode == 0,
+                "scenario_id": scenario_id,
+                "timestamp": results.get("timestamp", datetime.now().isoformat()),
+                "input_mode": input_mode,
+                "output_mode": "json",
+                "csv_files": None,
+                "results": results,
+                "error": result.stderr[:500] if result.returncode != 0 else None,
+            }
+        return {
+            "success": False,
+            "scenario_id": scenario_id,
+            "timestamp": datetime.now().isoformat(),
+            "input_mode": input_mode,
+            "output_mode": "json",
+            "csv_files": None,
+            "results": None,
+            "error": f"JSON output file not found. stderr: {result.stderr[:500]}",
+        }
 
     except subprocess.TimeoutExpired:
         return {
@@ -279,21 +206,27 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
             "scenario_id": scenario_id,
             "timestamp": datetime.now().isoformat(),
             "input_mode": input_mode,
-            "output_mode": output_mode,
+            "output_mode": "json",
             "csv_files": None,
             "results": None,
-            "error": "Calculation timeout after 10 minutes"
+            "error": "Calculation timeout after 10 minutes",
         }
 
     except Exception as e:
-        # Return error information
         return {
             "success": False,
             "scenario_id": payload.get("scenario_id", "unknown"),
             "timestamp": datetime.now().isoformat(),
             "input_mode": payload.get("input_mode", "json"),
-            "output_mode": payload.get("output_mode", "json"),
+            "output_mode": "json",
             "csv_files": None,
             "results": None,
-            "error": str(e)
+            "error": str(e),
         }
+
+    finally:
+        if temp_yaml_dir and os.path.exists(temp_yaml_dir):
+            try:
+                shutil.rmtree(temp_yaml_dir)
+            except Exception:
+                pass

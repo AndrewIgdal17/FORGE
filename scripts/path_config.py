@@ -13,8 +13,8 @@ SCRIPT_DIR = Path(__file__).parent.absolute()
 # Get project root (parent of scripts/)
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-# Define standard directories
-YAMLS_DIR = PROJECT_ROOT / "yamls"
+# Define standard directories (server can override YAMLS_DIR via CTCC_YAMLS_DIR for temp input)
+YAMLS_DIR = Path(os.environ.get("CTCC_YAMLS_DIR", str(PROJECT_ROOT / "yamls")))
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 SCRIPTS_DIR = SCRIPT_DIR
 

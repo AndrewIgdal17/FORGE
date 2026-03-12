@@ -5,21 +5,21 @@
 
 from __future__ import annotations
 
+import importlib
 import subprocess
 import sys
 import os
 import argparse
 import glob
 import json
+import traceback
 from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from bcr_calculator import calculate_and_display_bcr, BCRConfig, BCRInputData
-from csv_output_manager import (
-    CTCCOutputManager as CSVOutputManager,
-    BATCH_SUMMARY_FIELDS,
-)
+from csv_output_manager import BATCH_SUMMARY_FIELDS
+from run_context import set_output_manager, get_output_manager, clear_output_manager
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -356,46 +356,22 @@ def main() -> None:
         action="store_true",
         help="Skip curtailment benefit calculations",
     )
+    parser.add_argument(
+        "--subprocess",
+        action="store_true",
+        help="Run each calculation script as a subprocess (legacy). Default is in-process.",
+    )
     args = parser.parse_args()
 
-    # Load Primary BCR config (from YAML or JSON based on input mode)
-    # This overrides command-line flags
-    bcr_config = None  # Initialize to avoid NameError if exception occurs
-    source = "YAML"  # Default source name for error messages
+    # Load Primary BCR config from YAML (calculator is YAML-in only)
+    bcr_config = None
     try:
-        input_mode = os.environ.get("CTCC_INPUT_MODE", "yaml").lower()
-
-        if input_mode == "json":
-            # Use JSON loader when in JSON input mode
-            from scripts.json_loaders import load_primary_bcr_config
-
-            source = "JSON"
-        else:
-            # Use YAML loader (default)
-            from scripts.yaml_loaders import load_primary_bcr_config
-
-            source = "YAML"
+        from yaml_loaders import load_primary_bcr_config
 
         bcr_config = load_primary_bcr_config()
         bcr_config_dict = (
             bcr_config.model_dump() if hasattr(bcr_config, "model_dump") else bcr_config
         )
-
-        # Debug: Log what we loaded (always log for JSON mode to help diagnose issues)
-        if input_mode == "json":
-            line_losses_enabled = (
-                bcr_config_dict.get("energy", {}).get("line_losses", True)
-                if bcr_config_dict
-                else True
-            )
-            print(
-                f"DEBUG: BCR config loaded from {source}, line_losses={line_losses_enabled}",
-                file=sys.stderr,
-            )
-            print(
-                f"DEBUG: args.no_linelosses will be set to: {not line_losses_enabled}",
-                file=sys.stderr,
-            )
 
         # BCR config overrides command-line flags
         if bcr_config_dict:
@@ -433,8 +409,6 @@ def main() -> None:
         if not args.simple:
             print(f"Warning: Could not load Primary BCR config from {source}: {e}")
             print("  Using command-line flags only.")
-            import traceback
-
             traceback.print_exc()
 
     # Create BCRConfig from args (after YAML overrides are applied)
@@ -544,6 +518,14 @@ def main() -> None:
     if not args.simple:
         print(f"\n📋 Scenario ID: {scenario_id}\n")
 
+    # Calculator is JSON-out only; always use JSON aggregator
+    in_process_aggregator = None
+    if not args.subprocess:
+        from json_output_manager import JSONOutputManager
+        in_process_aggregator = JSONOutputManager(scenario_id=scenario_id)
+        set_output_manager(in_process_aggregator)
+    os.environ["CTCC_OUTPUT_MODE"] = "json"
+
     # List of scripts to run in order
     # If --capital_only is set, only run capital scripts plus prerequisites
     if args.capital_only:
@@ -611,46 +593,42 @@ def main() -> None:
             )
 
     for script in scripts:
-        # Debug: Log when we're about to run line_loss_costs
-        if script == "line_loss_costs.py":
-            print(
-                f"DEBUG: About to run line_loss_costs.py, args.no_linelosses={args.no_linelosses}",
-                file=sys.stderr,
-            )
         if not args.simple:
             print(f"\n🔄 Running {script}...")
 
-        # Special handling for line_loss_costs to capture detailed error output
-        if script == "line_loss_costs.py":
-            import subprocess
-
-            env = os.environ.copy()
-            result = subprocess.run(
-                [sys.executable, script],
-                capture_output=True,
-                text=True,
-                cwd="scripts",
-                env=env,
-            )
-            success = result.returncode == 0
-            if not success:
-                print("DEBUG: line_loss_costs.py FAILED!", file=sys.stderr)
-                if result.stderr:
-                    print(
-                        f"DEBUG: line_loss_costs.py stderr:\n{result.stderr}",
-                        file=sys.stderr,
-                    )
-                if result.stdout:
-                    print(
-                        f"DEBUG: line_loss_costs.py stdout:\n{result.stdout}",
-                        file=sys.stderr,
-                    )
-            else:
-                print(f"DEBUG: line_loss_costs.py succeeded", file=sys.stderr)
-                if not args.simple and result.stdout:
+        if args.subprocess:
+            if script == "line_loss_costs.py":
+                env = os.environ.copy()
+                result = subprocess.run(
+                    [sys.executable, script],
+                    capture_output=True,
+                    text=True,
+                    cwd="scripts",
+                    env=env,
+                )
+                success = result.returncode == 0
+                if not success and not args.simple:
+                    if result.stderr:
+                        print(result.stderr, file=sys.stderr)
+                    if result.stdout:
+                        print(result.stdout, file=sys.stderr)
+                elif success and not args.simple and result.stdout:
                     print(result.stdout)
+            else:
+                success = run_script(script, quiet=args.simple)
         else:
-            success = run_script(script, quiet=args.simple)
+            stem = script.replace(".py", "")
+            try:
+                mod = importlib.import_module(stem)
+                mod.main()
+                success = True
+            except Exception as e:
+                success = False
+                if not args.simple:
+                    print(f"❌ {script} failed with error:", file=sys.stderr)
+                    traceback.print_exc()
+                else:
+                    print(f"❌ Error running {script}: {e}", file=sys.stderr)
 
         if success:
             successful_runs += 1
@@ -663,9 +641,6 @@ def main() -> None:
         print(
             f"\n📊 SUMMARY: {successful_runs}/{total_runs} scripts completed successfully"
         )
-
-    # Check output mode from environment variable
-    output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
 
     # Calculate and display BCR metrics (even if some scripts failed)
     if successful_runs > 0:
@@ -682,120 +657,71 @@ def main() -> None:
             # In simple mode, just print the BCR analysis header
             print("=" * 80)
 
-        # Calculate BCR for CSV mode (before JSON aggregation)
+        # Aggregate JSON results and compute BCR (calculator is JSON-out only)
         bcr_results = None
-        if output_mode == "csv":
-            # CSV mode: Calculate BCR from batch_summary.csv
-            try:
-                bcr_results = calculate_and_display_bcr(
-                    scenario_id,
-                    output_dir="outputs",
-                    config=bcr_config,
-                )
-            except Exception as e:
-                import traceback
-
-                if not args.simple:
-                    print(f"⚠️  BCR calculation failed: {e}")
-                    print(f"   Scenario ID: {scenario_id}")
-                    print("   Full error traceback:")
-                    traceback.print_exc()
-                    print(
-                        "   This does not affect the validity of the cost calculations above."
-                    )
-                else:
-                    print(f"⚠️  BCR calculation failed: {e}")
-                bcr_results = None
-
-        # Handle output based on mode
-        # For JSON mode, aggregate results even if some scripts failed (partial results)
-        if output_mode == "json":
-            # JSON output mode: aggregate results and write final JSON
-            try:
+        try:
+            if not args.subprocess and in_process_aggregator is not None:
+                aggregator = in_process_aggregator
+            else:
                 aggregator = aggregate_json_outputs(scenario_id, output_dir="outputs")
 
-                # Calculate BCR from JSON aggregator data (not CSV)
-                bcr_results = None
-                csv_equivalent = None
-                summary_override = None
-                json_results = aggregator.get_json_results()
-                bcr_data = build_bcr_data_from_json(json_results)
-                try:
-                    from bcr_calculator import (
-                        calculate_benefits,
-                        calculate_costs,
-                        calculate_bcr_metrics,
-                    )
-
-                    benefits = calculate_benefits(bcr_data)
-                    costs = calculate_costs(bcr_data)
-                    bcr_metrics = calculate_bcr_metrics(
-                        benefits,
-                        costs,
-                        config=bcr_config,
-                    )
-                    bcr_results = {**benefits, **costs, **bcr_metrics}
-                    csv_equivalent = build_csv_equivalent(
-                        json_results, bcr_results, bcr_data
-                    )
-                    summary_override = build_summary_from_csv_equivalent(csv_equivalent)
-                except Exception as e:
-                    import traceback
-
-                    if not args.simple:
-                        print(f"⚠️  BCR calculation failed: {e}")
-                        traceback.print_exc()
-                    if bcr_data is not None:
-                        csv_equivalent = build_csv_equivalent(
-                            json_results, None, bcr_data
-                        )
-                        summary_override = build_summary_from_csv_equivalent(
-                            csv_equivalent
-                        )
-                    bcr_results = None
-
-                output_file = write_final_json_output(
-                    aggregator,
-                    bcr_results,
-                    scenario_id,
-                    output_dir="outputs",
-                    csv_equivalent=csv_equivalent,
-                    summary_override=summary_override,
+            csv_equivalent = None
+            summary_override = None
+            json_results = aggregator.get_json_results()
+            bcr_data = build_bcr_data_from_json(json_results)
+            try:
+                from bcr_calculator import (
+                    calculate_benefits,
+                    calculate_costs,
+                    calculate_bcr_metrics,
                 )
 
-                if not args.simple:
-                    print(f"✅ JSON results written to {output_file}")
+                benefits = calculate_benefits(bcr_data)
+                costs = calculate_costs(bcr_data)
+                bcr_metrics = calculate_bcr_metrics(
+                    benefits,
+                    costs,
+                    config=bcr_config,
+                )
+                bcr_results = {**benefits, **costs, **bcr_metrics}
+                csv_equivalent = build_csv_equivalent(
+                    json_results, bcr_results, bcr_data
+                )
+                summary_override = build_summary_from_csv_equivalent(csv_equivalent)
             except Exception as e:
-                import traceback
-
                 if not args.simple:
-                    print(f"⚠️  JSON output aggregation failed: {e}")
+                    print(f"⚠️  BCR calculation failed: {e}")
                     traceback.print_exc()
-                else:
-                    print(f"⚠️  JSON output aggregation failed: {e}")
-        else:
-            # CSV output mode (default)
-            if bcr_results:
-                # Update batch_summary.csv with BCR metrics
-                csv_manager = CSVOutputManager(
-                    output_dir="outputs", scenario_id=scenario_id
-                )
-                csv_manager.add_bcr_metrics(bcr_results)
-                csv_manager.write_batch_summary()
+                if bcr_data is not None:
+                    csv_equivalent = build_csv_equivalent(
+                        json_results, None, bcr_data
+                    )
+                    summary_override = build_summary_from_csv_equivalent(
+                        csv_equivalent
+                    )
+                bcr_results = None
 
-                if not args.simple:
-                    print("✅ BCR metrics added to batch_summary.csv")
-                else:
-                    # In simple mode, still confirm BCR columns were written
-                    print("✅ BCR metrics written to batch_summary.csv")
+            output_file = write_final_json_output(
+                aggregator,
+                bcr_results,
+                scenario_id,
+                output_dir="outputs",
+                csv_equivalent=csv_equivalent,
+                summary_override=summary_override,
+            )
+
+            if not args.simple:
+                print(f"✅ JSON results written to {output_file}")
+            if not args.subprocess:
+                clear_output_manager()
+        except Exception as e:
+            if not args.subprocess:
+                clear_output_manager()
+            if not args.simple:
+                print(f"⚠️  JSON output aggregation failed: {e}")
+                traceback.print_exc()
             else:
-                # Always show this warning, even in simple mode
-                print("⚠️  BCR calculation completed but no results returned")
-                print(f"   Scenario ID: {scenario_id}")
-                print(
-                    "   This may indicate missing required columns in batch_summary.csv"
-                )
-                print("   BCR columns will not be available in batch_summary.csv")
+                print(f"⚠️  JSON output aggregation failed: {e}")
     else:
         if not args.simple:
             print("⚠️  Some calculations failed. Check the output above.")

@@ -11,7 +11,6 @@ from __future__ import annotations
 import yaml
 import sys
 import os
-import csv
 from typing import Tuple, Dict, Any
 
 # Add parent directory to path for imports
@@ -26,6 +25,12 @@ from smart_loaders import (
 )
 from financial_utils import calculate_present_value, calculate_cod_year
 from path_config import OUTPUTS_DIR
+
+try:
+    from run_context import get_output_manager
+except ImportError:
+    def get_output_manager():
+        return None
 
 
 def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
@@ -69,7 +74,7 @@ def load_project_technical_details() -> Tuple[float, int, int]:
 
 def get_rate_base() -> float:
     """
-    Get rate base (AFUDC capital at COD) from batch_summary.csv (CSV mode) or JSON output files (JSON mode).
+    Get rate base (AFUDC capital at COD) from shared aggregator or JSON output files.
 
     Rate base = build_cost_afudc + row_cost_afudc + env_mitigation_afudc (nominal at COD).
     For Option A, this nominal rate base is deflated to base year in main(); annual revenue
@@ -78,93 +83,63 @@ def get_rate_base() -> float:
     Returns:
         float: Rate base (nominal at COD), or 0 if not found
     """
-    output_mode = os.environ.get("CTCC_OUTPUT_MODE", "csv").lower()
     scenario_id = os.environ.get("CTCC_SCENARIO_ID")
-
-    if output_mode == "json" and scenario_id:
-        try:
-            import json as json_lib
-            build_afudc = 0.0
-            row_afudc = 0.0
-            env_afudc = 0.0
-
-            build_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_build_costs.json"
-            if build_json_path.exists():
-                with open(build_json_path, "r") as f:
-                    build_data = json_lib.load(f)
-                    build_afudc = float(
-                        build_data.get("costs", {}).get("build", {}).get("total_afudc", 0)
-                        or 0
-                    )
-
-            row_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_row_costs.json"
-            if row_json_path.exists():
-                with open(row_json_path, "r") as f:
-                    row_data = json_lib.load(f)
-                    row_afudc = float(
-                        row_data.get("costs", {}).get("row", {}).get("total_afudc", 0)
-                        or 0
-                    )
-
-            env_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_environmental_mitigation.json"
-            if env_json_path.exists():
-                with open(env_json_path, "r") as f:
-                    env_data = json_lib.load(f)
-                    env_afudc = float(
-                        env_data.get("costs", {})
-                        .get("environmental", {})
-                        .get("total_afudc", 0)
-                        or 0
-                    )
-
-            total = build_afudc + row_afudc + env_afudc
-            if total > 0:
-                return total
-        except Exception as e:
-            print(f"⚠️  Warning: Error reading AFUDC capital from JSON files: {e}")
-            import traceback
-            traceback.print_exc()
-        return 0.0
-
-    batch_summary_path = OUTPUTS_DIR / "batch_summary.csv"
-    if not os.path.exists(batch_summary_path):
-        return 0.0
-
-    if not scenario_id:
-        print("⚠️  Warning: CTCC_SCENARIO_ID not set. Cannot filter by scenario_id.")
-        print("   Falling back to last row (may be incorrect if multiple runs exist).")
-        try:
-            with open(batch_summary_path, "r") as f:
-                reader = csv.DictReader(f)
-                rows = list(reader)
-                if rows:
-                    latest_row = rows[-1]
-                    build_afudc = float(latest_row.get("build_cost_afudc", 0) or 0)
-                    row_afudc = float(latest_row.get("row_cost_afudc", 0) or 0)
-                    env_afudc = float(latest_row.get("env_mitigation_afudc", 0) or 0)
-                    return build_afudc + row_afudc + env_afudc
-        except (ValueError, KeyError, IOError) as e:
-            print(
-                f"⚠️  Warning: Error reading rate base from batch_summary.csv: {e}"
-            )
-        return 0.0
-
     try:
-        with open(batch_summary_path, "r", newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row.get("scenario_id") == scenario_id:
-                    build_afudc = float(row.get("build_cost_afudc", 0) or 0)
-                    row_afudc = float(row.get("row_cost_afudc", 0) or 0)
-                    env_afudc = float(row.get("env_mitigation_afudc", 0) or 0)
-                    return build_afudc + row_afudc + env_afudc
-            print(
-                f"⚠️  Warning: scenario_id '{scenario_id}' not found in batch_summary.csv"
+        shared = get_output_manager()
+        if shared is not None and getattr(shared, "costs", None) is not None:
+            costs = shared.costs
+            build_afudc = float(costs.get("build", {}).get("total_afudc", 0) or 0)
+            row_afudc = float(costs.get("row", {}).get("total_afudc", 0) or 0)
+            env_afudc = float(
+                costs.get("environmental", {}).get("total_afudc", 0) or 0
             )
+            total_inprocess = build_afudc + row_afudc + env_afudc
+            if total_inprocess > 0:
+                return total_inprocess
+
+        if not scenario_id:
             return 0.0
-    except (ValueError, KeyError, IOError) as e:
-        print(f"⚠️  Warning: Error reading rate base from batch_summary.csv: {e}")
-        return 0.0
+
+        import json as json_lib
+        build_afudc = 0.0
+        row_afudc = 0.0
+        env_afudc = 0.0
+
+        build_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_build_costs.json"
+        row_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_row_costs.json"
+        env_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_environmental_mitigation.json"
+        if build_json_path.exists():
+            with open(build_json_path, "r") as f:
+                build_data = json_lib.load(f)
+                build_afudc = float(
+                    build_data.get("costs", {}).get("build", {}).get("total_afudc", 0)
+                    or 0
+                )
+        if row_json_path.exists():
+            with open(row_json_path, "r") as f:
+                row_data = json_lib.load(f)
+                row_afudc = float(
+                    row_data.get("costs", {}).get("row", {}).get("total_afudc", 0)
+                    or 0
+                )
+        if env_json_path.exists():
+            with open(env_json_path, "r") as f:
+                env_data = json_lib.load(f)
+                env_afudc = float(
+                    env_data.get("costs", {})
+                    .get("environmental", {})
+                    .get("total_afudc", 0)
+                    or 0
+                )
+
+        total = build_afudc + row_afudc + env_afudc
+        if total > 0:
+            return total
+    except Exception as e:
+        print(f"⚠️  Warning: Error reading AFUDC capital from JSON: {e}")
+        import traceback
+        traceback.print_exc()
+    return 0.0
 
 
 def main() -> None:
