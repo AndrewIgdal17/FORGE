@@ -115,7 +115,7 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     import subprocess
 
     input_mode = payload.get("input_mode", "json")
-    scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
+    scenario_id = payload.get("scenario_id") or datetime.now().strftime("%b %d %Y %H.%M.%S")
     combined_data = payload.get("combined_data")
     temp_yaml_dir = None
 

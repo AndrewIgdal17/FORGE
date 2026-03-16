@@ -38,18 +38,20 @@ class JSONOutputManager:
 
     def load_technical_details(self) -> Dict[str, Any]:
         """
-        Load technical parameters from JSON data source.
+        Load technical parameters from YAML data source via smart_loaders.
 
         Returns:
             Dictionary of technical parameters
         """
         try:
-            # Use json_loaders to get data
-            from yaml_loaders import ProjectTechnicalDetails
-
-            project_details: ProjectTechnicalDetails = (
-                json_loaders.load_project_technical_details()
+            from smart_loaders import (
+                load_project_technical_details,
+                load_physical_details,
+                get_project_data_raw,
+                get_financing_data_raw,
             )
+
+            project_details = load_project_technical_details()
 
             construction_type = project_details.construction_type
             ac_dc = project_details.ac_dc
@@ -64,16 +66,14 @@ class JSONOutputManager:
             project_lifetime = project_details.project_lifetime
             converter_loss_percentage = project_details.converter_loss_percentage
 
-            total_line_length = json_loaders.load_physical_details()
+            total_line_length = load_physical_details()
 
             # Get additional details for reconductoring
-            tech_data = json_loaders._data_source.get_data(
-                "01_project_technical_details"
-            )
+            tech_data = get_project_data_raw()
             project = tech_data.get("project", {})
 
             # Get financial parameters
-            financing_data = json_loaders._data_source.get_data("03_financing")
+            financing_data = get_financing_data_raw()
 
             technical_details = {
                 # Project identification
