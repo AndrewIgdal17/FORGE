@@ -1,4 +1,4 @@
-# Author: Claude Code
+# Author: Dane McFarlane
 # Date: 2025-11-10
 # Description: Smart loader wrapper that automatically chooses yaml_loaders or json_loaders
 #              based on environment variable. This allows calculation scripts to work

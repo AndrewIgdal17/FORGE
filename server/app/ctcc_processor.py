@@ -197,7 +197,7 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         # Extract parameters
         input_mode = payload.get("input_mode", "json")
         output_mode = payload.get("output_mode", "json")
-        scenario_id = payload.get("scenario_id") or datetime.now().strftime("%Y%m%d_%H%M%S")
+        scenario_id = payload.get("scenario_id") or datetime.now().strftime("%b %d %Y %H.%M.%S")
         combined_data = payload.get("combined_data")
 
         # For JSON input mode, we need to merge user input with the full template

@@ -974,6 +974,78 @@
       .phys-metrics-grid.emissions-amounts .phys-unit {
         color: rgba(0, 0, 0, 0.6);
       }
+      /* Scenario Management */
+      .scenario-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+      .scenario-toolbar button { padding: 0.5rem 1rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+      .scenario-toolbar button:hover { background: #f0f0f0; }
+      .scenario-list { max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem; border-collapse: collapse; }
+      .scenario-list table { width: 100%; border-collapse: collapse; }
+      .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); vertical-align: top; white-space: nowrap; }
+      .scenario-card:hover td { background: rgba(0,0,0,0.02); }
+      .scenario-card-checkbox { }
+      .scenario-card-info { display: flex; flex-direction: column; gap: 0.1rem; }
+      .scenario-card-name { font-weight: 600; font-size: 0.85rem; cursor: text; border: 1px solid transparent; padding: 0; border-radius: 0.25rem; display: inline-block; line-height: 1.4; }
+      .scenario-card-name:hover { border-color: rgba(0,0,0,0.15); }
+      .scenario-card-name-input { font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); padding: 0; border-radius: 0.25rem; outline: none; background: transparent; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.4; height: 1.4em; margin: 0; box-sizing: content-box; }
+      .scenario-card-params { font-size: 0.75rem; color: rgba(0,0,0,0.45); }
+      .scenario-card-meta { font-size: 0.75rem; color: rgba(0,0,0,0.35); }
+      .scenario-card td.scenario-actions-cell { vertical-align: middle; padding-left: 50px; }
+      .scenario-card-actions { display: flex; gap: 0.35rem; justify-content: flex-end; white-space: nowrap; }
+      .scenario-card-actions button { padding: 0.2rem 0.5rem; border: 1px solid rgba(0,0,0,0.12); border-radius: 0.25rem; background: white; cursor: pointer; font-size: 0.75rem; }
+      .scenario-card-actions button:hover { background: #f0f0f0; }
+      .scenario-card-actions button.load-btn { color: #0066cc; border-color: #0066cc; }
+      .scenario-card-actions button.load-btn:hover { background: #e3f2fd; }
+      .scenario-card-actions button.delete-btn { color: #b00020; }
+      .scenario-card-actions button.delete-btn:hover { background: #fce4ec; }
+      .scenario-card-actions button[data-tooltip] { position: relative; }
+      .scenario-card-actions button[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; margin-bottom: 0.25rem; }
+      .scenario-card-actions button[data-tooltip]:hover::after { opacity: 1; }
+      .scenario-badge { background: #0066cc; color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.35rem; vertical-align: middle; }
+      .scenario-empty { text-align: center; padding: 2rem; color: rgba(0,0,0,0.4); font-style: italic; }
+      .comparison-section { margin-top: 1rem; }
+      .comparison-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+      .comparison-controls { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+      .comparison-controls select { padding: 0.35rem 0.5rem; border: 1px solid rgba(0,0,0,0.2); border-radius: 0.25rem; font-size: 0.85rem; min-width: 180px; }
+      .comparison-table-wrapper { overflow-x: auto; margin-top: 0.5rem; }
+      .comparison-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+      .comparison-table thead th { text-align: left; padding: 0.6rem 1rem; background: #f8f9fa; white-space: nowrap; font-weight: 600; font-size: 0.8rem; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 2px solid rgba(0,0,0,0.1); }
+      .comparison-table thead th:first-child { border-left: 1px solid rgba(0,0,0,0.12); border-top-left-radius: 0.5rem; }
+      .comparison-table thead th:nth-last-child(2) { border-right: 1px solid rgba(0,0,0,0.12); border-top-right-radius: 0.5rem; }
+      .comparison-table thead th:last-child { border: none; background: transparent; }
+      .comparison-table th.metric-col { text-align: right; padding: 0.6rem 1rem; }
+      .comparison-table tbody td { padding: 0.5rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.06); white-space: nowrap; }
+      .comparison-table tbody td:first-child { border-left: 1px solid rgba(0,0,0,0.12); }
+      .comparison-table tbody td:nth-last-child(2) { border-right: 1px solid rgba(0,0,0,0.12); }
+      .comparison-table tbody td:last-child { border: none !important; background: white !important; }
+      .comparison-table tbody tr:last-child td { border-bottom: 1px solid rgba(0,0,0,0.12); }
+      .comparison-table tbody tr:last-child td:first-child { border-bottom-left-radius: 0.5rem; }
+      .comparison-table tbody tr:last-child td:nth-last-child(2) { border-bottom-right-radius: 0.5rem; }
+      .comparison-table td.metric-val { text-align: right; padding: 0.5rem 1rem; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; font-size: 0.85rem; }
+      .comparison-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.02); }
+      .comparison-table .add-col-btn { background: none; border: 1px dashed rgba(0,0,0,0.2); padding: 0.3rem 0.6rem; cursor: pointer; border-radius: 0.25rem; font-size: 0.8rem; color: rgba(0,0,0,0.5); }
+      .comparison-table .add-col-btn:hover { border-color: #0066cc; color: #0066cc; }
+      .comparison-table tfoot td { border: none; background: transparent; padding: 0.3rem 1rem; text-align: right; }
+      .comparison-table .remove-col-btn { background: none; border: none; cursor: pointer; color: rgba(0,0,0,0.3); font-size: 0.7rem; display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+      .comparison-table .remove-col-btn span:last-child { color: white; }
+      .comparison-table .remove-col-btn:hover { color: #b00020; }
+      .comparison-table .remove-col-btn:hover span:last-child { color: #b00020; }
+      .save-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+      .save-overlay.visible { display: flex; }
+      .save-dialog { background: white; border-radius: 0.75rem; padding: 1.5rem; max-width: 480px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+      .save-dialog h3 { margin: 0 0 1rem; font-size: 1.1rem; }
+      .save-dialog .save-option { padding: 0.75rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 0.5rem; margin-bottom: 0.75rem; cursor: pointer; }
+      .save-dialog .save-option:hover { background: #f8f9fa; }
+      .save-dialog .save-option.selected { border-color: #0066cc; background: #e3f2fd; }
+      .save-dialog .save-option-title { font-weight: 600; font-size: 0.9rem; }
+      .save-dialog .save-option-desc { font-size: 0.8rem; color: rgba(0,0,0,0.5); margin-top: 0.2rem; }
+      .save-dialog .save-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+      .save-dialog .save-actions button { padding: 0.4rem 1rem; border-radius: 0.375rem; font-size: 0.85rem; cursor: pointer; }
+      .save-dialog .save-cancel { background: white; border: 1px solid rgba(0,0,0,0.15); }
+      .save-dialog .save-confirm { background: #0066cc; color: white; border: none; }
+      .save-dialog .save-confirm:hover { background: #0055aa; }
+      .save-dialog input[type="text"] { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid rgba(0,0,0,0.2); border-radius: 0.25rem; font-size: 0.85rem; margin-top: 0.5rem; box-sizing: border-box; }
+      .save-dialog select { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid rgba(0,0,0,0.2); border-radius: 0.25rem; font-size: 0.85rem; margin-top: 0.5rem; }
+
       .results-summary-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -1462,7 +1534,7 @@
     <div class="main-tabs">
       <button type="button" class="main-tab-button active" data-tab="inputs">Inputs</button>
       <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
-      <button type="button" class="main-tab-button disabled" data-tab="scenarios">Scenarios</button>
+      <button type="button" class="main-tab-button" data-tab="scenarios">Scenarios</button>
       <button type="submit" form="demo-form" class="run-button">Run</button>
     </div>
 
@@ -1474,6 +1546,7 @@
         <span id="status-bar-timestamp"></span>
       </div>
       <button type="button" class="status-bar-button" id="status-bar-view-btn" style="display: none;" onclick="document.querySelector('.main-tab-button[data-tab=&quot;results&quot;]').click()">View Results</button>
+      <a href="#" id="status-bar-save-btn" style="display: none; margin-left: 0.75rem; color: white; text-decoration: underline; font-size: 0.85rem; font-weight: 400;" onmouseover="this.style.fontWeight='700'" onmouseout="this.style.fontWeight='400'">Save Results</a>
       <span id="status-bar-modified" style="display: none; margin-left: 0.5rem; opacity: 0.9; font-style: italic;">Inputs modified since last run - <a href="#" id="status-bar-rerun" style="color: white; text-decoration: underline;">rerun?</a></span>
     </div>
 
@@ -1536,12 +1609,50 @@
       <pre id="result">Submit the form to see the API response.</pre>
     </div>
 
-    <!-- Scenarios Tab (inactive) -->
+    <!-- Scenarios Tab -->
     <div class="main-tab-content" id="main-tab-scenarios">
-      <h2>Scenarios</h2>
-      <p style="color: rgba(0, 0, 0, 0.5); font-style: italic;">
-        Scenario management will be available in a future release. This feature will allow you to save, load, and compare multiple calculation scenarios.
-      </p>
+      <h2 style="margin: 0 0 1rem;">Scenario Manager</h2>
+      <div class="scenario-toolbar">
+        <button type="button" id="scenario-upload-btn">Load from file</button>
+        <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
+        <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
+      </div>
+      <div class="scenario-list" id="scenario-list">
+        <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
+      </div>
+      <div class="comparison-section" id="comparison-section">
+        <h3>Compare Selected Scenarios</h3>
+        <div id="comparison-table-container"></div>
+      </div>
+    </div>
+
+    <!-- Save Dialog Overlay -->
+    <div class="save-overlay" id="save-overlay">
+      <div class="save-dialog" style="position: relative;">
+        <h3 style="display: inline;">Save Scenario</h3>
+        <span id="save-status-indicator" style="position: absolute; top: 1.5rem; right: 1.5rem; font-size: 0.75rem; font-weight: 500;"></span>
+        <div style="margin-bottom: 0.75rem; margin-top: 1rem;">
+          <label style="font-size: 0.85rem; font-weight: 500; display: block; margin-bottom: 0.25rem;">Scenario name</label>
+          <input type="text" id="save-memory-name" placeholder="Scenario name" />
+        </div>
+        <div class="save-option" id="save-opt-memory" data-option="memory" style="position: relative;">
+          <div class="save-option-title">Save to session</div>
+          <div class="save-option-desc">Keep this scenario in the current browser session.</div>
+          <span id="save-saved-indicator" style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 0.75rem; font-weight: 500; color: #10b981;"></span>
+        </div>
+        <div class="save-option" id="save-opt-ctcc" data-option="ctcc">
+          <div class="save-option-title">Export as .ctcc</div>
+          <div class="save-option-desc">Download as a JSON file you can re-import later.</div>
+        </div>
+        <div class="save-option" id="save-opt-csv" data-option="csv">
+          <div class="save-option-title">Export as .csv</div>
+          <div class="save-option-desc">Download a human-readable CSV with inputs and results.</div>
+        </div>
+        <div class="save-actions">
+          <button type="button" class="save-cancel" id="save-cancel-btn">Cancel</button>
+          <button type="button" class="save-confirm" id="save-confirm-btn">Save</button>
+        </div>
+      </div>
     </div>
 
     <!-- Server Config Tab -->
@@ -1656,8 +1767,24 @@
         form.requestSubmit();
       });
 
+      document.getElementById('status-bar-save-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        showSaveDialog();
+      });
+
       let ctccJsonData = null;
       let activeTabIndex = 0;
+
+      // Scenario management state
+      let sessionScenarios = [];
+      let lastRunResults = null;
+      let scenarioCounter = 0;
+      let inputsDirtySinceRun = true;  // true until a run completes
+      let lastRunSavedToSession = false;  // true after auto-save on run, false after inputs change
+      let ranFromResultsTab = false;  // true when run triggered from results tab "not calculated" button
+      let lastRunScenarioId = '';  // scenario ID at last run, to detect user changes
+      let comparisonScenarioIds = new Set();
+      let comparisonColumns = [];
 
       // Modal dialog helpers
       const modalOverlay = document.getElementById('modal-overlay');
@@ -1691,6 +1818,871 @@
           hideModal();
         }
       });
+
+      // =============================================
+      // Scenario Management
+      // =============================================
+
+      const COMPARISON_METRICS = [
+        { group: 'Parameters', metrics: [
+          { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
+          { key: 'line_length', label: 'Line Length (mi)', path: 'technical_parameters.line_length_miles', format: 'number' },
+          { key: 'lifetime', label: 'Lifetime (yr)', path: 'technical_parameters.project_lifetime_years', format: 'number' },
+          { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
+        ]},
+        { group: 'Capital Costs (PV)', metrics: [
+          { key: 'build_pv', label: 'Build', path: 'costs.build.total_pv', format: 'currency' },
+          { key: 'row_capital_pv', label: 'ROW Capital', path: 'costs.row.row_capital_pv', format: 'currency' },
+          { key: 'env_pv', label: 'Environmental', path: 'costs.environmental.total_pv', format: 'currency' },
+          { key: 'total_capital_pv', label: 'Total Capital', path: 'summary.total_capital_pv', format: 'currency' },
+        ]},
+        { group: 'Operational Costs (PV)', metrics: [
+          { key: 'row_rent_pv', label: 'ROW Rent', path: 'costs.row.row_rent_pv', format: 'currency' },
+          { key: 'insurance_pv', label: 'Insurance', path: 'costs.insurance.pv_total', format: 'currency' },
+          { key: 'total_operational_pv', label: 'Total Operational', path: 'summary.total_operational_pv', format: 'currency' },
+        ]},
+        { group: 'Risk Costs (PV)', metrics: [
+          { key: 'wildfire_pv', label: 'Wildfire', path: 'costs.wildfire.pv_cost', format: 'currency' },
+          { key: 'outage_pv', label: 'Outage', path: 'costs.outage.pv_cost', format: 'currency' },
+          { key: 'total_risk_pv', label: 'Total Risk', path: 'summary.total_risk_pv', format: 'currency' },
+        ]},
+        { group: 'Delay Costs (PV)', metrics: [
+          { key: 'delay_pv', label: 'Base Delay', path: 'costs.delay.total_pv', format: 'currency' },
+        ]},
+        { group: 'Energy / Emissions (PV)', metrics: [
+          { key: 'line_loss_pv', label: 'Line Losses', path: 'costs.line_loss.total_pv', format: 'currency' },
+          { key: 'emissions_pv', label: 'Emissions', path: 'costs.emissions.total_pv', format: 'currency' },
+          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency' },
+        ]},
+        { group: 'Total Costs', metrics: [
+          { key: 'grand_total_pv', label: 'Grand Total Costs', path: 'summary.grand_total_cost_pv', format: 'currency' },
+        ]},
+        { group: 'Benefits (PV)', metrics: [
+          { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
+          { key: 'curtailment_pv', label: 'Curtailment (Conservative)', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
+          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
+          { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
+        ]},
+        { group: 'Benefit-Cost Ratio', metrics: [
+          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
+          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
+          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
+          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
+          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+        ]},
+        { group: 'Net Benefits (PV)', metrics: [
+          { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
+          { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
+          { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
+        ]},
+      ];
+
+      const RESULTS_EXPORT_FIELDS = [
+        { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
+        { key: 'line_length_miles', path: 'technical_parameters.line_length_miles' },
+        { key: 'project_lifetime_years', path: 'technical_parameters.project_lifetime_years' },
+        { key: 'delay_years', path: 'technical_parameters.delay_years' },
+        { key: 'build_cost_pv', path: 'costs.build.total_pv' },
+        { key: 'row_capital_pv', path: 'costs.row.row_capital_pv' },
+        { key: 'row_rent_pv', path: 'costs.row.row_rent_pv' },
+        { key: 'env_mitigation_pv', path: 'costs.environmental.total_pv' },
+        { key: 'total_capital_pv', path: 'summary.total_capital_pv' },
+        { key: 'insurance_pv', path: 'costs.insurance.pv_total' },
+        { key: 'oandm_pv', path: 'costs.oandm.total_pv' },
+        { key: 'total_operational_pv', path: 'summary.total_operational_pv' },
+        { key: 'wildfire_pv', path: 'costs.wildfire.pv_cost' },
+        { key: 'outage_pv', path: 'costs.outage.pv_cost' },
+        { key: 'total_risk_pv', path: 'summary.total_risk_pv' },
+        { key: 'delay_pv', path: 'costs.delay.total_pv' },
+        { key: 'line_loss_pv', path: 'costs.line_loss.total_pv' },
+        { key: 'emissions_pv', path: 'costs.emissions.total_pv' },
+        { key: 'total_energy_emissions_pv', path: 'summary.total_energy_emissions_pv' },
+        { key: 'grand_total_cost_pv', path: 'summary.grand_total_cost_pv' },
+        { key: 'congestion_benefit_haircut_pv', path: 'bcr.congestion_benefit_haircut_pv' },
+        { key: 'curtailment_benefit_haircut_pv', path: 'bcr.curtailment_benefit_haircut_pv' },
+        { key: 'total_benefits_haircut_pv', path: 'bcr.total_benefits_haircut_pv' },
+        { key: 'revenue_pv', path: 'bcr.revenue_pv' },
+        { key: 'bcr_system', path: 'bcr.bcr_system' },
+        { key: 'bcr_capital', path: 'bcr.bcr_capital' },
+        { key: 'bcr_primary', path: 'bcr.bcr_primary' },
+        { key: 'bcr_utility', path: 'bcr.bcr_utility' },
+        { key: 'bcr_ratepayer', path: 'bcr.bcr_ratepayer' },
+        { key: 'net_benefit_pv', path: 'bcr.net_benefit_pv' },
+        { key: 'net_benefit_utility_pv', path: 'bcr.net_benefit_utility_pv' },
+        { key: 'net_benefit_ratepayer_pv', path: 'bcr.net_benefit_ratepayer_pv' },
+      ];
+
+      // --- Scenario Data Layer ---
+
+      function getValueAtPath(obj, path) {
+        if (!obj || !path) return undefined;
+        const parts = path.split('.');
+        let current = obj;
+        for (const part of parts) {
+          if (current == null) return undefined;
+          current = current[part];
+        }
+        return current;
+      }
+
+      function setValueAtPath(obj, path, value) {
+        const parts = path.split('.');
+        let current = obj;
+        for (let i = 0; i < parts.length - 1; i++) {
+          if (current[parts[i]] == null) current[parts[i]] = {};
+          current = current[parts[i]];
+        }
+        current[parts[parts.length - 1]] = value;
+      }
+
+      function generateScenarioName(baseName) {
+        const existingNames = sessionScenarios.map(s => s.customName);
+        if (!existingNames.includes(baseName)) return baseName;
+        let counter = 2;
+        while (existingNames.includes(`${baseName} (${counter})`)) counter++;
+        return `${baseName} (${counter})`;
+      }
+
+      function updateScenarioBadge() {
+        // No-op: badge removed by design
+      }
+
+      function addScenarioToSession(inputs, results, metadata, customName) {
+        const scenario = {
+          version: '1.0',
+          id: crypto.randomUUID(),
+          customName: customName || generateScenarioName('Scenario'),
+          inputs: inputs ? JSON.parse(JSON.stringify(inputs)) : null,
+          results: results ? JSON.parse(JSON.stringify(results)) : null,
+          metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' }
+        };
+        sessionScenarios.push(scenario);
+        renderScenarioList();
+        updateScenarioBadge();
+        return scenario;
+      }
+
+      function removeScenarioFromSession(id) {
+        sessionScenarios = sessionScenarios.filter(s => s.id !== id);
+        comparisonScenarioIds.delete(id);
+        renderScenarioList();
+        updateScenarioBadge();
+        renderComparisonTable();
+      }
+
+      function renameScenario(id, newName) {
+        const scenario = sessionScenarios.find(s => s.id === id);
+        if (scenario && newName.trim()) {
+          scenario.customName = newName.trim();
+          renderScenarioList();
+        }
+      }
+
+      function loadScenarioIntoUI(scenario) {
+        if (!scenario.inputs) {
+          alert('This scenario was imported from CSV and contains only results, not full inputs.');
+          return;
+        }
+        renderJsonInputs(scenario.inputs);
+        scenarioIdInput.value = scenario.metadata?.scenario_id || '';
+        if (scenario.results) {
+          renderCTCCResults(scenario.results);
+          lastRunResults = JSON.parse(JSON.stringify(scenario.results));
+          markResultsAvailable(0);
+        }
+        switchMainTab('inputs');
+      }
+
+      function formatTimestamp(dateStr) {
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const mon = months[d.getMonth()];
+        const day = String(d.getDate()).padStart(2, '0');
+        const yr = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        return `${mon} ${day} ${yr} ${hh}.${mm}.${ss}`;
+      }
+
+      function getScenarioParams(scenario) {
+        const parts = [];
+        if (scenario.results?.technical_parameters) {
+          const tp = scenario.results.technical_parameters;
+          if (tp.project_name) parts.push(tp.project_name);
+          if (tp.capacity_mw) parts.push(tp.capacity_mw + ' MW');
+          if (tp.ac_dc) parts.push(tp.ac_dc);
+          if (tp.construction_type) parts.push(tp.construction_type);
+          if (tp.line_length_miles) parts.push(tp.line_length_miles + ' mi');
+        } else if (scenario.inputs) {
+          const proj = scenario.inputs['01_project_technical_details']?.project;
+          if (proj) {
+            if (proj.name) parts.push(proj.name);
+            if (proj.capacity_mw) parts.push(proj.capacity_mw + ' MW');
+            if (proj.ac_dc) parts.push(proj.ac_dc);
+            if (proj.construction_type) parts.push(proj.construction_type);
+          }
+          const terrain = scenario.inputs['02_project_physical_details']?.terrain?.terrain_miles;
+          if (terrain) {
+            const totalMiles = Object.values(terrain).reduce((sum, v) => sum + (Number(v) || 0), 0);
+            if (totalMiles > 0) parts.push(totalMiles + ' mi');
+          }
+        }
+        return parts.join(' | ') || 'No parameters available';
+      }
+
+      // --- Scenario List Rendering ---
+
+      function renderScenarioList() {
+        const container = document.getElementById('scenario-list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (sessionScenarios.length === 0) {
+          container.innerHTML = '<div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>';
+          renderComparisonTable();
+          return;
+        }
+
+        const table = document.createElement('table');
+        table.style.cssText = 'width: 100%; border-collapse: collapse;';
+
+        sessionScenarios.forEach(scenario => {
+          const card = document.createElement('tr');
+          card.className = 'scenario-card';
+          card.dataset.scenarioId = scenario.id;
+
+          // Checkbox cell
+          const checkTd = document.createElement('td');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'scenario-card-checkbox';
+          checkbox.checked = comparisonScenarioIds.has(scenario.id);
+          checkbox.title = 'Select for comparison';
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+              comparisonScenarioIds.add(scenario.id);
+            } else {
+              comparisonScenarioIds.delete(scenario.id);
+            }
+            renderComparisonTable();
+          });
+          checkTd.appendChild(checkbox);
+          card.appendChild(checkTd);
+
+          // Info cell
+          const infoTd = document.createElement('td');
+          infoTd.className = 'scenario-card-info';
+
+          // Editable name
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'scenario-card-name';
+          nameSpan.textContent = scenario.customName;
+          nameSpan.title = 'Click to rename';
+          nameSpan.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'scenario-card-name-input';
+            input.value = scenario.customName;
+            input.size = Math.max(scenario.customName.length, 5);
+            nameSpan.replaceWith(input);
+            input.focus();
+            input.select();
+            input.addEventListener('input', () => { input.size = Math.max(input.value.length, 5); });
+            const finishEdit = () => {
+              const newName = input.value.trim();
+              if (newName && newName !== scenario.customName) {
+                renameScenario(scenario.id, newName);
+              } else {
+                renderScenarioList();
+              }
+            };
+            input.addEventListener('blur', finishEdit);
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+              if (e.key === 'Escape') { input.value = scenario.customName; input.blur(); }
+            });
+          });
+          infoTd.appendChild(nameSpan);
+
+          // Params
+          const params = document.createElement('span');
+          params.className = 'scenario-card-params';
+          params.textContent = getScenarioParams(scenario);
+          infoTd.appendChild(params);
+
+          // Meta
+          const meta = document.createElement('span');
+          meta.className = 'scenario-card-meta';
+          const sourceLabel = scenario.metadata?.source === 'run' ? 'Calculated' :
+                              scenario.metadata?.source === 'upload-ctcc' ? 'Uploaded (.ctcc)' :
+                              scenario.metadata?.source === 'upload-csv' ? 'Uploaded (.csv)' : 'Saved';
+          const ts = scenario.metadata?.timestamp ? formatTimestamp(scenario.metadata.timestamp) : '';
+          meta.textContent = sourceLabel + (ts ? ' ' + ts : '');
+          infoTd.appendChild(meta);
+
+          card.appendChild(infoTd);
+
+          // Actions cell
+          const actionsTd = document.createElement('td');
+          actionsTd.className = 'scenario-actions-cell';
+          const actions = document.createElement('div');
+          actions.className = 'scenario-card-actions';
+
+          const loadBtn = document.createElement('button');
+          loadBtn.type = 'button';
+          loadBtn.className = 'load-btn';
+          loadBtn.textContent = 'Load';
+          loadBtn.addEventListener('click', () => loadScenarioIntoUI(scenario));
+          actions.appendChild(loadBtn);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', () => {
+            removeScenarioFromSession(scenario.id);
+          });
+          actions.appendChild(removeBtn);
+
+          const saveHereBtn = document.createElement('button');
+          saveHereBtn.type = 'button';
+          saveHereBtn.textContent = 'Save here';
+          saveHereBtn.dataset.tooltip = 'Overwrite with current inputs and results';
+          saveHereBtn.addEventListener('click', () => {
+            const currentInputs = collectJsonData();
+            scenario.inputs = currentInputs;
+            scenario.results = lastRunResults;
+            scenario.metadata.timestamp = new Date().toISOString();
+            scenario.metadata.source = 'manual';
+            renderScenarioList();
+          });
+          actions.appendChild(saveHereBtn);
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.addEventListener('click', () => {
+            showModal('Delete Scenario', `Delete "${scenario.customName}"?`, () => {
+              removeScenarioFromSession(scenario.id);
+            });
+          });
+          actions.appendChild(deleteBtn);
+
+          actionsTd.appendChild(actions);
+          card.appendChild(actionsTd);
+
+          // Filler cell
+          const fillerTd = document.createElement('td');
+          fillerTd.style.cssText = 'width: 100%;';
+          card.appendChild(fillerTd);
+
+          table.appendChild(card);
+        });
+
+        container.appendChild(table);
+
+        renderComparisonTable();
+      }
+
+      // --- Save & Export ---
+
+      function showSaveDialog() {
+        const overlay = document.getElementById('save-overlay');
+        const nameInput = document.getElementById('save-memory-name');
+        nameInput.value = scenarioIdInput.value.trim() || generateScenarioName('Scenario');
+        // Reset selection
+        document.querySelectorAll('.save-dialog .save-option').forEach(o => o.classList.remove('selected'));
+        document.getElementById('save-opt-memory').classList.add('selected');
+        // Update status indicators
+        const notCalcIndicator = document.getElementById('save-status-indicator');
+        const savedIndicator = document.getElementById('save-saved-indicator');
+        const scenarioIdChanged = scenarioIdInput.value.trim() !== lastRunScenarioId;
+
+        // "Scenario results not yet calculated" on the dialog level
+        if (inputsDirtySinceRun) {
+          notCalcIndicator.textContent = 'Scenario results not yet calculated';
+          notCalcIndicator.style.color = '#b00020';
+        } else {
+          notCalcIndicator.textContent = '';
+        }
+
+        // "Saved ✓" on the save-to-session box
+        if (lastRunSavedToSession && !inputsDirtySinceRun && !scenarioIdChanged) {
+          savedIndicator.textContent = 'Saved \u2713';
+        } else {
+          savedIndicator.textContent = '';
+        }
+        overlay.classList.add('visible');
+      }
+
+      function hideSaveDialog() {
+        document.getElementById('save-overlay').classList.remove('visible');
+      }
+
+      // Save dialog option selection
+      document.querySelectorAll('.save-dialog .save-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          document.querySelectorAll('.save-dialog .save-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+        });
+      });
+
+      document.getElementById('save-cancel-btn').addEventListener('click', hideSaveDialog);
+
+      let saveOverlayMouseDownTarget = null;
+      document.getElementById('save-overlay').addEventListener('mousedown', function(e) {
+        saveOverlayMouseDownTarget = e.target;
+      });
+      document.getElementById('save-overlay').addEventListener('click', function(e) {
+        if (e.target === this && saveOverlayMouseDownTarget === this) hideSaveDialog();
+      });
+
+      document.getElementById('save-confirm-btn').addEventListener('click', function() {
+        const selected = document.querySelector('.save-dialog .save-option.selected');
+        if (!selected) return;
+        const option = selected.dataset.option;
+        const currentInputs = collectJsonData();
+        const resultsToSave = inputsDirtySinceRun ? null : lastRunResults;
+
+        if (option === 'memory') {
+          const name = document.getElementById('save-memory-name').value.trim() || generateScenarioName('Scenario');
+          addScenarioToSession(currentInputs, resultsToSave,
+            { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'manual' },
+            name);
+          hideSaveDialog();
+        } else if (option === 'ctcc') {
+          const scenario = {
+            version: '1.0',
+            customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
+            inputs: currentInputs,
+            results: resultsToSave,
+            metadata: { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'export' }
+          };
+          exportAsCtcc(scenario);
+          hideSaveDialog();
+        } else if (option === 'csv') {
+          const scenario = {
+            version: '1.0',
+            customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
+            inputs: currentInputs,
+            results: resultsToSave,
+            metadata: { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'export' }
+          };
+          exportAsCsv(scenario);
+          hideSaveDialog();
+        }
+      });
+
+      document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
+
+      function exportAsCtcc(scenario) {
+        const data = {
+          version: '1.0',
+          customName: scenario.customName,
+          inputs: scenario.inputs,
+          results: scenario.results,
+          metadata: scenario.metadata
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (scenario.customName || 'scenario').replace(/[^a-zA-Z0-9_-]/g, '_') + '.ctcc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function flattenObject(obj, prefix) {
+        const rows = [];
+        for (const key of Object.keys(obj)) {
+          const val = obj[key];
+          const fullPath = prefix ? prefix + '.' + key : key;
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            rows.push(...flattenObject(val, fullPath));
+          } else {
+            rows.push({ path: fullPath, value: val });
+          }
+        }
+        return rows;
+      }
+
+      function exportAsCsv(scenario) {
+        let csv = '';
+        // METADATA
+        csv += '[METADATA]\n';
+        csv += 'version,' + (scenario.version || '1.0') + '\n';
+        csv += 'customName,' + csvEscape(scenario.customName || '') + '\n';
+        csv += 'scenario_id,' + csvEscape(scenario.metadata?.scenario_id || '') + '\n';
+        csv += 'timestamp,' + (scenario.metadata?.timestamp || new Date().toISOString()) + '\n';
+        csv += '\n';
+
+        // INPUTS
+        if (scenario.inputs) {
+          csv += '[INPUTS]\n';
+          csv += 'section,key,value\n';
+          for (const sectionKey of Object.keys(scenario.inputs)) {
+            const flat = flattenObject(scenario.inputs[sectionKey], sectionKey);
+            for (const row of flat) {
+              const lastDot = row.path.lastIndexOf('.');
+              const section = row.path.substring(0, lastDot);
+              const key = row.path.substring(lastDot + 1);
+              csv += csvEscape(section) + ',' + csvEscape(key) + ',' + csvEscape(String(row.value ?? '')) + '\n';
+            }
+          }
+          csv += '\n';
+        }
+
+        // RESULTS (full recursive export)
+        if (scenario.results) {
+          csv += '[RESULTS]\n';
+          csv += 'field,value\n';
+          const flatResults = flattenObject(scenario.results, '');
+          for (const row of flatResults) {
+            csv += csvEscape(row.path) + ',' + csvEscape(String(row.value ?? '')) + '\n';
+          }
+        }
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (scenario.customName || 'scenario').replace(/[^a-zA-Z0-9_-]/g, '_') + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function csvEscape(str) {
+        if (str == null) return '';
+        str = String(str);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      }
+
+      // --- Upload & Load ---
+
+      document.getElementById('scenario-upload-btn').addEventListener('click', () => {
+        document.getElementById('scenario-file-input').click();
+      });
+
+      document.getElementById('scenario-file-input').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            const text = ev.target.result;
+            if (file.name.endsWith('.ctcc')) {
+              loadCtccFile(text, file.name);
+            } else if (file.name.endsWith('.csv')) {
+              loadCsvFile(text, file.name);
+            }
+          };
+          reader.readAsText(file);
+        });
+
+        // Reset file input so same file can be re-uploaded
+        this.value = '';
+      });
+
+      function validateCtccFile(data) {
+        const errors = [];
+        if (!data || typeof data !== 'object') errors.push('Invalid JSON structure');
+        if (!data.version) errors.push('Missing version field');
+        if (!data.inputs || typeof data.inputs !== 'object') errors.push('Missing or invalid inputs field');
+        else if (!data.inputs['01_project_technical_details']) errors.push('Missing 01_project_technical_details in inputs');
+        if (data.results && typeof data.results !== 'object') errors.push('Results field must be an object');
+        return { valid: errors.length === 0, errors };
+      }
+
+      function loadCtccFile(text, fileName) {
+        try {
+          const data = JSON.parse(text);
+          const validation = validateCtccFile(data);
+          if (!validation.valid) {
+            alert('Invalid .ctcc file:\n' + validation.errors.join('\n'));
+            return;
+          }
+          const name = data.customName || fileName.replace('.ctcc', '');
+          addScenarioToSession(data.inputs, data.results || null,
+            { timestamp: data.metadata?.timestamp || new Date().toISOString(),
+              scenario_id: data.metadata?.scenario_id || '',
+              source: 'upload-ctcc' },
+            generateScenarioName(name));
+        } catch (e) {
+          alert('Failed to parse .ctcc file: ' + e.message);
+        }
+      }
+
+      function loadCsvFile(text, fileName) {
+        try {
+          const sections = {};
+          let currentSection = null;
+          const lines = text.split('\n');
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.match(/^\[([A-Z]+)\]$/)) {
+              currentSection = trimmed.match(/^\[([A-Z]+)\]$/)[1];
+              sections[currentSection] = [];
+            } else if (currentSection && trimmed) {
+              sections[currentSection].push(trimmed);
+            }
+          }
+
+          if (!sections.METADATA) {
+            alert('Invalid CSV: missing [METADATA] section');
+            return;
+          }
+
+          // Parse metadata
+          const metadata = {};
+          for (const line of sections.METADATA) {
+            const idx = line.indexOf(',');
+            if (idx > 0) {
+              metadata[line.substring(0, idx)] = line.substring(idx + 1);
+            }
+          }
+
+          // Parse inputs
+          let inputs = null;
+          if (sections.INPUTS && sections.INPUTS.length > 1) {
+            // Skip header row
+            inputs = ctccJsonData ? JSON.parse(JSON.stringify(ctccJsonData)) : {};
+            for (let i = 1; i < sections.INPUTS.length; i++) {
+              const parts = parseCsvLine(sections.INPUTS[i]);
+              if (parts.length >= 3) {
+                const fullPath = parts[0] + '.' + parts[1];
+                let val = parts[2];
+                // Try to parse numeric values
+                if (val !== '' && !isNaN(Number(val))) val = Number(val);
+                else if (val === 'true') val = true;
+                else if (val === 'false') val = false;
+                setValueAtPath(inputs, fullPath, val);
+              }
+            }
+          }
+
+          // Parse results
+          let results = null;
+          if (sections.RESULTS && sections.RESULTS.length > 1) {
+            results = {};
+            for (let i = 1; i < sections.RESULTS.length; i++) {
+              const parts = parseCsvLine(sections.RESULTS[i]);
+              if (parts.length >= 2) {
+                const field = RESULTS_EXPORT_FIELDS.find(f => f.key === parts[0]);
+                if (field) {
+                  let val = parts[1];
+                  if (val !== '' && !isNaN(Number(val))) val = Number(val);
+                  setValueAtPath(results, field.path, val);
+                }
+              }
+            }
+          }
+
+          const name = metadata.customName || fileName.replace('.csv', '');
+          addScenarioToSession(inputs, results,
+            { timestamp: metadata.timestamp || new Date().toISOString(),
+              scenario_id: metadata.scenario_id || '',
+              source: 'upload-csv' },
+            generateScenarioName(name));
+        } catch (e) {
+          alert('Failed to parse CSV file: ' + e.message);
+        }
+      }
+
+      function parseCsvLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (inQuotes) {
+            if (ch === '"' && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else if (ch === '"') {
+              inQuotes = false;
+            } else {
+              current += ch;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+            } else if (ch === ',') {
+              result.push(current);
+              current = '';
+            } else {
+              current += ch;
+            }
+          }
+        }
+        result.push(current);
+        return result;
+      }
+
+      // --- Comparison Table ---
+
+      function getMetricConfig(metricKey) {
+        for (const group of COMPARISON_METRICS) {
+          for (const m of group.metrics) {
+            if (m.key === metricKey) return m;
+          }
+        }
+        return null;
+      }
+
+      function getMetricValue(scenario, metricKey) {
+        const config = getMetricConfig(metricKey);
+        if (!config || !scenario.results) return undefined;
+        return getValueAtPath(scenario.results, config.path);
+      }
+
+      function formatMetricValue(value, format) {
+        if (value === undefined || value === null) return 'N/A';
+        const num = Number(value);
+        if (isNaN(num)) return String(value);
+        if (format === 'currency') return formatCurrency(num, 0);
+        if (format === 'number3') return formatNumber(num, 3);
+        return formatNumber(num, 0);
+      }
+
+      function buildMetricSelect(excludeKeys) {
+        const select = document.createElement('select');
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'New column: select metric';
+        select.appendChild(defaultOpt);
+        for (const group of COMPARISON_METRICS) {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = group.group;
+          for (const m of group.metrics) {
+            if (excludeKeys && excludeKeys.has(m.key)) continue;
+            const opt = document.createElement('option');
+            opt.value = m.key;
+            opt.textContent = m.label;
+            optgroup.appendChild(opt);
+          }
+          if (optgroup.children.length > 0) select.appendChild(optgroup);
+        }
+        return select;
+      }
+
+      function renderComparisonTable() {
+        const container = document.getElementById('comparison-table-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0) {
+          container.innerHTML = '<p style="color: rgba(0,0,0,0.4); font-style: italic;">Check scenarios above to compare them.</p>';
+          return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'comparison-table-wrapper';
+        const table = document.createElement('table');
+        table.className = 'comparison-table';
+
+        // Header
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const scenarioTh = document.createElement('th');
+        scenarioTh.textContent = 'Scenario';
+        headerRow.appendChild(scenarioTh);
+
+        comparisonColumns.forEach((colKey) => {
+          const config = getMetricConfig(colKey);
+          const th = document.createElement('th');
+          th.className = 'metric-col';
+          th.textContent = config ? config.label : colKey;
+          headerRow.appendChild(th);
+        });
+
+        // Filler column with add-column dropdown
+        const fillerTh = document.createElement('th');
+        fillerTh.style.cssText = 'width: 100%; border: none; background: transparent; text-align: left; padding-left: 0.75rem; white-space: nowrap;';
+        if (comparisonColumns.length < 10) {
+          const existingKeys = new Set(comparisonColumns);
+          const addSelect = buildMetricSelect(existingKeys);
+          addSelect.addEventListener('change', function() {
+            if (this.value) {
+              comparisonColumns.push(this.value);
+              renderComparisonTable();
+            }
+          });
+          const plusIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          plusIcon.setAttribute('width', '22');
+          plusIcon.setAttribute('height', '22');
+          plusIcon.setAttribute('viewBox', '0 0 24 24');
+          plusIcon.style.cssText = 'vertical-align: middle; margin-right: 0.35rem; flex-shrink: 0;';
+          plusIcon.innerHTML = '<circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.25)"/><line x1="7" y1="12" x2="17" y2="12" stroke="white" stroke-width="3" stroke-linecap="round"/><line x1="12" y1="7" x2="12" y2="17" stroke="white" stroke-width="3" stroke-linecap="round"/>';
+          fillerTh.appendChild(plusIcon);
+          fillerTh.appendChild(addSelect);
+        }
+        headerRow.appendChild(fillerTh);
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Body
+        const tbody = document.createElement('tbody');
+        selectedScenarios.forEach(scenario => {
+          const row = document.createElement('tr');
+          const nameTd = document.createElement('td');
+          nameTd.textContent = scenario.customName;
+          row.appendChild(nameTd);
+
+          comparisonColumns.forEach(colKey => {
+            const config = getMetricConfig(colKey);
+            const td = document.createElement('td');
+            td.className = 'metric-val';
+            const val = getMetricValue(scenario, colKey);
+            td.textContent = formatMetricValue(val, config?.format);
+            row.appendChild(td);
+          });
+
+          // Filler cell
+          const fillerTd = document.createElement('td');
+          fillerTd.style.cssText = 'border: none; background: transparent;';
+          row.appendChild(fillerTd);
+
+          tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        // Footer row with remove buttons (visually outside table)
+        const tfoot = document.createElement('tfoot');
+        const footRow = document.createElement('tr');
+        footRow.appendChild(document.createElement('td'));
+        comparisonColumns.forEach((colKey, colIdx) => {
+          const td = document.createElement('td');
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-col-btn';
+          removeBtn.innerHTML = '<span>\u00d7</span><span>remove</span>';
+          removeBtn.title = 'Remove column';
+          removeBtn.addEventListener('click', () => {
+            comparisonColumns.splice(colIdx, 1);
+            renderComparisonTable();
+          });
+          td.appendChild(removeBtn);
+          footRow.appendChild(td);
+        });
+        footRow.appendChild(document.createElement('td')); // filler
+        tfoot.appendChild(footRow);
+        table.appendChild(tfoot);
+
+        wrapper.appendChild(table);
+        container.appendChild(wrapper);
+      }
 
       // Smart tooltip positioning
       let activeTooltip = null;
@@ -2149,6 +3141,8 @@
       }
 
       function showCalculating() {
+        statusBarModified.style.display = 'none';
+        if (ranFromResultsTab) return;  // Don't show orange bar when run from results tab
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -2160,24 +3154,41 @@
         statusBarLabel.textContent = 'Calculating...';
         statusBarTimestamp.textContent = `Started ${timeStr}`;
         statusBarViewBtn.style.display = 'none';
+        document.getElementById('status-bar-save-btn').style.display = 'none';
         statusBarModified.style.display = 'none';
       }
 
       function markResultsAvailable(durationMs) {
+        const durationSeconds = (durationMs / 1000).toFixed(2);
         const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
+
         if (resultsButton) {
           resultsButton.classList.remove('disabled');
-          resultsButton.classList.add('results-available');
         }
 
-        // Format duration
-        const durationSeconds = (durationMs / 1000).toFixed(2);
+        if (ranFromResultsTab) {
+          // Don't show the green banner; update the button on results tab instead
+          ranFromResultsTab = false;
+          const notCalcBtn = document.getElementById('results-not-calculated-btn');
+          if (notCalcBtn) {
+            notCalcBtn.textContent = `Completed in ${durationSeconds}s`;
+            notCalcBtn.style.background = '#10b981';
+            notCalcBtn.style.cursor = 'default';
+            notCalcBtn.disabled = true;
+          }
+          return;
+        }
+
+        if (resultsButton) {
+          resultsButton.classList.add('results-available');
+        }
 
         statusBar.classList.add('success');
         statusBarIcon.textContent = '✓';
         statusBarLabel.textContent = 'Results available';
         statusBarTimestamp.textContent = `Completed in ${durationSeconds}s`;
         statusBarViewBtn.style.display = 'block';
+        document.getElementById('status-bar-save-btn').style.display = 'inline';
       }
 
       function hideStatusBar() {
@@ -2189,9 +3200,20 @@
       }
 
       function markInputsModified() {
+        inputsDirtySinceRun = true;
+        lastRunSavedToSession = false;
         // Only show modified message if results are available (success state)
         if (statusBar.classList.contains('success')) {
           statusBarModified.style.display = 'inline';
+        }
+        // Reset and show orange "not calculated" button on results tab
+        const notCalcBtn = document.getElementById('results-not-calculated-btn');
+        if (notCalcBtn) {
+          notCalcBtn.textContent = 'Not yet calculated \u2014 run?';
+          notCalcBtn.style.background = '#f59e0b';
+          notCalcBtn.style.cursor = 'pointer';
+          notCalcBtn.disabled = false;
+          notCalcBtn.style.display = 'inline-block';
         }
       }
 
@@ -4082,9 +5104,37 @@
         metaLine.className = 'results-metadata-line';
         const parts = [];
         if (results.scenario_id) parts.push('Scenario: ' + results.scenario_id);
-        if (results.timestamp) parts.push(new Date(results.timestamp).toLocaleString());
         if (results.technical_parameters?.project_name) parts.push(results.technical_parameters.project_name);
-        metaLine.textContent = parts.join(' | ');
+        const metaText = document.createElement('span');
+        metaText.textContent = parts.join(' | ');
+        metaLine.appendChild(metaText);
+
+        const notCalcBtn = document.createElement('button');
+        notCalcBtn.type = 'button';
+        notCalcBtn.id = 'results-not-calculated-btn';
+        notCalcBtn.textContent = 'Not yet calculated \u2014 run?';
+        notCalcBtn.style.cssText = 'margin-left: 1rem; padding: 0.25rem 0.75rem; background: #f59e0b; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; display: none;';
+        notCalcBtn.addEventListener('mouseover', () => { notCalcBtn.style.background = '#d97706'; });
+        notCalcBtn.addEventListener('mouseout', () => { notCalcBtn.style.background = '#f59e0b'; });
+        notCalcBtn.addEventListener('click', () => {
+          ranFromResultsTab = true;
+          notCalcBtn.textContent = 'Calculating\u2026';
+          notCalcBtn.style.background = '#9ca3af';
+          notCalcBtn.style.cursor = 'default';
+          notCalcBtn.disabled = true;
+          form.requestSubmit();
+        });
+        metaLine.appendChild(notCalcBtn);
+
+        const saveResultsBtn = document.createElement('button');
+        saveResultsBtn.type = 'button';
+        saveResultsBtn.textContent = 'Save Results';
+        saveResultsBtn.style.cssText = 'margin-left: 0.5rem; padding: 0.25rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500; cursor: pointer;';
+        saveResultsBtn.addEventListener('mouseover', () => { saveResultsBtn.style.background = '#059669'; });
+        saveResultsBtn.addEventListener('mouseout', () => { saveResultsBtn.style.background = '#10b981'; });
+        saveResultsBtn.addEventListener('click', () => showSaveDialog());
+        metaLine.appendChild(saveResultsBtn);
+
         stickyHeader.appendChild(metaLine);
 
         // Project parameters bar
@@ -4318,7 +5368,9 @@
         showCalculating();
         statusEl.textContent = "";
         statusEl.classList.remove("error");
-        resultEl.textContent = "";
+        if (!ranFromResultsTab) {
+          resultEl.textContent = "";
+        }
 
         try {
           const baseUrl = apiBaseInput.value.trim();
@@ -4396,12 +5448,27 @@
 
           if (json.mode === "bulk" && json.text) {
             resultEl.textContent = json.text;
-          } else if (mode === "ctcc" && json.output_mode === "csv" && json.csv_files) {
+          } else if (mode === "ctcc" && json.csv_files) {
             // CSV output mode - fetch and display CSV contents
             await displayCsvFiles(json, baseUrl);
-          } else if (mode === "ctcc" && json.output_mode === "json" && json.results) {
+          } else if (mode === "ctcc" && json.results) {
             // JSON output mode - render structured CTCC results
             renderCTCCResults(json.results);
+
+            // Auto-save scenario
+            try {
+              lastRunResults = json.results;
+              inputsDirtySinceRun = false;
+              lastRunSavedToSession = true;
+              const currentInputs = collectJsonData();
+              const sid = scenarioIdInput.value.trim() || json.scenario_id || json.results?.scenario_id || '';
+              lastRunScenarioId = scenarioIdInput.value.trim();
+              addScenarioToSession(currentInputs, json.results,
+                { timestamp: new Date().toISOString(), scenario_id: sid, source: 'run' },
+                sid || generateScenarioName('Run'));
+            } catch (e) {
+              console.error('Auto-save scenario failed:', e);
+            }
           } else {
             // Fallback to raw JSON display
             resultEl.textContent = JSON.stringify(json, null, 2);
