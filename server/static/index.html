@@ -982,7 +982,7 @@
       .scenario-list table { width: 100%; border-collapse: collapse; }
       .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); vertical-align: top; white-space: nowrap; }
       .scenario-card:hover td { background: rgba(0,0,0,0.02); }
-      .scenario-card-checkbox { }
+      .scenario-card-checkbox { cursor: pointer; }
       .scenario-card-info { display: flex; flex-direction: column; gap: 0.1rem; }
       .scenario-card-name { font-weight: 600; font-size: 0.85rem; cursor: text; border: 1px solid transparent; padding: 0; border-radius: 0.25rem; display: inline-block; line-height: 1.4; }
       .scenario-card-name:hover { border-color: rgba(0,0,0,0.15); }
@@ -1002,6 +1002,56 @@
       .scenario-card-actions button[data-tooltip]:hover::after { opacity: 1; }
       .scenario-badge { background: #0066cc; color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.35rem; vertical-align: middle; }
       .scenario-empty { text-align: center; padding: 2rem; color: rgba(0,0,0,0.4); font-style: italic; }
+      .scenario-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0.5rem 0;
+      }
+      .scenario-divider::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .scenario-toggle-btn {
+        position: relative;
+        z-index: 1;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.35);
+        padding: 0;
+      }
+      .scenario-toggle-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+      .scenario-list.collapsed { display: none; }
+      .comparison-export-btn {
+        font-size: 0.7rem;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.35);
+        background: none;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.25rem;
+        padding: 0.15rem 0.5rem;
+        cursor: pointer;
+      }
+      .comparison-export-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
       .comparison-section { margin-top: 1rem; }
       .comparison-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
       .comparison-controls { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -1620,8 +1670,16 @@
       <div class="scenario-list" id="scenario-list">
         <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
       </div>
+      <div class="scenario-divider" id="scenario-divider">
+        <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
+          <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
       <div class="comparison-section" id="comparison-section">
-        <h3>Compare Selected Scenarios</h3>
+        <h3 style="display: flex; align-items: baseline; gap: 0.75rem;">Compare Selected Scenarios
+          <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
+          <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
+        </h3>
         <div id="comparison-table-container"></div>
       </div>
     </div>
@@ -1824,6 +1882,39 @@
       // =============================================
 
       const COMPARISON_METRICS = [
+        { group: 'Benefit-Cost Ratio', metrics: [
+          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
+          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
+          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
+          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
+          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+        ]},
+        { group: 'Total Costs', metrics: [
+          { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
+          { key: 'total_capital_pv', label: 'Total Capital', path: 'summary.total_capital_pv', format: 'currency' },
+          { key: 'total_operational_pv', label: 'Total Operational', path: 'summary.total_operational_pv', format: 'currency' },
+        ]},
+        { group: 'Benefits (PV)', metrics: [
+          { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
+          { key: 'curtailment_pv', label: 'Curtailment (Conservative)', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
+          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
+          { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
+        ]},
+        { group: 'Net Benefits (PV)', metrics: [
+          { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
+          { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
+          { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
+        ]},
+        { group: 'BCR Sensitivity Exclusions', metrics: [
+          { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_out', label: 'BCR excl. Outage', path: 'bcr.bcr_excluding_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
+          { key: 'bcr_excl_ll', label: 'BCR excl. Line Losses', path: 'bcr.bcr_excluding_linelosses', format: 'number3' },
+          { key: 'bcr_excl_wf_out', label: 'BCR excl. Wildfire + Outage', path: 'bcr.bcr_excluding_wildfire_risk_and_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf_out', label: 'BCR excl. Emissions + Losses + Wildfire + Outage', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', format: 'number3' },
+        ]},
         { group: 'Parameters', metrics: [
           { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
           { key: 'line_length', label: 'Line Length (mi)', path: 'technical_parameters.line_length_miles', format: 'number' },
@@ -1834,12 +1925,10 @@
           { key: 'build_pv', label: 'Build', path: 'costs.build.total_pv', format: 'currency' },
           { key: 'row_capital_pv', label: 'ROW Capital', path: 'costs.row.row_capital_pv', format: 'currency' },
           { key: 'env_pv', label: 'Environmental', path: 'costs.environmental.total_pv', format: 'currency' },
-          { key: 'total_capital_pv', label: 'Total Capital', path: 'summary.total_capital_pv', format: 'currency' },
         ]},
         { group: 'Operational Costs (PV)', metrics: [
           { key: 'row_rent_pv', label: 'ROW Rent', path: 'costs.row.row_rent_pv', format: 'currency' },
           { key: 'insurance_pv', label: 'Insurance', path: 'costs.insurance.pv_total', format: 'currency' },
-          { key: 'total_operational_pv', label: 'Total Operational', path: 'summary.total_operational_pv', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
           { key: 'wildfire_pv', label: 'Wildfire', path: 'costs.wildfire.pv_cost', format: 'currency' },
@@ -1853,27 +1942,6 @@
           { key: 'line_loss_pv', label: 'Line Losses', path: 'costs.line_loss.total_pv', format: 'currency' },
           { key: 'emissions_pv', label: 'Emissions', path: 'costs.emissions.total_pv', format: 'currency' },
           { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency' },
-        ]},
-        { group: 'Total Costs', metrics: [
-          { key: 'grand_total_pv', label: 'Grand Total Costs', path: 'summary.grand_total_cost_pv', format: 'currency' },
-        ]},
-        { group: 'Benefits (PV)', metrics: [
-          { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
-          { key: 'curtailment_pv', label: 'Curtailment (Conservative)', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
-          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
-          { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
-        ]},
-        { group: 'Benefit-Cost Ratio', metrics: [
-          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
-          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
-          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
-          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
-          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
-        ]},
-        { group: 'Net Benefits (PV)', metrics: [
-          { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
-          { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
-          { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
         ]},
       ];
 
@@ -1897,7 +1965,7 @@
         { key: 'line_loss_pv', path: 'costs.line_loss.total_pv' },
         { key: 'emissions_pv', path: 'costs.emissions.total_pv' },
         { key: 'total_energy_emissions_pv', path: 'summary.total_energy_emissions_pv' },
-        { key: 'grand_total_cost_pv', path: 'summary.grand_total_cost_pv' },
+        { key: 'grand_total_cost_pv', path: 'summary.total_costs_pv' },
         { key: 'congestion_benefit_haircut_pv', path: 'bcr.congestion_benefit_haircut_pv' },
         { key: 'curtailment_benefit_haircut_pv', path: 'bcr.curtailment_benefit_haircut_pv' },
         { key: 'total_benefits_haircut_pv', path: 'bcr.total_benefits_haircut_pv' },
@@ -2052,6 +2120,13 @@
           const card = document.createElement('tr');
           card.className = 'scenario-card';
           card.dataset.scenarioId = scenario.id;
+
+          // Row click toggles checkbox (except buttons, checkbox, name editing)
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox') return;
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+          });
 
           // Checkbox cell
           const checkTd = document.createElement('td');
@@ -2277,6 +2352,262 @@
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
 
+      document.getElementById('scenario-toggle-btn').addEventListener('click', function() {
+        const list = document.getElementById('scenario-list');
+        const btn = this;
+        const collapsed = list.classList.toggle('collapsed');
+        if (collapsed) {
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          btn.title = 'Show scenario list';
+        } else {
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          btn.title = 'Hide scenario list';
+        }
+      });
+
+      // Copy comparison table to clipboard (Excel-compatible TSV)
+      document.getElementById('copy-table-btn').addEventListener('click', function() {
+        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+          alert('No scenarios or columns selected for comparison.');
+          return;
+        }
+        const headers = ['Scenario', ...comparisonColumns.map(key => {
+          for (const group of COMPARISON_METRICS) {
+            for (const m of group.metrics) {
+              if (m.key === key) return m.label;
+            }
+          }
+          return key;
+        })];
+        const rows = selectedScenarios.map(s => {
+          const cells = [s.customName];
+          comparisonColumns.forEach(key => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) {
+              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            }
+            if (!cfg) { cells.push(''); return; }
+            const parts = cfg.path.split('.');
+            let val = s.results;
+            for (const p of parts) { val = val?.[p]; }
+            if (val == null) { cells.push('N/A'); return; }
+            cells.push(typeof val === 'number' ? val : String(val));
+          });
+          return cells;
+        });
+        const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+        navigator.clipboard.writeText(tsv).then(() => {
+          const btn = document.getElementById('copy-table-btn');
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+      });
+
+      // Export comparison table as PNG
+      document.getElementById('export-png-btn').addEventListener('click', function() {
+        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+          alert('No scenarios or columns selected for comparison.');
+          return;
+        }
+        // Build a clean table in an offscreen container
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position: absolute; left: -9999px; top: 0; background: white; padding: 1.5rem; font-family: system-ui, -apple-system, sans-serif; font-size: 14px;';
+        document.body.appendChild(wrap);
+
+        const title = document.createElement('div');
+        title.style.cssText = 'font-weight: 700; font-size: 16px; margin-bottom: 0.75rem;';
+        title.textContent = 'Scenario Comparison';
+        wrap.appendChild(title);
+
+        const tbl = document.createElement('table');
+        tbl.style.cssText = 'border-collapse: collapse; font-size: 13px;';
+
+        // Header
+        const thead = document.createElement('thead');
+        const hrow = document.createElement('tr');
+        const headers = ['Scenario', ...comparisonColumns.map(key => {
+          for (const group of COMPARISON_METRICS) {
+            for (const m of group.metrics) { if (m.key === key) return m.label; }
+          }
+          return key;
+        })];
+        headers.forEach((h, i) => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          th.style.cssText = 'padding: 6px 12px; border-bottom: 2px solid #ddd; text-align: ' + (i === 0 ? 'left' : 'right') + '; white-space: nowrap; font-weight: 600; background: #f8f9fa;';
+          hrow.appendChild(th);
+        });
+        thead.appendChild(hrow);
+        tbl.appendChild(thead);
+
+        // Body
+        const tbody = document.createElement('tbody');
+        selectedScenarios.forEach((s, ri) => {
+          const tr = document.createElement('tr');
+          if (ri % 2 === 1) tr.style.background = 'rgba(0,0,0,0.02)';
+          const nameTd = document.createElement('td');
+          nameTd.textContent = s.customName;
+          nameTd.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; white-space: nowrap;';
+          tr.appendChild(nameTd);
+          comparisonColumns.forEach(key => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) {
+              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            }
+            const td = document.createElement('td');
+            td.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 12px;';
+            if (!cfg) { td.textContent = ''; }
+            else {
+              const parts = cfg.path.split('.');
+              let val = s.results;
+              for (const p of parts) { val = val?.[p]; }
+              if (val == null) td.textContent = 'N/A';
+              else if (cfg.format === 'currency') td.textContent = formatCurrency(val, 0);
+              else if (cfg.format === 'number3') td.textContent = formatNumber(val, 3);
+              else td.textContent = formatNumber(val, 0);
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        tbl.appendChild(tbody);
+        wrap.appendChild(tbl);
+
+        // Render to canvas directly (no foreignObject to avoid taint)
+        const scale = 2;
+        const font = '13px system-ui, -apple-system, sans-serif';
+        const monoFont = '12px "SF Mono", Monaco, Consolas, monospace';
+        const boldFont = 'bold 13px system-ui, -apple-system, sans-serif';
+        const titleFont = 'bold 16px system-ui, -apple-system, sans-serif';
+        const padX = 12, padY = 6;
+
+        // Measure columns using a temp canvas
+        const mCtx = document.createElement('canvas').getContext('2d');
+        const colWidths = headers.map((h, i) => {
+          mCtx.font = boldFont;
+          let w = mCtx.measureText(h).width;
+          selectedScenarios.forEach(s => {
+            if (i === 0) {
+              mCtx.font = font;
+              w = Math.max(w, mCtx.measureText(s.customName).width);
+            } else {
+              mCtx.font = monoFont;
+              const key = comparisonColumns[i - 1];
+              let cfg = null;
+              for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
+              if (cfg) {
+                const parts = cfg.path.split('.');
+                let val = s.results;
+                for (const p of parts) { val = val?.[p]; }
+                let txt = 'N/A';
+                if (val != null) {
+                  if (cfg.format === 'currency') txt = formatCurrency(val, 0);
+                  else if (cfg.format === 'number3') txt = formatNumber(val, 3);
+                  else txt = formatNumber(val, 0);
+                }
+                w = Math.max(w, mCtx.measureText(txt).width);
+              }
+            }
+          });
+          return w + padX * 2 + 4;
+        });
+
+        const rowH = 28;
+        const headerH = 32;
+        const titleH = 36;
+        const totalW = colWidths.reduce((a, b) => a + b, 0);
+        const totalH = titleH + headerH + selectedScenarios.length * rowH;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = totalW * scale;
+        canvas.height = totalH * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+
+        // Background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, totalW, totalH);
+
+        // Title
+        ctx.font = titleFont;
+        ctx.fillStyle = '#000';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Scenario Comparison', padX, titleH / 2);
+
+        // Header row
+        let y = titleH;
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, y, totalW, headerH);
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, y + headerH); ctx.lineTo(totalW, y + headerH); ctx.stroke();
+        ctx.font = boldFont;
+        ctx.fillStyle = '#000';
+        let x = 0;
+        headers.forEach((h, i) => {
+          ctx.textAlign = i === 0 ? 'left' : 'right';
+          const tx = i === 0 ? x + padX : x + colWidths[i] - padX;
+          ctx.fillText(h, tx, y + headerH / 2);
+          x += colWidths[i];
+        });
+
+        // Data rows
+        y += headerH;
+        selectedScenarios.forEach((s, ri) => {
+          if (ri % 2 === 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.02)';
+            ctx.fillRect(0, y, totalW, rowH);
+          }
+          // Row divider
+          ctx.strokeStyle = '#eee';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(totalW, y + rowH); ctx.stroke();
+
+          x = 0;
+          // Scenario name
+          ctx.font = font;
+          ctx.fillStyle = '#000';
+          ctx.textAlign = 'left';
+          ctx.fillText(s.customName, x + padX, y + rowH / 2);
+          x += colWidths[0];
+
+          // Metric values
+          comparisonColumns.forEach((key, ci) => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
+            ctx.font = monoFont;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'right';
+            let txt = 'N/A';
+            if (cfg) {
+              const parts = cfg.path.split('.');
+              let val = s.results;
+              for (const p of parts) { val = val?.[p]; }
+              if (val != null) {
+                if (cfg.format === 'currency') txt = formatCurrency(val, 0);
+                else if (cfg.format === 'number3') txt = formatNumber(val, 3);
+                else txt = formatNumber(val, 0);
+              }
+            }
+            ctx.fillText(txt, x + colWidths[ci + 1] - padX, y + rowH / 2);
+            x += colWidths[ci + 1];
+          });
+          y += rowH;
+        });
+
+        document.body.removeChild(wrap);
+        canvas.toBlob(function(blob) {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'scenario_comparison.png';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+      });
+
       function exportAsCtcc(scenario) {
         const data = {
           version: '1.0',
@@ -2376,7 +2707,14 @@
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        files.forEach(file => {
+        // Sort files alphabetically/numerically by name
+        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+        // Load sequentially to preserve sort order
+        let i = 0;
+        function loadNext() {
+          if (i >= files.length) return;
+          const file = files[i++];
           const reader = new FileReader();
           reader.onload = function(ev) {
             const text = ev.target.result;
@@ -2385,9 +2723,11 @@
             } else if (file.name.endsWith('.csv')) {
               loadCsvFile(text, file.name);
             }
+            loadNext();
           };
           reader.readAsText(file);
-        });
+        }
+        loadNext();
 
         // Reset file input so same file can be re-uploaded
         this.value = '';
@@ -2623,7 +2963,8 @@
           plusIcon.setAttribute('width', '22');
           plusIcon.setAttribute('height', '22');
           plusIcon.setAttribute('viewBox', '0 0 24 24');
-          plusIcon.style.cssText = 'vertical-align: middle; margin-right: 0.35rem; flex-shrink: 0;';
+          plusIcon.style.cssText = 'vertical-align: middle; margin-right: 0.35rem; flex-shrink: 0; cursor: pointer;';
+          plusIcon.addEventListener('click', () => { addSelect.focus(); try { addSelect.showPicker(); } catch(e) {} });
           plusIcon.innerHTML = '<circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.25)"/><line x1="7" y1="12" x2="17" y2="12" stroke="white" stroke-width="3" stroke-linecap="round"/><line x1="12" y1="7" x2="12" y2="17" stroke="white" stroke-width="3" stroke-linecap="round"/>';
           fillerTh.appendChild(plusIcon);
           fillerTh.appendChild(addSelect);
@@ -4496,7 +4837,7 @@
         // Emissions
         const emissionsPV = em.total_pv || 0;
         // Grand total
-        const totalPV = summary.grand_total_cost_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
+        const totalPV = summary.total_costs_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
 
         const heading = document.createElement('div');
         heading.className = 'results-section-heading';
@@ -5236,7 +5577,7 @@
               { label: 'Operational', value: summary.total_operational_pv },
               { label: 'Energy / Emissions', value: summary.total_energy_emissions_pv },
               { label: 'Risk', value: summary.total_risk_pv },
-              { label: 'Total Costs', value: summary.grand_total_cost_pv || summary.total_costs_pv, highlight: true },
+              { label: 'Total Costs', value: summary.total_costs_pv, highlight: true },
             ];
             summaryMetrics.forEach(m => {
               const card = document.createElement('div');

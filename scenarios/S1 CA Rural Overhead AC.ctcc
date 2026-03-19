@@ -1,19 +1,19 @@
 {
   "version": "1.0",
-  "customName": "Pacific Subsea DC 800MW",
+  "customName": "S1 CA Rural Overhead AC",
   "inputs": {
     "01_project_technical_details": {
       "project": {
-        "name": "Pacific_Subsea_DC_800MW",
-        "construction_type": "Subsea",
-        "ac_dc": "DC",
+        "name": "S1_California_Rural_Overhead_AC_657MW",
+        "construction_type": "Overhead",
+        "ac_dc": "AC",
         "number_of_converters": 0,
-        "capacity_mw": 500,
-        "conductor_type": "High-Temperature Low-Sag Conductor",
+        "capacity_mw": 657,
+        "conductor_type": "Standard Aluminum Conductor",
         "converter_type": "NA",
-        "converter_loss_percentage": "",
-        "line_utilization": 0.78,
-        "baseline_electricity_price_per_mwh": 50,
+        "converter_loss_percentage": null,
+        "line_utilization": 0.7,
+        "baseline_electricity_price_per_mwh": 50.0,
         "reconductoring": false,
         "uses_existing_row": false,
         "old_capacity_mw": null,
@@ -24,22 +24,22 @@
       },
       "timeline": {
         "construction_years": 1,
-        "delay_years": 6,
+        "delay_years": 4,
         "project_lifetime": 50
       }
     },
     "02_project_physical_details": {
       "terrain": {
         "terrain_miles": {
-          "forested": 0,
-          "scrubbed_flat": 0,
-          "wetland": 0,
-          "farmland": 0,
+          "forested": 20,
+          "scrubbed_flat": 40,
+          "wetland": 5,
+          "farmland": 25,
           "desert_barren": 0,
           "urban": 0,
-          "rolling_hills": 0,
+          "rolling_hills": 10,
           "mountain": 0,
-          "subsea": 195
+          "subsea": 0
         },
         "terrain_multipliers": {
           "forested": 2.25,
@@ -58,8 +58,8 @@
       "financial": {
         "inflation_rate": 0.03,
         "base_year": 2025,
-        "wacc_nominal": 0.106,
-        "social_discount_rate": 0.022,
+        "wacc_nominal": 0.08,
+        "social_discount_rate": 0.03,
         "contingencies": {
           "conductor_contingency": 0.1,
           "structure_contingency": 0.1,
@@ -130,20 +130,20 @@
           "urban": 0.0001,
           "rolling_hills": 0.001,
           "mountain": 0.002,
-          "subsea": 0
+          "subsea": 0.0
         },
         "ignition_rate_multiplier": {
-          "overhead": 1,
+          "overhead": 1.0,
           "underground": 0.02,
-          "subsea": 0
+          "subsea": 0.0
         }
       }
     },
     "07_outage_costs": {
       "outage": {
-        "risk_growth_rate": 0,
+        "risk_growth_rate": 0.0,
         "discount_rate_type": "social",
-        "capacity_at_risk_factor": 1,
+        "capacity_at_risk_factor": 1.0,
         "value_of_lost_load": {
           "tiers": [
             {
@@ -155,7 +155,7 @@
               "value_per_mwh": 10000
             },
             {
-              "max_hours": "Infinity",
+              "max_hours": null,
               "value_per_mwh": 15000
             }
           ]
@@ -172,9 +172,9 @@
           "subsea": 240
         },
         "outage_duration_multiplier": {
-          "overhead": 1,
-          "underground": 2,
-          "subsea": 3
+          "overhead": 1.0,
+          "underground": 2.0,
+          "subsea": 3.0
         },
         "outage_rates": {
           "overhead": {
@@ -279,10 +279,10 @@
           "wetlands": {
             "palustrine": 1.5,
             "estuarine": 2.5,
-            "other": 1
+            "other": 1.0
           },
           "habitat": {
-            "default": 1
+            "default": 1.0
           }
         }
       }
@@ -1293,7 +1293,7 @@
           "miles": 25,
           "acquisition_cost": 579,
           "rent_cost": 18.78,
-          "hold_cost": 1.88
+          "hold_cost": 1.878
         },
         "zone_3": {
           "miles": 30,
@@ -1317,7 +1317,7 @@
           "miles": 0,
           "acquisition_cost": 3394,
           "rent_cost": 110.09,
-          "hold_cost": 11
+          "hold_cost": 11.0
         },
         "zone_7": {
           "miles": 0,
@@ -2580,36 +2580,36 @@
         "compensation_percent": 0.9,
         "energy_source_mix": {
           "coal": {
-            "percentage": 10,
-            "rate_of_change": -0.05
+            "percentage": 0,
+            "rate_of_change": 0.0
           },
           "oil": {
-            "percentage": 2,
+            "percentage": 1,
             "rate_of_change": -0.04
           },
           "natural_gas": {
-            "percentage": 38,
-            "rate_of_change": 0
+            "percentage": 45,
+            "rate_of_change": -0.01
           },
           "solar": {
-            "percentage": 10,
+            "percentage": 18,
             "rate_of_change": 0.05
           },
           "wind": {
-            "percentage": 26,
+            "percentage": 12,
             "rate_of_change": 0.04
           },
           "hydro": {
-            "percentage": 5,
-            "rate_of_change": 0
+            "percentage": 8,
+            "rate_of_change": 0.0
           },
           "nuclear": {
-            "percentage": 5,
-            "rate_of_change": 0
+            "percentage": 6,
+            "rate_of_change": 0.0
           },
           "other": {
-            "percentage": 4,
-            "rate_of_change": 0
+            "percentage": 10,
+            "rate_of_change": 0.0
           }
         },
         "emission_intensities": {
@@ -2645,9 +2645,9 @@
           }
         },
         "societal_costs_per_kg": {
-          "co2_cost_per_kg": 0.05,
+          "co2_cost_per_kg": 0.051,
           "sox_cost_per_kg": 6.2,
-          "nox_cost_per_kg": 5
+          "nox_cost_per_kg": 5.0
         }
       }
     },
@@ -2656,8 +2656,8 @@
         "congestion": {
           "constraints": {
             "flow_factor": 0.6,
-            "binding_hours": 1000,
-            "average_exceedance": 560,
+            "binding_hours": 0,
+            "average_exceedance": 0,
             "near_binding_hours": 0,
             "near_average_exceedance": 0,
             "near_binding_relief_factor": 0.25,
@@ -2665,7 +2665,7 @@
           },
           "costs": {
             "average_congestion_price": 30,
-            "residual_exceedance_value": "",
+            "residual_exceedance_value": null,
             "value_of_lost_load": 0
           }
         },
@@ -2689,7 +2689,7 @@
           },
           "costs": {
             "average_congestion_price": 30,
-            "residual_exceedance_value": "",
+            "residual_exceedance_value": null,
             "value_of_lost_load": 0
           }
         },
@@ -2704,8 +2704,8 @@
     "19_cost_timing_patterns": {
       "cost_timing_patterns": {
         "build_costs": {
-          "during_delay": 0,
-          "during_construction": 1,
+          "during_delay": 0.0,
+          "during_construction": 1.0,
           "afudc_eligible": true
         },
         "row_acquisition": {
@@ -2714,18 +2714,18 @@
           "afudc_eligible": true
         },
         "row_holding": {
-          "during_delay": 1,
-          "during_construction": 0,
+          "during_delay": 1.0,
+          "during_construction": 0.0,
           "afudc_eligible": false
         },
         "row_rent": {
-          "during_delay": 0,
-          "during_construction": 0,
+          "during_delay": 0.0,
+          "during_construction": 0.0,
           "afudc_eligible": false
         },
         "environmental_mitigation_base": {
-          "during_delay": 0,
-          "during_construction": 1,
+          "during_delay": 0.0,
+          "during_construction": 1.0,
           "afudc_eligible": true
         },
         "environmental_mitigation_credits": {
@@ -2734,18 +2734,18 @@
           "afudc_eligible": true
         },
         "delay_costs": {
-          "during_delay": 1,
-          "during_construction": 0,
+          "during_delay": 1.0,
+          "during_construction": 0.0,
           "afudc_eligible": false
         },
         "operations_and_maintenance": {
-          "during_delay": 0,
-          "during_construction": 0,
+          "during_delay": 0.0,
+          "during_construction": 0.0,
           "afudc_eligible": false
         },
         "construction_insurance": {
-          "during_delay": 0,
-          "during_construction": 1,
+          "during_delay": 0.0,
+          "during_construction": 1.0,
           "afudc_eligible": true
         }
       }
@@ -4760,10 +4760,497 @@
       }
     }
   },
-  "results": null,
+  "results": {
+    "scenario_id": "Mar 19 2026 10.17.07",
+    "timestamp": "2026-03-19T10:17:10.302681",
+    "input_mode": "json",
+    "technical_parameters": {
+      "project_name": "S1_California_Rural_Overhead_AC_657MW",
+      "construction_type": "Overhead",
+      "ac_dc": "AC",
+      "capacity_mw": 657,
+      "conductor_type": "Standard Aluminum Conductor",
+      "line_length_miles": 100,
+      "line_utilization": 0.7,
+      "converter_type": "NA",
+      "number_of_converters": 0,
+      "reconductoring": false,
+      "old_capacity_mw": 0,
+      "old_conductor_type": "",
+      "old_ac_dc": "",
+      "baseline_electricity_price_per_mwh": 50.0,
+      "social_discount_rate": 0.03,
+      "construction_years": 1,
+      "delay_years": 4,
+      "project_lifetime_years": 50
+    },
+    "costs": {
+      "row": {
+        "total_nominal": 1373954.909090909,
+        "total_afudc": 1465325.5499924084,
+        "total_pv": 1158944.0954520344,
+        "row_capital_pv": 1158944.0954520344,
+        "row_capital_afudc": 1465325.5499924084,
+        "row_capital_nominal": 1373954.909090909,
+        "row_rent_pv": 0.0,
+        "row_rent_nominal": 0.0,
+        "acquisition_nominal": 1356363.6363636362,
+        "holding_nominal": 17591.272727272728,
+        "rent_nominal": 0.0
+      },
+      "wildfire": {
+        "lambda_total": 0.0635,
+        "EAL": 317500000.0,
+        "lambda_by_terrain": {
+          "forested": {
+            "miles": 20,
+            "base_rate": 0.002,
+            "construction_multiplier": 1.0,
+            "rate_per_mile": 0.002,
+            "events_per_year": 0.04
+          },
+          "scrubbed_flat": {
+            "miles": 40,
+            "base_rate": 0.0002,
+            "construction_multiplier": 1.0,
+            "rate_per_mile": 0.0002,
+            "events_per_year": 0.008
+          },
+          "wetland": {
+            "miles": 5,
+            "base_rate": 0.0001,
+            "construction_multiplier": 1.0,
+            "rate_per_mile": 0.0001,
+            "events_per_year": 0.0005
+          },
+          "farmland": {
+            "miles": 25,
+            "base_rate": 0.0002,
+            "construction_multiplier": 1.0,
+            "rate_per_mile": 0.0002,
+            "events_per_year": 0.005
+          },
+          "rolling_hills": {
+            "miles": 10,
+            "base_rate": 0.001,
+            "construction_multiplier": 1.0,
+            "rate_per_mile": 0.001,
+            "events_per_year": 0.01
+          }
+        },
+        "severity": 5000000000,
+        "growth_rate": 0.01,
+        "nominal_total": 20467060343.543274,
+        "pv_cost": 8556612836.273531
+      },
+      "oandm": {
+        "total_annual": 1440014.2734,
+        "total_nominal": 72000713.67,
+        "total_pv": 23478116.866134927,
+        "conductor_annual": 102514.2734,
+        "conductor_nominal": 5125713.67,
+        "conductor_pv": 1671401.5519091631,
+        "converter_annual": 0,
+        "converter_nominal": 0,
+        "converter_pv": 0.0,
+        "structure_annual": 700000,
+        "structure_nominal": 35000000,
+        "structure_pv": 11412860.351370491,
+        "vegetation_annual": 637500,
+        "vegetation_nominal": 31875000,
+        "vegetation_pv": 10393854.96285527
+      },
+      "environmental": {
+        "total_nominal": 44090909.09090909,
+        "total_afudc": 46023321.708717175,
+        "total_pv": 35603513.309179746,
+        "base_cost_nominal": 3636363.636363637,
+        "credits_nominal": 40454545.45454546,
+        "credits_pv": 32667141.077494815
+      },
+      "build": {
+        "total_nominal": 105469704.34,
+        "total_afudc": 109353316.9299612,
+        "total_pv": 85167035.55469869,
+        "conductor_nominal": 16003827.840000002,
+        "structure_nominal": 89465876.5,
+        "converter_nominal": 0.0,
+        "conductor_afudc": 0,
+        "structure_afudc": 0,
+        "converter_afudc": 0
+      },
+      "insurance": {
+        "annual_premium": 210939.40868000002,
+        "nominal_lifetime_cost": 10546970.434,
+        "pv_total": 3439174.305522154,
+        "insurable_value": 105469704.34,
+        "premium_rate": 0.002
+      },
+      "wildfire_liability": {
+        "annual_premium": 1620000.0,
+        "nominal_lifetime_cost": 81000000.0,
+        "pv_total": 26412619.670314554,
+        "liability_limit": 5400000,
+        "rate_on_line": 0.3
+      },
+      "emissions": {
+        "total_nominal": 214394463.70173597,
+        "total_pv": 109709558.23877925,
+        "annual_cost": 4287889.27403472,
+        "co2_emissions_kg": 3837778013.236626,
+        "co2_cost_nominal": 195726678.67506784,
+        "co2_cost_pv": 99328296.20182069,
+        "sox_emissions_kg": 1627041.1659130584,
+        "sox_cost_nominal": 10087655.228660963,
+        "sox_cost_pv": 5727364.9676945405,
+        "nox_emissions_kg": 1716025.9596014225,
+        "nox_cost_nominal": 8580129.798007116,
+        "nox_cost_pv": 4653897.069264021
+      },
+      "outage": {
+        "lambda_total": 2.35,
+        "EAC": 54662400.0,
+        "outage_by_terrain": {
+          "forested": {
+            "miles": 20,
+            "outage_rate": 0.04,
+            "outages_per_year": 0.8,
+            "duration_base": 8,
+            "duration_multiplier": 1.0,
+            "duration_effective": 8.0,
+            "unserved_mwh_per_event": 5256.0,
+            "cost_per_event": 39420000.0,
+            "annual_cost": 31536000.0
+          },
+          "scrubbed_flat": {
+            "miles": 40,
+            "outage_rate": 0.021,
+            "outages_per_year": 0.8400000000000001,
+            "duration_base": 4,
+            "duration_multiplier": 1.0,
+            "duration_effective": 4.0,
+            "unserved_mwh_per_event": 2628.0,
+            "cost_per_event": 13140000.0,
+            "annual_cost": 11037600.000000002
+          },
+          "wetland": {
+            "miles": 5,
+            "outage_rate": 0.012,
+            "outages_per_year": 0.06,
+            "duration_base": 6,
+            "duration_multiplier": 1.0,
+            "duration_effective": 6.0,
+            "unserved_mwh_per_event": 3942.0,
+            "cost_per_event": 26280000.0,
+            "annual_cost": 1576800.0
+          },
+          "farmland": {
+            "miles": 25,
+            "outage_rate": 0.016,
+            "outages_per_year": 0.4,
+            "duration_base": 3,
+            "duration_multiplier": 1.0,
+            "duration_effective": 3.0,
+            "unserved_mwh_per_event": 1971.0,
+            "cost_per_event": 9855000.0,
+            "annual_cost": 3942000.0
+          },
+          "rolling_hills": {
+            "miles": 10,
+            "outage_rate": 0.025,
+            "outages_per_year": 0.25,
+            "duration_base": 6,
+            "duration_multiplier": 1.0,
+            "duration_effective": 6.0,
+            "unserved_mwh_per_event": 3942.0,
+            "cost_per_event": 26280000.0,
+            "annual_cost": 6570000.0
+          }
+        },
+        "capacity_at_risk": 1.0,
+        "growth_rate": 0.0,
+        "nominal_total": 2733120000.0,
+        "pv_cost": 1213216687.266932
+      },
+      "line_loss": {
+        "annual_cost": 32346418.65387409,
+        "total_nominal": 1617320932.6937046,
+        "total_afudc": 0,
+        "total_pv": 527378798.5194721,
+        "line_loss_mwh_yr": 646928.3730774819,
+        "converter_loss_mwh_yr": 0,
+        "total_loss_mwh_yr": 646928.3730774819,
+        "line_annual_cost": 32346418.65387409,
+        "converter_annual_cost": 0.0,
+        "line_cost_pv": 527378798.5194721,
+        "converter_cost_pv": 0.0,
+        "line_nominal_total": 1617320932.6937046,
+        "converter_nominal_total": 0.0
+      },
+      "delay": {
+        "total_nominal": 50080000,
+        "total_afudc": 0,
+        "total_pv": 45053904.15071015
+      }
+    },
+    "benefits": {
+      "revenue": {
+        "revenue_nominal": 656763378.9767663,
+        "revenue_pv": 214158535.09017283,
+        "annual_revenue": 13135267.579535328,
+        "rate_base": 156841964.18867078,
+        "rate_base_real": 131352675.79535328,
+        "rate_base_pv": 214158535.09017283,
+        "annual_revenue_real": 13135267.579535328,
+        "allowed_return_rate": 0.1
+      },
+      "congestion_curtailment": {
+        "congestion_benefit_annual": 0.0,
+        "congestion_benefit_nominal": 0.0,
+        "congestion_benefit_pv": 0.0,
+        "congestion_benefit_haircut_annual": 0.0,
+        "congestion_benefit_haircut_nominal": 0.0,
+        "congestion_benefit_haircut_pv": 0.0,
+        "curtailment_benefit_annual": 11826000.0,
+        "curtailment_benefit_nominal": 591300000.0,
+        "curtailment_benefit_pv": 192812123.59329626,
+        "curtailment_benefit_haircut_annual": 10643400.0,
+        "curtailment_benefit_haircut_nominal": 532170000.0,
+        "curtailment_benefit_haircut_pv": 173530911.2339667,
+        "delivered_benefit_annual": 120861720.0,
+        "delivered_benefit_nominal": 6043086000.0,
+        "delivered_benefit_pv": 1970539903.123488,
+        "energy_delivered_annual_mwh_yr": 2417234.4,
+        "congestion_delay_cost_nominal": 0.0,
+        "congestion_delay_cost_pv": 0.0,
+        "curtailment_delay_cost_nominal": 59130000.0,
+        "curtailment_delay_cost_pv": 52106030.18061425,
+        "residual_exceedance_annual": 4974000.0,
+        "residual_exceedance_nominal": 248700000.0,
+        "residual_exceedance_pv": 81096524.83959548,
+        "effective_capacity_relief_mw": 394.2,
+        "energy_congestion_reduction_mwh_yr": 0.0,
+        "energy_residual_exceedance_mwh_yr": 165800.0,
+        "energy_curtailment_reduction_mwh_yr": 394200.0,
+        "theta_overlap": 0.0,
+        "binding_hours_overlap": 0.0,
+        "binding_hours_non_overlap": 0.0,
+        "remaining_capacity_mw": 394.2
+      }
+    },
+    "summary": {
+      "total_capital_pv": 121929492.95933047,
+      "total_operational_pv": 26917291.17165708,
+      "total_energy_emissions_pv": 718184881.5978469,
+      "total_risk_pv": 9796242143.210777,
+      "total_delay_pv": 97159934.3313244,
+      "total_costs_pv": 10760433743.270935,
+      "total_benefits_pv": 2163352026.716784,
+      "total_benefits_haircut_pv": 2144070814.3574548
+    },
+    "bcr": {
+      "congestion_benefit_pv": 0.0,
+      "curtailment_benefit_pv": 192812123.59329626,
+      "delivered_benefit_pv": 1970539903.123488,
+      "delivered_benefit_nominal": 6043086000.0,
+      "congestion_benefit_haircut_pv": 0.0,
+      "curtailment_benefit_haircut_pv": 173530911.2339667,
+      "line_loss_benefit_pv": 0,
+      "revenue_pv": 214158535.09017283,
+      "total_benefits_pv": 2163352026.716784,
+      "total_benefits_nominal": 6634386000.0,
+      "total_benefits_haircut_pv": 2144070814.3574548,
+      "build_cost_pv": 85167035.55469869,
+      "row_cost_pv": 1158944.0954520344,
+      "row_capital_pv": 1158944.0954520344,
+      "row_rent_pv": 0.0,
+      "env_mitigation_pv": 35603513.309179746,
+      "capital_costs_pv": 121929492.95933047,
+      "oandm_pv": 23478116.866134927,
+      "insurance_pv": 3439174.305522154,
+      "residual_exceedance_pv": 81096524.83959548,
+      "operational_costs_pv": 26917291.17165708,
+      "row_capital_nominal": 1373954.909090909,
+      "row_rent_nominal": 0.0,
+      "energy_losses_pv": 527378798.5194721,
+      "conductor_loss_pv": 527378798.5194721,
+      "converter_loss_pv": 0.0,
+      "emissions_cost_pv": 109709558.23877925,
+      "energy_emissions_costs_pv": 718184881.5978469,
+      "wildfire_pv": 8556612836.273531,
+      "outage_pv": 1213216687.266932,
+      "wildfire_liability_insurance_pv": 26412619.670314554,
+      "risk_costs_pv": 9796242143.210777,
+      "delay_cost_pv": 45053904.15071015,
+      "congestion_delay_cost_pv": 0.0,
+      "curtailment_delay_cost_pv": 52106030.18061425,
+      "delay_costs_pv": 97159934.3313244,
+      "total_costs_pv": 10760433743.270935,
+      "capital_costs_nominal": 150934568.34,
+      "operational_costs_nominal": 82547684.104,
+      "energy_emissions_costs_nominal": 2080415396.3954406,
+      "risk_costs_nominal": 23281180343.543274,
+      "delay_costs_nominal": 109210000.0,
+      "total_costs_nominal": 25704287992.382713,
+      "bcr_system": 0.19925505472288746,
+      "bcr_capital": 17.58451349479989,
+      "bcr_capital_and_delay": 9.786281523813672,
+      "bcr_primary": 0.200768153538314,
+      "bcr_excluding_wildfire_risk_and_outage_risk": 2.2236978772929383,
+      "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 2.509205237113283,
+      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 4.908443174730884,
+      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 8.715496990322787,
+      "bcr_excluding_emissions": 0.20130751459798332,
+      "bcr_excluding_linelosses": 0.2095240205328077,
+      "bcr_excluding_emissions_and_linelosses": 0.21350504691637787,
+      "bcr_excluding_wildfire_risk": 0.9846893790366903,
+      "bcr_excluding_emissions_and_wildfire_risk": 1.0369357896267695,
+      "bcr_excluding_linelosses_and_wildfire_risk": 1.2994136340598696,
+      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 1.4693232070835391,
+      "bcr_excluding_outage_risk": 0.22457547595077487,
+      "bcr_excluding_emissions_and_outage_risk": 0.227186130963622,
+      "bcr_excluding_linelosses_and_outage_risk": 0.23770612655701845,
+      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 0.2428432439710376,
+      "bcr_utility": 0.8705393756267749,
+      "bcr_ratepayer": 2.891386201582835,
+      "net_benefit_pv": -8616362928.91348,
+      "net_benefit_nominal": -19069901992.382713,
+      "net_benefit_primary_pv": -8535266404.073887,
+      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": 1179879214.297297,
+      "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 1289588772.536076,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 1707258012.8167691,
+      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 1898064095.895144,
+      "net_benefit_excluding_emissions_pv": -8506653370.674702,
+      "net_benefit_excluding_linelosses_pv": -8088984130.394009,
+      "net_benefit_excluding_emissions_and_linelosses_pv": -7898178047.315634,
+      "net_benefit_excluding_wildfire_risk_pv": -33337472.969634533,
+      "net_benefit_excluding_emissions_and_wildfire_risk_pv": 76372085.26914454,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": 494041325.5498376,
+      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 684847408.6282125,
+      "net_benefit_excluding_outage_risk_pv": -7403146241.646549,
+      "net_benefit_excluding_emissions_and_outage_risk_pv": -7293436683.40777,
+      "net_benefit_excluding_linelosses_and_outage_risk_pv": -6875767443.127077,
+      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": -6684961360.048702,
+      "net_benefit_capital_only_pv": 2022141321.3981242,
+      "net_benefit_capital_and_delay_pv": 1924981387.0667999,
+      "net_benefit_utility_pv": -31848183.372139126,
+      "net_benefit_ratepayer_pv": 1402533480.74781,
+      "total_costs_excluding_wildfire_risk_and_outage_risk_pv": 964191600.0601578,
+      "total_costs_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 854482041.8213787,
+      "total_costs_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 436812801.54068565,
+      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 246006718.4623108,
+      "total_costs_excluding_emissions_pv": 10650724185.032156,
+      "total_costs_excluding_linelosses_pv": 10233054944.751463,
+      "total_costs_excluding_emissions_and_linelosses_pv": 10042248861.673088,
+      "total_costs_excluding_wildfire_risk_pv": 2177408287.3270893,
+      "total_costs_excluding_emissions_and_wildfire_risk_pv": 2067698729.0883102,
+      "total_costs_excluding_linelosses_and_wildfire_risk_pv": 1650029488.8076172,
+      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 1459223405.7292423,
+      "total_costs_excluding_outage_risk_pv": 9547217056.004004,
+      "total_costs_excluding_emissions_and_outage_risk_pv": 9437507497.765224,
+      "total_costs_excluding_linelosses_and_outage_risk_pv": 9019838257.484531,
+      "total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv": 8829032174.406157
+    },
+    "csv_equivalent": {
+      "project_name": "S1_California_Rural_Overhead_AC_657MW",
+      "scenario_id": "Mar 19 2026 10.17.07",
+      "timestamp": "2026-03-19T10:17:10.302681",
+      "capacity_mw": 657,
+      "line_length_miles": 100,
+      "construction_type": "Overhead",
+      "ac_dc": "AC",
+      "social_discount_rate": 0.03,
+      "build_cost_pv": 85167035.55469869,
+      "row_cost_pv": 1158944.0954520344,
+      "row_capital_pv": 1158944.0954520344,
+      "row_rent_pv": 0.0,
+      "row_capital_afudc": 0,
+      "row_capital_nominal": 1373954.909090909,
+      "row_rent_nominal": 0.0,
+      "env_mitigation_pv": 35603513.309179746,
+      "capital_costs_pv": 121929492.95933047,
+      "build_cost_afudc": 0,
+      "row_cost_afudc": 0,
+      "env_mitigation_afudc": 0,
+      "insurance_pv": 3439174.305522154,
+      "oandm_pv": 23478116.866134927,
+      "operational_costs_pv": 26917291.17165708,
+      "wildfire_pv": 8556612836.273531,
+      "wildfire_liability_insurance_pv": 26412619.670314554,
+      "outage_pv": 1213216687.266932,
+      "risk_costs_pv": 9796242143.210777,
+      "delay_cost_pv": 45053904.15071015,
+      "congestion_delay_cost_pv": 0.0,
+      "curtailment_delay_cost_pv": 52106030.18061425,
+      "residual_exceedance_pv": 81096524.83959548,
+      "delay_costs_pv": 97159934.3313244,
+      "emissions_cost_pv": 109709558.23877925,
+      "energy_losses_pv": 527378798.5194721,
+      "conductor_loss_pv": 527378798.5194721,
+      "converter_loss_pv": 0.0,
+      "energy_losses_nominal": 1617320932.6937046,
+      "energy_emissions_costs_pv": 718184881.5978469,
+      "total_costs_pv": 10760433743.270935,
+      "congestion_benefit_pv": 0.0,
+      "curtailment_benefit_pv": 192812123.59329626,
+      "delivered_benefit_annual": 0,
+      "delivered_benefit_nominal": 6043086000.0,
+      "delivered_benefit_pv": 1970539903.123488,
+      "revenue_pv": 214158535.09017283,
+      "rate_base": 0,
+      "rate_base_real": 0,
+      "annual_revenue_real": 0,
+      "congestion_benefit_haircut_pv": 0.0,
+      "curtailment_benefit_haircut_pv": 173530911.2339667,
+      "total_benefits_pv": 2163352026.716784,
+      "total_benefits_haircut_pv": 2144070814.3574548,
+      "bcr_system": 0.19925505472288746,
+      "bcr_capital": 17.58451349479989,
+      "bcr_capital_and_delay": 9.786281523813672,
+      "bcr_primary": 0.200768153538314,
+      "bcr_excluding_wildfire_risk_and_outage_risk": 2.2236978772929383,
+      "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 2.509205237113283,
+      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 4.908443174730884,
+      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 8.715496990322787,
+      "bcr_excluding_emissions": 0.20130751459798332,
+      "bcr_excluding_linelosses": 0.2095240205328077,
+      "bcr_excluding_emissions_and_linelosses": 0.21350504691637787,
+      "bcr_excluding_wildfire_risk": 0.9846893790366903,
+      "bcr_excluding_emissions_and_wildfire_risk": 1.0369357896267695,
+      "bcr_excluding_linelosses_and_wildfire_risk": 1.2994136340598696,
+      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 1.4693232070835391,
+      "bcr_excluding_outage_risk": 0.22457547595077487,
+      "bcr_excluding_emissions_and_outage_risk": 0.227186130963622,
+      "bcr_excluding_linelosses_and_outage_risk": 0.23770612655701845,
+      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 0.2428432439710376,
+      "bcr_utility": 0.8705393756267749,
+      "bcr_ratepayer": 2.891386201582835,
+      "net_benefit_pv": -8616362928.91348,
+      "net_benefit_primary_pv": -8535266404.073887,
+      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": 1179879214.297297,
+      "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 1289588772.536076,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 1707258012.8167691,
+      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 1898064095.895144,
+      "net_benefit_excluding_emissions_pv": -8506653370.674702,
+      "net_benefit_excluding_linelosses_pv": -8088984130.394009,
+      "net_benefit_excluding_emissions_and_linelosses_pv": -7898178047.315634,
+      "net_benefit_excluding_wildfire_risk_pv": -33337472.969634533,
+      "net_benefit_excluding_emissions_and_wildfire_risk_pv": 76372085.26914454,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": 494041325.5498376,
+      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 684847408.6282125,
+      "net_benefit_excluding_outage_risk_pv": -7403146241.646549,
+      "net_benefit_excluding_emissions_and_outage_risk_pv": -7293436683.40777,
+      "net_benefit_excluding_linelosses_and_outage_risk_pv": -6875767443.127077,
+      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": -6684961360.048702,
+      "net_benefit_capital_only_pv": 2022141321.3981242,
+      "net_benefit_capital_and_delay_pv": 1924981387.0667999,
+      "net_benefit_utility_pv": -31848183.372139126,
+      "net_benefit_ratepayer_pv": 1402533480.74781
+    }
+  },
   "metadata": {
-    "timestamp": "2026-03-15T21:13:00.000Z",
-    "scenario_id": "Pacific Subsea DC 800MW",
-    "source": "export"
+    "timestamp": "2026-03-19T10:17:10.314464",
+    "scenario_id": "S1",
+    "source": "paper"
   }
 }
