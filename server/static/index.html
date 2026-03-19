@@ -1676,9 +1676,18 @@
         </button>
       </div>
       <div class="comparison-section" id="comparison-section">
-        <h3 style="display: flex; align-items: baseline; gap: 0.75rem;">Compare Selected Scenarios
+        <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: nowrap;">Compare Selected Scenarios
           <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
           <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
+          <button type="button" id="exclusions-btn" class="comparison-export-btn">Exclusions</button>
+          <span id="custom-bcr-controls" style="display:none; margin-left: 0.5rem; flex-shrink: 0; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
+            <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
+          </span>
         </h3>
         <div id="comparison-table-container"></div>
       </div>
@@ -1842,7 +1851,7 @@
       let ranFromResultsTab = false;  // true when run triggered from results tab "not calculated" button
       let lastRunScenarioId = '';  // scenario ID at last run, to detect user changes
       let comparisonScenarioIds = new Set();
-      let comparisonColumns = [];
+      let comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
       // Modal dialog helpers
       const modalOverlay = document.getElementById('modal-overlay');
@@ -1888,11 +1897,12 @@
           { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
           { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+          { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
         { group: 'Total Costs', metrics: [
           { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
-          { key: 'total_capital_pv', label: 'Total Capital', path: 'summary.total_capital_pv', format: 'currency' },
-          { key: 'total_operational_pv', label: 'Total Operational', path: 'summary.total_operational_pv', format: 'currency' },
+          { key: 'total_capital_pv', label: 'Total Capital Cost', path: 'summary.total_capital_pv', format: 'currency' },
+          { key: 'total_operational_pv', label: 'Total Operational Cost', path: 'summary.total_operational_pv', format: 'currency' },
         ]},
         { group: 'Benefits (PV)', metrics: [
           { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
@@ -1904,6 +1914,7 @@
           { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
           { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
           { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
+          { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
         ]},
         { group: 'BCR Sensitivity Exclusions', metrics: [
           { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
@@ -1922,26 +1933,26 @@
           { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
         ]},
         { group: 'Capital Costs (PV)', metrics: [
-          { key: 'build_pv', label: 'Build', path: 'costs.build.total_pv', format: 'currency' },
-          { key: 'row_capital_pv', label: 'ROW Capital', path: 'costs.row.row_capital_pv', format: 'currency' },
-          { key: 'env_pv', label: 'Environmental', path: 'costs.environmental.total_pv', format: 'currency' },
+          { key: 'build_pv', label: 'Build Cost', path: 'costs.build.total_pv', format: 'currency' },
+          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
+          { key: 'env_pv', label: 'Environmental Cost', path: 'costs.environmental.total_pv', format: 'currency' },
         ]},
         { group: 'Operational Costs (PV)', metrics: [
-          { key: 'row_rent_pv', label: 'ROW Rent', path: 'costs.row.row_rent_pv', format: 'currency' },
-          { key: 'insurance_pv', label: 'Insurance', path: 'costs.insurance.pv_total', format: 'currency' },
+          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
+          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
-          { key: 'wildfire_pv', label: 'Wildfire', path: 'costs.wildfire.pv_cost', format: 'currency' },
-          { key: 'outage_pv', label: 'Outage', path: 'costs.outage.pv_cost', format: 'currency' },
-          { key: 'total_risk_pv', label: 'Total Risk', path: 'summary.total_risk_pv', format: 'currency' },
+          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency' },
+          { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency' },
+          { key: 'total_risk_pv', label: 'Total Risk Cost', path: 'summary.total_risk_pv', format: 'currency' },
         ]},
         { group: 'Delay Costs (PV)', metrics: [
-          { key: 'delay_pv', label: 'Base Delay', path: 'costs.delay.total_pv', format: 'currency' },
+          { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency' },
         ]},
         { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'line_loss_pv', label: 'Line Losses', path: 'costs.line_loss.total_pv', format: 'currency' },
-          { key: 'emissions_pv', label: 'Emissions', path: 'costs.emissions.total_pv', format: 'currency' },
-          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency' },
+          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency' },
+          { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency' },
+          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
         ]},
       ];
 
@@ -2880,10 +2891,50 @@
         return null;
       }
 
+      function getExcludedCosts(scenario) {
+        if (!scenario.results) return 0;
+        const bcr = scenario.results.bcr || {};
+        let excluded = 0;
+        if (document.getElementById('cmp-exc-emissions')?.checked) excluded += (bcr.emissions_cost_pv || 0);
+        if (document.getElementById('cmp-exc-linelosses')?.checked) excluded += (bcr.energy_losses_pv || 0);
+        if (document.getElementById('cmp-exc-wildfire')?.checked) excluded += ((bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0));
+        if (document.getElementById('cmp-exc-outage')?.checked) excluded += (bcr.outage_pv || 0);
+        return excluded;
+      }
+
+      const MAIN_EXCLUSION_KEYS = new Set(['bcr_system', 'grand_total_pv', 'net_benefit_pv']);
+
       function getMetricValue(scenario, metricKey) {
+        if (metricKey === 'custom_bcr' || metricKey === 'custom_nb') {
+          return computeCustomMetric(scenario, metricKey);
+        }
+        // Apply exclusions to main columns if checkbox is checked
+        if (MAIN_EXCLUSION_KEYS.has(metricKey) && document.getElementById('cmp-exc-apply-main')?.checked) {
+          return computeMainWithExclusions(scenario, metricKey);
+        }
         const config = getMetricConfig(metricKey);
         if (!config || !scenario.results) return undefined;
         return getValueAtPath(scenario.results, config.path);
+      }
+
+      function computeMainWithExclusions(scenario, metricKey) {
+        if (!scenario.results) return undefined;
+        const bcr = scenario.results.bcr || {};
+        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
+        if (metricKey === 'bcr_system') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
+        if (metricKey === 'grand_total_pv') return totalCostsPV;
+        if (metricKey === 'net_benefit_pv') return totalBenefitsPV - totalCostsPV;
+        return undefined;
+      }
+
+      function computeCustomMetric(scenario, metricKey) {
+        if (!scenario.results) return undefined;
+        const bcr = scenario.results.bcr || {};
+        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
+        if (metricKey === 'custom_bcr') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
+        return totalBenefitsPV - totalCostsPV;
       }
 
       function formatMetricValue(value, format) {
@@ -2920,6 +2971,17 @@
         const container = document.getElementById('comparison-table-container');
         if (!container) return;
         container.innerHTML = '';
+
+        // Show custom BCR controls if custom columns are added (even if Exclusions wasn't clicked)
+        const customControls = document.getElementById('custom-bcr-controls');
+        const exclusionsBtnEl = document.getElementById('exclusions-btn');
+        if (customControls) {
+          const hasCustom = comparisonColumns.includes('custom_bcr') || comparisonColumns.includes('custom_nb');
+          if (hasCustom) {
+            customControls.style.display = 'inline-flex';
+            if (exclusionsBtnEl) exclusionsBtnEl.style.display = 'none';
+          }
+        }
 
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0) {
@@ -3024,6 +3086,22 @@
         wrapper.appendChild(table);
         container.appendChild(wrapper);
       }
+
+      // Exclusions button — show controls, hide button
+      const exclusionsBtn = document.getElementById('exclusions-btn');
+      if (exclusionsBtn) {
+        exclusionsBtn.addEventListener('click', () => {
+          const controls = document.getElementById('custom-bcr-controls');
+          if (controls) controls.style.display = 'inline-flex';
+          exclusionsBtn.style.display = 'none';
+        });
+      }
+
+      // Custom BCR checkbox listeners
+      ['cmp-exc-emissions', 'cmp-exc-linelosses', 'cmp-exc-wildfire', 'cmp-exc-outage', 'cmp-exc-apply-main'].forEach(id => {
+        const cb = document.getElementById(id);
+        if (cb) cb.addEventListener('change', () => renderComparisonTable());
+      });
 
       // Smart tooltip positioning
       let activeTooltip = null;
