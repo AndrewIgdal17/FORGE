@@ -7,6 +7,7 @@ Server converts client JSON to YAML at the boundary; calculator is YAML-in, JSON
 import sys
 import os
 import json
+import subprocess
 import shutil
 import tempfile
 import yaml
@@ -112,8 +113,6 @@ def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary containing calculation results (JSON) or error information
     """
-    import subprocess
-
     input_mode = payload.get("input_mode", "json")
     scenario_id = payload.get("scenario_id") or datetime.now().strftime("%b %d %Y %H.%M.%S")
     combined_data = payload.get("combined_data")

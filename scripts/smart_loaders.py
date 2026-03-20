@@ -1,4 +1,4 @@
-# Author: Claude Code
+# Author: Dane McFarlane
 # Date: 2025-11-10
 # Description: Loader wrapper for the calculator. Calculator uses YAML input only;
 #              this module re-exports yaml_loaders and provides get_*_raw from YAMLS_DIR.
@@ -60,7 +60,7 @@ def get_physical_data_raw() -> Dict[str, Any]:
 def load_terrain_miles() -> Dict[str, float]:
     """
     Load terrain miles dictionary from physical details.
-    Works in both YAML and JSON input modes.
+    Reads from YAML files under YAMLS_DIR.
     
     Returns:
         Dictionary mapping terrain types to miles (e.g., {"forested": 10.5, "urban": 2.3})

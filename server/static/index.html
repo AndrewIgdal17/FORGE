@@ -982,7 +982,7 @@
       .scenario-list table { width: 100%; border-collapse: collapse; }
       .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); vertical-align: top; white-space: nowrap; }
       .scenario-card:hover td { background: rgba(0,0,0,0.02); }
-      .scenario-card-checkbox { }
+      .scenario-card-checkbox { cursor: pointer; }
       .scenario-card-info { display: flex; flex-direction: column; gap: 0.1rem; }
       .scenario-card-name { font-weight: 600; font-size: 0.85rem; cursor: text; border: 1px solid transparent; padding: 0; border-radius: 0.25rem; display: inline-block; line-height: 1.4; }
       .scenario-card-name:hover { border-color: rgba(0,0,0,0.15); }
@@ -1002,6 +1002,56 @@
       .scenario-card-actions button[data-tooltip]:hover::after { opacity: 1; }
       .scenario-badge { background: #0066cc; color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.35rem; vertical-align: middle; }
       .scenario-empty { text-align: center; padding: 2rem; color: rgba(0,0,0,0.4); font-style: italic; }
+      .scenario-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0.5rem 0;
+      }
+      .scenario-divider::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+      .scenario-toggle-btn {
+        position: relative;
+        z-index: 1;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.35);
+        padding: 0;
+      }
+      .scenario-toggle-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+      .scenario-list.collapsed { display: none; }
+      .comparison-export-btn {
+        font-size: 0.7rem;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.35);
+        background: none;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.25rem;
+        padding: 0.15rem 0.5rem;
+        cursor: pointer;
+      }
+      .comparison-export-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
       .comparison-section { margin-top: 1rem; }
       .comparison-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
       .comparison-controls { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -1620,8 +1670,25 @@
       <div class="scenario-list" id="scenario-list">
         <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
       </div>
+      <div class="scenario-divider" id="scenario-divider">
+        <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
+          <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
       <div class="comparison-section" id="comparison-section">
-        <h3>Compare Selected Scenarios</h3>
+        <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: nowrap;">Compare Selected Scenarios
+          <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
+          <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
+          <button type="button" id="exclusions-btn" class="comparison-export-btn">Exclusions</button>
+          <span id="custom-bcr-controls" style="display:none; margin-left: 0.5rem; flex-shrink: 0; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
+            <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
+            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
+          </span>
+        </h3>
         <div id="comparison-table-container"></div>
       </div>
     </div>
@@ -1784,7 +1851,7 @@
       let ranFromResultsTab = false;  // true when run triggered from results tab "not calculated" button
       let lastRunScenarioId = '';  // scenario ID at last run, to detect user changes
       let comparisonScenarioIds = new Set();
-      let comparisonColumns = [];
+      let comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
       // Modal dialog helpers
       const modalOverlay = document.getElementById('modal-overlay');
@@ -1824,38 +1891,18 @@
       // =============================================
 
       const COMPARISON_METRICS = [
-        { group: 'Parameters', metrics: [
-          { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
-          { key: 'line_length', label: 'Line Length (mi)', path: 'technical_parameters.line_length_miles', format: 'number' },
-          { key: 'lifetime', label: 'Lifetime (yr)', path: 'technical_parameters.project_lifetime_years', format: 'number' },
-          { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
-        ]},
-        { group: 'Capital Costs (PV)', metrics: [
-          { key: 'build_pv', label: 'Build', path: 'costs.build.total_pv', format: 'currency' },
-          { key: 'row_capital_pv', label: 'ROW Capital', path: 'costs.row.row_capital_pv', format: 'currency' },
-          { key: 'env_pv', label: 'Environmental', path: 'costs.environmental.total_pv', format: 'currency' },
-          { key: 'total_capital_pv', label: 'Total Capital', path: 'summary.total_capital_pv', format: 'currency' },
-        ]},
-        { group: 'Operational Costs (PV)', metrics: [
-          { key: 'row_rent_pv', label: 'ROW Rent', path: 'costs.row.row_rent_pv', format: 'currency' },
-          { key: 'insurance_pv', label: 'Insurance', path: 'costs.insurance.pv_total', format: 'currency' },
-          { key: 'total_operational_pv', label: 'Total Operational', path: 'summary.total_operational_pv', format: 'currency' },
-        ]},
-        { group: 'Risk Costs (PV)', metrics: [
-          { key: 'wildfire_pv', label: 'Wildfire', path: 'costs.wildfire.pv_cost', format: 'currency' },
-          { key: 'outage_pv', label: 'Outage', path: 'costs.outage.pv_cost', format: 'currency' },
-          { key: 'total_risk_pv', label: 'Total Risk', path: 'summary.total_risk_pv', format: 'currency' },
-        ]},
-        { group: 'Delay Costs (PV)', metrics: [
-          { key: 'delay_pv', label: 'Base Delay', path: 'costs.delay.total_pv', format: 'currency' },
-        ]},
-        { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'line_loss_pv', label: 'Line Losses', path: 'costs.line_loss.total_pv', format: 'currency' },
-          { key: 'emissions_pv', label: 'Emissions', path: 'costs.emissions.total_pv', format: 'currency' },
-          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency' },
+        { group: 'Benefit-Cost Ratio', metrics: [
+          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
+          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
+          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
+          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
+          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+          { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
         { group: 'Total Costs', metrics: [
-          { key: 'grand_total_pv', label: 'Grand Total Costs', path: 'summary.grand_total_cost_pv', format: 'currency' },
+          { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.grand_total_cost_pv', format: 'currency' },
+          { key: 'total_capital_pv', label: 'Total Capital Cost', path: 'summary.total_capital_pv', format: 'currency' },
+          { key: 'total_operational_pv', label: 'Total Operational Cost', path: 'summary.total_operational_pv', format: 'currency' },
         ]},
         { group: 'Benefits (PV)', metrics: [
           { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
@@ -1863,17 +1910,49 @@
           { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
           { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
         ]},
-        { group: 'Benefit-Cost Ratio', metrics: [
-          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
-          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
-          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
-          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
-          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
-        ]},
         { group: 'Net Benefits (PV)', metrics: [
           { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
           { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
           { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
+          { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
+        ]},
+        { group: 'BCR Sensitivity Exclusions', metrics: [
+          { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_out', label: 'BCR excl. Outage', path: 'bcr.bcr_excluding_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
+          { key: 'bcr_excl_ll', label: 'BCR excl. Line Losses', path: 'bcr.bcr_excluding_linelosses', format: 'number3' },
+          { key: 'bcr_excl_wf_out', label: 'BCR excl. Wildfire + Outage', path: 'bcr.bcr_excluding_wildfire_risk_and_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf_out', label: 'BCR excl. Emissions + Losses + Wildfire + Outage', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', format: 'number3' },
+        ]},
+        { group: 'Parameters', metrics: [
+          { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
+          { key: 'line_length', label: 'Line Length (mi)', path: 'technical_parameters.line_length_miles', format: 'number' },
+          { key: 'lifetime', label: 'Lifetime (yr)', path: 'technical_parameters.project_lifetime_years', format: 'number' },
+          { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
+        ]},
+        { group: 'Capital Costs (PV)', metrics: [
+          { key: 'build_pv', label: 'Build Cost', path: 'costs.build.total_pv', format: 'currency' },
+          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
+          { key: 'env_pv', label: 'Environmental Cost', path: 'costs.environmental.total_pv', format: 'currency' },
+        ]},
+        { group: 'Operational Costs (PV)', metrics: [
+          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
+          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency' },
+        ]},
+        { group: 'Risk Costs (PV)', metrics: [
+          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency' },
+          { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency' },
+          { key: 'total_risk_pv', label: 'Total Risk Cost', path: 'summary.total_risk_pv', format: 'currency' },
+        ]},
+        { group: 'Delay Costs (PV)', metrics: [
+          { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency' },
+        ]},
+        { group: 'Energy / Emissions (PV)', metrics: [
+          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency' },
+          { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency' },
+          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
         ]},
       ];
 
@@ -2052,6 +2131,13 @@
           const card = document.createElement('tr');
           card.className = 'scenario-card';
           card.dataset.scenarioId = scenario.id;
+
+          // Row click toggles checkbox (except buttons, checkbox, name editing)
+          card.addEventListener('click', (e) => {
+            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox') return;
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+          });
 
           // Checkbox cell
           const checkTd = document.createElement('td');
@@ -2277,6 +2363,262 @@
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
 
+      document.getElementById('scenario-toggle-btn').addEventListener('click', function() {
+        const list = document.getElementById('scenario-list');
+        const btn = this;
+        const collapsed = list.classList.toggle('collapsed');
+        if (collapsed) {
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          btn.title = 'Show scenario list';
+        } else {
+          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+          btn.title = 'Hide scenario list';
+        }
+      });
+
+      // Copy comparison table to clipboard (Excel-compatible TSV)
+      document.getElementById('copy-table-btn').addEventListener('click', function() {
+        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+          alert('No scenarios or columns selected for comparison.');
+          return;
+        }
+        const headers = ['Scenario', ...comparisonColumns.map(key => {
+          for (const group of COMPARISON_METRICS) {
+            for (const m of group.metrics) {
+              if (m.key === key) return m.label;
+            }
+          }
+          return key;
+        })];
+        const rows = selectedScenarios.map(s => {
+          const cells = [s.customName];
+          comparisonColumns.forEach(key => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) {
+              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            }
+            if (!cfg) { cells.push(''); return; }
+            const parts = cfg.path.split('.');
+            let val = s.results;
+            for (const p of parts) { val = val?.[p]; }
+            if (val == null) { cells.push('N/A'); return; }
+            cells.push(typeof val === 'number' ? val : String(val));
+          });
+          return cells;
+        });
+        const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+        navigator.clipboard.writeText(tsv).then(() => {
+          const btn = document.getElementById('copy-table-btn');
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+      });
+
+      // Export comparison table as PNG
+      document.getElementById('export-png-btn').addEventListener('click', function() {
+        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+          alert('No scenarios or columns selected for comparison.');
+          return;
+        }
+        // Build a clean table in an offscreen container
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position: absolute; left: -9999px; top: 0; background: white; padding: 1.5rem; font-family: system-ui, -apple-system, sans-serif; font-size: 14px;';
+        document.body.appendChild(wrap);
+
+        const title = document.createElement('div');
+        title.style.cssText = 'font-weight: 700; font-size: 16px; margin-bottom: 0.75rem;';
+        title.textContent = 'Scenario Comparison';
+        wrap.appendChild(title);
+
+        const tbl = document.createElement('table');
+        tbl.style.cssText = 'border-collapse: collapse; font-size: 13px;';
+
+        // Header
+        const thead = document.createElement('thead');
+        const hrow = document.createElement('tr');
+        const headers = ['Scenario', ...comparisonColumns.map(key => {
+          for (const group of COMPARISON_METRICS) {
+            for (const m of group.metrics) { if (m.key === key) return m.label; }
+          }
+          return key;
+        })];
+        headers.forEach((h, i) => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          th.style.cssText = 'padding: 6px 12px; border-bottom: 2px solid #ddd; text-align: ' + (i === 0 ? 'left' : 'right') + '; white-space: nowrap; font-weight: 600; background: #f8f9fa;';
+          hrow.appendChild(th);
+        });
+        thead.appendChild(hrow);
+        tbl.appendChild(thead);
+
+        // Body
+        const tbody = document.createElement('tbody');
+        selectedScenarios.forEach((s, ri) => {
+          const tr = document.createElement('tr');
+          if (ri % 2 === 1) tr.style.background = 'rgba(0,0,0,0.02)';
+          const nameTd = document.createElement('td');
+          nameTd.textContent = s.customName;
+          nameTd.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; white-space: nowrap;';
+          tr.appendChild(nameTd);
+          comparisonColumns.forEach(key => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) {
+              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            }
+            const td = document.createElement('td');
+            td.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 12px;';
+            if (!cfg) { td.textContent = ''; }
+            else {
+              const parts = cfg.path.split('.');
+              let val = s.results;
+              for (const p of parts) { val = val?.[p]; }
+              if (val == null) td.textContent = 'N/A';
+              else if (cfg.format === 'currency') td.textContent = formatCurrency(val, 0);
+              else if (cfg.format === 'number3') td.textContent = formatNumber(val, 3);
+              else td.textContent = formatNumber(val, 0);
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        tbl.appendChild(tbody);
+        wrap.appendChild(tbl);
+
+        // Render to canvas directly (no foreignObject to avoid taint)
+        const scale = 2;
+        const font = '13px system-ui, -apple-system, sans-serif';
+        const monoFont = '12px "SF Mono", Monaco, Consolas, monospace';
+        const boldFont = 'bold 13px system-ui, -apple-system, sans-serif';
+        const titleFont = 'bold 16px system-ui, -apple-system, sans-serif';
+        const padX = 12, padY = 6;
+
+        // Measure columns using a temp canvas
+        const mCtx = document.createElement('canvas').getContext('2d');
+        const colWidths = headers.map((h, i) => {
+          mCtx.font = boldFont;
+          let w = mCtx.measureText(h).width;
+          selectedScenarios.forEach(s => {
+            if (i === 0) {
+              mCtx.font = font;
+              w = Math.max(w, mCtx.measureText(s.customName).width);
+            } else {
+              mCtx.font = monoFont;
+              const key = comparisonColumns[i - 1];
+              let cfg = null;
+              for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
+              if (cfg) {
+                const parts = cfg.path.split('.');
+                let val = s.results;
+                for (const p of parts) { val = val?.[p]; }
+                let txt = 'N/A';
+                if (val != null) {
+                  if (cfg.format === 'currency') txt = formatCurrency(val, 0);
+                  else if (cfg.format === 'number3') txt = formatNumber(val, 3);
+                  else txt = formatNumber(val, 0);
+                }
+                w = Math.max(w, mCtx.measureText(txt).width);
+              }
+            }
+          });
+          return w + padX * 2 + 4;
+        });
+
+        const rowH = 28;
+        const headerH = 32;
+        const titleH = 36;
+        const totalW = colWidths.reduce((a, b) => a + b, 0);
+        const totalH = titleH + headerH + selectedScenarios.length * rowH;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = totalW * scale;
+        canvas.height = totalH * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+
+        // Background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, totalW, totalH);
+
+        // Title
+        ctx.font = titleFont;
+        ctx.fillStyle = '#000';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Scenario Comparison', padX, titleH / 2);
+
+        // Header row
+        let y = titleH;
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, y, totalW, headerH);
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, y + headerH); ctx.lineTo(totalW, y + headerH); ctx.stroke();
+        ctx.font = boldFont;
+        ctx.fillStyle = '#000';
+        let x = 0;
+        headers.forEach((h, i) => {
+          ctx.textAlign = i === 0 ? 'left' : 'right';
+          const tx = i === 0 ? x + padX : x + colWidths[i] - padX;
+          ctx.fillText(h, tx, y + headerH / 2);
+          x += colWidths[i];
+        });
+
+        // Data rows
+        y += headerH;
+        selectedScenarios.forEach((s, ri) => {
+          if (ri % 2 === 1) {
+            ctx.fillStyle = 'rgba(0,0,0,0.02)';
+            ctx.fillRect(0, y, totalW, rowH);
+          }
+          // Row divider
+          ctx.strokeStyle = '#eee';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(totalW, y + rowH); ctx.stroke();
+
+          x = 0;
+          // Scenario name
+          ctx.font = font;
+          ctx.fillStyle = '#000';
+          ctx.textAlign = 'left';
+          ctx.fillText(s.customName, x + padX, y + rowH / 2);
+          x += colWidths[0];
+
+          // Metric values
+          comparisonColumns.forEach((key, ci) => {
+            let cfg = null;
+            for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
+            ctx.font = monoFont;
+            ctx.fillStyle = '#000';
+            ctx.textAlign = 'right';
+            let txt = 'N/A';
+            if (cfg) {
+              const parts = cfg.path.split('.');
+              let val = s.results;
+              for (const p of parts) { val = val?.[p]; }
+              if (val != null) {
+                if (cfg.format === 'currency') txt = formatCurrency(val, 0);
+                else if (cfg.format === 'number3') txt = formatNumber(val, 3);
+                else txt = formatNumber(val, 0);
+              }
+            }
+            ctx.fillText(txt, x + colWidths[ci + 1] - padX, y + rowH / 2);
+            x += colWidths[ci + 1];
+          });
+          y += rowH;
+        });
+
+        document.body.removeChild(wrap);
+        canvas.toBlob(function(blob) {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'scenario_comparison.png';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        });
+      });
+
       function exportAsCtcc(scenario) {
         const data = {
           version: '1.0',
@@ -2376,7 +2718,14 @@
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        files.forEach(file => {
+        // Sort files alphabetically/numerically by name
+        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+        // Load sequentially to preserve sort order
+        let i = 0;
+        function loadNext() {
+          if (i >= files.length) return;
+          const file = files[i++];
           const reader = new FileReader();
           reader.onload = function(ev) {
             const text = ev.target.result;
@@ -2385,9 +2734,11 @@
             } else if (file.name.endsWith('.csv')) {
               loadCsvFile(text, file.name);
             }
+            loadNext();
           };
           reader.readAsText(file);
-        });
+        }
+        loadNext();
 
         // Reset file input so same file can be re-uploaded
         this.value = '';
@@ -2540,10 +2891,50 @@
         return null;
       }
 
+      function getExcludedCosts(scenario) {
+        if (!scenario.results) return 0;
+        const bcr = scenario.results.bcr || {};
+        let excluded = 0;
+        if (document.getElementById('cmp-exc-emissions')?.checked) excluded += (bcr.emissions_cost_pv || 0);
+        if (document.getElementById('cmp-exc-linelosses')?.checked) excluded += (bcr.energy_losses_pv || 0);
+        if (document.getElementById('cmp-exc-wildfire')?.checked) excluded += ((bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0));
+        if (document.getElementById('cmp-exc-outage')?.checked) excluded += (bcr.outage_pv || 0);
+        return excluded;
+      }
+
+      const MAIN_EXCLUSION_KEYS = new Set(['bcr_system', 'grand_total_pv', 'net_benefit_pv']);
+
       function getMetricValue(scenario, metricKey) {
+        if (metricKey === 'custom_bcr' || metricKey === 'custom_nb') {
+          return computeCustomMetric(scenario, metricKey);
+        }
+        // Apply exclusions to main columns if checkbox is checked
+        if (MAIN_EXCLUSION_KEYS.has(metricKey) && document.getElementById('cmp-exc-apply-main')?.checked) {
+          return computeMainWithExclusions(scenario, metricKey);
+        }
         const config = getMetricConfig(metricKey);
         if (!config || !scenario.results) return undefined;
         return getValueAtPath(scenario.results, config.path);
+      }
+
+      function computeMainWithExclusions(scenario, metricKey) {
+        if (!scenario.results) return undefined;
+        const bcr = scenario.results.bcr || {};
+        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
+        if (metricKey === 'bcr_system') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
+        if (metricKey === 'grand_total_pv') return totalCostsPV;
+        if (metricKey === 'net_benefit_pv') return totalBenefitsPV - totalCostsPV;
+        return undefined;
+      }
+
+      function computeCustomMetric(scenario, metricKey) {
+        if (!scenario.results) return undefined;
+        const bcr = scenario.results.bcr || {};
+        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
+        if (metricKey === 'custom_bcr') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
+        return totalBenefitsPV - totalCostsPV;
       }
 
       function formatMetricValue(value, format) {
@@ -2580,6 +2971,17 @@
         const container = document.getElementById('comparison-table-container');
         if (!container) return;
         container.innerHTML = '';
+
+        // Show custom BCR controls if custom columns are added (even if Exclusions wasn't clicked)
+        const customControls = document.getElementById('custom-bcr-controls');
+        const exclusionsBtnEl = document.getElementById('exclusions-btn');
+        if (customControls) {
+          const hasCustom = comparisonColumns.includes('custom_bcr') || comparisonColumns.includes('custom_nb');
+          if (hasCustom) {
+            customControls.style.display = 'inline-flex';
+            if (exclusionsBtnEl) exclusionsBtnEl.style.display = 'none';
+          }
+        }
 
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0) {
@@ -2623,7 +3025,8 @@
           plusIcon.setAttribute('width', '22');
           plusIcon.setAttribute('height', '22');
           plusIcon.setAttribute('viewBox', '0 0 24 24');
-          plusIcon.style.cssText = 'vertical-align: middle; margin-right: 0.35rem; flex-shrink: 0;';
+          plusIcon.style.cssText = 'vertical-align: middle; margin-right: 0.35rem; flex-shrink: 0; cursor: pointer;';
+          plusIcon.addEventListener('click', () => { addSelect.focus(); try { addSelect.showPicker(); } catch(e) {} });
           plusIcon.innerHTML = '<circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.25)"/><line x1="7" y1="12" x2="17" y2="12" stroke="white" stroke-width="3" stroke-linecap="round"/><line x1="12" y1="7" x2="12" y2="17" stroke="white" stroke-width="3" stroke-linecap="round"/>';
           fillerTh.appendChild(plusIcon);
           fillerTh.appendChild(addSelect);
@@ -2683,6 +3086,22 @@
         wrapper.appendChild(table);
         container.appendChild(wrapper);
       }
+
+      // Exclusions button — show controls, hide button
+      const exclusionsBtn = document.getElementById('exclusions-btn');
+      if (exclusionsBtn) {
+        exclusionsBtn.addEventListener('click', () => {
+          const controls = document.getElementById('custom-bcr-controls');
+          if (controls) controls.style.display = 'inline-flex';
+          exclusionsBtn.style.display = 'none';
+        });
+      }
+
+      // Custom BCR checkbox listeners
+      ['cmp-exc-emissions', 'cmp-exc-linelosses', 'cmp-exc-wildfire', 'cmp-exc-outage', 'cmp-exc-apply-main'].forEach(id => {
+        const cb = document.getElementById(id);
+        if (cb) cb.addEventListener('change', () => renderComparisonTable());
+      });
 
       // Smart tooltip positioning
       let activeTooltip = null;
@@ -4496,7 +4915,7 @@
         // Emissions
         const emissionsPV = em.total_pv || 0;
         // Grand total
-        const totalPV = summary.grand_total_cost_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
+        const totalPV = summary.grand_total_cost_pv || summary.total_costs_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
 
         const heading = document.createElement('div');
         heading.className = 'results-section-heading';
@@ -5236,7 +5655,7 @@
               { label: 'Operational', value: summary.total_operational_pv },
               { label: 'Energy / Emissions', value: summary.total_energy_emissions_pv },
               { label: 'Risk', value: summary.total_risk_pv },
-              { label: 'Total Costs', value: summary.grand_total_cost_pv || summary.total_costs_pv, highlight: true },
+              { label: 'Total Costs', value: summary.grand_total_cost_pv ?? summary.total_costs_pv, highlight: true },
             ];
             summaryMetrics.forEach(m => {
               const card = document.createElement('div');
@@ -5404,17 +5823,13 @@
               document.querySelectorAll('input[name="ctcc-input-mode"]')
             ).find((input) => input.checked)?.value ?? "json";
 
-            const outputMode = Array.from(
-              document.querySelectorAll('input[name="ctcc-output-mode"]')
-            ).find((input) => input.checked)?.value ?? "json";
-
             const scenarioId = scenarioIdInput.value.trim() || null;
 
-            // Build CTCC payload
+            // Build CTCC payload (calculator is JSON-out only; output_mode accepted but ignored server-side)
             payload = {
               mode: "calculate",
               input_mode: inputMode,
-              output_mode: outputMode,
+              output_mode: "json",
               scenario_id: scenarioId,
               combined_data: null
             };
