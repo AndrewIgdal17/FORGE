@@ -1726,6 +1726,32 @@
         font-weight: 400;
         color: rgba(0, 0, 0, 0.45);
       }
+      .fuel-mix-preset-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin: 0.35rem 0 0.75rem 0;
+        padding: 0.25rem 0;
+      }
+      .fuel-mix-preset-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.65);
+        white-space: nowrap;
+      }
+      .fuel-mix-preset-bar select {
+        min-width: 14rem;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.375rem;
+        font-size: 0.85rem;
+        background: white;
+      }
+      .fuel-mix-preset-unavailable {
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.45);
+      }
     </style>
   </head>
   <body>
@@ -2024,6 +2050,8 @@
       });
 
       let ctccJsonData = null;
+      /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
+      let cachedFuelMixPresets = [];
       let activeTabIndex = 0;
 
       // Scenario management state
@@ -2087,6 +2115,7 @@
       // =============================================
       // Scenario Management
       // =============================================
+      // Comparison: format 'text' / 'boolean' = absolutes only (no Δ / % Δ); see metricSupportsComparisonDelta.
 
       const COMPARISON_METRICS = [
         { group: 'Project Parameters', metrics: [
@@ -3402,6 +3431,17 @@
         return n;
       }
 
+      /**
+       * Categorical / config metrics (format text or boolean) show absolutes only in comparison:
+       * no Δ line, no % Δ, empty Δ export cells. Unknown keys → false (no delta).
+       */
+      function metricSupportsComparisonDelta(metricKey) {
+        const cfg = getMetricConfig(metricKey);
+        if (!cfg) return false;
+        if (cfg.format === 'text' || cfg.format === 'boolean') return false;
+        return true;
+      }
+
       function cmpPickerSlug(s) {
         return String(s).replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '') || 'x';
       }
@@ -4488,6 +4528,7 @@
           ctccJsonInputs.hidden = true;
           ctccYamlMessage.hidden = false;
         }
+        syncFuelMixPresetBarVisibility();
       }
 
       function updateBulkSourceVisibility() {
@@ -4510,6 +4551,16 @@
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Failed to load final_combined.json: ${response.status} ${response.statusText} ${errorText}`);
+        }
+        return response.json();
+      }
+
+      async function fetchFuelMixPresets(baseUrl) {
+        const url = new URL("/api/fuel_mix_presets", baseUrl).toString();
+        const response = await fetch(url);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to load fuel_mix_presets: ${response.status} ${response.statusText} ${errorText}`);
         }
         return response.json();
       }
@@ -5409,6 +5460,7 @@
       function formatDeltaLine(baselineScenario, rowScenario, metricKey) {
         const config = getMetricConfig(metricKey);
         if (!config || !baselineScenario || rowScenario.id === baselineScenario.id) return null;
+        if (!metricSupportsComparisonDelta(metricKey)) return null;
         const a = getMetricNumericOrNull(baselineScenario, metricKey);
         const b = getMetricNumericOrNull(rowScenario, metricKey);
         if (a === null || b === null) return 'Δ —';
@@ -5424,6 +5476,7 @@
       function formatPercentDeltaLine(baselineScenario, rowScenario, metricKey) {
         const config = getMetricConfig(metricKey);
         if (!config || !baselineScenario || rowScenario.id === baselineScenario.id) return null;
+        if (!metricSupportsComparisonDelta(metricKey)) return null;
         const a = getMetricNumericOrNull(baselineScenario, metricKey);
         const b = getMetricNumericOrNull(rowScenario, metricKey);
         if (a === null || b === null || a === 0) return '—';
@@ -7969,6 +8022,112 @@
         updateMixTotal();
       }
 
+      const FUEL_MIX_SOURCE_KEYS = ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
+      const FUEL_MIX_PATH_BASE = '16_emissions_reductions.emissions_reductions.energy_source_mix';
+
+      function syncFuelMixPresetBarVisibility() {
+        const bar = document.getElementById('fuel-mix-preset-bar');
+        if (!bar) return;
+        const inputMode = Array.from(ctccInputModeInputs).find((input) => input.checked)?.value ?? 'json';
+        bar.style.display = inputMode === 'json' ? '' : 'none';
+      }
+
+      function applyEnergySourceMixPreset(mix) {
+        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
+        if (!emissionsTab || !mix) return;
+        FUEL_MIX_SOURCE_KEYS.forEach(src => {
+          const block = mix[src];
+          if (!block || typeof block !== 'object') return;
+          const pctPath = `${FUEL_MIX_PATH_BASE}.${src}.percentage`;
+          const rocPath = `${FUEL_MIX_PATH_BASE}.${src}.rate_of_change`;
+          const pctIn = emissionsTab.querySelector(`input[data-path="${pctPath}"]`);
+          const rocIn = emissionsTab.querySelector(`input[data-path="${rocPath}"]`);
+          if (pctIn) {
+            const p = Number(block.percentage);
+            if (!Number.isNaN(p)) {
+              pctIn.value = formatNumberInput(p);
+              pctIn.dataset.rawValue = String(p);
+              pctIn.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+          if (rocIn && typeof block.rate_of_change === 'number' && !Number.isNaN(block.rate_of_change)) {
+            const dec = block.rate_of_change;
+            rocIn.value = formatPercentageInput(dec);
+            rocIn.dataset.rawValue = String(dec);
+            rocIn.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      }
+
+      function injectFuelMixPresetBar() {
+        document.getElementById('fuel-mix-preset-bar')?.remove();
+        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
+        if (!emissionsTab) return;
+        const headers = emissionsTab.querySelectorAll('.section-header-row');
+        let mixHeaderRow = null;
+        headers.forEach(row => {
+          const h = row.querySelector('.subsection-header, .section-header');
+          if (h && h.textContent.trim().toLowerCase().includes('energy source mix')) {
+            mixHeaderRow = row;
+          }
+        });
+        if (!mixHeaderRow) return;
+        const table = mixHeaderRow.nextElementSibling;
+        if (!table || !table.classList.contains('energy-mix-table')) return;
+
+        const bar = document.createElement('div');
+        bar.id = 'fuel-mix-preset-bar';
+        bar.className = 'fuel-mix-preset-bar';
+
+        const label = document.createElement('label');
+        label.htmlFor = 'fuel-mix-preset-select';
+        label.textContent = 'Fuel Mixes';
+        label.className = 'fuel-mix-preset-label';
+
+        const sel = document.createElement('select');
+        sel.id = 'fuel-mix-preset-select';
+        sel.setAttribute('aria-label', 'Fuel Mixes');
+
+        bar.appendChild(label);
+        bar.appendChild(sel);
+        mixHeaderRow.parentNode.insertBefore(bar, table);
+
+        syncFuelMixPresetBarVisibility();
+
+        const optCustom = document.createElement('option');
+        optCustom.value = '';
+        optCustom.textContent = 'Custom';
+        sel.appendChild(optCustom);
+
+        const baseUrl = apiBaseInput.value.trim();
+        fetchFuelMixPresets(baseUrl)
+          .then(data => {
+            if (!document.getElementById('fuel-mix-preset-bar')) return;
+            cachedFuelMixPresets = Array.isArray(data.presets) ? data.presets : [];
+            while (sel.options.length) sel.remove(0);
+            sel.appendChild(new Option('Custom', ''));
+            cachedFuelMixPresets.forEach(p => {
+              if (!p || !p.id || !p.label) return;
+              sel.appendChild(new Option(p.label, p.id));
+            });
+          })
+          .catch(() => {
+            if (!document.getElementById('fuel-mix-preset-bar')) return;
+            const hint = document.createElement('span');
+            hint.className = 'fuel-mix-preset-unavailable';
+            hint.textContent = 'Fuel mixes unavailable';
+            bar.appendChild(hint);
+          });
+
+        sel.addEventListener('change', function() {
+          const id = this.value;
+          if (!id) return;
+          const preset = cachedFuelMixPresets.find(p => p.id === id);
+          if (!preset || !preset.energy_source_mix) return;
+          applyEnergySourceMixPreset(preset.energy_source_mix);
+        });
+      }
+
       // Combine all 3 emission intensity sections into one table with 4 columns
       function restructureEmissionIntensities() {
         const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
@@ -8277,6 +8436,7 @@
         restructureBcrConfig();
         cleanUpProjectOverviewHeaders();
         restructureEnergySourceMix();
+        injectFuelMixPresetBar();
         restructureEmissionIntensities();
         filterEnvironmentalTerrains();
         filterOperationalCosts();

@@ -1,0 +1,34 @@
+{
+  "presets": [
+    {
+      "id": "default_template",
+      "label": "Default (template)",
+      "description": "Matches bundled 16_emissions_reductions.yaml energy_source_mix.",
+      "energy_source_mix": {
+        "coal": { "percentage": 10, "rate_of_change": -0.05 },
+        "oil": { "percentage": 2, "rate_of_change": -0.04 },
+        "natural_gas": { "percentage": 38, "rate_of_change": 0.0 },
+        "solar": { "percentage": 10, "rate_of_change": 0.05 },
+        "wind": { "percentage": 26, "rate_of_change": 0.04 },
+        "hydro": { "percentage": 5, "rate_of_change": 0.0 },
+        "nuclear": { "percentage": 5, "rate_of_change": 0.0 },
+        "other": { "percentage": 4, "rate_of_change": 0.0 }
+      }
+    },
+    {
+      "id": "illustrative_high_renewables",
+      "label": "Illustrative — higher renewables",
+      "description": "Example preset for testing; not an ISO/RTO official mix.",
+      "energy_source_mix": {
+        "coal": { "percentage": 5, "rate_of_change": -0.05 },
+        "oil": { "percentage": 1, "rate_of_change": -0.04 },
+        "natural_gas": { "percentage": 30, "rate_of_change": 0.0 },
+        "solar": { "percentage": 18, "rate_of_change": 0.05 },
+        "wind": { "percentage": 32, "rate_of_change": 0.04 },
+        "hydro": { "percentage": 5, "rate_of_change": 0.0 },
+        "nuclear": { "percentage": 5, "rate_of_change": 0.0 },
+        "other": { "percentage": 4, "rate_of_change": 0.0 }
+      }
+    }
+  ]
+}

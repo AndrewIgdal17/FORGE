@@ -21,6 +21,7 @@ from .models import (
     OutputPayload,
     sanitize_for_json,
 )
+from .fuel_mix_presets import load_fuel_mix_presets
 from .processor import generate_result
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +31,10 @@ OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
 YAMLS_DIR = BASE_DIR.parent / "yamls"
 INDEX_FILE = STATIC_DIR / "index.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
+# Kept when syncing YAML→JSON; not derived from a YAML stem.
+PRESERVED_JSON_NAMES = frozenset(
+    {FINAL_COMBINED_FILE.name, "fuel_mix_presets.json"}
+)
 SKIP_BASENAME = "project_category_template"
 
 app = FastAPI(title="CTCC API Server")
@@ -59,7 +64,7 @@ def _refresh_final_combined() -> None:
 
     # Remove stale JSON files that no longer have YAML sources.
     for json_file in JSON_DIR.glob("*.json"):
-        if json_file.name == FINAL_COMBINED_FILE.name:
+        if json_file.name in PRESERVED_JSON_NAMES:
             continue
         if json_file.stem not in yaml_stems:
             json_file.unlink()
@@ -108,6 +113,13 @@ async def get_final_combined() -> JSONResponse:
         raise HTTPException(status_code=500, detail="final_combined.json is invalid JSON") from exc
 
     return JSONResponse(content)
+
+
+@app.get("/api/fuel_mix_presets", response_class=JSONResponse)
+async def get_fuel_mix_presets() -> JSONResponse:
+    """Reference energy_source_mix presets for the web UI (file-backed catalog)."""
+    data = load_fuel_mix_presets()
+    return JSONResponse(sanitize_for_json(data))
 
 
 @app.post("/api/process", response_model=OutputPayload)
