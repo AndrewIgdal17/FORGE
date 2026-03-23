@@ -89,6 +89,43 @@
         flex-shrink: 0;
         padding-top: 0.5rem;
       }
+      .bcr-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem 1rem;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+      .bcr-grid .section-header-row,
+      .bcr-grid .subsection-header {
+        margin-top: 0;
+      }
+      .bcr-grid-cell {
+        background: rgba(0,0,0,0.02);
+        border-radius: 0.4rem;
+        padding: 0 0.75rem;
+      }
+      .bcr-grid-cell .subsection-header {
+        font-size: 0.85rem;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+      }
+      .bcr-grid-cell .section-header-row {
+        margin: 0;
+      }
+      .bcr-grid-cell .form-grid {
+        gap: 0 0.75rem;
+      }
+      .bcr-grid-cell .form-field {
+        margin: 0;
+        padding: 0;
+      }
+      .bcr-grid-cell .form-field label {
+        margin: 0;
+        padding: 0;
+      }
       .tab-button {
         padding: 0.5rem 1rem;
         background: rgba(0, 0, 0, 0.03);
@@ -117,6 +154,7 @@
       .tab-content {
         display: none;
         padding: 1.5rem;
+        padding-bottom: 0.5rem;
         background: transparent;
         border-radius: 0.5rem;
         flex: 1;
@@ -1571,13 +1609,6 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem 1rem 2rem; background: rgba(0, 100, 200, 0.03); border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
       <h1 style="margin: 0; padding: 0; background: none; border: none;">Comprehensive Transmission Cost Calculator</h1>
-      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <label for="scenario-id" style="font-size: 0.9rem; font-weight: 500;">Scenario ID</label>
-          <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" form="demo-form" style="width: 170px; padding: 0.25rem 0.4rem; font-size: 0.85rem;" />
-        </div>
-        <a href="#" id="server-config-link" style="font-size: 0.75rem; color: rgba(0,0,0,0.45); text-decoration: none; cursor: pointer;">Server Config</a>
-      </div>
     </div>
 
     <!-- Main Tabs -->
@@ -1636,6 +1667,10 @@
       <div id="ctcc-section" class="section" hidden>
         <div id="ctcc-json-inputs" hidden>
           <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
+          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0 0.25rem 0;">
+            <label for="scenario-id" style="font-size: 0.9rem; font-weight: 500;">Scenario ID</label>
+            <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" form="demo-form" style="width: 200px; padding: 0.25rem 0.4rem; font-size: 0.85rem;" />
+          </div>
           <div id="tabs-container" class="tabs-hidden">
             <div class="tabs" id="tab-buttons"></div>
             <div id="tab-contents"></div>
@@ -3183,7 +3218,7 @@
 
       // Tab configuration for input tabs
       const TAB_CONFIG = [
-        { id: 'project-overview', label: 'Project Overview', sections: ['01_project_technical_details'] },
+        { id: 'project-overview', label: 'Project Overview', sections: ['01_project_technical_details', '22_primary_bcr_config'] },
         { id: 'physical-route', label: 'Physical Route Details', sections: ['02_project_physical_details'] },
         { id: 'financial', label: 'Financial Parameters', sections: ['03_financing'] },
         { id: 'revenue-requirements', label: 'Revenue Requirements', sections: ['19_cost_timing_patterns'] },
@@ -3192,8 +3227,7 @@
         { id: 'environmental', label: 'Environmental & Mitigation', sections: ['09_environmental_mitigation'] },
         { id: 'risk', label: 'Risk Costs', sections: ['06_wildfire_costs', '07_outage_costs'] },
         { id: 'congestion', label: 'Benefits - Congestion & Curtailment', sections: ['17_congestion_curtailment_reductions'] },
-        { id: 'emissions', label: 'Benefits - Emissions', sections: ['16_emissions_reductions'] },
-        { id: 'bcr-config', label: 'Benefit Cost Ratio (BCR)', sections: ['22_primary_bcr_config'] }
+        { id: 'emissions', label: 'Benefits - Emissions', sections: ['16_emissions_reductions'] }
       ];
 
       // Custom field ordering within sections
@@ -3645,14 +3679,7 @@
         });
       });
 
-      // Server Config link toggles to the server-config tab
-      const serverConfigLink = document.getElementById('server-config-link');
-      if (serverConfigLink) {
-        serverConfigLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          switchMainTab('server-config');
-        });
-      }
+
 
       const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
 
@@ -3774,7 +3801,7 @@
           .replace(/^Ignition Rates By Terrain$/, 'Ignition Rates by Terrain (events/mi/yr)')
           .replace(/^Outage Duration By Terrain$/, 'Outage Duration by Terrain (hrs/event)')
           .replace(/^Outage Rates$/, 'Outage Rates (outages/mi/yr)')
-          .replace(/^Primary BCR Config$/, 'Primary Benefit Cost Ratio (BCR) Configuration');
+          .replace(/^Primary BCR Config$/, 'Benefit Cost Ratio (BCR) Calculation');
       }
 
       // Field type detection and formatting
@@ -7270,6 +7297,124 @@
         });
       }
 
+      // Change 16: Restructure BCR config into 2x2 grid and default wildfire off
+      function restructureBcrConfig() {
+        const overviewTab = document.querySelector('[data-tab-id="project-overview"]');
+        if (!overviewTab) return;
+
+        // Find the BCR tab-section-header and restyle it to match subsection-header
+        const sectionHeaders = overviewTab.querySelectorAll('.tab-section-header');
+        let bcrHeader = null;
+        sectionHeaders.forEach(h => {
+          if (h.textContent.includes('BCR') || h.textContent.includes('Benefit Cost Ratio')) {
+            bcrHeader = h;
+          }
+        });
+        if (!bcrHeader) return;
+
+        // Restyle to match section-header (like Timeline)
+        bcrHeader.classList.remove('tab-section-header');
+        bcrHeader.classList.add('section-header');
+        bcrHeader.textContent = 'Benefit Cost Ratio (BCR) Calculation';
+
+        // Collect all BCR-related elements after the header
+        const bcrElements = [];
+        let sibling = bcrHeader.nextElementSibling;
+        while (sibling) {
+          if (sibling.classList.contains('tab-section-header')) break;
+          bcrElements.push(sibling);
+          sibling = sibling.nextElementSibling;
+        }
+
+        // Remove the duplicate "Primary BCR Config" / "Benefit Cost Ratio" section-header
+        bcrElements.forEach(el => {
+          const headerEl = el.querySelector ? el.querySelector('.section-header') : null;
+          if (headerEl && (headerEl.textContent.includes('BCR') || headerEl.textContent.includes('Benefit Cost Ratio'))) {
+            el.remove();
+          }
+        });
+
+        // Re-collect after removal
+        const bcrElements2 = [];
+        sibling = bcrHeader.nextElementSibling;
+        while (sibling) {
+          if (sibling.classList.contains('tab-section-header') || sibling.classList.contains('subsection-header')) break;
+          bcrElements2.push(sibling);
+          sibling = sibling.nextElementSibling;
+        }
+
+        // Group elements by subsection: operational, risk, energy, benefits
+        const groups = { operational: [], risk: [], energy: [], benefits: [] };
+        let currentGroup = null;
+        bcrElements2.forEach(el => {
+          const headerEl = el.querySelector ? el.querySelector('.subsection-header') : null;
+          if (headerEl) {
+            const text = headerEl.textContent.trim().toLowerCase();
+            if (text.includes('operational')) currentGroup = 'operational';
+            else if (text.includes('risk')) currentGroup = 'risk';
+            else if (text.includes('energy')) currentGroup = 'energy';
+            else if (text.includes('benefits')) currentGroup = 'benefits';
+          }
+          if (currentGroup) groups[currentGroup].push(el);
+        });
+
+        // Build 2x2 grid
+        const grid = document.createElement('div');
+        grid.className = 'bcr-grid';
+
+        const order = [['operational', 'energy'], ['risk', 'benefits']];
+        order.forEach(row => {
+          row.forEach(key => {
+            const cell = document.createElement('div');
+            cell.className = 'bcr-grid-cell';
+            groups[key].forEach(el => cell.appendChild(el));
+            // Make form-grid inside each cell display toggles inline
+            cell.querySelectorAll('.form-grid').forEach(fg => {
+              fg.style.display = 'flex';
+              fg.style.flexWrap = 'wrap';
+              fg.style.gap = '0.25rem 1rem';
+            });
+            // Make each toggle field compact and inline
+            cell.querySelectorAll('.form-field').forEach(ff => {
+              ff.style.display = 'inline-flex';
+              ff.style.alignItems = 'center';
+              ff.style.gap = '0.3rem';
+              ff.style.minWidth = 'auto';
+            });
+            grid.appendChild(cell);
+          });
+        });
+
+        // Insert grid after the BCR header
+        bcrHeader.parentNode.insertBefore(grid, bcrHeader.nextSibling);
+
+        // Default wildfire toggle to off
+        const wildfireToggle = overviewTab.querySelector('input[data-path="22_primary_bcr_config.primary_bcr_config.risk.wildfire"]');
+        if (wildfireToggle && wildfireToggle.type === 'checkbox') {
+          wildfireToggle.checked = false;
+        }
+      }
+
+      // Change 17: Remove "Project Technical Details" tab-section-header, rename "Project" to "Project Technical Details"
+      function cleanUpProjectOverviewHeaders() {
+        const overviewTab = document.querySelector('[data-tab-id="project-overview"]');
+        if (!overviewTab) return;
+
+        // Remove the "Project Technical Details" tab-section-header
+        overviewTab.querySelectorAll('.tab-section-header').forEach(h => {
+          if (h.textContent.trim() === 'Project Technical Details') {
+            h.remove();
+          }
+        });
+
+        // Rename "Project" subsection/section header to "Project Technical Details"
+        overviewTab.querySelectorAll('.section-header, .subsection-header').forEach(h => {
+          if (h.textContent.trim() === 'Project') {
+            h.textContent = 'Project Technical Details';
+          }
+        });
+      }
+
       // =============================================
       // Modified renderJsonInputs (monkey-patched)
       // =============================================
@@ -7297,6 +7442,8 @@
         injectGreenfieldComparisonToggle();
         makeTerrainMultipliersCollapsible();
         createEnvironmentalSubTabs();
+        restructureBcrConfig();
+        cleanUpProjectOverviewHeaders();
         restructureEnergySourceMix();
         restructureEmissionIntensities();
         filterEnvironmentalTerrains();
