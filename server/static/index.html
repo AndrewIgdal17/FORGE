@@ -1108,7 +1108,12 @@
       .comparison-table tbody tr:last-child td { border-bottom: 1px solid rgba(0,0,0,0.12); }
       .comparison-table tbody tr:last-child td:first-child { border-bottom-left-radius: 0.5rem; }
       .comparison-table tbody tr:last-child td:nth-last-child(2) { border-bottom-right-radius: 0.5rem; }
-      .comparison-table td.metric-val { text-align: right; padding: 0.5rem 1rem; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; font-size: 0.85rem; }
+      /* normal: stack block children vertically; each line uses .comparison-metric-line / -delta- / -percent- with nowrap */
+      .comparison-table td.metric-val { text-align: right; padding: 0.5rem 1rem; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace; font-size: 0.85rem; white-space: normal; vertical-align: top; }
+      .comparison-metric-line {
+        display: block;
+        white-space: nowrap;
+      }
       .comparison-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.02); }
       .comparison-table .add-col-btn { background: none; border: 1px dashed rgba(0,0,0,0.2); padding: 0.3rem 0.6rem; cursor: pointer; border-radius: 0.25rem; font-size: 0.8rem; color: rgba(0,0,0,0.5); }
       .comparison-table .add-col-btn:hover { border-color: #0066cc; color: #0066cc; }
@@ -1117,6 +1122,62 @@
       .comparison-table .remove-col-btn span:last-child { color: white; }
       .comparison-table .remove-col-btn:hover { color: #b00020; }
       .comparison-table .remove-col-btn:hover span:last-child { color: #b00020; }
+      .baseline-badge {
+        display: inline-block;
+        margin-left: 0.35rem;
+        padding: 0.1rem 0.35rem;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: rgba(0, 0, 0, 0.55);
+        background: rgba(0, 102, 204, 0.12);
+        border-radius: 0.25rem;
+        vertical-align: middle;
+      }
+      .comparison-delta-line {
+        display: block;
+        margin-top: 0.2rem;
+        font-size: 0.72rem;
+        color: rgba(0, 0, 0, 0.45);
+        font-weight: 400;
+        white-space: nowrap;
+      }
+      .comparison-percent-line {
+        display: block;
+        margin-top: 0.15rem;
+        font-size: 0.68rem;
+        color: rgba(0, 0, 0, 0.38);
+        font-weight: 400;
+        white-space: nowrap;
+      }
+      .scenario-list-table thead th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.45);
+        padding: 0.35rem 0.5rem 0.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      }
+      .scenario-list-table thead th.scenario-base-col { width: 2.25rem; text-align: center; }
+      .scenario-list-table thead th.scenario-compare-col { width: 2rem; text-align: center; }
+      .scenario-base-cell { text-align: center; vertical-align: middle; }
+      .cmp-show-delta-label {
+        font-size: 0.75rem;
+        font-weight: 400;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        white-space: nowrap;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.65);
+      }
+      .cmp-delta-hint {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.4);
+        margin: 0 0 0.5rem 0;
+      }
       .save-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
       .save-overlay.visible { display: flex; }
       .save-dialog { background: white; border-radius: 0.75rem; padding: 1.5rem; max-width: 480px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
@@ -1711,10 +1772,24 @@
         </button>
       </div>
       <div class="comparison-section" id="comparison-section">
-        <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: nowrap;">Compare Selected Scenarios
+        <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
           <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
           <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
           <button type="button" id="exclusions-btn" class="comparison-export-btn">Exclusions</button>
+          <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
+            <input type="checkbox" id="cmp-show-delta" />
+            Show Δ vs baseline
+          </label>
+          <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
+            <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
+              <option value="values_plus_delta">Values + Δ</option>
+              <option value="delta_only">Δ only (non-baseline)</option>
+            </select>
+          </label>
+          <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
+            <input type="checkbox" id="cmp-show-percent-delta" disabled />
+            Show % Δ
+          </label>
           <span id="custom-bcr-controls" style="display:none; margin-left: 0.5rem; flex-shrink: 0; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
             <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
@@ -1724,6 +1799,7 @@
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
           </span>
         </h3>
+        <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
         <div id="comparison-table-container"></div>
       </div>
     </div>
@@ -1886,6 +1962,11 @@
       let ranFromResultsTab = false;  // true when run triggered from results tab "not calculated" button
       let lastRunScenarioId = '';  // scenario ID at last run, to detect user changes
       let comparisonScenarioIds = new Set();
+      let comparisonBaselineId = null;
+      let showDeltaVsBaseline = false;
+      /** @type {'values_plus_delta'|'delta_only'} */
+      let comparisonDeltaDisplayMode = 'values_plus_delta';
+      let showComparisonPercentDelta = false;
       let comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
       // Modal dialog helpers
@@ -1926,70 +2007,107 @@
       // =============================================
 
       const COMPARISON_METRICS = [
+        { group: 'Project Parameters', metrics: [
+          { key: 'ac_dc', label: 'AC / DC', path: 'technical_parameters.ac_dc', format: 'text' },
+          { key: 'baseline_price_mwh', label: 'Baseline price ($/MWh)', path: 'technical_parameters.baseline_electricity_price_per_mwh', format: 'number2' },
+          { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
+          { key: 'conductor_type', label: 'Conductor type', path: 'technical_parameters.conductor_type', format: 'text' },
+          { key: 'construction_years', label: 'Construction (yr)', path: 'technical_parameters.construction_years', format: 'number' },
+          { key: 'construction_type', label: 'Construction type', path: 'technical_parameters.construction_type', format: 'text' },
+          { key: 'converter_type', label: 'Converter type', path: 'technical_parameters.converter_type', format: 'text' },
+          { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
+          { key: 'lifetime', label: 'Lifetime (yr)', path: 'technical_parameters.project_lifetime_years', format: 'number' },
+          { key: 'line_length', label: 'Line length (mi)', path: 'technical_parameters.line_length_miles', format: 'number2' },
+          { key: 'line_utilization', label: 'Line utilization', path: 'technical_parameters.line_utilization', format: 'number2' },
+        ]},
         { group: 'Benefit-Cost Ratio', metrics: [
-          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
           { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
           { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
-          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
           { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
+          { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
           { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
-        { group: 'Total Costs', metrics: [
-          { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
+        { group: 'Costs (PV)', metrics: [
           { key: 'total_capital_pv', label: 'Total Capital Cost', path: 'summary.total_capital_pv', format: 'currency' },
           { key: 'total_operational_pv', label: 'Total Operational Cost', path: 'summary.total_operational_pv', format: 'currency' },
+          { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
         ]},
         { group: 'Benefits (PV)', metrics: [
           { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
           { key: 'curtailment_pv', label: 'Curtailment (Conservative)', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
-          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
           { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
+          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
         ]},
         { group: 'Net Benefits (PV)', metrics: [
+          { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
+          { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
           { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
           { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
-          { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
-          { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
-        ]},
-        { group: 'BCR Sensitivity Exclusions', metrics: [
-          { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
-          { key: 'bcr_excl_out', label: 'BCR excl. Outage', path: 'bcr.bcr_excluding_outage_risk', format: 'number3' },
-          { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
-          { key: 'bcr_excl_ll', label: 'BCR excl. Line Losses', path: 'bcr.bcr_excluding_linelosses', format: 'number3' },
-          { key: 'bcr_excl_wf_out', label: 'BCR excl. Wildfire + Outage', path: 'bcr.bcr_excluding_wildfire_risk_and_outage_risk', format: 'number3' },
-          { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
-          { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
-          { key: 'bcr_excl_em_ll_wf_out', label: 'BCR excl. Emissions + Losses + Wildfire + Outage', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', format: 'number3' },
-        ]},
-        { group: 'Parameters', metrics: [
-          { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
-          { key: 'line_length', label: 'Line Length (mi)', path: 'technical_parameters.line_length_miles', format: 'number' },
-          { key: 'lifetime', label: 'Lifetime (yr)', path: 'technical_parameters.project_lifetime_years', format: 'number' },
-          { key: 'delay_years', label: 'Delay (yr)', path: 'technical_parameters.delay_years', format: 'number' },
         ]},
         { group: 'Capital Costs (PV)', metrics: [
           { key: 'build_pv', label: 'Build Cost', path: 'costs.build.total_pv', format: 'currency' },
-          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
           { key: 'env_pv', label: 'Environmental Cost', path: 'costs.environmental.total_pv', format: 'currency' },
+          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
         ]},
         { group: 'Operational Costs (PV)', metrics: [
-          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
           { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency', zeroIfMissing: true },
+          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
-          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency', zeroIfMissing: true },
           { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency', zeroIfMissing: true },
           { key: 'total_risk_pv', label: 'Total Risk Cost', path: 'summary.total_risk_pv', format: 'currency' },
+          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Delay Costs (PV)', metrics: [
           { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency', zeroIfMissing: true },
           { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency', zeroIfMissing: true },
           { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
         ]},
+        { group: 'BCR Sensitivity Exclusions', metrics: [
+          { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
+          { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_em_ll_wf_out', label: 'BCR excl. Emissions + Losses + Wildfire + Outage', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_ll', label: 'BCR excl. Line Losses', path: 'bcr.bcr_excluding_linelosses', format: 'number3' },
+          { key: 'bcr_excl_out', label: 'BCR excl. Outage', path: 'bcr.bcr_excluding_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
+          { key: 'bcr_excl_wf_out', label: 'BCR excl. Wildfire + Outage', path: 'bcr.bcr_excluding_wildfire_risk_and_outage_risk', format: 'number3' },
+        ]},
       ];
+
+      // Comparison catalog: group order is fixed (BCR Sensitivity Exclusions last); within each group,
+      // metrics are alphabetical by label. Flatten order drives the add-column dropdown and sortComparisonColumnsByCatalog().
+      const COMPARISON_METRIC_KEY_ORDER = (() => {
+        const order = new Map();
+        let idx = 0;
+        for (const g of COMPARISON_METRICS) {
+          for (const m of g.metrics) {
+            if (!order.has(m.key)) order.set(m.key, idx++);
+          }
+        }
+        return order;
+      })();
+
+      const UNKNOWN_METRIC_CATALOG_INDEX = Number.MAX_SAFE_INTEGER;
+
+      /**
+       * Sort `comparisonColumns` in place by COMPARISON_METRICS catalog order.
+       * Keys not present in the catalog sort last; ties broken by localeCompare for stability.
+       */
+      function sortComparisonColumnsByCatalog() {
+        comparisonColumns.sort((a, b) => {
+          const ia = COMPARISON_METRIC_KEY_ORDER.has(a) ? COMPARISON_METRIC_KEY_ORDER.get(a) : UNKNOWN_METRIC_CATALOG_INDEX;
+          const ib = COMPARISON_METRIC_KEY_ORDER.has(b) ? COMPARISON_METRIC_KEY_ORDER.get(b) : UNKNOWN_METRIC_CATALOG_INDEX;
+          if (ia !== ib) return ia - ib;
+          return String(a).localeCompare(String(b));
+        });
+      }
+
+      sortComparisonColumnsByCatalog();
 
       const RESULTS_EXPORT_FIELDS = [
         { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
@@ -2079,6 +2197,7 @@
       function removeScenarioFromSession(id) {
         sessionScenarios = sessionScenarios.filter(s => s.id !== id);
         comparisonScenarioIds.delete(id);
+        if (comparisonBaselineId === id) comparisonBaselineId = null;
         renderScenarioList();
         updateScenarioBadge();
         renderComparisonTable();
@@ -2146,6 +2265,18 @@
         return parts.join(' | ') || 'No parameters available';
       }
 
+      /**
+       * Sync header "select all" for comparison: checked when every listed scenario is selected;
+       * indeterminate when some but not all. Pass the checkbox element from the current thead.
+       */
+      function syncComparisonSelectAllCheckbox(input) {
+        if (!input || sessionScenarios.length === 0) return;
+        const n = sessionScenarios.length;
+        const k = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id)).length;
+        input.checked = n > 0 && k === n;
+        input.indeterminate = k > 0 && k < n;
+      }
+
       // --- Scenario List Rendering ---
 
       function renderScenarioList() {
@@ -2160,16 +2291,60 @@
         }
 
         const table = document.createElement('table');
+        table.className = 'scenario-list-table';
         table.style.cssText = 'width: 100%; border-collapse: collapse;';
+
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        const thCmp = document.createElement('th');
+        thCmp.className = 'scenario-compare-col';
+        thCmp.title = 'Include in comparison table';
+        const selectAllCmp = document.createElement('input');
+        selectAllCmp.type = 'checkbox';
+        selectAllCmp.id = 'scenario-compare-select-all';
+        selectAllCmp.setAttribute('aria-label', 'Select all scenarios for comparison');
+        selectAllCmp.title = 'Select all scenarios for comparison';
+        selectAllCmp.addEventListener('click', (e) => e.stopPropagation());
+        selectAllCmp.addEventListener('change', () => {
+          if (selectAllCmp.checked) {
+            sessionScenarios.forEach(s => comparisonScenarioIds.add(s.id));
+          } else {
+            comparisonScenarioIds.clear();
+            comparisonBaselineId = null;
+          }
+          renderScenarioList();
+        });
+        thCmp.appendChild(selectAllCmp);
+        syncComparisonSelectAllCheckbox(selectAllCmp);
+        const thBase = document.createElement('th');
+        thBase.className = 'scenario-base-col';
+        thBase.textContent = 'Base';
+        thBase.title = 'Baseline for Δ';
+        const thScenario = document.createElement('th');
+        thScenario.textContent = 'Scenario';
+        const thActions = document.createElement('th');
+        thActions.textContent = '';
+        const thFill = document.createElement('th');
+        thFill.style.width = '100%';
+        headRow.appendChild(thCmp);
+        headRow.appendChild(thBase);
+        headRow.appendChild(thScenario);
+        headRow.appendChild(thActions);
+        headRow.appendChild(thFill);
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        table.appendChild(tbody);
 
         sessionScenarios.forEach(scenario => {
           const card = document.createElement('tr');
           card.className = 'scenario-card';
           card.dataset.scenarioId = scenario.id;
 
-          // Row click toggles checkbox (except buttons, checkbox, name editing)
+          // Row click toggles checkbox (except buttons, checkbox, radio, name editing)
           card.addEventListener('click', (e) => {
-            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox') return;
+            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
           });
@@ -2186,11 +2361,32 @@
               comparisonScenarioIds.add(scenario.id);
             } else {
               comparisonScenarioIds.delete(scenario.id);
+              if (comparisonBaselineId === scenario.id) comparisonBaselineId = null;
             }
-            renderComparisonTable();
+            renderScenarioList();
           });
           checkTd.appendChild(checkbox);
           card.appendChild(checkTd);
+
+          // Baseline radio cell
+          const baseTd = document.createElement('td');
+          baseTd.className = 'scenario-base-cell';
+          const baseRadio = document.createElement('input');
+          baseRadio.type = 'radio';
+          baseRadio.name = 'comparison-baseline';
+          baseRadio.checked = comparisonBaselineId === scenario.id;
+          baseRadio.title = 'Set as comparison baseline';
+          baseRadio.setAttribute('aria-label', 'Set as comparison baseline');
+          baseRadio.addEventListener('click', (e) => e.stopPropagation());
+          baseRadio.addEventListener('change', () => {
+            if (baseRadio.checked) {
+              comparisonBaselineId = scenario.id;
+              comparisonScenarioIds.add(scenario.id);
+              renderScenarioList();
+            }
+          });
+          baseTd.appendChild(baseRadio);
+          card.appendChild(baseTd);
 
           // Info cell
           const infoTd = document.createElement('td');
@@ -2299,7 +2495,7 @@
           fillerTd.style.cssText = 'width: 100%;';
           card.appendChild(fillerTd);
 
-          table.appendChild(card);
+          tbody.appendChild(card);
         });
 
         container.appendChild(table);
@@ -2411,34 +2607,54 @@
         }
       });
 
-      // Copy comparison table to clipboard (Excel-compatible TSV)
+      // Copy comparison table to clipboard (Excel-compatible TSV).
+      // Rules: With Show Δ + baseline, emit one column per metric for value + one for " (Δ)" (delta plain text, no "Δ " prefix);
+      // baseline row leaves Δ (and optional % Δ) cells empty. With % Δ on, add a third column per metric " (% Δ)".
+      // Otherwise one column per metric (absolute only). On-screen "Δ only" mode does not change export columns.
       document.getElementById('copy-table-btn').addEventListener('click', function() {
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
           alert('No scenarios or columns selected for comparison.');
           return;
         }
-        const headers = ['Scenario', ...comparisonColumns.map(key => {
-          for (const group of COMPARISON_METRICS) {
-            for (const m of group.metrics) {
-              if (m.key === key) return m.label;
-            }
-          }
-          return key;
-        })];
-        const rows = selectedScenarios.map(s => {
-          const cells = [s.customName];
+        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
+        const separateDelta = !!(showDeltaVsBaseline && baselineScenario);
+        const includePctCol = separateDelta && showComparisonPercentDelta;
+        const subCols = separateDelta ? (includePctCol ? 3 : 2) : 1;
+
+        const headers = ['Scenario'];
+        if (subCols === 1) {
+          comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
+        } else {
           comparisonColumns.forEach(key => {
-            let cfg = null;
-            for (const group of COMPARISON_METRICS) {
-              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            const L = comparisonMetricLabel(key);
+            headers.push(L, L + ' (Δ)');
+            if (includePctCol) headers.push(L + ' (% Δ)');
+          });
+        }
+
+        const rows = selectedScenarios.map(s => {
+          let nameCell = s.customName;
+          if (showDeltaVsBaseline && baselineScenario && s.id === baselineScenario.id) {
+            nameCell += ' (Baseline)';
+          }
+          const cells = [nameCell];
+          comparisonColumns.forEach(key => {
+            const cfg = getMetricConfig(key);
+            if (!cfg) {
+              for (let c = 0; c < subCols; c++) cells.push('');
+              return;
             }
-            if (!cfg) { cells.push(''); return; }
-            const parts = cfg.path.split('.');
-            let val = s.results;
-            for (const p of parts) { val = val?.[p]; }
-            if (val == null) { cells.push('N/A'); return; }
-            cells.push(typeof val === 'number' ? val : String(val));
+            const parts = getDeltaDisplayParts(baselineScenario, s, key, includePctCol);
+            if (subCols === 1) {
+              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
+              cells.push(dline ? parts.absText + ' | ' + dline : parts.absText);
+            } else {
+              const isBase = baselineScenario && s.id === baselineScenario.id;
+              cells.push(parts.absText);
+              cells.push(isBase ? '' : (parts.deltaPlain || ''));
+              if (includePctCol) cells.push(isBase ? '' : (parts.percentText || ''));
+            }
           });
           return cells;
         });
@@ -2451,13 +2667,18 @@
         });
       });
 
-      // Export comparison table as PNG
+      // Export comparison table as PNG (column layout matches Copy TSV: multi-column per metric when Δ + baseline).
       document.getElementById('export-png-btn').addEventListener('click', function() {
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
           alert('No scenarios or columns selected for comparison.');
           return;
         }
+        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
+        const pngSeparateDelta = !!(showDeltaVsBaseline && baselineScenario);
+        const pngShowPercent = pngSeparateDelta && showComparisonPercentDelta;
+        const subCols = pngSeparateDelta ? (pngShowPercent ? 3 : 2) : 1;
+
         // Build a clean table in an offscreen container
         const wrap = document.createElement('div');
         wrap.style.cssText = 'position: absolute; left: -9999px; top: 0; background: white; padding: 1.5rem; font-family: system-ui, -apple-system, sans-serif; font-size: 14px;';
@@ -2474,12 +2695,16 @@
         // Header
         const thead = document.createElement('thead');
         const hrow = document.createElement('tr');
-        const headers = ['Scenario', ...comparisonColumns.map(key => {
-          for (const group of COMPARISON_METRICS) {
-            for (const m of group.metrics) { if (m.key === key) return m.label; }
-          }
-          return key;
-        })];
+        const headers = ['Scenario'];
+        if (subCols === 1) {
+          comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
+        } else {
+          comparisonColumns.forEach(key => {
+            const L = comparisonMetricLabel(key);
+            headers.push(L, L + ' (Δ)');
+            if (pngShowPercent) headers.push(L + ' (% Δ)');
+          });
+        }
         headers.forEach((h, i) => {
           const th = document.createElement('th');
           th.textContent = h;
@@ -2495,27 +2720,46 @@
           const tr = document.createElement('tr');
           if (ri % 2 === 1) tr.style.background = 'rgba(0,0,0,0.02)';
           const nameTd = document.createElement('td');
-          nameTd.textContent = s.customName;
+          let nameText = s.customName;
+          if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nameText += ' (Baseline)';
+          nameTd.textContent = nameText;
           nameTd.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; white-space: nowrap;';
           tr.appendChild(nameTd);
           comparisonColumns.forEach(key => {
-            let cfg = null;
-            for (const group of COMPARISON_METRICS) {
-              for (const m of group.metrics) { if (m.key === key) cfg = m; }
+            const cfg = getMetricConfig(key);
+            const tdStyle = 'padding: 5px 12px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 12px;';
+            if (!cfg) {
+              for (let c = 0; c < subCols; c++) {
+                const td = document.createElement('td');
+                td.style.cssText = tdStyle;
+                tr.appendChild(td);
+              }
+              return;
             }
-            const td = document.createElement('td');
-            td.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 12px;';
-            if (!cfg) { td.textContent = ''; }
-            else {
-              const parts = cfg.path.split('.');
-              let val = s.results;
-              for (const p of parts) { val = val?.[p]; }
-              if (val == null) td.textContent = 'N/A';
-              else if (cfg.format === 'currency') td.textContent = formatCurrency(val, 0);
-              else if (cfg.format === 'number3') td.textContent = formatNumber(val, 3);
-              else td.textContent = formatNumber(val, 0);
+            const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
+            if (subCols === 1) {
+              const td = document.createElement('td');
+              td.style.cssText = tdStyle;
+              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
+              td.textContent = dline ? parts.absText + ' | ' + dline : parts.absText;
+              tr.appendChild(td);
+            } else {
+              const isBase = baselineScenario && s.id === baselineScenario.id;
+              const t0 = document.createElement('td');
+              t0.style.cssText = tdStyle;
+              t0.textContent = parts.absText;
+              tr.appendChild(t0);
+              const t1 = document.createElement('td');
+              t1.style.cssText = tdStyle;
+              t1.textContent = isBase ? '' : (parts.deltaPlain || '');
+              tr.appendChild(t1);
+              if (pngShowPercent) {
+                const t2 = document.createElement('td');
+                t2.style.cssText = tdStyle;
+                t2.textContent = isBase ? '' : (parts.percentText || '');
+                tr.appendChild(t2);
+              }
             }
-            tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
@@ -2526,11 +2770,15 @@
         const scale = 2;
         const font = '13px system-ui, -apple-system, sans-serif';
         const monoFont = '12px "SF Mono", Monaco, Consolas, monospace';
+        const deltaMonoFont = '11px "SF Mono", Monaco, Consolas, monospace';
+        const pctMonoFont = '11px "SF Mono", Monaco, Consolas, monospace';
         const boldFont = 'bold 13px system-ui, -apple-system, sans-serif';
         const titleFont = 'bold 16px system-ui, -apple-system, sans-serif';
-        const padX = 12, padY = 6;
+        const padX = 12;
+        const rowH = pngSeparateDelta ? 30 : 28;
+        const headerH = 32;
+        const titleH = 36;
 
-        // Measure columns using a temp canvas
         const mCtx = document.createElement('canvas').getContext('2d');
         const colWidths = headers.map((h, i) => {
           mCtx.font = boldFont;
@@ -2538,32 +2786,38 @@
           selectedScenarios.forEach(s => {
             if (i === 0) {
               mCtx.font = font;
-              w = Math.max(w, mCtx.measureText(s.customName).width);
+              let nt = s.customName;
+              if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nt += ' (Baseline)';
+              w = Math.max(w, mCtx.measureText(nt).width);
             } else {
-              mCtx.font = monoFont;
-              const key = comparisonColumns[i - 1];
-              let cfg = null;
-              for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
-              if (cfg) {
-                const parts = cfg.path.split('.');
-                let val = s.results;
-                for (const p of parts) { val = val?.[p]; }
-                let txt = 'N/A';
-                if (val != null) {
-                  if (cfg.format === 'currency') txt = formatCurrency(val, 0);
-                  else if (cfg.format === 'number3') txt = formatNumber(val, 3);
-                  else txt = formatNumber(val, 0);
-                }
-                w = Math.max(w, mCtx.measureText(txt).width);
+              const metricIdx = Math.floor((i - 1) / subCols);
+              const subIdx = (i - 1) % subCols;
+              const key = comparisonColumns[metricIdx];
+              const cfg = getMetricConfig(key);
+              if (!cfg) return;
+              const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
+              const isBase = baselineScenario && s.id === baselineScenario.id;
+              let txt = '';
+              if (subCols === 1) {
+                const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
+                txt = dline ? parts.absText + ' | ' + dline : parts.absText;
+                mCtx.font = monoFont;
+              } else if (subIdx === 0) {
+                txt = parts.absText;
+                mCtx.font = monoFont;
+              } else if (subIdx === 1) {
+                txt = isBase ? '' : (parts.deltaPlain || '');
+                mCtx.font = deltaMonoFont;
+              } else {
+                txt = isBase ? '' : (parts.percentText || '');
+                mCtx.font = pctMonoFont;
               }
+              if (txt) w = Math.max(w, mCtx.measureText(txt).width);
             }
           });
           return w + padX * 2 + 4;
         });
 
-        const rowH = 28;
-        const headerH = 32;
-        const titleH = 36;
         const totalW = colWidths.reduce((a, b) => a + b, 0);
         const totalH = titleH + headerH + selectedScenarios.length * rowH;
 
@@ -2573,17 +2827,14 @@
         const ctx = canvas.getContext('2d');
         ctx.scale(scale, scale);
 
-        // Background
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, totalW, totalH);
 
-        // Title
         ctx.font = titleFont;
         ctx.fillStyle = '#000';
         ctx.textBaseline = 'middle';
         ctx.fillText('Scenario Comparison', padX, titleH / 2);
 
-        // Header row
         let y = titleH;
         ctx.fillStyle = '#f8f9fa';
         ctx.fillRect(0, y, totalW, headerH);
@@ -2600,47 +2851,75 @@
           x += colWidths[i];
         });
 
-        // Data rows
         y += headerH;
         selectedScenarios.forEach((s, ri) => {
           if (ri % 2 === 1) {
             ctx.fillStyle = 'rgba(0,0,0,0.02)';
             ctx.fillRect(0, y, totalW, rowH);
           }
-          // Row divider
           ctx.strokeStyle = '#eee';
           ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(totalW, y + rowH); ctx.stroke();
 
           x = 0;
-          // Scenario name
           ctx.font = font;
           ctx.fillStyle = '#000';
           ctx.textAlign = 'left';
-          ctx.fillText(s.customName, x + padX, y + rowH / 2);
+          let nameDraw = s.customName;
+          if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nameDraw += ' (Baseline)';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(nameDraw, x + padX, y + rowH / 2);
           x += colWidths[0];
 
-          // Metric values
-          comparisonColumns.forEach((key, ci) => {
-            let cfg = null;
-            for (const group of COMPARISON_METRICS) { for (const m of group.metrics) { if (m.key === key) cfg = m; } }
-            ctx.font = monoFont;
-            ctx.fillStyle = '#000';
+          for (let ci = 1; ci < headers.length; ci++) {
+            const metricIdx = Math.floor((ci - 1) / subCols);
+            const subIdx = (ci - 1) % subCols;
+            const key = comparisonColumns[metricIdx];
+            const cfg = getMetricConfig(key);
             ctx.textAlign = 'right';
-            let txt = 'N/A';
-            if (cfg) {
-              const parts = cfg.path.split('.');
-              let val = s.results;
-              for (const p of parts) { val = val?.[p]; }
-              if (val != null) {
-                if (cfg.format === 'currency') txt = formatCurrency(val, 0);
-                else if (cfg.format === 'number3') txt = formatNumber(val, 3);
-                else txt = formatNumber(val, 0);
-              }
+            const colRight = x + colWidths[ci] - padX;
+            if (!cfg) {
+              x += colWidths[ci];
+              continue;
             }
-            ctx.fillText(txt, x + colWidths[ci + 1] - padX, y + rowH / 2);
-            x += colWidths[ci + 1];
-          });
+            const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
+            const isBase = baselineScenario && s.id === baselineScenario.id;
+            if (subCols === 1) {
+              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
+              if (dline) {
+                ctx.font = monoFont;
+                ctx.fillStyle = '#000';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(parts.absText, colRight, y + 16);
+                ctx.font = deltaMonoFont;
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.fillText(dline, colRight, y + 32);
+              } else {
+                ctx.font = monoFont;
+                ctx.fillStyle = '#000';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(parts.absText, colRight, y + rowH / 2);
+              }
+            } else if (subIdx === 0) {
+              ctx.font = monoFont;
+              ctx.fillStyle = '#000';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(parts.absText, colRight, y + rowH / 2);
+            } else if (subIdx === 1) {
+              const t = isBase ? '' : (parts.deltaPlain || '');
+              ctx.font = deltaMonoFont;
+              ctx.fillStyle = 'rgba(0,0,0,0.45)';
+              ctx.textBaseline = 'middle';
+              if (t) ctx.fillText(t, colRight, y + rowH / 2);
+            } else {
+              const t = isBase ? '' : (parts.percentText || '');
+              ctx.font = pctMonoFont;
+              ctx.fillStyle = 'rgba(0,0,0,0.38)';
+              ctx.textBaseline = 'middle';
+              if (t) ctx.fillText(t, colRight, y + rowH / 2);
+            }
+            x += colWidths[ci];
+          }
           y += rowH;
         });
 
@@ -2978,11 +3257,40 @@
 
       function formatMetricValue(value, format) {
         if (value === undefined || value === null) return 'N/A';
+        if (format === 'text') return value === '' ? '—' : String(value);
+        if (format === 'boolean') {
+          if (value === true || value === 'true') return 'Yes';
+          if (value === false || value === 'false') return 'No';
+          return String(value);
+        }
+        if (format === 'percent_decimal') {
+          const num = Number(value);
+          if (isNaN(num)) return String(value);
+          return (num * 100).toLocaleString('en-US', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 2
+          }) + '%';
+        }
+        if (format === 'number2') {
+          const num = Number(value);
+          if (isNaN(num)) return String(value);
+          return formatNumber(num, 2);
+        }
         const num = Number(value);
         if (isNaN(num)) return String(value);
         if (format === 'currency') return formatCurrency(num, 0);
         if (format === 'number3') return formatNumber(num, 3);
         return formatNumber(num, 0);
+      }
+
+      function getMetricNumericOrNull(scenario, metricKey) {
+        const cfg = getMetricConfig(metricKey);
+        if (cfg && (cfg.format === 'text' || cfg.format === 'boolean')) return null;
+        const v = getMetricValue(scenario, metricKey);
+        if (v === undefined || v === null) return null;
+        const n = Number(v);
+        if (Number.isNaN(n)) return null;
+        return n;
       }
 
       function buildMetricSelect(excludeKeys) {
@@ -3006,6 +3314,21 @@
         return select;
       }
 
+      function updateComparisonDeltaControlState() {
+        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
+        const can = showDeltaVsBaseline && !!baselineScenario;
+        const modeSel = document.getElementById('cmp-delta-display-mode');
+        const pctCb = document.getElementById('cmp-show-percent-delta');
+        if (modeSel) {
+          modeSel.disabled = !can;
+          modeSel.value = comparisonDeltaDisplayMode;
+        }
+        if (pctCb) {
+          pctCb.disabled = !can;
+          pctCb.checked = showComparisonPercentDelta;
+        }
+      }
+
       function renderComparisonTable() {
         const container = document.getElementById('comparison-table-container');
         if (!container) return;
@@ -3023,10 +3346,28 @@
         }
 
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        const hintEl = document.getElementById('cmp-delta-hint');
+        if (hintEl) {
+          if (showDeltaVsBaseline && selectedScenarios.length > 0) {
+            const baseOk = comparisonBaselineId && comparisonScenarioIds.has(comparisonBaselineId);
+            if (!baseOk) {
+              hintEl.style.display = 'block';
+              hintEl.textContent = 'Select a baseline (Base column) to see Δ.';
+            } else {
+              hintEl.style.display = 'none';
+            }
+          } else {
+            hintEl.style.display = 'none';
+          }
+        }
+
         if (selectedScenarios.length === 0) {
           container.innerHTML = '<p style="color: rgba(0,0,0,0.4); font-style: italic;">Check scenarios above to compare them.</p>';
+          updateComparisonDeltaControlState();
           return;
         }
+
+        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'comparison-table-wrapper';
@@ -3057,6 +3398,7 @@
           addSelect.addEventListener('change', function() {
             if (this.value) {
               comparisonColumns.push(this.value);
+              sortComparisonColumnsByCatalog();
               renderComparisonTable();
             }
           });
@@ -3080,15 +3422,61 @@
         selectedScenarios.forEach(scenario => {
           const row = document.createElement('tr');
           const nameTd = document.createElement('td');
-          nameTd.textContent = scenario.customName;
+          nameTd.appendChild(document.createTextNode(scenario.customName));
+          if (showDeltaVsBaseline && baselineScenario && scenario.id === baselineScenario.id) {
+            const badge = document.createElement('span');
+            badge.className = 'baseline-badge';
+            badge.textContent = 'Baseline';
+            nameTd.appendChild(badge);
+          }
           row.appendChild(nameTd);
 
           comparisonColumns.forEach(colKey => {
             const config = getMetricConfig(colKey);
             const td = document.createElement('td');
             td.className = 'metric-val';
-            const val = getMetricValue(scenario, colKey);
-            td.textContent = formatMetricValue(val, config?.format);
+            const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, showComparisonPercentDelta);
+            const hasDelta = !!(showDeltaVsBaseline && baselineScenario && parts.deltaLineText);
+
+            if (!config) {
+              td.textContent = '';
+            } else if (!hasDelta) {
+              const main = document.createElement('span');
+              main.className = 'comparison-metric-line';
+              main.textContent = parts.absText;
+              td.appendChild(main);
+            } else if (scenario.id === baselineScenario.id) {
+              const main = document.createElement('span');
+              main.className = 'comparison-metric-line';
+              main.textContent = parts.absText;
+              td.appendChild(main);
+            } else if (comparisonDeltaDisplayMode === 'delta_only') {
+              const line1 = document.createElement('span');
+              line1.className = 'comparison-metric-line';
+              line1.textContent = parts.deltaLineText;
+              td.appendChild(line1);
+              if (showComparisonPercentDelta && parts.percentText) {
+                const linePct = document.createElement('span');
+                linePct.className = 'comparison-percent-line';
+                linePct.textContent = parts.percentText;
+                td.appendChild(linePct);
+              }
+            } else {
+              const line1 = document.createElement('span');
+              line1.className = 'comparison-metric-line';
+              line1.textContent = parts.absText;
+              td.appendChild(line1);
+              const line2 = document.createElement('span');
+              line2.className = 'comparison-delta-line';
+              line2.textContent = parts.deltaLineText;
+              td.appendChild(line2);
+              if (showComparisonPercentDelta && parts.percentText) {
+                const linePct = document.createElement('span');
+                linePct.className = 'comparison-percent-line';
+                linePct.textContent = parts.percentText;
+                td.appendChild(linePct);
+              }
+            }
             row.appendChild(td);
           });
 
@@ -3124,6 +3512,7 @@
 
         wrapper.appendChild(table);
         container.appendChild(wrapper);
+        updateComparisonDeltaControlState();
       }
 
       // Exclusions button — show controls, hide button
@@ -3141,6 +3530,31 @@
         const cb = document.getElementById(id);
         if (cb) cb.addEventListener('change', () => renderComparisonTable());
       });
+
+      const cmpShowDeltaEl = document.getElementById('cmp-show-delta');
+      if (cmpShowDeltaEl) {
+        cmpShowDeltaEl.checked = showDeltaVsBaseline;
+        cmpShowDeltaEl.addEventListener('change', () => {
+          showDeltaVsBaseline = cmpShowDeltaEl.checked;
+          renderComparisonTable();
+        });
+      }
+
+      const cmpDeltaModeEl = document.getElementById('cmp-delta-display-mode');
+      if (cmpDeltaModeEl) {
+        cmpDeltaModeEl.addEventListener('change', () => {
+          comparisonDeltaDisplayMode = cmpDeltaModeEl.value === 'delta_only' ? 'delta_only' : 'values_plus_delta';
+          renderComparisonTable();
+        });
+      }
+
+      const cmpPctDeltaEl = document.getElementById('cmp-show-percent-delta');
+      if (cmpPctDeltaEl) {
+        cmpPctDeltaEl.addEventListener('change', () => {
+          showComparisonPercentDelta = cmpPctDeltaEl.checked;
+          renderComparisonTable();
+        });
+      }
 
       // Smart tooltip positioning
       let activeTooltip = null;
@@ -4636,6 +5050,91 @@
           minimumFractionDigits: decimals,
           maximumFractionDigits: decimals
         });
+      }
+
+      function formatSignedCurrencyValue(value, decimals = 0) {
+        const num = Number(value);
+        if (isNaN(num)) return String(value);
+        const absNum = Math.abs(num);
+        const dollars = '$' + absNum.toLocaleString('en-US', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+        if (num > 0) return '+' + dollars;
+        if (num < 0) return '-' + dollars;
+        return dollars;
+      }
+
+      function formatSignedNumberValue(value, decimals = 0) {
+        const num = Number(value);
+        if (isNaN(num)) return String(value);
+        const absStr = Math.abs(num).toLocaleString('en-US', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+        if (num > 0) return '+' + absStr;
+        if (num < 0) return '-' + absStr;
+        return absStr;
+      }
+
+      function formatDeltaLine(baselineScenario, rowScenario, metricKey) {
+        const config = getMetricConfig(metricKey);
+        if (!config || !baselineScenario || rowScenario.id === baselineScenario.id) return null;
+        const a = getMetricNumericOrNull(baselineScenario, metricKey);
+        const b = getMetricNumericOrNull(rowScenario, metricKey);
+        if (a === null || b === null) return 'Δ —';
+        const d = b - a;
+        if (config.format === 'currency') return 'Δ ' + formatSignedCurrencyValue(d, 0);
+        if (config.format === 'number3') return 'Δ ' + formatSignedNumberValue(d, 3);
+        if (config.format === 'number2') return 'Δ ' + formatSignedNumberValue(d, 2);
+        if (config.format === 'percent_decimal') return 'Δ ' + formatSignedNumberValue(d * 100, 2) + '%';
+        return 'Δ ' + formatSignedNumberValue(d, 0);
+      }
+
+      /** Signed percent vs baseline; baseline row / missing nums / baseline 0 → null (caller uses only when includePercent). */
+      function formatPercentDeltaLine(baselineScenario, rowScenario, metricKey) {
+        const config = getMetricConfig(metricKey);
+        if (!config || !baselineScenario || rowScenario.id === baselineScenario.id) return null;
+        const a = getMetricNumericOrNull(baselineScenario, metricKey);
+        const b = getMetricNumericOrNull(rowScenario, metricKey);
+        if (a === null || b === null || a === 0) return '—';
+        const pct = ((b - a) / a) * 100;
+        if (!isFinite(pct)) return '—';
+        const t = pct.toFixed(1);
+        if (pct > 0) return '+' + t + '%';
+        return t + '%';
+      }
+
+      /**
+       * Shared pipeline for comparison table, Copy TSV, and PNG.
+       * deltaPlain strips the leading "Δ " from formatDeltaLine for spreadsheet Δ columns.
+       */
+      function getDeltaDisplayParts(baselineScenario, rowScenario, metricKey, includePercent) {
+        const config = getMetricConfig(metricKey);
+        const val = getMetricValue(rowScenario, metricKey);
+        const absText = formatMetricValue(val, config?.format);
+        if (!config || !baselineScenario || rowScenario.id === baselineScenario.id) {
+          return { absText, deltaLineText: null, deltaPlain: null, percentText: null };
+        }
+        const deltaLineText = formatDeltaLine(baselineScenario, rowScenario, metricKey);
+        let deltaPlain = null;
+        if (deltaLineText) {
+          deltaPlain = deltaLineText.startsWith('Δ ') ? deltaLineText.slice(2) : deltaLineText;
+        }
+        let percentText = null;
+        if (includePercent) {
+          percentText = formatPercentDeltaLine(baselineScenario, rowScenario, metricKey);
+        }
+        return { absText, deltaLineText, deltaPlain, percentText };
+      }
+
+      function comparisonMetricLabel(metricKey) {
+        for (const group of COMPARISON_METRICS) {
+          for (const m of group.metrics) {
+            if (m.key === metricKey) return m.label;
+          }
+        }
+        return metricKey;
       }
 
       function humanizeLabel(key) {

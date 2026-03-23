@@ -85,11 +85,13 @@ class JSONOutputManager:
                 "conductor_type": conductor_type,
                 "line_length_miles": total_line_length,
                 "line_utilization": line_utilization,
+                "uses_existing_row": uses_existing_row,
                 # Converter details (for DC projects)
                 "converter_type": converter_type,
                 "number_of_converters": (
                     project.get("number_of_converters", 0) if ac_dc == "DC" else 0
                 ),
+                "converter_loss_percentage": converter_loss_percentage,
                 # Reconductoring details
                 "reconductoring": reconductoring,
                 "old_capacity_mw": (

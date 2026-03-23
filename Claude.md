@@ -37,6 +37,7 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 - **14 calculation scripts:** Build, ROW, environmental, revenue, O&M, risk, benefits, etc.
 - **3 Financial Perspectives:** Nominal, AFUDC (regulatory), Present Value (societal)
 - **Web UI:** Browser-based interface for editing and running calculations
+- **Scenario Manager (comparison table):** In `server/static/index.html`, selected comparison columns are ordered by the flattened **`COMPARISON_METRICS`** catalog (same order as the metric dropdown groups). Implementation: **`COMPARISON_METRIC_KEY_ORDER`** and **`sortComparisonColumnsByCatalog()`**. Add new metrics in the appropriate group/position in `COMPARISON_METRICS` to control sort position; keys not in the catalog sort last.
 - **REST API:** Programmatic access for integration
 - **CLI:** Command-line tool for batch processing
 
