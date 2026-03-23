@@ -1151,26 +1151,17 @@ This file defines O\&M costs for converters (DC projects only), organized by pro
     \item \textbf{Note}: Only applies to DC projects; AC projects have "NA" converter type
 \end{itemize}
 
-\section{Emissions Reductions}
-\label{sec:emissions}
+\section{Energy Source Mix}
+\label{sec:energy-source-mix}
 
-\textbf{File:} \texttt{16\_emissions\_reductions.yaml}
+\textbf{File:} \texttt{18\_energy\_source\_mix.yaml} \\
+\textbf{Combined JSON key:} \texttt{18\_energy\_source\_mix}
 
 \subsection{Purpose}
 
-This file configures environmental benefits from emissions reductions associated with line losses. When transmission lines lose energy, that energy must be compensated by additional generation, which has associated emissions. This file defines the energy source mix, emission intensities, and societal costs of pollutants.
+Grid / compensating-generation shares used when attributing line-loss energy to fuel types. The emissions module merges this block with \texttt{16\_emissions\_reductions.yaml} at load time (\texttt{load\_emissions\_details} in \texttt{yaml\_loaders} / \texttt{json\_loaders}); \texttt{scripts/emissions.py} still receives a single in-memory \texttt{energy\_source\_mix} dict. Legacy scenarios or merged JSON may still store mix under \texttt{16\_emissions\_reductions.emissions\_reductions.energy\_source\_mix}; loaders fall back there if \texttt{18\_energy\_source\_mix} is absent.
 
 \subsection{Parameter Choices}
-
-\subsubsection{Compensation Percentage}
-
-\begin{itemize}
-    \item \textbf{compensation\_percent} (float): Fraction of losses compensated by additional generation
-    \begin{itemize}
-        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.9 = 90\%)
-        \item \textbf{Meaning}: Not all losses require compensation (some are absorbed by system)
-    \end{itemize}
-\end{itemize}
 
 \subsubsection{Energy Source Mix}
 
@@ -1192,6 +1183,27 @@ This file configures environmental benefits from emissions reductions associated
             \item Hydro: 5\%, rate: 0.0 (stable)
             \item Nuclear: 5\%, rate: 0.0 (stable)
         \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{Emissions Reductions}
+\label{sec:emissions}
+
+\textbf{File:} \texttt{16\_emissions\_reductions.yaml}
+
+\subsection{Purpose}
+
+This file configures environmental benefits from emissions reductions associated with line losses. When transmission lines lose energy, that energy must be compensated by additional generation, which has associated emissions. This file defines compensation fraction, emission intensities, and societal costs of pollutants. The energy source mix lives in \texttt{18\_energy\_source\_mix.yaml} and is merged at load for emissions calculations.
+
+\subsection{Parameter Choices}
+
+\subsubsection{Compensation Percentage}
+
+\begin{itemize}
+    \item \textbf{compensation\_percent} (float): Fraction of losses compensated by additional generation
+    \begin{itemize}
+        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.9 = 90\%)
+        \item \textbf{Meaning}: Not all losses require compensation (some are absorbed by system)
     \end{itemize}
 \end{itemize}
 
@@ -1238,23 +1250,27 @@ This file configures environmental benefits from emissions reductions associated
 \subsection{Example Configuration}
 
 \begin{lstlisting}[language=yaml]
+# 18_energy_source_mix.yaml
+energy_source_mix:
+  coal:
+    percentage: 10
+    rate_of_change: -0.05
+  natural_gas:
+    percentage: 38
+    rate_of_change: 0.0
+  wind:
+    percentage: 26
+    rate_of_change: 0.04
+  solar:
+    percentage: 10
+    rate_of_change: 0.05
+  # ... (other sources)
+\end{lstlisting}
+
+\begin{lstlisting}[language=yaml]
+# 16_emissions_reductions.yaml
 emissions_reductions:
   compensation_percent: 0.9
-
-  energy_source_mix:
-    coal:
-      percentage: 10
-      rate_of_change: -0.05
-    natural_gas:
-      percentage: 38
-      rate_of_change: 0.0
-    wind:
-      percentage: 26
-      rate_of_change: 0.04
-    solar:
-      percentage: 10
-      rate_of_change: 0.05
-    # ... (other sources)
 
   emission_intensities:
     co2_intensity_kg_per_mwh:

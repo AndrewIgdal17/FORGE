@@ -3,9 +3,10 @@
 # Description: JSON-based data loading utilities for transmission cost calculator.
 #              Parallel implementation to yaml_loaders.py that uses JSON input instead of YAML files.
 
-import os
 import json
-from typing import Dict, Any, Optional
+import logging
+import os
+from typing import Any, Dict, Optional
 from financial_utils import calculate_real_wacc, get_wacc_nominal
 from primary_bcr_config_model import PrimaryBCRConfig
 from yaml_loaders import (
@@ -69,6 +70,32 @@ class JSONDataSource:
 
 # Global instance
 _data_source = JSONDataSource()
+
+logger = logging.getLogger(__name__)
+
+
+def _load_energy_source_mix_from_combined_json(
+    emissions_reductions: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Canonical mix from key 18_energy_source_mix; legacy fallback from
+    emissions_reductions.energy_source_mix when 18 is absent.
+    """
+    jd = _data_source._json_data
+    if jd:
+        block18 = jd.get("18_energy_source_mix")
+        if isinstance(block18, dict) and "energy_source_mix" in block18:
+            return block18["energy_source_mix"]
+    if "energy_source_mix" in emissions_reductions:
+        logger.warning(
+            "Using legacy energy_source_mix under 16_emissions_reductions; "
+            "prefer top-level 18_energy_source_mix in combined JSON"
+        )
+        return emissions_reductions["energy_source_mix"]
+    raise KeyError(
+        "energy_source_mix missing: add 18_energy_source_mix to combined JSON "
+        "or legacy energy_source_mix under 16_emissions_reductions.emissions_reductions"
+    )
 
 
 def set_json_data(combined_json: Dict[str, Any]):
@@ -184,12 +211,13 @@ def load_delay_costs():
 
 
 def load_emissions_details():
-    """Load emissions reductions details from JSON."""
+    """Load emissions reductions details from JSON; mix merged from 18_energy_source_mix."""
     data = _data_source.get_data("16_emissions_reductions")
     erd = data["emissions_reductions"]
+    mix = _load_energy_source_mix_from_combined_json(erd)
     return (
         erd["compensation_percent"],
-        erd["energy_source_mix"],
+        mix,
         erd["emission_intensities"],
         erd["societal_costs_per_kg"],
     )

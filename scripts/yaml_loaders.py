@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import logging
 import yaml
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
@@ -11,6 +12,8 @@ from path_config import YAMLS_DIR
 from primary_bcr_config_model import PrimaryBCRConfig
 from calculation_utils import normalize_capacity_mw
 from financial_utils import calculate_real_wacc, get_wacc_nominal
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -386,12 +389,47 @@ def load_delay_costs() -> Dict[str, Any]:
         raise ValueError(f"Error parsing delay costs YAML: {e}")
 
 
+def _load_energy_source_mix_from_yaml_files() -> Dict[str, Any]:
+    """
+    Canonical mix from 18_energy_source_mix.yaml; legacy fallback from 16_emissions_reductions.yaml
+    if 18 is missing (backward compatibility).
+    """
+    path18 = YAMLS_DIR / "18_energy_source_mix.yaml"
+    if path18.is_file():
+        with open(path18, "r", encoding="utf-8") as file:
+            data = yaml.safe_load(file)
+        if not data or "energy_source_mix" not in data:
+            raise KeyError(
+                "Missing 'energy_source_mix' in 18_energy_source_mix.yaml"
+            )
+        return data["energy_source_mix"]
+
+    # Legacy: embedded under 16_emissions_reductions
+    path16 = YAMLS_DIR / "16_emissions_reductions.yaml"
+    with open(path16, "r", encoding="utf-8") as file:
+        data = yaml.safe_load(file)
+    er = data.get("emissions_reductions") or {}
+    mix = er.get("energy_source_mix")
+    if mix is None:
+        raise FileNotFoundError(
+            f"Energy source mix not found: add {path18} or legacy energy_source_mix under 16_emissions_reductions.yaml"
+        )
+    logger.warning(
+        "Using legacy energy_source_mix from 16_emissions_reductions.yaml; "
+        "prefer 18_energy_source_mix.yaml"
+    )
+    return mix
+
+
 def load_emissions_details() -> (
     Tuple[float, Dict[str, Any], Dict[str, Any], Dict[str, Any]]
 ):
-    """Load emissions reductions details from YAML."""
+    """Load emissions reductions details from YAML; mix merged from 18_energy_source_mix.yaml."""
+    path16 = YAMLS_DIR / "16_emissions_reductions.yaml"
+    if not path16.is_file():
+        raise FileNotFoundError(f"Emissions reductions YAML not found at {path16}")
     try:
-        with open(YAMLS_DIR / "16_emissions_reductions.yaml", "r") as file:
+        with open(path16, "r", encoding="utf-8") as file:
             data = yaml.safe_load(file)
         if not data:
             raise ValueError("Emissions reductions YAML file is empty or invalid")
@@ -400,7 +438,6 @@ def load_emissions_details() -> (
         emissions_reductions_data = data["emissions_reductions"]
         required_keys = [
             "compensation_percent",
-            "energy_source_mix",
             "emission_intensities",
             "societal_costs_per_kg",
         ]
@@ -409,15 +446,12 @@ def load_emissions_details() -> (
                 raise KeyError(
                     f"Missing '{key}' key in emissions_reductions section of YAML"
                 )
+        energy_mix = _load_energy_source_mix_from_yaml_files()
         return (
             emissions_reductions_data["compensation_percent"],
-            emissions_reductions_data["energy_source_mix"],
+            energy_mix,
             emissions_reductions_data["emission_intensities"],
             emissions_reductions_data["societal_costs_per_kg"],
-        )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Emissions reductions YAML not found at {YAMLS_DIR / '16_emissions_reductions.yaml'}"
         )
     except yaml.YAMLError as e:
         raise ValueError(f"Error parsing emissions reductions YAML: {e}")

@@ -1,42 +1,9 @@
 # Emissions Reductions
 # Environmental benefits from emissions reductions
+# Energy source mix lives in 18_energy_source_mix.yaml (merged at load for emissions.py).
 
 emissions_reductions:
   compensation_percent: 0.9 # [0,1]
-  # User Inputs - Energy Source Mix (Yellow)
-  energy_source_mix:
-    coal:
-      percentage: 10
-      # will have to be normalized
-      rate_of_change: -0.05
-    oil:
-      percentage: 2
-      # will have to be normalized
-      rate_of_change: -0.04
-    natural_gas:
-      percentage: 38
-      # will have to be normalized
-      rate_of_change: 0.0
-    solar:
-      percentage: 10
-      # will have to be normalized
-      rate_of_change: 0.05
-    wind:
-      percentage: 26
-      # will have to be normalized
-      rate_of_change: 0.04
-    hydro:
-      percentage: 5
-      # will have to be normalized
-      rate_of_change: 0.0
-    nuclear:
-      percentage: 5
-      # will have to be normalized
-      rate_of_change: 0.0
-    other:
-      percentage: 4
-      # will have to be normalized
-      rate_of_change: 0.0
 
   # User Inputs - Emission Intensities (Blue)
   emission_intensities:
@@ -73,4 +40,3 @@ emissions_reductions:
     co2_cost_per_kg: 0.051 # $/KGCO2
     sox_cost_per_kg: 6.2 # $/KGSOX
     nox_cost_per_kg: 5.0 # $/KGNOX
-

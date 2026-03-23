@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "total_yamls": 22,
-    "total_fields": 4109,
+    "total_yamls": 23,
+    "total_fields": 4110,
     "total_configurations": 0,
     "categories": {
       "Technical": {
-        "file_count": 5,
-        "field_count": 159
+        "file_count": 6,
+        "field_count": 175
       },
       "Physical": {
         "file_count": 1,
@@ -26,7 +26,7 @@
       },
       "Environmental": {
         "file_count": 4,
-        "field_count": 103
+        "field_count": 88
       },
       "Benefits": {
         "file_count": 1,
@@ -630,7 +630,7 @@
                   },
                   "liability_limit": {
                     "type": "int",
-                    "default": 1000000000,
+                    "default": 5400000,
                     "units": null,
                     "description": "",
                     "path": "04_insurance.insurance.wildfire_liability.liability_limit"
@@ -658,7 +658,7 @@
         "premium_by_construction_type": "If not specified, uses premium_rate above",
         "wildfire_liability": "Wildfire liability insurance (optional)"
       },
-      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n\n  # Premium rate can vary by construction type (optional)\n  # If not specified, uses premium_rate above\n  premium_by_construction_type:\n    overhead: 0.002 # 0.2% [0,1]\n    underground: 0.0015 # 0.15% [0,1] (typically lower risk)\n    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)\n\n  # Wildfire liability insurance (optional)\n  wildfire_liability:\n    enabled: true # Set to false to disable\n    liability_limit: 1000000000 # $1B liability limit (>= 0)\n    rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)\n"
+      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n\n  # Premium rate can vary by construction type (optional)\n  # If not specified, uses premium_rate above\n  premium_by_construction_type:\n    overhead: 0.002 # 0.2% [0,1]\n    underground: 0.0015 # 0.15% [0,1] (typically lower risk)\n    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)\n\n  # Wildfire liability insurance (optional)\n  wildfire_liability:\n    enabled: true # Set to false to disable\n    liability_limit: 5400000 # $1B liability limit (>= 0)\n    rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)\n"
     },
     "05_delays.yaml": {
       "filename": "05_delays.yaml",
@@ -753,7 +753,7 @@
                 "type": "int",
                 "default": 5000000000,
                 "units": null,
-                "description": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).",
+                "description": "Event severity (consequence)",
                 "path": "06_wildfire_costs.wildfire.severity_per_event"
               },
               "risk_growth_rate": {
@@ -769,6 +769,13 @@
                 "units": null,
                 "description": "Discount rate configuration",
                 "path": "06_wildfire_costs.wildfire.discount_rate_source"
+              },
+              "discount_rate_custom": {
+                "type": "float",
+                "default": 0.03,
+                "units": null,
+                "description": "",
+                "path": "06_wildfire_costs.wildfire.discount_rate_custom"
               }
             },
             "subsections": {
@@ -871,20 +878,20 @@
                 "field_count": 3
               }
             },
-            "field_count": 15
+            "field_count": 16
           }
         },
-        "field_count": 15
+        "field_count": 16
       },
-      "field_count": 15,
+      "field_count": 16,
       "comments": {
-        "severity_per_event": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).",
+        "severity_per_event": "Event severity (consequence)",
         "risk_growth_rate": "Risk growth (optional - wildfire risk increases over time)",
         "discount_rate_source": "Discount rate configuration",
         "ignition_rates_by_terrain": "Units: events per mile per year (>= 0)",
         "ignition_rate_multiplier": "All multipliers (>= 0)"
       },
-      "raw_content": "# Wildfire Risk Cost Parameters\n# Expected wildfire costs based on ignition rates and severity\n\nwildfire:\n  # Event severity: uninsured residual loss per event ($). Include deductibles, above limit,\n  # exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance).\n  severity_per_event: 5000000000 # (>= 0)\n\n  # Risk growth (optional - wildfire risk increases over time)\n  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)\n\n  # Discount rate configuration\n  discount_rate_source: \"social\" # Options: \"social\" | \"wacc_real\"\n\n  # Base ignition rates by terrain (for overhead baseline)\n  # Units: events per mile per year (>= 0)\n  ignition_rates_by_terrain:\n    forested: 0.002 # Higher risk in forested areas (>= 0)\n    scrubbed_flat: 0.0002 # (>= 0)\n    wetland: 0.0001 # Lower risk in wet areas (>= 0)\n    farmland: 0.0002 # (>= 0)\n    desert_barren: 0.0001 # (>= 0)\n    urban: 0.0001 # (>= 0)\n    rolling_hills: 0.001 # (>= 0)\n    mountain: 0.002 # (>= 0)\n    subsea: 0.0 # No wildfire risk subsea (>= 0)\n\n  # Ignition rate multiplier by construction type\n  # Effective rate = ignition_rates_by_terrain × multiplier\n  # All multipliers (>= 0)\n  ignition_rate_multiplier:\n    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)\n    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)\n    subsea: 0.0 # No wildfire risk (>= 0)\n"
+      "raw_content": "# Wildfire Risk Cost Parameters\n# Expected wildfire costs based on ignition rates and severity\n\nwildfire:\n  # Event severity (consequence)\n  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event) (>= 0)\n\n  # Risk growth (optional - wildfire risk increases over time)\n  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)\n\n  # Discount rate configuration\n  discount_rate_source: \"social\" # Options: \"social\" | \"wacc_real\" | \"custom\"\n  discount_rate_custom: 0.03 # Used only if discount_rate_source = \"custom\"\n\n  # Base ignition rates by terrain (for overhead baseline)\n  # Units: events per mile per year (>= 0)\n  ignition_rates_by_terrain:\n    forested: 0.002 # Higher risk in forested areas (>= 0)\n    scrubbed_flat: 0.0002 # (>= 0)\n    wetland: 0.0001 # Lower risk in wet areas (>= 0)\n    farmland: 0.0002 # (>= 0)\n    desert_barren: 0.0001 # (>= 0)\n    urban: 0.0001 # (>= 0)\n    rolling_hills: 0.001 # (>= 0)\n    mountain: 0.002 # (>= 0)\n    subsea: 0.0 # No wildfire risk subsea (>= 0)\n\n  # Ignition rate multiplier by construction type\n  # Effective rate = ignition_rates_by_terrain × multiplier\n  # All multipliers (>= 0)\n  ignition_rate_multiplier:\n    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)\n    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)\n    subsea: 0.0 # No wildfire risk (>= 0)\n"
     },
     "07_outage_costs.yaml": {
       "filename": "07_outage_costs.yaml",
@@ -15944,181 +15951,6 @@
               }
             },
             "subsections": {
-              "energy_source_mix": {
-                "type": "object",
-                "fields": {},
-                "subsections": {
-                  "coal": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 10,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": -0.05,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "oil": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 2,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": -0.04,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "natural_gas": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 38,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.0,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "solar": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 10,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.05,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "wind": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 26,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.04,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "hydro": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 5,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.0,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "nuclear": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 5,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.0,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  },
-                  "other": {
-                    "type": "object",
-                    "fields": {
-                      "percentage": {
-                        "type": "int",
-                        "default": 4,
-                        "units": null,
-                        "description": "",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.other.percentage"
-                      },
-                      "rate_of_change": {
-                        "type": "float",
-                        "default": 0.0,
-                        "units": null,
-                        "description": "will have to be normalized",
-                        "path": "16_emissions_reductions.emissions_reductions.energy_source_mix.other.rate_of_change"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 2
-                  }
-                },
-                "field_count": 16
-              },
               "emission_intensities": {
                 "type": "object",
                 "fields": {},
@@ -16344,19 +16176,17 @@
                 "field_count": 3
               }
             },
-            "field_count": 44
+            "field_count": 28
           }
         },
-        "field_count": 44
+        "field_count": 28
       },
-      "field_count": 44,
+      "field_count": 28,
       "comments": {
-        "energy_source_mix": "User Inputs - Energy Source Mix (Yellow)",
-        "rate_of_change": "will have to be normalized",
         "emission_intensities": "User Inputs - Emission Intensities (Blue)",
         "societal_costs_per_kg": "User Inputs - Societal Costs (Yellow)"
       },
-      "raw_content": "# Emissions Reductions\n# Environmental benefits from emissions reductions\n\nemissions_reductions:\n  compensation_percent: 0.9 # [0,1]\n  # User Inputs - Energy Source Mix (Yellow)\n  energy_source_mix:\n    coal:\n      percentage: 10\n      # will have to be normalized\n      rate_of_change: -0.05\n    oil:\n      percentage: 2\n      # will have to be normalized\n      rate_of_change: -0.04\n    natural_gas:\n      percentage: 38\n      # will have to be normalized\n      rate_of_change: 0.0\n    solar:\n      percentage: 10\n      # will have to be normalized\n      rate_of_change: 0.05\n    wind:\n      percentage: 26\n      # will have to be normalized\n      rate_of_change: 0.04\n    hydro:\n      percentage: 5\n      # will have to be normalized\n      rate_of_change: 0.0\n    nuclear:\n      percentage: 5\n      # will have to be normalized\n      rate_of_change: 0.0\n    other:\n      percentage: 4\n      # will have to be normalized\n      rate_of_change: 0.0\n\n  # User Inputs - Emission Intensities (Blue)\n  emission_intensities:\n    co2_intensity_kg_per_mwh:\n      coal: 820\n      oil: 650\n      natural_gas: 450\n      solar: 48\n      wind: 12\n      hydro: 4\n      nuclear: 12\n      other: 0\n    sox_intensity_kg_per_mwh:\n      coal: 13\n      oil: 10\n      natural_gas: 0.1\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n    nox_intensity_kg_per_mwh:\n      coal: 4\n      oil: 3.5\n      natural_gas: 0.2\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n\n  # User Inputs - Societal Costs (Yellow)\n  societal_costs_per_kg:\n    co2_cost_per_kg: 0.051 # $/KGCO2\n    sox_cost_per_kg: 6.2 # $/KGSOX\n    nox_cost_per_kg: 5.0 # $/KGNOX\n\n"
+      "raw_content": "# Emissions Reductions\n# Environmental benefits from emissions reductions\n# Energy source mix lives in 18_energy_source_mix.yaml (merged at load for emissions.py).\n\nemissions_reductions:\n  compensation_percent: 0.9 # [0,1]\n\n  # User Inputs - Emission Intensities (Blue)\n  emission_intensities:\n    co2_intensity_kg_per_mwh:\n      coal: 820\n      oil: 650\n      natural_gas: 450\n      solar: 48\n      wind: 12\n      hydro: 4\n      nuclear: 12\n      other: 0\n    sox_intensity_kg_per_mwh:\n      coal: 13\n      oil: 10\n      natural_gas: 0.1\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n    nox_intensity_kg_per_mwh:\n      coal: 4\n      oil: 3.5\n      natural_gas: 0.2\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n\n  # User Inputs - Societal Costs (Yellow)\n  societal_costs_per_kg:\n    co2_cost_per_kg: 0.051 # $/KGCO2\n    sox_cost_per_kg: 6.2 # $/KGSOX\n    nox_cost_per_kg: 5.0 # $/KGNOX\n"
     },
     "17_congestion_curtailment_reductions.yaml": {
       "filename": "17_congestion_curtailment_reductions.yaml",
@@ -16412,6 +16242,13 @@
                         "description": "",
                         "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance"
                       },
+                      "near_binding_relief_factor": {
+                        "type": "float",
+                        "default": 0.25,
+                        "units": null,
+                        "description": "near baseline congestion energy = H_n * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
+                      },
                       "saturation_factor": {
                         "type": "float",
                         "default": 0.3,
@@ -16421,7 +16258,7 @@
                       }
                     },
                     "subsections": {},
-                    "field_count": 6
+                    "field_count": 7
                   },
                   "costs": {
                     "type": "object",
@@ -16531,6 +16368,13 @@
                         "description": "",
                         "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_average_exceedance"
                       },
+                      "near_binding_relief_factor": {
+                        "type": "float",
+                        "default": 0.25,
+                        "units": null,
+                        "description": "near baseline congestion energy = H_n * X mwh/yr",
+                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
+                      },
                       "saturation_factor": {
                         "type": "float",
                         "default": 0.35,
@@ -16626,12 +16470,203 @@
         "flow_factor": "We need the capacity from project technical details",
         "binding_hours": "delta C_eff = delta C_eff_new - delta C_eff_old",
         "near_binding_hours": "baseline congestion energy = H_b * X mwh/yr",
+        "near_binding_relief_factor": "near baseline congestion energy = H_n * X mwh/yr",
         "curtailment_hours_total": "transmission capacity is insufficient to deliver power to demand centers",
         "average_curtailment_mw": "THis is already expressed as \"constraint-equivalent MW\" conceptually",
         "average_curtailment_price": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
         "curtailment_saturation_factor": "Higher values mean more saturation (less benefit per MW of capacity added)"
       },
-      "raw_content": "# Congestion and Curtailment Reductions\n# Cost savings from reduced transmission congestion and renewable energy curtailment\n\ngreenfield_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # We need the capacity from project technical details\n      flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]\n      # delta C_eff = S * capacity\n      binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 560 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 1000 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 560 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\nreconductoring_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # delta C_eff = delta C_eff_new - delta C_eff_old\n      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n    # energy loss info is in project_category_circuit_detail.yaml\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 0 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\n\n###### DEFINITIONS:\n# 1) Congestion price: $/MWh\n#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding\n#      transmission constraints.\n# 2) Curtailment price: $/MWh\n#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)\n#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.\n"
+      "raw_content": "# Congestion and Curtailment Reductions\n# Cost savings from reduced transmission congestion and renewable energy curtailment\n\ngreenfield_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # We need the capacity from project technical details\n      flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]\n      # delta C_eff = S * capacity\n      binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 560 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 1000 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 560 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\nreconductoring_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # delta C_eff = delta C_eff_new - delta C_eff_old\n      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n    # energy loss info is in project_category_circuit_detail.yaml\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 0 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\n\n###### DEFINITIONS:\n# 1) Congestion price: $/MWh\n#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding\n#      transmission constraints.\n# 2) Curtailment price: $/MWh\n#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)\n#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.\n"
+    },
+    "18_energy_source_mix.yaml": {
+      "filename": "18_energy_source_mix.yaml",
+      "filepath": "yamls/18_energy_source_mix.yaml",
+      "category": "Technical",
+      "structure": {
+        "type": "object",
+        "fields": {},
+        "subsections": {
+          "energy_source_mix": {
+            "type": "object",
+            "fields": {},
+            "subsections": {
+              "coal": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 10,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.coal.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": -0.05,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.coal.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "oil": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 2,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.oil.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": -0.04,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.oil.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "natural_gas": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 38,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.natural_gas.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.natural_gas.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "solar": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 10,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.solar.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.05,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.solar.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "wind": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 26,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.wind.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.04,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.wind.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "hydro": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 5,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.hydro.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.hydro.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "nuclear": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 5,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.nuclear.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.nuclear.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "other": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 4,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.other.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.energy_source_mix.other.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              }
+            },
+            "field_count": 16
+          }
+        },
+        "field_count": 16
+      },
+      "field_count": 16,
+      "comments": {},
+      "raw_content": "# Energy source mix (grid / compensating generation)\n# Consumed by emissions and other modules via merge at load time; canonical input for Fuel Mixes UI tab.\n\nenergy_source_mix:\n  coal:\n    percentage: 10\n    rate_of_change: -0.05\n  oil:\n    percentage: 2\n    rate_of_change: -0.04\n  natural_gas:\n    percentage: 38\n    rate_of_change: 0.0\n  solar:\n    percentage: 10\n    rate_of_change: 0.05\n  wind:\n    percentage: 26\n    rate_of_change: 0.04\n  hydro:\n    percentage: 5\n    rate_of_change: 0.0\n  nuclear:\n    percentage: 5\n    rate_of_change: 0.0\n  other:\n    percentage: 4\n    rate_of_change: 0.0\n"
     },
     "19_cost_timing_patterns.yaml": {
       "filename": "19_cost_timing_patterns.yaml",
@@ -34041,7 +34076,7 @@
       "field_name": "liability_limit",
       "full_path": "04_insurance.insurance.wildfire_liability.liability_limit",
       "type": "int",
-      "default": 1000000000,
+      "default": 5400000,
       "description": ""
     },
     "04_insurance.insurance.wildfire_liability.rate_on_line": {
@@ -34122,7 +34157,7 @@
       "full_path": "06_wildfire_costs.wildfire.severity_per_event",
       "type": "int",
       "default": 5000000000,
-      "description": "exclusions, or societal/external damages; do not include insured amounts (those are in wildfire liability insurance)."
+      "description": "Event severity (consequence)"
     },
     "06_wildfire_costs.wildfire.risk_growth_rate": {
       "yaml_file": "06_wildfire_costs",
@@ -34139,6 +34174,14 @@
       "type": "str",
       "default": "social",
       "description": "Discount rate configuration"
+    },
+    "06_wildfire_costs.wildfire.discount_rate_custom": {
+      "yaml_file": "06_wildfire_costs",
+      "field_name": "discount_rate_custom",
+      "full_path": "06_wildfire_costs.wildfire.discount_rate_custom",
+      "type": "float",
+      "default": 0.03,
+      "description": ""
     },
     "06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested": {
       "yaml_file": "06_wildfire_costs",
@@ -49017,134 +49060,6 @@
       "default": 0.9,
       "description": ""
     },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.percentage",
-      "type": "int",
-      "default": 10,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.coal.rate_of_change",
-      "type": "float",
-      "default": -0.05,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.percentage",
-      "type": "int",
-      "default": 2,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.oil.rate_of_change",
-      "type": "float",
-      "default": -0.04,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.percentage",
-      "type": "int",
-      "default": 38,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.natural_gas.rate_of_change",
-      "type": "float",
-      "default": 0.0,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.percentage",
-      "type": "int",
-      "default": 10,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.solar.rate_of_change",
-      "type": "float",
-      "default": 0.05,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.percentage",
-      "type": "int",
-      "default": 26,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.wind.rate_of_change",
-      "type": "float",
-      "default": 0.04,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.percentage",
-      "type": "int",
-      "default": 5,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.hydro.rate_of_change",
-      "type": "float",
-      "default": 0.0,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.percentage",
-      "type": "int",
-      "default": 5,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.nuclear.rate_of_change",
-      "type": "float",
-      "default": 0.0,
-      "description": "will have to be normalized"
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.other.percentage": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "percentage",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.other.percentage",
-      "type": "int",
-      "default": 4,
-      "description": ""
-    },
-    "16_emissions_reductions.emissions_reductions.energy_source_mix.other.rate_of_change": {
-      "yaml_file": "16_emissions_reductions",
-      "field_name": "rate_of_change",
-      "full_path": "16_emissions_reductions.emissions_reductions.energy_source_mix.other.rate_of_change",
-      "type": "float",
-      "default": 0.0,
-      "description": "will have to be normalized"
-    },
     "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.coal": {
       "yaml_file": "16_emissions_reductions",
       "field_name": "coal",
@@ -49401,6 +49316,14 @@
       "default": 0,
       "description": ""
     },
+    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "near_binding_relief_factor",
+      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor",
+      "type": "float",
+      "default": 0.25,
+      "description": "near baseline congestion energy = H_n * X mwh/yr"
+    },
     "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
       "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "saturation_factor",
@@ -49497,6 +49420,14 @@
       "default": 0,
       "description": ""
     },
+    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor": {
+      "yaml_file": "17_congestion_curtailment_reductions",
+      "field_name": "near_binding_relief_factor",
+      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor",
+      "type": "float",
+      "default": 0.25,
+      "description": "near baseline congestion energy = H_n * X mwh/yr"
+    },
     "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
       "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "saturation_factor",
@@ -49568,6 +49499,134 @@
       "type": "float",
       "default": 0.1,
       "description": "Higher values mean more saturation (less benefit per MW of capacity added)"
+    },
+    "18_energy_source_mix.energy_source_mix.coal.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.coal.percentage",
+      "type": "int",
+      "default": 10,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.coal.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.coal.rate_of_change",
+      "type": "float",
+      "default": -0.05,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.oil.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.oil.percentage",
+      "type": "int",
+      "default": 2,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.oil.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.oil.rate_of_change",
+      "type": "float",
+      "default": -0.04,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.natural_gas.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.natural_gas.percentage",
+      "type": "int",
+      "default": 38,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.natural_gas.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.natural_gas.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.solar.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.solar.percentage",
+      "type": "int",
+      "default": 10,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.solar.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.solar.rate_of_change",
+      "type": "float",
+      "default": 0.05,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.wind.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.wind.percentage",
+      "type": "int",
+      "default": 26,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.wind.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.wind.rate_of_change",
+      "type": "float",
+      "default": 0.04,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.hydro.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.hydro.percentage",
+      "type": "int",
+      "default": 5,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.hydro.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.hydro.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.nuclear.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.nuclear.percentage",
+      "type": "int",
+      "default": 5,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.nuclear.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.nuclear.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.other.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.energy_source_mix.other.percentage",
+      "type": "int",
+      "default": 4,
+      "description": ""
+    },
+    "18_energy_source_mix.energy_source_mix.other.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.energy_source_mix.other.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
     },
     "19_cost_timing_patterns.cost_timing_patterns.build_costs.during_delay": {
       "yaml_file": "19_cost_timing_patterns",
@@ -66423,6 +66482,7 @@
       "01_project_technical_details.yaml",
       "07_outage_costs.yaml",
       "11_project_row_details.yaml",
+      "18_energy_source_mix.yaml",
       "19_cost_timing_patterns.yaml",
       "22_primary_bcr_config.yaml"
     ],

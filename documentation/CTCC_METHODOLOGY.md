@@ -949,7 +949,7 @@ $E_{loss}$, $E_{lineloss,MW,annual}$, and $E_{converterloss,MW,annual}$ are defi
 
 ### Emissions costs (3.b)
 
-Emissions cost is the societal cost of emissions (CO₂, SOₓ, NOₓ) from the extra generation used to compensate for transmission energy losses. Only a fraction of losses may be assumed to be met by additional generation; that energy is allocated across sources via an energy source mix (with optional growth/decay by year). Emissions are computed from emission intensities by source and pollutant, then valued at societal cost per kg. It is an externality/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the social discount rate.
+Emissions cost is the societal cost of emissions (CO₂, SOₓ, NOₓ) from the extra generation used to compensate for transmission energy losses. Only a fraction of losses may be assumed to be met by additional generation; that energy is allocated across sources via an energy source mix (with optional growth/decay by year). **Configuration:** the mix is stored in **`18_energy_source_mix.yaml`** (top-level key `18_energy_source_mix` in merged JSON / `combined_data`); it is **merged at load** with `16_emissions_reductions.yaml` in `yaml_loaders` / `json_loaders` so `emissions.py` still consumes one in-memory `energy_source_mix` dict. Legacy files may still carry mix under `16_emissions_reductions`; loaders fall back there if `18` is absent. Emissions are computed from emission intensities by source and pollutant, then valued at societal cost per kg. It is an externality/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the social discount rate.
 
 **Variables**
 

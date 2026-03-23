@@ -4014,13 +4014,15 @@
         { id: 'environmental', label: 'Environmental & Mitigation', sections: ['09_environmental_mitigation'] },
         { id: 'risk', label: 'Risk Costs', sections: ['06_wildfire_costs', '07_outage_costs'] },
         { id: 'congestion', label: 'Benefits - Congestion & Curtailment', sections: ['17_congestion_curtailment_reductions'] },
+        { id: 'energy-mix', label: 'Energy mix', sections: ['18_energy_source_mix'] },
         { id: 'emissions', label: 'Benefits - Emissions', sections: ['16_emissions_reductions'] }
       ];
 
       // Custom field ordering within sections
       const SECTION_FIELD_ORDER = {
         '03_financing.financial': ['base_year', 'inflation_rate', 'wacc_nominal', 'social_discount_rate', 'contingencies'],
-        '16_emissions_reductions.emissions_reductions': ['compensation_percent', 'energy_source_mix', 'societal_costs_per_kg', 'emission_intensities']
+        '16_emissions_reductions.emissions_reductions': ['compensation_percent', 'societal_costs_per_kg', 'emission_intensities'],
+        '18_energy_source_mix.energy_source_mix': ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other']
       };
 
       // Conductor type options filtered by construction type
@@ -7844,11 +7846,11 @@
 
       // Restructure energy source mix into a compact table layout
       function restructureEnergySourceMix() {
-        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
-        if (!emissionsTab) return;
+        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        if (!energyMixTab) return;
 
         // Find the "Energy Source Mix" subsection header
-        const headers = emissionsTab.querySelectorAll('.section-header-row');
+        const headers = energyMixTab.querySelectorAll('.section-header-row');
         let mixHeaderRow = null;
         headers.forEach(row => {
           const h = row.querySelector('.subsection-header, .section-header');
@@ -8023,7 +8025,7 @@
       }
 
       const FUEL_MIX_SOURCE_KEYS = ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
-      const FUEL_MIX_PATH_BASE = '16_emissions_reductions.emissions_reductions.energy_source_mix';
+      const FUEL_MIX_PATH_BASE = '18_energy_source_mix.energy_source_mix';
 
       function syncFuelMixPresetBarVisibility() {
         const bar = document.getElementById('fuel-mix-preset-bar');
@@ -8033,15 +8035,15 @@
       }
 
       function applyEnergySourceMixPreset(mix) {
-        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
-        if (!emissionsTab || !mix) return;
+        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        if (!energyMixTab || !mix) return;
         FUEL_MIX_SOURCE_KEYS.forEach(src => {
           const block = mix[src];
           if (!block || typeof block !== 'object') return;
           const pctPath = `${FUEL_MIX_PATH_BASE}.${src}.percentage`;
           const rocPath = `${FUEL_MIX_PATH_BASE}.${src}.rate_of_change`;
-          const pctIn = emissionsTab.querySelector(`input[data-path="${pctPath}"]`);
-          const rocIn = emissionsTab.querySelector(`input[data-path="${rocPath}"]`);
+          const pctIn = energyMixTab.querySelector(`input[data-path="${pctPath}"]`);
+          const rocIn = energyMixTab.querySelector(`input[data-path="${rocPath}"]`);
           if (pctIn) {
             const p = Number(block.percentage);
             if (!Number.isNaN(p)) {
@@ -8061,9 +8063,9 @@
 
       function injectFuelMixPresetBar() {
         document.getElementById('fuel-mix-preset-bar')?.remove();
-        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
-        if (!emissionsTab) return;
-        const headers = emissionsTab.querySelectorAll('.section-header-row');
+        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        if (!energyMixTab) return;
+        const headers = energyMixTab.querySelectorAll('.section-header-row');
         let mixHeaderRow = null;
         headers.forEach(row => {
           const h = row.querySelector('.subsection-header, .section-header');
@@ -8409,13 +8411,28 @@
       // =============================================
       // Modified renderJsonInputs (monkey-patched)
       // =============================================
+      /** Lift legacy energy_source_mix from 16_emissions_reductions into 18_energy_source_mix when 18 is absent. */
+      function normalizeEnergySourceMixInCombinedData(data) {
+        if (!data || typeof data !== 'object') return data;
+        const out = JSON.parse(JSON.stringify(data));
+        const has18 = out['18_energy_source_mix'] && typeof out['18_energy_source_mix'] === 'object';
+        const er = out['16_emissions_reductions'] && out['16_emissions_reductions'].emissions_reductions;
+        const legacyMix = er && er.energy_source_mix;
+        if (!has18 && legacyMix && typeof legacyMix === 'object') {
+          out['18_energy_source_mix'] = { energy_source_mix: JSON.parse(JSON.stringify(legacyMix)) };
+          delete er.energy_source_mix;
+        }
+        return out;
+      }
+
       const originalRenderJsonInputs = renderJsonInputs;
       renderJsonInputs = function(data) {
+        const normalized = normalizeEnergySourceMixInCombinedData(data);
         // Store original data for reset functionality
-        originalJsonData = JSON.parse(JSON.stringify(data));
+        originalJsonData = JSON.parse(JSON.stringify(normalized));
 
         // Call original function
-        originalRenderJsonInputs(data);
+        originalRenderJsonInputs(normalized);
 
         // Set up conditional field listeners (includes initial visibility update)
         setupConditionalFieldListeners();

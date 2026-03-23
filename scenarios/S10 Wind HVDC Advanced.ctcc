@@ -2578,40 +2578,6 @@
     "16_emissions_reductions": {
       "emissions_reductions": {
         "compensation_percent": 0.9,
-        "energy_source_mix": {
-          "coal": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "oil": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "natural_gas": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "solar": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "wind": {
-            "percentage": 100,
-            "rate_of_change": 0.0
-          },
-          "hydro": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "nuclear": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          },
-          "other": {
-            "percentage": 0,
-            "rate_of_change": 0.0
-          }
-        },
         "emission_intensities": {
           "co2_intensity_kg_per_mwh": {
             "coal": 820,
@@ -4756,6 +4722,42 @@
         "benefits": {
           "congestion": true,
           "curtailment": true
+        }
+      }
+    },
+    "18_energy_source_mix": {
+      "energy_source_mix": {
+        "coal": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "oil": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "natural_gas": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "solar": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "wind": {
+          "percentage": 100,
+          "rate_of_change": 0.0
+        },
+        "hydro": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "nuclear": {
+          "percentage": 0,
+          "rate_of_change": 0.0
+        },
+        "other": {
+          "percentage": 0,
+          "rate_of_change": 0.0
         }
       }
     }

@@ -728,7 +728,7 @@ The calculator no longer has a JSON input mode. All input is via a YAML director
 
 **Status:** ⚠️ Known limitation / Future improvement
 
-**Problem:** Emissions due to line-loss compensation are calculated using the configured **average** energy source mix (e.g. from `16_emissions_reductions.yaml`). For incremental emissions from extra MWh of loss, the theoretically correct measure is the **marginal** unit (or marginal emission factor), not the system average.
+**Problem:** Emissions due to line-loss compensation are calculated using the configured **average** energy source mix (canonical YAML **`yamls/18_energy_source_mix.yaml`**, merged at load with `16_emissions_reductions` in `load_emissions_details()`). For incremental emissions from extra MWh of loss, the theoretically correct measure is the **marginal** unit (or marginal emission factor), not the system average.
 
 **Current behavior:** The emissions script (`scripts/emissions.py`) uses `energy_source_mix` shares as weights: emissions = TEC × Σ (mix_share_j × intensity_j). Average mix data is easy to obtain and consistent with CTCC’s current annual-level resolution.
 
