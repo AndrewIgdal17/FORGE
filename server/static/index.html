@@ -1974,19 +1974,19 @@
         ]},
         { group: 'Operational Costs (PV)', metrics: [
           { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
-          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency' },
+          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
-          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency' },
-          { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency' },
+          { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency', zeroIfMissing: true },
+          { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency', zeroIfMissing: true },
           { key: 'total_risk_pv', label: 'Total Risk Cost', path: 'summary.total_risk_pv', format: 'currency' },
         ]},
         { group: 'Delay Costs (PV)', metrics: [
-          { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency' },
+          { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency' },
-          { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency' },
+          { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
           { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
         ]},
       ];
@@ -2949,7 +2949,11 @@
         }
         const config = getMetricConfig(metricKey);
         if (!config || !scenario.results) return undefined;
-        return getValueAtPath(scenario.results, config.path);
+        const raw = getValueAtPath(scenario.results, config.path);
+        if ((raw === undefined || raw === null) && config.zeroIfMissing) {
+          return 0;
+        }
+        return raw;
       }
 
       function computeMainWithExclusions(scenario, metricKey) {
