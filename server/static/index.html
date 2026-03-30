@@ -1016,7 +1016,7 @@
       .scenario-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
       .scenario-toolbar button { padding: 0.5rem 1rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
       .scenario-toolbar button:hover { background: #f0f0f0; }
-      .scenario-list { max-height: 400px; overflow-y: auto; margin-bottom: 1.5rem; border-collapse: collapse; }
+      .scenario-list { flex: 0 0 auto; max-height: 50%; overflow-y: auto; margin-bottom: 0; border-collapse: collapse; min-height: 0; }
       .scenario-list table { width: 100%; border-collapse: collapse; }
       .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); vertical-align: top; white-space: nowrap; }
       .scenario-card:hover td { background: rgba(0,0,0,0.02); }
@@ -1035,6 +1035,22 @@
       .scenario-card-actions button.load-btn:hover { background: #e3f2fd; }
       .scenario-card-actions button.delete-btn { color: #b00020; }
       .scenario-card-actions button.delete-btn:hover { background: #fce4ec; }
+      .scenario-drag-cell { width: 20px; padding: 0 0.5rem 0 0.35rem !important; vertical-align: middle !important; text-align: center; }
+      .scenario-drag-handle {
+        display: inline-block;
+        vertical-align: middle;
+        width: 16px;
+        height: 16px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M14 5V19M5 14L3 12L5 10M19 14L21 12L19 10M10 5L10 19' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+        opacity: 0;
+        cursor: grab;
+        transform: rotate(90deg);
+      }
+      .scenario-card:hover .scenario-drag-handle { opacity: 0.25; }
+      .scenario-drag-handle:hover { opacity: 0.5 !important; }
+      .scenario-card.scenario-row-dragging { opacity: 0.35; }
+      .scenario-card.scenario-drop-above td { box-shadow: inset 0 3px 0 rgba(0,0,0,0.45); }
+      .scenario-card.scenario-drop-below td { box-shadow: inset 0 -3px 0 rgba(0,0,0,0.45); }
       .scenario-card-actions button[data-tooltip] { position: relative; }
       .scenario-card-actions button[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; margin-bottom: 0.25rem; }
       .scenario-card-actions button[data-tooltip]:hover::after { opacity: 1; }
@@ -1055,6 +1071,17 @@
         top: 50%;
         height: 1px;
         background: rgba(0, 0, 0, 0.1);
+      }
+      .scenario-divider-hint {
+        display: none;
+        position: absolute;
+        top: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.7rem;
+        color: rgba(0, 0, 0, 0.25);
+        white-space: nowrap;
+        pointer-events: none;
       }
       .scenario-toggle-btn {
         position: relative;
@@ -1090,7 +1117,29 @@
         color: rgba(0, 0, 0, 0.6);
         border-color: rgba(0, 0, 0, 0.25);
       }
-      .comparison-section { margin-top: 1rem; }
+      .comparison-toggle-btn {
+        font-size: 0.7rem;
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.35);
+        background: none;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.25rem;
+        padding: 0.15rem 0.5rem;
+        cursor: pointer;
+      }
+      .comparison-toggle-btn:hover {
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+      .comparison-toggle-btn.active {
+        background: rgba(0, 0, 0, 0.08);
+        color: rgba(0, 0, 0, 0.6);
+        border-color: rgba(0, 0, 0, 0.2);
+      }
+      .comparison-section { margin-top: 0; flex: 1 1 0; overflow-y: auto; min-height: 0; }
+      .comparison-section > h3,
+      .comparison-section > #cmp-toolbar-row2,
+      .comparison-section > #cmp-delta-hint { user-select: none; -webkit-user-select: none; }
       .comparison-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
       .comparison-controls { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
       .comparison-controls select { padding: 0.35rem 0.5rem; border: 1px solid rgba(0,0,0,0.2); border-radius: 0.25rem; font-size: 0.85rem; min-width: 180px; }
@@ -1100,7 +1149,26 @@
       .comparison-table thead th:first-child { border-left: 1px solid rgba(0,0,0,0.12); border-top-left-radius: 0.5rem; }
       .comparison-table thead th:nth-last-child(2) { border-right: 1px solid rgba(0,0,0,0.12); border-top-right-radius: 0.5rem; }
       .comparison-table thead th:last-child { border: none; background: transparent; }
-      .comparison-table th.metric-col { text-align: right; padding: 0.6rem 1rem; }
+      .comparison-table th.metric-col { text-align: right; padding: 0.6rem 1rem; cursor: grab; position: relative; }
+      .comparison-table th.metric-col::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M14 5V19M5 14L3 12L5 10M19 14L21 12L19 10M10 5L10 19' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .comparison-table th.metric-col:hover::after { opacity: 0.3; }
+      .comparison-table th.metric-col.cmp-dragging { opacity: 0.35; }
+      .comparison-table td.cmp-dragging { opacity: 0.35; }
+      .comparison-table thead .cmp-drop-left,
+      .comparison-table tbody .cmp-drop-left { box-shadow: inset 3px 0 0 rgba(0,0,0,0.45); }
+      .comparison-table thead .cmp-drop-right,
+      .comparison-table tbody .cmp-drop-right { box-shadow: inset -3px 0 0 rgba(0,0,0,0.45); }
       .comparison-table tbody td { padding: 0.5rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.06); white-space: nowrap; }
       .comparison-table tbody td:first-child { border-left: 1px solid rgba(0,0,0,0.12); }
       .comparison-table tbody td:nth-last-child(2) { border-right: 1px solid rgba(0,0,0,0.12); }
@@ -1162,8 +1230,9 @@
       .cmp-metric-picker-panel summary::before {
         content: '';
         display: inline-block;
-        width: 0.35em;
-        margin-right: 0.4em;
+        width: 0;
+        height: 0;
+        margin-right: 0.45em;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
         border-top: 5px solid rgba(0,0,0,0.35);
@@ -1171,11 +1240,11 @@
         vertical-align: middle;
       }
       .cmp-metric-picker-panel details[open] > summary::before { transform: rotate(0deg); }
-      .cmp-metric-picker-panel .cmp-det-group > summary {
+      .cmp-metric-picker-panel .cmp-group-header {
         font-weight: 500;
         font-size: 0.76rem;
-        padding: 0.35rem 0.75rem 0.35rem 1.25rem;
-        color: rgba(0,0,0,0.45);
+        padding: 0.35rem 0.75rem 0.35rem calc(1.25rem + 1ch);
+        color: rgba(0,0,0,0.35);
       }
       .cmp-metric-picker-panel .cmp-metric-picker-metrics {
         padding: 0 0.5rem 0.35rem 1.5rem;
@@ -1231,6 +1300,7 @@
         color: rgba(0, 0, 0, 0.45);
         padding: 0.35rem 0.5rem 0.25rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        vertical-align: bottom;
       }
       .scenario-list-table thead th.scenario-base-col { width: 2.25rem; text-align: center; }
       .scenario-list-table thead th.scenario-compare-col { width: 2rem; text-align: center; }
@@ -1866,6 +1936,7 @@
         <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
       </div>
       <div class="scenario-divider" id="scenario-divider">
+        <span class="scenario-divider-hint" id="scenario-divider-hint">Click to show scenarios list</span>
         <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
           <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -1874,22 +1945,31 @@
         <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
           <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
           <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
-          <button type="button" id="exclusions-btn" class="comparison-export-btn">Exclusions</button>
-          <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
-            <input type="checkbox" id="cmp-show-delta" />
-            Show Δ vs baseline
+          <button type="button" id="exclusions-btn" class="comparison-toggle-btn">Exclusions</button>
+          <button type="button" id="compare-baseline-btn" class="comparison-toggle-btn">Compare to Baseline</button>
+          <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
+            <input type="checkbox" id="cmp-auto-sort-columns" />
+            Auto-sort Columns
           </label>
-          <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
-            <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
-              <option value="values_plus_delta">Values + Δ</option>
-              <option value="delta_only">Δ only (non-baseline)</option>
-            </select>
-          </label>
-          <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
-            <input type="checkbox" id="cmp-show-percent-delta" disabled />
-            Show % Δ
-          </label>
-          <span id="custom-bcr-controls" style="display:none; margin-left: 0.5rem; flex-shrink: 0; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
+        </h3>
+        <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
+          <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
+            <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
+              <input type="checkbox" id="cmp-show-delta" />
+              Show Δ vs baseline
+            </label>
+            <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
+              <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
+                <option value="values_plus_delta">Values + Δ</option>
+                <option value="delta_only">Δ only (except baseline)</option>
+              </select>
+            </label>
+            <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
+              <input type="checkbox" id="cmp-show-percent-delta" disabled />
+              Show % Δ
+            </label>
+          </span>
+          <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
             <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
@@ -1897,7 +1977,7 @@
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
             <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
           </span>
-        </h3>
+        </div>
         <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
         <div id="comparison-table-container"></div>
       </div>
@@ -2068,6 +2148,7 @@
       /** @type {'values_plus_delta'|'delta_only'} */
       let comparisonDeltaDisplayMode = 'values_plus_delta';
       let showComparisonPercentDelta = false;
+      let comparisonAutoSort = false;
       let comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
       /** Hierarchical add-column picker (fixed popover); see spec Tooling UX 3/23. */
@@ -2140,30 +2221,24 @@
           { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
         { group: 'Costs (PV)', metrics: [
+          { key: 'build_pv', label: 'Build Cost', path: 'costs.build.total_pv', format: 'currency' },
+          { key: 'env_pv', label: 'Environmental Cost', path: 'costs.environmental.total_pv', format: 'currency' },
+          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency', zeroIfMissing: true },
+          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
+          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
           { key: 'total_capital_pv', label: 'Total Capital Cost', path: 'summary.total_capital_pv', format: 'currency' },
           { key: 'total_operational_pv', label: 'Total Operational Cost', path: 'summary.total_operational_pv', format: 'currency' },
           { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
         ]},
-        { group: 'Benefits (PV)', metrics: [
-          { key: 'congestion_pv', label: 'Congestion (Conservative)', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
-          { key: 'curtailment_pv', label: 'Curtailment (Conservative)', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
-          { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
-          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
-        ]},
-        { group: 'Net Benefits (PV)', metrics: [
+        { group: 'Benefits', metrics: [
+          { key: 'congestion_pv', label: 'Congestion Benefits', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
+          { key: 'curtailment_pv', label: 'Curtailment Benefits', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
           { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
           { key: 'net_benefit_ratepayer_pv', label: 'Net Benefit (Ratepayer)', path: 'bcr.net_benefit_ratepayer_pv', format: 'currency' },
           { key: 'net_benefit_pv', label: 'Net Benefit (System)', path: 'bcr.net_benefit_pv', format: 'currency' },
           { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
-        ]},
-        { group: 'Capital Costs (PV)', metrics: [
-          { key: 'build_pv', label: 'Build Cost', path: 'costs.build.total_pv', format: 'currency' },
-          { key: 'env_pv', label: 'Environmental Cost', path: 'costs.environmental.total_pv', format: 'currency' },
-          { key: 'row_capital_pv', label: 'ROW Capital Cost', path: 'costs.row.row_capital_pv', format: 'currency' },
-        ]},
-        { group: 'Operational Costs (PV)', metrics: [
-          { key: 'insurance_pv', label: 'Insurance Cost', path: 'costs.insurance.pv_total', format: 'currency', zeroIfMissing: true },
-          { key: 'row_rent_pv', label: 'ROW Rent Cost', path: 'costs.row.row_rent_pv', format: 'currency' },
+          { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
+          { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
           { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency', zeroIfMissing: true },
@@ -2195,10 +2270,7 @@
         'Project Parameters': 'project',
         'Benefit-Cost Ratio': 'bcr',
         'Costs (PV)': 'costs',
-        'Benefits (PV)': 'benefits',
-        'Net Benefits (PV)': 'benefits',
-        'Capital Costs (PV)': 'costs',
-        'Operational Costs (PV)': 'costs',
+        'Benefits': 'benefits',
         'Risk Costs (PV)': 'costs',
         'Delay Costs (PV)': 'costs',
         'Energy / Emissions (PV)': 'costs',
@@ -2207,11 +2279,11 @@
 
       const COMPARISON_SUPERGROUP_ORDER = ['project', 'bcr', 'costs', 'benefits', 'sensitivity'];
       const COMPARISON_SUPERGROUP_LABEL = {
-        project: 'Project',
-        bcr: 'Benefit–cost',
+        project: 'Project Information',
+        bcr: 'Benefit-Cost Ratio (BCR)',
         costs: 'Costs',
         benefits: 'Benefits',
-        sensitivity: 'Sensitivity',
+        sensitivity: 'BCR Sensitivity Adjustments',
       };
 
       const CMP_PICKER_STORAGE_KEY = 'ctcc-cmp-picker-details';
@@ -2245,7 +2317,7 @@
         });
       }
 
-      sortComparisonColumnsByCatalog();
+      if (comparisonAutoSort) sortComparisonColumnsByCatalog();
 
       const RESULTS_EXPORT_FIELDS = [
         { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
@@ -2456,18 +2528,23 @@
         syncComparisonSelectAllCheckbox(selectAllCmp);
         const thBase = document.createElement('th');
         thBase.className = 'scenario-base-col';
-        thBase.textContent = 'Base';
-        thBase.title = 'Baseline for Δ';
+        thBase.innerHTML = 'Set as<br>baseline';
+        thBase.style.textAlign = 'center';
+        thBase.style.lineHeight = '1.1';
+        thBase.title = 'Set as baseline for Δ comparison';
         const thScenario = document.createElement('th');
         thScenario.textContent = 'Scenario';
         const thActions = document.createElement('th');
         thActions.textContent = '';
         const thFill = document.createElement('th');
         thFill.style.width = '100%';
+        const thDrag = document.createElement('th');
+        thDrag.style.width = '20px';
         headRow.appendChild(thCmp);
         headRow.appendChild(thBase);
         headRow.appendChild(thScenario);
         headRow.appendChild(thActions);
+        headRow.appendChild(thDrag);
         headRow.appendChild(thFill);
         thead.appendChild(headRow);
         table.appendChild(thead);
@@ -2482,7 +2559,7 @@
 
           // Row click toggles checkbox (except buttons, checkbox, radio, name editing)
           card.addEventListener('click', (e) => {
-            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
+            if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-drag-handle') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
           });
@@ -2628,6 +2705,16 @@
           actionsTd.appendChild(actions);
           card.appendChild(actionsTd);
 
+          // Drag handle cell
+          const dragTd = document.createElement('td');
+          dragTd.className = 'scenario-drag-cell';
+          const dragHandle = document.createElement('span');
+          dragHandle.className = 'scenario-drag-handle';
+          dragHandle.title = 'Drag to reorder';
+          dragHandle.draggable = true;
+          dragTd.appendChild(dragHandle);
+          card.appendChild(dragTd);
+
           // Filler cell
           const fillerTd = document.createElement('td');
           fillerTd.style.cssText = 'width: 100%;';
@@ -2635,6 +2722,73 @@
 
           tbody.appendChild(card);
         });
+
+        // Row drag-and-drop reordering
+        (function initRowDrag() {
+          let dragRowIdx = null;
+          let dropRowIdx = null;
+
+          function clearRowDropIndicators() {
+            tbody.querySelectorAll('.scenario-drop-above, .scenario-drop-below').forEach(el => {
+              el.classList.remove('scenario-drop-above', 'scenario-drop-below');
+            });
+          }
+
+          const rows = tbody.querySelectorAll('tr.scenario-card');
+          rows.forEach((row, rowIdx) => {
+            const handle = row.querySelector('.scenario-drag-handle');
+            if (!handle) return;
+
+            handle.addEventListener('dragstart', function(e) {
+              e.stopPropagation();
+              dragRowIdx = rowIdx;
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', '' + rowIdx);
+              const ghost = document.createElement('div');
+              ghost.textContent = sessionScenarios[rowIdx].customName;
+              ghost.style.cssText = 'position:absolute;top:-9999px;padding:4px 10px;background:rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.2);border-radius:4px;font-size:0.8rem;font-weight:600;color:rgba(0,0,0,0.5);white-space:nowrap;';
+              document.body.appendChild(ghost);
+              e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
+              requestAnimationFrame(() => document.body.removeChild(ghost));
+              setTimeout(() => row.classList.add('scenario-row-dragging'), 0);
+            });
+
+            handle.addEventListener('dragend', function() {
+              row.classList.remove('scenario-row-dragging');
+              clearRowDropIndicators();
+              if (dragRowIdx !== null && dropRowIdx !== null && dragRowIdx !== dropRowIdx) {
+                const moved = sessionScenarios.splice(dragRowIdx, 1)[0];
+                const insertAt = dropRowIdx > dragRowIdx ? dropRowIdx - 1 : dropRowIdx;
+                sessionScenarios.splice(insertAt, 0, moved);
+                renderScenarioList();
+              }
+              dragRowIdx = null;
+              dropRowIdx = null;
+            });
+
+            row.addEventListener('dragover', function(e) {
+              if (dragRowIdx === null) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              const targetIdx = rowIdx;
+              if (targetIdx === dragRowIdx) { clearRowDropIndicators(); dropRowIdx = null; return; }
+              clearRowDropIndicators();
+              const rect = row.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              if (e.clientY < midY) {
+                dropRowIdx = targetIdx;
+                row.classList.add('scenario-drop-above');
+              } else {
+                dropRowIdx = targetIdx + 1;
+                row.classList.add('scenario-drop-below');
+              }
+            });
+
+            row.addEventListener('drop', function(e) {
+              e.preventDefault();
+            });
+          });
+        })();
 
         container.appendChild(table);
 
@@ -2734,21 +2888,25 @@
 
       document.getElementById('scenario-toggle-btn').addEventListener('click', function() {
         const list = document.getElementById('scenario-list');
+        const cmpSection = document.getElementById('comparison-section');
+        const hint = document.getElementById('scenario-divider-hint');
         const btn = this;
         const collapsed = list.classList.toggle('collapsed');
         if (collapsed) {
           btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
           btn.title = 'Show scenario list';
+          if (cmpSection) { cmpSection.style.flex = '1 1 auto'; }
+          if (hint) { hint.style.display = 'block'; }
         } else {
           btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
           btn.title = 'Hide scenario list';
+          if (cmpSection) { cmpSection.style.flex = ''; }
+          if (hint) { hint.style.display = 'none'; }
         }
       });
 
       // Copy comparison table to clipboard (Excel-compatible TSV).
-      // Rules: With Show Δ + baseline, emit one column per metric for value + one for " (Δ)" (delta plain text, no "Δ " prefix);
-      // baseline row leaves Δ (and optional % Δ) cells empty. With % Δ on, add a third column per metric " (% Δ)".
-      // Otherwise one column per metric (absolute only). On-screen "Δ only" mode does not change export columns.
+      // One column per metric. With Δ enabled, each scenario gets sub-rows for delta and optional % delta.
       document.getElementById('copy-table-btn').addEventListener('click', function() {
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
@@ -2756,45 +2914,51 @@
           return;
         }
         const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
-        const separateDelta = !!(showDeltaVsBaseline && baselineScenario);
-        const includePctCol = separateDelta && showComparisonPercentDelta;
-        const subCols = separateDelta ? (includePctCol ? 3 : 2) : 1;
+        const hasDelta = !!(showDeltaVsBaseline && baselineScenario);
+        const hasPercent = hasDelta && showComparisonPercentDelta;
 
         const headers = ['Scenario'];
-        if (subCols === 1) {
-          comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
-        } else {
-          comparisonColumns.forEach(key => {
-            const L = comparisonMetricLabel(key);
-            headers.push(L, L + ' (Δ)');
-            if (includePctCol) headers.push(L + ' (% Δ)');
-          });
-        }
+        comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
 
-        const rows = selectedScenarios.map(s => {
+        const rows = [];
+        selectedScenarios.forEach(s => {
+          const isBase = baselineScenario && s.id === baselineScenario.id;
           let nameCell = s.customName;
-          if (showDeltaVsBaseline && baselineScenario && s.id === baselineScenario.id) {
-            nameCell += ' (Baseline)';
-          }
-          const cells = [nameCell];
+          if (hasDelta && isBase) nameCell += ' (Baseline)';
+
+          // Value row
+          const valCells = [nameCell];
           comparisonColumns.forEach(key => {
             const cfg = getMetricConfig(key);
-            if (!cfg) {
-              for (let c = 0; c < subCols; c++) cells.push('');
-              return;
-            }
-            const parts = getDeltaDisplayParts(baselineScenario, s, key, includePctCol);
-            if (subCols === 1) {
-              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
-              cells.push(dline ? parts.absText + ' | ' + dline : parts.absText);
-            } else {
-              const isBase = baselineScenario && s.id === baselineScenario.id;
-              cells.push(parts.absText);
-              cells.push(isBase ? '' : (parts.deltaPlain || ''));
-              if (includePctCol) cells.push(isBase ? '' : (parts.percentText || ''));
-            }
+            if (!cfg) { valCells.push(''); return; }
+            const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
+            valCells.push(parts.absText || '');
           });
-          return cells;
+          rows.push(valCells);
+
+          // Delta row
+          if (hasDelta && !isBase) {
+            const deltaCells = [''];
+            comparisonColumns.forEach(key => {
+              const cfg = getMetricConfig(key);
+              if (!cfg) { deltaCells.push(''); return; }
+              const dline = formatDeltaLine(baselineScenario, s, key);
+              deltaCells.push(dline || '');
+            });
+            rows.push(deltaCells);
+          }
+
+          // Percent delta row
+          if (hasPercent && !isBase) {
+            const pctCells = [''];
+            comparisonColumns.forEach(key => {
+              const cfg = getMetricConfig(key);
+              if (!cfg) { pctCells.push(''); return; }
+              const pline = formatPercentDeltaLine(baselineScenario, s, key);
+              pctCells.push(pline || '');
+            });
+            rows.push(pctCells);
+          }
         });
         const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
         navigator.clipboard.writeText(tsv).then(() => {
@@ -2805,7 +2969,7 @@
         });
       });
 
-      // Export comparison table as PNG (column layout matches Copy TSV: multi-column per metric when Δ + baseline).
+      // Export comparison table as PNG — one column per metric, delta/% nested as sub-lines.
       document.getElementById('export-png-btn').addEventListener('click', function() {
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
         if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
@@ -2813,110 +2977,30 @@
           return;
         }
         const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
-        const pngSeparateDelta = !!(showDeltaVsBaseline && baselineScenario);
-        const pngShowPercent = pngSeparateDelta && showComparisonPercentDelta;
-        const subCols = pngSeparateDelta ? (pngShowPercent ? 3 : 2) : 1;
+        const hasDelta = !!(showDeltaVsBaseline && baselineScenario);
+        const hasPercent = hasDelta && showComparisonPercentDelta;
 
-        // Build a clean table in an offscreen container
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'position: absolute; left: -9999px; top: 0; background: white; padding: 1.5rem; font-family: system-ui, -apple-system, sans-serif; font-size: 14px;';
-        document.body.appendChild(wrap);
-
-        const title = document.createElement('div');
-        title.style.cssText = 'font-weight: 700; font-size: 16px; margin-bottom: 0.75rem;';
-        title.textContent = 'Scenario Comparison';
-        wrap.appendChild(title);
-
-        const tbl = document.createElement('table');
-        tbl.style.cssText = 'border-collapse: collapse; font-size: 13px;';
-
-        // Header
-        const thead = document.createElement('thead');
-        const hrow = document.createElement('tr');
-        const headers = ['Scenario'];
-        if (subCols === 1) {
-          comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
-        } else {
-          comparisonColumns.forEach(key => {
-            const L = comparisonMetricLabel(key);
-            headers.push(L, L + ' (Δ)');
-            if (pngShowPercent) headers.push(L + ' (% Δ)');
-          });
-        }
-        headers.forEach((h, i) => {
-          const th = document.createElement('th');
-          th.textContent = h;
-          th.style.cssText = 'padding: 6px 12px; border-bottom: 2px solid #ddd; text-align: ' + (i === 0 ? 'left' : 'right') + '; white-space: nowrap; font-weight: 600; background: #f8f9fa;';
-          hrow.appendChild(th);
-        });
-        thead.appendChild(hrow);
-        tbl.appendChild(thead);
-
-        // Body
-        const tbody = document.createElement('tbody');
-        selectedScenarios.forEach((s, ri) => {
-          const tr = document.createElement('tr');
-          if (ri % 2 === 1) tr.style.background = 'rgba(0,0,0,0.02)';
-          const nameTd = document.createElement('td');
-          let nameText = s.customName;
-          if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nameText += ' (Baseline)';
-          nameTd.textContent = nameText;
-          nameTd.style.cssText = 'padding: 5px 12px; border-bottom: 1px solid #eee; white-space: nowrap;';
-          tr.appendChild(nameTd);
-          comparisonColumns.forEach(key => {
-            const cfg = getMetricConfig(key);
-            const tdStyle = 'padding: 5px 12px; border-bottom: 1px solid #eee; text-align: right; white-space: nowrap; font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 12px;';
-            if (!cfg) {
-              for (let c = 0; c < subCols; c++) {
-                const td = document.createElement('td');
-                td.style.cssText = tdStyle;
-                tr.appendChild(td);
-              }
-              return;
-            }
-            const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
-            if (subCols === 1) {
-              const td = document.createElement('td');
-              td.style.cssText = tdStyle;
-              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
-              td.textContent = dline ? parts.absText + ' | ' + dline : parts.absText;
-              tr.appendChild(td);
-            } else {
-              const isBase = baselineScenario && s.id === baselineScenario.id;
-              const t0 = document.createElement('td');
-              t0.style.cssText = tdStyle;
-              t0.textContent = parts.absText;
-              tr.appendChild(t0);
-              const t1 = document.createElement('td');
-              t1.style.cssText = tdStyle;
-              t1.textContent = isBase ? '' : (parts.deltaPlain || '');
-              tr.appendChild(t1);
-              if (pngShowPercent) {
-                const t2 = document.createElement('td');
-                t2.style.cssText = tdStyle;
-                t2.textContent = isBase ? '' : (parts.percentText || '');
-                tr.appendChild(t2);
-              }
-            }
-          });
-          tbody.appendChild(tr);
-        });
-        tbl.appendChild(tbody);
-        wrap.appendChild(tbl);
-
-        // Render to canvas directly (no foreignObject to avoid taint)
         const scale = 2;
         const font = '13px system-ui, -apple-system, sans-serif';
         const monoFont = '12px "SF Mono", Monaco, Consolas, monospace';
         const deltaMonoFont = '11px "SF Mono", Monaco, Consolas, monospace';
-        const pctMonoFont = '11px "SF Mono", Monaco, Consolas, monospace';
         const boldFont = 'bold 13px system-ui, -apple-system, sans-serif';
         const titleFont = 'bold 16px system-ui, -apple-system, sans-serif';
         const padX = 12;
-        const rowH = pngSeparateDelta ? 30 : 28;
+        const lineH = 15;
         const headerH = 32;
         const titleH = 36;
+        const cellPadY = 6;
 
+        // Determine lines per row: 1 (value) + optional delta + optional %
+        const linesPerRow = 1 + (hasDelta ? 1 : 0) + (hasPercent ? 1 : 0);
+        const rowH = linesPerRow * lineH + cellPadY * 2;
+
+        // Headers: one per metric
+        const headers = ['Scenario'];
+        comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
+
+        // Measure column widths
         const mCtx = document.createElement('canvas').getContext('2d');
         const colWidths = headers.map((h, i) => {
           mCtx.font = boldFont;
@@ -2925,32 +3009,23 @@
             if (i === 0) {
               mCtx.font = font;
               let nt = s.customName;
-              if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nt += ' (Baseline)';
+              if (hasDelta && baselineScenario && s.id === baselineScenario.id) nt += ' (Baseline)';
               w = Math.max(w, mCtx.measureText(nt).width);
             } else {
-              const metricIdx = Math.floor((i - 1) / subCols);
-              const subIdx = (i - 1) % subCols;
-              const key = comparisonColumns[metricIdx];
+              const key = comparisonColumns[i - 1];
               const cfg = getMetricConfig(key);
               if (!cfg) return;
-              const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
-              const isBase = baselineScenario && s.id === baselineScenario.id;
-              let txt = '';
-              if (subCols === 1) {
-                const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
-                txt = dline ? parts.absText + ' | ' + dline : parts.absText;
-                mCtx.font = monoFont;
-              } else if (subIdx === 0) {
-                txt = parts.absText;
-                mCtx.font = monoFont;
-              } else if (subIdx === 1) {
-                txt = isBase ? '' : (parts.deltaPlain || '');
-                mCtx.font = deltaMonoFont;
-              } else {
-                txt = isBase ? '' : (parts.percentText || '');
-                mCtx.font = pctMonoFont;
+              const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
+              mCtx.font = monoFont;
+              w = Math.max(w, mCtx.measureText(parts.absText || '').width);
+              if (hasDelta) {
+                const dline = formatDeltaLine(baselineScenario, s, key);
+                if (dline) { mCtx.font = deltaMonoFont; w = Math.max(w, mCtx.measureText(dline).width); }
               }
-              if (txt) w = Math.max(w, mCtx.measureText(txt).width);
+              if (hasPercent) {
+                const pline = formatPercentDeltaLine(baselineScenario, s, key);
+                if (pline) { mCtx.font = deltaMonoFont; w = Math.max(w, mCtx.measureText(pline).width); }
+              }
             }
           });
           return w + padX * 2 + 4;
@@ -2973,6 +3048,7 @@
         ctx.textBaseline = 'middle';
         ctx.fillText('Scenario Comparison', padX, titleH / 2);
 
+        // Header row
         let y = titleH;
         ctx.fillStyle = '#f8f9fa';
         ctx.fillRect(0, y, totalW, headerH);
@@ -2989,6 +3065,7 @@
           x += colWidths[i];
         });
 
+        // Data rows
         y += headerH;
         selectedScenarios.forEach((s, ri) => {
           if (ri % 2 === 1) {
@@ -3000,68 +3077,66 @@
           ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(totalW, y + rowH); ctx.stroke();
 
           x = 0;
+          // Scenario name
           ctx.font = font;
           ctx.fillStyle = '#000';
           ctx.textAlign = 'left';
-          let nameDraw = s.customName;
-          if (pngSeparateDelta && baselineScenario && s.id === baselineScenario.id) nameDraw += ' (Baseline)';
           ctx.textBaseline = 'middle';
+          let nameDraw = s.customName;
+          if (hasDelta && baselineScenario && s.id === baselineScenario.id) nameDraw += ' (Baseline)';
           ctx.fillText(nameDraw, x + padX, y + rowH / 2);
           x += colWidths[0];
 
-          for (let ci = 1; ci < headers.length; ci++) {
-            const metricIdx = Math.floor((ci - 1) / subCols);
-            const subIdx = (ci - 1) % subCols;
-            const key = comparisonColumns[metricIdx];
+          const isBase = baselineScenario && s.id === baselineScenario.id;
+
+          // Metric columns
+          for (let ci = 0; ci < comparisonColumns.length; ci++) {
+            const key = comparisonColumns[ci];
             const cfg = getMetricConfig(key);
+            const colRight = x + colWidths[ci + 1] - padX;
             ctx.textAlign = 'right';
-            const colRight = x + colWidths[ci] - padX;
-            if (!cfg) {
-              x += colWidths[ci];
-              continue;
-            }
-            const parts = getDeltaDisplayParts(baselineScenario, s, key, pngShowPercent);
-            const isBase = baselineScenario && s.id === baselineScenario.id;
-            if (subCols === 1) {
-              const dline = showDeltaVsBaseline && baselineScenario ? formatDeltaLine(baselineScenario, s, key) : null;
-              if (dline) {
-                ctx.font = monoFont;
-                ctx.fillStyle = '#000';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(parts.absText, colRight, y + 16);
-                ctx.font = deltaMonoFont;
-                ctx.fillStyle = 'rgba(0,0,0,0.45)';
-                ctx.fillText(dline, colRight, y + 32);
-              } else {
-                ctx.font = monoFont;
-                ctx.fillStyle = '#000';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(parts.absText, colRight, y + rowH / 2);
+            if (!cfg) { x += colWidths[ci + 1]; continue; }
+
+            const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
+            let lineY = y + cellPadY + lineH / 2;
+
+            // Line 1: absolute value
+            ctx.font = monoFont;
+            ctx.fillStyle = '#000';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(parts.absText || '', colRight, lineY);
+            lineY += lineH;
+
+            // Line 2: delta (if active and not baseline)
+            if (hasDelta) {
+              if (!isBase) {
+                const dline = formatDeltaLine(baselineScenario, s, key);
+                if (dline) {
+                  ctx.font = deltaMonoFont;
+                  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                  ctx.fillText(dline, colRight, lineY);
+                }
               }
-            } else if (subIdx === 0) {
-              ctx.font = monoFont;
-              ctx.fillStyle = '#000';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(parts.absText, colRight, y + rowH / 2);
-            } else if (subIdx === 1) {
-              const t = isBase ? '' : (parts.deltaPlain || '');
-              ctx.font = deltaMonoFont;
-              ctx.fillStyle = 'rgba(0,0,0,0.45)';
-              ctx.textBaseline = 'middle';
-              if (t) ctx.fillText(t, colRight, y + rowH / 2);
-            } else {
-              const t = isBase ? '' : (parts.percentText || '');
-              ctx.font = pctMonoFont;
-              ctx.fillStyle = 'rgba(0,0,0,0.38)';
-              ctx.textBaseline = 'middle';
-              if (t) ctx.fillText(t, colRight, y + rowH / 2);
+              lineY += lineH;
             }
-            x += colWidths[ci];
+
+            // Line 3: percent delta (if active and not baseline)
+            if (hasPercent) {
+              if (!isBase) {
+                const pline = formatPercentDeltaLine(baselineScenario, s, key);
+                if (pline) {
+                  ctx.font = deltaMonoFont;
+                  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+                  ctx.fillText(pline, colRight, lineY);
+                }
+              }
+            }
+
+            x += colWidths[ci + 1];
           }
           y += rowH;
         });
 
-        document.body.removeChild(wrap);
         canvas.toBlob(function(blob) {
           const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
@@ -3497,21 +3572,13 @@
           superDetails.appendChild(sum);
 
           let anyInner = false;
+          const singleGroup = groups.length === 1;
           groups.forEach(function(gentry) {
             const metrics = gentry.metrics.filter(function(m) {
               return !excludeKeys || !excludeKeys.has(m.key);
             });
             if (metrics.length === 0) return;
             anyInner = true;
-
-            const grpDet = document.createElement('details');
-            grpDet.className = 'cmp-det-group';
-            grpDet.id = 'cmp-grp-' + superId + '-' + cmpPickerSlug(gentry.group);
-            if (openState[grpDet.id]) grpDet.open = true;
-
-            const gsum = document.createElement('summary');
-            gsum.textContent = gentry.group;
-            grpDet.appendChild(gsum);
 
             const metricsWrap = document.createElement('div');
             metricsWrap.className = 'cmp-metric-picker-metrics';
@@ -3523,8 +3590,16 @@
               btn.dataset.metricKey = m.key;
               metricsWrap.appendChild(btn);
             });
-            grpDet.appendChild(metricsWrap);
-            superDetails.appendChild(grpDet);
+
+            if (singleGroup) {
+              superDetails.appendChild(metricsWrap);
+            } else {
+              const grpHeader = document.createElement('div');
+              grpHeader.className = 'cmp-group-header';
+              grpHeader.textContent = gentry.group;
+              superDetails.appendChild(grpHeader);
+              superDetails.appendChild(metricsWrap);
+            }
           });
 
           if (anyInner) wrap.appendChild(superDetails);
@@ -3625,7 +3700,7 @@
           ev.preventDefault();
           cmpMetricPickerReopen = true;
           comparisonColumns.push(key);
-          sortComparisonColumnsByCatalog();
+          if (comparisonAutoSort) sortComparisonColumnsByCatalog();
           renderComparisonTable();
         });
 
@@ -3678,15 +3753,11 @@
 
         container.innerHTML = '';
 
-        // Show custom BCR controls if custom columns are added (even if Exclusions wasn't clicked)
-        const customControls = document.getElementById('custom-bcr-controls');
-        const exclusionsBtnEl = document.getElementById('exclusions-btn');
-        if (customControls) {
-          const hasCustom = comparisonColumns.includes('custom_bcr') || comparisonColumns.includes('custom_nb');
-          if (hasCustom) {
-            customControls.style.display = 'inline-flex';
-            if (exclusionsBtnEl) exclusionsBtnEl.style.display = 'none';
-          }
+        // Auto-activate exclusions panel if custom columns are added
+        const hasCustom = comparisonColumns.includes('custom_bcr') || comparisonColumns.includes('custom_nb');
+        if (hasCustom && activeToolbarPanel !== 'exclusions') {
+          activeToolbarPanel = 'exclusions';
+          updateToolbarRow2();
         }
 
         const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
@@ -3725,11 +3796,13 @@
         scenarioTh.textContent = 'Scenario';
         headerRow.appendChild(scenarioTh);
 
-        comparisonColumns.forEach((colKey) => {
+        comparisonColumns.forEach((colKey, colIdx) => {
           const config = getMetricConfig(colKey);
           const th = document.createElement('th');
           th.className = 'metric-col';
           th.textContent = config ? config.label : colKey;
+          th.dataset.colIdx = colIdx;
+          th.draggable = true;
           headerRow.appendChild(th);
         });
 
@@ -3794,10 +3867,11 @@
           }
           row.appendChild(nameTd);
 
-          comparisonColumns.forEach(colKey => {
+          comparisonColumns.forEach((colKey, colIdx) => {
             const config = getMetricConfig(colKey);
             const td = document.createElement('td');
             td.className = 'metric-val';
+            td.dataset.colIdx = colIdx;
             const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, showComparisonPercentDelta);
             const hasDelta = !!(showDeltaVsBaseline && baselineScenario && parts.deltaLineText);
 
@@ -3873,6 +3947,89 @@
         tfoot.appendChild(footRow);
         table.appendChild(tfoot);
 
+        // Column drag-and-drop reordering
+        (function initColDrag() {
+          let dragIdx = null;
+          let dropIdx = null;
+
+          function clearDropIndicators() {
+            table.querySelectorAll('.cmp-drop-left, .cmp-drop-right').forEach(el => {
+              el.classList.remove('cmp-drop-left', 'cmp-drop-right');
+            });
+          }
+
+          function setDraggingClass(idx, on) {
+            table.querySelectorAll('[data-col-idx="' + idx + '"]').forEach(el => {
+              el.classList.toggle('cmp-dragging', on);
+            });
+          }
+
+          function getCellsForCol(idx) {
+            return table.querySelectorAll('[data-col-idx="' + idx + '"]');
+          }
+
+          headerRow.querySelectorAll('th.metric-col').forEach(th => {
+            th.addEventListener('dragstart', function(e) {
+              dragIdx = parseInt(th.dataset.colIdx);
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', '' + dragIdx);
+              // Create a small drag image
+              const ghost = document.createElement('div');
+              ghost.textContent = th.textContent;
+              ghost.style.cssText = 'position:absolute;top:-9999px;padding:4px 10px;background:rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.2);border-radius:4px;font-size:0.8rem;font-weight:600;color:rgba(0,0,0,0.5);white-space:nowrap;';
+              document.body.appendChild(ghost);
+              e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
+              requestAnimationFrame(() => document.body.removeChild(ghost));
+              setTimeout(() => setDraggingClass(dragIdx, true), 0);
+            });
+
+            th.addEventListener('dragend', function() {
+              if (dragIdx !== null) setDraggingClass(dragIdx, false);
+              clearDropIndicators();
+              if (dragIdx !== null && dropIdx !== null && dragIdx !== dropIdx) {
+                const moved = comparisonColumns.splice(dragIdx, 1)[0];
+                const insertAt = dropIdx > dragIdx ? dropIdx - 1 : dropIdx;
+                comparisonColumns.splice(insertAt, 0, moved);
+                renderComparisonTable();
+              }
+              dragIdx = null;
+              dropIdx = null;
+            });
+
+            th.addEventListener('dragover', function(e) {
+              if (dragIdx === null) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              const targetIdx = parseInt(th.dataset.colIdx);
+              if (targetIdx === dragIdx) { clearDropIndicators(); dropIdx = null; return; }
+              clearDropIndicators();
+              const rect = th.getBoundingClientRect();
+              const midX = rect.left + rect.width / 2;
+              if (e.clientX < midX) {
+                dropIdx = targetIdx;
+                getCellsForCol(targetIdx).forEach(el => el.classList.add('cmp-drop-left'));
+              } else {
+                dropIdx = targetIdx + 1;
+                getCellsForCol(targetIdx).forEach(el => el.classList.add('cmp-drop-right'));
+              }
+            });
+
+            th.addEventListener('dragleave', function() {
+              // Only clear if actually leaving the header area
+            });
+
+            th.addEventListener('drop', function(e) {
+              e.preventDefault();
+            });
+          });
+
+          // Allow dragover on the table to keep drop targets active
+          table.addEventListener('dragover', function(e) {
+            if (dragIdx === null) return;
+            e.preventDefault();
+          });
+        })();
+
         wrapper.appendChild(table);
         container.appendChild(wrapper);
         if (shouldReopenCmpPicker && comparisonColumns.length < 10) {
@@ -3884,13 +4041,42 @@
         updateComparisonDeltaControlState();
       }
 
-      // Exclusions button — show controls, hide button
+      // Toolbar row 2 toggle logic — only one of Exclusions / Compare to Baseline active at a time
+      let activeToolbarPanel = null; // 'exclusions' | 'baseline' | null
+
+      function updateToolbarRow2() {
+        const row2 = document.getElementById('cmp-toolbar-row2');
+        const exclBtn = document.getElementById('exclusions-btn');
+        const baseBtn = document.getElementById('compare-baseline-btn');
+        const exclControls = document.getElementById('custom-bcr-controls');
+        const baseControls = document.getElementById('baseline-controls');
+        if (!row2) return;
+
+        if (activeToolbarPanel) {
+          row2.style.display = 'flex';
+        } else {
+          row2.style.display = 'none';
+        }
+
+        if (exclBtn) exclBtn.classList.toggle('active', activeToolbarPanel === 'exclusions');
+        if (baseBtn) baseBtn.classList.toggle('active', activeToolbarPanel === 'baseline');
+        if (exclControls) exclControls.style.display = activeToolbarPanel === 'exclusions' ? 'inline-flex' : 'none';
+        if (baseControls) baseControls.style.display = activeToolbarPanel === 'baseline' ? 'inline-flex' : 'none';
+      }
+
       const exclusionsBtn = document.getElementById('exclusions-btn');
       if (exclusionsBtn) {
         exclusionsBtn.addEventListener('click', () => {
-          const controls = document.getElementById('custom-bcr-controls');
-          if (controls) controls.style.display = 'inline-flex';
-          exclusionsBtn.style.display = 'none';
+          activeToolbarPanel = activeToolbarPanel === 'exclusions' ? null : 'exclusions';
+          updateToolbarRow2();
+        });
+      }
+
+      const compareBaselineBtn = document.getElementById('compare-baseline-btn');
+      if (compareBaselineBtn) {
+        compareBaselineBtn.addEventListener('click', () => {
+          activeToolbarPanel = activeToolbarPanel === 'baseline' ? null : 'baseline';
+          updateToolbarRow2();
         });
       }
 
@@ -3922,6 +4108,17 @@
         cmpPctDeltaEl.addEventListener('change', () => {
           showComparisonPercentDelta = cmpPctDeltaEl.checked;
           renderComparisonTable();
+        });
+      }
+
+      const cmpAutoSortEl = document.getElementById('cmp-auto-sort-columns');
+      if (cmpAutoSortEl) {
+        cmpAutoSortEl.addEventListener('change', () => {
+          comparisonAutoSort = cmpAutoSortEl.checked;
+          if (comparisonAutoSort) {
+            sortComparisonColumnsByCatalog();
+            renderComparisonTable();
+          }
         });
       }
 
