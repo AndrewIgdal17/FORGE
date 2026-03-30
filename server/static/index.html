@@ -3536,13 +3536,26 @@
         } catch (e) {}
       }
 
-      function persistCmpPickerDetailsFromPanel(panel) {
+      let cmpPickerLastOpenedId = null;
+
+      function persistCmpPickerDetailsFromPanel(panel, closingPanel) {
         if (!panel) return;
-        const state = {};
-        panel.querySelectorAll('details.cmp-det-super, details.cmp-det-group').forEach(function(det) {
-          if (det.id) state[det.id] = !!det.open;
-        });
-        saveCmpPickerOpenState(state);
+        if (closingPanel) {
+          // On close: only keep the most recently expanded category open
+          const state = {};
+          panel.querySelectorAll('details.cmp-det-super').forEach(function(det) {
+            if (det.id) state[det.id] = (det.id === cmpPickerLastOpenedId);
+          });
+          saveCmpPickerOpenState(state);
+          cmpPickerLastOpenedId = null;
+        } else {
+          // During use: save full state
+          const state = {};
+          panel.querySelectorAll('details.cmp-det-super').forEach(function(det) {
+            if (det.id) state[det.id] = !!det.open;
+          });
+          saveCmpPickerOpenState(state);
+        }
       }
 
       function buildComparisonMetricPickerContent(excludeKeys) {
@@ -3643,8 +3656,11 @@
           document.removeEventListener('pointerdown', cmpMetricPickerOutsideHandler, true);
           cmpMetricPickerOutsideHandler = null;
         }
-        if (cmpMetricPickerPanelEl && cmpMetricPickerPanelEl.parentNode) {
-          cmpMetricPickerPanelEl.parentNode.removeChild(cmpMetricPickerPanelEl);
+        if (cmpMetricPickerPanelEl) {
+          persistCmpPickerDetailsFromPanel(cmpMetricPickerPanelEl, true);
+          if (cmpMetricPickerPanelEl.parentNode) {
+            cmpMetricPickerPanelEl.parentNode.removeChild(cmpMetricPickerPanelEl);
+          }
         }
         cmpMetricPickerPanelEl = null;
         cmpMetricPickerOpen = false;
@@ -3688,7 +3704,10 @@
         panel.addEventListener('toggle', function(ev) {
           const t = ev.target;
           if (t && t.tagName === 'DETAILS' && panel.contains(t)) {
-            persistCmpPickerDetailsFromPanel(panel);
+            if (t.open && t.id) {
+              cmpPickerLastOpenedId = t.id;
+            }
+            persistCmpPickerDetailsFromPanel(panel, false);
           }
         }, true);
 
