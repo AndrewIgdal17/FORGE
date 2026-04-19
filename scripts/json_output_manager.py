@@ -162,8 +162,8 @@ class JSONOutputManager:
         """Add O&M cost results."""
         self.costs["oandm"] = results
 
-    def add_emissions_costs(self, results: Dict[str, Any]):
-        """Add emissions cost results."""
+    def add_emissions_comp_costs(self, results: Dict[str, Any]):
+        """Add loss-compensation emissions cost results."""
         self.costs["emissions"] = results
 
     def add_line_loss_costs(self, results: Dict[str, Any]):

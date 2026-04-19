@@ -297,7 +297,7 @@ def print_emissions_results(
 
     # Average Annual Emissions
     print("=" * 60)
-    print("AVERAGE ANNUAL EMISSIONS")
+    print("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS")
     print("=" * 60)
     print(f"CO2: {avg_annual_emissions['co2']:,.2f} kg/yr")
     print(f"SOx: {avg_annual_emissions['sox']:,.2f} kg/yr")
@@ -315,7 +315,7 @@ def print_emissions_results(
 
     # Annual Emissions Cost
     print("=" * 60)
-    print("AVERAGE ANNUAL EMISSIONS COST")
+    print("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS COST")
     print("=" * 60)
     print(f"CO2 cost: ${avg_annual_costs_by_pollutant['co2']:,.2f}/yr")
     print(f"SOx cost: ${avg_annual_costs_by_pollutant['sox']:,.2f}/yr")
@@ -325,7 +325,7 @@ def print_emissions_results(
 
     # Lifetime Totals
     print("=" * 60)
-    print("LIFETIME EMISSIONS TOTALS")
+    print("LIFETIME LOSS-COMPENSATION EMISSIONS TOTALS")
     print("=" * 60)
     print(f"Total CO2 emissions: {total_emissions['co2']:,.2f} kg")
     print(f"Total SOx emissions: {total_emissions['sox']:,.2f} kg")
@@ -338,7 +338,7 @@ def print_emissions_results(
     print(f"Total lifetime emissions cost (nominal): ${lifetime_cost:,.2f}")
     print()
     print("=" * 60)
-    print("LIFETIME EMISSIONS COSTS (PRESENT VALUE)")
+    print("LIFETIME LOSS-COMPENSATION EMISSIONS COSTS (PRESENT VALUE)")
     print("=" * 60)
     print(f"Total CO2 cost (PV): ${total_costs_by_pollutant_pv['co2']:,.2f}")
     print(f"Total SOx cost (PV): ${total_costs_by_pollutant_pv['sox']:,.2f}")
@@ -466,8 +466,8 @@ def main() -> None:
         "nox_cost_pv": emissions_results.total_costs_by_pollutant_pv["nox"],
     }
 
-    # Write to CSV
-    csv_manager.add_emissions_costs(results)
+    # Write to output manager (loss-compensation emissions)
+    csv_manager.add_emissions_comp_costs(results)
     csv_manager.write_batch_summary()
 
 

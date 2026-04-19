@@ -3422,7 +3422,7 @@
         if (!scenario.results) return 0;
         const bcr = scenario.results.bcr || {};
         let excluded = 0;
-        if (document.getElementById('cmp-exc-emissions')?.checked) excluded += (bcr.emissions_cost_pv || 0);
+        if (document.getElementById('cmp-exc-emissions')?.checked) excluded += (bcr.emissions_comp_cost_pv || 0);
         if (document.getElementById('cmp-exc-linelosses')?.checked) excluded += (bcr.energy_losses_pv || 0);
         if (document.getElementById('cmp-exc-wildfire')?.checked) excluded += ((bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0));
         if (document.getElementById('cmp-exc-outage')?.checked) excluded += (bcr.outage_pv || 0);
@@ -6070,7 +6070,7 @@
           { label: 'Energy Losses', value: energyLossPV },
           { label: 'Wildfire Risk', value: wildfirePV },
           { label: 'Outage Risk', value: outagePV },
-          { label: 'Emissions Cost to Society', value: emissionsPV },
+          { label: 'Loss-Compensation Emissions Cost', value: emissionsPV },
         ];
         items.sort((a, b) => b.value - a.value);
         items.forEach((item, idx) => {
@@ -6562,7 +6562,7 @@
 
         const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
         const totalCostsPV = bcr.total_costs_pv || 0;
-        const emissionsPV = bcr.emissions_cost_pv || 0;
+        const emissionsPV = bcr.emissions_comp_cost_pv || 0;
         const energyLossesPV = bcr.energy_losses_pv || 0;
         const wildfirePV = (bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0);
         const outagePV = bcr.outage_pv || 0;

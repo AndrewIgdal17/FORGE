@@ -57,7 +57,7 @@ BATCH_SUMMARY_FIELDS = [
     "residual_exceedance_pv",
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
-    "emissions_cost_pv",
+    "emissions_comp_cost_pv",
     "energy_losses_pv",
     "conductor_loss_pv",
     "converter_loss_pv",
@@ -944,13 +944,13 @@ class CTCCOutputManager:
             "oandm_costs", detail_rows=detail_rows, summary_row=summary_row
         )
 
-    def add_emissions_costs(self, results: Dict[str, float]) -> None:
-        """Add emissions cost results to batch summary and detail CSV."""
+    def add_emissions_comp_costs(self, results: Dict[str, float]) -> None:
+        """Add loss-compensation emissions cost results to batch summary and detail CSV."""
         self.append_to_batch_summary(
             {
-                "emissions_cost_nominal": results.get("total_nominal", 0),
-                "emissions_cost_pv": results.get("total_pv", 0),
-                "emissions_annual_cost": results.get("annual_cost", 0),
+                "emissions_comp_cost_nominal": results.get("total_nominal", 0),
+                "emissions_comp_cost_pv": results.get("total_pv", 0),
+                "emissions_comp_annual_cost": results.get("annual_cost", 0),
             }
         )
 
@@ -1329,8 +1329,8 @@ class CTCCOutputManager:
         )
 
         # Other costs
-        emissions_nominal = self.batch_summary_data.get("emissions_cost_nominal", 0)
-        emissions_pv = self.batch_summary_data.get("emissions_cost_pv", 0)
+        emissions_nominal = self.batch_summary_data.get("emissions_comp_cost_nominal", 0)
+        emissions_pv = self.batch_summary_data.get("emissions_comp_cost_pv", 0)
         energy_losses_nominal = self.batch_summary_data.get(
             "energy_losses_nominal", 0
         ) or self.batch_summary_data.get("line_loss_cost_nominal", 0)

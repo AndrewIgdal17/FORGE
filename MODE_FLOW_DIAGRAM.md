@@ -311,7 +311,7 @@ Plus BCR aggregation and `write_final_json_output` in `ctcc.py`.
 
 ### Run commands
 
-- **CLI:** From repo root, `python ctcc.py` (see [codebase.md](ChevronResStock/Projects/CTCC/codebase.md)).
+- **CLI:** From repo root, `python ctcc.py` (see [codebase.md](../../Projects/CTCC/codebase.md)).
 - **Web app:** `run_calc_server.command` (FastAPI on port 8000).
 
 ---
@@ -430,15 +430,15 @@ env | grep CTCC
 
 ## Future Enhancements
 
-- **Database (e.g. DuckDB):** The calculator's only input is "read config from a directory." A future step can introduce an input adapter that reads from a DB for the current run instead of from a YAML dir, without adding a second input path. See [refactor51126.md](ChevronResStock/Projects/CTCC/audit/refactor51126.md) and [database-instead-of-filesystem.md](ChevronResStock/Projects/CTCC/audit/database-instead-of-filesystem.md).
+- **Database (e.g. DuckDB):** The calculator's only input is "read config from a directory." A future step can introduce an input adapter that reads from a DB for the current run instead of from a YAML dir, without adding a second input path. See [refactor51126.md](../../Projects/CTCC/ben_audit_3.26/refactor51126.md) and [database-instead-of-filesystem.md](../../Projects/CTCC/ben_audit_3.26/database-instead-of-filesystem.md).
 - **Optional CSV export:** If needed, a separate step could read `ctcc_results_*.json` and write CSV as a derived export; the pipeline would remain YAML in, JSON out.
 
 ---
 
 ## Related
 
-- [Projects/CTCC/audit/refactor51126](ChevronResStock/Projects/CTCC/audit/refactor51126.md) — Refactor summary: before/after, why it helps, DB path.
-- [Projects/CTCC/codebase](ChevronResStock/Projects/CTCC/codebase.md) — Paths and architecture.
+- [Projects/CTCC/ben_audit_3.26/refactor51126](../../Projects/CTCC/ben_audit_3.26/refactor51126.md) — Refactor summary: before/after, why it helps, DB path.
+- [Projects/CTCC/codebase](../../Projects/CTCC/codebase.md) — Paths and architecture.
 
 ---
 
