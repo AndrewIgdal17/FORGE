@@ -133,6 +133,8 @@ $$
 - **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, line loss cost, residual exceedance, benefits, revenue; delay and congestion/curtailment delay costs.
 - **$r_{social}$:** Societal PV of externality costs: emissions (3.b), expected cost of wildfires (4.b), expected cost of outages (4.c).
 
+**Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
+
 ---
 
 ## Capital Costs
@@ -1883,5 +1885,13 @@ Both use the same capital spending: same nominal amounts ($C^{nom}$ for build, R
 3. Different purpose: utility number = rate base $RB_{nominal}$; society number = PV of spending.
 
 AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views.
+
+---
+
+## Related (Andy’s Workshop vault)
+
+- [[Projects/CTCC/CTCC MOC]] — project hub
+- [[Projects/CTCC/PROJECT_MEMORY]] — CTCC state and key files
+- [[Projects/CTCC/ctcc_method_webapp_alignment_audit]] — paper vs app alignment audit
 
 ---

@@ -1942,6 +1942,7 @@
         </button>
       </div>
       <div class="comparison-section" id="comparison-section">
+        <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (incremental benefits and costs, &Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios.</p>
         <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
           <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
           <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
@@ -2231,6 +2232,8 @@
           { key: 'grand_total_pv', label: 'Total System Cost', path: 'summary.total_costs_pv', format: 'currency' },
         ]},
         { group: 'Benefits', metrics: [
+          { key: 'benefits_remedial_pv', label: 'Remedial Benefits', path: 'bcr.benefits_remedial_haircut_pv', format: 'currency' },
+          { key: 'benefits_enabling_pv', label: 'Enabling Benefits', path: 'bcr.benefits_enabling_haircut_pv', format: 'currency' },
           { key: 'congestion_pv', label: 'Congestion Benefits', path: 'bcr.congestion_benefit_haircut_pv', format: 'currency' },
           { key: 'curtailment_pv', label: 'Curtailment Benefits', path: 'bcr.curtailment_benefit_haircut_pv', format: 'currency' },
           { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
@@ -2239,6 +2242,11 @@
           { key: 'net_benefit_utility_pv', label: 'Net Benefit (Utility)', path: 'bcr.net_benefit_utility_pv', format: 'currency' },
           { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
           { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_haircut_pv', format: 'currency' },
+        ]},
+        { group: 'Cost Buckets (PV)', metrics: [
+          { key: 'hard_costs_pv', label: 'Hard Costs', path: 'bcr.hard_costs_pv', format: 'currency' },
+          { key: 'soft_costs_pv', label: 'Soft Costs', path: 'bcr.soft_costs_pv', format: 'currency' },
+          { key: 'emissions_costs_pv', label: 'Emissions Costs', path: 'bcr.emissions_costs_pv', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
           { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency', zeroIfMissing: true },
@@ -2270,6 +2278,7 @@
         'Project Parameters': 'project',
         'Benefit-Cost Ratio': 'bcr',
         'Costs (PV)': 'costs',
+        'Cost Buckets (PV)': 'costs',
         'Benefits': 'benefits',
         'Risk Costs (PV)': 'costs',
         'Delay Costs (PV)': 'costs',
@@ -2340,9 +2349,14 @@
         { key: 'emissions_pv', path: 'costs.emissions.total_pv' },
         { key: 'total_energy_emissions_pv', path: 'summary.total_energy_emissions_pv' },
         { key: 'grand_total_cost_pv', path: 'summary.total_costs_pv' },
+        { key: 'hard_costs_pv', path: 'bcr.hard_costs_pv' },
+        { key: 'soft_costs_pv', path: 'bcr.soft_costs_pv' },
+        { key: 'emissions_costs_pv', path: 'bcr.emissions_costs_pv' },
         { key: 'congestion_benefit_haircut_pv', path: 'bcr.congestion_benefit_haircut_pv' },
         { key: 'curtailment_benefit_haircut_pv', path: 'bcr.curtailment_benefit_haircut_pv' },
         { key: 'total_benefits_haircut_pv', path: 'bcr.total_benefits_haircut_pv' },
+        { key: 'benefits_remedial_haircut_pv', path: 'bcr.benefits_remedial_haircut_pv' },
+        { key: 'benefits_enabling_haircut_pv', path: 'bcr.benefits_enabling_haircut_pv' },
         { key: 'revenue_pv', path: 'bcr.revenue_pv' },
         { key: 'bcr_system', path: 'bcr.bcr_system' },
         { key: 'bcr_capital', path: 'bcr.bcr_capital' },
@@ -5785,12 +5799,13 @@
         return createResultItem(label, value, true);
       }
 
-      function currencyPairItem(label, nominal, pv) {
+      function currencyPairItem(label, nominal, pv, titleHint) {
         const item = document.createElement('div');
         item.className = 'results-item paired';
         const labelEl = document.createElement('span');
         labelEl.className = 'results-item-label';
         labelEl.textContent = label;
+        if (titleHint) labelEl.title = titleHint;
         const nomEl = document.createElement('span');
         nomEl.className = 'results-item-value currency';
         const nomNum = Number(nominal);
@@ -6060,6 +6075,12 @@
         heading.appendChild(subtitle);
         container.appendChild(heading);
 
+        const pipelineNote = document.createElement('div');
+        pipelineNote.className = 'results-note';
+        pipelineNote.style.marginBottom = '0.75rem';
+        pipelineNote.textContent = 'Sections 1–6 below follow the tool\u2019s calculation pipeline order. Reporting buckets (Hard / Soft / Risk / Emissions) follow the paper appendix grouping — same PV total, different presentation.';
+        container.appendChild(pipelineNote);
+
         const items = [
           { label: 'Delay Costs', value: delayPV },
           { label: 'Capital Costs', value: capitalPV },
@@ -6079,6 +6100,39 @@
           container.appendChild(el);
         });
         container.appendChild(createSubtotalRow('Total', totalPV));
+
+        // Reporting buckets (paper appendix four-bucket framework; T-AUD-01)
+        const bucketHardPV = summary.reporting_bucket_hard_pv ?? capitalPV;
+        const bucketSoftPV = summary.reporting_bucket_soft_pv ?? (delayPV + operationalPV + energyLossPV);
+        const bucketRiskPV = summary.reporting_bucket_risk_pv ?? (wildfirePV + outagePV);
+        const bucketEmissionsPV = summary.reporting_bucket_emissions_pv ?? emissionsPV;
+        const bucketSum = bucketHardPV + bucketSoftPV + bucketRiskPV + bucketEmissionsPV;
+
+        const bucketHeading = document.createElement('div');
+        bucketHeading.className = 'results-section-heading';
+        bucketHeading.style.marginTop = '1.25rem';
+        bucketHeading.style.marginBottom = '0.35rem';
+        const bucketTitle = document.createElement('span');
+        bucketTitle.className = 'results-section-title';
+        bucketTitle.textContent = 'Reporting buckets';
+        const bucketSub = document.createElement('span');
+        bucketSub.className = 'results-section-subtitle';
+        bucketSub.textContent = 'Present Value (appendix framework)';
+        bucketHeading.appendChild(bucketTitle);
+        bucketHeading.appendChild(bucketSub);
+        container.appendChild(bucketHeading);
+
+        const bucketFoot = document.createElement('div');
+        bucketFoot.className = 'results-note';
+        bucketFoot.style.marginBottom = '0.5rem';
+        bucketFoot.textContent = 'Soft bucket = delay + operational + energy losses (incl. residual exceedance) PV, consistent with the paper\u2019s C_soft composite. Sum of four buckets equals the same total cost PV as Cost Summary when components match.';
+        container.appendChild(bucketFoot);
+
+        container.appendChild(currencyItem('Hard costs (C_hard)', bucketHardPV));
+        container.appendChild(currencyItem('Soft costs (C_soft)', bucketSoftPV));
+        container.appendChild(currencyItem('Risk costs (C_risk)', bucketRiskPV));
+        container.appendChild(currencyItem('Emissions bucket (C_emissions, loss-comp.)', bucketEmissionsPV));
+        container.appendChild(createSubtotalRow('Total (reporting buckets)', bucketSum));
 
         return container;
       }
@@ -6321,41 +6375,38 @@
         const rev = results.benefits?.revenue || {};
         const bcr = results.bcr || {};
 
-        // Total Benefits
-        const totalBenefitsHaircutNom = (cc.congestion_benefit_haircut_nominal || 0) + (cc.curtailment_benefit_haircut_nominal || 0);
-        const totalBenefitsNom = (cc.congestion_benefit_nominal || 0) + (cc.curtailment_benefit_nominal || 0);
+        // Remedial Benefits (B_remedial = congestion + curtailment)
+        const remSection = document.createElement('div');
+        remSection.className = 'cost-section-items';
+        remSection.appendChild(pairHeader());
+        remSection.appendChild(currencyItem('Congestion (Annual)', cc.congestion_benefit_haircut_annual || cc.congestion_benefit_annual || 0));
+        remSection.appendChild(currencyPairItem('Congestion Benefit (Conservative)', cc.congestion_benefit_haircut_nominal || 0, cc.congestion_benefit_haircut_pv || 0));
+        remSection.appendChild(currencyPairItem('Congestion Benefit (Raw)', cc.congestion_benefit_nominal || 0, cc.congestion_benefit_pv || 0));
+        remSection.appendChild(currencyItem('Curtailment (Annual)', cc.curtailment_benefit_haircut_annual || cc.curtailment_benefit_annual || 0));
+        remSection.appendChild(currencyPairItem('Curtailment Benefit (Conservative)', cc.curtailment_benefit_haircut_nominal || 0, cc.curtailment_benefit_haircut_pv || 0));
+        remSection.appendChild(currencyPairItem('Curtailment Benefit (Raw)', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
+        const remedialHaircutNom = (cc.congestion_benefit_haircut_nominal || 0) + (cc.curtailment_benefit_haircut_nominal || 0);
+        remSection.appendChild(currencyPairItem('Remedial Subtotal (Conservative)', remedialHaircutNom, bcr.benefits_remedial_haircut_pv || 0));
+        container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection));
+
+        // Enabling Benefits (B_enabling = delivered energy)
+        const enSection = document.createElement('div');
+        enSection.className = 'cost-section-items';
+        enSection.appendChild(pairHeader());
+        enSection.appendChild(currencyItem('Annual', cc.delivered_benefit_annual || 0));
+        enSection.appendChild(currencyPairItem('Benefit from Delivered Electricity', cc.delivered_benefit_nominal || 0, cc.delivered_benefit_pv || 0));
+        enSection.appendChild(currencyPairItem('Enabling Subtotal', cc.delivered_benefit_nominal || 0, bcr.benefits_enabling_pv || 0));
+        container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection));
+
+        // Total Benefits (B = B_remedial + B_enabling)
+        const totalBenefitsHaircutNom = remedialHaircutNom + (cc.delivered_benefit_nominal || 0);
+        const totalBenefitsNom = (cc.congestion_benefit_nominal || 0) + (cc.curtailment_benefit_nominal || 0) + (cc.delivered_benefit_nominal || 0);
         const totalSection = document.createElement('div');
         totalSection.className = 'cost-section-items';
         totalSection.appendChild(pairHeader());
-        totalSection.appendChild(currencyPairItem('Total Benefits (Conservative)', totalBenefitsHaircutNom, bcr.total_benefits_haircut_pv || 0));
+        totalSection.appendChild(currencyPairItem('Total Benefits (Conservative)', totalBenefitsHaircutNom, bcr.total_benefits_haircut_pv || 0, 'B = B_remedial + B_enabling: same PV stream used as the numerator in societal BCR_system.'));
         totalSection.appendChild(currencyPairItem('Total Benefits (Raw)', totalBenefitsNom, bcr.total_benefits_pv || 0));
         container.appendChild(createCategory('Total Benefits', totalSection));
-
-        // Congestion Benefits
-        const congSection = document.createElement('div');
-        congSection.className = 'cost-section-items';
-        congSection.appendChild(pairHeader());
-        congSection.appendChild(currencyItem('Annual', cc.congestion_benefit_haircut_annual || cc.congestion_benefit_annual || 0));
-        congSection.appendChild(currencyPairItem('Congestion Benefit (Conservative)', cc.congestion_benefit_haircut_nominal || 0, cc.congestion_benefit_haircut_pv || 0));
-        congSection.appendChild(currencyPairItem('Congestion Benefit (Raw)', cc.congestion_benefit_nominal || 0, cc.congestion_benefit_pv || 0));
-        container.appendChild(createCategory('Congestion Benefits', congSection));
-
-        // Curtailment Benefits
-        const curtSection = document.createElement('div');
-        curtSection.className = 'cost-section-items';
-        curtSection.appendChild(pairHeader());
-        curtSection.appendChild(currencyItem('Annual', cc.curtailment_benefit_haircut_annual || cc.curtailment_benefit_annual || 0));
-        curtSection.appendChild(currencyPairItem('Curtailment Benefit (Conservative)', cc.curtailment_benefit_haircut_nominal || 0, cc.curtailment_benefit_haircut_pv || 0));
-        curtSection.appendChild(currencyPairItem('Curtailment Benefit (Raw)', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
-        container.appendChild(createCategory('Curtailment Benefits', curtSection));
-
-        // Benefit from Delivered Electricity (same style, no conservative row)
-        const delivSection = document.createElement('div');
-        delivSection.className = 'cost-section-items';
-        delivSection.appendChild(pairHeader());
-        delivSection.appendChild(currencyItem('Annual', cc.delivered_benefit_annual || 0));
-        delivSection.appendChild(currencyPairItem('Benefit from Delivered Electricity', cc.delivered_benefit_nominal || 0, cc.delivered_benefit_pv || 0));
-        container.appendChild(createCategory('Benefit from Delivered Electricity', delivSection));
 
         // Revenue
         const revSection = document.createElement('div');
@@ -6364,7 +6415,12 @@
         if (rev.annual_revenue) {
           revSection.appendChild(currencyItem('Annual Revenue', rev.annual_revenue || 0));
         }
-        revSection.appendChild(currencyPairItem('Revenue', rev.revenue_nominal || 0, bcr.revenue_pv || rev.revenue_pv || 0));
+        revSection.appendChild(currencyPairItem('Revenue', rev.revenue_nominal || 0, bcr.revenue_pv || rev.revenue_pv || 0, 'Financial transfer between parties; excluded from societal system benefits / BCR_system numerator.'));
+        const revFoot = document.createElement('div');
+        revFoot.className = 'results-note';
+        revFoot.style.marginTop = '0.35rem';
+        revFoot.textContent = 'Revenue is a transfer in the accounting (see Methods): it is not an additional societal benefit line in BCR_system.';
+        revSection.appendChild(revFoot);
         container.appendChild(createCategory('Revenue', revSection));
 
         // Physical Metrics
@@ -6469,7 +6525,7 @@
         });
 
         container.appendChild(grid);
-        container.appendChild(createNote('System: societal welfare (all real resource costs). Utility / Transm. Service Provider: revenue vs costs borne by the transmission service provider. Ratepayer: benefits received vs costs passed through (revenue + energy losses).'));
+        container.appendChild(createNote('System: societal welfare (all real resource costs). Utility / Transm. Service Provider: revenue vs costs borne by the provider (revenue is a transfer). Ratepayer: benefits received vs costs passed through (revenue + energy losses).'));
         return container;
       }
 
@@ -6781,10 +6837,10 @@
             const summaryGrid = document.createElement('div');
             summaryGrid.className = 'results-summary-grid';
             const summaryMetrics = [
-              { label: 'Capital', value: summary.total_capital_pv },
-              { label: 'Operational', value: summary.total_operational_pv },
-              { label: 'Energy / Emissions', value: summary.total_energy_emissions_pv },
-              { label: 'Risk', value: summary.total_risk_pv },
+              { label: 'Hard (C_hard)', value: summary.reporting_bucket_hard_pv },
+              { label: 'Soft (C_soft)', value: summary.reporting_bucket_soft_pv },
+              { label: 'Risk (C_risk)', value: summary.reporting_bucket_risk_pv },
+              { label: 'Emissions (C_emissions)', value: summary.reporting_bucket_emissions_pv },
               { label: 'Total Costs', value: summary.grand_total_cost_pv ?? summary.total_costs_pv, highlight: true },
             ];
             summaryMetrics.forEach(m => {
@@ -6838,13 +6894,12 @@
 
             const tbGrid = document.createElement('div');
             tbGrid.style.display = 'grid';
-            tbGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            tbGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
             tbGrid.style.gap = '1rem';
             tbGrid.style.marginTop = '1rem';
             const tbMetrics = [
-              { label: 'Congestion', value: bcr.congestion_benefit_haircut_pv || cc.congestion_benefit_haircut_pv || 0 },
-              { label: 'Curtailment', value: bcr.curtailment_benefit_haircut_pv || cc.curtailment_benefit_haircut_pv || 0 },
-              { label: 'Delivered Electricity', value: cc.delivered_benefit_pv || 0 },
+              { label: 'Remedial', value: bcr.benefits_remedial_haircut_pv || 0 },
+              { label: 'Enabling', value: bcr.benefits_enabling_haircut_pv || 0 },
               { label: 'Total Benefits', value: bcr.total_benefits_haircut_pv || 0, highlight: true },
             ];
             tbMetrics.forEach(m => {
@@ -6885,7 +6940,7 @@
             content.appendChild(createCategory('3. Operational Costs', renderOperationalCosts(results)));
             content.appendChild(createCategory('4. Energy Losses', renderEnergyLosses(results)));
             content.appendChild(createCategory('5. Risk Costs', renderRiskCosts(results)));
-            content.appendChild(createCategory('6. Emissions', renderEmissionsCosts(results)));
+            content.appendChild(createCategory('6. Emissions (loss-compensation)', renderEmissionsCosts(results)));
           } else if (tab.id === 'bcr') {
             content.appendChild(renderBCRHeadline(results));
             content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityExclusions(results)));

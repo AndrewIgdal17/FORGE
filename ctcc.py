@@ -185,8 +185,9 @@ def build_csv_equivalent(
 
 
 def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
-    """Create a minimal summary aligned with CSV/BCR totals."""
+    """Create a minimal summary aligned with CSV/BCR totals and appendix buckets."""
     return {
+        # Pipeline groupings (backward compat)
         "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
         "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
         "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),
@@ -195,6 +196,16 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
         "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
         "total_benefits_haircut_pv": csv_equivalent.get("total_benefits_haircut_pv", 0),
+        # Appendix-aligned cost buckets (C_hard + C_soft + C_risk + C_emissions)
+        "reporting_bucket_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
+        "reporting_bucket_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
+        "reporting_bucket_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
+        "reporting_bucket_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
+        # Appendix-aligned benefit buckets (B_remedial + B_enabling)
+        "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
+        "benefits_remedial_haircut_pv": csv_equivalent.get("benefits_remedial_haircut_pv", 0),
+        "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
+        "benefits_enabling_haircut_pv": csv_equivalent.get("benefits_enabling_haircut_pv", 0),
     }
 
 

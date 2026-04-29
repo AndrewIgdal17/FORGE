@@ -61,6 +61,11 @@ class BCRInputData(BaseModel):
     total_benefits_pv: float = 0.0
     total_benefits_nominal: float = 0.0
     total_benefits_haircut_pv: float = 0.0
+    # Benefit buckets (appendix-aligned: remedial + enabling = total)
+    benefits_remedial_pv: float = 0.0
+    benefits_remedial_haircut_pv: float = 0.0
+    benefits_enabling_pv: float = 0.0
+    benefits_enabling_haircut_pv: float = 0.0
     # Capital costs
     build_cost_pv: float = 0.0
     build_cost_nominal: float = 0.0
@@ -293,45 +298,52 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
     """
     Calculate total benefits from scenario data.
 
-    System total benefits (societal) include only real resource benefits:
-      - Congestion reduction savings
-      - Curtailment reduction savings
-      - Benefit of delivered energy (throughput value at electricity price)
+    Benefits are organized into two appendix-aligned buckets:
+      - Remedial (B_remedial): congestion reduction + curtailment reduction
+      - Enabling (B_enabling): benefit of delivered energy
+    Total: B = B_remedial + B_enabling
+
     Revenue (rate-based revenue requirement) is a transfer, not a net social
     benefit; it is excluded from system totals but still returned in the dict
     for Utility/Ratepayer BCRs.
-
-    Note: Line losses are now always treated as costs, not benefits, for both
-    greenfield and reconductoring projects.
 
     Args:
         data: Dictionary or BCRInputData with scenario data
 
     Returns:
-        Dictionary with benefit breakdown and total (both nominal and PV)
+        Dictionary with benefit breakdown by bucket and total (both nominal and PV)
     """
     if isinstance(data, dict):
         data = BCRInputData.model_validate(data)
-    # Present value benefits
+
+    # --- Sub-items ---
     congestion_benefit_pv = data.congestion_benefit_pv
     curtailment_benefit_pv = data.curtailment_benefit_pv
     delivered_benefit_pv = data.delivered_benefit_pv
-
-    # Nominal benefits
     congestion_benefit_nominal = data.congestion_benefit_nominal
     curtailment_benefit_nominal = data.curtailment_benefit_nominal
     delivered_benefit_nominal = data.delivered_benefit_nominal
-
-    # Line losses are now always costs, never benefits
-    # (Both greenfield and reconductoring report absolute losses as positive costs)
-
-    # Add revenue (rate-based revenue requirement)
+    congestion_benefit_haircut = data.congestion_benefit_haircut_pv
+    curtailment_benefit_haircut = data.curtailment_benefit_haircut_pv
     revenue_pv = data.revenue_pv
     revenue_nominal = data.revenue_nominal
 
-    calculated_total_benefits = (
-        congestion_benefit_pv + curtailment_benefit_pv + delivered_benefit_pv
+    # --- Bucket: Remedial (congestion + curtailment) ---
+    calculated_remedial = congestion_benefit_pv + curtailment_benefit_pv
+    benefits_remedial_pv = _prefer_subtotal(
+        data, "benefits_remedial_pv", calculated_remedial
     )
+    calculated_remedial_haircut = congestion_benefit_haircut + curtailment_benefit_haircut
+    benefits_remedial_haircut_pv = _prefer_subtotal(
+        data, "benefits_remedial_haircut_pv", calculated_remedial_haircut
+    )
+
+    # --- Bucket: Enabling (delivered energy) ---
+    benefits_enabling_pv = delivered_benefit_pv
+    benefits_enabling_haircut_pv = delivered_benefit_pv  # no haircut on delivered
+
+    # --- Totals (bucket-first: remedial + enabling) ---
+    calculated_total_benefits = benefits_remedial_pv + benefits_enabling_pv
     total_benefits_pv = _prefer_subtotal(
         data, "total_benefits_pv", calculated_total_benefits
     )
@@ -343,27 +355,29 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
     total_benefits_nominal = _prefer_subtotal(
         data, "total_benefits_nominal", calculated_total_benefits_nominal
     )
-
-    # Also calculate haircut benefits (conservative estimate)
-    # Haircut applies to congestion/curtailment only; delivered energy has no haircut
-    congestion_benefit_haircut = data.congestion_benefit_haircut_pv
-    curtailment_benefit_haircut = data.curtailment_benefit_haircut_pv
     calculated_total_benefits_haircut = (
-        congestion_benefit_haircut + curtailment_benefit_haircut + delivered_benefit_pv
+        benefits_remedial_haircut_pv + benefits_enabling_haircut_pv
     )
     total_benefits_haircut_pv = _prefer_subtotal(
         data, "total_benefits_haircut_pv", calculated_total_benefits_haircut
     )
 
     return {
+        # Sub-items
         "congestion_benefit_pv": congestion_benefit_pv,
         "curtailment_benefit_pv": curtailment_benefit_pv,
         "delivered_benefit_pv": delivered_benefit_pv,
         "delivered_benefit_nominal": delivered_benefit_nominal,
         "congestion_benefit_haircut_pv": congestion_benefit_haircut,
         "curtailment_benefit_haircut_pv": curtailment_benefit_haircut,
-        "line_loss_benefit_pv": 0,  # Line losses are always costs, never benefits
+        "line_loss_benefit_pv": 0,
         "revenue_pv": revenue_pv,
+        # Bucket subtotals
+        "benefits_remedial_pv": benefits_remedial_pv,
+        "benefits_remedial_haircut_pv": benefits_remedial_haircut_pv,
+        "benefits_enabling_pv": benefits_enabling_pv,
+        "benefits_enabling_haircut_pv": benefits_enabling_haircut_pv,
+        # Grand totals
         "total_benefits_pv": total_benefits_pv,
         "total_benefits_nominal": total_benefits_nominal,
         "total_benefits_haircut_pv": total_benefits_haircut_pv,
@@ -493,7 +507,7 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         data, "delay_costs_nominal", calculated_delay_nominal
     )
 
-    # Totals
+    # Totals (pipeline groupings)
     calculated_total = (
         capital_costs_pv
         + operational_costs_pv
@@ -512,6 +526,15 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
     total_costs_nominal = _prefer_subtotal(
         data, "total_costs_nominal", calculated_total_nominal
     )
+
+    # Appendix-aligned cost buckets (C_hard + C_soft + C_risk + C_emissions = C)
+    hard_costs_pv = capital_costs_pv
+    soft_costs_pv = (
+        operational_costs_pv
+        + energy_losses_pv + residual_exceedance_pv
+        + delay_costs_pv
+    )
+    emissions_costs_pv = emissions_pv  # loss-comp only; will include fac when implemented
 
     return {
         # Capital (PV)
@@ -545,6 +568,10 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         "congestion_delay_cost_pv": congestion_delay_pv,
         "curtailment_delay_cost_pv": curtailment_delay_pv,
         "delay_costs_pv": delay_costs_pv,
+        # Appendix-aligned cost buckets
+        "hard_costs_pv": hard_costs_pv,
+        "soft_costs_pv": soft_costs_pv,
+        "emissions_costs_pv": emissions_costs_pv,
         # Totals (PV)
         "total_costs_pv": total_costs_pv,
         # Totals (Nominal)

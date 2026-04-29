@@ -65,6 +65,10 @@ BATCH_SUMMARY_FIELDS = [
     "energy_emissions_costs_pv",
     # 8. Total Costs PV
     "total_costs_pv",
+    # 8a. Appendix-aligned cost buckets
+    "hard_costs_pv",
+    "soft_costs_pv",
+    "emissions_costs_pv",
     # 9. Benefits PV (with breakdown)
     "congestion_benefit_pv",
     "curtailment_benefit_pv",
@@ -79,6 +83,11 @@ BATCH_SUMMARY_FIELDS = [
     "curtailment_benefit_haircut_pv",
     "total_benefits_pv",
     "total_benefits_haircut_pv",
+    # 9a. Appendix-aligned benefit buckets
+    "benefits_remedial_pv",
+    "benefits_remedial_haircut_pv",
+    "benefits_enabling_pv",
+    "benefits_enabling_haircut_pv",
     # 10. BCR Metrics
     "bcr_system",
     "bcr_capital",
@@ -1084,6 +1093,17 @@ class CTCCOutputManager:
                     + results.get("curtailment_benefit_haircut_pv", 0)
                     + results.get("delivered_benefit_pv", 0)
                 ),
+                # Benefit buckets (appendix-aligned)
+                "benefits_remedial_pv": (
+                    results.get("congestion_benefit_pv", 0)
+                    + results.get("curtailment_benefit_pv", 0)
+                ),
+                "benefits_remedial_haircut_pv": (
+                    results.get("congestion_benefit_haircut_pv", 0)
+                    + results.get("curtailment_benefit_haircut_pv", 0)
+                ),
+                "benefits_enabling_pv": results.get("delivered_benefit_pv", 0),
+                "benefits_enabling_haircut_pv": results.get("delivered_benefit_pv", 0),
                 # COSTS (increase system cost)
                 "congestion_delay_cost_nominal": results.get(
                     "congestion_delay_cost_nominal", 0
