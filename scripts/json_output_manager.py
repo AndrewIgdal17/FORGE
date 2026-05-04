@@ -166,6 +166,10 @@ class JSONOutputManager:
         """Add loss-compensation emissions cost results."""
         self.costs["emissions"] = results
 
+    def add_facilitated_emissions_costs(self, results: Dict[str, Any]):
+        """Add facilitated emissions + displacement results."""
+        self.costs["facilitated_emissions"] = results
+
     def add_line_loss_costs(self, results: Dict[str, Any]):
         """Add line loss cost results."""
         self.costs["line_loss"] = results
@@ -211,6 +215,9 @@ class JSONOutputManager:
         outage = self.costs.get("outage", {})
         wildfire_liability = self.costs.get("wildfire_liability", {})
 
+        # Facilitated emissions
+        fac_em = self.costs.get("facilitated_emissions", {})
+
         # Delay costs
         delay = self.costs.get("delay", {})
 
@@ -242,12 +249,16 @@ class JSONOutputManager:
                 + oandm.get("total_pv", 0)
                 + row.get("row_rent_pv", 0)
             ),
-            # Energy/emissions costs (line losses + emissions + residual exceedance; residual added below)
+            # Energy/emissions costs (line losses + loss-comp emissions + facilitated emissions + residual exceedance; residual added below)
             "total_energy_emissions_nominal": (
-                line_loss.get("total_nominal", 0) + emissions.get("total_nominal", 0)
+                line_loss.get("total_nominal", 0)
+                + emissions.get("total_nominal", 0)
+                + fac_em.get("fac_emissions_project_nominal", 0)
             ),
             "total_energy_emissions_pv": (
-                line_loss.get("total_pv", 0) + emissions.get("total_pv", 0)
+                line_loss.get("total_pv", 0)
+                + emissions.get("total_pv", 0)
+                + fac_em.get("fac_emissions_project_pv", 0)
             ),
             # Risk costs
             "total_risk_nominal": (
@@ -339,7 +350,11 @@ class JSONOutputManager:
             _delay_total_pv + self.summary["total_operational_pv"] + _energy_line_pv
         )
         self.summary["reporting_bucket_risk_pv"] = self.summary["total_risk_pv"]
-        self.summary["reporting_bucket_emissions_pv"] = _em.get("total_pv", 0) or 0
+        _fac = self.costs.get("facilitated_emissions", {})
+        self.summary["reporting_bucket_emissions_pv"] = (
+            (_em.get("total_pv", 0) or 0)
+            + (_fac.get("fac_emissions_project_pv", 0) or 0)
+        )
 
     def get_json_results(self) -> Dict[str, Any]:
         """

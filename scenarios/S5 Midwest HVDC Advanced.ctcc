@@ -4759,6 +4759,40 @@
           "percentage": 2,
           "rate_of_change": 0.0
         }
+      },
+      "counterfactual_energy_source_mix": {
+        "coal": {
+          "percentage": 10,
+          "rate_of_change": 0.0
+        },
+        "oil": {
+          "percentage": 2,
+          "rate_of_change": 0.0
+        },
+        "natural_gas": {
+          "percentage": 25,
+          "rate_of_change": 0.0
+        },
+        "solar": {
+          "percentage": 10,
+          "rate_of_change": 0.0
+        },
+        "wind": {
+          "percentage": 26,
+          "rate_of_change": 0.0
+        },
+        "hydro": {
+          "percentage": 5,
+          "rate_of_change": 0.0
+        },
+        "nuclear": {
+          "percentage": 20,
+          "rate_of_change": 0.0
+        },
+        "other": {
+          "percentage": 2,
+          "rate_of_change": 0.0
+        }
       }
     }
   },

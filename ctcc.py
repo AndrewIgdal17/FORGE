@@ -77,6 +77,7 @@ def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
     wildfire_liability = costs.get("wildfire_liability", {}) or {}
     delay = costs.get("delay", {}) or {}
     emissions = costs.get("emissions", {}) or {}
+    fac_em = costs.get("facilitated_emissions", {}) or {}
     line_loss = costs.get("line_loss", {}) or {}
 
     flat_dict = {
@@ -125,6 +126,9 @@ def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
         "converter_loss_pv": line_loss.get("converter_cost_pv", 0) or 0,
         "emissions_comp_cost_pv": emissions.get("total_pv", 0) or 0,
         "emissions_comp_cost_nominal": emissions.get("total_nominal", 0) or 0,
+        "fac_emissions_project_pv": fac_em.get("fac_emissions_project_pv", 0) or 0,
+        "fac_emissions_project_nominal": fac_em.get("fac_emissions_project_nominal", 0) or 0,
+        "displacement_avoided_cost_pv": fac_em.get("displacement_avoided_cost_pv", 0) or 0,
         # Risk costs (PV + nominal)
         "wildfire_pv": wildfire.get("pv_cost", 0) or 0,
         "wildfire_nominal": wildfire.get("nominal_total", 0) or 0,
@@ -201,6 +205,9 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "reporting_bucket_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
         "reporting_bucket_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
         "reporting_bucket_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
+        # Facilitated emissions + displacement (reporting)
+        "fac_emissions_project_pv": csv_equivalent.get("fac_emissions_project_pv", 0),
+        "displacement_avoided_cost_pv": csv_equivalent.get("displacement_avoided_cost_pv", 0),
         # Appendix-aligned benefit buckets (B_remedial + B_enabling)
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
         "benefits_remedial_haircut_pv": csv_equivalent.get("benefits_remedial_haircut_pv", 0),
@@ -584,6 +591,7 @@ def main() -> None:
         # Conditionally add emissions and line_loss_costs based on flags
         if not args.no_emissions:
             scripts.append("emissions.py")
+            scripts.append("facilitated_emissions.py")
         if not args.no_linelosses:
             scripts.append("line_loss_costs.py")
 

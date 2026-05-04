@@ -95,6 +95,9 @@ class BCRInputData(BaseModel):
     converter_loss_pv: float = 0.0
     emissions_comp_cost_pv: float = 0.0
     emissions_comp_cost_nominal: float = 0.0
+    fac_emissions_project_pv: float = 0.0
+    fac_emissions_project_nominal: float = 0.0
+    displacement_avoided_cost_pv: float = 0.0
     energy_emissions_costs_pv: float = 0.0
     energy_emissions_costs_nominal: float = 0.0
     line_loss_cost_pv: float = 0.0
@@ -443,14 +446,15 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         data, "operational_costs_nominal", calculated_operational_nominal
     )
 
-    # Energy & Emissions costs (PV) - Energy losses, emissions, and residual exceedance (system cost only)
+    # Energy & Emissions costs (PV) - Energy losses, emissions (comp + fac), and residual exceedance
     emissions_pv = data.emissions_comp_cost_pv
+    fac_emissions_pv = data.fac_emissions_project_pv
     energy_losses_pv = data.energy_losses_pv or data.line_loss_cost_pv
     energy_losses_pv = max(0, energy_losses_pv)
     conductor_loss_pv = data.conductor_loss_pv
     converter_loss_pv = data.converter_loss_pv
     calculated_energy_emissions = (
-        energy_losses_pv + emissions_pv + residual_exceedance_pv
+        energy_losses_pv + emissions_pv + fac_emissions_pv + residual_exceedance_pv
     )
     energy_emissions_costs_pv = _prefer_subtotal(
         data, "energy_emissions_costs_pv", calculated_energy_emissions
@@ -458,10 +462,11 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
 
     # Energy & Emissions costs (Nominal) - includes residual exceedance
     emissions_nominal = data.emissions_comp_cost_nominal
+    fac_emissions_nominal = data.fac_emissions_project_nominal
     energy_losses_nominal = data.energy_losses_nominal or data.line_loss_cost_nominal
     energy_losses_nominal = max(0, energy_losses_nominal)
     calculated_energy_emissions_nominal = (
-        energy_losses_nominal + emissions_nominal + residual_exceedance_nominal
+        energy_losses_nominal + emissions_nominal + fac_emissions_nominal + residual_exceedance_nominal
     )
     energy_emissions_costs_nominal = _prefer_subtotal(
         data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal
@@ -534,7 +539,7 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         + energy_losses_pv + residual_exceedance_pv
         + delay_costs_pv
     )
-    emissions_costs_pv = emissions_pv  # loss-comp only; will include fac when implemented
+    emissions_costs_pv = emissions_pv + fac_emissions_pv
 
     return {
         # Capital (PV)
@@ -557,6 +562,8 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         "conductor_loss_pv": conductor_loss_pv,
         "converter_loss_pv": converter_loss_pv,
         "emissions_comp_cost_pv": emissions_pv,
+        "fac_emissions_project_pv": fac_emissions_pv,
+        "displacement_avoided_cost_pv": data.displacement_avoided_cost_pv,
         "energy_emissions_costs_pv": energy_emissions_costs_pv,
         # Risk (PV)
         "wildfire_pv": wildfire_pv,
@@ -612,8 +619,11 @@ def calculate_bcr_metrics(
         "energy_emissions_costs_pv"
     ]  # Line Losses + Emissions
 
-    # Separate emissions (loss-compensation) and energy losses for individual calculations
-    emissions_pv = safe_get_numeric(costs, "emissions_comp_cost_pv")
+    # Separate emissions (loss-comp + facilitated) and energy losses for individual calculations
+    emissions_pv = (
+        safe_get_numeric(costs, "emissions_comp_cost_pv")
+        + safe_get_numeric(costs, "fac_emissions_project_pv")
+    )
     energy_losses_pv = safe_get_numeric(costs, "energy_losses_pv")
 
     # Separate wildfire and outage risk for individual calculations

@@ -58,6 +58,8 @@ BATCH_SUMMARY_FIELDS = [
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
+    "fac_emissions_project_pv",
+    "displacement_avoided_cost_pv",
     "energy_losses_pv",
     "conductor_loss_pv",
     "converter_loss_pv",

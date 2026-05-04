@@ -4235,17 +4235,15 @@
 
       // Tab configuration for input tabs
       const TAB_CONFIG = [
-        { id: 'project-overview', label: 'Project Overview', sections: ['01_project_technical_details', '22_primary_bcr_config'] },
-        { id: 'physical-route', label: 'Physical Route Details', sections: ['02_project_physical_details'] },
-        { id: 'financial', label: 'Financial Parameters', sections: ['03_financing'] },
-        { id: 'revenue-requirements', label: 'Revenue Requirements', sections: ['19_cost_timing_patterns'] },
-        { id: 'operational', label: 'Operational Costs', sections: ['04_insurance', '05_delays', '12_project_om_vegetation_management'] },
-        { id: 'row', label: 'Right-of-Way', sections: ['11_project_row_details'] },
-        { id: 'environmental', label: 'Environmental & Mitigation', sections: ['09_environmental_mitigation'] },
+        { id: 'project', label: 'Project', sections: ['01_project_technical_details', '22_primary_bcr_config'] },
+        { id: 'route-terrain', label: 'Route & Terrain', sections: ['02_project_physical_details'] },
+        { id: 'financial', label: 'Financial', sections: ['03_financing', '19_cost_timing_patterns'] },
+        { id: 'capital-costs', label: 'Capital Costs', sections: ['11_project_row_details', '09_environmental_mitigation'] },
+        { id: 'operational', label: 'Operational Costs', sections: ['04_insurance', '12_project_om_vegetation_management'] },
+        { id: 'delay-costs', label: 'Delay Costs', sections: ['05_delays'] },
         { id: 'risk', label: 'Risk Costs', sections: ['06_wildfire_costs', '07_outage_costs'] },
-        { id: 'congestion', label: 'Benefits - Congestion & Curtailment', sections: ['17_congestion_curtailment_reductions'] },
-        { id: 'energy-mix', label: 'Energy mix', sections: ['18_energy_source_mix'] },
-        { id: 'emissions', label: 'Benefits - Emissions', sections: ['16_emissions_reductions'] }
+        { id: 'emissions', label: 'Emissions', sections: ['18_energy_source_mix', '16_emissions_reductions'] },
+        { id: 'benefits', label: 'Benefits', sections: ['17_congestion_curtailment_reductions'] },
       ];
 
       // Custom field ordering within sections
@@ -4253,6 +4251,12 @@
         '03_financing.financial': ['base_year', 'inflation_rate', 'wacc_nominal', 'social_discount_rate', 'contingencies'],
         '16_emissions_reductions.emissions_reductions': ['compensation_percent', 'societal_costs_per_kg', 'emission_intensities'],
         '18_energy_source_mix.energy_source_mix': ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other']
+      };
+
+      const FIELD_LABEL_RENAME = {
+        'compensation_percent': 'Loss Compensation Rate (\u03B1)',
+        'severity_per_event': 'Uninsured Severity ($/event)',
+        'capacity_at_risk_factor': 'Capacity at Risk (\u03C6)',
       };
 
       // Conductor type options filtered by construction type
@@ -4962,9 +4966,9 @@
         const label = document.createElement('label');
         label.htmlFor = path;
 
-        // Add label text
+        // Add label text (apply renames if configured)
         const labelText = document.createElement('span');
-        labelText.textContent = humanizeKey(key);
+        labelText.textContent = FIELD_LABEL_RENAME[key] || humanizeKey(key);
         label.appendChild(labelText);
 
         // Add required indicator
@@ -7162,7 +7166,7 @@
 
         // Show/hide congestion sections based on reconductoring
         // Traverse section-header-row elements (not the inner .section-header)
-        const congestionTab = document.querySelector('[data-tab-id="congestion"]');
+        const congestionTab = document.querySelector('[data-tab-id="benefits"]');
         if (congestionTab) {
           const headerRows = congestionTab.querySelectorAll('.section-header-row');
           headerRows.forEach(row => {
@@ -7403,7 +7407,7 @@
         });
 
         // Insert ROW miles total after right_of_way section
-        const rowTab = document.querySelector('[data-tab-id="row"]');
+        const rowTab = document.querySelector('[data-tab-id="capital-costs"]');
         if (rowTab) {
           const sectionHeader = rowTab.querySelector('.section-header');
           if (sectionHeader && sectionHeader.textContent.includes('Right Of Way')) {
@@ -7596,7 +7600,7 @@
 
       // Change 3: Style prominent toggles (reconductoring, uses_existing_row)
       function styleProminentToggles() {
-        const overviewTab = document.querySelector('[data-tab-id="project-overview"]');
+        const overviewTab = document.querySelector('[data-tab-id="project"]');
         if (!overviewTab) return;
 
         const paths = [
@@ -7928,19 +7932,56 @@
 
       function cleanUpSectionHeaders() {
         // --- Operational Costs tab ---
+        // --- Operational Costs tab (insurance + O&M; delays moved to own tab) ---
         const operationalTab = document.querySelector('[data-tab-id="operational"]');
         if (operationalTab) {
           const opRenameMap = {
-            'delays': 'Delays: Annual Delay Costs',
             'project o&m vegetation management': 'Vegetation Management O&M Costs'
           };
           operationalTab.querySelectorAll('.tab-section-header').forEach(tabHeader => {
             const lowerText = tabHeader.textContent.trim().toLowerCase();
             if (opRenameMap[lowerText]) tabHeader.textContent = opRenameMap[lowerText];
-            // Hide first duplicate subsection header
             hideFirstDuplicateSubheader(tabHeader, [
-              lowerText, 'annual delay costs', 'vegetation management o&m costs', 'insurance'
+              lowerText, 'vegetation management o&m costs', 'insurance'
             ]);
+          });
+        }
+
+        // --- Capital Costs tab (ROW + Environmental) ---
+        const capitalCostsTab = document.querySelector('[data-tab-id="capital-costs"]');
+        if (capitalCostsTab) {
+          const capRenameMap = {
+            'project row details': 'Right-of-Way (Acquisition & Holding)',
+            'environmental mitigation': 'Environmental Mitigation'
+          };
+          capitalCostsTab.querySelectorAll('.tab-section-header').forEach(tabHeader => {
+            const lowerText = tabHeader.textContent.trim().toLowerCase();
+            if (capRenameMap[lowerText]) tabHeader.textContent = capRenameMap[lowerText];
+          });
+        }
+
+        // --- Financial tab (financing + cost timing patterns) ---
+        const financialTab2 = document.querySelector('[data-tab-id="financial"]');
+        if (financialTab2) {
+          const finRenameMap = {
+            'cost timing patterns': 'AFUDC Timing Patterns'
+          };
+          financialTab2.querySelectorAll('.tab-section-header').forEach(tabHeader => {
+            const lowerText = tabHeader.textContent.trim().toLowerCase();
+            if (finRenameMap[lowerText]) tabHeader.textContent = finRenameMap[lowerText];
+          });
+        }
+
+        // --- Emissions tab (energy source mix + emissions reductions) ---
+        const emissionsTab2 = document.querySelector('[data-tab-id="emissions"]');
+        if (emissionsTab2) {
+          const emRenameMap = {
+            'energy source mix': 'Energy Source Mix',
+            'emissions reductions': 'Emissions Parameters'
+          };
+          emissionsTab2.querySelectorAll('.tab-section-header').forEach(tabHeader => {
+            const lowerText = tabHeader.textContent.trim().toLowerCase();
+            if (emRenameMap[lowerText]) tabHeader.textContent = emRenameMap[lowerText];
           });
         }
 
@@ -7982,18 +8023,8 @@
           }
         });
 
-        // --- Environmental tab ---
-        const envTab = document.querySelector('[data-tab-id="environmental"]');
-        if (envTab) {
-          // Single section tab — hide the top-level "Environmental Mitigation" header since tab name covers it
-          const firstHeaderRow = envTab.querySelector('.section-header-row');
-          if (firstHeaderRow) {
-            const header = firstHeaderRow.querySelector('.section-header');
-            if (header && header.textContent.trim().toLowerCase().includes('environmental mitigation')) {
-              firstHeaderRow.style.display = 'none';
-            }
-          }
-        }
+        // Capital Costs tab is now multi-section (ROW + Environmental);
+        // tab-section-headers handle grouping — no single-header hiding needed.
       }
 
       // Helper: hide the first section-header-row after a tab-section-header if its text matches any in the list
@@ -8079,7 +8110,7 @@
         const constructionTypeEl = document.querySelector('select[data-path="01_project_technical_details.project.construction_type"]');
         const constructionType = constructionTypeEl ? constructionTypeEl.value : 'Overhead';
 
-        const envTab = document.querySelector('[data-tab-id="environmental"]');
+        const envTab = document.querySelector('[data-tab-id="capital-costs"]');
         if (!envTab) return;
 
         // Normalize construction type for matching subsection headers
@@ -8117,7 +8148,7 @@
 
       // Restructure energy source mix into a compact table layout
       function restructureEnergySourceMix() {
-        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        const energyMixTab = document.querySelector('[data-tab-id="emissions"]');
         if (!energyMixTab) return;
 
         // Find the "Energy Source Mix" subsection header
@@ -8306,7 +8337,7 @@
       }
 
       function applyEnergySourceMixPreset(mix) {
-        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        const energyMixTab = document.querySelector('[data-tab-id="emissions"]');
         if (!energyMixTab || !mix) return;
         FUEL_MIX_SOURCE_KEYS.forEach(src => {
           const block = mix[src];
@@ -8334,7 +8365,7 @@
 
       function injectFuelMixPresetBar() {
         document.getElementById('fuel-mix-preset-bar')?.remove();
-        const energyMixTab = document.querySelector('[data-tab-id="energy-mix"]');
+        const energyMixTab = document.querySelector('[data-tab-id="emissions"]');
         if (!energyMixTab) return;
         const headers = energyMixTab.querySelectorAll('.section-header-row');
         let mixHeaderRow = null;
@@ -8505,7 +8536,7 @@
 
       // Change 15: Create environmental mitigation sub-tabs
       function createEnvironmentalSubTabs() {
-        const envTab = document.querySelector('[data-tab-id="environmental"]');
+        const envTab = document.querySelector('[data-tab-id="capital-costs"]');
         if (!envTab) return;
 
         // Create sub-tab bar
@@ -8563,7 +8594,7 @@
 
       // Change 16: Restructure BCR config into 2x2 grid and default wildfire off
       function restructureBcrConfig() {
-        const overviewTab = document.querySelector('[data-tab-id="project-overview"]');
+        const overviewTab = document.querySelector('[data-tab-id="project"]');
         if (!overviewTab) return;
 
         // Find the BCR tab-section-header and restyle it to match subsection-header
@@ -8661,7 +8692,7 @@
 
       // Change 17: Remove "Project Technical Details" tab-section-header, rename "Project" to "Project Technical Details"
       function cleanUpProjectOverviewHeaders() {
-        const overviewTab = document.querySelector('[data-tab-id="project-overview"]');
+        const overviewTab = document.querySelector('[data-tab-id="project"]');
         if (!overviewTab) return;
 
         // Remove the "Project Technical Details" tab-section-header

@@ -421,6 +421,26 @@ def _load_energy_source_mix_from_yaml_files() -> Dict[str, Any]:
     return mix
 
 
+def load_counterfactual_energy_source_mix() -> Dict[str, Any]:
+    """Load counterfactual (no-line / BAU) energy source mix from 18_energy_source_mix.yaml.
+
+    Fallback: if the counterfactual key is absent (pre-displacement YAML), construct
+    a frozen version from the project path (same percentages, all rates zero).
+    """
+    path18 = YAMLS_DIR / "18_energy_source_mix.yaml"
+    if path18.is_file():
+        with open(path18, "r", encoding="utf-8") as file:
+            data = yaml.safe_load(file)
+        cf = (data or {}).get("counterfactual_energy_source_mix")
+        if cf:
+            return cf
+    esm = _load_energy_source_mix_from_yaml_files()
+    return {
+        src: {"percentage": vals.get("percentage", 0), "rate_of_change": 0.0}
+        for src, vals in esm.items()
+    }
+
+
 def load_emissions_details() -> (
     Tuple[float, Dict[str, Any], Dict[str, Any], Dict[str, Any]]
 ):

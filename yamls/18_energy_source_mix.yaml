@@ -26,3 +26,32 @@ energy_source_mix:
   other:
     percentage: 4
     rate_of_change: 0.0
+
+# Counterfactual (no-line / BAU) energy source mix for displacement module.
+# Same initial percentages as energy_source_mix; all rates frozen (0.0).
+# Used ONLY by the facilitated-emissions module (not by loss-compensation).
+counterfactual_energy_source_mix:
+  coal:
+    percentage: 10
+    rate_of_change: 0.0
+  oil:
+    percentage: 2
+    rate_of_change: 0.0
+  natural_gas:
+    percentage: 38
+    rate_of_change: 0.0
+  solar:
+    percentage: 10
+    rate_of_change: 0.0
+  wind:
+    percentage: 26
+    rate_of_change: 0.0
+  hydro:
+    percentage: 5
+    rate_of_change: 0.0
+  nuclear:
+    percentage: 5
+    rate_of_change: 0.0
+  other:
+    percentage: 4
+    rate_of_change: 0.0
