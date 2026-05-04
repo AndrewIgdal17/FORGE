@@ -381,55 +381,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Load Primary BCR config from YAML (calculator is YAML-in only)
-    bcr_config = None
-    try:
-        from yaml_loaders import load_primary_bcr_config
-
-        bcr_config = load_primary_bcr_config()
-        bcr_config_dict = (
-            bcr_config.model_dump() if hasattr(bcr_config, "model_dump") else bcr_config
-        )
-
-        # BCR config overrides command-line flags
-        if bcr_config_dict:
-            # Convert BCR config enabled flags to ctcc.py flags (invert logic)
-            # Operational
-            if not bcr_config_dict.get("operational", {}).get("oandm", True):
-                args.no_oandm = True
-            if not bcr_config_dict.get("operational", {}).get("insurance", True):
-                args.no_insurance = True
-            if not bcr_config_dict.get("operational", {}).get("delay_costs", True):
-                args.no_delay_costs = True
-
-            # Risk
-            if not bcr_config_dict.get("risk", {}).get("wildfire", True):
-                args.no_wildfire = True
-            if not bcr_config_dict.get("risk", {}).get("outages", True):
-                args.no_outages = True
-
-            # Energy
-            if not bcr_config_dict.get("energy", {}).get("line_losses", True):
-                args.no_linelosses = True
-            if not bcr_config_dict.get("energy", {}).get("emissions", True):
-                args.no_emissions = True
-
-            # Benefits
-            if not bcr_config_dict.get("benefits", {}).get("congestion", True):
-                args.no_congestion = True
-            if not bcr_config_dict.get("benefits", {}).get("curtailment", True):
-                args.no_curtailment = True
-    except (FileNotFoundError, ImportError):
-        # Config file doesn't exist or can't be loaded - use command-line flags only
-        pass
-    except Exception as e:
-        # Any other error loading config - use command-line flags only
-        if not args.simple:
-            print(f"Warning: Could not load Primary BCR config from {source}: {e}")
-            print("  Using command-line flags only.")
-            traceback.print_exc()
-
-    # Create BCRConfig from args (after YAML overrides are applied)
+    # Create BCRConfig from CLI args
     bcr_config = BCRConfig(
         no_emissions=args.no_emissions,
         no_linelosses=args.no_linelosses,

@@ -4237,7 +4237,7 @@
 
       // Tab configuration for input tabs
       const TAB_CONFIG = [
-        { id: 'project', label: 'Project', sections: ['01_project_technical_details', '22_primary_bcr_config'] },
+        { id: 'project', label: 'Project', sections: ['01_project_technical_details'] },
         { id: 'route-terrain', label: 'Route & Terrain', sections: ['02_project_physical_details'] },
         { id: 'financial', label: 'Financial', sections: ['03_financing', '19_cost_timing_patterns'] },
         { id: 'capital-costs', label: 'Capital Costs', sections: ['11_project_row_details', '09_environmental_mitigation'] },
@@ -4287,7 +4287,9 @@
         '01_project_technical_details.project.number_of_converters': { help: 'Number of AC/DC converter stations (DC only)' },
         '01_project_technical_details.project.converter_type': { help: 'LCC (Line Commutated) or VSC (Voltage Source) converter' },
         '01_project_technical_details.project.converter_loss_percentage': { unit: '%', help: 'Energy lost in AC/DC conversion' },
-        '01_project_technical_details.project.line_utilization': { help: 'Fraction of rated capacity typically used (0-1)' },
+        '01_project_technical_details.project.reconductoring': { help: 'Enable if upgrading an existing transmission line (replaces conductor on existing structures). Disables structure costs, uses old capacity for delta calculations.' },
+        '01_project_technical_details.project.uses_existing_row': { help: 'Enable if the project uses an existing right-of-way (lease/license instead of acquisition). Affects which ROW cost terms apply.' },
+        '01_project_technical_details.project.line_utilization': { help: 'Average fraction of rated capacity used over the year (0\u20131). E.g. 0.7 = 70% utilized on average. Drives delivered energy, line losses, and delay opportunity costs.' },
         '01_project_technical_details.project.baseline_electricity_price_per_mwh': { unit: '$/MWh', help: 'Reference electricity price for calculations' },
         '01_project_technical_details.project.old_capacity_mw': { help: 'Existing line capacity before reconductoring' },
         '01_project_technical_details.project.greenfield_comparison_capacity_mw': { help: 'Capacity of alternative greenfield project for comparison' },
@@ -4295,7 +4297,16 @@
         '01_project_technical_details.timeline.delay_years': { required: true, help: 'Expected permitting and regulatory delay' },
         '01_project_technical_details.timeline.project_lifetime': { required: true, help: 'Expected operational lifetime of the project' },
 
-        // Physical Route - terrain miles
+        // Physical Route - terrain miles and multipliers
+        '02_project_physical_details.terrain.terrain_multipliers.forested': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment). Applied to build costs per weighted mile.' },
+        '02_project_physical_details.terrain.terrain_multipliers.scrubbed_flat': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.wetland': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.farmland': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.desert_barren': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.urban': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.rolling_hills': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.mountain': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
+        '02_project_physical_details.terrain.terrain_multipliers.subsea': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
         '02_project_physical_details.terrain.terrain_miles.forested': { unit: 'miles' },
         '02_project_physical_details.terrain.terrain_miles.scrubbed_flat': { unit: 'miles' },
         '02_project_physical_details.terrain.terrain_miles.wetland': { unit: 'miles' },
@@ -4334,7 +4345,7 @@
         '05_delays.annual_delay_costs.miscellaneous': { unit: '$/year' },
 
         // Wildfire
-        '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average cost per wildfire ignition event' },
+        '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average uninsured cost per wildfire ignition event (deductibles, above-limit amounts, exclusions, societal damages). Insured portion is in wildfire liability insurance.' },
         '06_wildfire_costs.wildfire.risk_growth_rate': { help: 'Annual increase in wildfire risk' },
         '06_wildfire_costs.wildfire.discount_rate_source': { help: 'Which discount rate to use for wildfire cost PV' },
         '06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested': { unit: 'events/mi/yr' },
@@ -4351,7 +4362,7 @@
         '06_wildfire_costs.wildfire.ignition_rate_multiplier.subsea': { help: 'Multiplier applied to base ignition rate' },
 
         // Outage
-        '07_outage_costs.outage.capacity_at_risk_factor': { help: '1.0 = radial line, <1.0 = meshed/redundant network' },
+        '07_outage_costs.outage.capacity_at_risk_factor': { help: 'Fraction of line capacity lost per outage event (0\u20131). 1.0 = radial (all capacity lost); <1 for meshed/redundant configurations.' },
         '07_outage_costs.outage.risk_growth_rate': { help: 'Annual increase in outage risk' },
         '07_outage_costs.outage.outage_duration_by_terrain.forested': { unit: 'hrs/event' },
         '07_outage_costs.outage.outage_duration_by_terrain.scrubbed_flat': { unit: 'hrs/event' },
@@ -4367,17 +4378,17 @@
         '07_outage_costs.outage.outage_duration_multiplier.subsea': {},
 
         // Congestion
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor': { help: 'Deliverability to the targeted constrained area (0-1)' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor': { help: 'Fraction of nameplate capacity that effectively relieves the constraint (0\u20131). Accounts for flow distribution on meshed networks. Greenfield: \u03C6 \u00D7 C_new = effective relief.' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours': { unit: 'hrs/year', help: 'Hours per year constraint is binding' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance': { unit: 'MW', help: 'Average MW exceeding constraint when binding' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: '0 for radial line, higher for meshed system' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: 'Conservative haircut applied to congestion benefit (0 = no haircut, 1 = full haircut). Reduces congestion benefit to account for uncertainty in relief estimates.' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price': { unit: '$/MWh' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total': { unit: 'hrs/year' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw': { unit: 'MW' },
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price': { unit: '$/MWh', help: 'Typically PPA price or avoided cost' },
 
         // Emissions
-        '16_emissions_reductions.emissions_reductions.compensation_percent': { help: 'Fraction of displaced generation that reduces emissions' },
+        '16_emissions_reductions.emissions_reductions.compensation_percent': { help: 'Fraction of line energy losses compensated by additional generation (\u03B1). 1.0 = all losses compensated; 0 = no loss-compensation emissions.' },
         '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg': { unit: '$/kg' },
         '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg': { unit: '$/kg' },
         '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg': { unit: '$/kg' }
@@ -8064,13 +8075,26 @@
         if (riskTab) {
           riskTab.querySelectorAll('.tab-section-header').forEach(tabHeader => {
             const lowerText = tabHeader.textContent.trim().toLowerCase();
-            // "Wildfire Costs" tab-section-header → hide nested "Wildfire" subsection header
-            // "Outage Costs" tab-section-header → hide nested "Outage" subsection header
             hideFirstDuplicateSubheader(tabHeader, [
               lowerText,
-              lowerText.replace(' costs', ''),  // "wildfire costs" → match "wildfire"
+              lowerText.replace(' costs', ''),
               lowerText.replace(' costs', ' risk')
             ]);
+          });
+
+          const outageRateRenames = {
+            'overhead': 'Outage Rate \u2014 Overhead (outages/mi/yr)',
+            'underground': 'Outage Rate \u2014 Underground (outages/mi/yr)',
+            'subsea': 'Outage Rate \u2014 Subsea (outages/mi/yr)',
+          };
+          riskTab.querySelectorAll('.subsection-header').forEach(h => {
+            const text = h.textContent.trim().toLowerCase();
+            if (outageRateRenames[text]) {
+              const path = h.closest('.section-header-row')?.nextElementSibling?.querySelector('.form-field')?.dataset?.fieldPath || '';
+              if (path.includes('outage_rates')) {
+                h.textContent = outageRateRenames[text];
+              }
+            }
           });
         }
 
@@ -8754,6 +8778,36 @@
         elementsToRemove.forEach(el => el.remove());
       }
 
+      function makeEmissionIntensitiesCollapsible() {
+        const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
+        if (!emissionsTab) return;
+        emissionsTab.querySelectorAll('.subsection-header, .section-header').forEach(h => {
+          const text = h.textContent.trim().toLowerCase();
+          if (text.includes('emission intensities') || text.includes('emission_intensities')) {
+            h.classList.add('collapsible-header');
+            h.textContent = 'Advanced: Emission Intensities (kg/MWh)';
+            const headerRow = h.closest('.section-header-row') || h;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'collapsible-content';
+            let sibling = headerRow.nextElementSibling;
+            const toWrap = [];
+            while (sibling && !sibling.classList.contains('section-header-row')
+                   && !sibling.classList.contains('tab-section-header')) {
+              toWrap.push(sibling);
+              sibling = sibling.nextElementSibling;
+            }
+            if (toWrap.length > 0) {
+              headerRow.parentNode.insertBefore(wrapper, toWrap[0]);
+              toWrap.forEach(el => wrapper.appendChild(el));
+            }
+            h.addEventListener('click', () => {
+              h.classList.toggle('expanded');
+              wrapper.classList.toggle('expanded');
+            });
+          }
+        });
+      }
+
       // Change 15: Create environmental mitigation sub-tabs
       function createEnvironmentalSubTabs() {
         const envTab = document.querySelector('[data-tab-id="capital-costs"]');
@@ -8812,102 +8866,52 @@
         });
       }
 
-      // Change 16: Restructure BCR config into 2x2 grid and default wildfire off
-      function restructureBcrConfig() {
-        const overviewTab = document.querySelector('[data-tab-id="project"]');
-        if (!overviewTab) return;
 
-        // Find the BCR tab-section-header and restyle it to match subsection-header
-        const sectionHeaders = overviewTab.querySelectorAll('.tab-section-header');
-        let bcrHeader = null;
-        sectionHeaders.forEach(h => {
-          if (h.textContent.includes('BCR') || h.textContent.includes('Benefit Cost Ratio')) {
-            bcrHeader = h;
-          }
-        });
-        if (!bcrHeader) return;
+      function makeAfudcCollapsible() {
+        const financialTab = document.querySelector('[data-tab-id="financial"]');
+        if (!financialTab) return;
 
-        // Restyle to match section-header (like Timeline)
-        bcrHeader.classList.remove('tab-section-header');
-        bcrHeader.classList.add('section-header');
-        bcrHeader.textContent = 'Benefit Cost Ratio (BCR) Calculation';
-
-        // Collect all BCR-related elements after the header
-        const bcrElements = [];
-        let sibling = bcrHeader.nextElementSibling;
-        while (sibling) {
-          if (sibling.classList.contains('tab-section-header')) break;
-          bcrElements.push(sibling);
-          sibling = sibling.nextElementSibling;
-        }
-
-        // Remove the duplicate "Primary BCR Config" / "Benefit Cost Ratio" section-header
-        bcrElements.forEach(el => {
-          const headerEl = el.querySelector ? el.querySelector('.section-header') : null;
-          if (headerEl && (headerEl.textContent.includes('BCR') || headerEl.textContent.includes('Benefit Cost Ratio'))) {
-            el.remove();
-          }
-        });
-
-        // Re-collect after removal
-        const bcrElements2 = [];
-        sibling = bcrHeader.nextElementSibling;
-        while (sibling) {
-          if (sibling.classList.contains('tab-section-header') || sibling.classList.contains('subsection-header')) break;
-          bcrElements2.push(sibling);
-          sibling = sibling.nextElementSibling;
-        }
-
-        // Group elements by subsection: operational, risk, energy, benefits
-        const groups = { operational: [], risk: [], energy: [], benefits: [] };
-        let currentGroup = null;
-        bcrElements2.forEach(el => {
-          const headerEl = el.querySelector ? el.querySelector('.subsection-header') : null;
-          if (headerEl) {
-            const text = headerEl.textContent.trim().toLowerCase();
-            if (text.includes('operational')) currentGroup = 'operational';
-            else if (text.includes('risk')) currentGroup = 'risk';
-            else if (text.includes('energy')) currentGroup = 'energy';
-            else if (text.includes('benefits')) currentGroup = 'benefits';
-          }
-          if (currentGroup) groups[currentGroup].push(el);
-        });
-
-        // Build 2x2 grid
-        const grid = document.createElement('div');
-        grid.className = 'bcr-grid';
-
-        const order = [['operational', 'energy'], ['risk', 'benefits']];
-        order.forEach(row => {
-          row.forEach(key => {
-            const cell = document.createElement('div');
-            cell.className = 'bcr-grid-cell';
-            groups[key].forEach(el => cell.appendChild(el));
-            // Make form-grid inside each cell display toggles inline
-            cell.querySelectorAll('.form-grid').forEach(fg => {
-              fg.style.display = 'flex';
-              fg.style.flexWrap = 'wrap';
-              fg.style.gap = '0.25rem 1rem';
+        // 1. Collapse the AFUDC Timing Patterns tab-section-header + its content
+        financialTab.querySelectorAll('.tab-section-header').forEach(h => {
+          if (h.textContent.trim() === 'AFUDC Timing Patterns') {
+            h.classList.add('collapsible-header');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'collapsible-content';
+            let sibling = h.nextElementSibling;
+            const toWrap = [];
+            while (sibling && !sibling.classList.contains('tab-section-header')) {
+              toWrap.push(sibling);
+              sibling = sibling.nextElementSibling;
+            }
+            if (toWrap.length > 0) {
+              h.parentNode.insertBefore(wrapper, toWrap[0]);
+              toWrap.forEach(el => wrapper.appendChild(el));
+            }
+            h.addEventListener('click', () => {
+              h.classList.toggle('expanded');
+              wrapper.classList.toggle('expanded');
             });
-            // Make each toggle field compact and inline
-            cell.querySelectorAll('.form-field').forEach(ff => {
-              ff.style.display = 'inline-flex';
-              ff.style.alignItems = 'center';
-              ff.style.gap = '0.3rem';
-              ff.style.minWidth = 'auto';
-            });
-            grid.appendChild(cell);
-          });
+          }
         });
 
-        // Insert grid after the BCR header
-        bcrHeader.parentNode.insertBefore(grid, bcrHeader.nextSibling);
-
-        // Default wildfire toggle to off
-        const wildfireToggle = overviewTab.querySelector('input[data-path="22_primary_bcr_config.primary_bcr_config.risk.wildfire"]');
-        if (wildfireToggle && wildfireToggle.type === 'checkbox') {
-          wildfireToggle.checked = false;
-        }
+        // 2. Collapse the AFUDC subsection (apply_afudc, delay_period_active_work) within financing
+        financialTab.querySelectorAll('.subsection-header').forEach(h => {
+          if (h.textContent.trim().toUpperCase() === 'AFUDC') {
+            h.classList.add('collapsible-header');
+            const headerRow = h.closest('.section-header-row') || h;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'collapsible-content';
+            const nextGrid = headerRow.nextElementSibling;
+            if (nextGrid && nextGrid.classList.contains('form-grid')) {
+              headerRow.parentNode.insertBefore(wrapper, nextGrid);
+              wrapper.appendChild(nextGrid);
+            }
+            h.addEventListener('click', () => {
+              h.classList.toggle('expanded');
+              wrapper.classList.toggle('expanded');
+            });
+          }
+        });
       }
 
       // Change 17: Remove "Project Technical Details" tab-section-header, rename "Project" to "Project Technical Details"
@@ -8971,12 +8975,14 @@
         styleProminentToggles();
         injectGreenfieldComparisonToggle();
         makeTerrainMultipliersCollapsible();
+        makeAfudcCollapsible();
         createEnvironmentalSubTabs();
-        restructureBcrConfig();
+        // restructureBcrConfig();  // BCR config removed from inputs; use Custom BCR in results tab
         cleanUpProjectOverviewHeaders();
         restructureEnergySourceMix();
         injectFuelMixPresetBar();
         restructureEmissionIntensities();
+        makeEmissionIntensitiesCollapsible();
         filterEnvironmentalTerrains();
         filterOperationalCosts();
         filterRiskTerrains();
