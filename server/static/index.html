@@ -1549,9 +1549,7 @@
         transition: transform 0.2s;
         font-size: 0.7rem;
       }
-      .collapsible-trigger.open .arrow { transform: rotate(90deg); }
-      .collapsible-content { display: none; }
-      .collapsible-content.open { display: block; }
+      .collapsible-trigger.expanded .arrow { transform: rotate(90deg); }
       .custom-bcr-toggles {
         display: flex;
         flex-wrap: wrap;
@@ -2257,7 +2255,9 @@
           { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'emissions_pv', label: 'Emissions Cost', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'emissions_pv', label: 'Loss-Comp Emissions', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'fac_emissions_pv', label: 'Facilitated Emissions', path: 'bcr.fac_emissions_project_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'displacement_pv', label: 'Displacement Avoided', path: 'bcr.displacement_avoided_cost_pv', format: 'currency', zeroIfMissing: true },
           { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency', zeroIfMissing: true },
           { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
         ]},
@@ -2347,6 +2347,8 @@
         { key: 'delay_pv', path: 'costs.delay.total_pv' },
         { key: 'line_loss_pv', path: 'costs.line_loss.total_pv' },
         { key: 'emissions_pv', path: 'costs.emissions.total_pv' },
+        { key: 'fac_emissions_project_pv', path: 'bcr.fac_emissions_project_pv' },
+        { key: 'displacement_avoided_cost_pv', path: 'bcr.displacement_avoided_cost_pv' },
         { key: 'total_energy_emissions_pv', path: 'summary.total_energy_emissions_pv' },
         { key: 'grand_total_cost_pv', path: 'summary.total_costs_pv' },
         { key: 'hard_costs_pv', path: 'bcr.hard_costs_pv' },
@@ -4250,7 +4252,8 @@
       const SECTION_FIELD_ORDER = {
         '03_financing.financial': ['base_year', 'inflation_rate', 'wacc_nominal', 'social_discount_rate', 'contingencies'],
         '16_emissions_reductions.emissions_reductions': ['compensation_percent', 'societal_costs_per_kg', 'emission_intensities'],
-        '18_energy_source_mix.energy_source_mix': ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other']
+        '18_energy_source_mix.energy_source_mix': ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'],
+        '18_energy_source_mix.counterfactual_energy_source_mix': ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other']
       };
 
       const FIELD_LABEL_RENAME = {
@@ -6062,7 +6065,8 @@
         // Outage
         const outagePV = out.pv_cost || 0;
         // Emissions
-        const emissionsPV = em.total_pv || 0;
+        const facEm = results.costs?.facilitated_emissions || {};
+        const emissionsPV = (em.total_pv || 0) + (facEm.fac_emissions_project_pv || 0);
         // Grand total
         const totalPV = summary.grand_total_cost_pv || summary.total_costs_pv || (delayPV + capitalPV + operationalPV + energyLossPV + wildfirePV + outagePV + emissionsPV);
 
@@ -6095,7 +6099,7 @@
           { label: 'Energy Losses', value: energyLossPV },
           { label: 'Wildfire Risk', value: wildfirePV },
           { label: 'Outage Risk', value: outagePV },
-          { label: 'Loss-Compensation Emissions Cost', value: emissionsPV },
+          { label: 'Emissions Cost (comp + fac)', value: emissionsPV },
         ];
         items.sort((a, b) => b.value - a.value);
         items.forEach((item, idx) => {
@@ -6338,6 +6342,54 @@
         return container;
       }
 
+      function renderFacilitatedEmissions(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const fac = results.costs?.facilitated_emissions || {};
+        if (!fac.fac_emissions_project_pv && !fac.fac_emissions_noline_pv) {
+          const note = document.createElement('div');
+          note.className = 'results-note';
+          note.textContent = 'Facilitated emissions not computed for this scenario.';
+          container.appendChild(note);
+          return container;
+        }
+        container.appendChild(pairHeader());
+        container.appendChild(currencyPairItem('Project Path', fac.fac_emissions_project_nominal || 0, fac.fac_emissions_project_pv || 0, 'C_fac,emissions: social cost of project-path generation mix over delivered energy. Enters the emissions cost bucket.'));
+        container.appendChild(currencyPairItem('No-Line Path (counterfactual)', fac.fac_emissions_noline_nominal || 0, fac.fac_emissions_noline_pv || 0, 'Counterfactual reference; not a cost anyone incurs.'));
+
+        const pollTitle = document.createElement('div');
+        pollTitle.className = 'results-subcategory-title';
+        pollTitle.style.marginTop = '1rem';
+        pollTitle.textContent = 'Project Path by Pollutant (PV)';
+        container.appendChild(pollTitle);
+        container.appendChild(currencyItem('CO\u2082', fac.project_co2_pv || 0));
+        container.appendChild(currencyItem('SO\u2093', fac.project_sox_pv || 0));
+        container.appendChild(currencyItem('NO\u2093', fac.project_nox_pv || 0));
+        return container;
+      }
+
+      function renderDisplacement(results) {
+        const container = document.createElement('div');
+        container.className = 'cost-section-items';
+        const fac = results.costs?.facilitated_emissions || {};
+        if (!fac.displacement_avoided_cost_pv && fac.displacement_avoided_cost_pv !== 0) {
+          const note = document.createElement('div');
+          note.className = 'results-note';
+          note.textContent = 'Displacement not computed for this scenario.';
+          container.appendChild(note);
+          return container;
+        }
+        container.appendChild(pairHeader());
+        container.appendChild(currencyPairItem('Displacement Avoided Cost', fac.displacement_avoided_cost_nominal || 0, fac.displacement_avoided_cost_pv || 0, 'Reported for transparency; does not enter NB or BCR.'));
+        const sign = (fac.displacement_avoided_cost_pv || 0) >= 0 ? 'cleaner' : 'dirtier';
+        const note = document.createElement('div');
+        note.className = 'results-note';
+        note.style.marginTop = '0.35rem';
+        note.textContent = `Positive = project enables cleaner generation than no-line counterfactual. This scenario: ${sign} project.`;
+        container.appendChild(note);
+        return container;
+      }
+
       function renderEmissionsCosts(results) {
         const container = document.createElement('div');
         container.className = 'cost-section-items';
@@ -6401,6 +6453,27 @@
         enSection.appendChild(currencyPairItem('Benefit from Delivered Electricity', cc.delivered_benefit_nominal || 0, cc.delivered_benefit_pv || 0));
         enSection.appendChild(currencyPairItem('Enabling Subtotal', cc.delivered_benefit_nominal || 0, bcr.benefits_enabling_pv || 0));
         container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection));
+
+        // Displacement Avoided Cost (reporting only — under Enabling for context)
+        const dispSection = document.createElement('div');
+        dispSection.className = 'cost-section-items';
+        const fac = results.costs?.facilitated_emissions || {};
+        if (fac.displacement_avoided_cost_pv || fac.displacement_avoided_cost_pv === 0) {
+          dispSection.appendChild(pairHeader());
+          dispSection.appendChild(currencyPairItem('Displacement Avoided Cost', fac.displacement_avoided_cost_nominal || 0, fac.displacement_avoided_cost_pv || 0, 'Reported for transparency; does not enter NB or BCR. The clean-generation incentive appears through incremental emissions cost comparisons.'));
+          const sign = (fac.displacement_avoided_cost_pv || 0) >= 0 ? 'cleaner' : 'dirtier';
+          const dispNote = document.createElement('div');
+          dispNote.className = 'results-note';
+          dispNote.style.marginTop = '0.35rem';
+          dispNote.textContent = `Positive = project enables cleaner generation than no-line counterfactual. This scenario: ${sign} project.`;
+          dispSection.appendChild(dispNote);
+        } else {
+          const noDisp = document.createElement('div');
+          noDisp.className = 'results-note';
+          noDisp.textContent = 'Displacement not computed for this scenario.';
+          dispSection.appendChild(noDisp);
+        }
+        container.appendChild(createCategory('Displacement (reporting only)', dispSection));
 
         // Total Benefits (B = B_remedial + B_enabling)
         const totalBenefitsHaircutNom = remedialHaircutNom + (cc.delivered_benefit_nominal || 0);
@@ -6594,8 +6667,8 @@
         moreContent.className = 'collapsible-content';
 
         trigger.addEventListener('click', () => {
-          trigger.classList.toggle('open');
-          moreContent.classList.toggle('open');
+          trigger.classList.toggle('expanded');
+          moreContent.classList.toggle('expanded');
         });
 
         const moreRows = [
@@ -6945,6 +7018,7 @@
             content.appendChild(createCategory('4. Energy Losses', renderEnergyLosses(results)));
             content.appendChild(createCategory('5. Risk Costs', renderRiskCosts(results)));
             content.appendChild(createCategory('6. Emissions (loss-compensation)', renderEmissionsCosts(results)));
+            content.appendChild(createCategory('7. Facilitated Emissions', renderFacilitatedEmissions(results)));
           } else if (tab.id === 'bcr') {
             content.appendChild(renderBCRHeadline(results));
             content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityExclusions(results)));
@@ -8324,6 +8398,152 @@
 
         // Calculate initial total (must run after table is in DOM)
         updateMixTotal();
+
+        // --- Counterfactual energy source mix (same restructure pattern) ---
+        let cfMixHeaderRow = null;
+        energyMixTab.querySelectorAll('.section-header-row').forEach(row => {
+          const h = row.querySelector('.subsection-header, .section-header');
+          if (h && h.textContent.trim().toLowerCase().includes('counterfactual energy source mix')) {
+            cfMixHeaderRow = row;
+          }
+        });
+        if (!cfMixHeaderRow) return;
+
+        const cfSources = [];
+        let cfSibling = cfMixHeaderRow.nextElementSibling;
+        const cfElementsToRemove = [];
+        const cfFuelNames = ['coal', 'oil', 'natural gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
+        while (cfSibling) {
+          if (cfSibling.classList.contains('section-header-row')) {
+            const h = cfSibling.querySelector('.subsection-header');
+            if (h) {
+              const sourceName = h.textContent.trim();
+              if (!cfFuelNames.some(f => sourceName.toLowerCase() === f)) break;
+              const grid = cfSibling.nextElementSibling;
+              if (grid && grid.classList.contains('form-grid')) {
+                const pctField = grid.querySelector('.form-field[data-field-path$=".percentage"]');
+                const rocField = grid.querySelector('.form-field[data-field-path$=".rate_of_change"]');
+                if (pctField || rocField) {
+                  cfSources.push({
+                    name: sourceName,
+                    pctInput: pctField ? pctField.querySelector('input[data-path]') : null,
+                    rocInput: rocField ? rocField.querySelector('input[data-path]') : null
+                  });
+                  cfElementsToRemove.push(cfSibling, grid);
+                  cfSibling = grid.nextElementSibling;
+                  continue;
+                }
+              }
+            }
+            break;
+          } else if (cfSibling.classList.contains('tab-section-header') || cfSibling.classList.contains('calculated-total')) {
+            break;
+          }
+          cfSibling = cfSibling.nextElementSibling;
+        }
+
+        if (cfSources.length > 0) {
+          const cfTable = document.createElement('table');
+          cfTable.className = 'energy-mix-table';
+          const cfThead = document.createElement('thead');
+          const cfHeaderTr = document.createElement('tr');
+          ['Source', 'Share of Mix', 'Rate of Change'].forEach((text, i) => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            if (i > 0) th.className = 'intensity-col';
+            cfHeaderTr.appendChild(th);
+          });
+          cfThead.appendChild(cfHeaderTr);
+          cfTable.appendChild(cfThead);
+
+          const cfTbody = document.createElement('tbody');
+          cfSources.forEach(src => {
+            const tr = document.createElement('tr');
+            const tdName = document.createElement('td');
+            tdName.textContent = src.name;
+            tr.appendChild(tdName);
+            const tdPct = document.createElement('td');
+            tdPct.className = 'intensity-cell';
+            const pctCell = document.createElement('div');
+            pctCell.className = 'mix-input-cell';
+            if (src.pctInput) { src.pctInput.style.cssText = ''; pctCell.appendChild(src.pctInput); }
+            const pctUnit = document.createElement('span');
+            pctUnit.className = 'mix-unit';
+            pctUnit.textContent = '%';
+            pctCell.appendChild(pctUnit);
+            tdPct.appendChild(pctCell);
+            tr.appendChild(tdPct);
+            const tdRoc = document.createElement('td');
+            tdRoc.className = 'intensity-cell';
+            const rocCell = document.createElement('div');
+            rocCell.className = 'mix-input-cell';
+            if (src.rocInput) { src.rocInput.style.cssText = ''; rocCell.appendChild(src.rocInput); }
+            const rocUnit = document.createElement('span');
+            rocUnit.className = 'mix-unit';
+            rocUnit.textContent = '%/yr';
+            rocCell.appendChild(rocUnit);
+            tdRoc.appendChild(rocCell);
+            tr.appendChild(tdRoc);
+            cfTbody.appendChild(tr);
+          });
+          cfTable.appendChild(cfTbody);
+
+          const cfTfoot = document.createElement('tfoot');
+          const cfTotalTr = document.createElement('tr');
+          const cfTdLabel = document.createElement('td');
+          cfTdLabel.textContent = 'Total';
+          cfTdLabel.style.fontWeight = '700';
+          cfTotalTr.appendChild(cfTdLabel);
+          const cfTdVal = document.createElement('td');
+          cfTdVal.className = 'intensity-cell';
+          const cfTotalCell = document.createElement('div');
+          cfTotalCell.className = 'mix-input-cell';
+          const cfTotalSpan = document.createElement('span');
+          cfTotalSpan.id = 'cf-energy-mix-total';
+          cfTotalSpan.style.cssText = 'font-family: "SF Mono", Monaco, monospace; font-size: 0.9rem; font-weight: 700; min-width: 70px; text-align: right; display: inline-block;';
+          cfTotalCell.appendChild(cfTotalSpan);
+          const cfTotalUnit = document.createElement('span');
+          cfTotalUnit.className = 'mix-unit';
+          cfTotalUnit.textContent = '%';
+          cfTotalCell.appendChild(cfTotalUnit);
+          cfTdVal.appendChild(cfTotalCell);
+          cfTotalTr.appendChild(cfTdVal);
+          cfTotalTr.appendChild(document.createElement('td'));
+          cfTfoot.appendChild(cfTotalTr);
+          cfTable.appendChild(cfTfoot);
+
+          function updateCfMixTotal() {
+            let sum = 0;
+            cfSources.forEach(src => {
+              if (src.pctInput) {
+                const val = parseNumberInput(src.pctInput.value);
+                if (val !== null) sum += val;
+              }
+            });
+            const display = document.getElementById('cf-energy-mix-total');
+            if (display) {
+              display.textContent = formatNumberInput(sum);
+              display.style.color = Math.abs(sum - 100) < 0.5 ? '#047857' : '#b45309';
+            }
+          }
+
+          cfSources.forEach(src => {
+            if (src.pctInput) {
+              src.pctInput.addEventListener('input', updateCfMixTotal);
+              src.pctInput.addEventListener('blur', updateCfMixTotal);
+            }
+          });
+          cfElementsToRemove.forEach(el => el.remove());
+          cfMixHeaderRow.parentNode.insertBefore(cfTable, cfMixHeaderRow.nextSibling);
+
+          const cfNote = document.createElement('div');
+          cfNote.className = 'results-note';
+          cfNote.style.marginTop = '0.5rem';
+          cfNote.textContent = 'No-line / BAU path for displacement reporting. Default: same percentages as project mix, all rates frozen at 0%.';
+          cfTable.parentNode.insertBefore(cfNote, cfTable.nextSibling);
+
+          updateCfMixTotal();
+        }
       }
 
       const FUEL_MIX_SOURCE_KEYS = ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
