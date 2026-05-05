@@ -281,6 +281,262 @@
             }
           ],
           resetButton: 'single'
+        },
+        'capital-costs': {
+          sections: [
+            {
+              id: 'cap-row-tab-header',
+              matchPath: '11_project_row_details',
+              hidden: true
+            },
+            {
+              id: 'capital-row-corridor',
+              label: 'Capital ROW (Acquisition & Holding)',
+              tier: 'first-glance',
+              matchPath: '11_project_row_details.right_of_way',
+              note: 'Per-zone corridor inputs: acquisition and holding (option fees) per §2.1.2. Rent belongs under Operational Costs per appendix §2.2.3; rent fields remain here until field migration lands.'
+            },
+            {
+              id: 'cap-env-tab-header',
+              matchPath: '09_environmental_mitigation',
+              hidden: true
+            },
+            {
+              id: 'environmental-mitigation',
+              label: 'Environmental Mitigation',
+              tier: 'working',
+              matchPath: '09_environmental_mitigation.environmental_mitigation',
+              note: 'Base mitigation ($/acre by terrain and construction type) and credit costs/ratios per §2.1.3. Reconductoring forces wetland/habitat credits to zero in the model.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'operational': {
+          sections: [
+            {
+              id: 'om-parent',
+              matchPath: '12_project_om_vegetation_management',
+              hidden: true
+            },
+            {
+              id: 'om-vegetation',
+              label: 'O&M — Vegetation Management',
+              tier: 'first-glance',
+              matchPath: '12_project_om_vegetation_management.vegetation_management_om_costs',
+              note: 'Editable slice of §2.2.1 O&M (vegetation $/mile/yr by terrain). Other O&M (conductor, converter, structure) are template-driven.'
+            },
+            {
+              id: 'insurance-parent',
+              matchPath: '04_insurance',
+              hidden: true
+            },
+            {
+              id: 'operational-insurance',
+              label: 'Operational Insurance',
+              tier: 'working',
+              matchPath: '04_insurance.insurance',
+              note: 'Premium rate, insurable components, and construction-type overrides per §2.2.2. Wildfire liability insurance is on the Risk Costs tab.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'delay-costs': {
+          sections: [
+            {
+              id: 'delays-parent',
+              matchPath: '05_delays',
+              hidden: true
+            },
+            {
+              id: 'base-delay-categories',
+              label: 'Base Delay Cost Categories (Annual)',
+              tier: 'first-glance',
+              matchPath: '05_delays.annual_delay_costs',
+              note: '§2.2.6 — constant annual costs for each delay year; PV is a level annuity at real WACC. Congestion (§2.2.7) and curtailment (§2.2.8) delay costs are computed from benefit inputs, not entered here.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'risk': {
+          sections: [
+            {
+              id: 'risk-wildfire-liability',
+              label: 'Wildfire Liability Insurance',
+              tier: 'first-glance',
+              matchPath: '04_insurance.insurance.wildfire_liability',
+              note: 'Insured portion of wildfire risk: annual premium = rate-on-line × liability limit (§2.3.1). Data path remains 04_insurance after DOM move.'
+            },
+            {
+              id: 'risk-wildfire-eal',
+              label: 'Expected Cost of Wildfires',
+              tier: 'working',
+              matchPath: '06_wildfire_costs.wildfire',
+              note: 'Uninsured wildfire EAL: severity per event, ignition by terrain, construction-type multipliers, risk growth (§2.3.2).',
+              children: [
+                {
+                  matchPath: '06_wildfire_costs.wildfire.ignition_rates_by_terrain',
+                  label: 'Base Ignition Rates by Terrain',
+                  collapsed: true
+                },
+                {
+                  matchPath: '06_wildfire_costs.wildfire.ignition_rate_multiplier',
+                  label: 'Construction-Type Multipliers',
+                  collapsed: true
+                }
+              ]
+            },
+            {
+              id: 'risk-outage',
+              label: 'Expected Cost of Outages',
+              tier: 'working',
+              matchPath: '07_outage_costs.outage',
+              note: 'Outage EAC: rates × duration × capacity at risk × tiered VoLL, risk growth (§2.3.3).',
+              children: [
+                {
+                  matchPath: '07_outage_costs.outage.value_of_lost_load',
+                  label: 'Value of Lost Load (VoLL Tiers)',
+                  collapsed: true
+                },
+                {
+                  matchPath: '07_outage_costs.outage.outage_duration_by_terrain',
+                  label: 'Outage Duration by Terrain',
+                  collapsed: true
+                },
+                {
+                  matchPath: '07_outage_costs.outage.outage_duration_multiplier',
+                  label: 'Duration Multipliers by Construction Type',
+                  collapsed: true
+                },
+                {
+                  matchPath: '07_outage_costs.outage.outage_rates.overhead',
+                  label: 'Outage Frequency — Overhead',
+                  collapsed: true
+                },
+                {
+                  matchPath: '07_outage_costs.outage.outage_rates.underground',
+                  label: 'Outage Frequency — Underground',
+                  collapsed: true
+                },
+                {
+                  matchPath: '07_outage_costs.outage.outage_rates.subsea',
+                  label: 'Outage Frequency — Subsea',
+                  collapsed: true
+                }
+              ]
+            },
+            {
+              id: 'risk-parent-06',
+              matchPath: '06_wildfire_costs',
+              hidden: true
+            },
+            {
+              id: 'risk-parent-07',
+              matchPath: '07_outage_costs',
+              hidden: true
+            }
+          ],
+          resetButton: 'single'
+        },
+        'emissions': {
+          sections: [
+            {
+              id: 'emissions-parent-16',
+              matchPath: '16_emissions_reductions',
+              hidden: true
+            },
+            {
+              id: 'emissions-parent-18',
+              matchPath: '18_energy_source_mix',
+              hidden: true
+            },
+            {
+              id: 'emissions-loss-comp',
+              label: 'Loss-Compensation Emissions',
+              tier: 'first-glance',
+              matchPath: '16_emissions_reductions.emissions_reductions',
+              note: 'Fraction α of line losses compensated; societal externality prices per kg (§2.4.1). Project-path shares come from Energy Source Mix below.'
+            },
+            {
+              id: 'emissions-energy-mix',
+              label: 'Energy Source Mix (Project Path)',
+              tier: 'working',
+              matchPath: '18_energy_source_mix.energy_source_mix',
+              note: 'Initial shares and growth/decay rates for the project-path fuel mix. Preset bar selects regional defaults.'
+            },
+            {
+              id: 'emissions-counterfactual-mix',
+              label: 'Counterfactual Energy Source Mix (No-Line)',
+              tier: 'working',
+              matchPath: '18_energy_source_mix.counterfactual_energy_source_mix',
+              note: 'No-line path for facilitated emissions and displacement reporting (§2.4.2). Defaults: same percentages as project mix, rates frozen at 0%.'
+            },
+            {
+              id: 'emissions-intensities',
+              label: 'Emission Intensities',
+              tier: 'advanced',
+              matchPath: '16_emissions_reductions.emissions_reductions.emission_intensities',
+              note: 'kg/MWh by source × pollutant. Shared across loss-comp and facilitated emissions. Most users keep defaults.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'benefits': {
+          sections: [
+            {
+              id: 'benefits-parent',
+              matchPath: '17_congestion_curtailment_reductions',
+              hidden: true
+            },
+            {
+              id: 'benefits-greenfield-remedial',
+              label: 'Remedial Benefits (Greenfield)',
+              tier: 'first-glance',
+              matchPath: '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions',
+              note: 'Congestion and curtailment relief inputs (greenfield). Delivered energy benefit is computed from capacity relief × utilization × 8760.',
+              children: [
+                {
+                  matchPath: '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints',
+                  label: 'Congestion — Binding Hours & Capacity',
+                  collapsed: false
+                },
+                {
+                  matchPath: '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs',
+                  label: 'Congestion — Economic Valuation',
+                  collapsed: false
+                },
+                {
+                  matchPath: '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment',
+                  label: 'Curtailment Reduction Parameters',
+                  collapsed: false
+                }
+              ]
+            },
+            {
+              id: 'benefits-recon-remedial',
+              label: 'Remedial Benefits (Reconductoring)',
+              tier: 'first-glance',
+              matchPath: '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions',
+              note: 'Reconductoring variant; effective relief = C_new − C_old.',
+              children: [
+                {
+                  matchPath: '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints',
+                  label: 'Congestion — Binding Hours & Capacity',
+                  collapsed: false
+                },
+                {
+                  matchPath: '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs',
+                  label: 'Congestion — Economic Valuation',
+                  collapsed: false
+                },
+                {
+                  matchPath: '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment',
+                  label: 'Curtailment Reduction Parameters',
+                  collapsed: false
+                }
+              ]
+            }
+          ],
+          resetButton: 'single'
         }
       };
 
@@ -399,78 +655,98 @@
         '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.during_construction': { help: 'Fraction of construction insurance incurred during construction (typically 1.0).' },
         '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.afudc_eligible': { help: 'Whether construction insurance qualifies for AFUDC. Can be capitalized as part of construction cost.' },
 
-        // Insurance
-        '04_insurance.insurance.premium_rate': { help: 'Annual insurance premium as fraction of insured value' },
-        '04_insurance.insurance.wildfire_liability.liability_limit': { unit: '$', help: 'Maximum wildfire liability coverage' },
-        '04_insurance.insurance.wildfire_liability.rate_on_line': { help: 'Annual premium = Rate on Line × Liability Limit' },
+        // Insurance (Tab 5 — Operational Costs)
+        '04_insurance.insurance.premium_rate': { help: 'Annual insurance premium as fraction of insured value. Applied to the sum of insured component build costs.' },
+        '04_insurance.insurance.insurable_components.conductors': { help: 'Include conductor build costs in the insured value base.' },
+        '04_insurance.insurance.insurable_components.structures': { help: 'Include structure build costs in the insured value base.' },
+        '04_insurance.insurance.insurable_components.converters': { help: 'Include converter build costs in the insured value base (DC only).' },
+        '04_insurance.insurance.premium_by_construction_type.overhead': { help: 'Construction-phase premium multiplier for overhead lines.' },
+        '04_insurance.insurance.premium_by_construction_type.underground': { help: 'Construction-phase premium multiplier for underground lines.' },
+        '04_insurance.insurance.premium_by_construction_type.subsea': { help: 'Construction-phase premium multiplier for subsea lines.' },
+        '04_insurance.insurance.wildfire_liability.enabled': { help: 'Enable wildfire liability insurance. When on, annual premium = rate on line × liability limit.' },
+        '04_insurance.insurance.wildfire_liability.liability_limit': { unit: '$', help: 'Maximum wildfire liability coverage per policy year.' },
+        '04_insurance.insurance.wildfire_liability.rate_on_line': { help: 'Annual premium = Rate on Line × Liability Limit.' },
 
-        // Delays
-        '05_delays.annual_delay_costs.legal': { unit: '$/year' },
-        '05_delays.annual_delay_costs.admin': { unit: '$/year' },
-        '05_delays.annual_delay_costs.labor': { unit: '$/year' },
-        '05_delays.annual_delay_costs.material_and_equipment': { unit: '$/year' },
-        '05_delays.annual_delay_costs.regulatory': { unit: '$/year' },
-        '05_delays.annual_delay_costs.public_relations': { unit: '$/year' },
-        '05_delays.annual_delay_costs.project_management': { unit: '$/year' },
-        '05_delays.annual_delay_costs.miscellaneous': { unit: '$/year' },
+        // Environmental Mitigation (Tab 4 — Capital Costs)
+        '09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor': { help: 'Multiplier applied to base per-acre mitigation costs to account for project-specific conditions (§2.1.3). 1.0 = no uplift.' },
+
+        // Delays (Tab 6 — Delay Costs)
+        '05_delays.annual_delay_costs.legal': { unit: '$/year', help: 'Annual legal costs incurred during each delay year (litigation, regulatory counsel).' },
+        '05_delays.annual_delay_costs.admin': { unit: '$/year', help: 'Annual administrative overhead during each delay year.' },
+        '05_delays.annual_delay_costs.labor': { unit: '$/year', help: 'Annual labor costs to maintain project readiness during each delay year.' },
+        '05_delays.annual_delay_costs.material_and_equipment': { unit: '$/year', help: 'Annual material storage and equipment maintenance during each delay year.' },
+        '05_delays.annual_delay_costs.regulatory': { unit: '$/year', help: 'Annual regulatory compliance and permitting costs during each delay year.' },
+        '05_delays.annual_delay_costs.public_relations': { unit: '$/year', help: 'Annual community engagement and public relations costs during each delay year.' },
+        '05_delays.annual_delay_costs.project_management': { unit: '$/year', help: 'Annual project management overhead during each delay year.' },
+        '05_delays.annual_delay_costs.miscellaneous': { unit: '$/year', help: 'Other annual costs during each delay year not captured above.' },
 
         // Wildfire
         '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average uninsured cost per wildfire ignition event (deductibles, above-limit amounts, exclusions, societal damages). Insured portion is in wildfire liability insurance.' },
         '06_wildfire_costs.wildfire.risk_growth_rate': { help: 'Annual increase in wildfire risk' },
         '06_wildfire_costs.wildfire.discount_rate_source': { help: 'Which discount rate to use for wildfire cost PV' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.scrubbed_flat': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.wetland': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.farmland': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.desert_barren': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.urban': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.rolling_hills': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.mountain': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.subsea': { unit: 'events/mi/yr' },
-        '06_wildfire_costs.wildfire.ignition_rate_multiplier.overhead': { help: 'Multiplier applied to base ignition rate' },
-        '06_wildfire_costs.wildfire.ignition_rate_multiplier.underground': { help: 'Multiplier applied to base ignition rate' },
-        '06_wildfire_costs.wildfire.ignition_rate_multiplier.subsea': { help: 'Multiplier applied to base ignition rate' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for forested terrain (before construction-type multiplier).' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.scrubbed_flat': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for scrubbed flat terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.wetland': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for wetland terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.farmland': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for farmland terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.desert_barren': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for desert/barren terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.urban': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for urban terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.rolling_hills': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for rolling hills terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.mountain': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for mountain terrain.' },
+        '06_wildfire_costs.wildfire.ignition_rates_by_terrain.subsea': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for subsea terrain (typically 0).' },
+        '06_wildfire_costs.wildfire.ignition_rate_multiplier.overhead': { help: 'Multiplier applied to base ignition rate for overhead construction.' },
+        '06_wildfire_costs.wildfire.ignition_rate_multiplier.underground': { help: 'Multiplier applied to base ignition rate for underground construction (typically 0).' },
+        '06_wildfire_costs.wildfire.ignition_rate_multiplier.subsea': { help: 'Multiplier applied to base ignition rate for subsea construction (typically 0).' },
 
-        // Outage
+        // Outage (Tab 7 — Risk Costs)
         '07_outage_costs.outage.capacity_at_risk_factor': { help: 'Fraction of line capacity lost per outage event (0\u20131). 1.0 = radial (all capacity lost); <1 for meshed/redundant configurations.' },
-        '07_outage_costs.outage.risk_growth_rate': { help: 'Annual increase in outage risk' },
-        '07_outage_costs.outage.outage_duration_by_terrain.forested': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.scrubbed_flat': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.wetland': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.farmland': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.desert_barren': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.urban': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.rolling_hills': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.mountain': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_by_terrain.subsea': { unit: 'hrs/event' },
-        '07_outage_costs.outage.outage_duration_multiplier.overhead': {},
-        '07_outage_costs.outage.outage_duration_multiplier.underground': {},
-        '07_outage_costs.outage.outage_duration_multiplier.subsea': {},
+        '07_outage_costs.outage.risk_growth_rate': { help: 'Annual increase in outage risk (compounds over project lifetime).' },
+        '07_outage_costs.outage.outage_duration_by_terrain.forested': { unit: 'hrs/event', help: 'Average outage duration for forested terrain (before construction-type multiplier).' },
+        '07_outage_costs.outage.outage_duration_by_terrain.scrubbed_flat': { unit: 'hrs/event', help: 'Average outage duration for scrubbed flat terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.wetland': { unit: 'hrs/event', help: 'Average outage duration for wetland terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.farmland': { unit: 'hrs/event', help: 'Average outage duration for farmland terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.desert_barren': { unit: 'hrs/event', help: 'Average outage duration for desert/barren terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.urban': { unit: 'hrs/event', help: 'Average outage duration for urban terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.rolling_hills': { unit: 'hrs/event', help: 'Average outage duration for rolling hills terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.mountain': { unit: 'hrs/event', help: 'Average outage duration for mountain terrain.' },
+        '07_outage_costs.outage.outage_duration_by_terrain.subsea': { unit: 'hrs/event', help: 'Average outage duration for subsea terrain.' },
+        '07_outage_costs.outage.outage_duration_multiplier.overhead': { help: 'Duration multiplier for overhead construction type.' },
+        '07_outage_costs.outage.outage_duration_multiplier.underground': { help: 'Duration multiplier for underground construction type.' },
+        '07_outage_costs.outage.outage_duration_multiplier.subsea': { help: 'Duration multiplier for subsea construction type.' },
 
-        // Congestion
+        // Congestion & Curtailment — Greenfield (Tab 9 — Benefits)
         '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.flow_factor': { help: 'Fraction of nameplate capacity that effectively relieves the constraint (0\u20131). Accounts for flow distribution on meshed networks. Greenfield: \u03C6 \u00D7 C_new = effective relief.' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours': { unit: 'hrs/year', help: 'Hours per year constraint is binding' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance': { unit: 'MW', help: 'Average MW exceeding constraint when binding' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: 'Conservative haircut applied to congestion benefit (0 = no haircut, 1 = full haircut). Reduces congestion benefit to account for uncertainty in relief estimates.' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price': { unit: '$/MWh' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total': { unit: 'hrs/year' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw': { unit: 'MW' },
-        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price': { unit: '$/MWh', help: 'Typically PPA price or avoided cost' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.binding_hours': { unit: 'hrs/year', help: 'Hours per year the transmission constraint is binding.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.average_exceedance': { unit: 'MW', help: 'Average MW exceeding constraint capacity when binding.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: 'Conservative haircut applied to congestion benefit (0 = no haircut, 1 = full haircut). Reduces benefit to account for uncertainty.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price': { unit: '$/MWh', help: 'Average locational marginal price differential during binding hours.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_hours_total': { unit: 'hrs/year', help: 'Total annual hours of renewable curtailment relieved by the project.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_mw': { unit: 'MW', help: 'Average MW curtailed during curtailment hours.' },
+        '17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price': { unit: '$/MWh', help: 'Typically PPA price or avoided cost of curtailed energy.' },
 
-        // Emissions
+        // Congestion & Curtailment — Reconductoring (Tab 9 — Benefits)
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.flow_factor': { help: 'Fraction of incremental capacity (C_new − C_old) that relieves the constraint.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.binding_hours': { unit: 'hrs/year', help: 'Hours per year the transmission constraint is binding.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.average_exceedance': { unit: 'MW', help: 'Average MW exceeding constraint capacity when binding.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor': { help: 'Conservative haircut on congestion benefit (0 = no haircut, 1 = full haircut).' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.costs.average_congestion_price': { unit: '$/MWh', help: 'Average locational marginal price differential during binding hours.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_hours_total': { unit: 'hrs/year', help: 'Total annual hours of curtailment relieved.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_mw': { unit: 'MW', help: 'Average MW curtailed during curtailment hours.' },
+        '17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_price': { unit: '$/MWh', help: 'Typically PPA price or avoided cost of curtailed energy.' },
+
+        // Emissions (Tab 8)
         '16_emissions_reductions.emissions_reductions.compensation_percent': { help: 'Fraction of line energy losses compensated by additional generation (\u03B1). 1.0 = all losses compensated; 0 = no loss-compensation emissions.' },
-        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg': { unit: '$/kg' },
-        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg': { unit: '$/kg' },
-        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg': { unit: '$/kg' }
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg': { unit: '$/kg', help: 'Societal cost of CO\u2082 emissions per kilogram (social cost of carbon).' },
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg': { unit: '$/kg', help: 'Societal cost of SO\u2093 emissions per kilogram.' },
+        '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg': { unit: '$/kg', help: 'Societal cost of NO\u2093 emissions per kilogram.' }
       };
 
-      // Add ROW zone units for all 15 zones
+      // Add ROW zone units + help for all 15 zones
       for (let i = 1; i <= 15; i++) {
         const z = `zone_${i}`;
-        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.miles`] = { unit: 'miles' };
-        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.acquisition_cost`] = { unit: '$/acre' };
-        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.rent_cost`] = { unit: '$/acre/year' };
-        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.hold_cost`] = { unit: '$/acre' };
+        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.miles`] = { unit: 'miles', help: 'Route miles through this ROW zone. Zone miles × ROW width = zone acreage for cost calculations.' };
+        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.acquisition_cost`] = { unit: '$/acre', help: 'Per-acre land acquisition cost for this zone (§2.1.2). Applied to zone acreage for capital ROW cost.' };
+        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.rent_cost`] = { unit: '$/acre/year', help: 'Annual per-acre rent for existing ROW (§2.2.3). Classified as operational cost; remains here until field migration.' };
+        FIELD_METADATA[`11_project_row_details.right_of_way.${z}.hold_cost`] = { unit: '$/acre/year', help: 'Annual per-acre holding cost (option fee) during delay and construction periods (§2.1.2).' };
       }
 
       // Add outage rate units for all construction type × terrain combinations
