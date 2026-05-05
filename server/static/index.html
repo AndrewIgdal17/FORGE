@@ -270,6 +270,37 @@
       .main-tab-content .section[hidden] {
         display: none;
       }
+      .scenario-subtab-content {
+        display: none;
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+        padding: 0;
+      }
+      .scenario-subtab-content.active {
+        display: flex;
+        flex-direction: column;
+      }
+      .cf-calculator {
+        margin-bottom: 1.5rem;
+      }
+      .cf-calculator-header {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #111;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid rgba(0,0,0,0.1);
+        margin-bottom: 0;
+      }
+      .cf-calculator-header::before {
+        color: #333;
+      }
+      .cf-method-header {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #0066cc;
+        padding: 0.4rem 0;
+      }
       #ctcc-json-inputs {
         display: flex;
         flex-direction: column;
@@ -1924,61 +1955,156 @@
 
     <!-- Scenarios Tab -->
     <div class="main-tab-content" id="main-tab-scenarios">
-      <h2 style="margin: 0 0 1rem;">Scenario Manager</h2>
-      <div class="scenario-toolbar">
-        <button type="button" id="scenario-upload-btn">Load from file</button>
-        <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
-        <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
+      <!-- Subtab navigation strip -->
+      <div class="tabs" id="scenario-subtabs" style="padding-left: 1rem;">
+        <button type="button" class="tab-button active" data-scenario-tab="scenario-comparison">Scenario Comparison</button>
+        <button type="button" class="tab-button" data-scenario-tab="design-comparison">Counterfactual Calculators</button>
+        <button type="button" class="tab-button" data-scenario-tab="sensitivity-analysis">Sensitivity Analysis</button>
       </div>
-      <div class="scenario-list" id="scenario-list">
-        <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
-      </div>
-      <div class="scenario-divider" id="scenario-divider">
-        <span class="scenario-divider-hint" id="scenario-divider-hint">Click to show scenarios list</span>
-        <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
-          <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-      <div class="comparison-section" id="comparison-section">
-        <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (incremental benefits and costs, &Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios.</p>
-        <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
-          <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
-          <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
-          <button type="button" id="exclusions-btn" class="comparison-toggle-btn">Exclusions</button>
-          <button type="button" id="compare-baseline-btn" class="comparison-toggle-btn">Compare to Baseline</button>
-          <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
-            <input type="checkbox" id="cmp-auto-sort-columns" />
-            Auto-sort Columns
-          </label>
-        </h3>
-        <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
-          <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
-            <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
-              <input type="checkbox" id="cmp-show-delta" />
-              Show Δ vs baseline
-            </label>
-            <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
-              <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
-                <option value="values_plus_delta">Values + Δ</option>
-                <option value="delta_only">Δ only (except baseline)</option>
-              </select>
-            </label>
-            <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
-              <input type="checkbox" id="cmp-show-percent-delta" disabled />
-              Show % Δ
-            </label>
-          </span>
-          <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
-            <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
-            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
-            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
-            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
-            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
-            <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
-          </span>
+
+      <!-- Subtab 1: Scenario Comparison (existing Scenario Manager, wrapped) -->
+      <div class="scenario-subtab-content active" id="scenario-subtab-scenario-comparison">
+        <h2 style="margin: 0 0 1rem; padding: 0 1rem;">Scenario Comparison</h2>
+        <div class="scenario-toolbar">
+          <button type="button" id="scenario-upload-btn">Load from file</button>
+          <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
+          <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
         </div>
-        <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
-        <div id="comparison-table-container"></div>
+        <div class="scenario-list" id="scenario-list">
+          <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
+        </div>
+        <div class="scenario-divider" id="scenario-divider">
+          <span class="scenario-divider-hint" id="scenario-divider-hint">Click to show scenarios list</span>
+          <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
+            <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="comparison-section" id="comparison-section">
+          <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (incremental benefits and costs, &Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios.</p>
+          <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
+            <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
+            <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
+            <button type="button" id="exclusions-btn" class="comparison-toggle-btn">Exclusions</button>
+            <button type="button" id="compare-baseline-btn" class="comparison-toggle-btn">Compare to Baseline</button>
+            <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
+              <input type="checkbox" id="cmp-auto-sort-columns" />
+              Auto-sort Columns
+            </label>
+          </h3>
+          <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
+            <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
+              <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
+                <input type="checkbox" id="cmp-show-delta" />
+                Show Δ vs baseline
+              </label>
+              <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
+                <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
+                  <option value="values_plus_delta">Values + Δ</option>
+                  <option value="delta_only">Δ only (except baseline)</option>
+                </select>
+              </label>
+              <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
+                <input type="checkbox" id="cmp-show-percent-delta" disabled />
+                Show % Δ
+              </label>
+            </span>
+            <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
+              <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
+            </span>
+          </div>
+          <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
+          <div id="comparison-table-container"></div>
+        </div>
+      </div>
+
+      <!-- Subtab 2: Counterfactual Calculators -->
+      <div class="scenario-subtab-content" id="scenario-subtab-design-comparison">
+        <div style="padding: 1.5rem 1rem; max-width: 60rem;">
+
+          <!-- Reconductoring guard -->
+          <div id="design-comparison-reconductoring-guard" style="display: none; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 0.5rem; border: 1px solid rgba(0,0,0,0.08);">
+            <p style="margin: 0; font-size: 0.9rem; color: rgba(0,0,0,0.55);">Counterfactual calculators are available for greenfield (non-reconductoring) projects. Your current project is set to reconductoring mode.</p>
+          </div>
+
+          <div id="design-comparison-main">
+            <!-- Calculator 1: Line Losses Under Alternative Designs -->
+            <div class="cf-calculator">
+              <div class="collapsible-header expanded cf-calculator-header" id="cf-calc-lineloss-header">
+                Line Losses Under Alternative Designs
+              </div>
+              <div class="collapsible-content expanded" id="cf-calc-lineloss-body">
+                <p style="color: rgba(0,0,0,0.55); line-height: 1.4; font-size: 0.85rem; margin: 0.5rem 0 1.25rem;">
+                  How would line losses change if this route used a different capacity or conductor?
+                  Set an alternative configuration below and run the calculation.
+                </p>
+
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                  <!-- Primary config readout -->
+                  <div style="flex: 1 1 14rem; background: rgba(0,0,0,0.02); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,0,0,0.06);">
+                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.4rem; color: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 0.03em;">Your Project</p>
+                    <div id="design-cmp-primary-readout" style="font-size: 0.85rem; line-height: 1.5;">
+                      <span style="color: rgba(0,0,0,0.4);">Run a calculation first</span>
+                    </div>
+                  </div>
+
+                  <!-- Comparison config controls -->
+                  <div style="flex: 1 1 14rem; background: rgba(0,100,200,0.04); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,100,200,0.12);">
+                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.5rem; color: rgba(0,100,200,0.7); text-transform: uppercase; letter-spacing: 0.03em;">Alternative Design</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                      <label style="font-size: 0.8rem; font-weight: 500;">
+                        Capacity
+                        <select id="design-cmp-capacity" data-path="01_project_technical_details.project.greenfield_comparison_capacity_mw" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
+                          <option value="">(None)</option>
+                        </select>
+                      </label>
+                      <label style="font-size: 0.8rem; font-weight: 500;">
+                        Conductor Type
+                        <select id="design-cmp-conductor" data-path="01_project_technical_details.project.greenfield_comparison_conductor_type" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
+                          <option value="">(None)</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                  <button type="button" id="design-cmp-run-btn" disabled style="padding: 0.5rem 1.25rem; background: #ccc; color: white; border: none; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 600; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Run Comparison</button>
+                  <span id="design-cmp-run-hint" style="font-size: 0.8rem; color: rgba(0,0,0,0.45);">
+                    Select an alternative capacity and conductor, then run.
+                  </span>
+                </div>
+
+                <!-- Results area -->
+                <div id="design-comparison-results" style="display: none;"></div>
+              </div>
+            </div>
+
+            <!-- Future calculators go here with the same cf-calculator pattern -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtab 3: Sensitivity Analysis (placeholder) -->
+      <div class="scenario-subtab-content" id="scenario-subtab-sensitivity-analysis">
+        <div style="padding: 2rem; max-width: 40rem;">
+          <h2 style="margin: 0 0 0.75rem;">Sensitivity Analysis</h2>
+          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">
+            Systematic sensitivity analysis tools for understanding which input parameters
+            most affect project economics.
+          </p>
+          <div style="background: rgba(0,0,0,0.03); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.08);">
+            <p style="font-weight: 600; margin: 0 0 0.5rem; font-size: 0.85rem;">Under Development</p>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: rgba(0,0,0,0.6); line-height: 1.6;">
+              <li><strong>One-At-a-Time (OAT)</strong> &mdash; vary a single parameter while holding all others fixed to isolate its effect on BCR, costs, and benefits.</li>
+              <li><strong>Latin Hypercube Sampling (LHS)</strong> &mdash; simultaneously vary multiple parameters across their ranges to capture interaction effects and identify the most influential inputs.</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -4248,6 +4374,152 @@
         { id: 'benefits', label: 'Benefits', sections: ['17_congestion_curtailment_reductions'] },
       ];
 
+      /**
+       * TAB_HIERARCHY — single source of truth for within-tab layout.
+       *
+       * To change a tab's field ordering, section grouping, collapsing, or
+       * labeling: add/edit entries here. Do NOT write ad-hoc DOM layout functions.
+       *
+       * Matching primitives:
+       *   matchPath   — JSON dot path (matches data-section-path on Reset buttons
+       *                 or data-section-key on .tab-section-header elements).
+       *                 Finds the existing section header + its content.
+       *   matchFields — array of data-field-path suffixes. Extracts individual
+       *                 fields from their current grid and regroups them into a
+       *                 new synthetic section.
+       *
+       * Children (sub-grouping within a section):
+       *   children: [{ matchFields, label, collapsed }, { matchPath, label, collapsed }]
+       *   matchFields children — extract fields into labeled collapsible sub-sections.
+       *   matchPath children   — relabel/collapse existing subsection headers within
+       *                          the parent's content.
+       *
+       * Tiers:
+       *   first-glance — prominent, always visible at top
+       *   working      — visible, standard form fields
+       *   advanced     — collapsed by default (collapsible-header/content pattern)
+       *
+       * The engine (applyTabHierarchy) claims elements, physically reorders them
+       * to match this config's array order, applies decorations (label, tier, note),
+       * then processes children for sub-grouping. Unclaimed elements go at the end.
+       *
+       * Design doc: Projects/CTCC/input_app_audit/within-tab-hierarchy-proposal.md
+       */
+      const TAB_HIERARCHY = {
+        'project': {
+          sections: [
+            {
+              id: 'project-setup',
+              label: 'Project Setup',
+              tier: 'first-glance',
+              matchPath: '01_project_technical_details.project',
+              note: 'Core project parameters. Capacity maps to appendix C_new; reconductoring fields define C_old.',
+              children: [
+                {
+                  label: 'Identity & Technology',
+                  matchFields: ['name', 'construction_type', 'ac_dc', 'capacity_mw', 'conductor_type',
+                                'number_of_converters', 'converter_type', 'converter_loss_percentage']
+                },
+                {
+                  label: 'Reconductoring & ROW Context',
+                  matchFields: ['reconductoring', 'uses_existing_row', 'old_capacity_mw', 'old_conductor_type', 'old_ac_dc']
+                },
+                {
+                  label: 'Utilization & Reference Price',
+                  matchFields: ['line_utilization', 'baseline_electricity_price_per_mwh']
+                }
+              ]
+            },
+            {
+              id: 'timeline',
+              label: 'Timeline',
+              tier: 'first-glance',
+              matchPath: '01_project_technical_details.timeline',
+              note: 'Construction years, delay years, and project lifetime — used across AFUDC timing and all PV calculations.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'route-terrain': {
+          sections: [
+            {
+              id: 'terrain-parent',
+              matchPath: '02_project_physical_details.terrain',
+              hidden: true
+            },
+            {
+              id: 'terrain-miles',
+              label: 'Terrain Miles',
+              tier: 'first-glance',
+              matchPath: '02_project_physical_details.terrain.terrain_miles',
+              note: 'Miles by terrain type. Zero-mile terrains are hidden from cost calculations. Totals and weighted miles are computed.'
+            },
+            {
+              id: 'terrain-multipliers',
+              label: 'Terrain Multipliers',
+              tier: 'advanced',
+              matchPath: '02_project_physical_details.terrain.terrain_multipliers',
+              note: 'Cost multiplier by terrain type — applied to build costs via weighted miles.'
+            }
+          ],
+          resetButton: 'single'
+        },
+        'financial': {
+          sections: [
+            {
+              id: 'financing-parent',
+              matchPath: '03_financing',
+              hidden: true
+            },
+            {
+              id: 'financial-parent',
+              matchPath: '03_financing.financial',
+              hidden: true
+            },
+            {
+              id: 'core-rates',
+              label: 'Financial Parameters',
+              tier: 'first-glance',
+              matchFields: ['base_year', 'inflation_rate', 'wacc_nominal', 'social_discount_rate'],
+              note: 'Discount rates and inflation for present-value calculations. Real WACC discounts market costs/benefits; social rate discounts externalities.'
+            },
+            {
+              id: 'contingencies',
+              label: 'Build Contingencies',
+              tier: 'working',
+              matchPath: '03_financing.financial.contingencies',
+              note: 'Contingency factors applied to terrain-adjusted build cost components.'
+            },
+            {
+              id: 'capital-structure',
+              matchPath: '03_financing.financial.capital_structure',
+              hidden: true
+            },
+            {
+              id: 'revenue',
+              label: 'Revenue & Return',
+              tier: 'working',
+              matchPath: '03_financing.financial.revenue'
+            },
+            {
+              id: 'afudc-config',
+              label: 'AFUDC Configuration',
+              tier: 'advanced',
+              matchPath: '03_financing.financial.afudc',
+              note: 'AFUDC rate equals nominal WACC. Controls whether pre-construction spending earns AFUDC.'
+            },
+            {
+              id: 'afudc-timing',
+              label: 'AFUDC Timing Patterns',
+              tier: 'advanced',
+              matchPath: '19_cost_timing_patterns',
+              note: 'Spending split by cost component for AFUDC capitalization to COD.'
+            }
+          ],
+          resetButton: 'single'
+        }
+      };
+
       // Custom field ordering within sections
       const SECTION_FIELD_ORDER = {
         '03_financing.financial': ['base_year', 'inflation_rate', 'wacc_nominal', 'social_discount_rate', 'contingencies'],
@@ -4280,22 +4552,23 @@
       const FIELD_METADATA = {
         // Project Overview
         '01_project_technical_details.project.name': { required: true, help: 'Unique identifier for this project scenario' },
-        '01_project_technical_details.project.construction_type': { required: true, help: 'Method of transmission line construction' },
-        '01_project_technical_details.project.ac_dc': { required: true, help: 'Alternating Current or Direct Current transmission' },
-        '01_project_technical_details.project.capacity_mw': { required: true, help: 'Maximum power transfer capacity' },
-        '01_project_technical_details.project.conductor_type': { required: true, help: 'Type of conductor material and design' },
-        '01_project_technical_details.project.number_of_converters': { help: 'Number of AC/DC converter stations (DC only)' },
-        '01_project_technical_details.project.converter_type': { help: 'LCC (Line Commutated) or VSC (Voltage Source) converter' },
-        '01_project_technical_details.project.converter_loss_percentage': { unit: '%', help: 'Energy lost in AC/DC conversion' },
-        '01_project_technical_details.project.reconductoring': { help: 'Enable if upgrading an existing transmission line (replaces conductor on existing structures). Disables structure costs, uses old capacity for delta calculations.' },
-        '01_project_technical_details.project.uses_existing_row': { help: 'Enable if the project uses an existing right-of-way (lease/license instead of acquisition). Affects which ROW cost terms apply.' },
-        '01_project_technical_details.project.line_utilization': { help: 'Average fraction of rated capacity used over the year (0\u20131). E.g. 0.7 = 70% utilized on average. Drives delivered energy, line losses, and delay opportunity costs.' },
-        '01_project_technical_details.project.baseline_electricity_price_per_mwh': { unit: '$/MWh', help: 'Reference electricity price for calculations' },
-        '01_project_technical_details.project.old_capacity_mw': { help: 'Existing line capacity before reconductoring' },
-        '01_project_technical_details.project.greenfield_comparison_capacity_mw': { help: 'Capacity of alternative greenfield project for comparison' },
-        '01_project_technical_details.timeline.construction_years': { required: true, help: 'Duration of construction phase' },
-        '01_project_technical_details.timeline.delay_years': { required: true, help: 'Expected permitting and regulatory delay' },
-        '01_project_technical_details.timeline.project_lifetime': { required: true, help: 'Expected operational lifetime of the project' },
+        '01_project_technical_details.project.construction_type': { required: true, help: 'Overhead, underground, or subsea. Determines build cost templates, terrain multiplier applicability, O&M rates, and outage/wildfire risk profiles.' },
+        '01_project_technical_details.project.ac_dc': { required: true, help: 'AC or DC transmission. DC adds converter stations and converter losses; AC uses power factor in loss calculations.' },
+        '01_project_technical_details.project.capacity_mw': { required: true, unit: 'MW', help: 'Nameplate capacity (C_new). Used for line losses, delivered energy, outage cost (capacity at risk), and effective capacity relief.' },
+        '01_project_technical_details.project.conductor_type': { required: true, help: 'Determines per-mile conductor costs, resistance (for line losses), and O&M rates from the build cost templates.' },
+        '01_project_technical_details.project.number_of_converters': { help: 'Number of AC/DC converter stations (DC only). Typically 2 (one at each end). Drives converter build cost and converter energy losses.' },
+        '01_project_technical_details.project.converter_type': { help: 'LCC (Line Commutated Converter) or VSC (Voltage Source Converter). Determines converter loss percentage defaults (LCC ~0.75%, VSC ~1%).' },
+        '01_project_technical_details.project.converter_loss_percentage': { unit: '%', help: 'Fraction of through-power lost per converter station. Defaults: 0.75% for LCC, 1% for VSC. Drives converter energy losses.' },
+        '01_project_technical_details.project.reconductoring': { help: 'Enable if upgrading an existing transmission line (replaces conductor on existing structures). Disables structure/converter costs; effective relief = C_new \u2212 C_old instead of \u03C6 \u00D7 C_new.' },
+        '01_project_technical_details.project.uses_existing_row': { help: 'Enable if the project uses an existing right-of-way (lease/license). Switches ROW costs from acquisition/holding to rent, and may change rent start year.' },
+        '01_project_technical_details.project.line_utilization': { help: 'Average fraction of rated capacity used over the year (0\u20131). E.g. 0.7 = 70% utilized. Drives delivered energy (benefit), line losses (cost), and delay opportunity costs.' },
+        '01_project_technical_details.project.baseline_electricity_price_per_mwh': { unit: '$/MWh', help: 'Wholesale electricity price used to value thermal line losses and delivered energy benefit. Should reflect the system marginal energy price.' },
+        '01_project_technical_details.project.old_capacity_mw': { unit: 'MW', help: 'Existing line capacity before reconductoring (C_old). Effective capacity relief = C_new \u2212 C_old.' },
+        '01_project_technical_details.project.old_conductor_type': { help: 'Conductor type of the existing line before reconductoring. Used for old-line resistance and loss calculations.' },
+        '01_project_technical_details.project.old_ac_dc': { help: 'AC or DC type of the existing line before reconductoring. Determines old-line loss calculation method.' },
+        '01_project_technical_details.timeline.construction_years': { required: true, unit: 'years', help: 'Duration of construction. Build, ROW, and environmental costs are spread over this period for PV. AFUDC compounds from midpoint of construction to COD.' },
+        '01_project_technical_details.timeline.delay_years': { required: true, unit: 'years', help: 'Pre-construction permitting/regulatory delay. Drives base delay costs, ROW holding costs, AFUDC compounding, and congestion/curtailment delay opportunity costs.' },
+        '01_project_technical_details.timeline.project_lifetime': { required: true, unit: 'years', help: 'Operational lifetime after COD. O&M, insurance, ROW rent, line losses, risk costs, and benefits all accrue over this period.' },
 
         // Physical Route - terrain miles and multipliers
         '02_project_physical_details.terrain.terrain_multipliers.forested': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment). Applied to build costs per weighted mile.' },
@@ -4307,27 +4580,60 @@
         '02_project_physical_details.terrain.terrain_multipliers.rolling_hills': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
         '02_project_physical_details.terrain.terrain_multipliers.mountain': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
         '02_project_physical_details.terrain.terrain_multipliers.subsea': { help: 'Cost multiplier relative to flat terrain (1.0 = no adjustment).' },
-        '02_project_physical_details.terrain.terrain_miles.forested': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.scrubbed_flat': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.wetland': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.farmland': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.desert_barren': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.urban': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.rolling_hills': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.mountain': { unit: 'miles' },
-        '02_project_physical_details.terrain.terrain_miles.subsea': { unit: 'miles' },
+        '02_project_physical_details.terrain.terrain_miles.forested': { unit: 'miles', help: 'Route miles through forested terrain. Drives build costs (via weighted miles), ROW area, environmental mitigation, wildfire ignition rates, and outage rates for this terrain.' },
+        '02_project_physical_details.terrain.terrain_miles.scrubbed_flat': { unit: 'miles', help: 'Route miles through scrubbed flat terrain. Zero-mile terrains are excluded from all cost and risk calculations.' },
+        '02_project_physical_details.terrain.terrain_miles.wetland': { unit: 'miles', help: 'Route miles through wetland terrain. Drives wetland mitigation credits and wetland-specific environmental costs.' },
+        '02_project_physical_details.terrain.terrain_miles.farmland': { unit: 'miles', help: 'Route miles through farmland terrain.' },
+        '02_project_physical_details.terrain.terrain_miles.desert_barren': { unit: 'miles', help: 'Route miles through desert/barren terrain.' },
+        '02_project_physical_details.terrain.terrain_miles.urban': { unit: 'miles', help: 'Route miles through urban terrain. Typically has the highest terrain cost multiplier.' },
+        '02_project_physical_details.terrain.terrain_miles.rolling_hills': { unit: 'miles', help: 'Route miles through rolling hills terrain.' },
+        '02_project_physical_details.terrain.terrain_miles.mountain': { unit: 'miles', help: 'Route miles through mountain terrain.' },
+        '02_project_physical_details.terrain.terrain_miles.subsea': { unit: 'miles', help: 'Route miles through subsea terrain. Subsea segments use subsea-specific build costs and outage rates.' },
 
         // Financial
-        '03_financing.financial.inflation_rate': { help: 'Annual inflation rate for cost escalation' },
-        '03_financing.financial.base_year': { required: true, help: 'Reference year for all dollar values' },
-        '03_financing.financial.wacc_nominal': { help: 'Weighted Average Cost of Capital (nominal)' },
-        '03_financing.financial.social_discount_rate': { help: 'Discount rate for societal benefits (OMB recommends 2-7%)' },
-        '03_financing.financial.capital_structure.equity_percent': { help: 'Fraction of capital from equity financing' },
-        '03_financing.financial.capital_structure.debt_percent': { help: 'Fraction of capital from debt financing' },
+        '03_financing.financial.inflation_rate': { help: 'Annual inflation rate (\u03C0). Used in the Fisher equation to convert nominal WACC to real WACC: r_real = (1 + r_nom)/(1 + \u03C0) \u2212 1.' },
+        '03_financing.financial.base_year': { required: true, help: 'Reference year for all present-value calculations. All dollar amounts are expressed in base-year dollars.' },
+        '03_financing.financial.wacc_nominal': { help: 'Nominal Weighted Average Cost of Capital. Used as AFUDC rate and for utility-perspective discounting. Converted to real WACC via Fisher equation for societal PV.' },
+        '03_financing.financial.social_discount_rate': { help: 'Rate for discounting externality costs: emissions, expected wildfire cost, expected outage cost. OMB Circular A-4 recommends 2\u20137%.' },
+        '03_financing.financial.capital_structure.equity_percent': { help: 'Fraction of capital from equity financing. Must sum with debt percent to 1.0.' },
+        '03_financing.financial.capital_structure.debt_percent': { help: 'Fraction of capital from debt financing. Must sum with equity percent to 1.0.' },
         '03_financing.financial.capital_structure.cost_of_equity': { help: 'Required return on equity investment' },
         '03_financing.financial.capital_structure.cost_of_debt': { help: 'Interest rate on debt financing' },
-        '03_financing.financial.afudc.apply_afudc': { help: 'Apply Allowance for Funds Used During Construction' },
-        '03_financing.financial.afudc.delay_period_active_work': { help: 'AFUDC accrues if active work continues during delay' },
+        '03_financing.financial.contingencies.conductor_contingency': { help: 'Contingency factor for conductor costs (0\u201350%). Applied as (1 + factor) \u00D7 terrain-adjusted conductor cost.' },
+        '03_financing.financial.contingencies.structure_contingency': { help: 'Contingency factor for structure costs (0\u201350%). Applied as (1 + factor) \u00D7 terrain-adjusted structure cost.' },
+        '03_financing.financial.contingencies.converter_contingency': { help: 'Contingency factor for converter costs (0\u201350%, DC only). Applied as (1 + factor) \u00D7 converter cost.' },
+        '03_financing.financial.revenue.rate_based.enabled': { help: 'Enable rate-based revenue requirement calculation. When on, computes annual revenue = allowed return rate \u00D7 rate base (capitalized AFUDC-eligible costs).' },
+        '03_financing.financial.revenue.rate_based.allowed_return_rate': { help: 'Annual return rate on rate base (regulatory allowed return). Revenue = rate \u00D7 nominal rate base at COD.' },
+        '03_financing.financial.afudc.apply_afudc': { help: 'Apply Allowance for Funds Used During Construction. Compounds pre-COD capital spending at nominal WACC to the commercial operation date.' },
+        '03_financing.financial.afudc.delay_period_active_work': { help: 'If enabled, AFUDC accrues during the delay period (pre-construction work in progress). If disabled, AFUDC is suspended during delay — conservative default per FERC.' },
+        // AFUDC Timing Patterns
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.during_delay': { help: 'Fraction of build cost incurred during delay period (typically 0 \u2014 construction hasn\u2019t started).' },
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.during_construction': { help: 'Fraction of build cost incurred during construction (typically 1.0 \u2014 spread uniformly).' },
+        '19_cost_timing_patterns.cost_timing_patterns.build_costs.afudc_eligible': { help: 'Whether build costs qualify for AFUDC capitalization (Account 107 CWIP). Typically yes.' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.during_delay': { help: 'Fraction of ROW acquisition cost incurred during delay (typically 0.8 \u2014 land acquired before construction).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.during_construction': { help: 'Fraction of ROW acquisition cost incurred during construction (typically 0.2 \u2014 final parcels).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.afudc_eligible': { help: 'Whether ROW acquisition qualifies for AFUDC. Typically yes \u2014 capitalized to plant cost.' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.during_delay': { help: 'Fraction of ROW holding (option fee) incurred during delay (typically 1.0 \u2014 holding costs are a delay-period expense).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.during_construction': { help: 'Fraction of ROW holding incurred during construction (typically 0).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_holding.afudc_eligible': { help: 'Whether ROW holding qualifies for AFUDC. Often no \u2014 treated as operating expense.' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.during_delay': { help: 'Fraction of ROW rent incurred during delay (0 for most agreement types).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.during_construction': { help: 'Fraction of ROW rent incurred during construction (0 \u2014 rent is an operational cost post-COD).' },
+        '19_cost_timing_patterns.cost_timing_patterns.row_rent.afudc_eligible': { help: 'Whether ROW rent qualifies for AFUDC. No \u2014 operational expense.' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.during_delay': { help: 'Fraction of base mitigation/restoration cost incurred during delay (typically 0).' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.during_construction': { help: 'Fraction of base mitigation cost incurred during construction (typically 1.0).' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_base.afudc_eligible': { help: 'Whether base environmental mitigation qualifies for AFUDC. Typically yes \u2014 necessary for plant readiness.' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.during_delay': { help: 'Fraction of environmental credit purchases during delay (typically 0.2 \u2014 early permitting).' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.during_construction': { help: 'Fraction of environmental credit purchases during construction (typically 0.8).' },
+        '19_cost_timing_patterns.cost_timing_patterns.environmental_mitigation_credits.afudc_eligible': { help: 'Whether environmental credits qualify for AFUDC. Typically yes \u2014 required for regulatory approval.' },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.during_delay': { help: 'Fraction of delay costs incurred during delay (1.0 by definition).' },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.during_construction': { help: 'Fraction of delay costs incurred during construction (0 by definition).' },
+        '19_cost_timing_patterns.cost_timing_patterns.delay_costs.afudc_eligible': { help: 'Whether delay costs qualify for AFUDC. Typically no \u2014 expensed, not capitalized.' },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.during_delay': { help: 'Fraction of O&M incurred during delay (0 \u2014 O&M begins at COD).' },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.during_construction': { help: 'Fraction of O&M incurred during construction (0 \u2014 O&M begins at COD).' },
+        '19_cost_timing_patterns.cost_timing_patterns.operations_and_maintenance.afudc_eligible': { help: 'Whether O&M qualifies for AFUDC. No \u2014 operating expense.' },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.during_delay': { help: 'Fraction of construction insurance incurred during delay (typically 0).' },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.during_construction': { help: 'Fraction of construction insurance incurred during construction (typically 1.0).' },
+        '19_cost_timing_patterns.cost_timing_patterns.construction_insurance.afudc_eligible': { help: 'Whether construction insurance qualifies for AFUDC. Can be capitalized as part of construction cost.' },
 
         // Insurance
         '04_insurance.insurance.premium_rate': { help: 'Annual insurance premium as fraction of insured value' },
@@ -4425,13 +4731,11 @@
           '01_project_technical_details.project.old_conductor_type',
           '01_project_technical_details.project.old_ac_dc'
         ],
-        // Greenfield-only fields (shown when NOT reconductoring AND comparison toggle on)
-        greenfield_only: [
-          '01_project_technical_details.project.greenfield_comparison_capacity_mw',
-          '01_project_technical_details.project.greenfield_comparison_conductor_type'
-        ],
         // Fields permanently hidden from UI (data retained in JSON for backend)
         always_hidden: [
+          // Greenfield comparison fields (moved to Counterfactual Calculators subtab)
+          '01_project_technical_details.project.greenfield_comparison_capacity_mw',
+          '01_project_technical_details.project.greenfield_comparison_conductor_type',
           // Capital structure (CTCC defaults to WACC nominal)
           '03_financing.financial.capital_structure.equity_percent',
           '03_financing.financial.capital_structure.debt_percent',
@@ -4484,14 +4788,6 @@
           suffix: ' MW',
           allowBlank: true
         },
-        // Greenfield comparison capacity — dynamic dropdown
-        '01_project_technical_details.project.greenfield_comparison_capacity_mw': {
-          type: 'dynamic_dropdown',
-          optionSets: CAPACITY_OPTIONS_BY_AC_DC,
-          dependsOn: '01_project_technical_details.project.ac_dc',
-          suffix: ' MW',
-          allowBlank: true
-        },
         // Base year — plain number, no comma formatting
         '03_financing.financial.base_year': { type: 'dropdown', options: Array.from({length: 31}, (_, i) => 2020 + i) },
         '01_project_technical_details.project.number_of_converters': {
@@ -4509,10 +4805,6 @@
         '01_project_technical_details.project.old_ac_dc': {
           type: 'dropdown',
           options: ['', 'AC', 'DC']
-        },
-        '01_project_technical_details.project.greenfield_comparison_conductor_type': {
-          type: 'dropdown',
-          options: ['', 'Standard Aluminum Conductor', 'Advanced Aluminum Conductor', 'Underground Copper Conductor', 'Subsea Copper Conductor']
         },
         '06_wildfire_costs.wildfire.discount_rate_source': {
           type: 'dropdown',
@@ -4716,7 +5008,237 @@
         });
       });
 
+      // Scenario subtab switching
+      function switchScenarioSubtab(tabId) {
+        document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.scenarioTab === tabId);
+        });
+        document.querySelectorAll('.scenario-subtab-content').forEach(pane => {
+          pane.classList.toggle('active', pane.id === 'scenario-subtab-' + tabId);
+        });
+      }
 
+      document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchScenarioSubtab(btn.dataset.scenarioTab);
+          if (btn.dataset.scenarioTab === 'design-comparison') {
+            updateDesignComparisonState();
+          }
+        });
+      });
+
+      // --- Counterfactual Calculators subtab logic ---
+
+      // Calculator-level collapsible toggle
+      document.getElementById('cf-calc-lineloss-header')?.addEventListener('click', function() {
+        this.classList.toggle('expanded');
+        document.getElementById('cf-calc-lineloss-body')?.classList.toggle('expanded');
+      });
+
+      // "Run Comparison" button state management
+      function updateDesignCmpRunButton() {
+        const btn = document.getElementById('design-cmp-run-btn');
+        if (!btn) return;
+        const cap = document.getElementById('design-cmp-capacity');
+        const cond = document.getElementById('design-cmp-conductor');
+        const ready = cap && cap.value && cond && cond.value;
+        btn.disabled = !ready;
+        btn.style.background = ready ? '#10b981' : '#ccc';
+        btn.style.cursor = ready ? 'pointer' : 'not-allowed';
+        btn.style.opacity = ready ? '1' : '0.6';
+      }
+
+      document.getElementById('design-cmp-capacity')?.addEventListener('change', updateDesignCmpRunButton);
+      document.getElementById('design-cmp-conductor')?.addEventListener('change', updateDesignCmpRunButton);
+
+      document.getElementById('design-cmp-run-btn')?.addEventListener('click', () => {
+        const btn = document.getElementById('design-cmp-run-btn');
+        if (btn?.disabled) return;
+        const form = document.getElementById('demo-form');
+        if (form) {
+          form.requestSubmit();
+          const onResults = () => {
+            switchMainTab('scenarios');
+            switchScenarioSubtab('design-comparison');
+            updateDesignComparisonState();
+            document.removeEventListener('ctcc-results-ready', onResults);
+          };
+          document.addEventListener('ctcc-results-ready', onResults);
+        }
+      });
+
+      function updateDesignComparisonState() {
+        const reconductoringEl = document.querySelector('input[data-path="01_project_technical_details.project.reconductoring"]');
+        const isReconductoring = reconductoringEl && reconductoringEl.checked;
+        const guard = document.getElementById('design-comparison-reconductoring-guard');
+        const main = document.getElementById('design-comparison-main');
+        if (guard && main) {
+          guard.style.display = isReconductoring ? 'block' : 'none';
+          main.style.display = isReconductoring ? 'none' : '';
+        }
+        if (!isReconductoring) {
+          populateDesignCmpDropdowns();
+          updateDesignCmpPrimaryReadout();
+          if (lastRunResults) renderDesignComparison(lastRunResults);
+        }
+      }
+
+      function populateDesignCmpDropdowns() {
+        const acDcEl = document.querySelector('select[data-path="01_project_technical_details.project.ac_dc"]');
+        const acDc = acDcEl ? acDcEl.value : 'AC';
+        const constructionEl = document.querySelector('select[data-path="01_project_technical_details.project.construction_type"]');
+        const constructionType = constructionEl ? constructionEl.value : 'Overhead';
+
+        const capSelect = document.getElementById('design-cmp-capacity');
+        if (capSelect) {
+          const current = capSelect.value;
+          const opts = CAPACITY_OPTIONS_BY_AC_DC[acDc] || CAPACITY_OPTIONS_BY_AC_DC['AC'];
+          capSelect.innerHTML = '<option value="">(None)</option>';
+          opts.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v + ' MW';
+            if (String(v) === String(current)) opt.selected = true;
+            capSelect.appendChild(opt);
+          });
+        }
+
+        const condSelect = document.getElementById('design-cmp-conductor');
+        if (condSelect) {
+          const current = condSelect.value;
+          const condOpts = CONDUCTOR_TYPE_BY_CONSTRUCTION[constructionType] || ['Standard Aluminum Conductor'];
+          condSelect.innerHTML = '<option value="">(None)</option>';
+          condOpts.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            if (v === current) opt.selected = true;
+            condSelect.appendChild(opt);
+          });
+        }
+      }
+
+      function updateDesignCmpPrimaryReadout() {
+        const readout = document.getElementById('design-cmp-primary-readout');
+        if (!readout) return;
+        const get = path => {
+          const el = document.querySelector(`[data-path="${path}"]`);
+          return el ? (el.value || el.textContent) : '—';
+        };
+        const cap = get('01_project_technical_details.project.capacity_mw');
+        const cond = get('01_project_technical_details.project.conductor_type');
+        const acDc = get('01_project_technical_details.project.ac_dc');
+        const ct = get('01_project_technical_details.project.construction_type');
+        readout.innerHTML =
+          `<div><strong>${cap} MW</strong> ${acDc} · ${ct}</div>` +
+          `<div style="color: rgba(0,0,0,0.55);">${cond}</div>`;
+      }
+
+      function formatDollar(n) {
+        if (n == null || isNaN(n)) return '—';
+        const abs = Math.abs(n);
+        const sign = n < 0 ? '−' : '';
+        if (abs >= 1e9) return sign + '$' + (abs / 1e9).toFixed(2) + 'B';
+        if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(2) + 'M';
+        if (abs >= 1e3) return sign + '$' + (abs / 1e3).toFixed(1) + 'K';
+        return sign + '$' + abs.toFixed(0);
+      }
+
+      function renderDesignComparison(results) {
+        const container = document.getElementById('design-comparison-results');
+        const hint = document.getElementById('design-cmp-run-hint');
+        if (!container) return;
+
+        const dc = results?.costs?.design_comparison;
+        if (!dc) {
+          container.style.display = 'none';
+          if (hint) hint.style.display = '';
+          return;
+        }
+        container.style.display = '';
+        if (hint) hint.style.display = 'none';
+        container.innerHTML = '';
+
+        const p = dc.primary;
+        const c = dc.comparison;
+        const methods = dc.methods;
+
+        const fNum = (n, d) => n != null ? Number(n).toLocaleString(undefined, {maximumFractionDigits: d ?? 0}) : '—';
+
+        // Config summary cards
+        const cardsGrid = document.createElement('div');
+        cardsGrid.className = 'results-summary-grid';
+        cardsGrid.style.gridTemplateColumns = '1fr 1fr';
+        cardsGrid.style.marginBottom = '1.25rem';
+
+        function configCard(title, cap, conductor, lossRate) {
+          const card = document.createElement('div');
+          card.className = 'results-summary-card';
+          const lbl = document.createElement('div');
+          lbl.className = 'results-summary-label';
+          lbl.textContent = title;
+          const val = document.createElement('div');
+          val.className = 'results-summary-value';
+          val.style.fontSize = '1.1rem';
+          val.textContent = fNum(cap) + ' MW';
+          const sub = document.createElement('div');
+          sub.style.cssText = 'font-size: 0.82rem; color: rgba(0,0,0,0.55); margin-top: 0.25rem;';
+          sub.textContent = conductor || '—';
+          const rate = document.createElement('div');
+          rate.style.cssText = 'font-size: 0.82rem; color: rgba(0,0,0,0.55); margin-top: 0.15rem;';
+          rate.textContent = 'Loss rate: ' + (lossRate != null ? lossRate.toFixed(2) + '%' : '—');
+          card.appendChild(lbl);
+          card.appendChild(val);
+          card.appendChild(sub);
+          card.appendChild(rate);
+          return card;
+        }
+
+        cardsGrid.appendChild(configCard('Your Project', p.capacity_mw, p.conductor_type, p.loss_percent));
+        const altCard = configCard('Alternative', c.capacity_mw, c.conductor_type, c.loss_percent);
+        altCard.classList.add('highlight');
+        cardsGrid.appendChild(altCard);
+        container.appendChild(cardsGrid);
+
+        // Method sections
+        const section = document.createElement('div');
+        section.className = 'cost-section-items';
+
+        const methodEntries = [
+          { key: 'direct', label: 'Direct Comparison', startExpanded: true },
+          { key: 'counterfactual', label: 'Counterfactual Comparison', startExpanded: false },
+          { key: 'normalized', label: 'Normalized Comparison', startExpanded: false },
+        ];
+
+        methodEntries.forEach((entry, idx) => {
+          const m = methods[entry.key];
+
+          const header = document.createElement('div');
+          header.className = 'collapsible-header cf-method-header' + (entry.startExpanded ? ' expanded' : '');
+          if (idx > 0) header.style.marginTop = '1rem';
+          header.textContent = entry.label;
+          section.appendChild(header);
+
+          const body = document.createElement('div');
+          body.className = 'collapsible-content' + (entry.startExpanded ? ' expanded' : '');
+
+          body.appendChild(createNote(m.description));
+          body.appendChild(numberItem('Loss Difference (MWh/yr)', fNum(m.delta_mwh_yr, 1)));
+          body.appendChild(currencyItem('Annual Cost Difference', m.annual_cost));
+          body.appendChild(currencyItem('Lifetime Nominal', m.lifetime_nominal));
+          body.appendChild(createSubtotalRow('Net Present Value', m.npv));
+
+          header.addEventListener('click', () => {
+            header.classList.toggle('expanded');
+            body.classList.toggle('expanded');
+          });
+
+          section.appendChild(body);
+        });
+
+        section.appendChild(createNote('Positive values mean the primary design has higher losses (costs more).'));
+        container.appendChild(section);
+      }
 
       const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
 
@@ -4969,7 +5491,6 @@
         // Check if this field should be conditionally hidden
         if (CONDITIONAL_FIELDS.dc_only.includes(path) ||
             CONDITIONAL_FIELDS.reconductoring_only.includes(path) ||
-            CONDITIONAL_FIELDS.greenfield_only.includes(path) ||
             CONDITIONAL_FIELDS.always_hidden.includes(path)) {
           fieldDiv.dataset.conditional = 'true';
         }
@@ -5450,6 +5971,7 @@
               if (tab.sections.length > 1) {
                 const sectionHeader = document.createElement('div');
                 sectionHeader.className = 'tab-section-header';
+                sectionHeader.dataset.sectionKey = sectionKey;
                 sectionHeader.textContent = humanizeKey(sectionKey.replace(/^\d+_/, ''));
                 tabContent.appendChild(sectionHeader);
               }
@@ -5548,6 +6070,18 @@
 
           setValueAtPath(path, value);
         });
+
+        // Collect Design Comparison selects (live outside tabContentsContainer)
+        const dcCapacity = document.getElementById('design-cmp-capacity');
+        if (dcCapacity) {
+          const v = dcCapacity.value;
+          setValueAtPath(dcCapacity.dataset.path, v === '' ? null : parseInt(v, 10));
+        }
+        const dcConductor = document.getElementById('design-cmp-conductor');
+        if (dcConductor) {
+          const v = dcConductor.value;
+          setValueAtPath(dcConductor.dataset.path, v === '' ? null : v);
+        }
 
         return result;
       }
@@ -7147,6 +7681,9 @@
             // Auto-save scenario
             try {
               lastRunResults = json.results;
+              renderDesignComparison(json.results);
+              updateDesignCmpPrimaryReadout();
+              document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
               inputsDirtySinceRun = false;
               lastRunSavedToSession = true;
               const currentInputs = collectJsonData();
@@ -7189,11 +7726,9 @@
         // Get current values of controlling fields
         const acDcSelect = document.querySelector('select[data-path="01_project_technical_details.project.ac_dc"]');
         const reconductoringToggle = document.querySelector('input[data-path="01_project_technical_details.project.reconductoring"]');
-        const greenfieldComparisonToggle = document.getElementById('_ui_enable_greenfield_comparison');
 
         const isDC = acDcSelect && acDcSelect.value === 'DC';
         const isReconductoring = reconductoringToggle && reconductoringToggle.checked;
-        const greenfieldComparisonEnabled = greenfieldComparisonToggle && greenfieldComparisonToggle.checked;
 
         // Show/hide DC-only fields
         CONDITIONAL_FIELDS.dc_only.forEach(path => {
@@ -7210,21 +7745,6 @@
             field.classList.toggle('field-hidden', !isReconductoring);
           }
         });
-
-        // Show/hide greenfield-only fields (hidden if reconductoring OR comparison toggle off)
-        const hideGreenfield = isReconductoring || !greenfieldComparisonEnabled;
-        CONDITIONAL_FIELDS.greenfield_only.forEach(path => {
-          const field = document.querySelector(`.form-field[data-field-path="${path}"]`);
-          if (field) {
-            field.classList.toggle('field-hidden', hideGreenfield);
-          }
-        });
-
-        // Show/hide greenfield comparison toggle itself (only visible when not reconductoring)
-        const comparisonToggleField = document.getElementById('_ui_greenfield_comparison_container');
-        if (comparisonToggleField) {
-          comparisonToggleField.style.display = isReconductoring ? 'none' : '';
-        }
 
         // Always-hidden fields (permanently hidden from UI)
         CONDITIONAL_FIELDS.always_hidden.forEach(path => {
@@ -7653,8 +8173,7 @@
         // Update main conductor_type
         const conductorPaths = [
           '01_project_technical_details.project.conductor_type',
-          '01_project_technical_details.project.old_conductor_type',
-          '01_project_technical_details.project.greenfield_comparison_conductor_type'
+          '01_project_technical_details.project.old_conductor_type'
         ];
 
         conductorPaths.forEach(path => {
@@ -7683,113 +8202,20 @@
         });
       }
 
-      // Change 3: Style prominent toggles (reconductoring, uses_existing_row)
       function styleProminentToggles() {
         const overviewTab = document.querySelector('[data-tab-id="project"]');
         if (!overviewTab) return;
-
-        const paths = [
-          '01_project_technical_details.project.reconductoring',
-          '01_project_technical_details.project.uses_existing_row'
-        ];
-
-        // Rename labels
         const renameMap = {
           '01_project_technical_details.project.reconductoring': 'Reconductoring Project',
           '01_project_technical_details.project.uses_existing_row': 'Project Uses Existing ROW'
         };
-
-        const container = document.createElement('div');
-        container.className = 'prominent-toggles-container';
-
-        paths.forEach(path => {
+        for (const [path, label] of Object.entries(renameMap)) {
           const field = overviewTab.querySelector(`.form-field[data-field-path="${path}"]`);
-          if (field) {
-            field.classList.add('prominent-toggle');
-            if (renameMap[path]) {
-              const labelText = field.querySelector('label span:first-child');
-              if (labelText) labelText.textContent = renameMap[path];
-            }
-            container.appendChild(field);
-          }
-        });
-
-        if (container.children.length > 0) {
-          // Insert after the form-grid containing baseline_electricity_price_per_mwh
-          const baselinePriceField = overviewTab.querySelector('.form-field[data-field-path="01_project_technical_details.project.baseline_electricity_price_per_mwh"]');
-          const parentGrid = baselinePriceField ? baselinePriceField.closest('.form-grid') : null;
-          if (parentGrid) {
-            parentGrid.parentNode.insertBefore(container, parentGrid.nextSibling);
-          } else {
-            overviewTab.insertBefore(container, overviewTab.firstChild);
-          }
+          if (!field) continue;
+          field.classList.add('prominent-toggle');
+          const labelText = field.querySelector('label span:first-child');
+          if (labelText) labelText.textContent = label;
         }
-      }
-
-      // Change 4: Inject greenfield comparison toggle
-      function injectGreenfieldComparisonToggle() {
-        const container = document.querySelector('.prominent-toggles-container');
-        if (!container) return;
-
-        const toggleField = document.createElement('div');
-        toggleField.className = 'form-field prominent-toggle';
-        toggleField.id = '_ui_greenfield_comparison_container';
-
-        const label = document.createElement('label');
-        const labelText = document.createElement('span');
-        labelText.textContent = 'Enable Greenfield Comparison';
-        label.appendChild(labelText);
-        const helpIcon = document.createElement('span');
-        helpIcon.className = 'help-icon';
-        helpIcon.textContent = '?';
-        helpIcon.dataset.tooltip = 'Show optional greenfield comparison fields for line loss analysis';
-        label.appendChild(helpIcon);
-        toggleField.appendChild(label);
-
-        const toggleLabel = document.createElement('label');
-        toggleLabel.className = 'toggle-switch';
-        const toggleInput = document.createElement('input');
-        toggleInput.type = 'checkbox';
-        toggleInput.id = '_ui_enable_greenfield_comparison';
-        toggleInput.checked = false;
-        toggleInput.addEventListener('change', updateConditionalFieldVisibility);
-        const slider = document.createElement('span');
-        slider.className = 'toggle-slider';
-        toggleLabel.appendChild(toggleInput);
-        toggleLabel.appendChild(slider);
-        toggleField.appendChild(toggleLabel);
-
-        container.appendChild(toggleField);
-      }
-
-      // Change 5: Make terrain multipliers collapsible
-      function makeTerrainMultipliersCollapsible() {
-        const allSubsections = document.querySelectorAll('.subsection-header');
-        allSubsections.forEach(h => {
-          if (h.textContent.trim() === 'Terrain Multipliers') {
-            const headerRow = h.closest('.section-header-row');
-            const header = headerRow || h;
-
-            // Add collapsible class to header
-            h.classList.add('collapsible-header');
-
-            // Find the next form-grid sibling
-            const nextGrid = header.nextElementSibling;
-            if (nextGrid && nextGrid.classList.contains('form-grid')) {
-              // Wrap grid in collapsible content div
-              const wrapper = document.createElement('div');
-              wrapper.className = 'collapsible-content'; // starts collapsed
-              header.parentNode.insertBefore(wrapper, nextGrid);
-              wrapper.appendChild(nextGrid);
-
-              // Toggle on click
-              h.addEventListener('click', () => {
-                h.classList.toggle('expanded');
-                wrapper.classList.toggle('expanded');
-              });
-            }
-          }
-        });
       }
 
       // Change 7b: Insert real WACC display
@@ -8867,72 +9293,273 @@
       }
 
 
-      function makeAfudcCollapsible() {
-        const financialTab = document.querySelector('[data-tab-id="financial"]');
-        if (!financialTab) return;
+      function applyTabHierarchy() {
+        for (const [tabId, config] of Object.entries(TAB_HIERARCHY)) {
+          const tab = document.querySelector(`[data-tab-id="${tabId}"]`);
+          if (!tab) continue;
 
-        // 1. Collapse the AFUDC Timing Patterns tab-section-header + its content
-        financialTab.querySelectorAll('.tab-section-header').forEach(h => {
-          if (h.textContent.trim() === 'AFUDC Timing Patterns') {
-            h.classList.add('collapsible-header');
+          const claimed = new Set();
+          const sectionGroups = [];
+
+          // --- Claim phase ---
+          for (const section of (config.sections || [])) {
+            let elements = [];
+
+            if (section.matchPath) {
+              // Find header row by Reset button data-section-path
+              let headerRow = null;
+              tab.querySelectorAll('.section-header-row').forEach(row => {
+                const btn = row.querySelector('.section-reset-btn');
+                if (btn && btn.dataset.sectionPath === section.matchPath) {
+                  headerRow = row;
+                }
+              });
+              // Or find tab-section-header by data-section-key
+              if (!headerRow) {
+                tab.querySelectorAll('.tab-section-header').forEach(h => {
+                  if (h.dataset.sectionKey === section.matchPath) {
+                    headerRow = h;
+                  }
+                });
+              }
+              if (headerRow && !claimed.has(headerRow)) {
+                elements.push(headerRow);
+                claimed.add(headerRow);
+                if (!section.hidden) {
+                  const isTabHeader = headerRow.classList.contains('tab-section-header');
+                  let sibling = headerRow.nextElementSibling;
+                  while (sibling) {
+                    if (sibling.classList.contains('tab-section-header')) break;
+                    if (!isTabHeader && sibling.classList.contains('section-header-row')) {
+                      const btn = sibling.querySelector('.section-reset-btn');
+                      const childPath = btn?.dataset?.sectionPath || '';
+                      if (!childPath.startsWith(section.matchPath + '.')) break;
+                    }
+                    if (!claimed.has(sibling)) {
+                      elements.push(sibling);
+                      claimed.add(sibling);
+                    }
+                    sibling = sibling.nextElementSibling;
+                  }
+                }
+              }
+            }
+
+            if (section.matchFields) {
+              const matched = [];
+              tab.querySelectorAll('.form-field').forEach(field => {
+                const fp = field.dataset.fieldPath || '';
+                for (const suffix of section.matchFields) {
+                  if (fp.endsWith('.' + suffix) || fp === suffix) {
+                    if (!claimed.has(field)) {
+                      matched.push(field);
+                      claimed.add(field);
+                    }
+                    break;
+                  }
+                }
+              });
+
+              if (matched.length > 0) {
+                const headerRow = document.createElement('div');
+                headerRow.className = 'section-header-row';
+                const headerEl = document.createElement('div');
+                headerEl.className = 'subsection-header';
+                headerEl.textContent = section.label || section.id;
+                headerRow.appendChild(headerEl);
+                const grid = document.createElement('div');
+                grid.className = 'form-grid';
+                matched.forEach(f => grid.appendChild(f));
+                elements = [headerRow, grid];
+              }
+            }
+
+            sectionGroups.push({ section, elements });
+          }
+
+          // --- Reorder phase ---
+          const fragment = document.createDocumentFragment();
+
+          for (const { elements } of sectionGroups) {
+            for (const el of elements) {
+              fragment.appendChild(el);
+            }
+          }
+
+          // Append unclaimed children (preserve original order)
+          const unclaimed = [];
+          while (tab.firstChild) {
+            const child = tab.firstChild;
+            tab.removeChild(child);
+            if (!claimed.has(child)) {
+              unclaimed.push(child);
+            }
+          }
+          for (const el of unclaimed) {
+            fragment.appendChild(el);
+          }
+
+          tab.appendChild(fragment);
+
+          // Clean up empty form-grids left by matchFields extraction
+          tab.querySelectorAll('.form-grid').forEach(grid => {
+            if (grid.children.length === 0) grid.remove();
+          });
+
+          // --- Decorate phase ---
+          for (const { section, elements } of sectionGroups) {
+            if (elements.length === 0) continue;
+            const headerRow = elements[0];
+
+            if (section.hidden) {
+              elements.forEach(el => el.style.display = 'none');
+              continue;
+            }
+
+            const headerEl = headerRow.querySelector('.subsection-header, .section-header') || headerRow;
+
+            if (headerEl.classList.contains('subsection-header')) {
+              headerEl.classList.remove('subsection-header');
+              headerEl.classList.add('section-header');
+            }
+
+            if (section.label) {
+              headerEl.textContent = section.label;
+            }
+
+            headerEl.classList.add('collapsible-header');
+            const decorateIsTabHeader = headerRow.classList.contains('tab-section-header');
             const wrapper = document.createElement('div');
             wrapper.className = 'collapsible-content';
-            let sibling = h.nextElementSibling;
             const toWrap = [];
-            while (sibling && !sibling.classList.contains('tab-section-header')) {
+            let sibling = headerRow.nextElementSibling;
+            while (sibling) {
+              if (sibling.classList.contains('tab-section-header')) break;
+              if (!decorateIsTabHeader && sibling.classList.contains('section-header-row')) {
+                const btn = sibling.querySelector('.section-reset-btn');
+                const childPath = btn?.dataset?.sectionPath || '';
+                if (!childPath.startsWith(section.matchPath + '.')) break;
+              }
               toWrap.push(sibling);
               sibling = sibling.nextElementSibling;
             }
             if (toWrap.length > 0) {
-              h.parentNode.insertBefore(wrapper, toWrap[0]);
+              headerRow.parentNode.insertBefore(wrapper, toWrap[0]);
               toWrap.forEach(el => wrapper.appendChild(el));
             }
-            h.addEventListener('click', () => {
-              h.classList.toggle('expanded');
-              wrapper.classList.toggle('expanded');
-            });
-          }
-        });
-
-        // 2. Collapse the AFUDC subsection (apply_afudc, delay_period_active_work) within financing
-        financialTab.querySelectorAll('.subsection-header').forEach(h => {
-          if (h.textContent.trim().toUpperCase() === 'AFUDC') {
-            h.classList.add('collapsible-header');
-            const headerRow = h.closest('.section-header-row') || h;
-            const wrapper = document.createElement('div');
-            wrapper.className = 'collapsible-content';
-            const nextGrid = headerRow.nextElementSibling;
-            if (nextGrid && nextGrid.classList.contains('form-grid')) {
-              headerRow.parentNode.insertBefore(wrapper, nextGrid);
-              wrapper.appendChild(nextGrid);
+            if (section.tier !== 'advanced') {
+              headerEl.classList.add('expanded');
+              wrapper.classList.add('expanded');
             }
-            h.addEventListener('click', () => {
-              h.classList.toggle('expanded');
+            headerEl.addEventListener('click', () => {
+              headerEl.classList.toggle('expanded');
               wrapper.classList.toggle('expanded');
             });
+
+            if (section.note) {
+              const noteEl = document.createElement('div');
+              noteEl.className = 'results-note';
+              noteEl.style.marginTop = '0.35rem';
+              noteEl.style.marginBottom = '0.5rem';
+              noteEl.textContent = section.note;
+              headerRow.parentNode.insertBefore(noteEl, headerRow.nextElementSibling);
+            }
+
+            // --- Children sub-grouping (matchFields or matchPath within parent) ---
+            if (section.children && section.children.length > 0 && toWrap.length > 0) {
+              for (const child of section.children) {
+                if (child.matchFields && child.matchFields.length > 0) {
+                  const matched = [];
+                  wrapper.querySelectorAll('.form-field').forEach(field => {
+                    const fp = field.dataset.fieldPath || '';
+                    for (const suffix of child.matchFields) {
+                      if (fp.endsWith('.' + suffix) || fp === suffix) {
+                        matched.push(field);
+                        break;
+                      }
+                    }
+                  });
+                  if (matched.length === 0) continue;
+                  const subHeader = document.createElement('div');
+                  subHeader.className = 'subsection-header collapsible-header';
+                  subHeader.textContent = child.label || '';
+                  const subContent = document.createElement('div');
+                  subContent.className = 'collapsible-content';
+                  if (child.collapsed !== true) {
+                    subHeader.classList.add('expanded');
+                    subContent.classList.add('expanded');
+                  }
+                  const grid = document.createElement('div');
+                  grid.className = 'form-grid';
+                  matched.forEach(f => grid.appendChild(f));
+                  subContent.appendChild(grid);
+                  wrapper.appendChild(subHeader);
+                  wrapper.appendChild(subContent);
+                  subHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    subHeader.classList.toggle('expanded');
+                    subContent.classList.toggle('expanded');
+                  });
+                } else if (child.matchPath) {
+                  let childHeaderRow = null;
+                  wrapper.querySelectorAll('.section-header-row').forEach(row => {
+                    const btn = row.querySelector('.section-reset-btn');
+                    if (btn && btn.dataset.sectionPath === child.matchPath) {
+                      childHeaderRow = row;
+                    }
+                  });
+                  if (!childHeaderRow) continue;
+                  const childHeaderEl = childHeaderRow.querySelector('.subsection-header, .section-header') || childHeaderRow;
+                  if (child.label) childHeaderEl.textContent = child.label;
+                  if (child.collapsed !== undefined) {
+                    childHeaderEl.classList.add('collapsible-header');
+                    const subWrapper = document.createElement('div');
+                    subWrapper.className = 'collapsible-content';
+                    if (!child.collapsed) {
+                      childHeaderEl.classList.add('expanded');
+                      subWrapper.classList.add('expanded');
+                    }
+                    const toWrapChild = [];
+                    let nextSib = childHeaderRow.nextElementSibling;
+                    while (nextSib) {
+                      if (nextSib.classList.contains('section-header-row') ||
+                          nextSib.classList.contains('tab-section-header') ||
+                          nextSib.classList.contains('subsection-header')) break;
+                      toWrapChild.push(nextSib);
+                      nextSib = nextSib.nextElementSibling;
+                    }
+                    if (toWrapChild.length > 0) {
+                      childHeaderRow.parentNode.insertBefore(subWrapper, toWrapChild[0]);
+                      toWrapChild.forEach(el => subWrapper.appendChild(el));
+                    }
+                    childHeaderEl.addEventListener('click', (e) => {
+                      e.stopPropagation();
+                      childHeaderEl.classList.toggle('expanded');
+                      subWrapper.classList.toggle('expanded');
+                    });
+                  }
+                }
+              }
+              wrapper.querySelectorAll('.form-grid').forEach(grid => {
+                if (grid.children.length === 0) grid.remove();
+              });
+            }
           }
-        });
+
+          // --- Reset button consolidation ---
+          if (config.resetButton === 'single') {
+            const resetButtons = Array.from(tab.querySelectorAll('button')).filter(b =>
+              b.textContent.trim().toLowerCase() === 'reset'
+            );
+            if (resetButtons.length > 1) {
+              resetButtons.slice(0, -1).forEach(b => b.remove());
+            }
+          }
+        }
       }
 
-      // Change 17: Remove "Project Technical Details" tab-section-header, rename "Project" to "Project Technical Details"
-      function cleanUpProjectOverviewHeaders() {
-        const overviewTab = document.querySelector('[data-tab-id="project"]');
-        if (!overviewTab) return;
-
-        // Remove the "Project Technical Details" tab-section-header
-        overviewTab.querySelectorAll('.tab-section-header').forEach(h => {
-          if (h.textContent.trim() === 'Project Technical Details') {
-            h.remove();
-          }
-        });
-
-        // Rename "Project" subsection/section header to "Project Technical Details"
-        overviewTab.querySelectorAll('.section-header, .subsection-header').forEach(h => {
-          if (h.textContent.trim() === 'Project') {
-            h.textContent = 'Project Technical Details';
-          }
-        });
-      }
+      // cleanUpProjectOverviewHeaders() removed — absorbed into TAB_HIERARCHY engine
+      // (label rename handled by matchPath: '01_project_technical_details.project', label: 'Project Configuration')
 
       // =============================================
       // Modified renderJsonInputs (monkey-patched)
@@ -8967,18 +9594,16 @@
         insertCalculatedTotals();
 
         // Post-render DOM manipulations
+        applyTabHierarchy();
         insertRealWaccDisplay();
         updateRealWacc();
         moveAfudcToRevenueRequirements();
         moveWildfireLiabilityToRisk();
         cleanUpSectionHeaders();
         styleProminentToggles();
-        injectGreenfieldComparisonToggle();
-        makeTerrainMultipliersCollapsible();
-        makeAfudcCollapsible();
         createEnvironmentalSubTabs();
         // restructureBcrConfig();  // BCR config removed from inputs; use Custom BCR in results tab
-        cleanUpProjectOverviewHeaders();
+        // cleanUpProjectOverviewHeaders() — absorbed into TAB_HIERARCHY engine
         restructureEnergySourceMix();
         injectFuelMixPresetBar();
         restructureEmissionIntensities();

@@ -1039,6 +1039,10 @@ class CTCCOutputManager:
             }
             self.write_module_csv("line_loss_costs", summary_row=summary_row)
 
+    def add_design_comparison(self, results: Dict[str, Any]) -> None:
+        """Design comparison data is not tabular; no CSV output."""
+        pass
+
     def add_congestion_curtailment(self, results: Dict[str, float]) -> None:
         """
         Add congestion and curtailment benefits and costs to batch summary.
