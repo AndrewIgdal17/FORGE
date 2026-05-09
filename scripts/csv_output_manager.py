@@ -47,7 +47,6 @@ BATCH_SUMMARY_FIELDS = [
     "operational_costs_pv",
     # 5. Risk Costs PV (with breakdown)
     "wildfire_pv",
-    "wildfire_liability_insurance_pv",
     "outage_pv",
     "risk_costs_pv",
     # 6. Delay Costs PV
@@ -807,26 +806,6 @@ class CTCCOutputManager:
         }
         self.write_module_csv("insurance_costs", summary_row=summary_row)
 
-    def add_wildfire_liability_costs(self, results: Dict[str, float]) -> None:
-        """Add wildfire liability insurance cost results to batch summary."""
-        self.append_to_batch_summary(
-            {
-                "wildfire_liability_annual": results.get("annual_premium", 0),
-                "wildfire_liability_nominal": results.get("nominal_lifetime_cost", 0),
-                "wildfire_liability_insurance_pv": results.get("pv_total", 0),
-            }
-        )
-
-        # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values, module-specific
-        summary_row = {
-            "row_type": "wildfire_liability",
-            "pv_total": results.get("pv_total", 0),
-            "annual_premium": results.get("annual_premium", 0),
-            "nominal_total": results.get("nominal_lifetime_cost", 0),
-            "liability_limit": results.get("liability_limit", 0),
-            "rate_on_line": results.get("rate_on_line", 0),
-        }
-        self.write_module_csv("insurance_costs", summary_row=summary_row)
 
     def add_wildfire_costs(self, results: Dict[str, Any]) -> None:
         """Add wildfire cost results to batch summary and detail CSV."""
@@ -1342,14 +1321,12 @@ class CTCCOutputManager:
         risk_nominal = sum(
             [
                 self.batch_summary_data.get("wildfire_nominal", 0),
-                self.batch_summary_data.get("wildfire_liability_nominal", 0),
                 self.batch_summary_data.get("outage_nominal", 0),
             ]
         )
         risk_pv = sum(
             [
                 self.batch_summary_data.get("wildfire_pv", 0),
-                self.batch_summary_data.get("wildfire_liability_insurance_pv", 0),
                 self.batch_summary_data.get("outage_pv", 0),
             ]
         )
@@ -1424,7 +1401,7 @@ class CTCCOutputManager:
                 - bcr_capital (uses conservative/haircut benefits)
                 - bcr_capital_and_delay (uses conservative/haircut benefits)
                 - bcr_excluding_wildfire_risk_and_outage_risk (renamed from bcr_excluding_risk)
-                - bcr_excluding_wildfire_risk (new: excludes wildfire + liability only)
+                - bcr_excluding_wildfire_risk (excludes wildfire risk only)
                 - bcr_excluding_outage_risk (new: excludes outage only)
                 - bcr_excluding_emissions (uses conservative/haircut benefits)
                 - bcr_excluding_linelosses (uses conservative/haircut benefits)

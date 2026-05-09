@@ -335,7 +335,7 @@
               label: 'Operational Insurance',
               tier: 'working',
               matchPath: '04_insurance.insurance',
-              note: 'Premium rate, insurable components, and construction-type overrides per §2.2.2. Wildfire liability insurance is on the Risk Costs tab.'
+              note: 'Premium rate, insurable components, and construction-type overrides per §2.2.2.'
             }
           ],
           resetButton: 'single'
@@ -360,18 +360,11 @@
         'risk': {
           sections: [
             {
-              id: 'risk-wildfire-liability',
-              label: 'Wildfire Liability Insurance',
-              tier: 'first-glance',
-              matchPath: '04_insurance.insurance.wildfire_liability',
-              note: 'Insured portion of wildfire risk: annual premium = rate-on-line × liability limit (§2.3.1). Data path remains 04_insurance after DOM move.'
-            },
-            {
               id: 'risk-wildfire-eal',
               label: 'Expected Cost of Wildfires',
               tier: 'working',
               matchPath: '06_wildfire_costs.wildfire',
-              note: 'Uninsured wildfire EAL: severity per event, ignition by terrain, construction-type multipliers, risk growth (§2.3.2).',
+              note: 'Expected wildfire cost: severity per event, ignition by terrain, construction-type multipliers, risk growth (§2.3.2).',
               children: [
                 {
                   matchPath: '06_wildfire_costs.wildfire.ignition_rates_by_terrain',
@@ -663,9 +656,6 @@
         '04_insurance.insurance.premium_by_construction_type.overhead': { help: 'Construction-phase premium multiplier for overhead lines.' },
         '04_insurance.insurance.premium_by_construction_type.underground': { help: 'Construction-phase premium multiplier for underground lines.' },
         '04_insurance.insurance.premium_by_construction_type.subsea': { help: 'Construction-phase premium multiplier for subsea lines.' },
-        '04_insurance.insurance.wildfire_liability.enabled': { help: 'Enable wildfire liability insurance. When on, annual premium = rate on line × liability limit.' },
-        '04_insurance.insurance.wildfire_liability.liability_limit': { unit: '$', help: 'Maximum wildfire liability coverage per policy year.' },
-        '04_insurance.insurance.wildfire_liability.rate_on_line': { help: 'Annual premium = Rate on Line × Liability Limit.' },
 
         // Environmental Mitigation (Tab 4 — Capital Costs)
         '09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor': { help: 'Multiplier applied to base per-acre mitigation costs to account for project-specific conditions (§2.1.3). 1.0 = no uplift.' },
@@ -681,7 +671,7 @@
         '05_delays.annual_delay_costs.miscellaneous': { unit: '$/year', help: 'Other annual costs during each delay year not captured above.' },
 
         // Wildfire
-        '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average uninsured cost per wildfire ignition event (deductibles, above-limit amounts, exclusions, societal damages). Insured portion is in wildfire liability insurance.' },
+        '06_wildfire_costs.wildfire.severity_per_event': { unit: '$/event', help: 'Average cost per wildfire ignition event (societal damages, deductibles, liability costs).' },
         '06_wildfire_costs.wildfire.risk_growth_rate': { help: 'Annual increase in wildfire risk' },
         '06_wildfire_costs.wildfire.discount_rate_source': { help: 'Which discount rate to use for wildfire cost PV' },
         '06_wildfire_costs.wildfire.ignition_rates_by_terrain.forested': { unit: 'events/mi/yr', help: 'Base wildfire ignition rate for forested terrain (before construction-type multiplier).' },
@@ -864,7 +854,6 @@
         '04_insurance.insurance.insurable_components.conductors': { type: 'toggle' },
         '04_insurance.insurance.insurable_components.structures': { type: 'toggle' },
         '04_insurance.insurance.insurable_components.converters': { type: 'toggle' },
-        '04_insurance.insurance.wildfire_liability.enabled': { type: 'toggle' },
         '19_cost_timing_patterns.cost_timing_patterns.build_costs.afudc_eligible': { type: 'toggle' },
         '19_cost_timing_patterns.cost_timing_patterns.row_acquisition.afudc_eligible': { type: 'toggle' },
         '19_cost_timing_patterns.cost_timing_patterns.row_holding.afudc_eligible': { type: 'toggle' },
@@ -889,7 +878,6 @@
         '03_financing.financial.capital_structure.cost_of_debt': { type: 'slider', min: 0, max: 0.2, step: 0.005, pct: true },
         '03_financing.financial.revenue.rate_based.allowed_return_rate': { type: 'slider', min: 0, max: 0.2, step: 0.005, pct: true },
         '04_insurance.insurance.premium_rate': { type: 'slider', min: 0, max: 1, step: 0.001, pct: true },
-        '04_insurance.insurance.wildfire_liability.rate_on_line': { type: 'slider', min: 0, max: 1, step: 0.01, pct: true },
         '06_wildfire_costs.wildfire.risk_growth_rate': { type: 'slider', min: 0, max: 0.1, step: 0.005, pct: true },
         '07_outage_costs.outage.risk_growth_rate': { type: 'slider', min: 0, max: 0.1, step: 0.005, pct: true },
         '07_outage_costs.outage.capacity_at_risk_factor': { type: 'slider', min: 0, max: 1, step: 0.01 },

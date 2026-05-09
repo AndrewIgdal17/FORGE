@@ -7,10 +7,9 @@ from __future__ import annotations
 
 import csv
 import os
-import yaml
 from dataclasses import dataclass
 from typing import Dict, Any, Optional, Tuple, Union
-from path_config import OUTPUTS_DIR, YAMLS_DIR
+from path_config import OUTPUTS_DIR
 from pydantic import BaseModel, ConfigDict
 
 # BCR viability threshold
@@ -107,9 +106,6 @@ class BCRInputData(BaseModel):
     wildfire_nominal: float = 0.0
     outage_pv: float = 0.0
     outage_nominal: float = 0.0
-    wildfire_liability_pv: float = 0.0
-    wildfire_liability_nominal: float = 0.0
-    wildfire_liability_insurance_pv: float = 0.0
     risk_costs_pv: float = 0.0
     risk_costs_nominal: float = 0.0
     # Delay costs
@@ -472,24 +468,17 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         data, "energy_emissions_costs_nominal", calculated_energy_emissions_nominal
     )
 
-    # Risk costs (PV) - Wildfire, outage, and wildfire liability insurance
+    # Risk costs (PV) - Wildfire + Outage
     wildfire_pv = data.wildfire_pv
     outage_pv = data.outage_pv
-    wildfire_liability_insurance_pv = data.wildfire_liability_insurance_pv
-    # Backward compatibility for older CSVs (pre-rename)
-    if wildfire_liability_insurance_pv == 0:
-        wildfire_liability_insurance_pv = data.wildfire_liability_pv
 
-    calculated_risk = wildfire_pv + outage_pv + wildfire_liability_insurance_pv
+    calculated_risk = wildfire_pv + outage_pv
     risk_costs_pv = _prefer_subtotal(data, "risk_costs_pv", calculated_risk)
 
     # Risk costs (Nominal)
     wildfire_nominal = data.wildfire_nominal
     outage_nominal = data.outage_nominal
-    wildfire_liability_nominal = data.wildfire_liability_nominal
-    calculated_risk_nominal = (
-        wildfire_nominal + outage_nominal + wildfire_liability_nominal
-    )
+    calculated_risk_nominal = wildfire_nominal + outage_nominal
     risk_costs_nominal = _prefer_subtotal(
         data, "risk_costs_nominal", calculated_risk_nominal
     )
@@ -568,7 +557,6 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
         # Risk (PV)
         "wildfire_pv": wildfire_pv,
         "outage_pv": outage_pv,
-        "wildfire_liability_insurance_pv": wildfire_liability_insurance_pv,
         "risk_costs_pv": risk_costs_pv,
         # Delay (PV)
         "delay_cost_pv": delay_cost_pv,
@@ -629,9 +617,7 @@ def calculate_bcr_metrics(
     # Separate wildfire and outage risk for individual calculations
     wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
     outage_pv = safe_get_numeric(costs, "outage_pv")
-    wildfire_liability_pv = safe_get_numeric(costs, "wildfire_liability_insurance_pv")
-    # Wildfire risk = wildfire + wildfire liability (grouped together)
-    wildfire_risk_pv = wildfire_pv + wildfire_liability_pv
+    wildfire_risk_pv = wildfire_pv
 
     # Extract benefit components early (needed for utility/TSP and ratepayer calculations)
     congestion_benefit_pv = safe_get_numeric(benefits, "congestion_benefit_haircut_pv")
@@ -895,7 +881,6 @@ def calculate_bcr_metrics(
     # - Emissions (if not no_emissions)
     wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
     outage_pv = safe_get_numeric(costs, "outage_pv")
-    wildfire_liability_pv = safe_get_numeric(costs, "wildfire_liability_insurance_pv")
     oandm_pv = safe_get_numeric(costs, "oandm_pv")
     insurance_pv = safe_get_numeric(costs, "insurance_pv")
 
@@ -905,7 +890,7 @@ def calculate_bcr_metrics(
     if not config.no_insurance:
         primary_costs_pv += insurance_pv
     if not config.no_wildfire:
-        primary_costs_pv += wildfire_pv + wildfire_liability_pv
+        primary_costs_pv += wildfire_pv
     if not config.no_outages:
         primary_costs_pv += outage_pv
     if not config.no_linelosses:
@@ -1221,31 +1206,6 @@ def print_bcr_summary(
     print("  Risk Costs:")
     print(f"    Wildfire:                  ${costs['wildfire_pv']:>15,.0f}")
     print(f"    Outage:                    ${costs['outage_pv']:>15,.0f}")
-    wf_liab_pv = costs.get("wildfire_liability_insurance_pv", 0) or 0
-    if wf_liab_pv > 0:
-        print(f"    Insurance (wildfire liab): ${wf_liab_pv:>15,.0f}")
-    else:
-        yaml_enabled = False
-        try:
-            with open(YAMLS_DIR / "04_insurance.yaml", "r") as f:
-                cfg = yaml.safe_load(f)
-            yaml_enabled = (
-                cfg.get("insurance", {})
-                .get("wildfire_liability", {})
-                .get("enabled", False)
-            )
-        except Exception:
-            pass
-        dev_flag_set = "CTCC_NO_WF_LIABILITY" in os.environ
-        if not yaml_enabled and dev_flag_set:
-            msg = "both flags false, not calculated"
-        elif not yaml_enabled:
-            msg = "yaml flag false, not calculated"
-        elif dev_flag_set:
-            msg = "dev flag false, not calculated"
-        else:
-            msg = "not calculated"
-        print(f"    Insurance (wildfire liab):  {msg}")
     print(f"    Subtotal:                  ${costs['risk_costs_pv']:>15,.0f}")
     print()
     print("  Delay Costs:")
@@ -1412,10 +1372,6 @@ def print_bcr_summary(
 
     # Print wildfire-only BCRs (4 combinations)
     wildfire_risk_pv = safe_get_numeric(costs, "wildfire_pv")
-    wildfire_liability_insurance_pv = safe_get_numeric(
-        costs, "wildfire_liability_insurance_pv"
-    )
-    wildfire_risk_total_pv = wildfire_risk_pv + wildfire_liability_insurance_pv
 
     print("  Wildfire-Only Exclusions:")
     bcr_excluding_wildfire_risk = bcr_metrics.get("bcr_excluding_wildfire_risk", 0)
@@ -1424,7 +1380,7 @@ def print_bcr_summary(
         f"    BCR (excl. wildfire risk): {bcr_excluding_wildfire_risk:>6.3f}  {viable_symbol_wf} ({viable_text_wf})"
     )
     print(
-        f"      (Excludes ${wildfire_risk_total_pv:>15,.0f} in wildfire + liability costs, keeps outage risk)"
+        f"      (Excludes ${wildfire_risk_pv:>15,.0f} in wildfire costs, keeps outage risk)"
     )
 
     bcr_excluding_emissions_and_wildfire_risk = bcr_metrics.get(

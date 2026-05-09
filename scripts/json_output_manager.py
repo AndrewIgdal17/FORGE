@@ -146,9 +146,6 @@ class JSONOutputManager:
         """Add insurance cost results."""
         self.costs["insurance"] = results
 
-    def add_wildfire_liability_costs(self, results: Dict[str, Any]):
-        """Add wildfire liability insurance cost results."""
-        self.costs["wildfire_liability"] = results
 
     def add_wildfire_costs(self, results: Dict[str, Any]):
         """Add wildfire cost results."""
@@ -217,7 +214,6 @@ class JSONOutputManager:
         # Risk costs
         wildfire = self.costs.get("wildfire", {})
         outage = self.costs.get("outage", {})
-        wildfire_liability = self.costs.get("wildfire_liability", {})
 
         # Facilitated emissions
         fac_em = self.costs.get("facilitated_emissions", {})
@@ -268,12 +264,10 @@ class JSONOutputManager:
             "total_risk_nominal": (
                 wildfire.get("nominal_total", 0)
                 + outage.get("nominal_total", 0)
-                + wildfire_liability.get("nominal_lifetime_cost", 0)
             ),
             "total_risk_pv": (
                 wildfire.get("pv_cost", 0)
                 + outage.get("pv_cost", 0)
-                + wildfire_liability.get("pv_total", 0)
             ),
             # Grand totals
             "grand_total_cost_nominal": 0,  # Calculated below

@@ -74,7 +74,6 @@ def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
     insurance = costs.get("insurance", {}) or {}
     wildfire = costs.get("wildfire", {}) or {}
     outage = costs.get("outage", {}) or {}
-    wildfire_liability = costs.get("wildfire_liability", {}) or {}
     delay = costs.get("delay", {}) or {}
     emissions = costs.get("emissions", {}) or {}
     fac_em = costs.get("facilitated_emissions", {}) or {}
@@ -134,10 +133,6 @@ def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
         "wildfire_nominal": wildfire.get("nominal_total", 0) or 0,
         "outage_pv": outage.get("pv_cost", 0) or 0,
         "outage_nominal": outage.get("nominal_total", 0) or 0,
-        "wildfire_liability_pv": wildfire_liability.get("pv_total", 0) or 0,
-        "wildfire_liability_nominal": wildfire_liability.get("nominal_lifetime_cost", 0)
-        or 0,
-        "wildfire_liability_insurance_pv": wildfire_liability.get("pv_total", 0) or 0,
         # Delay costs (PV + nominal)
         "delay_cost_pv": delay.get("total_pv", 0) or 0,
         "delay_cost_nominal": delay.get("total_nominal", 0) or 0,
@@ -320,11 +315,6 @@ def main() -> None:
         help="Simple output mode: only show BCR analysis (suppress intermediate outputs)",
     )
     parser.add_argument(
-        "--no_wf_liability",
-        action="store_true",
-        help="[DEPRECATED] Skip wildfire liability insurance calculation. Use --no_wildfire instead.",
-    )
-    parser.add_argument(
         "--no_emissions",
         action="store_true",
         help="Skip emissions cost calculations",
@@ -357,7 +347,7 @@ def main() -> None:
     parser.add_argument(
         "--no_wildfire",
         action="store_true",
-        help="Skip wildfire risk costs (both wildfire costs and wildfire liability insurance)",
+        help="Skip wildfire risk costs (expected wildfire cost)",
     )
     parser.add_argument(
         "--no_outages",
@@ -395,14 +385,6 @@ def main() -> None:
         no_curtailment=args.no_curtailment,
     )
 
-    # Handle flag interactions and set environment variables
-    # --no_wildfire replaces --no_wf_liability and sets the environment variable
-    if args.no_wildfire:
-        os.environ["CTCC_NO_WF_LIABILITY"] = "1"
-    # Backward compatibility: --no_wf_liability also sets the environment variable
-    elif args.no_wf_liability:
-        os.environ["CTCC_NO_WF_LIABILITY"] = "1"
-
     # Set environment variables for congestion/curtailment script
     if args.no_congestion:
         os.environ["CTCC_NO_CONGESTION"] = "1"
@@ -423,15 +405,9 @@ def main() -> None:
             print("   Use --no_wildfire --no_outages instead")
             print("   Risk costs disabled (wildfire and outage)")
             print("=" * 80)
-        if args.no_wf_liability:
-            print("⚠️  [DEPRECATED] --no_wf_liability flag is deprecated")
-            print(
-                "   Use --no_wildfire instead (skips both wildfire costs and liability)"
-            )
-            print("=" * 80)
         if args.no_wildfire:
             print("⚠️  Wildfire risk costs disabled (--no_wildfire flag set)")
-            print("   Skipping: wildfire_costs.py, wildfire liability insurance")
+            print("   Skipping: wildfire_costs.py")
             print("=" * 80)
         if args.no_outages:
             print("⚠️  Outage risk costs disabled (--no_outages flag set)")

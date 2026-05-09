@@ -1606,7 +1606,7 @@
         let excluded = 0;
         if (document.getElementById('cmp-exc-emissions')?.checked) excluded += (bcr.emissions_comp_cost_pv || 0);
         if (document.getElementById('cmp-exc-linelosses')?.checked) excluded += (bcr.energy_losses_pv || 0);
-        if (document.getElementById('cmp-exc-wildfire')?.checked) excluded += ((bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0));
+        if (document.getElementById('cmp-exc-wildfire')?.checked) excluded += (bcr.wildfire_pv || 0);
         if (document.getElementById('cmp-exc-outage')?.checked) excluded += (bcr.outage_pv || 0);
         return excluded;
       }
@@ -2887,7 +2887,6 @@
 
         const currencyPatterns = [
           'severity_per_event',
-          'liability_limit',
           'value_of_lost_load',
           'acquisition_cost', 'rent_cost', 'hold_cost',
           '_cost_per_acre',
@@ -2911,7 +2910,7 @@
           'percent', '_rate', 'rate_', 'contingency', 'factor',
           'equity_percent', 'debt_percent', 'utilization',
           'inflation', 'wacc', 'discount', 'return_rate',
-          'premium_rate', 'rate_on_line', 'compensation_percent',
+          'premium_rate', 'compensation_percent',
           'during_delay', 'during_construction', 'rate_of_change',
           'premium_by_construction_type'
         ];
@@ -4083,7 +4082,6 @@
         const ins = results.costs?.insurance || {};
         const ll = results.costs?.line_loss || {};
         const wf = results.costs?.wildfire || {};
-        const wfl = results.costs?.wildfire_liability || {};
         const out = results.costs?.outage || {};
         const em = results.costs?.emissions || {};
 
@@ -4101,7 +4099,7 @@
         // Energy losses + residual exceedance
         const energyLossPV = (ll.total_pv || 0) + (cc.residual_exceedance_pv || 0);
         // Wildfire
-        const wildfirePV = (wf.pv_cost || 0) + (wfl.pv_total || 0);
+        const wildfirePV = wf.pv_cost || 0;
         // Outage
         const outagePV = out.pv_cost || 0;
         // Emissions
@@ -4352,7 +4350,6 @@
         const container = document.createElement('div');
         container.className = 'cost-section-items';
         const wf = results.costs?.wildfire || {};
-        const wfl = results.costs?.wildfire_liability || {};
         const out = results.costs?.outage || {};
         const summary = results.summary || {};
 
@@ -4363,11 +4360,8 @@
 
         container.appendChild(pairHeader());
         container.appendChild(currencyPairItem('EAL (Expected Annual Loss)', wf.nominal_total || 0, wf.pv_cost || 0));
-        container.appendChild(currencyItem('Liability — Annual Premium', wfl.annual_premium || 0));
-        container.appendChild(currencyPairItem('Liability Insurance', wfl.nominal_lifetime_cost || 0, wfl.pv_total || 0));
-
-        const wfSubNom = (wf.nominal_total || 0) + (wfl.nominal_lifetime_cost || 0);
-        const wfSubPV = (wf.pv_cost || 0) + (wfl.pv_total || 0);
+        const wfSubNom = wf.nominal_total || 0;
+        const wfSubPV = wf.pv_cost || 0;
         container.appendChild(subtotalPairRow('Wildfire Subtotal', wfSubNom, wfSubPV));
 
         const outTitle = document.createElement('div');
@@ -4377,7 +4371,7 @@
         container.appendChild(outTitle);
         container.appendChild(currencyPairItem('Outage', out.nominal_total || 0, out.pv_cost || 0));
 
-        const riskNom = summary.total_risk_nominal || ((wf.nominal_total || 0) + (wfl.nominal_lifetime_cost || 0) + (out.nominal_total || 0));
+        const riskNom = summary.total_risk_nominal || ((wf.nominal_total || 0) + (out.nominal_total || 0));
         container.appendChild(subtotalPairRow('Total Risk', riskNom, summary.total_risk_pv || 0));
         return container;
       }
@@ -4737,7 +4731,7 @@
         const totalCostsPV = bcr.total_costs_pv || 0;
         const emissionsPV = bcr.emissions_comp_cost_pv || 0;
         const energyLossesPV = bcr.energy_losses_pv || 0;
-        const wildfirePV = (bcr.wildfire_pv || 0) + (bcr.wildfire_liability_insurance_pv || 0);
+        const wildfirePV = bcr.wildfire_pv || 0;
         const outagePV = bcr.outage_pv || 0;
 
         const toggles = [
@@ -5889,25 +5883,6 @@
         });
       }
 
-      // Change 11: Move wildfire liability insurance to risk tab
-      function moveWildfireLiabilityToRisk() {
-        const operationalTab = document.querySelector('[data-tab-id="operational"]');
-        const riskTab = document.querySelector('[data-tab-id="risk"]');
-        if (!operationalTab || !riskTab) return;
-
-        const subsections = operationalTab.querySelectorAll('.section-header-row');
-        subsections.forEach(row => {
-          const headerEl = row.querySelector('.subsection-header');
-          if (headerEl && headerEl.textContent.trim().toLowerCase().includes('wildfire liability')) {
-            const nextGrid = row.nextElementSibling;
-            riskTab.appendChild(row);
-            if (nextGrid && nextGrid.classList.contains('form-grid')) {
-              riskTab.appendChild(nextGrid);
-            }
-          }
-        });
-      }
-
       // Clean up section headers across tabs: rename and remove duplicates
       // Apply SI subscript notation (CO₂, SOₓ, NOₓ) to all visible text
       function applyChemicalSubscripts() {
@@ -6824,7 +6799,6 @@
         insertCalculatedTotals();
 
         // Pre-hierarchy DOM moves (must happen before applyTabHierarchy)
-        moveWildfireLiabilityToRisk();
         restructureEnergySourceMix();
         injectFuelMixPresetBar();
         restructureEmissionIntensities();

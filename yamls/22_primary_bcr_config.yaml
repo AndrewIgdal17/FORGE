@@ -69,7 +69,7 @@
 #           even if set to false here (the flag controls calculation, not inclusion)
 #
 # RISK COSTS:
-#   - wildfire: Expected wildfire costs + wildfire liability insurance
+#   - wildfire: Expected wildfire costs
 #   - outages: Expected outage costs based on reliability parameters
 #
 # ENERGY COSTS:
@@ -99,7 +99,7 @@ primary_bcr_config:
 
   # Risk costs that can be included/excluded from Primary BCR
   risk:
-    wildfire: true # Wildfire expected costs + liability insurance
+    wildfire: true # Expected wildfire costs
     outages: true # Outage expected costs
 
   # Energy-related costs that can be included/excluded from Primary BCR

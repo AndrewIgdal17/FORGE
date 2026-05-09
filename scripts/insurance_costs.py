@@ -10,7 +10,7 @@ from __future__ import annotations
 import yaml
 import sys
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -87,52 +87,6 @@ def calculate_insurance_costs(
     }
 
 
-def calculate_wildfire_liability_premium(
-    insurance_yaml: Dict[str, Any],
-    project_lifetime: int,
-) -> Optional[Dict[str, float]]:
-    """
-    Calculate wildfire liability insurance premium using rate-on-line (ROL).
-
-    ROL is the annual premium as a fraction of the liability limit.
-    Premium = ROL x Liability Limit (annual)
-
-    Args:
-        insurance_yaml: Loaded insurance YAML data
-        project_lifetime: Project lifetime in years
-
-    Returns:
-        dict: Contains liability_limit, rate_on_line, annual_premium, nominal_lifetime_cost
-              Returns None if disabled or not configured
-    """
-    insurance = insurance_yaml.get("insurance", {})
-    wildfire_liability = insurance.get("wildfire_liability", {})
-
-    # Check if enabled
-    if not wildfire_liability.get("enabled", False):
-        return None
-
-    # Get parameters
-    liability_limit = wildfire_liability.get("liability_limit", 0)
-    rate_on_line = wildfire_liability.get("rate_on_line", 0)
-
-    # Validate parameters
-    if liability_limit <= 0 or rate_on_line <= 0:
-        return None
-
-    # Calculate annual premium
-    annual_premium = rate_on_line * liability_limit
-
-    # Calculate lifetime cost (annual premium x project lifetime)
-    nominal_lifetime_cost = annual_premium * project_lifetime
-
-    return {
-        "liability_limit": liability_limit,
-        "rate_on_line": rate_on_line,
-        "annual_premium": annual_premium,
-        "nominal_lifetime_cost": nominal_lifetime_cost,
-    }
-
 
 def main() -> None:
     """Main function to calculate and display insurance costs."""
@@ -190,18 +144,6 @@ def main() -> None:
     # Load financing parameters for present value calculation
     financing = load_financing_details()
 
-    # Calculate wildfire liability insurance.
-    #
-    # Controls:
-    # - YAML: insurance.wildfire_liability.enabled (primary control; if False -> disabled)
-    # - Dev flag: CTCC_NO_WF_LIABILITY (kept for developer workflows)
-    #
-    # Per project decision: YAML takes precedence. If YAML enables it, we still calculate
-    # even if the dev flag is set.
-    wildfire_liability_results = calculate_wildfire_liability_premium(
-        insurance_yaml,
-        project_details.project_lifetime,
-    )
 
     # Calculate Present Value for operational insurance
     # Insurance payments start at COD (after construction) and continue for project lifetime
@@ -215,15 +157,6 @@ def main() -> None:
         insurance_start_year,
     )
 
-    # Calculate Present Value for wildfire liability (if enabled)
-    wildfire_liability_pv = 0
-    if wildfire_liability_results:
-        wildfire_liability_pv = calculate_present_value(
-            wildfire_liability_results["annual_premium"],
-            financing.wacc_real,
-            project_details.project_lifetime,
-            insurance_start_year,
-        )
 
     # Display results
     print("=" * 80)
@@ -263,34 +196,6 @@ def main() -> None:
     print("NOTE: Operational insurance is not AFUDC-eligible (operating expense).")
     print("=" * 80)
 
-    # Display wildfire liability ONLY if enabled and non-zero
-    if wildfire_liability_results and wildfire_liability_pv > 0:
-        print()
-        print("=" * 80)
-        print("WILDFIRE LIABILITY INSURANCE COST CALCULATION RESULTS")
-        print("=" * 80)
-        print(f"Liability Limit: ${wildfire_liability_results['liability_limit']:,.2f}")
-        print(f"Rate-on-Line (ROL): {wildfire_liability_results['rate_on_line']:.2%}")
-        print()
-        print("[NOMINAL VALUES]")
-        print(f"  Annual Premium: ${wildfire_liability_results['annual_premium']:,.2f}")
-        print(f"  Project Lifetime: {project_details.project_lifetime} years")
-        print(f"  ---")
-        print(
-            f"  TOTAL NOMINAL COST: ${wildfire_liability_results['nominal_lifetime_cost']:,.2f}"
-        )
-        print()
-        print("[UTILITY PERSPECTIVE - Present Value]")
-        print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
-        print(f"  Base Year: {financing.base_year}")
-        print(f"  Payment Start: Year {insurance_start_year:.1f} (at COD)")
-        print(f"  ---")
-        print(f"  TOTAL PRESENT VALUE: ${wildfire_liability_pv:,.2f}")
-        print()
-        print(
-            "NOTE: Wildfire liability insurance is not AFUDC-eligible (operating expense)."
-        )
-        print("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
@@ -309,28 +214,6 @@ def main() -> None:
     }
     csv_manager.add_insurance_costs(csv_results)
 
-    # Always write wildfire liability insurance to CSV (zeros when disabled)
-    if wildfire_liability_results:
-        wildfire_csv_results = {
-            "annual_premium": wildfire_liability_results["annual_premium"],
-            "nominal_lifetime_cost": wildfire_liability_results[
-                "nominal_lifetime_cost"
-            ],
-            "pv_total": wildfire_liability_pv,
-            "liability_limit": wildfire_liability_results["liability_limit"],
-            "rate_on_line": wildfire_liability_results["rate_on_line"],
-        }
-        csv_manager.add_wildfire_liability_costs(wildfire_csv_results)
-    else:
-        csv_manager.add_wildfire_liability_costs(
-            {
-                "annual_premium": 0,
-                "nominal_lifetime_cost": 0,
-                "pv_total": 0,
-                "liability_limit": 0,
-                "rate_on_line": 0,
-            }
-        )
 
     csv_manager.write_batch_summary()
 

@@ -16,9 +16,3 @@ insurance:
     overhead: 0.002 # 0.2% [0,1]
     underground: 0.0015 # 0.15% [0,1] (typically lower risk)
     subsea: 0.0025 # 0.25% [0,1] (typically higher risk)
-
-  # Wildfire liability insurance (optional)
-  wildfire_liability:
-    enabled: true # Set to false to disable
-    liability_limit: 5400000 # $1B liability limit (>= 0)
-    rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)
