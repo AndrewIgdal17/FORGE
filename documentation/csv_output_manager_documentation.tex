@@ -165,7 +165,7 @@ Special method that distinguishes benefits from costs in detail rows.
 
 \textbf{Detail Rows Created:}
 \begin{itemize}
-    \item \textbf{Benefits}: Congestion reduction (full and haircut), Curtailment reduction (full and haircut)
+    \item \textbf{Benefits}: Congestion reduction, Curtailment reduction
     \item \textbf{Costs}: Congestion during delay, Curtailment during delay, Residual congestion
 \end{itemize}
 
@@ -173,7 +173,7 @@ Each detail row includes:
 \begin{itemize}
     \item \texttt{benefit\_or\_cost}: "benefit" or "cost"
     \item \texttt{constraint\_type}: "congestion", "curtailment", "congestion\_delay", etc.
-    \item \texttt{value\_type}: "full", "haircut", or "NA"
+    \item \texttt{value\_type}: "full" or "NA"
     \item Annual, nominal, and PV values
 \end{itemize}
 
@@ -183,7 +183,7 @@ Adds BCR metrics to the batch summary.
 
 \textbf{Expected Keys in bcr\_results:}
 \begin{itemize}
-    \item \texttt{bcr\_system}, \texttt{bcr\_capital}, \texttt{bcr\_haircut}, \texttt{bcr\_excluding\_risk}
+    \item \texttt{bcr\_system}, \texttt{bcr\_capital}, \texttt{bcr\_excluding\_risk}
     \item \texttt{net\_benefit\_pv}, \texttt{net\_benefit\_nominal}, \texttt{net\_benefit\_excluding\_risk\_pv}
     \item \texttt{total\_benefits\_pv}, \texttt{total\_costs\_pv}, etc.
 \end{itemize}

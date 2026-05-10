@@ -16,7 +16,6 @@ This script calculates congestion and curtailment benefits by:
     \item Allocating capacity relief between curtailment and congestion
     \item Calculating congestion reduction energy and costs
     \item Calculating curtailment reduction energy and benefits
-    \item Applying saturation factors (haircuts) to account for diminishing returns
     \item Computing residual exceedance costs (unmet capacity needs; one cost from congestion and/or curtailment)
     \item Calculating present values of all benefits and costs
 \end{enumerate}
@@ -46,7 +45,7 @@ where $H_c$ is curtailment hours, $C_c$ is average curtailment MW, and $\lambda_
 \textbf{Congestion Benefits:}
 \begin{align}
 E_{cong} &= E_{cong,bc} + E_{cong,non} + E_{near} \\
-\text{Benefit}_{cong} &= E_{cong} \times \lambda_{cong} \times (1 - \text{saturation})
+\text{Benefit}_{cong} &= E_{cong} \times \lambda_{cong}
 \end{align}
 
 where the energy is split between overlap hours (with curtailment) and non-overlap binding hours.
@@ -66,15 +65,15 @@ E_{residual} &= E_{res,cong} + E_{res,curt} \\
 \textbf{Inputs:}
 \begin{itemize}
     \item Project technical details (capacity, old capacity, reconductoring status)
-    \item Congestion parameters (binding hours, average exceedance, flow factor, saturation factor, congestion price; \texttt{residual\_exceedance\_value} optional, null = use average congestion price)
-    \item Curtailment parameters (curtailment hours, average curtailment MW, curtailment price, saturation factor)
+    \item Congestion parameters (binding hours, average exceedance, flow factor, congestion price; \texttt{residual\_exceedance\_value} optional, null = use average congestion price)
+    \item Curtailment parameters (curtailment hours, average curtailment MW, curtailment price)
     \item Financing parameters (WACC, timeline)
 \end{itemize}
 
 \textbf{Outputs:}
 \begin{itemize}
-    \item Annual and lifetime congestion benefits (raw and haircut)
-    \item Annual and lifetime curtailment benefits (raw and haircut)
+    \item Annual and lifetime congestion benefits
+    \item Annual and lifetime curtailment benefits
     \item Residual exceedance costs
     \item Congestion and curtailment costs during delay/construction (allocated, no double count)
     \item Present values of all metrics
@@ -163,8 +162,6 @@ E_near = near_binding_hours * min(effective_capacity_relief, near_average_exceed
 energy_congestion_reduction = E_cong_bc + E_cong_non + E_near
 
 annual_congestion_reduction_cost_raw = energy_congestion_reduction * average_congestion_price
-annual_congestion_reduction_cost_haircut = (1 - saturation_factor) * annual_congestion_reduction_cost_raw
-
 total_binding_hours = H_bc + H_bnon
 energy_residual_congestion = total_binding_hours * max(0, average_exceedance - effective_capacity_relief)
 energy_residual_curtailment = curtailment_hours_total * max(0, average_curtailment_mw - effective_capacity_relief)
@@ -193,7 +190,6 @@ The following example demonstrates a typical usage:
 #   - Average curtailment: 200 MW
 #   - Congestion price: $50/MWh
 #   - Curtailment price: $30/MWh
-#   - Saturation factor: 0.2 (20% haircut)
 #   - Project lifetime: 50 years
 #
 # Calculation:
@@ -211,8 +207,7 @@ The following example demonstrates a typical usage:
 #     E_cong_bc = 1500 * min(150, 300) = 225,000 MWh/year
 #     E_cong_non = 500 * min(350, 300) = 150,000 MWh/year
 #     E_cong = 375,000 MWh/year
-#     Benefit_raw = 375,000 * $50 = $18.75M/year
-#     Benefit_haircut = (1 - 0.2) * $18.75M = $15M/year
+#     Benefit = 375,000 * $50 = $18.75M/year
 #   
 #   Residual exceedance (congestion contribution here; curtailment-only: E_res,cong=0,
 #     E_res,curt = H_c * max(0, C_c - Delta_C_eff)):
@@ -222,9 +217,9 @@ The following example demonstrates a typical usage:
 #
 # Output:
 #   - Annual curtailment benefit: $9M
-#   - Annual congestion benefit (haircut): $15M
+#   - Annual congestion benefit: $18.75M
 #   - Annual residual exceedance cost: $11.25M
-#   - Net annual benefit: $12.75M
+#   - Net annual benefit: $16.5M
 \end{lstlisting}
 
 \textbf{Integration Example:}
@@ -240,7 +235,7 @@ results = {
     "curtailment_benefit_pv": congestion_results.lifetime_curtailment_benefit_pv,
     "residual_exceedance_annual": congestion_results.annual_residual_exceedance_cost,
     "residual_exceedance_pv": congestion_results.lifetime_residual_exceedance_cost_pv,
-    # ... delay costs, haircut variants, physical metrics
+    # ... delay costs, physical metrics
 }
 csv_manager.add_congestion_curtailment(results)
 csv_manager.write_batch_summary()
@@ -252,9 +247,9 @@ csv_manager.write_batch_summary()
 
 The script prevents double-counting by allocating capacity relief first to curtailment, then to congestion. The overlap factor (theta) accounts for hours when both curtailment and congestion occur. This same allocation is used for delay-period opportunity costs.
 
-\subsection{Saturation Factors}
+\subsection{Benefit Monetization}
 
-Saturation factors (haircuts) account for diminishing returns as more capacity is added. They reduce the monetized benefits to reflect that not all theoretical benefits are realized.
+Benefits are calculated by multiplying energy relief (MWh) by the applicable price (\$/MWh) to produce annual benefit values, which are then summed over the project lifetime.
 
 \subsection{Residual Exceedance}
 

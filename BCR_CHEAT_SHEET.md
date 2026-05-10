@@ -12,13 +12,13 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_system`
 
-**Equation:** `Total Benefits (haircut) / Total Costs`
+**Equation:** `Total Benefits / Total Costs`
 
 **Perspective:** Full societal/system-wide analysis
 
 **Includes:**
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (with conservative haircuts on congestion/curtailment; excludes revenue transfer)
+- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
 - **Costs:** Capital + Operational (O&M + insurance only) + Energy/Emissions (line losses + emissions + residual exceedance) + Risk + Delay (everything)
 
 **Use Case:** Complete societal cost-benefit analysis including all externalities and risks
@@ -27,7 +27,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_wildfire_risk_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Wildfire Risk - Outage Risk)`
+**Equation:** `Total Benefits / (Total Costs - Wildfire Risk - Outage Risk)`
 
 **Perspective:** Societal perspective excluding both wildfire and outage risk costs
 
@@ -42,7 +42,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs)`
 
 **Perspective:** Societal perspective excluding emissions externalities only
 
@@ -57,7 +57,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_linelosses`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Line Loss Costs)`
+**Equation:** `Total Benefits / (Total Costs - Line Loss Costs)`
 
 **Perspective:** Societal perspective excluding line loss costs only
 
@@ -72,7 +72,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_linelosses`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Line Loss Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs)`
 
 **Perspective:** Societal perspective excluding both emissions and line losses
 
@@ -87,7 +87,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_wildfire_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Wildfire Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Wildfire Risk Costs)`
 
 **Perspective:** Societal perspective excluding wildfire risk costs only (includes outage risk)
 
@@ -102,7 +102,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding outage risk costs only (includes wildfire risk)
 
@@ -117,7 +117,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_wildfire_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Wildfire Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Wildfire Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions and wildfire risk costs
 
@@ -132,7 +132,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions and outage risk costs
 
@@ -147,7 +147,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_linelosses_and_wildfire_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Line Loss Costs - Wildfire Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Wildfire Risk Costs)`
 
 **Perspective:** Societal perspective excluding line losses and wildfire risk costs
 
@@ -162,7 +162,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_linelosses_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Line Loss Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding line losses and outage risk costs
 
@@ -177,7 +177,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_linelosses_and_wildfire_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions, line losses, and wildfire risk costs
 
@@ -192,7 +192,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_linelosses_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Line Loss Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions, line losses, and outage risk costs
 
@@ -207,7 +207,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_wildfire_risk_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Wildfire Risk Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Wildfire Risk Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions and both risk costs
 
@@ -222,7 +222,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding line losses and both risk costs
 
@@ -237,7 +237,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk`
 
-**Equation:** `Total Benefits (haircut) / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
+**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
 
 **Perspective:** Societal perspective excluding emissions, line losses, and both risk costs
 
@@ -254,7 +254,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_capital`
 
-**Equation:** `Total Benefits (haircut) / Capital Costs`
+**Equation:** `Total Benefits / Capital Costs`
 
 **Perspective:** Capital investment return analysis
 
@@ -269,7 +269,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 ### `bcr_capital_and_delay`
 
-**Equation:** `Total Benefits (haircut) / (Capital Costs + Delay Costs)`
+**Equation:** `Total Benefits / (Capital Costs + Delay Costs)`
 
 **Perspective:** Capital investment including time value of money
 
@@ -351,7 +351,7 @@ All BCRs have corresponding net benefit calculations (Present Value unless noted
 
 ### System/Societal Net Benefits
 
-- `net_benefit_pv = Total Benefits (haircut) - Total Costs`
+- `net_benefit_pv = Total Benefits - Total Costs`
 - `net_benefit_nominal = Total Benefits (nominal) - Total Costs (nominal)` _(undiscounted)_
 - `net_benefit_primary_pv = Primary Benefits - Primary Costs` _(customizable via flags)_
 - `net_benefit_excluding_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Wildfire Risk - Outage Risk)`
@@ -420,15 +420,14 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 
 ## Important Notes
 
-1. **Haircut Benefits:** Most BCRs use conservative "haircut" benefits (saturation factors applied to congestion/curtailment; delivered energy is included in total benefits with no haircut)
-2. **Present Value:** All values are in present value (PV) terms, discounted to base year
-3. **Context Matters:**
+1. **Present Value:** All values are in present value (PV) terms, discounted to base year
+2. **Context Matters:**
    - Wildfire costs assume California-style catastrophic events ($5B/event)
    - For regions with lower wildfire risk (e.g., Virginia, Great Plains), `bcr_excluding_wildfire_risk` may be more appropriate than `bcr_excluding_wildfire_risk_and_outage_risk`
    - Outage risk is more universal (weather, equipment failure) and generally applicable across regions
    - Line losses are socialized through rates (not direct utility costs)
    - Emissions are externalities (utilities don't pay unless carbon pricing exists)
-4. **Separating Wildfire and Outage Risk:**
+3. **Separating Wildfire and Outage Risk:**
    - Wildfire risk is highly region-specific (California vs. Virginia vs. Great Plains)
    - Outage risk is more universal and applicable across regions
    - Use `bcr_excluding_wildfire_risk` for Virginia scenarios where California-calibrated wildfire parameters would overstate risk

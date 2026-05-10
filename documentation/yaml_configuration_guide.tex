@@ -1325,11 +1325,6 @@ This file configures cost savings from reduced transmission congestion. Congesti
                 \item \textbf{Meaning}: Relief during near-binding hours is capped by this value; $E_{near} = \texttt{near\_binding\_hours} \times \min(\Delta C_{eff}, \texttt{near\_average\_exceedance})$ (MWh/year), consistent with binding hours.
             \end{itemize}
             
-            \item \textbf{saturation\_factor} (float): System saturation factor
-            \begin{itemize}
-                \item \textbf{Valid Values}: Non-negative numbers (typical: 0.0 to 0.3)
-                \item \textbf{Meaning}: 0.0 = Radial line (full benefit); >0.0 = Meshed system (diminishing returns).
-            \end{itemize}
         \end{itemize}
         
         \item \textbf{costs} (dictionary):
@@ -1367,7 +1362,6 @@ greenfield_congestion_reductions:
     average_exceedance: 150
     near_binding_hours: 800
     near_average_exceedance: 0
-    saturation_factor: 0.2
   costs:
     average_congestion_price: 20
 
@@ -1377,7 +1371,6 @@ reconductoring_congestion_reductions:
     average_exceedance: 0
     near_binding_hours: 0
     near_average_exceedance: 0
-    saturation_factor: 0
     hot_hour_weights: 0
 \end{lstlisting}
 
@@ -1412,11 +1405,6 @@ This file configures cost savings from reduced renewable energy curtailment. Cur
         \item \textbf{Meaning}: PPA proxy or avoided cost of curtailed renewable energy
     \end{itemize}
     
-    \item \textbf{curtailment\_saturation\_factor} (float): Saturation factor [0, 1]
-    \begin{itemize}
-        \item \textbf{Valid Values}: Range [0, 1] (typical: 0.1)
-        \item \textbf{Meaning}: Accounts for diminishing returns in meshed systems
-    \end{itemize}
 \end{itemize}
 
 \subsection{Example Configuration}
@@ -1426,7 +1414,6 @@ curtailment_reductions:
   curtailment_hours_total: 300
   average_curtailment_mw: 60
   average_curtailment_price: 25
-  curtailment_saturation_factor: 0.1
 \end{lstlisting}
 
 \section{Cost Timing Patterns}

@@ -130,7 +130,7 @@ $$
 
 - **$r_{WACC,nom}$:** Utility/regulatory perspective (e.g. AFUDC rate when applicable).
 - **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, line loss cost, residual exceedance, benefits, revenue; delay and congestion/curtailment delay costs.
-- **$r_{social}$:** Societal PV of externality costs: emissions (3.b), expected cost of wildfires (4.a), expected cost of outages (4.b).
+- **$r_{social}$:** Societal PV of externality costs: loss-compensation emissions, facilitated emissions, expected wildfire cost, expected outage cost.
 
 **Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
 
@@ -1035,7 +1035,7 @@ $$
 Emissions cost is not capitalized; there is no AFUDC term. It does not enter rate base.
 
 **Societal perspective**
-The relevant measure is real (present value) total emissions cost, $C_{emissions,real}$, using $r_{social}$. This is an externality cost; unlike market-tracked costs (e.g. thermal line loss cost 3.a), it is discounted at the social discount rate.
+The relevant measure is real (present value) total emissions cost, $C_{emissions,real}$, using $r_{social}$. This is an externality cost; unlike market-tracked costs (e.g. thermal line loss cost 3.a), it is discounted at the social discount rate. Facilitated (generation-mix / delivered-energy) emissions PV is also discounted at $r_{social}$, the same externality treatment as loss-compensation emissions.
 
 **Link to Energy losses**
 $E_{loss}$ is defined in the Energy losses section. Emissions cost (3.b) uses the share $\alpha$ of that loss assumed to be compensated by additional generation ($TEC = \alpha \times E_{loss}$), then applies the energy mix, emission intensities, and societal costs per kg to obtain $C_{\tau}$ and hence $C_{emissions,nominal}$ and $C_{emissions,real}$.
@@ -1390,7 +1390,7 @@ The relevant measure is real (present value) base delay cost, $C_{delay,real}$, 
 
 ### Congestion delay costs (5.b)
 
-Congestion delay costs are the **opportunity cost** of congestion that is not relieved while the project is in the delay and construction period. In each of those years, the same congestion relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** congestion delay cost equals the **annual congestion reduction benefit** (raw, before any benefit haircut). The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Congestion delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
+Congestion delay costs are the **opportunity cost** of congestion that is not relieved while the project is in the delay and construction period. In each of those years, the same congestion relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** congestion delay cost equals the **annual congestion reduction benefit**. The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Congestion delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
 
 **Conceptually**
 This cost answers: "What congestion benefit do we give up each year we are delayed?" Capacity relief and allocation (curtailment first, then congestion; overlap handled) are the same as in the Congestion and Curtailment Reduction Benefits section. The same annual $ amount is used as the raw congestion benefit, so there is no double-count with post-COD benefits.
@@ -1399,7 +1399,7 @@ This cost answers: "What congestion benefit do we give up each year we are delay
 
 | Variable                      | Meaning / units                                 | Notes                                                                                                                                                   |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $B_{congestion,annual}$ (raw) | Annual congestion reduction benefit (raw), $/yr | Same formula as in Congestion and Curtailment Reduction Benefits: allocated congestion relief MWh/yr × $\gamma_{congestion}$. No haircut for delay cost. |
+| $B_{congestion,annual}$ | Annual congestion reduction benefit, $/yr | Same formula as in Congestion and Curtailment Reduction Benefits: allocated congestion relief MWh/yr × $\gamma_{congestion}$. |
 | $C_{cong,delay,annual}$       | Congestion delay cost (annual), $/yr            | $C_{cong,delay,annual} = B_{congestion,annual}\text{ (raw)}$.                                                                                           |
 | $T_{delay}$                   | Delay years                                     | From project technical details.                                                                                                                         |
 | $T_{construction}$            | Construction years                              | From project technical details.                                                                                                                         |
@@ -1457,7 +1457,7 @@ The same effective capacity relief, curtailment-then-congestion allocation, and 
 
 ### Curtailment delay costs (5.c)
 
-Curtailment delay costs are the **opportunity cost** of curtailment that is not relieved while the project is in the delay and construction period. In each of those years, the same curtailment relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** curtailment delay cost equals the **annual curtailment reduction benefit** (same formula as the benefit; the un-haircut benefit is used). The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Curtailment delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
+Curtailment delay costs are the **opportunity cost** of curtailment that is not relieved while the project is in the delay and construction period. In each of those years, the same curtailment relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** curtailment delay cost equals the **annual curtailment reduction benefit**. The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Curtailment delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
 
 **Conceptually**
 This cost answers: "What curtailment benefit do we give up each year we are delayed?" Capacity relief and allocation (curtailment first, then congestion) are the same as in the Congestion and Curtailment Reduction Benefits section. The same annual $ amount is used as the curtailment benefit, so there is no double-count with post-COD benefits.
@@ -1466,7 +1466,7 @@ This cost answers: "What curtailment benefit do we give up each year we are dela
 
 | Variable                 | Meaning / units                            | Notes                                                                                                                                                                        |
 | ------------------------ | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $B_{curtailment,annual}$ | Annual curtailment reduction benefit, $/yr | Same formula as in Congestion and Curtailment Reduction Benefits: allocated curtailment relief MWh/yr × $\gamma_{curtailment}$ (un-haircut benefit is used for delay cost). |
+| $B_{curtailment,annual}$ | Annual curtailment reduction benefit, $/yr | Same formula as in Congestion and Curtailment Reduction Benefits: allocated curtailment relief MWh/yr × $\gamma_{curtailment}$. |
 | $C_{curt,delay,annual}$  | Curtailment delay cost (annual), $/yr      | $C_{curt,delay,annual} = B_{curtailment,annual}$.                                                                                                                            |
 | $T_{delay}$              | Delay years                                | From project technical details.                                                                                                                                              |
 | $T_{construction}$       | Construction years                         | From project technical details.                                                                                                                                              |
@@ -1532,7 +1532,7 @@ Total costs are organized into **four reporting buckets** for the appendix and r
 | $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
 | $C_{\text{soft}}$ | Operational + energy/emissions losses + delay | O&M + insurance + rent + line losses + residual exceedance + all delay |
 | $C_{\text{risk}}$ | Expected losses from uncertain events | $C_{\text{wf}} + C_{\text{outage}}$ |
-| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions (+ facilitated, when implemented) |
+| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions + facilitated emissions |
 
 $$C^P = C_{\text{hard}}^P + C_{\text{soft}}^P + C_{\text{risk}}^P + C_{\text{emissions}}^P$$
 
@@ -1540,7 +1540,7 @@ Total benefits are organized into **two buckets**:
 
 | Bucket | Definition | Components |
 |--------|-----------|-----------|
-| $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief + curtailment relief (each with conservative haircut) |
+| $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief + curtailment relief |
 | $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy benefit ($B_{\text{delivered,lifetime}}$) |
 
 $$B^P = B_{\text{remedial}}^P + B_{\text{enabling}}^P$$
@@ -1567,7 +1567,7 @@ The same MW of relief can't count twice. The CTCC assigns relief first to curtai
 Congestion hours and curtailment hours can overlap. An overlap fraction $\theta$ splits congestion hours into overlap and non-overlap. On overlap hours, congestion relief is capped by $\Delta C_{remaining}$ (because curtailment already used some of $\Delta C_{effective}$). On non-overlap hours, the full $\Delta C_{effective}$ is available for congestion relief (capped by exceedance $X_{congestion}$). So: overlap congestion relief uses $\Delta C_{remaining}$; non-overlap congestion relief uses $\Delta C_{effective}$.
 
 **Monetization**
-Curtailment relief (MWh/yr) is valued at $\gamma_{curtailment}$ ($/MWh); congestion relief at $\gamma_{congestion}$ ($/MWh). Conservative haircuts ($\sigma*{curtailment}$, $\sigma*{congestion}$) can be applied so benefits are $(1 - \sigma) \times \text{energy} \times \text{price}$. Annual benefits are then summed over the project lifetime in nominal terms, or discounted to present value at real WACC from the commercial operation date ($T_{COD}$).
+Curtailment relief (MWh/yr) is valued at $\gamma_{curtailment}$ ($/MWh); congestion relief at $\gamma_{congestion}$ ($/MWh). Annual benefits are $\text{energy} \times \text{price}$, then summed over the project lifetime in nominal terms, or discounted to present value at real WACC from the commercial operation date ($T_{COD}$).
 
 **Summary**
 Benefits = value of the congestion and curtailment that the project removes, plus the benefit of delivered energy (see below). Effective capacity relief is computed (greenfield vs reconductoring); curtailment is relieved first, then congestion, with overlap handled so the same MW isn't double-counted. Total benefits in the calculator sum congestion, curtailment, and delivered-energy benefits, in nominal or real (PV) terms. The ratepayer perspective includes all three benefits (congestion, curtailment, and delivered energy) in ratepayer benefits for `bcr_ratepayer` and `net_benefit_ratepayer_pv`.
@@ -1585,8 +1585,6 @@ Benefits = value of the congestion and curtailment that the project removes, plu
 | $H_{congestion,nonoverlap}$        | Hours of congestion that do not overlap with curtailment, h/yr      |                                                                             |
 | $\gamma_{congestion}$              | Value of congestion, $/MWh                                          |                                                                             |
 | $\gamma_{curtailment}$             | Value of curtailed energy, $/MWh                                    |                                                                             |
-| $\sigma_{congestion}$              | Haircut to value of congestion reduction                            | Conservative estimate of congestion benefits.                               |
-| $\sigma_{curtailment}$             | Haircut to value of curtailment reduction                           | Conservative estimate of curtailment benefits.                              |
 | $R_{curtailment,annual}$           | Average curtailment relief due to project, MWh/yr                   |                                                                             |
 | $R_{congestion,annual}$            | Average congestion relief due to project, MWh/yr                    | Sum of overlap and non-overlap relief.                                      |
 | $R_{congestion,overlap,annual}$    | Overlap-hours congestion relief due to project, MWh/yr              |                                                                             |

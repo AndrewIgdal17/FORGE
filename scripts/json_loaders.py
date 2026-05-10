@@ -280,7 +280,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         near_average_exceedance=float(
             congestion_data["constraints"]["near_average_exceedance"]
         ),
-        saturation_factor=float(congestion_data["constraints"]["saturation_factor"]),
         average_congestion_price=float(average_congestion_price),
         residual_exceedance_value=residual_exceedance_value,
         curtailment_hours_total=float(
@@ -289,9 +288,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         average_curtailment_mw=float(curtailment_data.get("average_curtailment_mw", 0)),
         average_curtailment_price=float(
             curtailment_data.get("average_curtailment_price", 0)
-        ),
-        curtailment_saturation_factor=float(
-            curtailment_data.get("curtailment_saturation_factor", 0)
         ),
     )
 

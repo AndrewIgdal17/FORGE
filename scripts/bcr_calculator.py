@@ -25,20 +25,15 @@ class BCRInputData(BaseModel):
     curtailment_benefit_pv: float = 0.0
     congestion_benefit_nominal: float = 0.0
     curtailment_benefit_nominal: float = 0.0
-    congestion_benefit_haircut_pv: float = 0.0
-    curtailment_benefit_haircut_pv: float = 0.0
     delivered_benefit_pv: float = 0.0
     delivered_benefit_nominal: float = 0.0
     revenue_pv: float = 0.0
     revenue_nominal: float = 0.0
     total_benefits_pv: float = 0.0
     total_benefits_nominal: float = 0.0
-    total_benefits_haircut_pv: float = 0.0
     # Benefit buckets (appendix-aligned: remedial + enabling = total)
     benefits_remedial_pv: float = 0.0
-    benefits_remedial_haircut_pv: float = 0.0
     benefits_enabling_pv: float = 0.0
-    benefits_enabling_haircut_pv: float = 0.0
     # Capital costs
     build_cost_pv: float = 0.0
     build_cost_nominal: float = 0.0
@@ -296,8 +291,6 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
     congestion_benefit_nominal = data.congestion_benefit_nominal
     curtailment_benefit_nominal = data.curtailment_benefit_nominal
     delivered_benefit_nominal = data.delivered_benefit_nominal
-    congestion_benefit_haircut = data.congestion_benefit_haircut_pv
-    curtailment_benefit_haircut = data.curtailment_benefit_haircut_pv
     revenue_pv = data.revenue_pv
     revenue_nominal = data.revenue_nominal
 
@@ -306,14 +299,9 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
     benefits_remedial_pv = _prefer_subtotal(
         data, "benefits_remedial_pv", calculated_remedial
     )
-    calculated_remedial_haircut = congestion_benefit_haircut + curtailment_benefit_haircut
-    benefits_remedial_haircut_pv = _prefer_subtotal(
-        data, "benefits_remedial_haircut_pv", calculated_remedial_haircut
-    )
 
     # --- Bucket: Enabling (delivered energy) ---
     benefits_enabling_pv = delivered_benefit_pv
-    benefits_enabling_haircut_pv = delivered_benefit_pv  # no haircut on delivered
 
     # --- Totals (bucket-first: remedial + enabling) ---
     calculated_total_benefits = benefits_remedial_pv + benefits_enabling_pv
@@ -328,12 +316,6 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
     total_benefits_nominal = _prefer_subtotal(
         data, "total_benefits_nominal", calculated_total_benefits_nominal
     )
-    calculated_total_benefits_haircut = (
-        benefits_remedial_haircut_pv + benefits_enabling_haircut_pv
-    )
-    total_benefits_haircut_pv = _prefer_subtotal(
-        data, "total_benefits_haircut_pv", calculated_total_benefits_haircut
-    )
 
     return {
         # Sub-items
@@ -341,19 +323,14 @@ def calculate_benefits(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, f
         "curtailment_benefit_pv": curtailment_benefit_pv,
         "delivered_benefit_pv": delivered_benefit_pv,
         "delivered_benefit_nominal": delivered_benefit_nominal,
-        "congestion_benefit_haircut_pv": congestion_benefit_haircut,
-        "curtailment_benefit_haircut_pv": curtailment_benefit_haircut,
         "line_loss_benefit_pv": 0,
         "revenue_pv": revenue_pv,
         # Bucket subtotals
         "benefits_remedial_pv": benefits_remedial_pv,
-        "benefits_remedial_haircut_pv": benefits_remedial_haircut_pv,
         "benefits_enabling_pv": benefits_enabling_pv,
-        "benefits_enabling_haircut_pv": benefits_enabling_haircut_pv,
         # Grand totals
         "total_benefits_pv": total_benefits_pv,
         "total_benefits_nominal": total_benefits_nominal,
-        "total_benefits_haircut_pv": total_benefits_haircut_pv,
     }
 
 
@@ -568,8 +545,7 @@ def calculate_bcr_metrics(
         Dictionary with BCR metrics (both nominal and PV)
     """
     # Present value metrics
-    # Use conservative (haircut) benefits for all BCR calculations
-    total_benefits_pv = benefits["total_benefits_haircut_pv"]
+    total_benefits_pv = benefits["total_benefits_pv"]
     total_costs_pv = costs["total_costs_pv"]
     capital_costs_pv = costs["capital_costs_pv"]
     risk_costs_pv = costs["risk_costs_pv"]  # Wildfire + Outage + Wildfire Liability
@@ -590,10 +566,8 @@ def calculate_bcr_metrics(
     wildfire_risk_pv = wildfire_pv
 
     # Extract benefit components early (needed for utility/TSP and ratepayer calculations)
-    congestion_benefit_pv = safe_get_numeric(benefits, "congestion_benefit_haircut_pv")
-    curtailment_benefit_pv = safe_get_numeric(
-        benefits, "curtailment_benefit_haircut_pv"
-    )
+    congestion_benefit_pv = safe_get_numeric(benefits, "congestion_benefit_pv")
+    curtailment_benefit_pv = safe_get_numeric(benefits, "curtailment_benefit_pv")
     delivered_benefit_pv = safe_get_numeric(benefits, "delivered_benefit_pv")
     revenue_pv = safe_get_numeric(benefits, "revenue_pv")
 
@@ -673,7 +647,6 @@ def calculate_bcr_metrics(
     capital_and_delay_costs_pv = capital_costs_pv + delay_costs_pv
 
     # Prevent division by zero
-    # All BCRs use conservative (haircut) benefits
     bcr_system = safe_divide(total_benefits_pv, total_costs_pv)
     bcr_capital = safe_divide(total_benefits_pv, capital_costs_pv)
     bcr_capital_and_delay = safe_divide(total_benefits_pv, capital_and_delay_costs_pv)
@@ -939,7 +912,6 @@ def calculate_and_display_bcr(
             "revenue_pv": 0,
             "total_benefits_pv": 0,
             "total_benefits_nominal": 0,
-            "total_benefits_haircut_pv": 0,
         }
 
     try:
@@ -1029,10 +1001,10 @@ def print_bcr_summary(
     # Benefits section
     print("BENEFITS (Present Value):")
     print(
-        f"  Congestion Reduction (haircut): ${benefits['congestion_benefit_haircut_pv']:>15,.0f}"
+        f"  Congestion Reduction:        ${benefits['congestion_benefit_pv']:>15,.0f}"
     )
     print(
-        f"  Curtailment Reduction (haircut): ${benefits['curtailment_benefit_haircut_pv']:>15,.0f}"
+        f"  Curtailment Reduction:       ${benefits['curtailment_benefit_pv']:>15,.0f}"
     )
 
     energy_losses_pv = safe_get_numeric(data, "energy_losses_pv") or safe_get_numeric(
@@ -1052,7 +1024,7 @@ def print_bcr_summary(
 
     print("  " + "-" * 78)
     print(
-        f"  Total Benefits (haircut):    ${benefits['total_benefits_haircut_pv']:>15,.0f}"
+        f"  Total Benefits:              ${benefits['total_benefits_pv']:>15,.0f}"
     )
     print("  (societal; excludes revenue transfer)")
     print()

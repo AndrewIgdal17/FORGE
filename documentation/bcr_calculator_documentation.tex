@@ -25,13 +25,13 @@ This script calculates BCR metrics by:
 The BCR calculation follows this structure:
 
 \begin{align}
-\text{Total Benefits (Conservative)} &= \text{Congestion (Haircut)} + \text{Curtailment (Haircut)} \\
+\text{Total Benefits} &= \text{Congestion} + \text{Curtailment} \\
 \text{Total Costs} &= \text{Capital} + \text{Operational} + \text{Energy/Emissions} + \text{Risk} + \text{Delay} \\
-\text{BCR}_{system} &= \frac{\text{Conservative Benefits}}{\text{Total Costs}} \\
-\text{BCR}_{capital} &= \frac{\text{Conservative Benefits}}{\text{Capital Costs}} \\
-\text{BCR}_{excluding\_risk} &= \frac{\text{Conservative Benefits}}{\text{Total Costs} - \text{Risk Costs}} \\
-\text{BCR}_{excluding\_emissions} &= \frac{\text{Conservative Benefits}}{\text{Total Costs} - \text{Emissions Costs}} \\
-\text{Net Benefit} &= \text{Conservative Benefits} - \text{Total Costs}
+\text{BCR}_{system} &= \frac{\text{Total Benefits}}{\text{Total Costs}} \\
+\text{BCR}_{capital} &= \frac{\text{Total Benefits}}{\text{Capital Costs}} \\
+\text{BCR}_{excluding\_risk} &= \frac{\text{Total Benefits}}{\text{Total Costs} - \text{Risk Costs}} \\
+\text{BCR}_{excluding\_emissions} &= \frac{\text{Total Benefits}}{\text{Total Costs} - \text{Emissions Costs}} \\
+\text{Net Benefit} &= \text{Total Benefits} - \text{Total Costs}
 \end{align}
 
 \subsection{Inputs and Outputs}
@@ -44,7 +44,7 @@ The BCR calculation follows this structure:
 
 \textbf{Outputs:}
 \begin{itemize}
-    \item BCR metrics (system, capital, excluding risk, excluding emissions) - all use conservative benefits
+    \item BCR metrics (system, capital, excluding risk, excluding emissions)
     \item Net benefits (total and excluding risk)
     \item Benefit and cost breakdowns
     \item Formatted summary display
@@ -87,7 +87,7 @@ Calculates total benefits from scenario data.
 
 \textbf{Returns:}
 \begin{itemize}
-    \item Dictionary with benefit breakdown and totals (PV, nominal, haircut)
+    \item Dictionary with benefit breakdown and totals (PV, nominal)
 \end{itemize}
 
 \textbf{Key Logic:}
@@ -97,10 +97,6 @@ curtailment_benefit_pv = safe_get_numeric(data, "curtailment_benefit_pv")
 # Line losses are always costs, never benefits (line_loss_benefit_pv = 0)
 calculated_total_benefits = congestion_benefit_pv + curtailment_benefit_pv
 total_benefits_pv = prefer_csv_subtotal(data, "total_benefits_pv", calculated_total_benefits)
-congestion_benefit_haircut = safe_get_numeric(data, "congestion_benefit_haircut_pv")
-curtailment_benefit_haircut = safe_get_numeric(data, "curtailment_benefit_haircut_pv")
-total_benefits_haircut_pv = prefer_csv_subtotal(data, "total_benefits_haircut_pv",
-    congestion_benefit_haircut + curtailment_benefit_haircut)
 \end{lstlisting}
 
 \subsection{\texttt{calculate\_costs(data)}}
@@ -163,19 +159,16 @@ Calculates benefit-cost ratios and net benefits.
 
 \textbf{BCR Metrics:}
 \begin{itemize}
-    \item \textbf{BCR\_system}: Conservative benefits / Total costs (primary metric, uses saturation-adjusted benefits)
-    \item \textbf{BCR\_capital}: Conservative benefits / Capital costs (investor perspective, uses saturation-adjusted benefits)
-    \item \textbf{BCR\_excluding\_risk}: Conservative benefits / (Total costs - Risk costs) (core economics, uses saturation-adjusted benefits)
-    \item \textbf{BCR\_excluding\_emissions}: Conservative benefits / (Total costs - Emissions costs) (uses saturation-adjusted benefits)
+    \item \textbf{BCR\_system}: Total Benefits / Total costs (primary metric)
+    \item \textbf{BCR\_capital}: Total Benefits / Capital costs (investor perspective)
+    \item \textbf{BCR\_excluding\_risk}: Total Benefits / (Total costs - Risk costs) (core economics)
+    \item \textbf{BCR\_excluding\_emissions}: Total Benefits / (Total costs - Emissions costs)
 \end{itemize}
 
 \textbf{Key Logic:}
 \begin{lstlisting}
 # Calculate costs excluding risk
 total_costs_excluding_risk_pv = total_costs_pv - risk_costs_pv
-
-# Use conservative (haircut) benefits for all BCR calculations
-total_benefits_pv = total_benefits_haircut_pv
 
 # Calculate BCRs (with division by zero protection)
 bcr_system = total_benefits_pv / total_costs_pv if total_costs_pv > 0 else 0
@@ -185,7 +178,7 @@ bcr_excluding_risk = (total_benefits_pv / total_costs_excluding_risk_pv
 bcr_excluding_emissions = (total_benefits_pv / total_costs_excluding_emissions_pv 
                            if total_costs_excluding_emissions_pv > 0 else 0)
 
-# Net benefits (using conservative benefits)
+# Net benefits
 net_benefit_pv = total_benefits_pv - total_costs_pv
 net_benefit_excluding_risk_pv = total_benefits_pv - total_costs_excluding_risk_pv
 \end{lstlisting}
@@ -280,12 +273,12 @@ The script handles line losses differently for greenfield vs. reconductoring:
 
 \subsection{Multiple BCR Perspectives}
 
-The script calculates multiple BCR metrics to provide different perspectives. All BCR metrics use conservative (saturation-adjusted) benefits to account for diminishing marginal returns:
+The script calculates multiple BCR metrics to provide different perspectives:
 \begin{itemize}
-    \item \textbf{System BCR}: Overall project economics including all costs (uses conservative benefits)
-    \item \textbf{Capital BCR}: Benefits relative to capital investment (investor view, uses conservative benefits)
-    \item \textbf{Excluding Risk BCR}: Core economics without wildfire/outage risk costs (uses conservative benefits)
-    \item \textbf{Excluding Emissions BCR}: Economics without emissions costs (uses conservative benefits)
+    \item \textbf{System BCR}: Overall project economics including all costs
+    \item \textbf{Capital BCR}: Benefits relative to capital investment (investor view)
+    \item \textbf{Excluding Risk BCR}: Core economics without wildfire/outage risk costs
+    \item \textbf{Excluding Emissions BCR}: Economics without emissions costs
 \end{itemize}
 
 \subsection{Net Benefits}

@@ -80,15 +80,10 @@ BATCH_SUMMARY_FIELDS = [
     "rate_base",
     "rate_base_real",
     "annual_revenue_real",
-    "congestion_benefit_haircut_pv",
-    "curtailment_benefit_haircut_pv",
     "total_benefits_pv",
-    "total_benefits_haircut_pv",
     # 9a. Appendix-aligned benefit buckets
     "benefits_remedial_pv",
-    "benefits_remedial_haircut_pv",
     "benefits_enabling_pv",
-    "benefits_enabling_haircut_pv",
     # 10. BCR Metrics
     "bcr_system",
     "bcr_capital",
@@ -1025,8 +1020,8 @@ class CTCCOutputManager:
         Add congestion and curtailment benefits and costs to batch summary.
 
         Benefits (reduce system cost):
-        - Congestion reduction benefit (operational, full + haircut)
-        - Curtailment reduction benefit (operational, full + haircut)
+        - Congestion reduction benefit (operational)
+        - Curtailment reduction benefit (operational)
         - Delivered energy benefit (throughput value at electricity price)
 
         Costs (increase system cost):
@@ -1045,9 +1040,6 @@ class CTCCOutputManager:
                     "congestion_benefit_nominal", 0
                 ),
                 "congestion_benefit_pv": results.get("congestion_benefit_pv", 0),
-                "congestion_benefit_haircut_pv": results.get(
-                    "congestion_benefit_haircut_pv", 0
-                ),
                 "curtailment_benefit_annual": results.get(
                     "curtailment_benefit_annual", 0
                 ),
@@ -1055,9 +1047,6 @@ class CTCCOutputManager:
                     "curtailment_benefit_nominal", 0
                 ),
                 "curtailment_benefit_pv": results.get("curtailment_benefit_pv", 0),
-                "curtailment_benefit_haircut_pv": results.get(
-                    "curtailment_benefit_haircut_pv", 0
-                ),
                 "delivered_benefit_annual": results.get(
                     "delivered_benefit_annual", 0
                 ),
@@ -1071,22 +1060,12 @@ class CTCCOutputManager:
                     + results.get("curtailment_benefit_pv", 0)
                     + results.get("delivered_benefit_pv", 0)
                 ),
-                "total_benefits_haircut_pv": (
-                    results.get("congestion_benefit_haircut_pv", 0)
-                    + results.get("curtailment_benefit_haircut_pv", 0)
-                    + results.get("delivered_benefit_pv", 0)
-                ),
                 # Benefit buckets (appendix-aligned)
                 "benefits_remedial_pv": (
                     results.get("congestion_benefit_pv", 0)
                     + results.get("curtailment_benefit_pv", 0)
                 ),
-                "benefits_remedial_haircut_pv": (
-                    results.get("congestion_benefit_haircut_pv", 0)
-                    + results.get("curtailment_benefit_haircut_pv", 0)
-                ),
                 "benefits_enabling_pv": results.get("delivered_benefit_pv", 0),
-                "benefits_enabling_haircut_pv": results.get("delivered_benefit_pv", 0),
                 # COSTS (increase system cost)
                 "congestion_delay_cost_nominal": results.get(
                     "congestion_delay_cost_nominal", 0
@@ -1124,17 +1103,7 @@ class CTCCOutputManager:
                 "annual": results.get("congestion_benefit_annual", 0),
                 "nominal": results.get("congestion_benefit_nominal", 0),
             },
-            # BENEFITS - Congestion reduction (haircut/conservative)
-            {
-                "row_type": "detail",
-                "benefit_or_cost": "benefit",
-                "constraint_type": "congestion",
-                "value_type": "haircut",
-                "pv": results.get("congestion_benefit_haircut_pv", 0),
-                "annual": results.get("congestion_benefit_haircut_annual", 0),
-                "nominal": results.get("congestion_benefit_haircut_nominal", 0),
-            },
-            # BENEFITS - Curtailment reduction (full value)
+            # BENEFITS - Curtailment reduction
             {
                 "row_type": "detail",
                 "benefit_or_cost": "benefit",
@@ -1143,16 +1112,6 @@ class CTCCOutputManager:
                 "pv": results.get("curtailment_benefit_pv", 0),
                 "annual": results.get("curtailment_benefit_annual", 0),
                 "nominal": results.get("curtailment_benefit_nominal", 0),
-            },
-            # BENEFITS - Curtailment reduction (haircut/conservative)
-            {
-                "row_type": "detail",
-                "benefit_or_cost": "benefit",
-                "constraint_type": "curtailment",
-                "value_type": "haircut",
-                "pv": results.get("curtailment_benefit_haircut_pv", 0),
-                "annual": results.get("curtailment_benefit_haircut_annual", 0),
-                "nominal": results.get("curtailment_benefit_haircut_nominal", 0),
             },
             # BENEFITS - Delivered energy (throughput value)
             {
@@ -1392,23 +1351,11 @@ class CTCCOutputManager:
             bcr_results: Dictionary containing BCR metrics from bcr_calculator
                 Expected keys include:
                 - total_benefits_pv
-                - total_benefits_haircut_pv
                 - total_costs_pv
                 - capital_costs_pv
-                - bcr_system (uses conservative/haircut benefits)
-                - bcr_capital (uses conservative/haircut benefits)
-                - bcr_capital_and_delay (uses conservative/haircut benefits)
-                - bcr_excluding_wildfire_risk_and_outage_risk (renamed from bcr_excluding_risk)
-                - bcr_excluding_wildfire_risk (excludes wildfire risk only)
-                - bcr_excluding_outage_risk (new: excludes outage only)
-                - bcr_excluding_emissions (uses conservative/haircut benefits)
-                - bcr_excluding_linelosses (uses conservative/haircut benefits)
-                - bcr_excluding_emissions_and_linelosses (uses conservative/haircut benefits)
-                - bcr_excluding_emissions_and_wildfire_risk_and_outage_risk (renamed)
-                - bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk (renamed)
-                - bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk (renamed)
-                - Plus all combinations with emissions/linelosses for wildfire-only and outage-only
+                - bcr_system, bcr_capital, bcr_capital_and_delay
+                - bcr_excluding_* variants
                 - bcr_utility, bcr_ratepayer
-                - net_benefit_pv and all net benefit variants (matching BCR naming)
+                - net_benefit_pv and all net benefit variants
         """
         self.append_to_batch_summary(bcr_results)

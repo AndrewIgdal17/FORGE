@@ -87,14 +87,6 @@ def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
         or 0,
         "curtailment_benefit_nominal": congestion.get("curtailment_benefit_nominal", 0)
         or 0,
-        "congestion_benefit_haircut_pv": congestion.get(
-            "congestion_benefit_haircut_pv", 0
-        )
-        or 0,
-        "curtailment_benefit_haircut_pv": congestion.get(
-            "curtailment_benefit_haircut_pv", 0
-        )
-        or 0,
         "delivered_benefit_pv": congestion.get("delivered_benefit_pv", 0) or 0,
         "delivered_benefit_nominal": congestion.get("delivered_benefit_nominal", 0)
         or 0,
@@ -194,7 +186,6 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
         "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
         "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
-        "total_benefits_haircut_pv": csv_equivalent.get("total_benefits_haircut_pv", 0),
         # Appendix-aligned cost buckets (C_hard + C_soft + C_risk + C_emissions)
         "reporting_bucket_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
         "reporting_bucket_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
@@ -205,9 +196,7 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "displacement_avoided_cost_pv": csv_equivalent.get("displacement_avoided_cost_pv", 0),
         # Appendix-aligned benefit buckets (B_remedial + B_enabling)
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
-        "benefits_remedial_haircut_pv": csv_equivalent.get("benefits_remedial_haircut_pv", 0),
         "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
-        "benefits_enabling_haircut_pv": csv_equivalent.get("benefits_enabling_haircut_pv", 0),
     }
 
 

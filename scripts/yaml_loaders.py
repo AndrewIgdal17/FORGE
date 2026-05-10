@@ -45,13 +45,11 @@ class CongestionCurtailmentParams:
     average_exceedance: float
     near_binding_hours: float
     near_average_exceedance: float
-    saturation_factor: float
     average_congestion_price: float
     residual_exceedance_value: Optional[float]
     curtailment_hours_total: float
     average_curtailment_mw: float
     average_curtailment_price: float
-    curtailment_saturation_factor: float
 
 
 @dataclass
@@ -550,7 +548,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             "average_exceedance",
             "near_binding_hours",
             "near_average_exceedance",
-            "saturation_factor",
         ]
         for key in required_constraint_keys:
             if key not in constraints:
@@ -567,7 +564,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             "curtailment_hours_total",
             "average_curtailment_mw",
             "average_curtailment_price",
-            "curtailment_saturation_factor",
         ]
         for key in required_curtailment_keys:
             if key not in curtailment_data:
@@ -588,16 +584,12 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             average_exceedance=float(constraints["average_exceedance"]),
             near_binding_hours=float(constraints["near_binding_hours"]),
             near_average_exceedance=float(constraints["near_average_exceedance"]),
-            saturation_factor=float(constraints["saturation_factor"]),
             average_congestion_price=float(costs["average_congestion_price"]),
             residual_exceedance_value=residual_exceedance_value,
             curtailment_hours_total=float(curtailment_data["curtailment_hours_total"]),
             average_curtailment_mw=float(curtailment_data["average_curtailment_mw"]),
             average_curtailment_price=float(
                 curtailment_data["average_curtailment_price"]
-            ),
-            curtailment_saturation_factor=float(
-                curtailment_data["curtailment_saturation_factor"]
             ),
         )
     except FileNotFoundError:

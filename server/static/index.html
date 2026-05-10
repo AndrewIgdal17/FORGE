@@ -133,7 +133,7 @@
           </button>
         </div>
         <div class="comparison-section" id="comparison-section">
-          <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (incremental benefits and costs, &Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios.</p>
+          <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (&Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios. <strong>Sign convention:</strong> &Delta; is always <em>scenario value &minus; baseline value</em>. For benefits and net benefit, positive &Delta; means the scenario scores higher (better). For cost PV rows (capital, emissions, risk, etc.), positive &Delta; means the scenario is more expensive; negative &Delta; means cheaper (avoided cost). For ratios such as BCR, positive &Delta; means the scenario&rsquo;s ratio is numerically higher. <em>Note for paper readers:</em> the appendix defines &Delta;C<sup>P:B</sup> = baseline &minus; scenario (avoided-cost convention); cost &Delta; in this table uses the opposite sign so every row follows the same scenario &minus; baseline direction.</p>
           <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
             <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
             <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
@@ -146,7 +146,7 @@
           </h3>
           <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
             <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
-              <label class="cmp-show-delta-label" title="Show difference vs baseline scenario (comparison minus baseline)">
+              <label class="cmp-show-delta-label" title="Show Δ = scenario − baseline for each metric. Benefits/NB: positive = better. Cost PVs: positive = more expensive, negative = avoided cost.">
                 <input type="checkbox" id="cmp-show-delta" />
                 Show Δ vs baseline
               </label>
@@ -520,11 +520,6 @@
         { key: 'hard_costs_pv', path: 'bcr.hard_costs_pv' },
         { key: 'soft_costs_pv', path: 'bcr.soft_costs_pv' },
         { key: 'emissions_costs_pv', path: 'bcr.emissions_costs_pv' },
-        { key: 'congestion_benefit_haircut_pv', path: 'bcr.congestion_benefit_haircut_pv' },
-        { key: 'curtailment_benefit_haircut_pv', path: 'bcr.curtailment_benefit_haircut_pv' },
-        { key: 'total_benefits_haircut_pv', path: 'bcr.total_benefits_haircut_pv' },
-        { key: 'benefits_remedial_haircut_pv', path: 'bcr.benefits_remedial_haircut_pv' },
-        { key: 'benefits_enabling_haircut_pv', path: 'bcr.benefits_enabling_haircut_pv' },
         { key: 'revenue_pv', path: 'bcr.revenue_pv' },
         { key: 'bcr_system', path: 'bcr.bcr_system' },
         { key: 'bcr_capital', path: 'bcr.bcr_capital' },
@@ -1636,7 +1631,7 @@
       function computeMainWithExclusions(scenario, metricKey) {
         if (!scenario.results) return undefined;
         const bcr = scenario.results.bcr || {};
-        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalBenefitsPV = bcr.total_benefits_pv || 0;
         const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
         if (metricKey === 'bcr_system') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
         if (metricKey === 'grand_total_pv') return totalCostsPV;
@@ -1647,7 +1642,7 @@
       function computeCustomMetric(scenario, metricKey) {
         if (!scenario.results) return undefined;
         const bcr = scenario.results.bcr || {};
-        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalBenefitsPV = bcr.total_benefits_pv || 0;
         const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
         if (metricKey === 'custom_bcr') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
         return totalBenefitsPV - totalCostsPV;
@@ -4472,14 +4467,12 @@
         const remSection = document.createElement('div');
         remSection.className = 'cost-section-items';
         remSection.appendChild(pairHeader());
-        remSection.appendChild(currencyItem('Congestion (Annual)', cc.congestion_benefit_haircut_annual || cc.congestion_benefit_annual || 0));
-        remSection.appendChild(currencyPairItem('Congestion Benefit (Conservative)', cc.congestion_benefit_haircut_nominal || 0, cc.congestion_benefit_haircut_pv || 0));
-        remSection.appendChild(currencyPairItem('Congestion Benefit (Raw)', cc.congestion_benefit_nominal || 0, cc.congestion_benefit_pv || 0));
-        remSection.appendChild(currencyItem('Curtailment (Annual)', cc.curtailment_benefit_haircut_annual || cc.curtailment_benefit_annual || 0));
-        remSection.appendChild(currencyPairItem('Curtailment Benefit (Conservative)', cc.curtailment_benefit_haircut_nominal || 0, cc.curtailment_benefit_haircut_pv || 0));
-        remSection.appendChild(currencyPairItem('Curtailment Benefit (Raw)', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
-        const remedialHaircutNom = (cc.congestion_benefit_haircut_nominal || 0) + (cc.curtailment_benefit_haircut_nominal || 0);
-        remSection.appendChild(currencyPairItem('Remedial Subtotal (Conservative)', remedialHaircutNom, bcr.benefits_remedial_haircut_pv || 0));
+        remSection.appendChild(currencyItem('Congestion (Annual)', cc.congestion_benefit_annual || 0));
+        remSection.appendChild(currencyPairItem('Congestion Benefit', cc.congestion_benefit_nominal || 0, cc.congestion_benefit_pv || 0));
+        remSection.appendChild(currencyItem('Curtailment (Annual)', cc.curtailment_benefit_annual || 0));
+        remSection.appendChild(currencyPairItem('Curtailment Benefit', cc.curtailment_benefit_nominal || 0, cc.curtailment_benefit_pv || 0));
+        const remedialNom = (cc.congestion_benefit_nominal || 0) + (cc.curtailment_benefit_nominal || 0);
+        remSection.appendChild(currencyPairItem('Remedial Subtotal', remedialNom, bcr.benefits_remedial_pv || 0));
         container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection));
 
         // Enabling Benefits (B_enabling = delivered energy)
@@ -4513,13 +4506,11 @@
         container.appendChild(createCategory('Displacement (reporting only)', dispSection));
 
         // Total Benefits (B = B_remedial + B_enabling)
-        const totalBenefitsHaircutNom = remedialHaircutNom + (cc.delivered_benefit_nominal || 0);
-        const totalBenefitsNom = (cc.congestion_benefit_nominal || 0) + (cc.curtailment_benefit_nominal || 0) + (cc.delivered_benefit_nominal || 0);
+        const totalBenefitsNom = remedialNom + (cc.delivered_benefit_nominal || 0);
         const totalSection = document.createElement('div');
         totalSection.className = 'cost-section-items';
         totalSection.appendChild(pairHeader());
-        totalSection.appendChild(currencyPairItem('Total Benefits (Conservative)', totalBenefitsHaircutNom, bcr.total_benefits_haircut_pv || 0, 'B = B_remedial + B_enabling: same PV stream used as the numerator in societal BCR_system.'));
-        totalSection.appendChild(currencyPairItem('Total Benefits (Raw)', totalBenefitsNom, bcr.total_benefits_pv || 0));
+        totalSection.appendChild(currencyPairItem('Total Benefits', totalBenefitsNom, bcr.total_benefits_pv || 0, 'B = B_remedial + B_enabling: same PV stream used as the numerator in societal BCR_system.'));
         container.appendChild(createCategory('Total Benefits', totalSection));
 
         // Revenue
@@ -4610,13 +4601,13 @@
 
         // Utility costs = capital + delay + operational
         const utilityCosts = (bcr.capital_costs_pv || 0) + (bcr.delay_costs_pv || 0) + (bcr.operational_costs_pv || 0);
-        // Ratepayer benefits = congestion + curtailment (haircut) + delivered electricity
-        const ratepayerBenefits = (bcr.congestion_benefit_haircut_pv || 0) + (bcr.curtailment_benefit_haircut_pv || 0) + (cc.delivered_benefit_pv || 0);
+        // Ratepayer benefits = congestion + curtailment + delivered electricity
+        const ratepayerBenefits = (bcr.congestion_benefit_pv || 0) + (bcr.curtailment_benefit_pv || 0) + (cc.delivered_benefit_pv || 0);
         // Ratepayer costs = revenue + energy losses
         const ratepayerCosts = (bcr.revenue_pv || 0) + (bcr.energy_losses_pv || 0);
 
         const rows = [
-          { name: 'System (Societal)', benefits: bcr.total_benefits_haircut_pv || 0, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
+          { name: 'System (Societal)', benefits: bcr.total_benefits_pv || 0, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
           { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0 },
           { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0 },
         ];
@@ -4634,6 +4625,11 @@
             const cell = document.createElement('div');
             cell.className = 'persp-cell' + evenClass + (v.isLabel ? ' persp-label' : '') + (v.negative ? ' negative' : '');
             cell.textContent = v.text;
+            if (v.isLabel && r.name === 'Utility / Transm. Service Provider') {
+              cell.title = 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.';
+            } else if (v.isLabel && r.name === 'Ratepayer') {
+              cell.title = 'Costs include revenue (what ratepayers pay the utility) plus energy losses passed through.';
+            }
             grid.appendChild(cell);
           });
         });
@@ -4730,7 +4726,7 @@
         const container = document.createElement('div');
         const bcr = results.bcr || {};
 
-        const totalBenefitsPV = bcr.total_benefits_haircut_pv || 0;
+        const totalBenefitsPV = bcr.total_benefits_pv || 0;
         const totalCostsPV = bcr.total_costs_pv || 0;
         const emissionsPV = bcr.emissions_comp_cost_pv || 0;
         const energyLossesPV = bcr.energy_losses_pv || 0;
@@ -5012,9 +5008,9 @@
             tbGrid.style.gap = '1rem';
             tbGrid.style.marginTop = '1rem';
             const tbMetrics = [
-              { label: 'Remedial', value: bcr.benefits_remedial_haircut_pv || 0 },
-              { label: 'Enabling', value: bcr.benefits_enabling_haircut_pv || 0 },
-              { label: 'Total Benefits', value: bcr.total_benefits_haircut_pv || 0, highlight: true },
+              { label: 'Remedial', value: bcr.benefits_remedial_pv || 0 },
+              { label: 'Enabling', value: bcr.benefits_enabling_pv || 0 },
+              { label: 'Total Benefits', value: bcr.total_benefits_pv || 0, highlight: true },
             ];
             tbMetrics.forEach(m => {
               const card = document.createElement('div');

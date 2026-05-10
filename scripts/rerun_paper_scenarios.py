@@ -174,7 +174,7 @@ def main() -> None:
             bcr_sys = bcr.get("bcr_system", 0) or 0
             bcr_xwf = bcr.get("bcr_excluding_wildfire_risk", 0) or 0
             bcr_xwfo = bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0) or 0
-            benefits = (bcr.get("total_benefits_haircut_pv", 0) or 0) / 1e9
+            benefits = (bcr.get("total_benefits_pv", 0) or 0) / 1e9
             net_ben = benefits - total
 
             print(f"{sid:<5} {total:<11.2f} {risk:<11.2f} {bcr_sys:<9.3f} {bcr_xwf:<9.3f} {bcr_xwfo:<10.3f} {net_ben:<11.2f}")
