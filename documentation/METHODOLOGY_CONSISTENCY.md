@@ -15,13 +15,13 @@ When checking whether **Section 3 (Methods)** in `papers/paper1/paper1.tex` is c
 ### 2. Notation consistency
 
 - The **same mathematical symbols and subscript names** are used for the same quantities in both places.
-- Examples: appendix uses \(C_{\text{rent}}\), \(C_{\text{loss}}\), \(C_{\text{wf,liab}}\), \(C_{\text{cong,delay}}\) — the main paper must use those same symbols for those costs, not \(C_{\text{ROW rent}}\), \(C_{\text{Line losses}}\), \(C_{\text{Wildfire liability ins.}}\), \(C_{\text{Congestion delay}}\).
+- Examples: appendix uses \(C_{\text{rent}}\), \(C_{\text{loss}}\), \(C_{\text{cong,delay}}\) — the main paper must use those same symbols for those costs, not \(C_{\text{ROW rent}}\), \(C_{\text{Line losses}}\), \(C_{\text{Congestion delay}}\).
 - When in doubt, the appendix’s variable tables and equation subscripts are the reference.
 
 ### 3. Terminology consistency
 
 - Same **terms** for the same concepts in prose and in equation labels.
-- Examples: “base delay” not “construction delay”; “liability limit” not “liability cap”; “externality costs” for the set discounted at the social rate (emissions, expected wildfire, expected outage).
+- Examples: “base delay” not “construction delay”; “externality costs” for the set discounted at the social rate (emissions, expected wildfire, expected outage).
 
 ## How to report a consistency check
 

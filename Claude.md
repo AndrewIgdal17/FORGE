@@ -2,8 +2,8 @@
 
 Comprehensive technical documentation for developers working on CTCC.
 
-**Last Updated:** 2026-03-11
-**Version:** 3.0
+**Last Updated:** 2026-05-10
+**Version:** 4.0
 **Status:** Production-ready
 
 ---
@@ -29,7 +29,7 @@ Comprehensive technical documentation for developers working on CTCC.
 
 ### What is CTCC?
 
-CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis tool for high-voltage transmission line projects. It calculates 13 different cost and benefit categories to help utilities and regulators make informed decisions about energy infrastructure investments.
+CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis tool for high-voltage transmission line projects. It calculates 12 cost and benefit categories to help utilities and regulators make informed decisions about energy infrastructure investments.
 
 ### Key Features
 
@@ -38,7 +38,7 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 - **3 Financial Perspectives:** Nominal, AFUDC (regulatory), Present Value (societal)
 - **Web UI:** Browser-based interface for editing and running calculations
 - **Scenario Manager (comparison table):** In `server/static/index.html`, selected comparison columns are ordered by the flattened **`COMPARISON_METRICS`** catalog. Implementation: **`COMPARISON_METRIC_KEY_ORDER`** and **`sortComparisonColumnsByCatalog()`**. **Add column** uses a fixed-position hierarchical popover (`openComparisonMetricPicker`, super-groups via **`COMPARISON_GROUP_SUPERGROUP`** / **`COMPARISON_SUPERGROUP_ORDER`**), not a flat `<select>`. Add new metrics in the appropriate group/position in `COMPARISON_METRICS` to control sort position; keys not in the catalog sort last. Metrics with **`format: 'text'`** or **`'boolean'`** show **absolutes only** in comparison (no Δ / % Δ); see **`metricSupportsComparisonDelta`** with **`formatDeltaLine`** / **`formatPercentDeltaLine`**.
-- **Fuel mix presets:** **`server/json/fuel_mix_presets.json`** + **`app/fuel_mix_presets.py`** + **`GET /api/fuel_mix_presets`**. UI: **Fuel Mixes** dropdown on **Benefits - Emissions** (above Energy Source Mix table); JSON input mode only. Extend by editing the JSON catalog.
+- **Fuel mix presets:** **`server/json/fuel_mix_presets.json`** + **`app/fuel_mix_presets.py`** + **`GET /api/fuel_mix_presets`**. UI: **Fuel Mixes** dropdown on **Emissions** (above Energy Source Mix table); JSON input mode only. Extend by editing the JSON catalog.
 - **REST API:** Programmatic access for integration
 - **CLI:** Command-line tool for batch processing
 
@@ -49,7 +49,7 @@ Costs are grouped into **5 categories** (variables, equations, and notation are 
 1. **Capital costs:** Build (1.a), Capital ROW—acquisition, holding (1.b), Environmental Mitigation (1.c)
 2. **Operational costs:** O&M (2.a), Operational Insurance (2.b), Operational ROW—rent (2.c)
 3. **Energy/Emissions costs:** Thermal line loss (3.a), Emissions from line losses (3.b), Residual exceedance (3.c)
-4. **Risk costs:** Wildfire liability insurance (4.a), Expected wildfire cost (4.b), Expected outage cost (4.c)
+4. **Risk costs:** Expected wildfire cost (4.a), Expected outage cost (4.b)
 5. **Delay costs:** Base delay (5.a), Congestion delay (5.b), Curtailment delay (5.c)
 
 ### Technology Stack
@@ -58,7 +58,7 @@ Costs are grouped into **5 categories** (variables, equations, and notation are 
 - **Web Framework:** FastAPI + Uvicorn
 - **Data Processing:** Pandas, NumPy
 - **Configuration:** YAML (PyYAML), JSON. The calculator reads only YAML (from a directory); JSON is used at the API boundary and in server templates.
-- **Frontend:** Vanilla JavaScript (no frameworks)
+- **Frontend:** Vanilla JavaScript (no frameworks). Config-driven layout via TAB_HIERARCHY (configs.js) + hierarchy engine (hierarchy-engine.js)
 
 **Context optimization:** Use the "Context and information gathering" section below for where to look and how to search. Prefer `documentation/CTCC_METHODOLOGY.md` for methodology and notation. Scope searches to the relevant directory. Prefer search + targeted read for files over ~500 lines.
 
@@ -588,7 +588,10 @@ CTCC/
 │   │   └── processor.py          # Demo processor
 │   │
 │   ├── static/
-│   │   └── index.html            # Web UI (SPA)
+│   │   ├── index.html            # Web UI (SPA)
+│   │   ├── styles.css            # All CSS (extracted)
+│   │   ├── configs.js            # Config objects (TAB_HIERARCHY, FIELD_METADATA, etc.)
+│   │   └── hierarchy-engine.js   # TAB_HIERARCHY engine (applyTabHierarchy, humanizeKey)
 │   │
 │   ├── json/                     # JSON configs (21 files)
 │   │   ├── 01_project_technical_details.json
@@ -910,6 +913,17 @@ pip install -r requirements.txt
 ---
 
 ## Version History
+
+### v4.0 (2026-05-10)
+
+**Major changes:**
+
+- **Wildfire liability removal:** Cost category 4.a (wildfire liability insurance) deleted. Risk costs now have 2 components: expected wildfire cost (4.a) and expected outage cost (4.b). Total cost/benefit categories reduced from 13 to 12.
+- **Primary BCR removal:** `BCRConfig` dataclass deleted; `bcr_primary` metric removed from calculator, web UI, CSV export, and scenario files.
+- **4-file frontend:** CSS extracted to `styles.css` (~1846 lines); config objects extracted to `configs.js` (~909 lines); TAB_HIERARCHY engine extracted to `hierarchy-engine.js` (~294 lines). `index.html` reduced to ~6850 lines.
+- **TAB_HIERARCHY migration:** All 9 input tabs (Project, Route & Terrain, Financial, Capital Costs, Operational Costs, Delay Costs, Risk Costs, Emissions, Benefits) use config-driven declarative layout via `TAB_HIERARCHY` in `configs.js`.
+- **Benefit/cost bucket restructuring:** Benefits split into remedial ($B_{\text{remedial}}$: congestion + curtailment) and enabling ($B_{\text{enabling}}$: delivered energy). Costs organized into four reporting buckets: hard, soft, risk, emissions.
+- **Scenario Manager features:** Baseline deltas, hierarchical metric picker with super-groups, select-all, fuel mix presets dropdown.
 
 ### v3.0 (2026-03-11)
 

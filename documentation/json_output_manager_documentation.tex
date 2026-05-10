@@ -19,7 +19,7 @@ The \texttt{json\_output\_manager.py} module aggregates and writes CTCC results 
 
 \subsection{Calculation Approach}
 
-Output only; no cost/benefit formulas. \texttt{calculate\_summary()} sums stored costs and benefits into \texttt{summary}: total capital (build + row + environmental), total operational (insurance + oandm), total energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), total risk (wildfire + outage + wildfire\_liability), delay costs, and grand total (nominal, AFUDC, PV). Residual exceedance and congestion/curtailment delay costs are taken from \texttt{benefits["congestion\_curtailment"]} and included in the appropriate totals.
+Output only; no cost/benefit formulas. \texttt{calculate\_summary()} sums stored costs and benefits into \texttt{summary}: total capital (build + row + environmental), total operational (insurance + oandm), total energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), total risk (wildfire + outage), delay costs, and grand total (nominal, AFUDC, PV). Residual exceedance and congestion/curtailment delay costs are taken from \texttt{benefits["congestion\_curtailment"]} and included in the appropriate totals.
 
 \subsection{Inputs and Outputs}
 
@@ -57,11 +57,11 @@ Loads project and financial data via \texttt{json\_loaders} and returns a dict o
 
 \subsection{\texttt{add\_*()} methods}
 
-Each \texttt{add\_*()} stores the passed dict under a fixed key: \texttt{add\_build\_costs} $\to$ \texttt{costs["build"]}, \texttt{add\_row\_costs} $\to$ \texttt{costs["row"]}, \texttt{add\_environmental\_mitigation} $\to$ \texttt{costs["environmental"]}, \texttt{add\_delay\_costs} $\to$ \texttt{costs["delay"]}, \texttt{add\_insurance\_costs} $\to$ \texttt{costs["insurance"]}, \texttt{add\_wildfire\_liability\_costs} $\to$ \texttt{costs["wildfire\_liability"]}, \texttt{add\_wildfire\_costs} $\to$ \texttt{costs["wildfire"]}, \texttt{add\_outage\_costs} $\to$ \texttt{costs["outage"]}, \texttt{add\_oandm\_costs} $\to$ \texttt{costs["oandm"]}, \texttt{add\_emissions\_costs} $\to$ \texttt{costs["emissions"]}, \texttt{add\_line\_loss\_costs} $\to$ \texttt{costs["line\_loss"]}, \texttt{add\_congestion\_curtailment} $\to$ \texttt{benefits["congestion\_curtailment"]}, \texttt{add\_revenue} $\to$ \texttt{benefits["revenue"]}. \texttt{add\_bcr\_metrics(bcr\_results)} sets \texttt{self.bcr}.
+Each \texttt{add\_*()} stores the passed dict under a fixed key: \texttt{add\_build\_costs} $\to$ \texttt{costs["build"]}, \texttt{add\_row\_costs} $\to$ \texttt{costs["row"]}, \texttt{add\_environmental\_mitigation} $\to$ \texttt{costs["environmental"]}, \texttt{add\_delay\_costs} $\to$ \texttt{costs["delay"]}, \texttt{add\_insurance\_costs} $\to$ \texttt{costs["insurance"]}, \texttt{add\_wildfire\_costs} $\to$ \texttt{costs["wildfire"]}, \texttt{add\_outage\_costs} $\to$ \texttt{costs["outage"]}, \texttt{add\_oandm\_costs} $\to$ \texttt{costs["oandm"]}, \texttt{add\_emissions\_costs} $\to$ \texttt{costs["emissions"]}, \texttt{add\_line\_loss\_costs} $\to$ \texttt{costs["line\_loss"]}, \texttt{add\_congestion\_curtailment} $\to$ \texttt{benefits["congestion\_curtailment"]}, \texttt{add\_revenue} $\to$ \texttt{benefits["revenue"]}. \texttt{add\_bcr\_metrics(bcr\_results)} sets \texttt{self.bcr}.
 
 \subsection{\texttt{calculate\_summary()}}
 
-Computes \texttt{self.summary} from \texttt{self.costs} and \texttt{self.benefits}: capital (build + row + environmental), operational (insurance + oandm), energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), risk (wildfire + outage + wildfire\_liability), delay; then grand total nominal, AFUDC, and PV.
+Computes \texttt{self.summary} from \texttt{self.costs} and \texttt{self.benefits}: capital (build + row + environmental), operational (insurance + oandm), energy/emissions (line\_loss + emissions + residual exceedance from congestion\_curtailment), risk (wildfire + outage), delay; then grand total nominal, AFUDC, and PV.
 
 \textbf{Key logic (excerpt):}
 \begin{lstlisting}
@@ -122,7 +122,6 @@ Final output structure (from \texttt{get\_json\_results()}):
     "insurance": { ... },
     "wildfire": { ... },
     "outage": { ... },
-    "wildfire_liability": { ... },
     "oandm": { ... },
     "emissions": { ... },
     "line_loss": { ... }

@@ -26,9 +26,8 @@ This document is the **complete methodology** for the Comprehensive Transmission
   - [Emissions costs (3.b)](#emissions-costs-3b)
   - [Residual exceedance costs (3.c)](#residual-exceedance-costs-3c)
 - [Risk costs](#risk-costs)
-  - [Wildfire liability insurance (4.a)](#wildfire-liability-insurance-4a)
-  - [Expected cost of wildfires (4.b)](#expected-cost-of-wildfires-4b)
-  - [Expected cost of outages (4.c)](#expected-cost-of-outages-4c)
+  - [Expected cost of wildfires (4.a)](#expected-cost-of-wildfires-4a)
+  - [Expected cost of outages (4.b)](#expected-cost-of-outages-4b)
 - [Delay costs](#delay-costs)
   - [Base delay costs (5.a)](#base-delay-costs-5a)
   - [Congestion delay costs (5.b)](#congestion-delay-costs-5b)
@@ -131,7 +130,7 @@ $$
 
 - **$r_{WACC,nom}$:** Utility/regulatory perspective (e.g. AFUDC rate when applicable).
 - **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, line loss cost, residual exceedance, benefits, revenue; delay and congestion/curtailment delay costs.
-- **$r_{social}$:** Societal PV of externality costs: emissions (3.b), expected cost of wildfires (4.b), expected cost of outages (4.c).
+- **$r_{social}$:** Societal PV of externality costs: emissions (3.b), expected cost of wildfires (4.a), expected cost of outages (4.b).
 
 **Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
 
@@ -1143,73 +1142,9 @@ $\Delta C_{effective}$, $H_{congestion}$, $H_{curtailment}$, $X_{congestion}$, a
 
 ## Risk costs
 
-### Wildfire liability insurance (4.a)
+### Expected cost of wildfires (4.a)
 
-Wildfire liability insurance is the **annual premium** the utility pays for coverage of wildfire liability up to a **liability limit**. The premium is **rate-on-line (ROL)** × **liability limit**: a level annual cost over the project's operating life, starting at commercial operation date (COD). It is an **operational/risk** cost (no AFUDC): not capitalized, not in rate base. It is optional; when disabled, all values are zero. Present value uses **real WACC** (utility/private perspective).
-
-**Interpretation of the liability limit:** The input **liability limit** is the **project-allocable** limit—the portion of coverage (or exposure) attributable to *this* project—not the utility's total portfolio or policy limit. In practice, a utility (e.g. a California IOU) may have one or a few portfolio-level policies or a wildfire fund backstop covering the whole transmission system. Using that full portfolio limit in the formula would overstate this project's incremental cost. Users should allocate: e.g. by transmission miles (project miles / portfolio transmission miles × portfolio limit), by exposure, or by asset value. **Calibration example:** If the portfolio reference is on the order of $1B over the utility's transmission system (e.g. California Wildfire Fund threshold), and the utility has roughly 18,500 transmission miles (PG&E-scale), then a simple per-mile allocation is about **$54,000 per transmission mile** ($1B ÷ 18,500). For a 100-mile project, use an allocable limit of about $5.4M; for 230 miles, about $12.4M. The appendix is the source of truth for notation.
-
-**Conceptually:** Wildfire liability insurance (4.a) is the **insured** portion of wildfire risk—the premium paid to transfer that risk to insurers. The expected cost of wildfires (4.b) is the **uninsured** portion (e.g. deductibles, amounts above the limit, exclusions, societal damages). Defining 4.b as uninsured ensures that including both 4.a and 4.b does not double-count.
-
-**Variables**
-
-| Variable              | Meaning / units                               | Notes                                                               |
-| --------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
-| $L_{limit}$           | Liability limit, $                            | Project-allocable limit (see interpretation above); not utility-wide. |
-| $\rho_{ROL}$          | Rate-on-line (ROL), decimal                   | Annual premium as fraction of liability limit; e.g. 0.30 = 30% ROL. |
-| $C_{wf,liab,annual}$  | Wildfire liability premium (annual), $/yr     | Level annual premium.                                               |
-| $T_{lifetime}$        | Project lifetime, years                       |                                                                     |
-| $T_{COD}$             | Commercial operation date (year index), years | First year of operation; premiums start here.                       |
-| $C_{wf,liab,nominal}$ | Wildfire liability cost (nominal), $          | Undiscounted sum over lifetime.                                     |
-| $C_{wf,liab,real}$    | Wildfire liability cost (real / PV), $        | PV of annual premium stream from $T_{COD}$ over $T_{lifetime}$.      |
-| $r_{WACC,real}$       | Real WACC, decimal                            | Used to discount this cost.                                         |
-
-**Equations**
-
-1. Annual premium (rate-on-line × liability limit)
-
-$$
-C_{wf,liab,annual} = \rho_{ROL} \times L_{limit}
-
-
-$$
-
-2. Nominal (undiscounted) lifetime cost
-
-$$
-C_{wf,liab,nominal} = C_{wf,liab,annual} \times T_{lifetime}
-
-
-$$
-
-3. Real (present value) cost
-
-Annual premiums at the start of each year from $T_{COD}$ for $T_{lifetime}$ years, discounted at real WACC:
-
-$$
-C_{wf,liab,real} = \sum_{t=0}^{T_{lifetime}-1} \frac{C_{wf,liab,annual}}{(1 + r_{WACC,real})^{T_{COD} + t}}
-
-
-$$
-
----
-
-**Regulatory perspective (AFUDC)**
-Wildfire liability insurance is not capitalized; there is no AFUDC term. It does not enter rate base. It is an operational expense.
-
-**Societal perspective**
-The premium is a **private cost** to the utility (transfer to insurers). CTCC discounts it at real WACC. For a full societal view, expected uninsured wildfire loss is handled separately in 4.b.
-
-**Link to Expected cost of wildfires (4.b)**
-4.a is the cost of the **insured** portion (premium for coverage up to $L_{limit}$). 4.b uses **uninsured** severity (e.g. deductibles, amounts above the limit, exclusions, societal damages), so the two do not double-count.
-
----
-
-### Expected cost of wildfires (4.b)
-
-Expected cost of wildfires is the expected annual loss (EAL) from wildfire events over the project's operating life, valued at uninsured loss per event (severity). It uses ignition rates by terrain and construction type, multiplies by severity (uninsured $ per event), and can apply risk growth over the lifetime. It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
-
-**Conceptually:** Expected cost of wildfires (4.b) is the uninsured portion of wildfire risk—expected loss from deductibles, amounts above the liability limit, exclusions, and societal/external damages. Wildfire liability insurance (4.a) is the insured portion (premium for coverage). Severity in 4.b is defined as uninsured loss per event so that 4.a and 4.b do not double-count.
+Expected cost of wildfires is the expected annual loss (EAL) from wildfire events over the project's operating life, valued at expected loss per event (severity). It uses ignition rates by terrain and construction type, multiplies by severity ($ per event), and can apply risk growth over the lifetime. It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
 
 **Variables**
 
@@ -1222,7 +1157,7 @@ Expected cost of wildfires is the expected annual loss (EAL) from wildfire event
 | $f_{terrain,t}$     | Effective ignition rate for terrain and type $t$, events/(mi·yr) | $f_{terrain,t}=f_{base,terrain} \times k_t$.                                                       |
 | $\lambda_{terrain}$ | Annual event rate for terrain, events/yr                        | $\lambda_{terrain} = L_{terrain} \times f_{terrain,t}$.                                            |
 | $\lambda$           | Total annual event rate, events/yr                              | $\lambda = \sum_{terrain} \lambda_{terrain}$.                                                      |
-| $S$                 | Severity (uninsured loss per event), $                          | Deductibles, above limit, exclusions, societal damages; not insured amounts.                       |
+| $S$                 | Severity (expected loss per event), $                           | Expected loss per wildfire event.                                                                  |
 | $EAL$               | Expected annual loss, $/yr                                      | $EAL=\lambda \times S$.                                                                            |
 | $g_{wf}$            | Wildfire risk growth rate, decimal                              | Annual increase in expected loss (e.g. escalation of risk).                                        |
 | $T_{lifetime}$      | Project lifetime, years                                         |                                                                                                    |
@@ -1287,12 +1222,9 @@ Expected wildfire cost is not capitalized; there is no AFUDC term. It does not e
 **Societal perspective**
 The relevant measure is real (present value) expected wildfire cost, $C_{wf,real}$, using $r_{social}$. This is an externality cost; the discount rate is typically the social discount rate.
 
-**Link to Wildfire liability insurance (4.a)**
-4.a is the insured portion (premium for coverage up to the liability limit). 4.b uses uninsured severity $S$ (deductibles, above limit, exclusions, societal damages), so the two do not double-count.
-
 ---
 
-### Expected cost of outages (4.c)
+### Expected cost of outages (4.b)
 
 Expected cost of outages is the expected annual cost (EAC) from transmission outages over the project's operating life. It uses outage rates by terrain and construction type, effective duration (hours per event) by terrain and type, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
 
@@ -1590,6 +1522,34 @@ The same effective capacity relief and curtailment-then-congestion allocation de
 
 **Link to Base delay costs (5.a)**
 5.a is out-of-pocket delay costs (legal, admin, etc.). 5.c is the opportunity cost of foregone curtailment relief during the same delay and construction period.
+
+## Reporting framework
+
+Total costs are organized into **four reporting buckets** for the appendix and results presentation:
+
+| Bucket | Definition | Components |
+|--------|-----------|-----------|
+| $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
+| $C_{\text{soft}}$ | Operational + energy/emissions losses + delay | O&M + insurance + rent + line losses + residual exceedance + all delay |
+| $C_{\text{risk}}$ | Expected losses from uncertain events | $C_{\text{wf}} + C_{\text{outage}}$ |
+| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions (+ facilitated, when implemented) |
+
+$$C^P = C_{\text{hard}}^P + C_{\text{soft}}^P + C_{\text{risk}}^P + C_{\text{emissions}}^P$$
+
+Total benefits are organized into **two buckets**:
+
+| Bucket | Definition | Components |
+|--------|-----------|-----------|
+| $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief + curtailment relief (each with conservative haircut) |
+| $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy benefit ($B_{\text{delivered,lifetime}}$) |
+
+$$B^P = B_{\text{remedial}}^P + B_{\text{enabling}}^P$$
+
+$$NB^P = B^P - C^P$$
+
+Revenue ($R_{\text{PV}}$) is a transfer (utility benefit = ratepayer cost); excluded from societal net benefit and BCR.
+
+---
 
 ## Benefits
 

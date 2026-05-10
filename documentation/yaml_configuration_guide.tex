@@ -520,17 +520,6 @@ This file configures operational insurance costs for transmission line assets. I
     \end{itemize}
 \end{itemize}
 
-\subsubsection{Wildfire liability (optional)}
-
-\begin{itemize}
-    \item \textbf{wildfire\_liability} (dictionary, optional): When \texttt{enabled} is true, annual premium = \texttt{rate\_on\_line} $\times$ \texttt{liability\_limit}.
-    \begin{itemize}
-        \item \textbf{enabled} (boolean): If true, wildfire liability premium is calculated; otherwise zero.
-        \item \textbf{liability\_limit} (float): \textbf{Project-allocable} liability limit (\$). This is the portion of coverage attributable to \emph{this} project, not the utility's total portfolio or policy limit. Allocate e.g.\ by transmission miles (e.g.\ portfolio limit $\times$ project miles / portfolio transmission miles). Calibration: if portfolio reference is on the order of \$1B over $\sim$18,500 transmission miles (PG\&E-scale), about \$54,000 per transmission mile; 100-mile project $\Rightarrow$ $\sim$\$5.4M; 230-mile $\Rightarrow$ $\sim$\$12.4M. See CTCC\_METHODOLOGY.md.
-        \item \textbf{rate\_on\_line} (float): Annual premium as fraction of liability limit (e.g.\ 0.30 = 30\% ROL).
-    \end{itemize}
-\end{itemize}
-
 \subsection{Example Configuration}
 
 \begin{lstlisting}[language=yaml]
@@ -606,11 +595,11 @@ This file configures wildfire risk parameters, including event severity, ignitio
 \subsubsection{Event Severity}
 
 \begin{itemize}
-    \item \textbf{severity\_per\_event} (float): Mean \textbf{uninsured} loss per wildfire event
+    \item \textbf{severity\_per\_event} (float): Mean loss per wildfire event
     \begin{itemize}
         \item \textbf{Valid Values}: Large numbers (typical: \$1B to \$10B)
-        \item \textbf{Meaning}: Expected residual loss not covered by liability insurance---e.g.\ deductibles, amounts above the liability limit, exclusions, or societal/external costs. Wildfire liability insurance (file 04) covers the insured portion; severity here should exclude that to avoid double-counting.
-        \item \textbf{Example}: 5000000000 = \$5 billion uninsured loss per event
+        \item \textbf{Meaning}: Expected loss per wildfire event, including societal and external costs.
+        \item \textbf{Example}: 5000000000 = \$5 billion loss per event
     \end{itemize}
 \end{itemize}
 
