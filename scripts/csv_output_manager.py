@@ -93,7 +93,6 @@ BATCH_SUMMARY_FIELDS = [
     "bcr_system",
     "bcr_capital",
     "bcr_capital_and_delay",
-    "bcr_primary",
     # Combined risk BCRs (renamed)
     "bcr_excluding_wildfire_risk_and_outage_risk",
     "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk",
@@ -118,7 +117,6 @@ BATCH_SUMMARY_FIELDS = [
     "bcr_ratepayer",
     # 11. Net Benefits PV
     "net_benefit_pv",
-    "net_benefit_primary_pv",
     # Combined risk net benefits (renamed)
     "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
     "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv",

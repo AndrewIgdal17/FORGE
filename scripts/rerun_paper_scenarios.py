@@ -69,7 +69,7 @@ def extract_scenario_id(filename: str) -> str:
 
 
 def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    """POST inputs to the CTCC API and return the inner results dict."""
+    """POST inputs to the CTCC API and return the full JSON response."""
     payload = json.dumps({
         "combined_data": inputs,
         "scenario_id": scenario_id,
@@ -103,7 +103,6 @@ def main() -> None:
     print(f"Found {len(ctcc_files)} scenario files")
     print("=" * 100)
 
-    # results["results"] contains the actual calculation data
     inner_results_by_scenario = {}
 
     for ctcc_file in ctcc_files:
@@ -118,14 +117,13 @@ def main() -> None:
         response = run_scenario(inputs, scenario_id)
         elapsed = time.time() - t0
 
-        # Store the full API response as .ctcc results (matches web app behavior)
-        data["results"] = response
+        inner = response.get("results", response)
+        data["results"] = inner
         with open(ctcc_file, "w") as f:
             json.dump(data, f, indent=2)
             f.write("\n")
 
-        # The inner results (costs, bcr, etc.) are at response["results"]
-        inner_results_by_scenario[scenario_id] = response["results"]
+        inner_results_by_scenario[scenario_id] = inner
         print(f"OK ({elapsed:.1f}s)")
 
     print("\n" + "=" * 100)

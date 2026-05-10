@@ -14,7 +14,6 @@ graph TD
     Tech --> 11_project_row_details_yaml["11 Project Row Details<br/>📄 60 fields"]
     Tech --> 18_energy_source_mix_yaml["18 Energy Source Mix<br/>📄 16 fields"]
     Tech --> 19_cost_timing_patterns_yaml["19 Cost Timing Patterns<br/>📄 27 fields"]
-    Tech --> 22_primary_bcr_config_yaml["22 Primary Bcr Config<br/>📄 9 fields"]
     Phys --> 02_project_physical_details_yaml["02 Project Physical Details<br/>📄 18 fields"]
     Fin --> 03_financing_yaml["03 Financing<br/>📄 15 fields"]
     Fin --> 04_insurance_yaml["04 Insurance<br/>📄 10 fields"]

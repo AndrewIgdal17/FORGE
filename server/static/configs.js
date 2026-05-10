@@ -21,7 +21,6 @@
         ]},
         { group: 'Benefit-Cost Ratio', metrics: [
           { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
-          { key: 'bcr_primary', label: 'BCR Primary', path: 'bcr.bcr_primary', format: 'number3' },
           { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
           { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },

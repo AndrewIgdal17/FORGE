@@ -528,7 +528,6 @@
         { key: 'revenue_pv', path: 'bcr.revenue_pv' },
         { key: 'bcr_system', path: 'bcr.bcr_system' },
         { key: 'bcr_capital', path: 'bcr.bcr_capital' },
-        { key: 'bcr_primary', path: 'bcr.bcr_primary' },
         { key: 'bcr_utility', path: 'bcr.bcr_utility' },
         { key: 'bcr_ratepayer', path: 'bcr.bcr_ratepayer' },
         { key: 'net_benefit_pv', path: 'bcr.net_benefit_pv' },
@@ -1470,6 +1469,10 @@
           if (!validation.valid) {
             alert('Invalid .ctcc file:\n' + validation.errors.join('\n'));
             return;
+          }
+          // Unwrap double-nested results from old .ctcc files (rerun_paper_scenarios wrote full API envelope)
+          if (data.results && data.results.results && data.results.results.bcr) {
+            data.results = data.results.results;
           }
           const name = data.customName || fileName.replace('.ctcc', '');
           addScenarioToSession(data.inputs, data.results || null,

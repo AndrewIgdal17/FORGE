@@ -25,8 +25,7 @@ function humanizeKey(key) {
     .replace(/\bOperations And Maintenance\b/g, 'O&M')
     .replace(/^Ignition Rates By Terrain$/, 'Ignition Rates by Terrain (events/mi/yr)')
     .replace(/^Outage Duration By Terrain$/, 'Outage Duration by Terrain (hrs/event)')
-    .replace(/^Outage Rates$/, 'Outage Rates (outages/mi/yr)')
-    .replace(/^Primary BCR Config$/, 'Benefit Cost Ratio (BCR) Calculation');
+    .replace(/^Outage Rates$/, 'Outage Rates (outages/mi/yr)');
 }
 
 function applyTabHierarchy() {

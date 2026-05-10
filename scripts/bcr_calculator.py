@@ -7,38 +7,12 @@ from __future__ import annotations
 
 import csv
 import os
-from dataclasses import dataclass
 from typing import Dict, Any, Optional, Tuple, Union
 from path_config import OUTPUTS_DIR
 from pydantic import BaseModel, ConfigDict
 
 # BCR viability threshold
 BCR_VIABILITY_THRESHOLD = 1.0
-
-
-@dataclass
-class BCRConfig:
-    """Configuration for BCR calculation exclusions.
-
-    All flags default to False, meaning all modules are included by default.
-    Set a flag to True to exclude that module from Primary BCR calculations.
-    """
-
-    no_emissions: bool = False
-    no_linelosses: bool = False
-    capital_only: bool = False
-    no_wildfire: bool = False
-    no_outages: bool = False
-    no_oandm: bool = False
-    no_insurance: bool = False
-    no_delay_costs: bool = False
-    no_congestion: bool = False
-    no_curtailment: bool = False
-
-    @classmethod
-    def default(cls) -> "BCRConfig":
-        """Create default config (all modules included)."""
-        return cls()
 
 
 class BCRInputData(BaseModel):
@@ -582,7 +556,6 @@ def calculate_costs(data: Union[Dict[str, Any], BCRInputData]) -> Dict[str, floa
 def calculate_bcr_metrics(
     benefits: Dict[str, float],
     costs: Dict[str, float],
-    config: BCRConfig = None,
 ) -> Dict[str, float]:
     """
     Calculate benefit-cost ratios and net benefits.
@@ -590,13 +563,10 @@ def calculate_bcr_metrics(
     Args:
         benefits: Dictionary with benefit breakdown
         costs: Dictionary with cost breakdown
-        config: BCR configuration (defaults to all modules included)
 
     Returns:
         Dictionary with BCR metrics (both nominal and PV)
     """
-    if config is None:
-        config = BCRConfig.default()
     # Present value metrics
     # Use conservative (haircut) benefits for all BCR calculations
     total_benefits_pv = benefits["total_benefits_haircut_pv"]
@@ -858,55 +828,10 @@ def calculate_bcr_metrics(
     net_benefit_capital_only_pv = total_benefits_pv - capital_costs_pv
     net_benefit_capital_and_delay_pv = total_benefits_pv - capital_and_delay_costs_pv
 
-    # Calculate Primary BCR
-    # Always calculate from flags - if no flags are set (all False), calculation includes everything = System BCR
-    # If flags are set, calculation excludes disabled modules = Custom BCR
-    # Primary benefits = congestion + curtailment + delivered energy (per config). Revenue is excluded as a transfer.
-
-    primary_benefits_pv = 0.0
-    if not config.no_congestion:
-        primary_benefits_pv += congestion_benefit_pv
-    if not config.no_curtailment:
-        primary_benefits_pv += curtailment_benefit_pv
-    primary_benefits_pv += delivered_benefit_pv
-
-    # Costs included:
-    # - Capital costs (always: build, ROW, environmental)
-    # - Delay costs (always included, even if --no_delay_costs flag is set)
-    # - O&M (if not no_oandm)
-    # - Insurance (if not no_insurance)
-    # - Wildfire (if not no_wildfire)
-    # - Outage (if not no_outages)
-    # - Energy losses (if not no_linelosses)
-    # - Emissions (if not no_emissions)
-    wildfire_pv = safe_get_numeric(costs, "wildfire_pv")
-    outage_pv = safe_get_numeric(costs, "outage_pv")
-    oandm_pv = safe_get_numeric(costs, "oandm_pv")
-    insurance_pv = safe_get_numeric(costs, "insurance_pv")
-
-    primary_costs_pv = capital_costs_pv + delay_costs_pv
-    if not config.no_oandm:
-        primary_costs_pv += oandm_pv
-    if not config.no_insurance:
-        primary_costs_pv += insurance_pv
-    if not config.no_wildfire:
-        primary_costs_pv += wildfire_pv
-    if not config.no_outages:
-        primary_costs_pv += outage_pv
-    if not config.no_linelosses:
-        primary_costs_pv += energy_losses_pv
-    if not config.no_emissions:
-        primary_costs_pv += emissions_pv
-
-    # Calculate Primary BCR
-    bcr_primary = safe_divide(primary_benefits_pv, primary_costs_pv)
-    net_benefit_primary_pv = primary_benefits_pv - primary_costs_pv
-
     result = {
         "bcr_system": bcr_system,
         "bcr_capital": bcr_capital,
         "bcr_capital_and_delay": bcr_capital_and_delay,
-        "bcr_primary": bcr_primary,
         # Renamed combined risk BCRs
         "bcr_excluding_wildfire_risk_and_outage_risk": bcr_excluding_wildfire_risk_and_outage_risk,
         "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": bcr_excluding_emissions_and_wildfire_risk_and_outage_risk,
@@ -932,7 +857,6 @@ def calculate_bcr_metrics(
         # Net benefits
         "net_benefit_pv": net_benefit_pv,
         "net_benefit_nominal": net_benefit_nominal,
-        "net_benefit_primary_pv": net_benefit_primary_pv,
         # Renamed combined risk net benefits
         "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": net_benefit_excluding_wildfire_risk_and_outage_risk_pv,
         "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv,
@@ -981,7 +905,6 @@ def calculate_bcr_metrics(
 def calculate_and_display_bcr(
     scenario_id: str,
     output_dir: str = str(OUTPUTS_DIR),
-    config: BCRConfig = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Main function to calculate and display BCR analysis.
@@ -990,13 +913,10 @@ def calculate_and_display_bcr(
     Args:
         scenario_id: Unique identifier for the scenario
         output_dir: Directory containing batch_summary.csv
-        config: BCR configuration (defaults to all modules included)
 
     Returns:
         Dictionary with all BCR results, or None only if CSV doesn't exist or is empty
     """
-    if config is None:
-        config = BCRConfig.default()
 
     # Load scenario data (now with robust lookup)
     data = load_scenario_data(scenario_id, output_dir)
@@ -1044,7 +964,6 @@ def calculate_and_display_bcr(
         bcr_metrics = calculate_bcr_metrics(
             benefits,
             costs,
-            config=config,
         )
     except Exception as e:
         import traceback
@@ -1056,13 +975,11 @@ def calculate_and_display_bcr(
             "bcr_system": 0,
             "bcr_capital": 0,
             "bcr_capital_and_delay": 0,
-            "bcr_primary": 0,
             "bcr_excluding_wildfire_risk_and_outage_risk": 0,
             "bcr_excluding_emissions": 0,
             "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 0,
             "net_benefit_pv": 0,
             "net_benefit_nominal": 0,
-            "net_benefit_primary_pv": 0,
             "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": 0,
         }
 
@@ -1080,7 +997,6 @@ def calculate_and_display_bcr(
             costs,
             bcr_metrics,
             data,
-            config=config,
         )
     except Exception as e:
         # Don't fail if printing fails, but log it
@@ -1094,7 +1010,6 @@ def print_bcr_summary(
     costs: Dict[str, float],
     bcr_metrics: Dict[str, float],
     data: Dict[str, Any],
-    config: BCRConfig = None,
 ) -> None:
     """
     Print formatted BCR summary to terminal.
@@ -1104,41 +1019,11 @@ def print_bcr_summary(
         costs: Dictionary with cost breakdown
         bcr_metrics: Dictionary with BCR metrics
         data: Original scenario data
-        config: BCR configuration (defaults to all modules included)
     """
-    if config is None:
-        config = BCRConfig.default()
-
-    # Check if any custom flags are set (for display purposes)
-    has_custom_flags = any(
-        [
-            config.no_wildfire,
-            config.no_outages,
-            config.no_oandm,
-            config.no_insurance,
-            config.no_delay_costs,
-            config.no_congestion,
-            config.no_curtailment,
-            config.no_emissions,
-            config.no_linelosses,
-        ]
-    )
-
     print()
     print("=" * 80)
     print("BENEFIT-COST RATIO ANALYSIS")
     print("=" * 80)
-    print()
-
-    # Display Primary BCR prominently
-    print("PRIMARY BCR:")
-    if not has_custom_flags:
-        print("  (All modules included - equals System BCR)")
-    else:
-        print("  (Custom calculation based on selected modules)")
-    print(f"  Primary BCR:                  {bcr_metrics.get('bcr_primary', 0):>6.3f}")
-    net_benefit_primary = bcr_metrics.get("net_benefit_primary_pv", 0)
-    print(f"  Net Benefit (PV):              ${net_benefit_primary:>15,.0f}")
     print()
 
     # Benefits section
@@ -1224,18 +1109,6 @@ def print_bcr_summary(
 
     # BCR metrics
     print("BENEFIT-COST RATIOS:")
-
-    # Primary BCR (prominently displayed first)
-    bcr_primary = bcr_metrics.get("bcr_primary", 0)
-    primary_viable_symbol, primary_viable_text = format_bcr_viability(bcr_primary)
-    if not has_custom_flags:
-        primary_label = "Primary BCR (all modules):"
-    else:
-        primary_label = "Primary BCR (custom):"
-    print(
-        f"  {primary_label:28s} {bcr_primary:>6.3f}  {primary_viable_symbol} ({primary_viable_text})"
-    )
-    print()
 
     bcr_system = bcr_metrics["bcr_system"]
     viable_symbol, viable_text = format_bcr_viability(bcr_system)

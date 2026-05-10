@@ -17,7 +17,7 @@ from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from bcr_calculator import calculate_and_display_bcr, BCRConfig, BCRInputData
+from bcr_calculator import BCRInputData
 from csv_output_manager import BATCH_SUMMARY_FIELDS
 from run_context import set_output_manager, get_output_manager, clear_output_manager
 
@@ -371,20 +371,6 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Create BCRConfig from CLI args
-    bcr_config = BCRConfig(
-        no_emissions=args.no_emissions,
-        no_linelosses=args.no_linelosses,
-        capital_only=args.capital_only,
-        no_wildfire=args.no_wildfire,
-        no_outages=args.no_outages,
-        no_oandm=args.no_oandm,
-        no_insurance=args.no_insurance,
-        no_delay_costs=args.no_delay_costs,
-        no_congestion=args.no_congestion,
-        no_curtailment=args.no_curtailment,
-    )
-
     # Set environment variables for congestion/curtailment script
     if args.no_congestion:
         os.environ["CTCC_NO_CONGESTION"] = "1"
@@ -628,7 +614,6 @@ def main() -> None:
                 bcr_metrics = calculate_bcr_metrics(
                     benefits,
                     costs,
-                    config=bcr_config,
                 )
                 bcr_results = {**benefits, **costs, **bcr_metrics}
                 csv_equivalent = build_csv_equivalent(
