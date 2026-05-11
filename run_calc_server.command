@@ -19,6 +19,7 @@ if ! command -v uv >/dev/null 2>&1; then
   echo "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
   exit 1
 fi
+cd "$CODE_ROOT"
 uv sync --quiet
 VENV_PYTHON="$CODE_ROOT/.venv/bin/python"
 
