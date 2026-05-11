@@ -24,7 +24,12 @@ from .models import (
 from .fuel_mix_presets import load_fuel_mix_presets
 from .processor import generate_result
 
+import sys as _sys
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = BASE_DIR.parent / "scripts"
+if str(SCRIPTS_DIR) not in _sys.path:
+    _sys.path.insert(0, str(SCRIPTS_DIR))
 STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
 OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
@@ -113,6 +118,20 @@ async def get_final_combined() -> JSONResponse:
         raise HTTPException(status_code=500, detail="final_combined.json is invalid JSON") from exc
 
     return JSONResponse(content)
+
+
+@app.get("/api/taxonomy", response_class=JSONResponse)
+async def get_taxonomy() -> JSONResponse:
+    """Return the CTCC cost/benefit taxonomy (reference data, static)."""
+    from taxonomy import taxonomy_to_dict
+    return JSONResponse(sanitize_for_json(taxonomy_to_dict()))
+
+
+@app.get("/api/input_metadata", response_class=JSONResponse)
+async def get_input_metadata() -> JSONResponse:
+    """Return input field metadata for taxonomy-driven form generation."""
+    from input_metadata import input_metadata_to_dict
+    return JSONResponse(sanitize_for_json(input_metadata_to_dict()))
 
 
 @app.get("/api/fuel_mix_presets", response_class=JSONResponse)

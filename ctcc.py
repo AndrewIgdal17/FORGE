@@ -17,7 +17,6 @@ from datetime import datetime
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from bcr_calculator import BCRInputData
 from csv_output_manager import BATCH_SUMMARY_FIELDS
 from run_context import set_output_manager, get_output_manager, clear_output_manager
 
@@ -59,97 +58,10 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         return False
 
 
-def build_bcr_data_from_json(json_results: dict) -> BCRInputData:
-    """Build a flat dict for BCR calculations from JSON results."""
-    costs = json_results.get("costs", {}) or {}
-    benefits = json_results.get("benefits", {}) or {}
-
-    congestion = benefits.get("congestion_curtailment", {}) or {}
-    revenue = benefits.get("revenue", {}) or {}
-
-    build = costs.get("build", {}) or {}
-    row = costs.get("row", {}) or {}
-    environmental = costs.get("environmental", {}) or {}
-    oandm = costs.get("oandm", {}) or {}
-    insurance = costs.get("insurance", {}) or {}
-    wildfire = costs.get("wildfire", {}) or {}
-    outage = costs.get("outage", {}) or {}
-    delay = costs.get("delay", {}) or {}
-    emissions = costs.get("emissions", {}) or {}
-    fac_em = costs.get("facilitated_emissions", {}) or {}
-    line_loss = costs.get("line_loss", {}) or {}
-
-    flat_dict = {
-        # Benefits (PV + nominal)
-        "congestion_benefit_pv": congestion.get("congestion_benefit_pv", 0) or 0,
-        "curtailment_benefit_pv": congestion.get("curtailment_benefit_pv", 0) or 0,
-        "congestion_benefit_nominal": congestion.get("congestion_benefit_nominal", 0)
-        or 0,
-        "curtailment_benefit_nominal": congestion.get("curtailment_benefit_nominal", 0)
-        or 0,
-        "delivered_benefit_pv": congestion.get("delivered_benefit_pv", 0) or 0,
-        "delivered_benefit_nominal": congestion.get("delivered_benefit_nominal", 0)
-        or 0,
-        "revenue_pv": revenue.get("revenue_pv", 0) or 0,
-        "revenue_nominal": revenue.get("revenue_nominal", 0) or 0,
-        # Capital costs (PV + nominal); ROW = capital only (acquisition + holding)
-        "build_cost_pv": build.get("total_pv", 0) or 0,
-        "build_cost_nominal": build.get("total_nominal", 0) or 0,
-        "row_cost_pv": row.get("total_pv", 0) or 0,
-        "row_cost_nominal": row.get("total_nominal", 0) or 0,
-        "row_capital_pv": row.get("row_capital_pv", 0) or row.get("total_pv", 0) or 0,
-        "row_capital_nominal": row.get("row_capital_nominal", 0)
-        or row.get("total_nominal", 0)
-        or 0,
-        "row_rent_pv": row.get("row_rent_pv", 0) or 0,
-        "row_rent_nominal": row.get("row_rent_nominal", 0) or 0,
-        "env_mitigation_pv": environmental.get("total_pv", 0) or 0,
-        "env_mitigation_nominal": environmental.get("total_nominal", 0) or 0,
-        # Operational costs (PV + nominal)
-        "oandm_pv": oandm.get("total_pv", 0) or 0,
-        "oandm_nominal": oandm.get("total_nominal", 0) or 0,
-        "insurance_pv": insurance.get("pv_total", 0) or 0,
-        "insurance_nominal": insurance.get("nominal_lifetime_cost", 0) or 0,
-        # Energy & loss-compensation emissions costs (PV + nominal)
-        "energy_losses_pv": line_loss.get("total_pv", 0) or 0,
-        "energy_losses_nominal": line_loss.get("total_nominal", 0) or 0,
-        "conductor_loss_pv": line_loss.get("line_cost_pv", 0) or 0,
-        "converter_loss_pv": line_loss.get("converter_cost_pv", 0) or 0,
-        "emissions_comp_cost_pv": emissions.get("total_pv", 0) or 0,
-        "emissions_comp_cost_nominal": emissions.get("total_nominal", 0) or 0,
-        "fac_emissions_project_pv": fac_em.get("fac_emissions_project_pv", 0) or 0,
-        "fac_emissions_project_nominal": fac_em.get("fac_emissions_project_nominal", 0) or 0,
-        "displacement_avoided_cost_pv": fac_em.get("displacement_avoided_cost_pv", 0) or 0,
-        # Risk costs (PV + nominal)
-        "wildfire_pv": wildfire.get("pv_cost", 0) or 0,
-        "wildfire_nominal": wildfire.get("nominal_total", 0) or 0,
-        "outage_pv": outage.get("pv_cost", 0) or 0,
-        "outage_nominal": outage.get("nominal_total", 0) or 0,
-        # Delay costs (PV + nominal)
-        "delay_cost_pv": delay.get("total_pv", 0) or 0,
-        "delay_cost_nominal": delay.get("total_nominal", 0) or 0,
-        "congestion_delay_cost_pv": congestion.get("congestion_delay_cost_pv", 0) or 0,
-        "congestion_delay_cost_nominal": congestion.get(
-            "congestion_delay_cost_nominal", 0
-        )
-        or 0,
-        "curtailment_delay_cost_pv": congestion.get("curtailment_delay_cost_pv", 0)
-        or 0,
-        "curtailment_delay_cost_nominal": congestion.get(
-            "curtailment_delay_cost_nominal", 0
-        )
-        or 0,
-        "residual_exceedance_pv": congestion.get("residual_exceedance_pv", 0) or 0,
-        "residual_exceedance_nominal": congestion.get("residual_exceedance_nominal", 0)
-        or 0,
-    }
-    return BCRInputData.model_validate(flat_dict)
-
-
 def build_csv_equivalent(
     json_results: dict,
     bcr_results: dict | None,
-    bcr_data: dict | BCRInputData | None,
+    bcr_data: dict | None,
 ) -> dict:
     """Build a flat CSV-equivalent dict using current CSV schema."""
     technical = json_results.get("technical_parameters", {}) or {}
@@ -249,6 +161,7 @@ def write_final_json_output(
     output_dir: str = "outputs",
     csv_equivalent: dict | None = None,
     summary_override: dict | None = None,
+    taxonomy_results_json: list | None = None,
 ):
     """
     Write the final aggregated JSON output file.
@@ -274,6 +187,8 @@ def write_final_json_output(
         results["csv_equivalent"] = csv_equivalent
     if summary_override is not None:
         results["summary"] = summary_override
+    if taxonomy_results_json is not None:
+        results["taxonomy_results"] = taxonomy_results_json
 
     # Write to final output file
     output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
@@ -589,37 +504,29 @@ def main() -> None:
 
             csv_equivalent = None
             summary_override = None
+            taxonomy_results_json = None
             json_results = aggregator.get_json_results()
-            bcr_data = build_bcr_data_from_json(json_results)
             try:
-                from bcr_calculator import (
-                    calculate_benefits,
-                    calculate_costs,
-                    calculate_bcr_metrics,
+                from taxonomy_adapters import (
+                    adapt_all_results,
+                    taxonomy_results_to_json_list,
                 )
+                from bcr_calculator import compute_all_bcrs, print_bcr_summary
 
-                benefits = calculate_benefits(bcr_data)
-                costs = calculate_costs(bcr_data)
-                bcr_metrics = calculate_bcr_metrics(
-                    benefits,
-                    costs,
-                )
-                bcr_results = {**benefits, **costs, **bcr_metrics}
+                taxonomy_results = adapt_all_results(json_results)
+                taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
+                bcr_results = compute_all_bcrs(taxonomy_results)
                 csv_equivalent = build_csv_equivalent(
-                    json_results, bcr_results, bcr_data
+                    json_results, bcr_results, bcr_results
                 )
                 summary_override = build_summary_from_csv_equivalent(csv_equivalent)
+
+                if not args.simple:
+                    print_bcr_summary(bcr_results)
             except Exception as e:
                 if not args.simple:
                     print(f"⚠️  BCR calculation failed: {e}")
                     traceback.print_exc()
-                if bcr_data is not None:
-                    csv_equivalent = build_csv_equivalent(
-                        json_results, None, bcr_data
-                    )
-                    summary_override = build_summary_from_csv_equivalent(
-                        csv_equivalent
-                    )
                 bcr_results = None
 
             output_file = write_final_json_output(
@@ -629,6 +536,7 @@ def main() -> None:
                 output_dir="outputs",
                 csv_equivalent=csv_equivalent,
                 summary_override=summary_override,
+                taxonomy_results_json=taxonomy_results_json,
             )
 
             if not args.simple:

@@ -360,7 +360,7 @@
     </div>
 
     <script src="/static/configs.js"></script>
-    <script src="/static/hierarchy-engine.js"></script>
+    <!-- hierarchy-engine.js deleted in Phase 4 — form rendering is taxonomy-driven -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, initializing...');
@@ -412,6 +412,15 @@
       let ctccJsonData = null;
       /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
       let cachedFuelMixPresets = [];
+
+      // Taxonomy state (loaded once from GET /api/taxonomy)
+      let taxonomy = null;
+      let taxonomyById = {};
+      let taxonomyBySide = {};
+      let taxonomyByBucket = {};
+
+      // Input metadata state (loaded once from GET /api/input_metadata)
+      let inputMetadata = null;
       let activeTabIndex = 0;
 
       // Scenario management state
@@ -2846,6 +2855,18 @@
         return response.json();
       }
 
+      async function fetchTaxonomy(baseUrl) {
+        const resp = await fetch(new URL("/api/taxonomy", baseUrl).toString());
+        if (!resp.ok) throw new Error("Failed to load taxonomy: " + resp.status);
+        return resp.json();
+      }
+
+      async function fetchInputMetadata(baseUrl) {
+        const resp = await fetch(new URL("/api/input_metadata", baseUrl).toString());
+        if (!resp.ok) throw new Error("Failed to load input_metadata: " + resp.status);
+        return resp.json();
+      }
+
       async function fetchFuelMixPresets(baseUrl) {
         const url = new URL("/api/fuel_mix_presets", baseUrl).toString();
         const response = await fetch(url);
@@ -3581,6 +3602,29 @@
       async function loadCtccJson() {
         try {
           const baseUrl = apiBaseInput.value.trim();
+          // Ensure taxonomy + input metadata are loaded before rendering
+          if (!taxonomy || !inputMetadata) {
+            try {
+              const [taxData, metaData] = await Promise.all([
+                taxonomy ? Promise.resolve(taxonomy) : fetchTaxonomy(baseUrl),
+                inputMetadata ? Promise.resolve(inputMetadata) : fetchInputMetadata(baseUrl),
+              ]);
+              if (!taxonomy) {
+                taxonomy = taxData;
+                taxonomyById = {};
+                taxonomyBySide = {};
+                taxonomyByBucket = {};
+                (taxData.items || []).forEach(item => {
+                  taxonomyById[item.id] = item;
+                  (taxonomyBySide[item.side] ??= []).push(item);
+                  (taxonomyByBucket[item.bucket] ??= []).push(item);
+                });
+              }
+              if (!inputMetadata) inputMetadata = metaData;
+            } catch (err) {
+              console.warn('Taxonomy/metadata pre-load failed, using legacy renderer:', err);
+            }
+          }
           const data = await fetchFinalCombined(baseUrl);
           renderJsonInputs(data);
         } catch (error) {
@@ -4059,6 +4103,783 @@
         category.appendChild(contentDiv);
 
         return category;
+      }
+
+      // ===== Taxonomy-Driven Renderers (Phase 3) =====
+
+      const BUCKET_LABELS = {
+        hard: 'Hard Costs (C_hard)', soft: 'Soft Costs (C_soft)',
+        risk: 'Risk Costs (C_risk)', emissions: 'Emissions Costs (C_emissions)',
+        remedial: 'Remedial Benefits (B_remedial)', enabling: 'Enabling Benefits (B_enabling)',
+        transfer: 'Revenue (Transfer)', reporting: 'Reporting Only',
+      };
+      const COST_BUCKET_ORDER = ['hard', 'soft', 'risk', 'emissions'];
+
+      function buildResultById(results) {
+        const m = {};
+        (results.taxonomy_results || []).forEach(r => { m[r.taxonomy_id] = r; });
+        return m;
+      }
+
+      function exclOutputSuffix(groups) {
+        const ORDER = ['emissions', 'line_losses', 'wildfire', 'outage'];
+        const MAP = { emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
+        return ORDER.filter(g => groups.includes(g)).map(g => MAP[g]).join('_and_');
+      }
+
+      function deriveTaxonomyResultsFromLegacy(results) {
+        const bcr = results.bcr || {};
+        const costs = results.costs || {};
+        const benefits = results.benefits || {};
+        const cc = benefits.congestion_curtailment || {};
+        const rev = benefits.revenue || {};
+        const wf = costs.wildfire || {};
+        const out = costs.outage || {};
+        const em = costs.emissions || {};
+        const fac = costs.facilitated_emissions || {};
+        const ll = costs.line_loss || {};
+        const build = costs.build || {};
+        const row = costs.row || {};
+        const env = costs.environmental || {};
+        const om = costs.oandm || {};
+        const ins = costs.insurance || {};
+        const delay = costs.delay || {};
+        const totalBuildNom = build.total_nominal || 0;
+        function proportional(compNom, totalNom, totalPV) {
+          return totalNom ? totalPV * compNom / totalNom : 0;
+        }
+        return [
+          { taxonomy_id: 'build_conductor', value_pv: proportional(build.conductor_nominal||0, totalBuildNom, build.total_pv||0), value_nominal: build.conductor_nominal||0, detail: [] },
+          { taxonomy_id: 'build_structure', value_pv: proportional(build.structure_nominal||0, totalBuildNom, build.total_pv||0), value_nominal: build.structure_nominal||0, detail: [] },
+          { taxonomy_id: 'build_converter', value_pv: proportional(build.converter_nominal||0, totalBuildNom, build.total_pv||0), value_nominal: build.converter_nominal||0, detail: [] },
+          { taxonomy_id: 'row_acquisition', value_pv: proportional(row.acquisition_nominal||0, row.row_capital_nominal||0, row.row_capital_pv||0), value_nominal: row.acquisition_nominal||0, detail: [] },
+          { taxonomy_id: 'row_holding', value_pv: proportional(row.holding_nominal||0, row.row_capital_nominal||0, row.row_capital_pv||0), value_nominal: row.holding_nominal||0, detail: [] },
+          { taxonomy_id: 'env_mitigation', value_pv: env.total_pv||0, value_nominal: env.total_nominal||0, detail: [] },
+          { taxonomy_id: 'oandm', value_pv: om.total_pv||0, value_nominal: om.total_nominal||0, value_annual: om.total_annual||null, detail: [] },
+          { taxonomy_id: 'insurance', value_pv: ins.pv_total||0, value_nominal: ins.nominal_lifetime_cost||0, value_annual: ins.annual_premium||null, detail: [] },
+          { taxonomy_id: 'row_rent', value_pv: row.row_rent_pv||0, value_nominal: row.row_rent_nominal||0, detail: [] },
+          { taxonomy_id: 'line_loss_conductor', value_pv: ll.line_cost_pv||0, value_nominal: ll.line_nominal_total||0, value_annual: ll.line_annual_cost||null, detail: [] },
+          { taxonomy_id: 'line_loss_converter', value_pv: ll.converter_cost_pv||0, value_nominal: ll.converter_nominal_total||0, value_annual: ll.converter_annual_cost||null, detail: [] },
+          { taxonomy_id: 'residual_exceedance', value_pv: cc.residual_exceedance_pv||0, value_nominal: cc.residual_exceedance_nominal||0, value_annual: cc.residual_exceedance_annual||null, detail: [] },
+          { taxonomy_id: 'base_delay', value_pv: delay.total_pv||0, value_nominal: delay.total_nominal||0, detail: [] },
+          { taxonomy_id: 'congestion_delay', value_pv: cc.congestion_delay_cost_pv||0, value_nominal: cc.congestion_delay_cost_nominal||0, detail: [] },
+          { taxonomy_id: 'curtailment_delay', value_pv: cc.curtailment_delay_cost_pv||0, value_nominal: cc.curtailment_delay_cost_nominal||0, detail: [] },
+          { taxonomy_id: 'wildfire_eac', value_pv: wf.pv_cost||0, value_nominal: wf.nominal_total||0, value_annual: wf.EAL||null, detail: [] },
+          { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.EAC||null, detail: [] },
+          { taxonomy_id: 'emissions_comp', value_pv: em.total_pv||0, value_nominal: em.total_nominal||0, value_annual: em.annual_cost||null, detail: [] },
+          { taxonomy_id: 'emissions_fac', value_pv: fac.fac_emissions_project_pv||0, value_nominal: fac.fac_emissions_project_nominal||0, detail: [] },
+          { taxonomy_id: 'congestion_benefit', value_pv: cc.congestion_benefit_pv||0, value_nominal: cc.congestion_benefit_nominal||0, value_annual: cc.congestion_benefit_annual||null, detail: [] },
+          { taxonomy_id: 'curtailment_benefit', value_pv: cc.curtailment_benefit_pv||0, value_nominal: cc.curtailment_benefit_nominal||0, value_annual: cc.curtailment_benefit_annual||null, detail: [] },
+          { taxonomy_id: 'delivered_energy_benefit', value_pv: cc.delivered_benefit_pv||0, value_nominal: cc.delivered_benefit_nominal||0, value_annual: cc.delivered_benefit_annual||null, detail: [] },
+          { taxonomy_id: 'revenue', value_pv: rev.revenue_pv||0, value_nominal: rev.revenue_nominal||0, value_annual: rev.annual_revenue||null, detail: [] },
+          { taxonomy_id: 'displacement_avoided', value_pv: fac.displacement_avoided_cost_pv||0, value_nominal: fac.displacement_avoided_cost_nominal||0, detail: [] },
+        ];
+      }
+
+      function renderTaxonomyItem(item, result, showDetail) {
+        const container = document.createElement('div');
+        const pv = result?.value_pv || 0;
+        const nom = result?.value_nominal || 0;
+        const ann = result?.value_annual;
+        if (pv === 0 && nom === 0 && item.condition) {
+          container.style.opacity = '0.4';
+        }
+        if (ann != null && ann !== 0) {
+          container.appendChild(currencyItem(item.label + ' (Annual)', ann));
+        }
+        container.appendChild(currencyPairItem(item.label, nom, pv, item.description || ''));
+        if (showDetail && result?.detail && result.detail.length > 0) {
+          const detailDiv = document.createElement('div');
+          detailDiv.style.paddingLeft = '1.5rem';
+          detailDiv.style.opacity = '0.85';
+          detailDiv.style.fontSize = '0.85em';
+          result.detail.forEach(d => {
+            const val = d.value_pv || d.value_annual || d.value_nominal || 0;
+            const fmt = d.value_pv ? formatCurrency(val, 0) : formatNumber(val, 2);
+            const row = document.createElement('div');
+            row.className = 'results-line-item';
+            row.innerHTML = `<span class="label">${d.dimension}: ${d.dimension_key}</span><span class="value">${fmt}</span>`;
+            detailDiv.appendChild(row);
+          });
+          container.appendChild(detailDiv);
+        }
+        return container;
+      }
+
+      function renderCostsByTaxonomy(results) {
+        const container = document.createElement('div');
+        if (!taxonomy) return container;
+        const resultById = buildResultById(results);
+        const costItems = taxonomy.items.filter(i => i.side === 'cost');
+        let grandTotalPV = 0;
+        let grandTotalNom = 0;
+
+        COST_BUCKET_ORDER.forEach(bucket => {
+          const bucketItems = costItems.filter(i => i.bucket === bucket);
+          if (bucketItems.length === 0) return;
+          const section = document.createElement('div');
+          section.className = 'cost-section-items';
+          section.appendChild(pairHeader());
+
+          const subgroups = {};
+          bucketItems.forEach(item => {
+            (subgroups[item.subgroup] ??= []).push(item);
+          });
+
+          let bucketPV = 0;
+          let bucketNom = 0;
+          Object.entries(subgroups).forEach(([sg, items]) => {
+            items.sort((a, b) => a.display_order - b.display_order);
+            if (Object.keys(subgroups).length > 1) {
+              const sgTitle = document.createElement('div');
+              sgTitle.className = 'results-subcategory-title';
+              sgTitle.textContent = sg.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              if (section.children.length > 1) sgTitle.style.marginTop = '1rem';
+              section.appendChild(sgTitle);
+            }
+            items.forEach(item => {
+              const r = resultById[item.id];
+              section.appendChild(renderTaxonomyItem(item, r, true));
+              bucketPV += r?.value_pv || 0;
+              bucketNom += r?.value_nominal || 0;
+            });
+          });
+
+          section.appendChild(subtotalPairRow('Bucket Subtotal', bucketNom, bucketPV));
+          grandTotalPV += bucketPV;
+          grandTotalNom += bucketNom;
+          container.appendChild(createCategory(BUCKET_LABELS[bucket] || bucket, section));
+        });
+
+        const totalSection = document.createElement('div');
+        totalSection.className = 'cost-section-items';
+        totalSection.appendChild(subtotalPairRow('Total Costs (C)', grandTotalNom, grandTotalPV));
+        container.appendChild(totalSection);
+
+        return container;
+      }
+
+      function renderBenefitsByTaxonomy(results) {
+        const container = document.createElement('div');
+        if (!taxonomy) return container;
+        const resultById = buildResultById(results);
+        const bcr = results.bcr || {};
+
+        // Remedial
+        const remItems = (taxonomyByBucket['remedial'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+        const remSection = document.createElement('div');
+        remSection.className = 'cost-section-items';
+        remSection.appendChild(pairHeader());
+        let remPV = 0, remNom = 0;
+        remItems.forEach(item => {
+          const r = resultById[item.id];
+          remSection.appendChild(renderTaxonomyItem(item, r, false));
+          remPV += r?.value_pv || 0;
+          remNom += r?.value_nominal || 0;
+        });
+        remSection.appendChild(subtotalPairRow('Remedial Subtotal', remNom, remPV));
+        container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection));
+
+        // Enabling
+        const enItems = (taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+        const enSection = document.createElement('div');
+        enSection.className = 'cost-section-items';
+        enSection.appendChild(pairHeader());
+        let enPV = 0, enNom = 0;
+        enItems.forEach(item => {
+          const r = resultById[item.id];
+          enSection.appendChild(renderTaxonomyItem(item, r, false));
+          enPV += r?.value_pv || 0;
+          enNom += r?.value_nominal || 0;
+        });
+        enSection.appendChild(subtotalPairRow('Enabling Subtotal', enNom, enPV));
+        container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection));
+
+        // Displacement (reporting only)
+        const dispItems = (taxonomyBySide['reporting_only'] || []);
+        if (dispItems.length > 0) {
+          const dispSection = document.createElement('div');
+          dispSection.className = 'cost-section-items';
+          dispItems.forEach(item => {
+            const r = resultById[item.id];
+            if (r && (r.value_pv || r.value_pv === 0)) {
+              dispSection.appendChild(pairHeader());
+              dispSection.appendChild(currencyPairItem(item.label, r.value_nominal || 0, r.value_pv, 'Reported for transparency; does not enter NB or BCR.'));
+              const sign = (r.value_pv || 0) >= 0 ? 'cleaner' : 'dirtier';
+              const note = document.createElement('div');
+              note.className = 'results-note';
+              note.style.marginTop = '0.35rem';
+              note.textContent = `Positive = project enables cleaner generation than no-line counterfactual. This scenario: ${sign} project.`;
+              dispSection.appendChild(note);
+            } else {
+              const note = document.createElement('div');
+              note.className = 'results-note';
+              note.textContent = 'Displacement not computed for this scenario.';
+              dispSection.appendChild(note);
+            }
+          });
+          container.appendChild(createCategory('Displacement (reporting only)', dispSection));
+        }
+
+        // Total Benefits
+        const totalPV = remPV + enPV;
+        const totalNom = remNom + enNom;
+        const totalSection = document.createElement('div');
+        totalSection.className = 'cost-section-items';
+        totalSection.appendChild(pairHeader());
+        totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling'));
+        container.appendChild(createCategory('Total Benefits', totalSection));
+
+        // Revenue (transfer)
+        const revItems = (taxonomyBySide['transfer'] || []);
+        if (revItems.length > 0) {
+          const revSection = document.createElement('div');
+          revSection.className = 'cost-section-items';
+          revSection.appendChild(pairHeader());
+          revItems.forEach(item => {
+            const r = resultById[item.id];
+            if (r?.value_annual) revSection.appendChild(currencyItem('Annual Revenue', r.value_annual));
+            revSection.appendChild(currencyPairItem(item.label, r?.value_nominal || 0, r?.value_pv || 0, 'Financial transfer between parties; excluded from societal system benefits.'));
+          });
+          const revFoot = document.createElement('div');
+          revFoot.className = 'results-note';
+          revFoot.style.marginTop = '0.35rem';
+          revFoot.textContent = 'Revenue is a transfer in the accounting: it is not an additional societal benefit line in BCR_system.';
+          revSection.appendChild(revFoot);
+          container.appendChild(createCategory('Revenue', revSection));
+        }
+
+        // Physical Metrics (not from taxonomy — direct from results)
+        const cc = results.benefits?.congestion_curtailment || {};
+        const physGrid = document.createElement('div');
+        physGrid.className = 'phys-metrics-grid';
+        let hasPhys = false;
+        const physEntries = [
+          ['Effective Capacity Relief', cc.effective_capacity_relief_mw, 'MW'],
+          ['Congestion Reduction', cc.energy_congestion_reduction_mwh_yr, 'MWh/yr'],
+          ['Curtailment Reduction', cc.energy_curtailment_reduction_mwh_yr, 'MWh/yr'],
+          ['Residual Exceedance', cc.energy_residual_exceedance_mwh_yr, 'MWh/yr'],
+          ['Remaining Capacity', cc.remaining_capacity_mw, 'MW'],
+          ['Theta Overlap', cc.theta_overlap, ''],
+          ['Binding Hours (Overlap)', cc.binding_hours_overlap, ''],
+          ['Binding Hours (Non-Overlap)', cc.binding_hours_non_overlap, ''],
+        ];
+        physEntries.forEach(([label, val, unit]) => {
+          if (val !== undefined) { appendPhysMetric(physGrid, label, val, unit); hasPhys = true; }
+        });
+        if (hasPhys) container.appendChild(createCategory('Physical Metrics', physGrid));
+
+        return container;
+      }
+
+      function renderSensitivityByTaxonomy(results) {
+        const container = document.createElement('div');
+        if (!taxonomy) return container;
+        const bcr = results.bcr || {};
+        const totalCostsPV = bcr.total_costs_pv || 0;
+
+        const exclDefs = Object.values(taxonomy.bcr_definitions)
+          .filter(d => d.exclude_groups.length > 0)
+          .sort((a, b) => a.display_order - b.display_order);
+
+        const mainRows = [];
+        const moreRows = [];
+
+        exclDefs.forEach(def => {
+          const suffix = exclOutputSuffix(def.exclude_groups);
+          const exclCosts = bcr[`total_costs_excluding_${suffix}_pv`] || 0;
+          const row = {
+            label: def.label,
+            bcr: bcr[`bcr_excluding_${suffix}`] || 0,
+            nb: bcr[`net_benefit_excluding_${suffix}_pv`] || 0,
+            excluded: totalCostsPV - exclCosts,
+          };
+          const hasWf = def.exclude_groups.includes('wildfire');
+          const hasOut = def.exclude_groups.includes('outage');
+          if (hasWf === hasOut) mainRows.push(row); else moreRows.push(row);
+        });
+
+        function buildSensTable(rows) {
+          const table = document.createElement('table');
+          table.className = 'sensitivity-table';
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr><th>Exclusion</th><th>BCR</th><th>Net Benefit (PV)</th><th>Excluded $ (PV)</th></tr>';
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          rows.forEach(r => {
+            const tr = document.createElement('tr');
+            [r.label, formatNumber(r.bcr, 3), formatCurrency(r.nb, 0), formatCurrency(r.excluded, 0)].forEach((text, i) => {
+              const td = document.createElement('td');
+              td.textContent = text;
+              if (i === 2 && r.nb < 0) td.className = 'negative';
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          return table;
+        }
+
+        container.appendChild(buildSensTable(mainRows));
+
+        if (moreRows.length > 0) {
+          const trigger = document.createElement('div');
+          trigger.className = 'collapsible-trigger';
+          trigger.innerHTML = '<span class="arrow">&#9654;</span> More Sensitivity (By Risk Type)';
+          const moreContent = document.createElement('div');
+          moreContent.className = 'collapsible-content';
+          trigger.addEventListener('click', () => {
+            trigger.classList.toggle('expanded');
+            moreContent.classList.toggle('expanded');
+          });
+          moreContent.appendChild(buildSensTable(moreRows));
+          container.appendChild(trigger);
+          container.appendChild(moreContent);
+        }
+
+        return container;
+      }
+
+      function renderCustomBCRByTaxonomy(results) {
+        const container = document.createElement('div');
+        if (!taxonomy) return container;
+        const bcr = results.bcr || {};
+        const resultById = buildResultById(results);
+        const totalBenefitsPV = bcr.total_benefits_pv || 0;
+        const totalCostsPV = bcr.total_costs_pv || 0;
+
+        const toggles = [];
+        Object.entries(taxonomy.excludable_groups).forEach(([gid, group]) => {
+          const groupPV = group.taxonomy_ids.reduce((sum, tid) => sum + (resultById[tid]?.value_pv || 0), 0);
+          toggles.push({ id: `custom-exc-${gid}`, label: `Exclude ${group.label}`, pv: groupPV });
+        });
+
+        const togglesDiv = document.createElement('div');
+        togglesDiv.className = 'custom-bcr-toggles';
+        toggles.forEach(t => {
+          const lbl = document.createElement('label');
+          lbl.className = 'custom-bcr-toggle';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.id = t.id;
+          lbl.appendChild(cb);
+          lbl.appendChild(document.createTextNode(t.label));
+          togglesDiv.appendChild(lbl);
+        });
+        container.appendChild(togglesDiv);
+
+        const resultBox = document.createElement('div');
+        resultBox.className = 'custom-bcr-result';
+        const bcrMetric = document.createElement('div');
+        bcrMetric.className = 'custom-bcr-metric';
+        bcrMetric.innerHTML = '<div class="label">Custom BCR</div><div class="value" id="custom-bcr-value">' + formatNumber(totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0, 3) + '</div>';
+        const nbMetric = document.createElement('div');
+        nbMetric.className = 'custom-bcr-metric';
+        nbMetric.innerHTML = '<div class="label">Custom Net Benefit (PV)</div><div class="value" id="custom-nb-value">' + formatCurrency(totalBenefitsPV - totalCostsPV, 0) + '</div>';
+        resultBox.appendChild(bcrMetric);
+        resultBox.appendChild(nbMetric);
+        container.appendChild(resultBox);
+
+        function recompute() {
+          let customCosts = totalCostsPV;
+          toggles.forEach(t => {
+            const cb = document.getElementById(t.id);
+            if (cb && cb.checked) customCosts -= t.pv;
+          });
+          const customBCR = customCosts > 0 ? totalBenefitsPV / customCosts : 0;
+          const customNB = totalBenefitsPV - customCosts;
+          const bcrEl = document.getElementById('custom-bcr-value');
+          const nbEl = document.getElementById('custom-nb-value');
+          if (bcrEl) bcrEl.textContent = formatNumber(customBCR, 3);
+          if (nbEl) {
+            nbEl.textContent = formatCurrency(customNB, 0);
+            nbEl.style.color = customNB < 0 ? '#b00020' : '#0066cc';
+          }
+        }
+
+        setTimeout(() => {
+          toggles.forEach(t => {
+            const cb = document.getElementById(t.id);
+            if (cb) cb.addEventListener('change', recompute);
+          });
+        }, 0);
+
+        return container;
+      }
+
+      // ===== Taxonomy-Driven Input Form Renderer (Phase 4) =====
+
+      const INPUT_TAB_ORDER = ['project', 'route-terrain', 'financial', 'capital-costs', 'operational', 'delay-costs', 'risk', 'emissions', 'benefits'];
+      const INPUT_TAB_LABELS = {
+        'project': 'Project', 'route-terrain': 'Route & Terrain', 'financial': 'Financial',
+        'capital-costs': 'Capital Costs', 'operational': 'Operational Costs', 'delay-costs': 'Delay Costs',
+        'risk': 'Risk Costs', 'emissions': 'Emissions', 'benefits': 'Benefits',
+      };
+
+      function getValueAtFieldPath(data, yamlSection, fieldPath) {
+        const parts = fieldPath.split('.');
+        let obj = data?.[yamlSection];
+        for (const p of parts) {
+          const arrMatch = p.match(/^(.+)\[(\d+)\]$/);
+          if (arrMatch) {
+            obj = obj?.[arrMatch[1]]?.[parseInt(arrMatch[2])];
+          } else {
+            obj = obj?.[p];
+          }
+          if (obj === undefined) return undefined;
+        }
+        return obj;
+      }
+
+      function createFieldFromMetadata(meta, value) {
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'form-field';
+        const fullPath = meta.yaml_section + '.' + meta.field_path;
+        fieldDiv.dataset.fieldPath = fullPath;
+
+        if (meta.condition === 'dc_only' || meta.condition === 'reconductoring_only') {
+          fieldDiv.dataset.conditional = 'true';
+        }
+
+        const label = document.createElement('label');
+        label.htmlFor = fullPath;
+        const labelText = document.createElement('span');
+        labelText.textContent = meta.label;
+        label.appendChild(labelText);
+
+        if (meta.validation?.required) {
+          const req = document.createElement('span');
+          req.className = 'required-indicator';
+          req.textContent = ' *';
+          label.appendChild(req);
+        }
+        if (meta.unit) {
+          const unitSpan = document.createElement('span');
+          unitSpan.className = 'unit-label';
+          unitSpan.textContent = '(' + meta.unit + ')';
+          label.appendChild(unitSpan);
+        }
+        if (meta.help_text) {
+          const helpIcon = document.createElement('span');
+          helpIcon.className = 'help-icon';
+          helpIcon.textContent = '?';
+          helpIcon.dataset.tooltip = meta.help_text;
+          label.appendChild(helpIcon);
+        }
+        fieldDiv.appendChild(label);
+
+        let input;
+        const v = meta.validation || {};
+
+        if (meta.input_type === 'dropdown') {
+          input = document.createElement('select');
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          (v.options || []).forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            input.appendChild(o);
+          });
+          if (value !== undefined && value !== null) input.value = String(value);
+          fieldDiv.appendChild(input);
+
+        } else if (meta.input_type === 'dynamic_dropdown') {
+          input = document.createElement('select');
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          const setOpts = (depVal) => {
+            const opts = v.optionSets?.[depVal] || [];
+            input.innerHTML = '';
+            if (v.allowBlank) input.appendChild(new Option('', ''));
+            opts.forEach(o => input.appendChild(new Option(o + (v.suffix || ''), o)));
+          };
+          const depPath = v.dependsOn;
+          if (depPath) {
+            const depEl = () => document.querySelector(`[data-path="${depPath}"]`);
+            setTimeout(() => {
+              const dep = depEl();
+              if (dep) { setOpts(dep.value); dep.addEventListener('change', () => setOpts(dep.value)); }
+            }, 0);
+          }
+          if (value !== undefined && value !== null) {
+            setTimeout(() => { input.value = String(value); }, 10);
+          }
+          fieldDiv.appendChild(input);
+
+        } else if (meta.input_type === 'toggle') {
+          const toggleLabel = document.createElement('label');
+          toggleLabel.className = 'toggle-switch';
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          if (value === true || value === 'true') input.checked = true;
+          const slider = document.createElement('span');
+          slider.className = 'toggle-slider';
+          toggleLabel.appendChild(input);
+          toggleLabel.appendChild(slider);
+          fieldDiv.appendChild(toggleLabel);
+
+        } else if (meta.input_type === 'percent') {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'slider-container';
+          const pct = v.pct !== false;
+          const sliderEl = document.createElement('input');
+          sliderEl.type = 'range';
+          sliderEl.min = v.min ?? 0; sliderEl.max = v.max ?? 1; sliderEl.step = v.step ?? 0.01;
+          sliderEl.value = value ?? 0;
+          sliderEl.className = 'slider-input';
+          const numInput = document.createElement('input');
+          numInput.type = 'number';
+          numInput.className = 'number-input';
+          numInput.id = fullPath;
+          numInput.dataset.path = fullPath;
+          if (pct) {
+            numInput.classList.add('slider-pct');
+            numInput.value = ((value ?? 0) * 100).toFixed(1);
+            numInput.step = ((v.step ?? 0.01) * 100);
+            sliderEl.addEventListener('input', () => { numInput.value = (parseFloat(sliderEl.value) * 100).toFixed(1); });
+            numInput.addEventListener('input', () => { sliderEl.value = parseFloat(numInput.value) / 100; });
+          } else {
+            numInput.value = value ?? 0;
+            numInput.step = v.step ?? 0.01;
+            sliderEl.addEventListener('input', () => { numInput.value = sliderEl.value; });
+            numInput.addEventListener('input', () => { sliderEl.value = numInput.value; });
+          }
+          wrapper.appendChild(sliderEl);
+          wrapper.appendChild(numInput);
+          fieldDiv.appendChild(wrapper);
+          input = numInput;
+
+        } else if (meta.input_type === 'currency') {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          input.className = 'currency-input';
+          if (value !== undefined && value !== null) {
+            const n = Number(value);
+            input.value = isNaN(n) ? value : '$' + n.toLocaleString('en-US', {maximumFractionDigits: 2});
+          }
+          input.addEventListener('focus', () => {
+            const raw = input.value.replace(/[$,]/g, '');
+            input.value = raw;
+          });
+          input.addEventListener('blur', () => {
+            const raw = parseFloat(input.value.replace(/[$,]/g, ''));
+            if (!isNaN(raw)) input.value = '$' + raw.toLocaleString('en-US', {maximumFractionDigits: 2});
+          });
+          fieldDiv.appendChild(input);
+
+        } else if (meta.input_type === 'text') {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          if (value !== undefined && value !== null) input.value = String(value);
+          fieldDiv.appendChild(input);
+
+        } else if (meta.input_type === 'year') {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          input.className = 'year-input';
+          if (value !== undefined && value !== null) input.value = String(value);
+          fieldDiv.appendChild(input);
+
+        } else if (meta.input_type === 'fuel_mix_row') {
+          input = document.createElement('input');
+          input.type = 'number';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          input.className = 'number-input';
+          if (value !== undefined && value !== null) input.value = value;
+          fieldDiv.appendChild(input);
+
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = fullPath;
+          input.dataset.path = fullPath;
+          input.className = 'number-input';
+          if (value !== undefined && value !== null) {
+            const n = Number(value);
+            input.value = isNaN(n) ? (value ?? '') : n.toLocaleString('en-US', {maximumFractionDigits: 10});
+          }
+          input.addEventListener('focus', () => { input.value = input.value.replace(/,/g, ''); });
+          input.addEventListener('blur', () => {
+            const raw = parseFloat(input.value.replace(/,/g, ''));
+            if (!isNaN(raw)) input.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+          });
+          fieldDiv.appendChild(input);
+        }
+
+        return fieldDiv;
+      }
+
+      function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
+        if (!taxonomyData || !metadataList) {
+          console.warn('Taxonomy or input metadata not loaded, falling back to legacy renderer');
+          renderJsonInputs(data);
+          return;
+        }
+
+        tabButtonsContainer.innerHTML = '';
+        tabContentsContainer.innerHTML = '';
+        ctccJsonData = data;
+
+        const taxById = {};
+        (taxonomyData.items || []).forEach(item => { taxById[item.id] = item; });
+
+        INPUT_TAB_ORDER.forEach((tabId, tabIndex) => {
+          const tabLabel = INPUT_TAB_LABELS[tabId] || tabId;
+
+          const tabButton = document.createElement('button');
+          tabButton.type = 'button';
+          tabButton.className = 'tab-button' + (tabIndex === 0 ? ' active' : '');
+          tabButton.textContent = tabLabel;
+          tabButton.addEventListener('click', () => switchTab(tabIndex));
+          tabButtonsContainer.appendChild(tabButton);
+
+          const tabContent = document.createElement('div');
+          tabContent.className = 'tab-content' + (tabIndex === 0 ? ' active' : '');
+          tabContent.dataset.tabId = tabId;
+
+          const tabFields = metadataList.filter(f => f.input_tab === tabId && f.condition !== 'always_hidden');
+          const groups = {};
+          tabFields.forEach(f => { (groups[f.taxonomy_id] ??= []).push(f); });
+
+          const seenTaxIds = [];
+          tabFields.forEach(f => { if (!seenTaxIds.includes(f.taxonomy_id)) seenTaxIds.push(f.taxonomy_id); });
+
+          seenTaxIds.forEach(taxId => {
+            const fields = groups[taxId];
+            if (!fields || fields.length === 0) return;
+            fields.sort((a, b) => a.display_order - b.display_order);
+
+            const taxItem = taxById[taxId];
+            const sectionLabel = taxItem?.label || taxId;
+            const tier = fields[0].tier || 'working';
+
+            const section = document.createElement('div');
+            section.className = 'taxonomy-input-section';
+            section.style.marginBottom = '0.75rem';
+
+            const header = document.createElement('div');
+            header.className = 'collapsible-header';
+            if (tier !== 'advanced') header.classList.add('expanded');
+            header.innerHTML = `<span class="section-title" style="font-weight:600;color:#0066cc;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em">${sectionLabel}</span>`;
+            section.appendChild(header);
+
+            const content = document.createElement('div');
+            content.className = 'collapsible-content';
+            if (tier !== 'advanced') content.classList.add('expanded');
+            header.addEventListener('click', () => {
+              header.classList.toggle('expanded');
+              content.classList.toggle('expanded');
+            });
+
+            const subGroups = {};
+            fields.forEach(f => {
+              const sg = f.section_label || '__default__';
+              (subGroups[sg] ??= []).push(f);
+            });
+
+            Object.entries(subGroups).forEach(([sgLabel, sgFields]) => {
+              if (sgLabel !== '__default__' && Object.keys(subGroups).length > 1) {
+                const sgHeader = document.createElement('div');
+                sgHeader.className = 'results-subcategory-title';
+                sgHeader.style.marginTop = '0.75rem';
+                sgHeader.textContent = sgLabel;
+                content.appendChild(sgHeader);
+              }
+
+              const grid = document.createElement('div');
+              grid.className = 'form-grid';
+
+              sgFields.forEach(fieldMeta => {
+                const val = getValueAtFieldPath(data, fieldMeta.yaml_section, fieldMeta.field_path);
+                const fieldEl = createFieldFromMetadata(fieldMeta, val);
+                if (fieldEl) grid.appendChild(fieldEl);
+              });
+
+              content.appendChild(grid);
+            });
+
+            section.appendChild(content);
+
+            const resetBtn = document.createElement('button');
+            resetBtn.type = 'button';
+            resetBtn.className = 'reset-section-btn';
+            resetBtn.textContent = 'Reset';
+            resetBtn.dataset.sectionPath = taxId;
+            resetBtn.addEventListener('click', () => {
+              const origData = typeof originalJsonData !== 'undefined' ? originalJsonData : data;
+              fields.forEach(f => {
+                const origVal = getValueAtFieldPath(origData, f.yaml_section, f.field_path);
+                const fullPath = f.yaml_section + '.' + f.field_path;
+                const el = tabContent.querySelector(`[data-path="${fullPath}"]`);
+                if (!el) return;
+                if (el.type === 'checkbox') { el.checked = origVal === true; }
+                else if (el.classList.contains('slider-pct')) {
+                  el.value = ((origVal || 0) * 100).toFixed(1);
+                  const slider = el.closest('.slider-container')?.querySelector('input[type="range"]');
+                  if (slider) slider.value = origVal || 0;
+                } else if (el.classList.contains('currency-input')) {
+                  const n = Number(origVal);
+                  el.value = isNaN(n) ? '' : '$' + n.toLocaleString('en-US', {maximumFractionDigits: 2});
+                } else if (el.tagName === 'SELECT') {
+                  el.value = origVal != null ? String(origVal) : '';
+                } else {
+                  const n = Number(origVal);
+                  el.value = origVal == null ? '' : (isNaN(n) ? origVal : n.toLocaleString('en-US', {maximumFractionDigits: 10}));
+                }
+              });
+            });
+            content.appendChild(resetBtn);
+
+            tabContent.appendChild(section);
+          });
+
+          tabContentsContainer.appendChild(tabContent);
+        });
+
+        tabsContainer.classList.remove('tabs-hidden');
+
+        setupTaxonomyConditionalVisibility();
+      }
+
+      function setupTaxonomyConditionalVisibility() {
+        const acDcPath = '01_project_technical_details.project.ac_dc';
+        const reconPath = '01_project_technical_details.project.reconductoring';
+
+        function updateVisibility() {
+          const acDcEl = document.querySelector(`[data-path="${acDcPath}"]`);
+          const reconEl = document.querySelector(`[data-path="${reconPath}"]`);
+          const isDC = acDcEl?.value === 'DC';
+          const isRecon = reconEl?.checked === true;
+
+          document.querySelectorAll('.form-field[data-conditional="true"]').forEach(field => {
+            const path = field.dataset.fieldPath;
+            if (!path || !inputMetadata) return;
+            const meta = inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path);
+            if (!meta) return;
+            if (meta.condition === 'dc_only') {
+              field.style.display = isDC ? '' : 'none';
+            } else if (meta.condition === 'reconductoring_only') {
+              field.style.display = isRecon ? '' : 'none';
+            }
+          });
+        }
+
+        setTimeout(() => {
+          const acDcEl = document.querySelector(`[data-path="${acDcPath}"]`);
+          const reconEl = document.querySelector(`[data-path="${reconPath}"]`);
+          if (acDcEl) acDcEl.addEventListener('change', updateVisibility);
+          if (reconEl) reconEl.addEventListener('change', updateVisibility);
+          updateVisibility();
+        }, 0);
       }
 
       // ===== Costs Tab Renderers =====
@@ -4807,6 +5628,11 @@
       }
 
       function renderCTCCResults(results) {
+        // Backward compat: derive taxonomy_results for old .ctcc files
+        if (!results.taxonomy_results || results.taxonomy_results.length === 0) {
+          results.taxonomy_results = deriveTaxonomyResultsFromLegacy(results);
+        }
+
         resultEl.innerHTML = '';
         resultEl.className = 'results-container';
 
@@ -4930,8 +5756,8 @@
           content.style.padding = '1.5rem';
 
           if (tab.id === 'summary') {
-            // Total Costs cards
-            const summary = results.summary || {};
+            // Taxonomy-driven cost bucket cards
+            const _rid = buildResultById(results);
             const costsHeading = document.createElement('div');
             costsHeading.className = 'results-section-heading';
             const costsTitle = document.createElement('div');
@@ -4946,29 +5772,28 @@
 
             const summaryGrid = document.createElement('div');
             summaryGrid.className = 'results-summary-grid';
-            const summaryMetrics = [
-              { label: 'Hard (C_hard)', value: summary.reporting_bucket_hard_pv },
-              { label: 'Soft (C_soft)', value: summary.reporting_bucket_soft_pv },
-              { label: 'Risk (C_risk)', value: summary.reporting_bucket_risk_pv },
-              { label: 'Emissions (C_emissions)', value: summary.reporting_bucket_emissions_pv },
-              { label: 'Total Costs', value: summary.grand_total_cost_pv ?? summary.total_costs_pv, highlight: true },
-            ];
-            summaryMetrics.forEach(m => {
+            let _totalCostPV = 0;
+            COST_BUCKET_ORDER.forEach(b => {
+              const items = (taxonomyByBucket[b] || []);
+              const pv = items.reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+              _totalCostPV += pv;
               const card = document.createElement('div');
               card.className = 'results-summary-card';
-              if (m.highlight) card.classList.add('highlight');
               const lbl = document.createElement('div');
               lbl.className = 'results-summary-label';
-              lbl.textContent = m.label;
+              lbl.textContent = BUCKET_LABELS[b] || b;
               const val = document.createElement('div');
               val.className = 'results-summary-value';
-              const num = Number(m.value || 0);
-              val.textContent = formatCurrency(num, 0);
-              if (num < 0) val.style.color = '#b00020';
+              val.textContent = formatCurrency(pv, 0);
+              if (pv < 0) val.style.color = '#b00020';
               card.appendChild(lbl);
               card.appendChild(val);
               summaryGrid.appendChild(card);
             });
+            const totalCard = document.createElement('div');
+            totalCard.className = 'results-summary-card highlight';
+            totalCard.innerHTML = `<div class="results-summary-label">Total Costs</div><div class="results-summary-value">${formatCurrency(_totalCostPV, 0)}</div>`;
+            summaryGrid.appendChild(totalCard);
             content.appendChild(summaryGrid);
 
             // Net Benefits heading + Three Perspectives table
@@ -4986,9 +5811,7 @@
             content.appendChild(benefitsHeading);
             content.appendChild(renderPerspectivesTable(results));
 
-            // Total Benefits cards
-            const cc = results.benefits?.congestion_curtailment || {};
-            const bcr = results.bcr || {};
+            // Total Benefits cards (taxonomy-driven)
             const tbHeading = document.createElement('div');
             tbHeading.className = 'results-section-heading';
             tbHeading.style.marginTop = '2rem';
@@ -5002,28 +5825,14 @@
             tbHeading.appendChild(tbSubtitle);
             content.appendChild(tbHeading);
 
+            const remPV = (taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            const enPV = (taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
             const tbGrid = document.createElement('div');
-            tbGrid.style.display = 'grid';
-            tbGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-            tbGrid.style.gap = '1rem';
-            tbGrid.style.marginTop = '1rem';
-            const tbMetrics = [
-              { label: 'Remedial', value: bcr.benefits_remedial_pv || 0 },
-              { label: 'Enabling', value: bcr.benefits_enabling_pv || 0 },
-              { label: 'Total Benefits', value: bcr.total_benefits_pv || 0, highlight: true },
-            ];
-            tbMetrics.forEach(m => {
+            tbGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem';
+            [{label:'Remedial',value:remPV}, {label:'Enabling',value:enPV}, {label:'Total Benefits',value:remPV+enPV,highlight:true}].forEach(m => {
               const card = document.createElement('div');
-              card.className = 'results-summary-card';
-              if (m.highlight) card.classList.add('highlight');
-              const lbl = document.createElement('div');
-              lbl.className = 'results-summary-label';
-              lbl.textContent = m.label;
-              const val = document.createElement('div');
-              val.className = 'results-summary-value';
-              val.textContent = formatCurrency(Number(m.value || 0), 0);
-              card.appendChild(lbl);
-              card.appendChild(val);
+              card.className = 'results-summary-card' + (m.highlight ? ' highlight' : '');
+              card.innerHTML = `<div class="results-summary-label">${m.label}</div><div class="results-summary-value">${formatCurrency(m.value, 0)}</div>`;
               tbGrid.appendChild(card);
             });
             content.appendChild(tbGrid);
@@ -5039,23 +5848,15 @@
             content.appendChild(renderBCRHeadline(results));
 
           } else if (tab.id === 'benefits') {
-            content.appendChild(renderBenefitsTab(results));
+            content.appendChild(renderBenefitsByTaxonomy(results));
 
           } else if (tab.id === 'costs') {
-            // Cost overview table
-            content.appendChild(renderCostOverview(results));
-            // 6 Cost sections
-            content.appendChild(createCategory('1. Delay Costs', renderDelayCosts(results)));
-            content.appendChild(createCategory('2. Capital Costs', renderCapitalCosts(results)));
-            content.appendChild(createCategory('3. Operational Costs', renderOperationalCosts(results)));
-            content.appendChild(createCategory('4. Energy Losses', renderEnergyLosses(results)));
-            content.appendChild(createCategory('5. Risk Costs', renderRiskCosts(results)));
-            content.appendChild(createCategory('6. Emissions (loss-compensation)', renderEmissionsCosts(results)));
-            content.appendChild(createCategory('7. Facilitated Emissions', renderFacilitatedEmissions(results)));
+            content.appendChild(renderCostsByTaxonomy(results));
+
           } else if (tab.id === 'bcr') {
             content.appendChild(renderBCRHeadline(results));
-            content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityExclusions(results)));
-            content.appendChild(createCategory('Custom BCR', renderCustomBCR(results)));
+            content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityByTaxonomy(results)));
+            content.appendChild(createCategory('Custom BCR', renderCustomBCRByTaxonomy(results)));
           }
 
           tabContents.appendChild(content);
@@ -6543,6 +7344,22 @@
         sel.appendChild(optCustom);
 
         const baseUrl = apiBaseInput.value.trim();
+        fetchTaxonomy(baseUrl)
+          .then(data => {
+            taxonomy = data;
+            taxonomyById = {};
+            taxonomyBySide = {};
+            taxonomyByBucket = {};
+            (data.items || []).forEach(item => {
+              taxonomyById[item.id] = item;
+              (taxonomyBySide[item.side] ??= []).push(item);
+              (taxonomyByBucket[item.bucket] ??= []).push(item);
+            });
+          })
+          .catch(err => console.warn('Taxonomy load failed (non-fatal):', err));
+        fetchInputMetadata(baseUrl)
+          .then(data => { inputMetadata = data; })
+          .catch(err => console.warn('Input metadata load failed (non-fatal):', err));
         fetchFuelMixPresets(baseUrl)
           .then(data => {
             if (!document.getElementById('fuel-mix-preset-bar')) return;
@@ -6785,46 +7602,8 @@
       const originalRenderJsonInputs = renderJsonInputs;
       renderJsonInputs = function(data) {
         const normalized = normalizeEnergySourceMixInCombinedData(data);
-        // Store original data for reset functionality
         originalJsonData = JSON.parse(JSON.stringify(normalized));
-
-        // Call original function
-        originalRenderJsonInputs(normalized);
-
-        // Set up conditional field listeners (includes initial visibility update)
-        setupConditionalFieldListeners();
-
-        // Insert calculated totals (terrain, delay, ROW)
-        insertCalculatedTotals();
-
-        // Pre-hierarchy DOM moves (must happen before applyTabHierarchy)
-        restructureEnergySourceMix();
-        injectFuelMixPresetBar();
-        restructureEmissionIntensities();
-
-        // TAB_HIERARCHY engine (claims, reorders, decorates all configured tabs)
-        applyTabHierarchy();
-
-        // Post-hierarchy transforms
-        insertRealWaccDisplay();
-        updateRealWacc();
-        moveAfudcToRevenueRequirements();
-        cleanUpSectionHeaders();
-        styleProminentToggles();
-        // makeEmissionIntensitiesCollapsible() — retired; absorbed into tier: 'advanced'
-        filterEnvironmentalTerrains();
-        filterOperationalCosts();
-        filterRiskTerrains();
-        insertLockedDiscountRate();
-        updateDynamicDropdowns();
-        updateConductorTypeOptions();
-        validateCostTimingPatterns();
-
-        // Re-run visibility after all DOM moves
-        updateConditionalFieldVisibility();
-
-        // Apply chemical subscript notation (CO₂, SOₓ, NOₓ)
-        applyChemicalSubscripts();
+        renderInputsFromTaxonomy(normalized, taxonomy, inputMetadata);
       };
 
       console.log('Calling initialiseApiBase and updateModeVisibility...');
