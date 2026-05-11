@@ -2897,7 +2897,7 @@
           'ignition_rate_multiplier', 'outage_duration_multiplier',
           'discount_rate', 'risk_growth_rate',
           'capacity_at_risk_factor',
-          'credit_ratios', 'mitigation_uplift_factor'
+          'mitigation_uplift_factor'
         ];
         if (excludePatterns.some(pattern => lowerPath.includes(pattern))) {
           return false;
@@ -5191,7 +5191,7 @@
           // Switch to credits when we hit credit-related headers
           const headerEl = child.querySelector ? child.querySelector('.subsection-header, .section-header') : null;
           const headerText = headerEl ? headerEl.textContent.toLowerCase() : text;
-          if (headerText.includes('credit cost') || headerText.includes('credit ratios') || headerText.includes('credit_cost') || headerText.includes('credit_ratios')) {
+          if (headerText.includes('credit cost') || headerText.includes('credit_cost')) {
             currentTarget = creditsDiv;
           }
           currentTarget.appendChild(child);

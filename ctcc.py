@@ -28,6 +28,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from csv_output_manager import BATCH_SUMMARY_FIELDS
 from run_context import set_output_manager, get_output_manager, clear_output_manager
 
+_PRELOAD_MODULES = [
+    "weighted_miles", "build_costs", "row_costs", "environmental_mitigation",
+    "revenue", "insurance_costs", "delay_costs", "wildfire_costs",
+    "outage_costs", "congestion_curtailment_reduction", "energy_losses",
+    "oandm", "emissions", "facilitated_emissions", "line_loss_costs",
+    "taxonomy_adapters", "bcr_calculator",
+]
+for _mod_name in _PRELOAD_MODULES:
+    importlib.import_module(_mod_name)
+
 _CTCC_ROOT = Path(__file__).resolve().parent
 _calculation_lock = threading.Lock()
 
@@ -323,17 +333,25 @@ def run_calculation(
             module_timings: list[tuple[str, float]] = []
             failed_scripts: list[str] = []
 
-            for script in scripts:
-                stem = script.replace(".py", "")
-                try:
-                    mod = importlib.import_module(stem)
-                    t0 = _time.perf_counter()
-                    mod.main()
-                    module_timings.append((stem, (_time.perf_counter() - t0) * 1000))
-                except Exception:
-                    failed_scripts.append(script)
-                    if not quiet:
-                        traceback.print_exc()
+            saved_stdout = sys.stdout
+            if quiet:
+                sys.stdout = open(os.devnull, "w")
+            try:
+                for script in scripts:
+                    stem = script.replace(".py", "")
+                    try:
+                        mod = importlib.import_module(stem)
+                        t0 = _time.perf_counter()
+                        mod.main()
+                        module_timings.append((stem, (_time.perf_counter() - t0) * 1000))
+                    except Exception:
+                        failed_scripts.append(script)
+                        if not quiet:
+                            traceback.print_exc()
+            finally:
+                if quiet:
+                    sys.stdout.close()
+                    sys.stdout = saved_stdout
 
             json_results = aggregator.get_json_results()
             bcr_results = None

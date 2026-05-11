@@ -32,8 +32,8 @@ The environmental mitigation cost calculation follows this structure:
 \text{Terrain Acres} &= \frac{\text{Terrain Miles} \times 5280 \times \text{ROW Width (feet)}}{43560} \\
 \text{Effective Acres} &= \text{Base Acres} \times \text{Uplift Factor} \\
 \text{Base Cost} &= \sum_{\text{terrains}} \text{Cost/Acre} \times \text{Effective Acres} \\
-\text{Wetland Credits} &= \text{Wetland Cost/Acre} \times \text{Ratio} \times \text{Wetland Impacted Acres} \\
-\text{Habitat Credits} &= \text{Habitat Cost/Acre} \times \text{Ratio} \times \text{Habitat Impacted Acres} \\
+\text{Wetland Credits} &= \text{Wetland Cost/Acre} \times \text{Wetland Impacted Acres} \\
+\text{Habitat Credits} &= \text{Habitat Cost/Acre} \times \text{Habitat Impacted Acres} \\
 \text{Total} &= \text{Base Cost} + \text{Wetland Credits} + \text{Habitat Credits}
 \end{align}
 
@@ -46,7 +46,7 @@ The uplift factor accounts for additional mitigation requirements beyond the phy
     \item Project technical details (construction type, AC/DC, capacity, etc.)
     \item Physical details (terrain distribution)
     \item ROW width for project category
-    \item Environmental mitigation parameters (base costs, credit costs, credit ratios, uplift factor)
+    \item Environmental mitigation parameters (base costs, credit costs, uplift factor)
     \item Financing parameters (WACC, inflation, AFUDC rate)
     \item Timeline (delay years, construction years)
 \end{itemize}
@@ -116,18 +116,16 @@ for terrain, miles in terrain_miles_dict.items():
         base_cost += cost_per_acre * effective_acres
 wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor
 habitat_impacted_acres = sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
-wetlands_credits = wetland_cost_per_acre * wetland_ratio * wetland_impacted_acres
-habitat_dict = credits.get("habitat", {})
-ratios_habitat = ratios.get("habitat", {})
-default_cost, default_ratio = habitat_dict.get("default", 0.0), ratios_habitat.get("default", 1.0)
+wetland_cost_per_acre = mitigation_config.get("wetland_credit_cost_per_acre", 25000)
+wetlands_credits = wetland_cost_per_acre * wetland_impacted_acres
+habitat_costs = mitigation_config.get("habitat_credit_cost_per_acre", {})
 habitat_credits = 0.0
 for terrain in habitat_terrains:
     terrain_acres = acres_by_terrain.get(terrain, 0.0)
     if terrain_acres > 0:
         effective_acres = terrain_acres * uplift_factor
-        cost_per_acre = habitat_dict.get(terrain, default_cost)
-        ratio_val = ratios_habitat.get(terrain, default_ratio)
-        habitat_credits += cost_per_acre * ratio_val * effective_acres
+        cost_per_acre = habitat_costs.get(terrain, 30000)
+        habitat_credits += cost_per_acre * effective_acres
 if reconductoring:
     wetlands_credits = 0.0
     habitat_credits = 0.0
@@ -162,8 +160,8 @@ The following example demonstrates a typical usage of the environmental mitigati
 #     * Farmland: 50 miles
 #   - Uplift factor: 1.5x
 #   - Base cost: $2000/acre (overhead, forested), $3000/acre (overhead, wetland)
-#   - Wetland credit: $5000/acre, ratio 2.0:1
-#   - Habitat credit: $3000/acre, ratio 1.5:1 (in full implementation, cost and ratio can vary by habitat terrain)
+#   - Wetland credit: $5000/acre
+#   - Habitat credit: $3000/acre (per terrain; explicit value for each habitat terrain)
 #   - Construction: 2 years
 #
 # Calculation:
@@ -176,9 +174,9 @@ The following example demonstrates a typical usage of the environmental mitigati
 #   * Wetland: 242.4 * 1.5 = 363.6 acres
 #
 #   Base cost = (1454.6 * $2000) + (363.6 * $3000) = $4.4M
-#   Wetland credits = $5000 * 2.0 * 363.6 = $3.6M
-#   Habitat credits = $3000 * 1.5 * 1454.6 = $6.5M
-#   Total = $14.5M
+#   Wetland credits = $5000 * 363.6 = $1.8M
+#   Habitat credits = $3000 * 1454.6 = $4.4M
+#   Total = $10.6M
 #
 # Output:
 #   - Nominal cost: $14.5M
@@ -208,13 +206,9 @@ csv_manager.write_batch_summary()
 
 The uplift factor (TCE - Total Cost Equivalent) accounts for mitigation requirements beyond the physical ROW footprint. For example, a 1.5x uplift means that for every acre of ROW, 1.5 acres of mitigation is required (including buffer zones, restoration areas, etc.).
 
-\subsection{Credit Ratios}
-
-Credit ratios represent the mitigation requirement. For example, a 2.0:1 ratio for wetlands means that for every acre of wetland impacted, 2 acres of wetland credits must be purchased.
-
 \subsection{Habitat Terrain Classification}
 
-The script identifies habitat-impacted acres by summing natural terrain types: forested, scrubbed\_flat, desert\_barren, rolling\_hills, and mountain. This is a conservative approach that captures all potential habitat impacts. Habitat credit cost and ratio can be specified per terrain in the configuration (with a \texttt{default} fallback); the total habitat credit cost is the sum over habitat terrains of (cost\_per\_acre $\times$ ratio $\times$ effective\_acres) for each terrain.
+The script identifies habitat-impacted acres by summing natural terrain types: forested, scrubbed\_flat, desert\_barren, rolling\_hills, and mountain. This is a conservative approach that captures all potential habitat impacts. Habitat credit cost is specified per terrain in the configuration; the total habitat credit cost is the sum over habitat terrains of (cost\_per\_acre $\times$ effective\_acres) for each terrain.
 
 \subsection{Present Value Timing}
 

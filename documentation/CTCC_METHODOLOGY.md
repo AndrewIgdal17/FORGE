@@ -336,12 +336,10 @@ Environmental mitigation has **base** costs (construction/restoration per effect
 | $A^{effective impact}_{wetland}$         | Wetland impact acres (effective)                           | acres. Wetland terrain only: $A^{effective impact}_{wetland} = A_{wetland} \times u_{mitigation}$.                                                                                                                                                   |
 | $A^{effective impact}_{habitat}$         | Habitat impact acres (effective), total                    | acres. Sum over habitat terrains: $A^{effective impact}_{habitat} = \bigl(\sum_{terrain \in habitat} A_{terrain}\bigr) \times u_{mitigation}$. Habitat = forested, scrubbed flat, desert barren, rolling hills, mountain.                            |
 | $A^{effective impact}_{terrain,habitat}$ | Effective acres of habitat impacted for that terrain       | acres. For a given habitat terrain: $A^{effective impact}_{terrain,habitat} = A_{terrain} \times u_{mitigation}$ (that terrain only, not the total). Used per term in $C_{credits,habitat}$.                                                         |
-| $p_{wetland}$                            | Wetland credit cost per acre                               | $/acre. |
-| $r_{wetland}$                            | Wetland credit ratio                                       | Acres of credits required per acre impacted. |
-| $p_{habitat}(terrain)$                   | Habitat credit cost per acre, by terrain                   | $/acre. Per habitat terrain; fallback to default if terrain not listed. |
-| $r_{habitat}(terrain)$                   | Habitat credit ratio, by terrain                           | Acres of credits required per acre impacted. Per habitat terrain; fallback to default. |
+| $p_{wetland}$                            | Wetland credit cost per acre                               | $/acre. Single rate for all wetland acres. |
+| $p_{habitat}(terrain)$                   | Habitat credit cost per acre, by terrain                   | $/acre. Per terrain; explicit value for each habitat terrain. |
 | $C_{credits,wetlands}$                   | Wetland credit cost                                        | $.                                                                                                                                                                                                                                                  |
-| $C_{credits,habitat}$                    | Habitat credit cost                                        | $. Sum over habitat terrains (with $M_{terrain} > 0$) of $p_{habitat}(terrain) \times r_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}$.                                                                                          |
+| $C_{credits,habitat}$                    | Habitat credit cost                                        | $. Sum over habitat terrains (with $M_{terrain} > 0$) of $p_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}$.                                                                                          |
 | $\xi_{reconductoring}$                   | Binary: project is not reconductoring                      | 1 if not reconductoring, 0 if reconductoring. When 0, wetland and habitat credits are set to zero.                                                                                                                                                  |
 | $C_{credits,total}$                      | Total credit cost (wetland + habitat)                      | $. After reconductoring rule.                                                                                                                                                                                                                       |
 | $T_{delay}$                              | Delay years                                                | years.                                                                                                                                                                                                                                              |
@@ -398,7 +396,7 @@ $$
 Wetland credit cost:
 
 $$
-C_{credits,wetlands} = p_{wetland} \times r_{wetland} \times A^{effective impact}_{wetland}.
+C_{credits,wetlands} = p_{wetland} \times A^{effective impact}_{wetland}.
 
 
 $$
@@ -406,7 +404,7 @@ $$
 Habitat credit cost (per-terrain effective acres $A^{effective impact}_{terrain,habitat}$ for that habitat terrain):
 
 $$
-C_{credits,habitat} = \sum_{\substack{terrain \in habitat \\ M_{terrain} > 0}} p_{habitat}(terrain) \times r_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}.
+C_{credits,habitat} = \sum_{\substack{terrain \in habitat \\ M_{terrain} > 0}} p_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}.
 
 
 $$

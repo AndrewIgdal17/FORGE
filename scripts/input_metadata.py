@@ -344,27 +344,26 @@ for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
             unit="$/acre", input_type="currency", tier="working", display_order=_env_order))
         _env_order += 1
 
-# Credits: wetlands (3 + 3) + habitat (1 + 1) = 8
-for _credit_type, _subtypes in [("wetlands", ["palustrine", "estuarine", "other"]), ("habitat", ["default"])]:
-    for _st in _subtypes:
-        _TAB4.append(_f(
-            f"env_credit_cost_{_credit_type}_{_st}", taxonomy_id="env_mitigation", input_tab="capital-costs",
-            yaml_section="09_environmental_mitigation",
-            field_path=f"environmental_mitigation.credit_cost_per_acre.{_credit_type}.{_st}",
-            label=f"{_credit_type.title()} — {_st.title()}",
-            help_text=f"Per-acre credit purchase cost for {_credit_type} ({_st}) mitigation banking",
-            section_label="Credit Costs",
-            unit="$/acre", input_type="currency", tier="working", display_order=_env_order))
-        _env_order += 1
-        _TAB4.append(_f(
-            f"env_credit_ratio_{_credit_type}_{_st}", taxonomy_id="env_mitigation", input_tab="capital-costs",
-            yaml_section="09_environmental_mitigation",
-            field_path=f"environmental_mitigation.credit_ratios.{_credit_type}.{_st}",
-            label=f"{_credit_type.title()} — {_st.title()}",
-            help_text=f"Acres of {_credit_type} credits required per acre impacted ({_st})",
-            section_label="Credit Ratios",
-            tier="working", display_order=_env_order))
-        _env_order += 1
+# Credits: 1 wetland + 5 habitat = 6 fields
+_TAB4.append(_f(
+    "env_credit_cost_wetland", taxonomy_id="env_mitigation", input_tab="capital-costs",
+    yaml_section="09_environmental_mitigation",
+    field_path="environmental_mitigation.wetland_credit_cost_per_acre",
+    label="Wetland Credit Cost",
+    help_text="Per-acre credit purchase cost for wetland mitigation banking",
+    section_label="Credit Costs",
+    unit="$/acre", input_type="currency", tier="working", display_order=_env_order))
+_env_order += 1
+for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain"]:
+    _TAB4.append(_f(
+        f"env_credit_cost_habitat_{_terrain}", taxonomy_id="env_mitigation", input_tab="capital-costs",
+        yaml_section="09_environmental_mitigation",
+        field_path=f"environmental_mitigation.habitat_credit_cost_per_acre.{_terrain}",
+        label=f"Habitat — {_terrain_label(_terrain)}",
+        help_text=f"Per-acre habitat credit cost for {_terrain_label(_terrain).lower()} terrain",
+        section_label="Credit Costs",
+        unit="$/acre", input_type="currency", tier="working", display_order=_env_order))
+    _env_order += 1
 
 # ===================================================================
 # Tab 5 — Operational Costs (43 fields: 7 insurance + 36 veg mgmt)

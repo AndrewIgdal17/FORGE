@@ -845,7 +845,7 @@ outage:
 
 \subsection{Purpose}
 
-This file configures environmental mitigation costs, including base restoration costs per acre by construction type and terrain, credit purchase costs (off-site mitigation), and mitigation ratios (acres required per acre impacted).
+This file configures environmental mitigation costs, including base restoration costs per acre by construction type and terrain, credit purchase costs (off-site mitigation).
 
 \subsection{Parameter Choices}
 
@@ -888,38 +888,14 @@ This file configures environmental mitigation costs, including base restoration 
 \subsubsection{Credit Purchase Costs}
 
 \begin{itemize}
-    \item \textbf{credit\_cost\_per\_acre} (dictionary): Off-site mitigation credit costs
+    \item \textbf{wetland\_credit\_cost\_per\_acre} (scalar): Wetland credit cost, \$25,000/acre. Single rate for all wetland acres.
+    \item \textbf{habitat\_credit\_cost\_per\_acre} (dictionary): Habitat credit costs by terrain type
     \begin{itemize}
-        \item \textbf{wetlands} (dictionary): Wetland credit costs by subtype
-        \begin{itemize}
-            \item \texttt{palustrine}: \$50,000/acre
-            \item \texttt{estuarine}: \$100,000/acre
-            \item \texttt{other}: \$25,000/acre
-        \end{itemize}
-        \item \textbf{habitat} (dictionary): Habitat credit costs. May include per-terrain keys and a \texttt{default} fallback for any terrain not listed.
-        \begin{itemize}
-            \item \texttt{default}: \$30,000/acre (fallback)
-            \item \texttt{forested}, \texttt{scrubbed\_flat}, \texttt{desert\_barren}, \texttt{rolling\_hills}, \texttt{mountain}: optional \$/acre per habitat terrain
-        \end{itemize}
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Mitigation Ratios}
-
-\begin{itemize}
-    \item \textbf{credit\_ratios} (dictionary): Acres required per acre impacted
-    \begin{itemize}
-        \item \textbf{wetlands} (dictionary):
-        \begin{itemize}
-            \item \texttt{palustrine}: 1.5 (1.5 acres required per acre impacted)
-            \item \texttt{estuarine}: 2.5
-            \item \texttt{other}: 1.0
-        \end{itemize}
-        \item \textbf{habitat} (dictionary): Per-terrain keys and a \texttt{default} fallback.
-        \begin{itemize}
-            \item \texttt{default}: 1.0 (fallback)
-            \item \texttt{forested}, \texttt{scrubbed\_flat}, \texttt{desert\_barren}, \texttt{rolling\_hills}, \texttt{mountain}: optional ratio per habitat terrain
-        \end{itemize}
+        \item \texttt{forested}: \$30,000/acre
+        \item \texttt{scrubbed\_flat}: \$30,000/acre
+        \item \texttt{desert\_barren}: \$30,000/acre
+        \item \texttt{rolling\_hills}: \$30,000/acre
+        \item \texttt{mountain}: \$30,000/acre
     \end{itemize}
 \end{itemize}
 
@@ -945,27 +921,14 @@ environmental_mitigation:
       seabed_corridor_default: 0
       landfall_default: 1000
 
-  credit_cost_per_acre:
-    wetlands:
-      palustrine: 50000
-      estuarine: 100000
-      other: 25000
-    habitat:
-      default: 30000
-      forested: 30000
-      mountain: 30000
-  # ... (scrubbed_flat, desert_barren, rolling_hills optional)
+  wetland_credit_cost_per_acre: 25000
 
-  credit_ratios:
-    wetlands:
-      palustrine: 1.5
-      estuarine: 2.5
-      other: 1.0
-    habitat:
-      default: 1.0
-      forested: 1.0
-      mountain: 1.0
-  # ... (per-terrain optional)
+  habitat_credit_cost_per_acre:
+    forested: 30000
+    scrubbed_flat: 30000
+    desert_barren: 30000
+    rolling_hills: 30000
+    mountain: 30000
 \end{lstlisting}
 
 \section{Right-of-Way Configuration}

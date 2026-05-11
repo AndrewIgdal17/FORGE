@@ -65,8 +65,6 @@ def calculate_environmental_mitigation_costs(
     """
     mitigation_config = em_yaml["environmental_mitigation"]
     base_costs = mitigation_config["base_mitigation_cost_per_acre"]
-    credits = mitigation_config.get("credit_cost_per_acre", {})
-    ratios = mitigation_config.get("credit_ratios", {})
     uplift_factor = mitigation_config.get("mitigation_uplift_factor", 1.0)
 
     # Determine construction type from category
@@ -113,24 +111,19 @@ def calculate_environmental_mitigation_costs(
         sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
     )
 
-    # Calculate wetland credits (using "other" subtype as default)
-    wetland_cost_per_acre = credits.get("wetlands", {}).get("other", 0.0)
-    wetland_ratio = ratios.get("wetlands", {}).get("other", 1.0)
-    wetlands_credits = wetland_cost_per_acre * wetland_ratio * wetland_impacted_acres
+    # Calculate wetland credits
+    wetland_cost_per_acre = mitigation_config.get("wetland_credit_cost_per_acre", 25000)
+    wetlands_credits = wetland_cost_per_acre * wetland_impacted_acres
 
-    # Calculate habitat credits: per-terrain cost and ratio (fallback to default)
+    # Calculate habitat credits: per-terrain cost
+    habitat_costs = mitigation_config.get("habitat_credit_cost_per_acre", {})
     habitat_credits = 0.0
-    habitat_dict = credits.get("habitat", {})
-    ratios_habitat = ratios.get("habitat", {})
-    default_cost = habitat_dict.get("default", 0.0)
-    default_ratio = ratios_habitat.get("default", 1.0)
     for terrain in habitat_terrains:
         terrain_acres = acres_by_terrain.get(terrain, 0.0)
         if terrain_acres > 0:
             effective_acres = terrain_acres * uplift_factor
-            cost_per_acre = habitat_dict.get(terrain, default_cost)
-            ratio_val = ratios_habitat.get(terrain, default_ratio)
-            habitat_credits += cost_per_acre * ratio_val * effective_acres
+            cost_per_acre = habitat_costs.get(terrain, 30000)
+            habitat_credits += cost_per_acre * effective_acres
 
     # For reconductoring projects, set credits to zero since they use existing ROW
     # and don't create new permanent environmental impacts requiring mitigation credits

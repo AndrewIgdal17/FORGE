@@ -46,19 +46,11 @@ environmental_mitigation:
       landfall_default: 1000 # for basic onshore site (flat/open)
 
   # Credit purchases (off-site mitigation via banks)
-  credit_cost_per_acre:
-    wetlands:
-      palustrine: 50000
-      estuarine: 100000
-      other: 25000
-    habitat:
-      default: 30000
+  wetland_credit_cost_per_acre: 25000
 
-  # Mitigation ratios (acres required per acre impacted)
-  credit_ratios:
-    wetlands:
-      palustrine: 1.5
-      estuarine: 2.5
-      other: 1.0
-    habitat:
-      default: 1.0
+  habitat_credit_cost_per_acre:
+    forested: 30000
+    scrubbed_flat: 30000
+    desert_barren: 30000
+    rolling_hills: 30000
+    mountain: 30000
