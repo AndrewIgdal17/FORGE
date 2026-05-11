@@ -6,8 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVER_DIR="$SCRIPT_DIR/server"
 CODE_ROOT="$SCRIPT_DIR"
-VENV_DIR="$CODE_ROOT/venv"
-REQUIREMENTS="$CODE_ROOT/requirements.txt"
+VENV_DIR="$CODE_ROOT/.venv"
 
 PORT="${PORT:-8000}"
 HOST="${HOST:-127.0.0.1}"
@@ -16,56 +15,12 @@ LOG_DIR="$SERVER_DIR/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/fastapi_$(date +%Y%m%d_%H%M%S).log"
 
-PYTHON_BIN="${PYTHON_BIN:-python3}"
-if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
-  if command -v python >/dev/null 2>&1; then
-    PYTHON_BIN="python"
-  else
-    echo "Python interpreter not found. Install Python 3 or export PYTHON_BIN." >&2
-    exit 1
-  fi
-fi
-
-if [[ ! -d "$VENV_DIR" ]]; then
-  echo "Creating virtual environment at $VENV_DIR"
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
-else
-  if ! "$VENV_DIR/bin/python" --version >/dev/null 2>&1; then
-    echo "Existing virtual environment is broken, recreating..."
-    rm -rf "$VENV_DIR"
-    "$PYTHON_BIN" -m venv "$VENV_DIR"
-  fi
-fi
-
-# shellcheck disable=SC1091
-source "$VENV_DIR/bin/activate"
-VENV_PYTHON="$(command -v python)"
-
-if [[ -z "$VENV_PYTHON" ]] || ! "$VENV_PYTHON" --version >/dev/null 2>&1; then
-  echo "Virtual environment activation failed. Recreating..."
-  deactivate 2>/dev/null || true
-  rm -rf "$VENV_DIR"
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
-  source "$VENV_DIR/bin/activate"
-  VENV_PYTHON="$(command -v python)"
-  if [[ -z "$VENV_PYTHON" ]]; then
-    echo "Failed to create working virtual environment" >&2
-    exit 1
-  fi
-fi
-
-if [[ -f "$REQUIREMENTS" ]]; then
-  echo "Installing/updating dependencies..."
-  "$VENV_PYTHON" -m pip install --upgrade pip >/dev/null 2>&1 || true
-  "$VENV_PYTHON" -m pip install -r "$REQUIREMENTS"
-else
-  echo "requirements.txt not found at $REQUIREMENTS; skipping dependency installation."
-fi
-
-if ! "$VENV_PYTHON" -c "import uvicorn" >/dev/null 2>&1; then
-  echo "uvicorn is unavailable even after installation. Verify requirements.txt includes uvicorn." >&2
+if ! command -v uv >/dev/null 2>&1; then
+  echo "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
   exit 1
 fi
+uv sync --quiet
+VENV_PYTHON="$CODE_ROOT/.venv/bin/python"
 
 LOCAL_IP=""
 for iface in en0 en1; do
@@ -94,34 +49,10 @@ fi
 
 LOCAL_IP="$(printf '%s' "${LOCAL_IP:-}" | tr -d '[:space:]')"
 
-PUBLIC_IP=""
-if command -v curl >/dev/null 2>&1; then
-  PUBLIC_IP="$(curl -fs https://api.ipify.org 2>/dev/null || curl -fs https://ifconfig.me 2>/dev/null || true)"
-fi
-if [[ -z "$PUBLIC_IP" ]] && command -v dig >/dev/null 2>&1; then
-  PUBLIC_IP="$(dig +short myip.opendns.com @resolver1.opendns.com 2>/dev/null || true)"
-fi
-if [[ -z "$PUBLIC_IP" ]]; then
-  PUBLIC_IP="$("$VENV_PYTHON" - <<'PY'
-import urllib.request
-for url in ("https://api.ipify.org", "https://ifconfig.me/ip"):
-    try:
-        with urllib.request.urlopen(url, timeout=2) as response:
-            data = response.read().decode().strip()
-            if data:
-                print(data)
-                break
-    except Exception:
-        pass
-else:
-    print("")
-PY
-)"
-fi
+_public_ip_file=$(mktemp)
+(curl -fs --connect-timeout 2 https://api.ipify.org 2>/dev/null || true) > "$_public_ip_file" &
+_public_ip_pid=$!
 
-PUBLIC_IP="$(printf '%s' "${PUBLIC_IP:-}" | tr -d '[:space:]')"
-
-PUBLIC_ADDRESS="http://${PUBLIC_IP:-unavailable}:$PORT"
 LAN_ADDRESS="http://${LOCAL_IP:-127.0.0.1}:$PORT"
 LOCAL_ADDRESS="http://127.0.0.1:$PORT"
 
@@ -140,6 +71,11 @@ cat << 'EOF'
 |_|/_/   \_|____/ |_/_/   \_|_|  |___| |____/|_____|_| \_\ \_/  |_____|_| \_\
 
 EOF
+
+wait "$_public_ip_pid" 2>/dev/null || true
+PUBLIC_IP="$(cat "$_public_ip_file" | tr -d '[:space:]')"
+rm -f "$_public_ip_file"
+PUBLIC_ADDRESS="http://${PUBLIC_IP:-unavailable}:$PORT"
 
 echo "Starting FastAPI server..."
 echo "Logging requests to $LOG_FILE"

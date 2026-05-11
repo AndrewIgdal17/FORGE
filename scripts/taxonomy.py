@@ -13,6 +13,7 @@ import itertools
 import json
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -426,6 +427,7 @@ def get_dimensions(taxonomy_id: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+@lru_cache(maxsize=1)
 def taxonomy_to_dict() -> dict:
     """Return the full taxonomy as a JSON-serializable dict.
 

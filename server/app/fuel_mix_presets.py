@@ -60,14 +60,25 @@ def _validate_preset(entry: Dict[str, Any], index: int) -> bool:
     return True
 
 
+_presets_cache: Dict[str, Any] | None = None
+_presets_mtime: float = 0.0
+
+
 def load_fuel_mix_presets() -> Dict[str, Any]:
     """
     Return { "presets": [ ... ] } from server/json/fuel_mix_presets.json.
     Invalid entries are skipped; if the file is missing or invalid, returns { "presets": [] }.
+    Cached with mtime-based invalidation.
     """
+    global _presets_cache, _presets_mtime
+
     if not FUEL_MIX_PRESETS_FILE.is_file():
         logger.warning("fuel_mix_presets: file missing at %s", FUEL_MIX_PRESETS_FILE)
         return {"presets": []}
+
+    current_mtime = FUEL_MIX_PRESETS_FILE.stat().st_mtime
+    if _presets_cache is not None and current_mtime <= _presets_mtime:
+        return _presets_cache
 
     try:
         raw = json.loads(FUEL_MIX_PRESETS_FILE.read_text(encoding="utf-8"))
@@ -89,4 +100,6 @@ def load_fuel_mix_presets() -> Dict[str, Any]:
         if _validate_preset(entry, i):
             valid.append(entry)
 
-    return {"presets": valid}
+    _presets_cache = {"presets": valid}
+    _presets_mtime = current_mtime
+    return _presets_cache

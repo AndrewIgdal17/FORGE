@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import yaml
 from json import JSONDecodeError
@@ -12,6 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 
 from .ctcc_processor import run_ctcc_calculation
 from .models import (
@@ -45,6 +47,7 @@ SKIP_BASENAME = "project_category_template"
 app = FastAPI(title="CTCC API Server")
 
 # Allow frontend apps to reach the API locally or across origins.
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -97,27 +100,48 @@ async def serve_index() -> FileResponse:
     return FileResponse(INDEX_FILE)
 
 
+_final_combined_cache: dict | None = None
+_final_combined_mtime: float = 0.0
+
+
+def _get_yaml_max_mtime() -> float:
+    """Return the newest mtime across all YAML files in YAMLS_DIR."""
+    if not YAMLS_DIR.exists():
+        return 0.0
+    mtimes = [f.stat().st_mtime for f in YAMLS_DIR.iterdir()
+              if f.suffix in (".yaml", ".yml")]
+    return max(mtimes) if mtimes else 0.0
+
+
+def _get_final_combined_cached() -> dict:
+    """Return cached final_combined data, refreshing only when YAML files change."""
+    global _final_combined_cache, _final_combined_mtime
+    current_mtime = _get_yaml_max_mtime()
+    if _final_combined_cache is None or current_mtime > _final_combined_mtime:
+        try:
+            _refresh_final_combined()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to regenerate final_combined.json: {exc}",
+            ) from exc
+        if not FINAL_COMBINED_FILE.exists():
+            raise HTTPException(status_code=404, detail="final_combined.json not found")
+        try:
+            _final_combined_cache = sanitize_for_json(
+                json.loads(FINAL_COMBINED_FILE.read_text(encoding="utf-8")))
+            _final_combined_mtime = current_mtime
+        except JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=500, detail="final_combined.json is invalid JSON"
+            ) from exc
+    return _final_combined_cache
+
+
 @app.get("/api/final_combined", response_class=JSONResponse)
 async def get_final_combined() -> JSONResponse:
     """Return the combined JSON payload generated from YAML files."""
-    try:
-        _refresh_final_combined()
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to regenerate final_combined.json: {exc}",
-        ) from exc
-
-    if not FINAL_COMBINED_FILE.exists():
-        raise HTTPException(status_code=404, detail="final_combined.json not found")
-
-    try:
-        content = json.loads(FINAL_COMBINED_FILE.read_text(encoding="utf-8"))
-        content = sanitize_for_json(content)
-    except JSONDecodeError as exc:
-        raise HTTPException(status_code=500, detail="final_combined.json is invalid JSON") from exc
-
-    return JSONResponse(content)
+    return JSONResponse(_get_final_combined_cached())
 
 
 @app.get("/api/taxonomy", response_class=JSONResponse)
@@ -153,32 +177,15 @@ async def calculate_ctcc(payload: CTCCInputPayload) -> CTCCOutputPayload:
     """
     Run CTCC calculations with JSON input and output.
 
-    Accepts a JSON payload, runs the calculator (YAML-in, JSON-out internally),
+    Accepts a JSON payload, runs the calculator in-process,
     and returns the calculation results as JSON.
     """
     payload_dict = payload.model_dump()
     if payload_dict.get("input_mode") == "json" and not payload_dict.get("combined_data"):
-        try:
-            _refresh_final_combined()
-        except Exception as exc:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to regenerate final_combined.json: {exc}",
-            ) from exc
+        payload_dict["combined_data"] = _get_final_combined_cached()
 
-        if not FINAL_COMBINED_FILE.exists():
-            raise HTTPException(status_code=404, detail="final_combined.json not found")
-
-        try:
-            payload_dict["combined_data"] = json.loads(
-                FINAL_COMBINED_FILE.read_text(encoding="utf-8")
-            )
-        except JSONDecodeError as exc:
-            raise HTTPException(
-                status_code=500, detail="final_combined.json is invalid JSON"
-            ) from exc
-
-    result = run_ctcc_calculation(payload_dict)
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, run_ctcc_calculation, payload_dict)
     return CTCCOutputPayload.model_validate(result)
 
 

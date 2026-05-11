@@ -6,19 +6,40 @@
 from __future__ import annotations
 
 import importlib
+import shutil
 import subprocess
 import sys
 import os
 import argparse
 import glob
 import json
+import tempfile
+import threading
+import time as _time
 import traceback
+from pathlib import Path
+from typing import Any
 from datetime import datetime
+
+import yaml
 
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from csv_output_manager import BATCH_SUMMARY_FIELDS
 from run_context import set_output_manager, get_output_manager, clear_output_manager
+
+_CTCC_ROOT = Path(__file__).resolve().parent
+_calculation_lock = threading.Lock()
+
+
+def _set_yamls_dir(new_path: Path) -> None:
+    """Patch YAMLS_DIR across path_config and all modules that cached it at import time."""
+    os.environ["CTCC_YAMLS_DIR"] = str(new_path)
+    import path_config
+    path_config.YAMLS_DIR = new_path
+    for mod in sys.modules.values():
+        if mod and hasattr(mod, "YAMLS_DIR") and mod is not path_config:
+            mod.YAMLS_DIR = new_path
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -200,9 +221,186 @@ def write_final_json_output(
     return output_file
 
 
+def _build_scripts_list(
+    *,
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    no_insurance: bool = False,
+    no_delay_costs: bool = False,
+    no_wildfire: bool = False,
+    no_outages: bool = False,
+    no_oandm: bool = False,
+    capital_only: bool = False,
+) -> list[str]:
+    """Build the ordered list of calculator module filenames to run."""
+    if capital_only:
+        return [
+            "weighted_miles.py",
+            "build_costs.py",
+            "row_costs.py",
+            "environmental_mitigation.py",
+        ]
+    scripts = [
+        "weighted_miles.py",
+        "build_costs.py",
+        "row_costs.py",
+        "environmental_mitigation.py",
+        "revenue.py",
+    ]
+    if not no_insurance:
+        scripts.append("insurance_costs.py")
+    if not no_delay_costs:
+        scripts.append("delay_costs.py")
+    if not no_wildfire:
+        scripts.append("wildfire_costs.py")
+    if not no_outages:
+        scripts.append("outage_costs.py")
+    scripts.append("congestion_curtailment_reduction.py")
+    scripts.append("energy_losses.py")
+    if not no_oandm:
+        scripts.append("oandm.py")
+    if not no_emissions:
+        scripts.append("emissions.py")
+        scripts.append("facilitated_emissions.py")
+    if not no_linelosses:
+        scripts.append("line_loss_costs.py")
+    return scripts
+
+
+def run_calculation(
+    combined_data: dict[str, Any],
+    scenario_id: str,
+    *,
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    no_insurance: bool = False,
+    no_delay_costs: bool = False,
+    no_wildfire: bool = False,
+    no_outages: bool = False,
+    no_oandm: bool = False,
+    capital_only: bool = False,
+    quiet: bool = True,
+) -> dict[str, Any]:
+    """Run the full CTCC calculation pipeline in-process.
+
+    Accepts a Python dict of inputs, returns a Python dict of results.
+    Thread-safe via _calculation_lock (env vars are process-global).
+    """
+    with _calculation_lock:
+        import path_config
+        saved_yamls_dir = path_config.YAMLS_DIR
+        saved_env = {
+            k: os.environ.get(k)
+            for k in ("CTCC_YAMLS_DIR", "CTCC_SCENARIO_ID", "CTCC_OUTPUT_MODE")
+        }
+        temp_yaml_dir = None
+        try:
+            temp_yaml_dir = tempfile.mkdtemp(prefix=f"ctcc_yaml_{scenario_id}_")
+            for key, value in combined_data.items():
+                yaml_path = os.path.join(temp_yaml_dir, f"{key}.yaml")
+                with open(yaml_path, "w") as f:
+                    yaml.dump(value, f, default_flow_style=False, sort_keys=False)
+
+            _set_yamls_dir(Path(temp_yaml_dir))
+            os.environ["CTCC_SCENARIO_ID"] = scenario_id
+            os.environ["CTCC_OUTPUT_MODE"] = "json"
+
+            from json_output_manager import JSONOutputManager
+            aggregator = JSONOutputManager(scenario_id=scenario_id)
+            set_output_manager(aggregator)
+
+            scripts = _build_scripts_list(
+                no_emissions=no_emissions,
+                no_linelosses=no_linelosses,
+                no_insurance=no_insurance,
+                no_delay_costs=no_delay_costs,
+                no_wildfire=no_wildfire,
+                no_outages=no_outages,
+                no_oandm=no_oandm,
+                capital_only=capital_only,
+            )
+
+            module_timings: list[tuple[str, float]] = []
+            failed_scripts: list[str] = []
+
+            for script in scripts:
+                stem = script.replace(".py", "")
+                try:
+                    mod = importlib.import_module(stem)
+                    t0 = _time.perf_counter()
+                    mod.main()
+                    module_timings.append((stem, (_time.perf_counter() - t0) * 1000))
+                except Exception:
+                    failed_scripts.append(script)
+                    if not quiet:
+                        traceback.print_exc()
+
+            json_results = aggregator.get_json_results()
+            bcr_results = None
+            csv_equivalent = None
+            summary_override = None
+            taxonomy_results_json = None
+            try:
+                from taxonomy_adapters import (
+                    adapt_all_results,
+                    taxonomy_results_to_json_list,
+                )
+                from bcr_calculator import compute_all_bcrs
+
+                t0 = _time.perf_counter()
+                taxonomy_results = adapt_all_results(json_results)
+                taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
+                bcr_results = compute_all_bcrs(taxonomy_results)
+                csv_equivalent = build_csv_equivalent(
+                    json_results, bcr_results, bcr_results
+                )
+                summary_override = build_summary_from_csv_equivalent(csv_equivalent)
+                module_timings.append(("taxonomy+bcr", (_time.perf_counter() - t0) * 1000))
+            except Exception:
+                if not quiet:
+                    traceback.print_exc()
+
+            if module_timings:
+                print("\n--- Module Timings ---", file=sys.stderr)
+                for name, ms in sorted(module_timings, key=lambda x: -x[1]):
+                    print(f"  {ms:7.1f} ms  {name}", file=sys.stderr)
+                total_time = sum(ms for _, ms in module_timings)
+                print(f"  {'─' * 20}", file=sys.stderr)
+                print(f"  {total_time:7.1f} ms  TOTAL", file=sys.stderr)
+
+            if bcr_results:
+                aggregator.add_bcr_metrics(bcr_results)
+            aggregator.calculate_summary()
+            results = aggregator.get_json_results()
+            if csv_equivalent is not None:
+                results["csv_equivalent"] = csv_equivalent
+            if summary_override is not None:
+                results["summary"] = summary_override
+            if taxonomy_results_json is not None:
+                results["taxonomy_results"] = taxonomy_results_json
+
+            if failed_scripts:
+                raise RuntimeError(
+                    f"Calculator modules failed: {', '.join(failed_scripts)}"
+                )
+
+            return results
+
+        finally:
+            clear_output_manager()
+            if temp_yaml_dir and os.path.exists(temp_yaml_dir):
+                shutil.rmtree(temp_yaml_dir, ignore_errors=True)
+            _set_yamls_dir(saved_yamls_dir)
+            for k, v in saved_env.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
 def main() -> None:
     """
-    Main function to run all cost calculation scripts.
+    Main function to run all cost calculation scripts (CLI entry point).
     """
     # Parse command line arguments
     parser = argparse.ArgumentParser(
@@ -418,6 +616,7 @@ def main() -> None:
     successful_runs = 0
     total_runs = len(scripts)
     failed_scripts = []
+    module_timings: list[tuple[str, float]] = []
 
     # Debug: Log which scripts will be run
     if not args.simple:
@@ -457,7 +656,10 @@ def main() -> None:
             stem = script.replace(".py", "")
             try:
                 mod = importlib.import_module(stem)
+                t0 = _time.perf_counter()
                 mod.main()
+                elapsed_ms = (_time.perf_counter() - t0) * 1000
+                module_timings.append((stem, elapsed_ms))
                 success = True
             except Exception as e:
                 success = False
@@ -513,6 +715,7 @@ def main() -> None:
                 )
                 from bcr_calculator import compute_all_bcrs, print_bcr_summary
 
+                t0 = _time.perf_counter()
                 taxonomy_results = adapt_all_results(json_results)
                 taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
                 bcr_results = compute_all_bcrs(taxonomy_results)
@@ -520,6 +723,7 @@ def main() -> None:
                     json_results, bcr_results, bcr_results
                 )
                 summary_override = build_summary_from_csv_equivalent(csv_equivalent)
+                module_timings.append(("taxonomy+bcr", (_time.perf_counter() - t0) * 1000))
 
                 if not args.simple:
                     print_bcr_summary(bcr_results)
@@ -558,7 +762,14 @@ def main() -> None:
             # In simple mode, show error even if quiet
             print("⚠️  Some calculations failed. BCR analysis may be incomplete.")
 
-    # Exit with failure so callers (e.g. batch_craft) can detect module failures
+    if module_timings:
+        print("\n--- Module Timings ---", file=sys.stderr)
+        for name, ms in sorted(module_timings, key=lambda x: -x[1]):
+            print(f"  {ms:7.1f} ms  {name}", file=sys.stderr)
+        total_time = sum(ms for _, ms in module_timings)
+        print(f"  {'─' * 20}", file=sys.stderr)
+        print(f"  {total_time:7.1f} ms  TOTAL", file=sys.stderr)
+
     if failed_scripts:
         sys.exit(1)
 

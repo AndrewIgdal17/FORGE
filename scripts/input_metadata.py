@@ -10,6 +10,7 @@ Phase 4 deliverable. Canonical source alongside taxonomy.py.
 from __future__ import annotations
 
 from dataclasses import dataclass, field as dc_field
+from functools import lru_cache
 from typing import Any, Literal
 
 InputType = Literal[
@@ -675,6 +676,7 @@ _ALL_FIELDS = _TAB1 + _TAB2 + _TAB3 + _TAB4 + _TAB5 + _TAB6 + _TAB7 + _TAB8 + _T
 INPUT_METADATA: dict[str, InputField] = {f.id: f for f in _ALL_FIELDS}
 
 
+@lru_cache(maxsize=1)
 def input_metadata_to_dict() -> list[dict]:
     """Serialize all input metadata entries for the browser."""
     from dataclasses import asdict
