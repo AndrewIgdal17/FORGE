@@ -1681,6 +1681,9 @@
       .collapsible-header.expanded::before {
         transform: rotate(90deg);
       }
+      .collapsible-header .section-reset-btn {
+        margin-left: auto;
+      }
       .collapsible-content {
         max-height: 0;
         overflow: hidden;

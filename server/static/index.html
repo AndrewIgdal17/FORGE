@@ -3064,11 +3064,13 @@
           if (!path) return;
 
           let value = select.value;
-          // Check if this should be a number (for number_of_converters or dynamic_dropdown)
-          const fieldConfig = FIELD_CONFIG[path];
-          if (fieldConfig && fieldConfig.type === 'dynamic_dropdown') {
+          const meta = inputMetadata
+            ? inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path)
+            : null;
+          if (meta && meta.input_type === 'dynamic_dropdown') {
             value = value === '' ? null : parseInt(value, 10);
-          } else if (fieldConfig && fieldConfig.options && fieldConfig.options.some(opt => typeof opt === 'number')) {
+          } else if (meta && meta.validation && Array.isArray(meta.validation.options)
+                     && meta.validation.options.some(opt => typeof opt === 'number')) {
             value = value === '' ? null : parseInt(value, 10);
           } else if (value === '') {
             value = null;
@@ -4124,7 +4126,7 @@
           sliderEl.className = 'slider-input';
           const numInput = document.createElement('input');
           numInput.type = 'number';
-          numInput.className = 'number-input';
+          numInput.className = 'slider-value';
           numInput.id = fullPath;
           numInput.dataset.path = fullPath;
           if (pct) {
@@ -4213,8 +4215,7 @@
 
       function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         if (!taxonomyData || !metadataList) {
-          console.warn('Taxonomy or input metadata not loaded, falling back to legacy renderer');
-          renderJsonInputs(data);
+          console.error('Taxonomy or input metadata not loaded — cannot render inputs');
           return;
         }
 
@@ -4304,7 +4305,7 @@
 
             const resetBtn = document.createElement('button');
             resetBtn.type = 'button';
-            resetBtn.className = 'reset-section-btn';
+            resetBtn.className = 'section-reset-btn';
             resetBtn.textContent = 'Reset';
             resetBtn.dataset.sectionPath = taxId;
             resetBtn.addEventListener('click', () => {
@@ -4330,7 +4331,7 @@
                 }
               });
             });
-            content.appendChild(resetBtn);
+            header.appendChild(resetBtn);
 
             tabContent.appendChild(section);
           });
@@ -5232,12 +5233,11 @@
         return out;
       }
 
-      const originalRenderJsonInputs = renderJsonInputs;
-      renderJsonInputs = function(data) {
+      function renderJsonInputs(data) {
         const normalized = normalizeEnergySourceMixInCombinedData(data);
         originalJsonData = JSON.parse(JSON.stringify(normalized));
         renderInputsFromTaxonomy(normalized, taxonomy, inputMetadata);
-      };
+      }
 
       console.log('Calling initialiseApiBase and updateModeVisibility...');
       initialiseApiBase();

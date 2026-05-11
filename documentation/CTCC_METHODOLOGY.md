@@ -1850,6 +1850,6 @@ AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}
 
 - [[Projects/CTCC/CTCC MOC]] — project hub
 - [[Projects/CTCC/PROJECT_MEMORY]] — CTCC state and key files
-- [[Projects/CTCC/ctcc_method_webapp_alignment_audit]] — paper vs app alignment audit
+- [[Projects/CTCC/docs/audits/2026-04-24__ctcc-method-webapp-alignment-audit]] — paper vs app alignment audit
 
 ---
