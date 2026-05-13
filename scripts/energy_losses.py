@@ -287,6 +287,16 @@ def main() -> None:
     # Get all loss calculation results
     loss_data = get_total_energy_losses()
 
+    from run_context import add_derived
+    add_derived({
+        "voltage_kv": loss_data["voltage_kv"],
+        "phase_current": loss_data["phase_current"],
+        "full_load_adj": loss_data["full_load_adj"],
+        "losses_mwh_per_year": loss_data["losses_mwh_per_year"],
+        "total_converter_losses_mwh": loss_data["total_converter_losses_mwh"],
+        "total_losses_mwh_per_year": loss_data["total_losses_mwh_per_year"],
+    })
+
     # Load line utilization for printing
     project_details = load_project_technical_details()
 

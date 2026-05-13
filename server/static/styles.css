@@ -409,6 +409,21 @@
         margin-right: 0.5rem;
         cursor: pointer;
       }
+      .details-editable-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .form-field-readonly-value {
+        padding: 0.6rem;
+        font-size: 0.95rem;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.375rem;
+        background: rgba(0, 0, 0, 0.04);
+        color: rgba(0, 0, 0, 0.55);
+        cursor: default;
+      }
       .section-header {
         font-weight: 700;
         font-size: 1.1rem;
@@ -506,7 +521,7 @@
         appearance: none;
         cursor: pointer;
         height: 20px;
-        background: linear-gradient(to right, #0066cc 50%, #ddd 50%);
+        background: linear-gradient(to right, #0066cc 0%, #0066cc 50%, #ddd 50%, #ddd 100%);
         background-size: 100% 4px;
         background-position: center;
         background-repeat: no-repeat;
@@ -526,7 +541,7 @@
       .slider-container input[type="range"]::-webkit-slider-runnable-track {
         height: 4px;
         border-radius: 2px;
-        background: transparent;
+        background: inherit;
       }
       .slider-container input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
@@ -559,6 +574,11 @@
         border-radius: 50%;
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      }
+      .slider-container input[type="range"]::-moz-range-progress {
+        background: #0066cc;
+        border-radius: 2px;
+        height: 4px;
       }
       .slider-value {
         min-width: 65px;
@@ -595,7 +615,7 @@
         margin-left: 0.35rem;
       }
       /* Help tooltip */
-      .form-field .help-icon {
+      .help-icon {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1684,6 +1704,26 @@
       .collapsible-header .section-reset-btn {
         margin-left: auto;
       }
+      .restore-defaults-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+        background: rgba(220, 38, 38, 0.08);
+        color: #dc2626;
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .restore-defaults-btn:hover {
+        background: rgba(220, 38, 38, 0.15);
+      }
+      .tab-restore {
+        float: right;
+        margin-bottom: 0.5rem;
+      }
+      .global-restore {
+        margin-left: 0.75rem;
+      }
       .collapsible-content {
         max-height: 0;
         overflow: hidden;
@@ -1732,6 +1772,324 @@
         border-bottom-color: #0066cc;
         font-weight: 600;
       }
+
+      /* Level 4: Terrain Mix / Rights of Way under Project Technical Details → Routing */
+      .routing-panel {
+        margin-top: 0.25rem;
+      }
+      .sub-sub-tabs {
+        display: flex;
+        gap: 0.2rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        margin-bottom: 0.75rem;
+        padding-left: 0.35rem;
+      }
+      .sub-sub-tab-button {
+        padding: 0.28rem 0.55rem;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-size: 0.72rem;
+        color: rgba(0, 0, 0, 0.55);
+        transition: all 0.2s;
+      }
+      .sub-sub-tab-button:hover {
+        color: rgba(0, 0, 0, 0.85);
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .sub-sub-tab-button.active {
+        color: #0066cc;
+        border-bottom-color: rgba(0, 102, 204, 0.55);
+        font-weight: 600;
+      }
+      .sub-sub-tab-content {
+        min-height: 0.5rem;
+      }
+
+      /* =============================================
+         Routing (under Project Technical Details) — validation banner, zone table, running totals
+         ============================================= */
+      .routing-validation-banner {
+        display: none;
+        background: rgba(251, 191, 36, 0.15);
+        border-left: 4px solid #f59e0b;
+        padding: 0.6rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0.375rem 0.375rem 0;
+        font-size: 0.85rem;
+        color: #92400e;
+        line-height: 1.4;
+      }
+      .routing-validation-banner.visible {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .routing-validation-banner .banner-icon {
+        flex-shrink: 0;
+        font-size: 1rem;
+      }
+
+      .row-regime-toggle {
+        margin-bottom: 0.75rem;
+      }
+
+      .readonly-miles-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 0.375rem;
+        font-size: 0.85rem;
+        color: rgba(0, 0, 0, 0.5);
+      }
+      .readonly-miles-label {
+        font-weight: 600;
+      }
+      .readonly-miles-value {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .row-zone-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+      }
+      .row-zone-table th {
+        text-align: left;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.55);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+      }
+      .row-zone-table td {
+        padding: 0.2rem 0.4rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        vertical-align: middle;
+      }
+      .row-zone-table:not(.terrain-table) td:first-child {
+        width: 3rem;
+        text-align: center;
+        color: rgba(0, 0, 0, 0.45);
+        font-weight: 600;
+        font-size: 0.8rem;
+      }
+      .terrain-table td:first-child {
+        width: 10rem;
+        color: rgba(0, 0, 0, 0.7);
+      }
+      .row-zone-table input {
+        width: 100%;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 0.3rem 0.4rem;
+        font-size: 0.85rem;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s;
+        box-sizing: border-box;
+      }
+      .row-zone-table input:hover {
+        border-color: rgba(0, 0, 0, 0.12);
+      }
+      .row-zone-table input:focus {
+        outline: none;
+        border-color: #0066cc;
+        background: rgba(0, 100, 200, 0.03);
+      }
+      .row-zone-table tr:hover td {
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      /* Conditional column visibility */
+      .row-table-greenfield .col-rent { display: none; }
+      .row-table-existing .col-holding,
+      .row-table-existing .col-acquisition { display: none; }
+
+      .zone-table-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.25rem;
+      }
+
+      .running-total {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.4rem 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .running-total-label {
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.6);
+      }
+      .running-total-value {
+        color: rgba(0, 0, 0, 0.8);
+      }
+      .running-total.match .running-total-indicator {
+        color: #16a34a;
+      }
+      .running-total.mismatch .running-total-indicator {
+        color: #d97706;
+      }
+
+      .add-zone-btn {
+        padding: 0.35rem 0.75rem;
+        background: rgba(0, 100, 200, 0.08);
+        border: 1px solid rgba(0, 100, 200, 0.2);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: #0066cc;
+        font-weight: 500;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .add-zone-btn:hover:not(:disabled) {
+        background: rgba(0, 100, 200, 0.15);
+      }
+      .add-zone-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+
+      .sub-tab-content {
+        padding-top: 0.5rem;
+      }
+
+      /* Environmental uplift factor row */
+      .env-uplift-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+      }
+      .env-uplift-label {
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.6);
+      }
+      .env-acres-cell {
+        color: rgba(0, 0, 0, 0.5);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        padding-right: 0.75rem !important;
+      }
+      .env-uplift-input {
+        width: 5rem;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.25rem;
+        font-size: 0.85rem;
+        text-align: right;
+      }
+
+      /* Locked-column pattern (Pattern 7) */
+      .locked-cell {
+        color: rgba(0, 0, 0, 0.4) !important;
+        cursor: default !important;
+        pointer-events: none;
+      }
+      .locked-cell:hover, .locked-cell:focus {
+        border-color: transparent !important;
+        background: transparent !important;
+      }
+      .multiplier-lock-toggle {
+        cursor: pointer;
+        user-select: none;
+      }
+      .multiplier-lock-toggle:hover {
+        color: #0066cc;
+      }
+      .multiplier-lock-toggle .lock-icon {
+        font-size: 0.7rem;
+        margin-right: 0.2rem;
+      }
+
+      /* Confirmation dialog */
+      .confirm-dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      .confirm-dialog {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        max-width: 26rem;
+        width: 90%;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+      }
+      .confirm-dialog-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #1a1a1a;
+      }
+      .confirm-dialog-body {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 1rem;
+      }
+      .confirm-dialog-suppress {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.5);
+        margin-bottom: 1.25rem;
+        cursor: pointer;
+      }
+      .confirm-dialog-suppress input[type="checkbox"] {
+        margin: 0;
+      }
+      .confirm-dialog-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .confirm-btn-cancel {
+        padding: 0.45rem 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.375rem;
+        background: white;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.65);
+      }
+      .confirm-btn-cancel:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
+      .confirm-btn-confirm {
+        padding: 0.45rem 1rem;
+        border: none;
+        border-radius: 0.375rem;
+        background: #0066cc;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .confirm-btn-confirm:hover {
+        background: #0055aa;
+      }
+
       /* Cost timing validation warning */
       .timing-validation-warning {
         font-size: 0.75rem;
@@ -1846,4 +2204,56 @@
       .fuel-mix-preset-unavailable {
         font-size: 0.8rem;
         color: rgba(0, 0, 0, 0.45);
+      }
+
+      /* Capital Costs tab */
+      .capital-cost-table {
+        margin-top: 0.75rem;
+      }
+      .capital-cost-table td:last-child {
+        text-align: right;
+      }
+      .capital-cost-table input.currency-input {
+        text-align: right;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+      }
+      .conductor-details-table td:first-child {
+        width: auto;
+        text-align: left;
+        font-weight: 500;
+      }
+      .conductor-details-table td:last-child {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .conductor-details-footnote {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: rgba(0, 0, 0, 0.5);
+        font-style: italic;
+      }
+      .toast-notification {
+        position: fixed; bottom: 1.5rem; right: 1.5rem;
+        padding: 0.75rem 1.25rem; background: #1e293b; color: white;
+        border-radius: 0.5rem; font-size: 0.85rem;
+        opacity: 0; transition: opacity 0.3s; z-index: 9999;
+        max-width: 28rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      .toast-notification.visible { opacity: 1; }
+      .extra-terrain-row { background: rgba(59, 130, 246, 0.04); }
+      .extra-terrain-miles {
+        width: 4.5rem; padding: 0.2rem 0.35rem;
+        font-size: 0.82rem; border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: 0.25rem; background: rgba(59, 130, 246, 0.06);
+      }
+      .extra-terrain-acres-display {
+        font-size: 0.82rem; color: rgba(0, 0, 0, 0.55);
+        margin-left: 0.15rem;
+      }
+      .capital-cost-contingency {
+        margin: 0.75rem 0 0.25rem 0;
+      }
+      .capital-cost-contingency .form-section-header {
+        display: none;
       }

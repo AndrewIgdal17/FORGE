@@ -364,6 +364,8 @@ def normalize_construction_type_for_yaml(
         return "subsea"
     elif "underground" in construction_type_lower:
         if context == "environmental":
+            if "tunnel" in construction_type_lower:
+                return "underground_tunnel"
             return "underground_direct_buried"
         else:
             return "underground"

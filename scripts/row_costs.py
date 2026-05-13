@@ -115,6 +115,20 @@ def main() -> None:
         yearly_rent_cost = 0.0
     # federal_hybrid: keep all three (acquisition, holding, annual ROW payment)
 
+    from run_context import add_derived
+    from calculation_utils import miles_to_acres
+    _row_details = load_row_details()
+    _zone_acres = {
+        zname: miles_to_acres(zd["miles"], row_width_feet)
+        for zname, zd in _row_details["right_of_way"].items()
+        if zd["miles"] > 0
+    }
+    add_derived({
+        "zone_acres": _zone_acres,
+        "total_row_acres": total_acres,
+        "agreement_type": agreement_type,
+    })
+
     # Load financing parameters
     financing = load_financing_details()
 

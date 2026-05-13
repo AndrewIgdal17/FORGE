@@ -69,6 +69,9 @@ def main() -> None:
     )
     total_delay_cost = total_yearly_delay_cost * delay_year
 
+    from run_context import add_derived
+    add_derived({"total_annual_delay_cost": total_yearly_delay_cost})
+
     financing = load_financing_details()
 
     total_delay_cost_pv = calculate_present_value(

@@ -446,6 +446,17 @@ def main() -> None:
     )
     pv_total = pv_conductor + pv_converter + pv_structure + pv_vegetation_management
 
+    from run_context import add_derived
+    _total_annual_oandm = (
+        total_conductor_cost_per_year + total_converter_cost_per_year
+        + variable_structure_cost_per_year + total_vegetation_management_cost_per_year
+    )
+    add_derived({
+        "total_structures": structure_dict.get("total", 0) if structure_dict else 0,
+        "veg_mgmt_cost_per_year": total_vegetation_management_cost_per_year,
+        "total_annual_oandm": _total_annual_oandm,
+    })
+
     # Print results
     print("\n" + "=" * 80)
     print("O&M COST ANALYSIS")

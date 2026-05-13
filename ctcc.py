@@ -26,7 +26,11 @@ import yaml
 # Add scripts directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 from csv_output_manager import BATCH_SUMMARY_FIELDS
-from run_context import set_output_manager, get_output_manager, clear_output_manager
+from run_context import (
+    set_output_manager, get_output_manager, clear_output_manager,
+    RunContext, set_run_context, get_run_context, clear_run_context,
+    add_derived,
+)
 
 _PRELOAD_MODULES = [
     "weighted_miles", "build_costs", "row_costs", "environmental_mitigation",
@@ -221,6 +225,10 @@ def write_final_json_output(
     if taxonomy_results_json is not None:
         results["taxonomy_results"] = taxonomy_results_json
 
+    _ctx = get_run_context()
+    if _ctx is not None and _ctx.derived_parameters:
+        results["derived_parameters"] = _ctx.derived_parameters
+
     # Write to final output file
     output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
     os.makedirs(output_dir, exist_ok=True)
@@ -319,6 +327,69 @@ def run_calculation(
             aggregator = JSONOutputManager(scenario_id=scenario_id)
             set_output_manager(aggregator)
 
+            # Populate RunContext: load shared data once for the entire run
+            from smart_loaders import get_physical_data_raw
+            from yaml_loaders import (
+                load_project_technical_details, load_financing_details,
+                load_contingencies, load_row_widths,
+            )
+            from calculation_utils import build_category_string
+            from weighted_miles import calculate_weighted_miles as _calc_wm
+
+            _project_details = load_project_technical_details()
+            _financing = load_financing_details()
+            _contingencies = load_contingencies()
+            _physical_raw = get_physical_data_raw()
+            _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
+            _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
+            _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
+            _category_string = build_category_string(project_details=_project_details)
+            _row_width_feet = load_row_widths(_category_string)
+            _weighted_miles, _avg_terrain_mult = _calc_wm()
+
+            from financial_utils import (
+                calculate_afudc_rate as _calc_afudc,
+                calculate_cod_year as _calc_cod,
+                calculate_construction_start_year as _calc_cstart,
+            )
+            from smart_loaders import get_financing_data_raw
+            _afudc_rate, _afudc_source = _calc_afudc(get_financing_data_raw())
+            _cod_year = _calc_cod(_project_details.delay_years, _project_details.construction_years)
+            _construction_start_year = _calc_cstart(_project_details.delay_years)
+
+            set_run_context(RunContext(
+                project_details=_project_details,
+                terrain_miles=_terrain_miles,
+                terrain_multipliers=_terrain_multipliers,
+                total_miles=_total_miles,
+                financing=_financing,
+                contingencies=_contingencies,
+                category_string=_category_string,
+                row_width_feet=_row_width_feet,
+                weighted_miles=_weighted_miles,
+                average_terrain_multiplier=_avg_terrain_mult,
+            ))
+
+            _fin_raw = get_financing_data_raw()
+            add_derived({
+                "category_string": _category_string,
+                "row_width_feet": _row_width_feet,
+                "weighted_miles": _weighted_miles,
+                "average_terrain_multiplier": _avg_terrain_mult,
+                "total_miles": _total_miles,
+                "terrain_miles": _terrain_miles,
+                "terrain_multipliers": _terrain_multipliers,
+                "wacc_real": _financing.wacc_real,
+                "wacc_nominal": _financing.wacc_nominal,
+                "inflation_rate": _financing.inflation_rate,
+                "social_discount_rate": _fin_raw["financial"].get("social_discount_rate", 0),
+                "afudc_rate": _afudc_rate,
+                "afudc_source": _afudc_source,
+                "cod_year": _cod_year,
+                "construction_start_year": _construction_start_year,
+                "contingencies": _contingencies,
+            })
+
             scripts = _build_scripts_list(
                 no_emissions=no_emissions,
                 no_linelosses=no_linelosses,
@@ -397,6 +468,10 @@ def run_calculation(
             if taxonomy_results_json is not None:
                 results["taxonomy_results"] = taxonomy_results_json
 
+            _ctx = get_run_context()
+            if _ctx is not None and _ctx.derived_parameters:
+                results["derived_parameters"] = _ctx.derived_parameters
+
             if failed_scripts:
                 raise RuntimeError(
                     f"Calculator modules failed: {', '.join(failed_scripts)}"
@@ -405,6 +480,7 @@ def run_calculation(
             return results
 
         finally:
+            clear_run_context()
             clear_output_manager()
             if temp_yaml_dir and os.path.exists(temp_yaml_dir):
                 shutil.rmtree(temp_yaml_dir, ignore_errors=True)
@@ -576,6 +652,70 @@ def main() -> None:
         from json_output_manager import JSONOutputManager
         in_process_aggregator = JSONOutputManager(scenario_id=scenario_id)
         set_output_manager(in_process_aggregator)
+
+        # Populate RunContext: load shared data once for the entire run
+        from smart_loaders import get_physical_data_raw
+        from yaml_loaders import (
+            load_project_technical_details, load_financing_details,
+            load_contingencies, load_row_widths,
+        )
+        from calculation_utils import build_category_string
+        from weighted_miles import calculate_weighted_miles as _calc_wm
+
+        _project_details = load_project_technical_details()
+        _financing = load_financing_details()
+        _contingencies = load_contingencies()
+        _physical_raw = get_physical_data_raw()
+        _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
+        _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
+        _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
+        _category_string = build_category_string(project_details=_project_details)
+        _row_width_feet = load_row_widths(_category_string)
+        _weighted_miles, _avg_terrain_mult = _calc_wm()
+
+        set_run_context(RunContext(
+            project_details=_project_details,
+            terrain_miles=_terrain_miles,
+            terrain_multipliers=_terrain_multipliers,
+            total_miles=_total_miles,
+            financing=_financing,
+            contingencies=_contingencies,
+            category_string=_category_string,
+            row_width_feet=_row_width_feet,
+            weighted_miles=_weighted_miles,
+            average_terrain_multiplier=_avg_terrain_mult,
+        ))
+
+        from financial_utils import (
+            calculate_afudc_rate as _calc_afudc_cli,
+            calculate_cod_year as _calc_cod_cli,
+            calculate_construction_start_year as _calc_cstart_cli,
+        )
+        from smart_loaders import get_financing_data_raw as _get_fin_raw_cli
+        _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_get_fin_raw_cli())
+        _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
+        _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
+
+        _fin_raw_cli = _get_fin_raw_cli()
+        add_derived({
+            "category_string": _category_string,
+            "row_width_feet": _row_width_feet,
+            "weighted_miles": _weighted_miles,
+            "average_terrain_multiplier": _avg_terrain_mult,
+            "total_miles": _total_miles,
+            "terrain_miles": _terrain_miles,
+            "terrain_multipliers": _terrain_multipliers,
+            "wacc_real": _financing.wacc_real,
+            "wacc_nominal": _financing.wacc_nominal,
+            "inflation_rate": _financing.inflation_rate,
+            "social_discount_rate": _fin_raw_cli["financial"].get("social_discount_rate", 0),
+            "afudc_rate": _afudc_rate_cli,
+            "afudc_source": _afudc_source_cli,
+            "cod_year": _cod_year_cli,
+            "construction_start_year": _cstart_cli,
+            "contingencies": _contingencies,
+        })
+
     os.environ["CTCC_OUTPUT_MODE"] = "json"
 
     # List of scripts to run in order
@@ -764,9 +904,11 @@ def main() -> None:
             if not args.simple:
                 print(f"✅ JSON results written to {output_file}")
             if not args.subprocess:
+                clear_run_context()
                 clear_output_manager()
         except Exception as e:
             if not args.subprocess:
+                clear_run_context()
                 clear_output_manager()
             if not args.simple:
                 print(f"⚠️  JSON output aggregation failed: {e}")

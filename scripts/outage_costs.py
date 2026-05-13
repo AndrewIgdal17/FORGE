@@ -219,6 +219,18 @@ def main() -> None:
         construction_years=project_details.construction_years,
     )
 
+    from run_context import add_derived
+    _out_dur_mult = next(
+        (d["duration_multiplier"] for d in results["outage_by_terrain"].values()),
+        1.0,
+    )
+    add_derived({
+        "lambda_total_outage": results["lambda_total"],
+        "EAC_outage": results["EAC"],
+        "mw_lost_per_event": results["capacity_at_risk"] * project_details.capacity_mw,
+        "construction_type_multiplier_outage_duration": _out_dur_mult,
+    })
+
     # Display results
     print("=" * 80)
     print("EXPECTED OUTAGE COST CALCULATION RESULTS")

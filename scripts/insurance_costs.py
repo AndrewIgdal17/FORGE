@@ -117,16 +117,20 @@ def main() -> None:
         number_of_converters = 0
 
     # Load build costs to get insurable asset values
-    total_miles = load_physical_details()
-    contingencies = load_contingencies()
-
-    costs = load_costs(
-        category,
-        total_miles,
-        number_of_converters,
-        contingencies,
-        project_details.reconductoring,
-    )
+    from run_context import get_run_context
+    _ctx = get_run_context()
+    if _ctx is not None and _ctx.build_costs is not None:
+        costs = _ctx.build_costs
+    else:
+        total_miles = load_physical_details()
+        contingencies = load_contingencies()
+        costs = load_costs(
+            category,
+            total_miles,
+            number_of_converters,
+            contingencies,
+            project_details.reconductoring,
+        )
 
     # Load insurance parameters
     insurance_yaml = load_insurance_details()
@@ -140,6 +144,9 @@ def main() -> None:
         project_details.construction_type,
         project_details.project_lifetime,
     )
+
+    from run_context import add_derived
+    add_derived({"insurable_value": results["insurable_value"]})
 
     # Load financing parameters for present value calculation
     financing = load_financing_details()

@@ -169,6 +169,19 @@ def main() -> None:
         em_yaml, category, terrain_miles, row_width_feet, project_details.reconductoring
     )
 
+    from run_context import add_derived
+    from calculation_utils import miles_to_acres
+    _terrain_acres = {t: miles_to_acres(m, row_width_feet) for t, m in terrain_miles.items() if m > 0}
+    _uplift = results["uplift_factor_applied"]
+    _eff_acres = {t: a * _uplift for t, a in _terrain_acres.items()}
+    add_derived({
+        "terrain_acres": _terrain_acres,
+        "effective_acres_per_terrain": _eff_acres,
+        "total_effective_acres": results["total_effective_acres"],
+        "wetland_impacted_acres": results["wetland_impacted_acres"],
+        "habitat_impacted_acres": results["habitat_impacted_acres"],
+    })
+
     # Load financing parameters for discounting
     financing = load_financing_details()
 

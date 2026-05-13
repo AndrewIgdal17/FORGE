@@ -61,6 +61,7 @@ def load_costs(
     number_of_converters: int,
     contingencies: Dict[str, float],
     reconductoring: bool,
+    overrides: Dict[str, float] | None = None,
 ) -> BuildCosts:
     """
     Load the costs for the comprehensive transmission cost calculator.
@@ -111,14 +112,23 @@ def load_costs(
 
     weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
 
-    variable_conductor_cost_per_mile = costs[category][
-        "variable_conductor_cost_per_mile"
-    ]
-    fixed_conductor_cost = costs[category]["fixed_conductor_cost"]
-    variable_structure_cost_per_mile = costs[category][
-        "variable_structure_cost_per_mile"
-    ]
-    fixed_converter_cost = costs[category]["fixed_converter_cost"]
+    ov = overrides or {}
+    variable_conductor_cost_per_mile = ov.get(
+        "variable_conductor_cost_per_mile",
+        costs[category]["variable_conductor_cost_per_mile"],
+    )
+    fixed_conductor_cost = ov.get(
+        "fixed_conductor_cost",
+        costs[category]["fixed_conductor_cost"],
+    )
+    variable_structure_cost_per_mile = ov.get(
+        "variable_structure_cost_per_mile",
+        costs[category]["variable_structure_cost_per_mile"],
+    )
+    fixed_converter_cost = ov.get(
+        "fixed_converter_cost",
+        costs[category]["fixed_converter_cost"],
+    )
 
     conductor_cost = (
         variable_conductor_cost_per_mile * weighted_miles
@@ -201,9 +211,35 @@ def main() -> None:
     contingencies = load_contingencies()
     financing = load_financing_details()
 
+    # Load user overrides from the build costs YAML (if present)
+    build_cost_overrides = None
+    try:
+        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as f:
+            bc_data = yaml.safe_load(f) or {}
+        raw_ov = bc_data.get("overrides")
+        if raw_ov and isinstance(raw_ov, dict):
+            build_cost_overrides = {k: v for k, v in raw_ov.items() if v is not None}
+            if not build_cost_overrides:
+                build_cost_overrides = None
+    except Exception:
+        pass
+
     costs = load_costs(
-        category, total_miles, number_of_converters, contingencies, project_details.reconductoring
+        category, total_miles, number_of_converters, contingencies,
+        project_details.reconductoring, overrides=build_cost_overrides,
     )
+
+    from run_context import set_build_costs, add_derived
+    set_build_costs(costs)
+    add_derived({
+        "conductor_cost": costs.conductor_cost,
+        "structure_cost": costs.structure_cost,
+        "converter_cost": costs.converter_cost,
+        "conductor_cost_with_contingencies": costs.conductor_cost_with_contingencies,
+        "structure_cost_with_contingencies": costs.structure_cost_with_contingencies,
+        "converter_cost_with_contingencies": costs.converter_cost_with_contingencies,
+        "total_build_cost_with_contingencies": costs.total_cost_with_contingencies,
+    })
 
     # Load AFUDC configuration and timing patterns
     from financial_utils import load_afudc_setup

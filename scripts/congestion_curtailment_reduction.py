@@ -643,6 +643,16 @@ def main() -> None:
         "remaining_capacity_mw": congestion_results.delta_C_rem,
     }
 
+    from run_context import add_derived
+    add_derived({
+        "effective_capacity_relief": congestion_results.effective_capacity_relief,
+        "E_curt": congestion_results.E_curt,
+        "theta_overlap": congestion_results.theta_overlap,
+        "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
+        "energy_congestion_reduction": congestion_results.energy_congestion_reduction,
+        "energy_residual_exceedance": congestion_results.energy_residual_exceedance,
+    })
+
     # Write to CSV/JSON
     csv_manager.add_congestion_curtailment(results)
     csv_manager.write_batch_summary()

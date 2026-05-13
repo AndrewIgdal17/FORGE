@@ -426,6 +426,9 @@ def main() -> None:
     # Calculate TEC for display
     total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
 
+    from run_context import add_derived
+    add_derived({"total_energy_compensated_mwh": total_energy_compensated_mwh})
+
     # Print results
     print_emissions_results(
         compensation_percent,

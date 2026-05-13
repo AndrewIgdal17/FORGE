@@ -192,6 +192,9 @@ def main() -> None:
     cod_year = calculate_cod_year(delay_years, construction_years)
     rate_base_real = rate_base / (1 + financing.inflation_rate) ** cod_year
     annual_revenue_real = rate_base_real * allowed_return_rate
+
+    from run_context import add_derived
+    add_derived({"rate_base": rate_base, "rate_base_real": rate_base_real})
     revenue_undiscounted_real = annual_revenue_real * project_lifetime
     revenue_pv = calculate_present_value(
         annual_revenue_real,

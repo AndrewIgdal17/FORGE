@@ -10,6 +10,7 @@ import numpy as np
 import argparse
 from typing import Tuple
 from path_config import YAMLS_DIR
+from run_context import get_run_context
 
 
 def calculate_weighted_miles() -> Tuple[float, float]:
@@ -23,6 +24,10 @@ def calculate_weighted_miles() -> Tuple[float, float]:
     Returns:
         tuple: (weighted_miles, average_terrain_multiplier)
     """
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.weighted_miles, ctx.average_terrain_multiplier
+
     # From yaml 02_project_physical_details.yaml, get the miles of the transmission line in each terrain type
     try:
         with open(

@@ -9,6 +9,7 @@ import yaml
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
 from path_config import YAMLS_DIR
+from run_context import get_run_context
 from calculation_utils import normalize_capacity_mw
 from financial_utils import calculate_real_wacc, get_wacc_nominal
 
@@ -92,6 +93,9 @@ class FinancingDetails:
 
 def load_financing_details() -> FinancingDetails:
     """Load financing parameters and calculate real WACC using Fisher equation."""
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.financing
     try:
         with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
             financing_data = yaml.safe_load(file)
@@ -149,6 +153,9 @@ def normalize_construction_type(construction_type: str) -> str:
 
 def load_project_technical_details() -> ProjectTechnicalDetails:
     """Load project technical details - returns all project specs."""
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.project_details
     try:
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
             project_details = yaml.safe_load(file)
@@ -238,6 +245,9 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
 
 def load_physical_details() -> float:
     """Load physical project details - return total miles only."""
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.total_miles
     try:
         with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
             physical_details = yaml.safe_load(file)
@@ -325,6 +335,9 @@ def load_circuit_and_resistance_details(
 
 def load_row_widths(category: str) -> float:
     """Load ROW width for specified category."""
+    ctx = get_run_context()
+    if ctx is not None and category == ctx.category_string:
+        return ctx.row_width_feet
     try:
         with open(YAMLS_DIR / "20_project_category_row_widths.yaml", "r") as file:
             row_widths = yaml.safe_load(file)
@@ -610,6 +623,9 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
 
 def load_contingencies() -> Dict[str, float]:
     """Load contingencies from financing YAML."""
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.contingencies
     try:
         with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
             financing_data = yaml.safe_load(file)

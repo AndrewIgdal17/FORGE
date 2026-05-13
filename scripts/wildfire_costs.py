@@ -159,6 +159,17 @@ def main() -> None:
         construction_years=project_details.construction_years,
     )
 
+    from run_context import add_derived
+    _wf_mult = next(
+        (d["construction_multiplier"] for d in results["lambda_by_terrain"].values()),
+        1.0,
+    )
+    add_derived({
+        "lambda_total_wildfire": results["lambda_total"],
+        "EAL_wildfire": results["EAL"],
+        "construction_type_multiplier_wildfire": _wf_mult,
+    })
+
     # Display results
     print("=" * 80)
     print("EXPECTED WILDFIRE COST CALCULATION RESULTS")

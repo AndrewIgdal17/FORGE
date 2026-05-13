@@ -7,6 +7,7 @@ import yaml
 from typing import Any, Dict
 
 from path_config import YAMLS_DIR
+from run_context import get_run_context
 from yaml_loaders import *  # noqa: F401, F403
 
 
@@ -68,6 +69,9 @@ def load_terrain_miles() -> Dict[str, float]:
     Raises:
         KeyError: If terrain structure is missing or invalid
     """
+    ctx = get_run_context()
+    if ctx is not None:
+        return ctx.terrain_miles
     try:
         physical_details = get_physical_data_raw()
         if "terrain" not in physical_details:
