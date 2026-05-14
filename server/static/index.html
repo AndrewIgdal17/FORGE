@@ -443,8 +443,10 @@
       let routingValid = true;
 
       function showToast(msg, durationMs = 4000) {
+        const existing = document.querySelectorAll('.toast-notification').length;
         const el = document.createElement('div');
         el.className = 'toast-notification visible';
+        el.style.bottom = (1.5 + existing * 3.5) + 'rem';
         el.textContent = msg;
         document.body.appendChild(el);
         setTimeout(() => { el.classList.remove('visible'); setTimeout(() => el.remove(), 300); }, durationMs);
@@ -494,6 +496,8 @@
       let circuitDetailsLookup = null;
       let structureDetailsLookup = null;
       let converterDetailsLookup = null;
+      let conductorOmLookup = null;
+      let vegetationManagementLookup = null;
 
       async function fetchRowWidths(baseUrl) {
         const resp = await fetch(new URL("/static/row_widths.json", baseUrl).toString());
@@ -528,6 +532,20 @@
         if (!resp.ok) throw new Error("Failed to load converter_details.json: " + resp.status);
         converterDetailsLookup = await resp.json();
         return converterDetailsLookup;
+      }
+
+      async function fetchConductorOm(baseUrl) {
+        const resp = await fetch(new URL("/static/conductor_om.json", baseUrl).toString());
+        if (!resp.ok) throw new Error("Failed to load conductor_om.json: " + resp.status);
+        conductorOmLookup = await resp.json();
+        return conductorOmLookup;
+      }
+
+      async function fetchVegetationManagement(baseUrl) {
+        const resp = await fetch(new URL("/static/vegetation_management.json", baseUrl).toString());
+        if (!resp.ok) throw new Error("Failed to load vegetation_management.json: " + resp.status);
+        vegetationManagementLookup = await resp.json();
+        return vegetationManagementLookup;
       }
 
       function normalizeCT(ct) {
@@ -3285,6 +3303,8 @@
                 circuitDetailsLookup ? Promise.resolve(circuitDetailsLookup) : fetchCircuitDetails(baseUrl),
                 structureDetailsLookup ? Promise.resolve(structureDetailsLookup) : fetchStructureDetails(baseUrl),
                 converterDetailsLookup ? Promise.resolve(converterDetailsLookup) : fetchConverterDetails(baseUrl),
+                conductorOmLookup ? Promise.resolve(conductorOmLookup) : fetchConductorOm(baseUrl),
+                vegetationManagementLookup ? Promise.resolve(vegetationManagementLookup) : fetchVegetationManagement(baseUrl),
               ]);
               if (!taxonomy) {
                 taxonomy = taxData;
@@ -4186,12 +4206,12 @@
 
       // ===== Taxonomy-Driven Input Form Renderer (Phase 4) =====
 
-      const INPUT_TAB_ORDER = ['project-technical', 'financial', 'capital-costs', 'environmental', 'operational', 'delay-costs', 'risk', 'emissions', 'benefits'];
+      const INPUT_TAB_ORDER = ['project-technical', 'financial', 'capital-costs', 'operational', 'delay-costs', 'risk', 'emissions', 'benefits'];
       const INPUT_TAB_LABELS = {
         'project-technical': 'Project Details', 'financial': 'Financial',
-        'capital-costs': 'Capital Costs', 'environmental': 'Environmental Mitigation',
+        'capital-costs': 'Capital Costs',
         'operational': 'Operational Costs', 'delay-costs': 'Delay Costs',
-        'risk': 'Risk Costs', 'emissions': 'Emissions', 'benefits': 'Benefits',
+        'risk': 'Risk Costs', 'emissions': 'Energy and Emissions', 'benefits': 'Benefits',
       };
       const SUB_TAB_LABELS = {
         'terrain-mix': 'Terrain Mix',
@@ -4207,6 +4227,19 @@
         'converter-details': 'Converter Details',
         'timeline': 'Timeline',
         'routing': 'Routing',
+        'operational-insurance': 'Operational Insurance',
+        'maintenance-costs': 'Maintenance Costs',
+        'vegetation-management': 'Vegetation Management',
+        'conductor-maintenance': 'Conductor Maintenance',
+        'structure-maintenance': 'Structure Maintenance',
+        'converter-maintenance': 'Converter Maintenance',
+        'energy-emissions-energy': 'Energy',
+        'energy-emissions-emissions': 'Emissions',
+        'environmental-mitigation': 'Environmental Mitigation',
+        'energy-mix': 'Energy Mix',
+        'energy-losses': 'Losses',
+        'emission-intensities': 'Intensities',
+        'emission-externality-costs': 'Externality Costs',
       };
 
       function getValueAtFieldPath(data, yamlSection, fieldPath) {
@@ -5631,6 +5664,763 @@
         }
       }
 
+      // ============================================================
+      // Operational Costs — Maintenance tables + rebuild functions
+      // ============================================================
+
+      function renderConductorMaintenanceTable() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'conductor-maintenance-wrapper';
+        const cat = buildCategoryString();
+        const entry = conductorOmLookup ? (conductorOmLookup[cat] ?? null) : null;
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table capital-cost-table conductor-maintenance-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const thParam = document.createElement('th');
+        thParam.textContent = 'Parameter';
+        thParam.appendChild(makeHelpIcon('Conductor O&M cost from the NREL/DOE database, determined by project configuration.'));
+        headerRow.appendChild(thParam);
+        const thValue = document.createElement('th');
+        thValue.className = 'multiplier-lock-toggle';
+        thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+        thValue.appendChild(makeHelpIcon('Annual conductor maintenance cost per mile. Click the lock to override.'));
+        headerRow.appendChild(thValue);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        const tr = document.createElement('tr');
+        const tdLabel = document.createElement('td');
+        tdLabel.textContent = 'Variable Cost per Mile per Year';
+        tdLabel.style.fontWeight = '500';
+        tr.appendChild(tdLabel);
+        const tdVal = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'currency-input locked-cell';
+        input.dataset.maintenanceField = 'conductor_om';
+        input.readOnly = true;
+        input.value = entry ? '$' + Number(entry.variable_cost_per_mile_year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' /mi/yr' : '\u2014';
+        tdVal.appendChild(input);
+        tr.appendChild(tdVal);
+        tbody.appendChild(tr);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        let locked = true;
+        thValue.style.cursor = 'pointer';
+        thValue.title = 'Click to edit values';
+        thValue.addEventListener('click', () => {
+          if (!locked) {
+            locked = true;
+            input.readOnly = true;
+            input.classList.add('locked-cell');
+            thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+            thValue.title = 'Click to edit values';
+          } else {
+            showBuildCostConfirmDialog('conductor-maintenance', (suppress) => {
+              locked = false;
+              input.readOnly = false;
+              input.classList.remove('locked-cell');
+              thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
+              thValue.title = 'Click to lock values';
+            });
+          }
+        });
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'Conductor maintenance cost from NREL/DOE database. Determined by project configuration.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function rebuildConductorMaintenance() {
+        const existing = document.getElementById('conductor-maintenance-wrapper');
+        if (existing) {
+          const parent = existing.parentNode;
+          parent.replaceChild(renderConductorMaintenanceTable(), existing);
+        }
+      }
+
+      function renderStructureMaintenanceTable() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'structure-maintenance-wrapper';
+        const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+        const constructionType = ctEl ? ctEl.value : '';
+        const entry = structureDetailsLookup ? (structureDetailsLookup[constructionType] ?? null) : null;
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table capital-cost-table structure-maintenance-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const thParam = document.createElement('th');
+        thParam.textContent = 'Parameter';
+        headerRow.appendChild(thParam);
+        const thTerrain = document.createElement('th');
+        thTerrain.textContent = 'Terrain';
+        headerRow.appendChild(thTerrain);
+        const thValue = document.createElement('th');
+        thValue.className = 'multiplier-lock-toggle';
+        thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+        thValue.appendChild(makeHelpIcon('Structure density and unit cost from NREL/DOE database. Click the lock to override.'));
+        headerRow.appendChild(thValue);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const TERRAINS = ['forested', 'scrubbed_flat', 'wetland', 'farmland', 'desert_barren', 'urban', 'rolling_hills', 'mountain'];
+        const TERRAIN_LABELS = {forested:'Forested', scrubbed_flat:'Scrubbed Flat', wetland:'Wetland', farmland:'Farmland', desert_barren:'Desert/Barren', urban:'Urban', rolling_hills:'Rolling Hills', mountain:'Mountain'};
+
+        const tbody = document.createElement('tbody');
+        const inputs = [];
+        TERRAINS.forEach((t, i) => {
+          const tr = document.createElement('tr');
+          const tdParam = document.createElement('td');
+          tdParam.textContent = i === 0 ? 'Structures per Mile' : '';
+          tdParam.style.fontWeight = '500';
+          tr.appendChild(tdParam);
+          const tdTerrain = document.createElement('td');
+          tdTerrain.textContent = TERRAIN_LABELS[t] || t;
+          tr.appendChild(tdTerrain);
+          const tdVal = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'currency-input locked-cell';
+          input.dataset.maintenanceField = 'structure_density_' + t;
+          input.readOnly = true;
+          input.value = entry ? String(entry['structures_per_mile_' + t] ?? 0) : '\u2014';
+          inputs.push(input);
+          tdVal.appendChild(input);
+          tr.appendChild(tdVal);
+          tbody.appendChild(tr);
+        });
+
+        const costTr = document.createElement('tr');
+        const costParamTd = document.createElement('td');
+        costParamTd.textContent = 'Cost per Structure';
+        costParamTd.style.fontWeight = '500';
+        costTr.appendChild(costParamTd);
+        const costTerrainTd = document.createElement('td');
+        costTerrainTd.textContent = '(all terrains)';
+        costTr.appendChild(costTerrainTd);
+        const costValTd = document.createElement('td');
+        const costInput = document.createElement('input');
+        costInput.type = 'text';
+        costInput.className = 'currency-input locked-cell';
+        costInput.dataset.maintenanceField = 'structure_cost_per_year';
+        costInput.readOnly = true;
+        costInput.value = entry ? '$' + Number(entry.cost_per_structure_per_year).toLocaleString() + ' /yr' : '\u2014';
+        inputs.push(costInput);
+        costValTd.appendChild(costInput);
+        costTr.appendChild(costValTd);
+        tbody.appendChild(costTr);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        let locked = true;
+        thValue.style.cursor = 'pointer';
+        thValue.title = 'Click to edit values';
+        thValue.addEventListener('click', () => {
+          if (!locked) {
+            locked = true;
+            inputs.forEach(inp => { inp.readOnly = true; inp.classList.add('locked-cell'); });
+            thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+            thValue.title = 'Click to edit values';
+          } else {
+            showBuildCostConfirmDialog('structure-maintenance', (suppress) => {
+              locked = false;
+              inputs.forEach(inp => { inp.readOnly = false; inp.classList.remove('locked-cell'); });
+              thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
+              thValue.title = 'Click to lock values';
+            });
+          }
+        });
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'Structure density and unit cost from NREL/DOE database. Only applicable to Overhead construction.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function rebuildStructureMaintenance() {
+        const existing = document.getElementById('structure-maintenance-wrapper');
+        if (existing) {
+          const parent = existing.parentNode;
+          parent.replaceChild(renderStructureMaintenanceTable(), existing);
+        }
+      }
+
+      function renderConverterMaintenanceTable() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'converter-maintenance-wrapper';
+        const cat = buildCategoryString();
+        const entry = converterDetailsLookup ? (converterDetailsLookup[cat] ?? null) : null;
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table capital-cost-table converter-maintenance-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const thParam = document.createElement('th');
+        thParam.textContent = 'Parameter';
+        thParam.appendChild(makeHelpIcon('Converter O&M cost from the NREL/DOE database, determined by project configuration.'));
+        headerRow.appendChild(thParam);
+        const thValue = document.createElement('th');
+        thValue.className = 'multiplier-lock-toggle';
+        thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+        thValue.appendChild(makeHelpIcon('Annual converter maintenance cost per mile. Click the lock to override.'));
+        headerRow.appendChild(thValue);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        const tr = document.createElement('tr');
+        const tdLabel = document.createElement('td');
+        tdLabel.textContent = 'Converter O&M Cost per Mile/Year';
+        tdLabel.style.fontWeight = '500';
+        tr.appendChild(tdLabel);
+        const tdVal = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'currency-input locked-cell';
+        input.dataset.maintenanceField = 'converter_om';
+        input.readOnly = true;
+        input.value = entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' /mi/yr' : '\u2014';
+        tdVal.appendChild(input);
+        tr.appendChild(tdVal);
+        tbody.appendChild(tr);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        let locked = true;
+        thValue.style.cursor = 'pointer';
+        thValue.title = 'Click to edit values';
+        thValue.addEventListener('click', () => {
+          if (!locked) {
+            locked = true;
+            input.readOnly = true;
+            input.classList.add('locked-cell');
+            thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
+            thValue.title = 'Click to edit values';
+          } else {
+            showBuildCostConfirmDialog('converter-maintenance', (suppress) => {
+              locked = false;
+              input.readOnly = false;
+              input.classList.remove('locked-cell');
+              thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
+              thValue.title = 'Click to lock values';
+            });
+          }
+        });
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'Converter maintenance cost from NREL/DOE database. Only applicable to DC projects.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function rebuildConverterMaintenance() {
+        const existing = document.getElementById('converter-maintenance-wrapper');
+        if (existing) {
+          const parent = existing.parentNode;
+          parent.replaceChild(renderConverterMaintenanceTable(), existing);
+        }
+      }
+
+      function renderInsurableAssetsTable(data) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'insurable-assets-wrapper';
+
+        const premiumDiv = document.createElement('div');
+        premiumDiv.className = 'env-uplift-row';
+        const premiumPath = '04_insurance.insurance.premium_rate';
+        const premiumVal = getValueAtFieldPath(data, '04_insurance', 'insurance.premium_rate') ?? 0.002;
+        premiumDiv.innerHTML = '<span class="env-uplift-label">Premium Rate</span> ';
+        premiumDiv.appendChild(makeHelpIcon('Annual insurance premium as % of insurable value. Applied to total insurable asset value.'));
+        const premiumInput = document.createElement('input');
+        premiumInput.type = 'text';
+        premiumInput.className = 'number-input env-uplift-input';
+        premiumInput.dataset.path = premiumPath;
+        const pn = Number(premiumVal);
+        premiumInput.value = (!isNaN(pn) && premiumVal !== null) ? pn.toLocaleString('en-US', {maximumFractionDigits: 10}) : '';
+        premiumInput.addEventListener('focus', () => { premiumInput.value = premiumInput.value.replace(/,/g, ''); });
+        premiumInput.addEventListener('blur', () => {
+          const raw = parseFloat(premiumInput.value.replace(/,/g, ''));
+          if (!isNaN(raw)) premiumInput.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+        });
+        premiumDiv.appendChild(premiumInput);
+        wrapper.appendChild(premiumDiv);
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table conductor-details-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ['Insurable Asset', 'Included', 'Value (with contingency)'].forEach(txt => {
+          const th = document.createElement('th');
+          th.textContent = txt;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const ASSETS = [
+          {label: 'Conductors', togglePath: '04_insurance.insurance.insurable_components.conductors'},
+          {label: 'Structures', togglePath: '04_insurance.insurance.insurable_components.structures'},
+          {label: 'Converters', togglePath: '04_insurance.insurance.insurable_components.converters'},
+        ];
+
+        const tbody = document.createElement('tbody');
+        ASSETS.forEach(asset => {
+          const tr = document.createElement('tr');
+          const tdName = document.createElement('td');
+          tdName.textContent = asset.label;
+          tdName.appendChild(makeHelpIcon('Insurable asset value derived from Capital Costs (with contingencies).'));
+          tr.appendChild(tdName);
+          const tdIncl = document.createElement('td');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = true;
+          cb.dataset.path = asset.togglePath;
+          cb.dataset.insurableToggle = asset.label.toLowerCase();
+          tdIncl.appendChild(cb);
+          tr.appendChild(tdIncl);
+          const tdVal = document.createElement('td');
+          tdVal.textContent = '\u2014';
+          tdVal.dataset.insurableValue = asset.label.toLowerCase();
+          tr.appendChild(tdVal);
+          tbody.appendChild(tr);
+        });
+
+        const totalTr = document.createElement('tr');
+        totalTr.style.fontWeight = '600';
+        const totalLabelTd = document.createElement('td');
+        totalLabelTd.textContent = 'Total Insurable Value';
+        totalTr.appendChild(totalLabelTd);
+        const totalInclTd = document.createElement('td');
+        totalTr.appendChild(totalInclTd);
+        const totalValTd = document.createElement('td');
+        totalValTd.textContent = '\u2014';
+        totalValTd.id = 'insurable-total-value';
+        totalTr.appendChild(totalValTd);
+        tbody.appendChild(totalTr);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        const premiumDisplay = document.createElement('div');
+        premiumDisplay.className = 'readonly-miles-display';
+        premiumDisplay.style.marginTop = '0.5rem';
+        const premLabel = document.createElement('span');
+        premLabel.className = 'readonly-miles-label';
+        premLabel.textContent = 'Annual Premium:';
+        premiumDisplay.appendChild(premLabel);
+        premiumDisplay.appendChild(document.createTextNode(' '));
+        const premValue = document.createElement('span');
+        premValue.className = 'readonly-display-value';
+        premValue.id = 'insurance-annual-premium';
+        premValue.textContent = '\u2014';
+        premiumDisplay.appendChild(premValue);
+        wrapper.appendChild(premiumDisplay);
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'Asset values derived from Capital Costs (with contingencies). Values populate after running a calculation.';
+        wrapper.appendChild(footnote);
+
+        return wrapper;
+      }
+
+      function renderVegetationManagementTable() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'vegetation-management-wrapper';
+
+        const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+        const constructionType = ctEl ? ctEl.value : '';
+        const entry = vegetationManagementLookup ? (vegetationManagementLookup[constructionType] ?? null) : null;
+
+        const ctxDisplay = document.createElement('div');
+        ctxDisplay.className = 'readonly-miles-display';
+        ctxDisplay.id = 'veg-mgmt-context';
+        const ctxLabel = document.createElement('span');
+        ctxLabel.className = 'readonly-miles-label';
+        ctxLabel.textContent = 'Construction Type:';
+        ctxLabel.appendChild(makeHelpIcon('Vegetation management costs apply to the selected construction type.'));
+        ctxDisplay.appendChild(ctxLabel);
+        ctxDisplay.appendChild(document.createTextNode(' '));
+        const ctxValue = document.createElement('span');
+        ctxValue.className = 'readonly-display-value';
+        ctxValue.id = 'veg-mgmt-context-value';
+        ctxValue.textContent = constructionType || '\u2014';
+        ctxDisplay.appendChild(ctxValue);
+        wrapper.appendChild(ctxDisplay);
+
+        const TERRAINS = ['forested', 'scrubbed_flat', 'wetland', 'farmland', 'desert_barren', 'urban', 'rolling_hills', 'mountain', 'subsea'];
+        const TERRAIN_LABELS = {forested:'Forested', scrubbed_flat:'Scrubbed Flat', wetland:'Wetland', farmland:'Farmland', desert_barren:'Desert/Barren', urban:'Urban', rolling_hills:'Rolling Hills', mountain:'Mountain', subsea:'Subsea'};
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table capital-cost-table veg-mgmt-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const thTerrain = document.createElement('th');
+        thTerrain.textContent = 'Terrain';
+        headerRow.appendChild(thTerrain);
+        const thValue = document.createElement('th');
+        thValue.className = 'multiplier-lock-toggle';
+        thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Cost ($/mile/year)';
+        thValue.appendChild(makeHelpIcon('Annual vegetation management cost per mile per terrain. Click the lock to override.'));
+        headerRow.appendChild(thValue);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const inputs = [];
+        let locked = true;
+        const tbody = document.createElement('tbody');
+        TERRAINS.forEach(t => {
+          const tr = document.createElement('tr');
+          const tdTerrain = document.createElement('td');
+          tdTerrain.textContent = TERRAIN_LABELS[t] || t;
+          tr.appendChild(tdTerrain);
+          const tdVal = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'currency-input locked-cell';
+          input.dataset.vegTerrain = t;
+          input.readOnly = true;
+          const val = entry ? entry[t] : null;
+          input.value = val != null ? '$' + Number(val).toLocaleString() : '\u2014';
+          inputs.push(input);
+          tdVal.appendChild(input);
+          tr.appendChild(tdVal);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        thValue.style.cursor = 'pointer';
+        thValue.title = 'Click to edit values';
+        thValue.addEventListener('click', () => {
+          if (!locked) {
+            locked = true;
+            inputs.forEach(inp => { inp.readOnly = true; inp.classList.add('locked-cell'); });
+            thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Cost ($/mile/year)';
+            thValue.title = 'Click to edit values';
+          } else {
+            showBuildCostConfirmDialog('vegetation-management', (suppress) => {
+              locked = false;
+              inputs.forEach(inp => { inp.readOnly = false; inp.classList.remove('locked-cell'); });
+              thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Cost ($/mile/year)';
+              thValue.title = 'Click to lock values';
+            });
+          }
+        });
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'Vegetation management costs per terrain from NREL/DOE database. Values update when construction type changes.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function rebuildVegetationManagement() {
+        const existing = document.getElementById('vegetation-management-wrapper');
+        if (existing) {
+          const parent = existing.parentNode;
+          parent.replaceChild(renderVegetationManagementTable(), existing);
+        }
+      }
+
+      function updateMaintenanceSubTabVisibility() {
+        const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+        const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+        const ct = ctEl ? ctEl.value : '';
+        const acDc = acDcEl ? acDcEl.value : '';
+        const wrapper = document.querySelector('[data-sub-tab="maintenance-costs"]');
+        if (!wrapper) return;
+        const buttons = wrapper.querySelectorAll('.sub-sub-tab-button');
+        const panels = wrapper.querySelectorAll('.sub-sub-tab-content');
+        const visibility = {'conductor-maintenance': true, 'structure-maintenance': ct === 'Overhead', 'converter-maintenance': acDc === 'DC'};
+        let activeHidden = false;
+        buttons.forEach((btn, i) => {
+          const id = panels[i] ? panels[i].dataset.subSubTab : '';
+          const show = visibility[id] !== false;
+          btn.style.display = show ? '' : 'none';
+          if (!show && btn.classList.contains('active')) activeHidden = true;
+        });
+        panels.forEach(p => { if (visibility[p.dataset.subSubTab] === false) p.style.display = 'none'; });
+        if (activeHidden && buttons[0]) buttons[0].click();
+      }
+
+      // ============================================================
+      // Energy and Emissions — render functions
+      // ============================================================
+
+      const FUEL_SOURCES = ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
+      const FUEL_LABELS = {coal:'Coal', oil:'Oil', natural_gas:'Natural Gas', solar:'Solar', wind:'Wind', hydro:'Hydro', nuclear:'Nuclear', other:'Other'};
+
+      function renderEnergyMixTable(data) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'energy-mix-wrapper';
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table conductor-details-table energy-mix-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ['Fuel Source', 'Share (%)', 'Rate of Change', 'CF Share (%)', 'CF Rate of Change'].forEach(txt => {
+          const th = document.createElement('th');
+          th.textContent = txt;
+          if (txt.startsWith('CF')) th.appendChild(makeHelpIcon('Counterfactual (no-line) baseline for displacement calculation.'));
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        FUEL_SOURCES.forEach(fuel => {
+          const tr = document.createElement('tr');
+          const tdFuel = document.createElement('td');
+          tdFuel.textContent = FUEL_LABELS[fuel] || fuel;
+          tdFuel.style.fontWeight = '500';
+          tr.appendChild(tdFuel);
+
+          const fields = [
+            {path: `18_energy_source_mix.energy_source_mix.${fuel}.percentage`, type: 'pct'},
+            {path: `18_energy_source_mix.energy_source_mix.${fuel}.rate_of_change`, type: 'rate'},
+            {path: `18_energy_source_mix.counterfactual_energy_source_mix.${fuel}.percentage`, type: 'pct'},
+            {path: `18_energy_source_mix.counterfactual_energy_source_mix.${fuel}.rate_of_change`, type: 'rate'},
+          ];
+          fields.forEach(f => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'number-input';
+            input.dataset.path = f.path;
+            const parts = f.path.split('.');
+            const yamlSection = parts[0];
+            const fieldPath = parts.slice(1).join('.');
+            const val = getValueAtFieldPath(data, yamlSection, fieldPath);
+            input.value = val != null ? String(val) : '';
+            input.addEventListener('focus', () => { input.value = input.value.replace(/,/g, ''); });
+            input.addEventListener('blur', () => {
+              const raw = parseFloat(input.value.replace(/,/g, ''));
+              if (!isNaN(raw)) input.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+            });
+            td.appendChild(input);
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = 'CF = Counterfactual / no-line baseline for displacement calculation. Shares should sum to 100%.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function renderLineLossParametersTable() {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'line-loss-params-wrapper';
+        wrapper.style.marginTop = '1.5rem';
+
+        const entry = getCircuitDetailsEntry();
+        const recon = isReconductoring();
+        const oldEntry = recon ? (function() {
+          const oldCat = buildOldCategoryString();
+          return (oldCat && circuitDetailsLookup) ? (circuitDetailsLookup[oldCat] ?? null) : null;
+        })() : null;
+
+        const ROWS = [
+          { key: 'AC_75_resistance', label: 'AC 75\u00B0C Resistance', format: v => v != null ? v + ' \u03A9/mi' : '\u2014', tooltip: 'AC resistance at 75\u00B0C. Input to conductor line loss calculation.' },
+          { key: 'DC_20_resistance', label: 'DC 20\u00B0C Resistance', format: v => v != null ? v + ' \u03A9/mi' : '\u2014', tooltip: 'DC resistance at 20\u00B0C. Input to conductor line loss calculation.' },
+          { key: 'voltage_kv', label: 'Voltage', format: v => v != null ? v + ' kV' : '\u2014', tooltip: 'Operating voltage. Affects power flow and loss calculations.' },
+        ];
+
+        const table = document.createElement('table');
+        table.className = 'row-zone-table conductor-details-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const thParam = document.createElement('th');
+        thParam.textContent = 'Parameter';
+        headerRow.appendChild(thParam);
+        const thValue = document.createElement('th');
+        thValue.textContent = recon ? 'New Value' : 'Value';
+        headerRow.appendChild(thValue);
+        if (recon) {
+          const thOld = document.createElement('th');
+          thOld.textContent = 'Old Value';
+          headerRow.appendChild(thOld);
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        ROWS.forEach(row => {
+          const tr = document.createElement('tr');
+          const tdLabel = document.createElement('td');
+          tdLabel.textContent = row.label;
+          tdLabel.appendChild(makeHelpIcon(row.tooltip));
+          tr.appendChild(tdLabel);
+          const tdVal = document.createElement('td');
+          tdVal.textContent = entry ? row.format(entry[row.key]) : '\u2014';
+          tr.appendChild(tdVal);
+          if (recon) {
+            const tdOld = document.createElement('td');
+            tdOld.textContent = oldEntry ? row.format(oldEntry[row.key]) : '\u2014';
+            tr.appendChild(tdOld);
+          }
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+
+        const footnote = document.createElement('div');
+        footnote.className = 'conductor-details-footnote';
+        footnote.textContent = recon
+          ? 'Loss-relevant circuit parameters. New vs existing line values from NREL/DOE database.'
+          : 'Loss-relevant circuit parameters from NREL/DOE database. These drive the conductor and converter loss calculations.';
+        wrapper.appendChild(footnote);
+        return wrapper;
+      }
+
+      function rebuildLineLossParameters() {
+        const existing = document.getElementById('line-loss-params-wrapper');
+        if (existing) {
+          const parent = existing.parentNode;
+          parent.replaceChild(renderLineLossParametersTable(), existing);
+        }
+      }
+
+      function renderLossesPanel(data) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'losses-panel-wrapper';
+
+        const compDiv = document.createElement('div');
+        compDiv.className = 'env-uplift-row';
+        const compPath = '16_emissions_reductions.emissions_reductions.compensation_percent';
+        const compVal = getValueAtFieldPath(data, '16_emissions_reductions', 'emissions_reductions.compensation_percent') ?? 0.9;
+        compDiv.innerHTML = '<span class="env-uplift-label">Loss Compensation Rate (\u03B1)</span> ';
+        compDiv.appendChild(makeHelpIcon('Fraction of line losses compensated by generation. Applied to conductor and converter loss calculations.'));
+        const compInput = document.createElement('input');
+        compInput.type = 'text';
+        compInput.className = 'number-input env-uplift-input';
+        compInput.dataset.path = compPath;
+        const cn = Number(compVal);
+        compInput.value = (!isNaN(cn) && compVal !== null) ? cn.toLocaleString('en-US', {maximumFractionDigits: 10}) : '';
+        compInput.addEventListener('focus', () => { compInput.value = compInput.value.replace(/,/g, ''); });
+        compInput.addEventListener('blur', () => {
+          const raw = parseFloat(compInput.value.replace(/,/g, ''));
+          if (!isNaN(raw)) compInput.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+        });
+        compDiv.appendChild(compInput);
+        wrapper.appendChild(compDiv);
+
+        wrapper.appendChild(renderLineLossParametersTable());
+        return wrapper;
+      }
+
+      function renderIntensityTable(data) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'intensity-table-wrapper';
+
+        const intTable = document.createElement('table');
+        intTable.className = 'row-zone-table conductor-details-table';
+        const intThead = document.createElement('thead');
+        const intHeaderRow = document.createElement('tr');
+        ['Fuel Source', 'CO\u2082 (kg/MWh)', 'SO\u2093 (kg/MWh)', 'NO\u2093 (kg/MWh)'].forEach(txt => {
+          const th = document.createElement('th');
+          th.textContent = txt;
+          intHeaderRow.appendChild(th);
+        });
+        intThead.appendChild(intHeaderRow);
+        intTable.appendChild(intThead);
+
+        const POLLUTANT_KEYS = ['co2', 'sox', 'nox'];
+        const intTbody = document.createElement('tbody');
+        FUEL_SOURCES.forEach(fuel => {
+          const tr = document.createElement('tr');
+          const tdFuel = document.createElement('td');
+          tdFuel.textContent = FUEL_LABELS[fuel] || fuel;
+          tdFuel.style.fontWeight = '500';
+          tr.appendChild(tdFuel);
+          POLLUTANT_KEYS.forEach(pk => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'number-input';
+            input.dataset.path = `16_emissions_reductions.emissions_reductions.emission_intensities.${pk}_intensity_kg_per_mwh.${fuel}`;
+            const val = getValueAtFieldPath(data, '16_emissions_reductions', `emissions_reductions.emission_intensities.${pk}_intensity_kg_per_mwh.${fuel}`);
+            input.value = val != null ? String(val) : '0';
+            input.addEventListener('focus', () => { input.value = input.value.replace(/,/g, ''); });
+            input.addEventListener('blur', () => {
+              const raw = parseFloat(input.value.replace(/,/g, ''));
+              if (!isNaN(raw)) input.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+            });
+            td.appendChild(input);
+            tr.appendChild(td);
+          });
+          intTbody.appendChild(tr);
+        });
+        intTable.appendChild(intTbody);
+        wrapper.appendChild(intTable);
+        return wrapper;
+      }
+
+      function renderExternalityCostTable(data) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'externality-cost-wrapper';
+
+        const extTable = document.createElement('table');
+        extTable.className = 'row-zone-table conductor-details-table';
+        const extThead = document.createElement('thead');
+        const extHeaderRow = document.createElement('tr');
+        ['Pollutant', 'Externality ($/kg)'].forEach(txt => {
+          const th = document.createElement('th');
+          th.textContent = txt;
+          extHeaderRow.appendChild(th);
+        });
+        extThead.appendChild(extHeaderRow);
+        extTable.appendChild(extThead);
+
+        const EXT_ROWS = [
+          {label: 'CO\u2082', key: 'co2_cost_per_kg'},
+          {label: 'SO\u2093', key: 'sox_cost_per_kg'},
+          {label: 'NO\u2093', key: 'nox_cost_per_kg'},
+        ];
+        const extTbody = document.createElement('tbody');
+        EXT_ROWS.forEach(row => {
+          const tr = document.createElement('tr');
+          const tdPoll = document.createElement('td');
+          tdPoll.textContent = row.label;
+          tdPoll.style.fontWeight = '500';
+          tr.appendChild(tdPoll);
+          const td = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'currency-input';
+          input.dataset.path = `16_emissions_reductions.emissions_reductions.societal_costs_per_kg.${row.key}`;
+          const val = getValueAtFieldPath(data, '16_emissions_reductions', `emissions_reductions.societal_costs_per_kg.${row.key}`);
+          input.value = val != null ? '$' + Number(val).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 3}) : '';
+          input.addEventListener('focus', () => {
+            const raw = input.value.replace(/[$,]/g, '');
+            input.value = raw;
+          });
+          input.addEventListener('blur', () => {
+            const raw = parseFloat(input.value.replace(/[$,]/g, ''));
+            if (!isNaN(raw)) input.value = '$' + raw.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 3});
+          });
+          td.appendChild(input);
+          tr.appendChild(td);
+          extTbody.appendChild(tr);
+        });
+        extTable.appendChild(extTbody);
+        wrapper.appendChild(extTable);
+        return wrapper;
+      }
+
       function renderCapitalCostSubTab(subTabId, data) {
         const wrapper = document.createElement('div');
         wrapper.id = `capital-cost-${subTabId}-wrapper`;
@@ -5935,6 +6725,15 @@
           if (tabId === 'project-technical') {
             subTabIds = ['configuration', 'timeline', 'routing', 'conductor-details', 'structure-details', 'converter-details'];
           }
+          if (tabId === 'capital-costs') {
+            subTabIds = ['conductor', 'structure', 'converter', 'environmental-mitigation'];
+          }
+          if (tabId === 'operational') {
+            subTabIds = ['operational-insurance', 'maintenance-costs', 'vegetation-management'];
+          }
+          if (tabId === 'emissions') {
+            subTabIds = ['energy-emissions-energy', 'energy-emissions-emissions'];
+          }
 
           if (subTabIds.length > 0) {
             // --- Sub-tabbed rendering ---
@@ -6039,13 +6838,32 @@
 
                 stContent.appendChild(routingPanel);
 
-              } else if (stId === 'base-mitigation') {
-                // Environmental base mitigation table
-                stContent.appendChild(renderEnvBaseMitigationTable(data));
-
-              } else if (stId === 'credits') {
-                // Environmental credits table
-                stContent.appendChild(renderEnvCreditsTable(data));
+              } else if (stId === 'environmental-mitigation') {
+                const envL4Bar = document.createElement('div');
+                envL4Bar.className = 'sub-sub-tabs';
+                const envL4Ids = ['base-mitigation', 'credits'];
+                const envL4Panels = [];
+                envL4Ids.forEach((l4Id, l4Idx) => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  envL4Bar.appendChild(btn);
+                  const panel = document.createElement('div');
+                  panel.className = 'sub-sub-tab-content';
+                  panel.dataset.subSubTab = l4Id;
+                  if (l4Idx > 0) panel.style.display = 'none';
+                  if (l4Id === 'base-mitigation') panel.appendChild(renderEnvBaseMitigationTable(data));
+                  else if (l4Id === 'credits') panel.appendChild(renderEnvCreditsTable(data));
+                  envL4Panels.push(panel);
+                  btn.addEventListener('click', () => {
+                    envL4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    envL4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
+                  });
+                });
+                stContent.appendChild(envL4Bar);
+                envL4Panels.forEach(p => stContent.appendChild(p));
 
               } else if (stId === 'conductor' || stId === 'structure' || stId === 'converter') {
                 // Capital Costs sub-tab
@@ -6082,6 +6900,89 @@
                 });
                 stContent.appendChild(cvInputs);
                 stContent.appendChild(renderConverterDetailsTable());
+              } else if (stId === 'maintenance-costs') {
+                const l4Bar = document.createElement('div');
+                l4Bar.className = 'sub-sub-tabs';
+                const l4Ids = ['conductor-maintenance', 'structure-maintenance', 'converter-maintenance'];
+                const l4Panels = [];
+                l4Ids.forEach((l4Id, l4Idx) => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  l4Bar.appendChild(btn);
+                  const panel = document.createElement('div');
+                  panel.className = 'sub-sub-tab-content';
+                  panel.dataset.subSubTab = l4Id;
+                  if (l4Idx > 0) panel.style.display = 'none';
+                  if (l4Id === 'conductor-maintenance') panel.appendChild(renderConductorMaintenanceTable());
+                  else if (l4Id === 'structure-maintenance') panel.appendChild(renderStructureMaintenanceTable());
+                  else if (l4Id === 'converter-maintenance') panel.appendChild(renderConverterMaintenanceTable());
+                  l4Panels.push(panel);
+                  btn.addEventListener('click', () => {
+                    l4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
+                  });
+                });
+                stContent.appendChild(l4Bar);
+                l4Panels.forEach(p => stContent.appendChild(p));
+              } else if (stId === 'operational-insurance') {
+                stContent.appendChild(renderInsurableAssetsTable(data));
+              } else if (stId === 'vegetation-management') {
+                stContent.appendChild(renderVegetationManagementTable());
+              } else if (stId === 'energy-emissions-energy') {
+                const eL4Bar = document.createElement('div');
+                eL4Bar.className = 'sub-sub-tabs';
+                const eL4Ids = ['energy-mix', 'energy-losses'];
+                const eL4Panels = [];
+                eL4Ids.forEach((l4Id, l4Idx) => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  eL4Bar.appendChild(btn);
+                  const panel = document.createElement('div');
+                  panel.className = 'sub-sub-tab-content';
+                  panel.dataset.subSubTab = l4Id;
+                  if (l4Idx > 0) panel.style.display = 'none';
+                  if (l4Id === 'energy-mix') panel.appendChild(renderEnergyMixTable(data));
+                  else if (l4Id === 'energy-losses') panel.appendChild(renderLossesPanel(data));
+                  eL4Panels.push(panel);
+                  btn.addEventListener('click', () => {
+                    eL4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    eL4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
+                  });
+                });
+                stContent.appendChild(eL4Bar);
+                eL4Panels.forEach(p => stContent.appendChild(p));
+              } else if (stId === 'energy-emissions-emissions') {
+                const emL4Bar = document.createElement('div');
+                emL4Bar.className = 'sub-sub-tabs';
+                const emL4Ids = ['emission-intensities', 'emission-externality-costs'];
+                const emL4Panels = [];
+                emL4Ids.forEach((l4Id, l4Idx) => {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  emL4Bar.appendChild(btn);
+                  const panel = document.createElement('div');
+                  panel.className = 'sub-sub-tab-content';
+                  panel.dataset.subSubTab = l4Id;
+                  if (l4Idx > 0) panel.style.display = 'none';
+                  if (l4Id === 'emission-intensities') panel.appendChild(renderIntensityTable(data));
+                  else if (l4Id === 'emission-externality-costs') panel.appendChild(renderExternalityCostTable(data));
+                  emL4Panels.push(panel);
+                  btn.addEventListener('click', () => {
+                    emL4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    emL4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
+                  });
+                });
+                stContent.appendChild(emL4Bar);
+                emL4Panels.forEach(p => stContent.appendChild(p));
               } else if (stId === 'configuration' || stId === 'timeline') {
                 renderTaxonomySections(stContent, stFields, data, taxById, tabContent);
                 if (stId === 'configuration') {
@@ -6129,18 +7030,8 @@
             });
 
             // Wire up tab-specific listeners after DOM is built
-            if (tabId === 'environmental') {
+            if (tabId === 'capital-costs') {
               tabContent.addEventListener('input', () => { updateEnvironmentalAcres(); });
-              setTimeout(() => {
-                const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
-                if (ctEl) ctEl.addEventListener('change', () => { rebuildEnvBaseMitigation(ctccJsonData, true); });
-                const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
-                const condEl = document.querySelector('[data-path="01_project_technical_details.project.conductor_type"]');
-                if (acDcEl) acDcEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
-                if (condEl) condEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
-                updateEnvironmentalAcres();
-              }, 0);
-            } else if (tabId === 'capital-costs') {
               setTimeout(() => {
                 const paths = [
                   '01_project_technical_details.project.construction_type',
@@ -6152,10 +7043,17 @@
                 ];
                 paths.forEach(p => {
                   const el = document.querySelector(`[data-path="${p}"]`);
-                  if (el) el.addEventListener('change', () => setTimeout(() => rebuildCapitalCosts(true), 0));
+                  if (el) el.addEventListener('change', () => {
+                    setTimeout(() => rebuildCapitalCosts(true), 0);
+                    setTimeout(() => rebuildEnvBaseMitigation(ctccJsonData, true), 0);
+                  });
                 });
-                // Deferred initial populate — capacity dropdown options need time to load
+                const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+                const condEl = document.querySelector('[data-path="01_project_technical_details.project.conductor_type"]');
+                if (acDcEl) acDcEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
+                if (condEl) condEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
                 setTimeout(rebuildCapitalCosts, 50);
+                updateEnvironmentalAcres();
               }, 0);
             } else if (tabId === 'project-technical') {
               tabContent.addEventListener('input', () => {
@@ -6247,6 +7145,68 @@
                   updateAcDcWarning();
                 }, 200);
               }, 0);
+            } else if (tabId === 'operational') {
+              setTimeout(() => {
+                const paths = [
+                  '01_project_technical_details.project.construction_type',
+                  '01_project_technical_details.project.ac_dc',
+                  '01_project_technical_details.project.capacity_mw',
+                  '01_project_technical_details.project.conductor_type',
+                  '01_project_technical_details.project.converter_type',
+                ];
+                paths.forEach(p => {
+                  const el = document.querySelector(`[data-path="${p}"]`);
+                  if (el) {
+                    el.addEventListener('change', () => {
+                      setTimeout(rebuildConductorMaintenance, 0);
+                      setTimeout(rebuildStructureMaintenance, 0);
+                      setTimeout(rebuildConverterMaintenance, 0);
+                      setTimeout(rebuildVegetationManagement, 0);
+                      setTimeout(updateMaintenanceSubTabVisibility, 0);
+                    });
+                  }
+                });
+                setTimeout(() => {
+                  rebuildConductorMaintenance();
+                  rebuildStructureMaintenance();
+                  rebuildConverterMaintenance();
+                  rebuildVegetationManagement();
+                  updateMaintenanceSubTabVisibility();
+                }, 200);
+              }, 0);
+            } else if (tabId === 'emissions') {
+              setTimeout(() => {
+                const paths = [
+                  '01_project_technical_details.project.construction_type',
+                  '01_project_technical_details.project.ac_dc',
+                  '01_project_technical_details.project.capacity_mw',
+                  '01_project_technical_details.project.conductor_type',
+                  '01_project_technical_details.project.converter_type',
+                  '01_project_technical_details.project.reconductoring',
+                ];
+                paths.forEach(p => {
+                  const el = document.querySelector(`[data-path="${p}"]`);
+                  if (el) {
+                    el.addEventListener('change', () => {
+                      setTimeout(rebuildLineLossParameters, 0);
+                    });
+                  }
+                });
+                const oldPaths = [
+                  '01_project_technical_details.project.old_capacity_mw',
+                  '01_project_technical_details.project.old_conductor_type',
+                  '01_project_technical_details.project.old_ac_dc',
+                ];
+                oldPaths.forEach(p => {
+                  const el = document.querySelector(`[data-path="${p}"]`);
+                  if (el) {
+                    el.addEventListener('change', () => {
+                      setTimeout(rebuildLineLossParameters, 0);
+                    });
+                  }
+                });
+                setTimeout(rebuildLineLossParameters, 200);
+              }, 0);
             }
 
           } else {
@@ -6255,6 +7215,7 @@
           }
 
           const tabRestoreBtn = document.createElement('button');
+          tabRestoreBtn.type = 'button';
           tabRestoreBtn.className = 'restore-defaults-btn tab-restore';
           tabRestoreBtn.textContent = 'Restore Tab Defaults';
           tabRestoreBtn.addEventListener('click', () => {
@@ -6262,8 +7223,7 @@
               tabContent.querySelectorAll('input[data-path], select[data-path]').forEach(el => {
                 if (el.dataset.path) resetFieldToDefault(el.dataset.path);
               });
-              if (tabId === 'capital-costs') rebuildCapitalCosts();
-              if (tabId === 'environmental') rebuildEnvBaseMitigation(ctccJsonData);
+              if (tabId === 'capital-costs') { rebuildCapitalCosts(); rebuildEnvBaseMitigation(ctccJsonData); }
               updateRoutingValidation();
               updateEnvironmentalAcres();
               showToast('Tab defaults restored');
@@ -6275,6 +7235,7 @@
         });
 
         const globalRestoreBtn = document.createElement('button');
+        globalRestoreBtn.type = 'button';
         globalRestoreBtn.className = 'restore-defaults-btn global-restore';
         globalRestoreBtn.textContent = 'Restore All Defaults';
         globalRestoreBtn.addEventListener('click', () => {

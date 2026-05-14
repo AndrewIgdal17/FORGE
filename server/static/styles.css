@@ -2254,6 +2254,11 @@
       .capital-cost-contingency {
         margin: 0.75rem 0 0.25rem 0;
       }
-      .capital-cost-contingency .form-section-header {
+      .capital-cost-contingency .form-section-header,
+      .capital-cost-contingency .collapsible-header {
         display: none;
+      }
+      .capital-cost-contingency .collapsible-content {
+        max-height: none !important;
+        overflow: visible !important;
       }

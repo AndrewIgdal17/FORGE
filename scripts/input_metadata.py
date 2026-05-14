@@ -366,7 +366,7 @@ _TAB4: list[InputField] = []
 
 # Uplift factor (base-mitigation sub-tab)
 _TAB4.append(_f(
-    "env_uplift_factor", taxonomy_id="env_mitigation", input_tab="environmental",
+    "env_uplift_factor", taxonomy_id="env_mitigation", input_tab="capital-costs",
     yaml_section="09_environmental_mitigation",
     field_path="environmental_mitigation.mitigation_uplift_factor",
     label="Mitigation Uplift Factor", help_text="TCE factor for construction width beyond ROW",
@@ -384,7 +384,7 @@ _env_order = 2
 for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
     for _t in _ct_terrains:
         _TAB4.append(_f(
-            f"env_base_{_ct_key}_{_t}", taxonomy_id="env_mitigation", input_tab="environmental",
+            f"env_base_{_ct_key}_{_t}", taxonomy_id="env_mitigation", input_tab="capital-costs",
             yaml_section="09_environmental_mitigation",
             field_path=f"environmental_mitigation.base_mitigation_cost_per_acre.{_ct_key}.{_t}",
             label=_terrain_label(_t), help_text=f"Per-acre mitigation/restoration cost for {_terrain_label(_t).lower()} terrain",
@@ -395,7 +395,7 @@ for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
 
 # Credits: 1 wetland + 5 habitat = 6 fields
 _TAB4.append(_f(
-    "env_credit_cost_wetland", taxonomy_id="env_mitigation", input_tab="environmental",
+    "env_credit_cost_wetland", taxonomy_id="env_mitigation", input_tab="capital-costs",
     yaml_section="09_environmental_mitigation",
     field_path="environmental_mitigation.wetland_credit_cost_per_acre",
     label="Wetland Credit Cost",
@@ -406,7 +406,7 @@ _TAB4.append(_f(
 _env_order += 1
 for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain"]:
     _TAB4.append(_f(
-        f"env_credit_cost_habitat_{_terrain}", taxonomy_id="env_mitigation", input_tab="environmental",
+        f"env_credit_cost_habitat_{_terrain}", taxonomy_id="env_mitigation", input_tab="capital-costs",
         yaml_section="09_environmental_mitigation",
         field_path=f"environmental_mitigation.habitat_credit_cost_per_acre.{_terrain}",
         label=f"Habitat — {_terrain_label(_terrain)}",
@@ -417,36 +417,32 @@ for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", 
     _env_order += 1
 
 # ===================================================================
-# Tab 5 — Operational Costs (43 fields: 7 insurance + 36 veg mgmt)
+# Tab 5 — Operational Costs (40 fields: 4 insurance + 36 veg mgmt)
 # ===================================================================
 
 _TAB5: list[InputField] = [
     _f("insurance_premium_rate", taxonomy_id="insurance", input_tab="operational",
        yaml_section="04_insurance", field_path="insurance.premium_rate",
        label="Premium Rate", help_text="Annual insurance premium as % of insurable value",
-       input_type="percent", tier="working", display_order=1,
-       validation={"min": 0, "max": 1, "step": 0.001, "pct": True}),
+       input_type="percent", condition="always_hidden", tier="working", display_order=1,
+       validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
+       sub_tab="operational-insurance"),
     _f("insurable_conductors", taxonomy_id="insurance", input_tab="operational",
        yaml_section="04_insurance", field_path="insurance.insurable_components.conductors",
        label="Conductors", help_text="Include conductor costs in insurable value",
-       input_type="toggle", tier="working", display_order=2),
+       input_type="toggle", condition="always_hidden", tier="working", display_order=2,
+       sub_tab="operational-insurance"),
     _f("insurable_structures", taxonomy_id="insurance", input_tab="operational",
        yaml_section="04_insurance", field_path="insurance.insurable_components.structures",
        label="Structures", help_text="Include structure costs in insurable value",
-       input_type="toggle", tier="working", display_order=3),
+       input_type="toggle", condition="always_hidden", tier="working", display_order=3,
+       sub_tab="operational-insurance"),
     _f("insurable_converters", taxonomy_id="insurance", input_tab="operational",
        yaml_section="04_insurance", field_path="insurance.insurable_components.converters",
        label="Converters", help_text="Include converter costs in insurable value",
-       input_type="toggle", tier="working", display_order=4),
+       input_type="toggle", condition="always_hidden", tier="working", display_order=4,
+       sub_tab="operational-insurance"),
 ]
-for _ci, _ct in enumerate(["overhead", "underground", "subsea"]):
-    _TAB5.append(_f(
-        f"insurance_premium_{_ct}", taxonomy_id="insurance", input_tab="operational",
-        yaml_section="04_insurance", field_path=f"insurance.premium_by_construction_type.{_ct}",
-        label=_ct.title(), help_text=f"Premium rate override for {_ct} construction",
-        section_label="Premium by Construction Type",
-        input_type="percent", tier="working", display_order=5 + _ci,
-        validation={"min": 0, "max": 1, "step": 0.001, "pct": True}))
 
 # Vegetation management: 4 construction types × 9 terrains = 36
 _VEG_CT = [
@@ -462,8 +458,9 @@ for _ct_key, _ct_label in _VEG_CT:
             field_path=f"vegetation_management_om_costs.{_ct_key}.{_t}",
             label=_terrain_label(_t), help_text=f"Annual vegetation management cost for {_terrain_label(_t).lower()} terrain",
             section_label=f"Vegetation Mgmt — {_ct_label}",
-            unit="$/mile/year", input_type="currency", tier="first-glance",
-            display_order=_veg_order, validation={"min": 0}))
+            unit="$/mile/year", input_type="currency", condition="always_hidden",
+            tier="first-glance", display_order=_veg_order, validation={"min": 0},
+            sub_tab="vegetation-management"))
         _veg_order += 1
 
 # ===================================================================
@@ -584,15 +581,17 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
             validation={"min": 0}))
 
 # ===================================================================
-# Tab 8 — Emissions (60 fields: 28 reductions + 32 energy mix)
+# Tab 8 — Energy and Emissions (60 fields: 28 reductions + 32 energy mix)
+# All fields are condition="always_hidden" — rendered via custom tables, not renderTaxonomySections.
 # ===================================================================
 
 _TAB8: list[InputField] = [
     _f("compensation_percent", taxonomy_id="emissions_comp", input_tab="emissions",
        yaml_section="16_emissions_reductions", field_path="emissions_reductions.compensation_percent",
        label="Loss Compensation Rate (\u03B1)", help_text="Fraction of line losses compensated by generation",
-       input_type="percent", tier="first-glance", display_order=1,
-       validation={"min": 0, "max": 1, "step": 0.01, "pct": True}),
+       input_type="percent", condition="always_hidden", tier="first-glance", display_order=1,
+       validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
+       sub_tab="energy-emissions-emissions"),
 ]
 # Societal costs (3)
 for _pi, (_pk, _pl) in enumerate([("co2_cost_per_kg", "CO\u2082 Cost per kg"),
@@ -603,8 +602,8 @@ for _pi, (_pk, _pl) in enumerate([("co2_cost_per_kg", "CO\u2082 Cost per kg"),
         yaml_section="16_emissions_reductions",
         field_path=f"emissions_reductions.societal_costs_per_kg.{_pk}",
         label=_pl, help_text=f"Social cost per kg of {_pl.split()[0]} emissions (externality value)",
-        unit="$/kg", input_type="currency", tier="first-glance",
-        display_order=2 + _pi))
+        unit="$/kg", input_type="currency", condition="always_hidden", tier="first-glance",
+        display_order=2 + _pi, sub_tab="energy-emissions-emissions"))
 
 # Emission intensities: 3 pollutants × 8 fuels = 24
 _POLLUTANTS = [("co2", "CO\u2082"), ("sox", "SO\u2093"), ("nox", "NO\u2093")]
@@ -618,7 +617,8 @@ for _pk, _pl in _POLLUTANTS:
             label=_fuel.replace("_", " ").title(),
             help_text=f"{_pl} emitted per MWh from {_fuel.replace('_', ' ')} generation",
             section_label=f"{_pl} Intensity (kg/MWh)",
-            unit="kg/MWh", tier="advanced", display_order=_int_order))
+            unit="kg/MWh", condition="always_hidden", tier="advanced", display_order=_int_order,
+            sub_tab="energy-emissions-emissions"))
         _int_order += 1
 
 # Energy source mix: 8 fuels × 2 fields × 2 instances = 32
@@ -633,14 +633,16 @@ for _instance, _inst_label, _yaml_key in [
             field_path=f"{_yaml_key}.{_fuel}.percentage",
             label="Percentage", help_text=f"Share of {_fuel.replace('_', ' ')} in this generation mix (must sum to 100)",
             section_label=f"{_inst_label} — {_fuel.replace('_', ' ').title()}",
-            input_type="fuel_mix_row", tier="working", display_order=_fi * 2 + 1))
+            input_type="fuel_mix_row", condition="always_hidden", tier="working",
+            display_order=_fi * 2 + 1, sub_tab="energy-emissions-energy"))
         _TAB8.append(_f(
             f"mix_{_instance}_{_fuel}_rate", taxonomy_id="emissions_fac", input_tab="emissions",
             yaml_section="18_energy_source_mix",
             field_path=f"{_yaml_key}.{_fuel}.rate_of_change",
             label="Rate Of Change", help_text=f"Annual growth/decline rate for {_fuel.replace('_', ' ')} share (decimal; mix renormalized yearly)",
             section_label=f"{_inst_label} — {_fuel.replace('_', ' ').title()}",
-            tier="working", display_order=_fi * 2 + 2))
+            condition="always_hidden", tier="working", display_order=_fi * 2 + 2,
+            sub_tab="energy-emissions-energy"))
 
 # ===================================================================
 # Tab 9 — Benefits (24 fields)

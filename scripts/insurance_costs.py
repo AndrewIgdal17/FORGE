@@ -37,7 +37,6 @@ def calculate_insurance_costs(
     conductor_cost_with_contingencies: float,
     structure_cost_with_contingencies: float,
     converter_cost_with_contingencies: float,
-    construction_type: str,
     project_lifetime: int,
 ) -> Dict[str, float]:
     """
@@ -48,7 +47,6 @@ def calculate_insurance_costs(
         conductor_cost_with_contingencies: Conductor cost with contingencies
         structure_cost_with_contingencies: Structure cost with contingencies
         converter_cost_with_contingencies: Converter cost with contingencies
-        construction_type: Type of construction (overhead, underground, subsea)
         project_lifetime: Project lifetime in years
 
     Returns:
@@ -69,11 +67,7 @@ def calculate_insurance_costs(
     if components.get("converters", True):
         insurable_value += converter_cost_with_contingencies
 
-    # Determine premium rate (construction type specific or default)
-    premium_by_type = ins_cfg.get("premium_by_construction_type", {})
-    premium_rate = premium_by_type.get(
-        construction_type.lower(), ins_cfg.get("premium_rate", 0.002)
-    )
+    premium_rate = ins_cfg.get("premium_rate", 0.002)
 
     # Calculate annual premium and lifetime cost
     annual_premium = insurable_value * premium_rate
@@ -141,7 +135,6 @@ def main() -> None:
         costs.conductor_cost_with_contingencies,
         costs.structure_cost_with_contingencies,
         costs.converter_cost_with_contingencies,
-        project_details.construction_type,
         project_details.project_lifetime,
     )
 
