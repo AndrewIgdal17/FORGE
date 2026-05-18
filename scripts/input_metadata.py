@@ -64,19 +64,19 @@ _TAB1: list[InputField] = [
        yaml_section="01_project_technical_details", field_path="project.name",
        label="Name", help_text="Unique identifier for this project scenario",
        input_type="text", tier="first-glance", display_order=1,
-       validation={"required": True}, sub_tab="configuration"),
+       validation={"required": True}, sub_tab="identity"),
     _f("construction_type", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.construction_type",
        label="Construction Type", help_text="Overhead, underground, or subsea transmission",
        input_type="dropdown", tier="first-glance", display_order=1,
        validation={"required": True, "options": ["Overhead", "Underground Direct-Buried", "Underground Tunnel", "Subsea"]},
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("ac_dc", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.ac_dc",
        label="AC/DC", help_text="Alternating current or direct current transmission",
        input_type="dropdown", tier="first-glance", display_order=2,
        validation={"required": True, "options": ["AC", "DC"]},
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("capacity_mw", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.capacity_mw",
        label="Capacity MW", help_text="Nameplate transfer capacity (C_new); feeds capacity relief and line loss calculations", unit="MW",
@@ -84,7 +84,7 @@ _TAB1: list[InputField] = [
        validation={"required": True, "dependsOn": "01_project_technical_details.project.ac_dc",
                    "optionSets": {"AC": [140, 329, 394, 460, 657, 1792, 2598, 6625],
                                   "DC": [500, 1500, 2000, 2400, 6000]}, "suffix": " MW"},
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("conductor_type", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.conductor_type",
        label="Conductor Type", help_text="Determines resistance, cost per mile, and O&M rates",
@@ -117,12 +117,12 @@ _TAB1: list[InputField] = [
        yaml_section="01_project_technical_details", field_path="project.converter_loss_percentage",
        label="Converter Loss Percentage", help_text="Loss per converter station (0.75% LCC, 1.0% VSC)", unit="%",
        input_type="percent", condition="always_hidden", tier="first-glance", display_order=7,
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("reconductoring", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.reconductoring",
        label="Reconductoring Project", help_text="Upgrade existing conductors; zeroes structure cost, relief = C_new minus C_old",
        input_type="toggle", tier="first-glance", display_order=8,
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("uses_existing_row", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.uses_existing_row",
        label="Project Uses Existing ROW", help_text="Zeroes acquisition/holding, includes delay in rent",
@@ -135,7 +135,7 @@ _TAB1: list[InputField] = [
        validation={"dependsOn": "01_project_technical_details.project.old_ac_dc",
                    "optionSets": {"AC": [140, 329, 394, 460, 657, 1792, 2598, 6625],
                                   "DC": [500, 1500, 2000, 2400, 6000]}, "suffix": " MW"},
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("old_conductor_type", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.old_conductor_type",
        label="Old Conductor Type", help_text="Original conductor for reconductoring cost comparison",
@@ -155,7 +155,7 @@ _TAB1: list[InputField] = [
        label="Old AC/DC", help_text="Original AC/DC type for reconductoring comparison",
        input_type="dropdown", condition="reconductoring_only",
        tier="first-glance", display_order=10, validation={"options": ["", "AC", "DC"]},
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("old_converter_type", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.old_converter_type",
        label="Old Converter Type", help_text="Original converter type for old DC line (used for reconductoring cost lookup)",
@@ -169,12 +169,12 @@ _TAB1: list[InputField] = [
        label="Line Utilization", help_text="Fraction of nameplate capacity used on average",
        input_type="percent", tier="first-glance", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
-       sub_tab="configuration"),
-    _f("baseline_price_mwh", taxonomy_id="project_utilization", input_tab="project-technical",
-       yaml_section="01_project_technical_details", field_path="project.baseline_electricity_price_per_mwh",
-       label="Baseline Electricity Price per MWh", help_text="Marginal energy price; values line losses and delivered energy benefit", unit="$/MWh",
-       input_type="currency", tier="first-glance", display_order=2,
-       sub_tab="configuration"),
+       sub_tab="technology"),
+    _f("baseline_price_mwh", taxonomy_id="project_utilization", input_tab="benefits",
+       yaml_section="01_project_technical_details", field_path="project.value_of_load_per_mwh",
+       label="Value of Load per MWh", help_text="Demand-side marginal value of delivered energy; values line losses and delivered energy benefit", unit="$/MWh",
+       input_type="currency", condition="always_hidden", tier="first-glance", display_order=2,
+       sub_tab="economic-details"),
     _f("construction_years", taxonomy_id="project_timing", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="timeline.construction_years",
        label="Construction Years", help_text="Construction duration; affects AFUDC compounding and PV discounting",
@@ -193,11 +193,11 @@ _TAB1: list[InputField] = [
     _f("greenfield_cmp_capacity", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.greenfield_comparison_capacity_mw",
        label="Greenfield Comparison Capacity MW", condition="always_hidden", display_order=99,
-       sub_tab="configuration"),
+       sub_tab="technology"),
     _f("greenfield_cmp_conductor", taxonomy_id="project_technology", input_tab="project-technical",
        yaml_section="01_project_technical_details", field_path="project.greenfield_comparison_conductor_type",
        label="Greenfield Comparison Conductor Type", condition="always_hidden", display_order=100,
-       sub_tab="configuration"),
+       sub_tab="technology"),
 ]
 
 # ===================================================================
@@ -227,23 +227,27 @@ for _i, _t in enumerate(TERRAINS):
 # ===================================================================
 
 _TAB3: list[InputField] = [
-    # --- Core rates ---
+    # --- Core rates (Rates sub-tab, custom-rendered) ---
     _f("base_year", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.base_year",
        label="Base Year", help_text="Reference year for all present values (base-year dollars)",
        input_type="dropdown", tier="first-glance", display_order=1,
        validation={"options": list(range(2020, 2051))}),
     _f("inflation_rate", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.inflation_rate",
        label="Inflation Rate", help_text="Annual inflation rate for Fisher equation",
        input_type="percent", tier="first-glance", display_order=2,
        validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     _f("wacc_nominal", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.wacc_nominal",
        label="WACC Nominal", help_text="Nominal WACC; real WACC derived via Fisher equation; also used as AFUDC rate",
        input_type="percent", tier="first-glance", display_order=3,
        validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     _f("social_discount_rate", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.social_discount_rate",
        label="Social Discount Rate", help_text="Discount rate for social externalities (risk, emissions)",
        input_type="percent", tier="first-glance", display_order=4,
@@ -268,39 +272,26 @@ _TAB3: list[InputField] = [
        input_type="percent", condition="dc_only",
        tier="working", display_order=3,
        validation={"min": 0, "max": 0.5, "step": 0.01, "pct": True}),
-    # --- Capital structure (always_hidden) ---
-    _f("equity_percent", taxonomy_id="financial_capital_structure", input_tab="financial",
-       yaml_section="03_financing", field_path="financial.capital_structure.equity_percent",
-       label="Equity Percent", input_type="percent", condition="always_hidden", display_order=1,
-       validation={"min": 0, "max": 1, "step": 0.01, "pct": True}),
-    _f("debt_percent", taxonomy_id="financial_capital_structure", input_tab="financial",
-       yaml_section="03_financing", field_path="financial.capital_structure.debt_percent",
-       label="Debt Percent", input_type="percent", condition="always_hidden", display_order=2,
-       validation={"min": 0, "max": 1, "step": 0.01, "pct": True}),
-    _f("cost_of_equity", taxonomy_id="financial_capital_structure", input_tab="financial",
-       yaml_section="03_financing", field_path="financial.capital_structure.cost_of_equity",
-       label="Cost Of Equity", input_type="percent", condition="always_hidden", display_order=3,
-       validation={"min": 0, "max": 0.3, "step": 0.005, "pct": True}),
-    _f("cost_of_debt", taxonomy_id="financial_capital_structure", input_tab="financial",
-       yaml_section="03_financing", field_path="financial.capital_structure.cost_of_debt",
-       label="Cost Of Debt", input_type="percent", condition="always_hidden", display_order=4,
-       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
-    # --- Revenue ---
+    # --- Revenue (Rates sub-tab, custom-rendered) ---
     _f("revenue_enabled", taxonomy_id="financial_revenue_config", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.revenue.rate_based.enabled",
-       label="Enabled", help_text="Enable rate-based revenue calculation",
+       label="Revenue Requirement", help_text="Enable rate-based revenue calculation",
        input_type="toggle", tier="working", display_order=1),
     _f("allowed_return_rate", taxonomy_id="financial_revenue_config", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.revenue.rate_based.allowed_return_rate",
        label="Allowed Return Rate", help_text="Annual return on rate base",
        input_type="percent", tier="working", display_order=2,
        validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
-    # --- AFUDC ---
+    # --- AFUDC (AFUDC sub-tab, custom-rendered) ---
     _f("apply_afudc", taxonomy_id="financial_afudc", input_tab="financial",
+       sub_tab="afudc", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.afudc.apply_afudc",
        label="Apply AFUDC", help_text="Toggle AFUDC capitalization",
        input_type="toggle", tier="advanced", display_order=1),
     _f("delay_period_active_work", taxonomy_id="financial_afudc", input_tab="financial",
+       sub_tab="afudc", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.afudc.delay_period_active_work",
        label="Delay Period Active Work", help_text="AFUDC accrues during delay if active work continues",
        input_type="toggle", tier="advanced", display_order=2),
@@ -319,6 +310,7 @@ for _ci, (_cat, _cat_label) in enumerate(_TIMING_CATEGORIES):
     _base = f"cost_timing_patterns.{_cat}"
     _TAB3.append(_f(
         f"timing_{_cat}_delay", taxonomy_id="financial_timing_patterns", input_tab="financial",
+        sub_tab="afudc", condition="always_hidden",
         yaml_section="19_cost_timing_patterns", field_path=f"{_base}.during_delay",
         label="During Delay", help_text=f"Fraction of {_cat_label} cost incurred during delay period",
         section_label=_cat_label, input_type="percent",
@@ -326,6 +318,7 @@ for _ci, (_cat, _cat_label) in enumerate(_TIMING_CATEGORIES):
         validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
     _TAB3.append(_f(
         f"timing_{_cat}_construction", taxonomy_id="financial_timing_patterns", input_tab="financial",
+        sub_tab="afudc", condition="always_hidden",
         yaml_section="19_cost_timing_patterns", field_path=f"{_base}.during_construction",
         label="During Construction", help_text=f"Fraction of {_cat_label} cost incurred during construction",
         section_label=_cat_label, input_type="percent",
@@ -333,6 +326,7 @@ for _ci, (_cat, _cat_label) in enumerate(_TIMING_CATEGORIES):
         validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
     _TAB3.append(_f(
         f"timing_{_cat}_afudc", taxonomy_id="financial_timing_patterns", input_tab="financial",
+        sub_tab="afudc", condition="always_hidden",
         yaml_section="19_cost_timing_patterns", field_path=f"{_base}.afudc_eligible",
         label="AFUDC Eligible", help_text=f"Whether {_cat_label} costs are AFUDC-eligible (compounded to COD)",
         section_label=_cat_label, input_type="toggle",
@@ -489,19 +483,23 @@ _TAB7: list[InputField] = [
     _f("wf_severity", taxonomy_id="wildfire_eac", input_tab="risk",
        yaml_section="06_wildfire_costs", field_path="wildfire.severity_per_event",
        label="Uninsured Severity ($/event)", help_text="Mean loss per wildfire event",
-       unit="$/event", input_type="currency", tier="working", display_order=1),
+       unit="$/event", input_type="currency", condition="always_hidden", tier="working",
+       display_order=1, sub_tab="wildfire-risk"),
     _f("wf_growth_rate", taxonomy_id="wildfire_eac", input_tab="risk",
        yaml_section="06_wildfire_costs", field_path="wildfire.risk_growth_rate",
        label="Risk Growth Rate", help_text="Annual increase in ignition probability",
-       input_type="percent", tier="working", display_order=2,
-       validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True}),
+       input_type="percent", condition="always_hidden", tier="working", display_order=2,
+       validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True},
+       sub_tab="wildfire-risk"),
     _f("wf_dr_source", taxonomy_id="wildfire_eac", input_tab="risk",
        yaml_section="06_wildfire_costs", field_path="wildfire.discount_rate_source",
        label="Discount Rate Source", input_type="dropdown", condition="always_hidden",
-       display_order=3, validation={"options": ["social", "wacc_real", "custom"]}),
+       display_order=3, validation={"options": ["social", "wacc_real", "custom"]},
+       sub_tab="wildfire-risk"),
     _f("wf_dr_custom", taxonomy_id="wildfire_eac", input_tab="risk",
        yaml_section="06_wildfire_costs", field_path="wildfire.discount_rate_custom",
-       label="Discount Rate Custom", condition="always_hidden", display_order=4),
+       label="Discount Rate Custom", condition="always_hidden", display_order=4,
+       sub_tab="wildfire-risk"),
 ]
 for _i, _t in enumerate(TERRAINS):
     _TAB7.append(_f(
@@ -509,47 +507,55 @@ for _i, _t in enumerate(TERRAINS):
         yaml_section="06_wildfire_costs", field_path=f"wildfire.ignition_rates_by_terrain.{_t}",
         label=_terrain_label(_t), help_text=f"Overhead baseline ignition rate for {_terrain_label(_t).lower()} (events/mi/yr)",
         section_label="Base Ignition Rates by Terrain",
-        unit="events/mi/yr", tier="working", display_order=10 + _i, validation={"min": 0}))
+        unit="events/mi/yr", condition="always_hidden", tier="working",
+        display_order=10 + _i, validation={"min": 0}, sub_tab="wildfire-risk"))
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
     _TAB7.append(_f(
         f"wf_mult_{_ct}", taxonomy_id="wildfire_eac", input_tab="risk",
         yaml_section="06_wildfire_costs", field_path=f"wildfire.ignition_rate_multiplier.{_ct}",
         label=_ct.title(), help_text=f"Multiplier on base ignition rate for {_ct} (1.0 = overhead baseline)",
         section_label="Construction-Type Multipliers",
-        tier="working", display_order=20 + _ci, validation={"min": 0}))
+        condition="always_hidden", tier="working", display_order=20 + _ci,
+        validation={"min": 0}, sub_tab="wildfire-risk"))
 
-# Outage (48 fields)
+# Outage (48 fields) — all always_hidden, custom rendered
 _TAB7 += [
     _f("out_growth_rate", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
        label="Risk Growth Rate", help_text="Annual increase in outage rates over project lifetime",
-       input_type="percent", tier="working", display_order=1,
-       validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True}),
+       input_type="percent", condition="always_hidden", tier="working", display_order=1,
+       validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True},
+       sub_tab="outage-risk"),
     _f("out_dr_type", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.discount_rate_type",
        label="Discount Rate Type", input_type="dropdown", condition="always_hidden",
-       display_order=2, validation={"options": ["social", "wacc_real"]}),
+       display_order=2, validation={"options": ["social", "wacc_real"]},
+       sub_tab="outage-risk"),
     _f("out_capacity_at_risk", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.capacity_at_risk_factor",
        label="Capacity at Risk (\u03C6)", help_text="Fraction of capacity lost per outage (1.0 = radial, <1.0 = meshed); MW_lost = phi x C_new",
-       input_type="percent", tier="working", display_order=3,
-       validation={"min": 0, "max": 1, "step": 0.01}),
+       input_type="percent", condition="always_hidden", tier="working", display_order=3,
+       validation={"min": 0, "max": 1, "step": 0.01},
+       sub_tab="outage-risk"),
 ]
-# VoLL tiers (3 tiers × 2 fields = 6)
+# VoLL tiers (3 tiers × 2 fields = 6) — moved to System Details (Economic Details)
+# Fields are always_hidden; rendered via custom table in renderEconomicDetailsPanel()
 for _ti in range(3):
     _tier_label = ["Short (0-4h)", "Medium (4-24h)", "Long (>24h)"][_ti]
     _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_eac", input_tab="risk",
+        f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_eac", input_tab="benefits",
         yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].max_hours",
         label=f"Max Hours — {_tier_label}", help_text=f"Upper bound for {_tier_label} duration tier",
         section_label="Value of Lost Load (VoLL Tiers)",
-        unit="hours", tier="working", display_order=10 + _ti * 2))
+        unit="hours", condition="always_hidden", tier="working", display_order=10 + _ti * 2,
+        sub_tab="economic-details"))
     _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_value", taxonomy_id="outage_eac", input_tab="risk",
+        f"out_voll_tier{_ti+1}_value", taxonomy_id="outage_eac", input_tab="benefits",
         yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].value_per_mwh",
         label=f"Value — {_tier_label}", help_text=f"Cost of unserved energy in {_tier_label} tier",
         section_label="Value of Lost Load (VoLL Tiers)",
-        unit="$/MWh", input_type="currency", tier="working", display_order=11 + _ti * 2))
+        unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
+        display_order=11 + _ti * 2, sub_tab="economic-details"))
 
 # Duration by terrain (9)
 for _i, _t in enumerate(TERRAINS):
@@ -558,7 +564,8 @@ for _i, _t in enumerate(TERRAINS):
         yaml_section="07_outage_costs", field_path=f"outage.outage_duration_by_terrain.{_t}",
         label=_terrain_label(_t), help_text=f"Base outage duration for {_terrain_label(_t).lower()} terrain (hrs/event)",
         section_label="Outage Duration by Terrain",
-        unit="hrs/event", tier="working", display_order=20 + _i, validation={"min": 0}))
+        unit="hrs/event", condition="always_hidden", tier="working",
+        display_order=20 + _i, validation={"min": 0}, sub_tab="outage-risk"))
 
 # Duration multiplier by construction type (3)
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
@@ -567,7 +574,8 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         yaml_section="07_outage_costs", field_path=f"outage.outage_duration_multiplier.{_ct}",
         label=_ct.title(), help_text=f"Duration multiplier for {_ct} construction (1.0 = overhead baseline)",
         section_label="Duration Multipliers by Construction Type",
-        tier="working", display_order=30 + _ci, validation={"min": 0}))
+        condition="always_hidden", tier="working", display_order=30 + _ci,
+        validation={"min": 0}, sub_tab="outage-risk"))
 
 # Outage rates: 3 construction types × 9 terrains = 27
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
@@ -577,8 +585,9 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
             yaml_section="07_outage_costs", field_path=f"outage.outage_rates.{_ct}.{_t}",
             label=_terrain_label(_t), help_text=f"Outage frequency for {_terrain_label(_t).lower()} under {_ct} construction",
             section_label=f"Outage Frequency — {_ct.title()}",
-            unit="outages/mi/yr", tier="working", display_order=40 + _ci * 9 + _ti,
-            validation={"min": 0}))
+            unit="outages/mi/yr", condition="always_hidden", tier="working",
+            display_order=40 + _ci * 9 + _ti, validation={"min": 0},
+            sub_tab="outage-risk"))
 
 # ===================================================================
 # Tab 8 — Energy and Emissions (60 fields: 28 reductions + 32 energy mix)
@@ -653,65 +662,72 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
     fields: list[InputField] = []
     _has_flow = "greenfield" in yaml_root
     _base = f"17_congestion_curtailment_reductions"
+    # All fields are always_hidden — rendered via custom panels in renderConstraintsPanel()
     if _has_flow:
         fields.append(_f(
             f"{prefix}_flow_factor", taxonomy_id="congestion_benefit", input_tab="benefits",
             yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.flow_factor",
             label="Flow Factor", help_text="Deliverability to targeted constraint [0,1]",
-            input_type="percent", tier="first-glance", display_order=1,
-            validation={"min": 0, "max": 1, "step": 0.01}))
+            input_type="percent", condition="always_hidden", tier="first-glance", display_order=1,
+            validation={"min": 0, "max": 1, "step": 0.01},
+            sub_tab="system-constraints"))
     fields += [
         _f(f"{prefix}_binding_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.binding_hours",
            label="Binding Hours", help_text="Hours/year the targeted constraint is binding",
-           unit="hrs/year", tier="first-glance", display_order=2),
+           unit="hrs/year", condition="always_hidden", tier="first-glance", display_order=2,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_avg_exceedance", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.average_exceedance",
            label="Average Exceedance", help_text="Average MW exceedance during binding hours",
-           unit="MW", tier="first-glance", display_order=3),
-        # always_hidden near-binding fields
+           unit="MW", condition="always_hidden", tier="first-glance", display_order=3,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_near_binding_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_binding_hours",
-           label="Near Binding Hours", condition="always_hidden", display_order=90),
+           label="Near Binding Hours", condition="always_hidden", display_order=90,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_near_avg_exceedance", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_average_exceedance",
-           label="Near Average Exceedance", condition="always_hidden", display_order=91),
+           label="Near Average Exceedance", condition="always_hidden", display_order=91,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_near_relief_factor", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_binding_relief_factor",
-           label="Near Binding Relief Factor", condition="always_hidden", display_order=92),
+           label="Near Binding Relief Factor", condition="always_hidden", display_order=92,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_cong_price", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.costs.average_congestion_price",
            label="Average Congestion Price", help_text="Marginal congestion cost during binding hours; monetizes relief",
-           unit="$/MWh", input_type="currency",
-           tier="first-glance", display_order=4),
-        _f(f"{prefix}_resid_exceedance", taxonomy_id="residual_exceedance", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.costs.residual_exceedance_value",
-           label="Residual Exceedance Value", help_text="$/MWh value for unrelieved constraint (null = use congestion price)",
-           tier="first-glance", display_order=5),
+           unit="$/MWh", input_type="currency", condition="always_hidden",
+           tier="first-glance", display_order=4,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_voll", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.costs.value_of_lost_load",
-           label="Value Of Lost Load", condition="always_hidden", display_order=93),
+           label="Value Of Lost Load", condition="always_hidden", display_order=93,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_curt_hours", taxonomy_id="curtailment_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.curtailment.curtailment_hours_total",
            label="Curtailment Hours Total", help_text="Hours/year of renewable curtailment on this constraint",
-           unit="hrs/year", tier="first-glance", display_order=6),
+           unit="hrs/year", condition="always_hidden", tier="first-glance", display_order=6,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_curt_mw", taxonomy_id="curtailment_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.curtailment.average_curtailment_mw",
            label="Average Curtailment MW", help_text="Average curtailed MW during curtailment hours",
-           unit="MW", tier="first-glance", display_order=7),
+           unit="MW", condition="always_hidden", tier="first-glance", display_order=7,
+           sub_tab="system-constraints"),
         _f(f"{prefix}_curt_price", taxonomy_id="curtailment_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.curtailment.average_curtailment_price",
            label="Average Curtailment Price", help_text="Value per MWh of curtailed energy (PPA proxy / avoided cost)",
-           unit="$/MWh", input_type="currency",
-           tier="first-glance", display_order=8),
+           unit="$/MWh", input_type="currency", condition="always_hidden",
+           tier="first-glance", display_order=8,
+           sub_tab="system-constraints"),
     ]
-    # Reconductoring adds hot_hour_weights
     if "reconductoring" in yaml_root:
         fields.append(_f(
             f"{prefix}_hot_hour_weights", taxonomy_id="congestion_benefit", input_tab="benefits",
             yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.hot_hour_weights",
             label="Hot Hour Weights", help_text="Fraction of binding hours at or near maximum operating temperature",
-            tier="first-glance", display_order=9))
+            condition="always_hidden", tier="first-glance", display_order=9,
+            sub_tab="system-constraints"))
     return fields
 
 _TAB9: list[InputField] = (

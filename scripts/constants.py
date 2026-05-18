@@ -10,7 +10,6 @@ HOURS_PER_YEAR = 8760
 
 # Financial validation constants
 MIN_DISCOUNT_RATE = -0.99  # Minimum allowed discount rate to prevent division by zero
-EQUITY_DEBT_TOLERANCE = 0.001  # Tolerance for equity + debt percent validation
 TIMING_PATTERN_TOLERANCE = 0.001  # Tolerance for during_delay + during_construction == 1.0 (AFUDC-eligible patterns)
 
 # Converter loss constants (as percentages, 0-1)

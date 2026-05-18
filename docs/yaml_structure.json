@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "total_yamls": 23,
-    "total_fields": 4110,
+    "total_yamls": 22,
+    "total_fields": 4105,
     "total_configurations": 0,
     "categories": {
       "Technical": {
-        "file_count": 6,
-        "field_count": 175
+        "file_count": 5,
+        "field_count": 182
       },
       "Physical": {
         "file_count": 1,
@@ -14,7 +14,7 @@
       },
       "Financial": {
         "file_count": 3,
-        "field_count": 33
+        "field_count": 27
       },
       "Costs": {
         "file_count": 0,
@@ -26,11 +26,11 @@
       },
       "Environmental": {
         "file_count": 4,
-        "field_count": 88
+        "field_count": 86
       },
       "Benefits": {
         "file_count": 1,
-        "field_count": 28
+        "field_count": 24
       },
       "Configurations": {
         "file_count": 3,
@@ -113,12 +113,12 @@
                 "description": "",
                 "path": "01_project_technical_details.project.line_utilization"
               },
-              "baseline_electricity_price_per_mwh": {
+              "value_of_load_per_mwh": {
                 "type": "float",
                 "default": 50.0,
                 "units": null,
                 "description": "",
-                "path": "01_project_technical_details.project.baseline_electricity_price_per_mwh"
+                "path": "01_project_technical_details.project.value_of_load_per_mwh"
               },
               "reconductoring": {
                 "type": "bool",
@@ -159,12 +159,12 @@
                 "type": "NoneType",
                 "default": null,
                 "units": null,
-                "description": "Greenfield capacity comparison (only used when reconductoring: False)",
+                "description": "Design comparison fields (set via Design Comparison subtab, not Project tab)",
                 "path": "01_project_technical_details.project.greenfield_comparison_capacity_mw"
               },
               "greenfield_comparison_conductor_type": {
-                "type": "str",
-                "default": "Standard Aluminum Conductor",
+                "type": "NoneType",
+                "default": null,
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.greenfield_comparison_conductor_type"
@@ -206,9 +206,9 @@
       },
       "field_count": 20,
       "comments": {
-        "greenfield_comparison_capacity_mw": "Greenfield capacity comparison (only used when reconductoring: False)"
+        "greenfield_comparison_capacity_mw": "Design comparison fields (set via Design Comparison subtab, not Project tab)"
       },
-      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  name: \"S1_California_Rural_Overhead_AC_657MW\"\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 657 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)\n\n  reconductoring: False # True or False\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Greenfield capacity comparison (only used when reconductoring: False)\n  greenfield_comparison_capacity_mw: null # Optional: Capacity in MW for comparison configuration\n  greenfield_comparison_conductor_type: \"Standard Aluminum Conductor\" # Optional: Conductor type for comparison configuration. Options: Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 4 # years (>= 0)\n  project_lifetime: 50 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
+      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  name: \"S1_California_Rural_Overhead_AC_657MW\"\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 657 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  value_of_load_per_mwh: 50.0 # $/MWh (>= 0)\n\n  reconductoring: False # True or False\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Design comparison fields (set via Design Comparison subtab, not Project tab)\n  greenfield_comparison_capacity_mw: null\n  greenfield_comparison_conductor_type: null\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 4 # years (>= 0)\n  project_lifetime: 50 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
     },
     "02_project_physical_details.yaml": {
       "filename": "02_project_physical_details.yaml",
@@ -589,76 +589,18 @@
                 },
                 "subsections": {},
                 "field_count": 3
-              },
-              "premium_by_construction_type": {
-                "type": "object",
-                "fields": {
-                  "overhead": {
-                    "type": "float",
-                    "default": 0.002,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.premium_by_construction_type.overhead"
-                  },
-                  "underground": {
-                    "type": "float",
-                    "default": 0.0015,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.premium_by_construction_type.underground"
-                  },
-                  "subsea": {
-                    "type": "float",
-                    "default": 0.0025,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.premium_by_construction_type.subsea"
-                  }
-                },
-                "subsections": {},
-                "field_count": 3
-              },
-              "wildfire_liability": {
-                "type": "object",
-                "fields": {
-                  "enabled": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.wildfire_liability.enabled"
-                  },
-                  "liability_limit": {
-                    "type": "int",
-                    "default": 5400000,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.wildfire_liability.liability_limit"
-                  },
-                  "rate_on_line": {
-                    "type": "float",
-                    "default": 0.3,
-                    "units": null,
-                    "description": "",
-                    "path": "04_insurance.insurance.wildfire_liability.rate_on_line"
-                  }
-                },
-                "subsections": {},
-                "field_count": 3
               }
             },
-            "field_count": 10
+            "field_count": 4
           }
         },
-        "field_count": 10
+        "field_count": 4
       },
-      "field_count": 10,
+      "field_count": 4,
       "comments": {
-        "insurable_components": "Insurable components (which assets are insured)",
-        "premium_by_construction_type": "If not specified, uses premium_rate above",
-        "wildfire_liability": "Wildfire liability insurance (optional)"
+        "insurable_components": "Insurable components (which assets are insured)"
       },
-      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n\n  # Premium rate can vary by construction type (optional)\n  # If not specified, uses premium_rate above\n  premium_by_construction_type:\n    overhead: 0.002 # 0.2% [0,1]\n    underground: 0.0015 # 0.15% [0,1] (typically lower risk)\n    subsea: 0.0025 # 0.25% [0,1] (typically higher risk)\n\n  # Wildfire liability insurance (optional)\n  wildfire_liability:\n    enabled: true # Set to false to disable\n    liability_limit: 5400000 # $1B liability limit (>= 0)\n    rate_on_line: 0.3 # Rate on line [0,1] (80% ROL = 0.80, annual premium = 0.80 × $100M = $80M/year)\n"
+      "raw_content": "# Insurance Parameters\n# Operational insurance costs for transmission line assets\n\ninsurance:\n  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)\n\n  # Insurable components (which assets are insured)\n  insurable_components:\n    conductors: true # Include conductor costs in insurable value\n    structures: true # Include structure costs in insurable value\n    converters: true # Include converter costs in insurable value\n"
     },
     "05_delays.yaml": {
       "filename": "05_delays.yaml",
@@ -1355,6 +1297,13 @@
                 "units": null,
                 "description": "",
                 "path": "09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor"
+              },
+              "wetland_credit_cost_per_acre": {
+                "type": "int",
+                "default": 25000,
+                "units": null,
+                "description": "Credit purchases (off-site mitigation via banks)",
+                "path": "09_environmental_mitigation.environmental_mitigation.wetland_credit_cost_per_acre"
               }
             },
             "subsections": {
@@ -1610,117 +1559,60 @@
                 },
                 "field_count": 31
               },
-              "credit_cost_per_acre": {
+              "habitat_credit_cost_per_acre": {
                 "type": "object",
-                "fields": {},
-                "subsections": {
-                  "wetlands": {
-                    "type": "object",
-                    "fields": {
-                      "palustrine": {
-                        "type": "int",
-                        "default": 50000,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.palustrine"
-                      },
-                      "estuarine": {
-                        "type": "int",
-                        "default": 100000,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.estuarine"
-                      },
-                      "other": {
-                        "type": "int",
-                        "default": 25000,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.other"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 3
+                "fields": {
+                  "forested": {
+                    "type": "int",
+                    "default": 30000,
+                    "units": null,
+                    "description": "",
+                    "path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.forested"
                   },
-                  "habitat": {
-                    "type": "object",
-                    "fields": {
-                      "default": {
-                        "type": "int",
-                        "default": 30000,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.habitat.default"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 1
+                  "scrubbed_flat": {
+                    "type": "int",
+                    "default": 30000,
+                    "units": null,
+                    "description": "",
+                    "path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.scrubbed_flat"
+                  },
+                  "desert_barren": {
+                    "type": "int",
+                    "default": 30000,
+                    "units": null,
+                    "description": "",
+                    "path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.desert_barren"
+                  },
+                  "rolling_hills": {
+                    "type": "int",
+                    "default": 30000,
+                    "units": null,
+                    "description": "",
+                    "path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.rolling_hills"
+                  },
+                  "mountain": {
+                    "type": "int",
+                    "default": 30000,
+                    "units": null,
+                    "description": "",
+                    "path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.mountain"
                   }
                 },
-                "field_count": 4
-              },
-              "credit_ratios": {
-                "type": "object",
-                "fields": {},
-                "subsections": {
-                  "wetlands": {
-                    "type": "object",
-                    "fields": {
-                      "palustrine": {
-                        "type": "float",
-                        "default": 1.5,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.palustrine"
-                      },
-                      "estuarine": {
-                        "type": "float",
-                        "default": 2.5,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.estuarine"
-                      },
-                      "other": {
-                        "type": "float",
-                        "default": 1.0,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.other"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 3
-                  },
-                  "habitat": {
-                    "type": "object",
-                    "fields": {
-                      "default": {
-                        "type": "float",
-                        "default": 1.0,
-                        "units": null,
-                        "description": "",
-                        "path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.habitat.default"
-                      }
-                    },
-                    "subsections": {},
-                    "field_count": 1
-                  }
-                },
-                "field_count": 4
+                "subsections": {},
+                "field_count": 5
               }
             },
-            "field_count": 40
+            "field_count": 38
           }
         },
-        "field_count": 40
+        "field_count": 38
       },
-      "field_count": 40,
+      "field_count": 38,
       "comments": {
         "base_mitigation_cost_per_acre": "All-in construction/restoration mitigation ($/acre) by terrain + construction type",
-        "credit_cost_per_acre": "Credit purchases (off-site mitigation via banks)",
-        "credit_ratios": "Mitigation ratios (acres required per acre impacted)"
+        "wetland_credit_cost_per_acre": "Credit purchases (off-site mitigation via banks)"
       },
-      "raw_content": "# Environmental Mitigation Costs\n# Costs per mile by terrain type for environmental mitigation\n\nenvironmental_mitigation:\n  mitigation_uplift_factor: 1.25 # to account for the fact that the width isnt just row width but also consturciton width via TCEs\n\n  # All-in construction/restoration mitigation ($/acre) by terrain + construction type\n  base_mitigation_cost_per_acre:\n    overhead:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 5000\n      farmland: 800\n      desert_barren: 1000\n      urban: 1500\n      rolling_hills: 1500\n      mountain: 7000\n      subsea: 1000 # onshore landfall/construction yard\n\n    underground_direct_buried:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 10000\n      farmland: 800\n      desert_barren: 1000\n      urban: 2000\n      rolling_hills: 1500\n      mountain: 9000\n      subsea: 1000\n\n    underground_tunnel:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 10000\n      farmland: 800\n      desert_barren: 1000\n      urban: 2000\n      rolling_hills: 1500\n      mountain: 9000\n      subsea: 1000\n      linear_corridor_default: 1500 # if terrain not known\n      shaft_site_default: 1000 # pad/disturbed site avg cost\n\n    subsea:\n      seabed_corridor_default: 0 # passive recovery (no cost)\n      landfall_default: 1000 # for basic onshore site (flat/open)\n\n  # Credit purchases (off-site mitigation via banks)\n  credit_cost_per_acre:\n    wetlands:\n      palustrine: 50000\n      estuarine: 100000\n      other: 25000\n    habitat:\n      default: 30000\n\n  # Mitigation ratios (acres required per acre impacted)\n  credit_ratios:\n    wetlands:\n      palustrine: 1.5\n      estuarine: 2.5\n      other: 1.0\n    habitat:\n      default: 1.0\n"
+      "raw_content": "# Environmental Mitigation Costs\n# Costs per mile by terrain type for environmental mitigation\n\nenvironmental_mitigation:\n  mitigation_uplift_factor: 1.25 # to account for the fact that the width isnt just row width but also consturciton width via TCEs\n\n  # All-in construction/restoration mitigation ($/acre) by terrain + construction type\n  base_mitigation_cost_per_acre:\n    overhead:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 5000\n      farmland: 800\n      desert_barren: 1000\n      urban: 1500\n      rolling_hills: 1500\n      mountain: 7000\n      subsea: 1000 # onshore landfall/construction yard\n\n    underground_direct_buried:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 10000\n      farmland: 800\n      desert_barren: 1000\n      urban: 2000\n      rolling_hills: 1500\n      mountain: 9000\n      subsea: 1000\n\n    underground_tunnel:\n      forested: 5000\n      scrubbed_flat: 1000\n      wetland: 10000\n      farmland: 800\n      desert_barren: 1000\n      urban: 2000\n      rolling_hills: 1500\n      mountain: 9000\n      subsea: 1000\n      linear_corridor_default: 1500 # if terrain not known\n      shaft_site_default: 1000 # pad/disturbed site avg cost\n\n    subsea:\n      seabed_corridor_default: 0 # passive recovery (no cost)\n      landfall_default: 1000 # for basic onshore site (flat/open)\n\n  # Credit purchases (off-site mitigation via banks)\n  wetland_credit_cost_per_acre: 25000\n\n  habitat_credit_cost_per_acre:\n    forested: 30000\n    scrubbed_flat: 30000\n    desert_barren: 30000\n    rolling_hills: 30000\n    mountain: 30000\n"
     },
     "10_project_category_build_costs.yaml": {
       "filename": "10_project_category_build_costs.yaml",
@@ -16248,17 +16140,10 @@
                         "units": null,
                         "description": "near baseline congestion energy = H_n * X mwh/yr",
                         "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
-                      },
-                      "saturation_factor": {
-                        "type": "float",
-                        "default": 0.3,
-                        "units": null,
-                        "description": "",
-                        "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor"
                       }
                     },
                     "subsections": {},
-                    "field_count": 7
+                    "field_count": 6
                   },
                   "costs": {
                     "type": "object",
@@ -16289,7 +16174,7 @@
                     "field_count": 3
                   }
                 },
-                "field_count": 10
+                "field_count": 9
               },
               "curtailment": {
                 "type": "object",
@@ -16314,20 +16199,13 @@
                     "units": null,
                     "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
                     "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.average_curtailment_price"
-                  },
-                  "curtailment_saturation_factor": {
-                    "type": "float",
-                    "default": 0.1,
-                    "units": null,
-                    "description": "Higher values mean more saturation (less benefit per MW of capacity added)",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor"
                   }
                 },
                 "subsections": {},
-                "field_count": 4
+                "field_count": 3
               }
             },
-            "field_count": 14
+            "field_count": 12
           },
           "reconductoring_congestion_curtailment_reductions": {
             "type": "object",
@@ -16375,13 +16253,6 @@
                         "description": "near baseline congestion energy = H_n * X mwh/yr",
                         "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.near_binding_relief_factor"
                       },
-                      "saturation_factor": {
-                        "type": "float",
-                        "default": 0.35,
-                        "units": null,
-                        "description": "",
-                        "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor"
-                      },
                       "hot_hour_weights": {
                         "type": "int",
                         "default": 0,
@@ -16391,7 +16262,7 @@
                       }
                     },
                     "subsections": {},
-                    "field_count": 7
+                    "field_count": 6
                   },
                   "costs": {
                     "type": "object",
@@ -16422,7 +16293,7 @@
                     "field_count": 3
                   }
                 },
-                "field_count": 10
+                "field_count": 9
               },
               "curtailment": {
                 "type": "object",
@@ -16447,25 +16318,18 @@
                     "units": null,
                     "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
                     "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.average_curtailment_price"
-                  },
-                  "curtailment_saturation_factor": {
-                    "type": "float",
-                    "default": 0.1,
-                    "units": null,
-                    "description": "Higher values mean more saturation (less benefit per MW of capacity added)",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor"
                   }
                 },
                 "subsections": {},
-                "field_count": 4
+                "field_count": 3
               }
             },
-            "field_count": 14
+            "field_count": 12
           }
         },
-        "field_count": 28
+        "field_count": 24
       },
-      "field_count": 28,
+      "field_count": 24,
       "comments": {
         "flow_factor": "We need the capacity from project technical details",
         "binding_hours": "delta C_eff = delta C_eff_new - delta C_eff_old",
@@ -16473,10 +16337,9 @@
         "near_binding_relief_factor": "near baseline congestion energy = H_n * X mwh/yr",
         "curtailment_hours_total": "transmission capacity is insufficient to deliver power to demand centers",
         "average_curtailment_mw": "THis is already expressed as \"constraint-equivalent MW\" conceptually",
-        "average_curtailment_price": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price",
-        "curtailment_saturation_factor": "Higher values mean more saturation (less benefit per MW of capacity added)"
+        "average_curtailment_price": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price"
       },
-      "raw_content": "# Congestion and Curtailment Reductions\n# Cost savings from reduced transmission congestion and renewable energy curtailment\n\ngreenfield_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # We need the capacity from project technical details\n      flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]\n      # delta C_eff = S * capacity\n      binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 560 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.3 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 1000 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 560 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\nreconductoring_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # delta C_eff = delta C_eff_new - delta C_eff_old\n      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n      saturation_factor: 0.35 # [0, something greater than 0??] (>= 0) # bascially 0 fora radial line and more for a meshed system\n\n      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n    # energy loss info is in project_category_circuit_detail.yaml\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 0 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n    # Saturation factor [0,1] to account for diminishing returns\n    # Applied as a haircut: Benefit_haircut = Benefit × (1 - curtailment_saturation_factor)\n    # Higher values mean more saturation (less benefit per MW of capacity added)\n    curtailment_saturation_factor: 0.1 # [0,1]\n\n\n###### DEFINITIONS:\n# 1) Congestion price: $/MWh\n#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding\n#      transmission constraints.\n# 2) Curtailment price: $/MWh\n#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)\n#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.\n"
+      "raw_content": "# Congestion and Curtailment Reductions\n# Cost savings from reduced transmission congestion and renewable energy curtailment\n\ngreenfield_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # We need the capacity from project technical details\n      flow_factor: 0.6 # flow factor is deliverability to the targeted constrained [0,1]\n      # delta C_eff = S * capacity\n      binding_hours: 1000 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 560 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 1000 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 560 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\nreconductoring_congestion_curtailment_reductions:\n  congestion:\n    constraints:\n      # delta C_eff = delta C_eff_new - delta C_eff_old\n      binding_hours: 1800 # binding hours is the number of hours per year that the line is binding (>= 0)\n      average_exceedance: 328 # MW exceedance during binding hours (>= 0)\n      # baseline congestion energy = H_b * X mwh/yr\n      near_binding_hours: 0 # near binding hours is the number of hours per year that the line is near binding (>= 0)\n      near_average_exceedance: 0 # MW exceedance during near binding hours (>= 0)\n      # near baseline congestion energy = H_n * X mwh/yr\n      near_binding_relief_factor: 0.25 # [0,1]\n\n      hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT\n    # energy loss info is in project_category_circuit_detail.yaml\n\n    costs:\n      average_congestion_price: 30 # $/mwh (>= 0)\n      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)\n      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease\n      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.\n\n  curtailment:\n    # Number of hours per year when renewable energy curtailment occurs\n    # Curtailment happens when renewable generators must reduce output because\n    # transmission capacity is insufficient to deliver power to demand centers\n    curtailment_hours_total: 0 # hrs/yr (>= 0) (set 0 if not applicable)\n\n    # Average MW of renewable energy that is curtailed during curtailment hours\n    # Total curtailed energy = curtailment_hours_total × average_curtailment_mw (MWh/yr)\n    # The new line can relieve up to min(effective_capacity_relief, average_curtailment_mw) MW\n    # Example: 300 hrs/yr × 250 MW = 75,000 MWh/yr potential curtailment relief\n    # THis is already expressed as \"constraint-equivalent MW\" conceptually\n    average_curtailment_mw: 0 # MW (>= 0)\n\n    # Price per MWh for the curtailed renewable energy (typically PPA price or avoided cost)\n    # Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price\n    average_curtailment_price: 30 # $/MWh (>= 0) (PPA proxy / avoided cost)\n\n\n###### DEFINITIONS:\n# 1) Congestion price: $/MWh\n#    - Annualized proxy for the marginal cost of congestion during binding hours i.e. the marginal redispatch cost created by binding\n#      transmission constraints.\n# 2) Curtailment price: $/MWh\n#    - The value of the curtailed MWh as an economic product (e.g. PPA Price, Avoided Cost, LCOE proxy, etc.)\n#    - Its the value foregone when output is reduced NOT the contemporaneous spot price at the curtailment hour.\n"
     },
     "18_energy_source_mix.yaml": {
       "filename": "18_energy_source_mix.yaml",
@@ -16660,13 +16523,190 @@
               }
             },
             "field_count": 16
+          },
+          "counterfactual_energy_source_mix": {
+            "type": "object",
+            "fields": {},
+            "subsections": {
+              "coal": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 10,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.coal.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.coal.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "oil": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 2,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.oil.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.oil.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "natural_gas": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 38,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "solar": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 10,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.solar.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.solar.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "wind": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 26,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.wind.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.wind.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "hydro": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 5,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.hydro.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.hydro.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "nuclear": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 5,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              },
+              "other": {
+                "type": "object",
+                "fields": {
+                  "percentage": {
+                    "type": "int",
+                    "default": 4,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.other.percentage"
+                  },
+                  "rate_of_change": {
+                    "type": "float",
+                    "default": 0.0,
+                    "units": null,
+                    "description": "",
+                    "path": "18_energy_source_mix.counterfactual_energy_source_mix.other.rate_of_change"
+                  }
+                },
+                "subsections": {},
+                "field_count": 2
+              }
+            },
+            "field_count": 16
           }
         },
-        "field_count": 16
+        "field_count": 32
       },
-      "field_count": 16,
-      "comments": {},
-      "raw_content": "# Energy source mix (grid / compensating generation)\n# Consumed by emissions and other modules via merge at load time; canonical input for Fuel Mixes UI tab.\n\nenergy_source_mix:\n  coal:\n    percentage: 10\n    rate_of_change: -0.05\n  oil:\n    percentage: 2\n    rate_of_change: -0.04\n  natural_gas:\n    percentage: 38\n    rate_of_change: 0.0\n  solar:\n    percentage: 10\n    rate_of_change: 0.05\n  wind:\n    percentage: 26\n    rate_of_change: 0.04\n  hydro:\n    percentage: 5\n    rate_of_change: 0.0\n  nuclear:\n    percentage: 5\n    rate_of_change: 0.0\n  other:\n    percentage: 4\n    rate_of_change: 0.0\n"
+      "field_count": 32,
+      "comments": {
+        "counterfactual_energy_source_mix": "Used ONLY by the facilitated-emissions module (not by loss-compensation)."
+      },
+      "raw_content": "# Energy source mix (grid / compensating generation)\n# Consumed by emissions and other modules via merge at load time; canonical input for Fuel Mixes UI tab.\n\nenergy_source_mix:\n  coal:\n    percentage: 10\n    rate_of_change: -0.05\n  oil:\n    percentage: 2\n    rate_of_change: -0.04\n  natural_gas:\n    percentage: 38\n    rate_of_change: 0.0\n  solar:\n    percentage: 10\n    rate_of_change: 0.05\n  wind:\n    percentage: 26\n    rate_of_change: 0.04\n  hydro:\n    percentage: 5\n    rate_of_change: 0.0\n  nuclear:\n    percentage: 5\n    rate_of_change: 0.0\n  other:\n    percentage: 4\n    rate_of_change: 0.0\n\n# Counterfactual (no-line / BAU) energy source mix for displacement module.\n# Same initial percentages as energy_source_mix; all rates frozen (0.0).\n# Used ONLY by the facilitated-emissions module (not by loss-compensation).\ncounterfactual_energy_source_mix:\n  coal:\n    percentage: 10\n    rate_of_change: 0.0\n  oil:\n    percentage: 2\n    rate_of_change: 0.0\n  natural_gas:\n    percentage: 38\n    rate_of_change: 0.0\n  solar:\n    percentage: 10\n    rate_of_change: 0.0\n  wind:\n    percentage: 26\n    rate_of_change: 0.0\n  hydro:\n    percentage: 5\n    rate_of_change: 0.0\n  nuclear:\n    percentage: 5\n    rate_of_change: 0.0\n  other:\n    percentage: 4\n    rate_of_change: 0.0\n"
     },
     "19_cost_timing_patterns.yaml": {
       "filename": "19_cost_timing_patterns.yaml",
@@ -29596,124 +29636,6 @@
       "comments": {},
       "raw_content": "# Project Category Circuit and Resistance Details\n# Electrical and physical circuit specifications and resistance values for all 90 transmission project configurations\n# All values synchronized with categorydata.csv on 2025-10-26\n\nproject_categories_circuit_and_resistance_details:\n  Overhead/AC/140MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 140\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 69\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.23232\n    DC_20_resistance: 0.187968\n  Overhead/AC/140MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 140\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 69\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.2517\n    DC_20_resistance: 0.2055\n  Overhead/AC/329MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 329\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 115\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/329MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 329\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 115\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.2517\n    DC_20_resistance: 0.2055\n  Overhead/AC/394MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 394\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 138\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/394MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 394\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 138\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.1065\n    DC_20_resistance: 0.0863\n  Overhead/AC/460MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 460\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 161\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/460MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 460\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 161\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.1065\n    DC_20_resistance: 0.0863\n  Overhead/AC/657MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 657\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 230\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/657MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 657\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 230\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.1065\n    DC_20_resistance: 0.0863\n  Overhead/AC/1792MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 1792\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 345\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/1792MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 1792\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 345\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.1065\n    DC_20_resistance: 0.0863\n  Overhead/AC/2598MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 2598\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 500\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.12144\n    DC_20_resistance: 0.094512\n  Overhead/AC/2598MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 2598\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 500\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.1065\n    DC_20_resistance: 0.0863\n  Overhead/AC/6625MW/Standard Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 6625\n    conductor_type: Standard Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 765\n    conductors_per_phase: 6\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/AC/6625MW/Advanced Aluminum Conductor/NA:\n    installation_method: Overhead\n    current_type: AC\n    capacity_mw: 6625\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: NA\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 765\n    conductors_per_phase: 6\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.150878197\n    DC_20_resistance: 0.122529715\n  Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Standard Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Standard Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Standard Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 400\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Standard Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 400\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 400\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 400\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Standard Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Standard Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Standard Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Standard Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.07392\n    DC_20_resistance: 0.057024\n  Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.0714\n    DC_20_resistance: 0.0566\n  Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Standard Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 640\n    conductors_per_phase: 6\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Standard Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACSR 477 kcmil Hawk\n    voltage_kv: 640\n    conductors_per_phase: 6\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.13728\n    DC_20_resistance: 0.112992\n  Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: LCC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 640\n    conductors_per_phase: 6\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.1334\n    DC_20_resistance: 0.1081\n  Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter:\n    installation_method: Overhead\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Advanced Aluminum Conductor\n    converter_type: VSC Converter\n    conductor_specification: ACCC 430 kcmil Linnet\n    voltage_kv: 640\n    conductors_per_phase: 6\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.1334\n    DC_20_resistance: 0.1081\n  Underground direct-buried/AC/140MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 140\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 69\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground direct-buried/AC/329MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 329\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 115\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground direct-buried/AC/394MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 394\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 138\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground direct-buried/AC/460MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 460\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 161\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.019794937\n    DC_20_resistance: 0.01158728\n  Underground direct-buried/AC/657MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 657\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 230\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 1792\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 345\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 2598\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA:\n    installation_method: Underground direct-buried\n    current_type: AC\n    capacity_mw: 6625\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 765\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/500MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground direct-buried\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/AC/140MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 140\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 69\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground tunnel/AC/329MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 329\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 115\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground tunnel/AC/394MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 394\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 138\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Underground tunnel/AC/460MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 460\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 161\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.019794937\n    DC_20_resistance: 0.01158728\n  Underground tunnel/AC/657MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 657\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 230\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Underground tunnel/AC/1792MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 1792\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 345\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Underground tunnel/AC/2598MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 2598\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/AC/6625MW/Underground Copper Conductor/NA:\n    installation_method: Underground tunnel\n    current_type: AC\n    capacity_mw: 6625\n    conductor_type: Underground Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 765\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/500MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Underground Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter:\n    installation_method: Underground tunnel\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Underground Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/AC/140MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 140\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 69\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Subsea/AC/329MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 329\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 115\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Subsea/AC/394MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 394\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 138\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.029772873\n    DC_20_resistance: 0.020760544\n  Subsea/AC/460MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 460\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 161\n    conductors_per_phase: 1\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.019794937\n    DC_20_resistance: 0.01158728\n  Subsea/AC/657MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 657\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 230\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Subsea/AC/1792MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 1792\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 345\n    conductors_per_phase: 3\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.022852692\n    DC_20_resistance: 0.0144841\n  Subsea/AC/2598MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 2598\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/AC/6625MW/Subsea Copper Conductor/NA:\n    installation_method: Subsea\n    current_type: AC\n    capacity_mw: 6625\n    conductor_type: Subsea Copper Conductor\n    converter_type: NA\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 765\n    conductors_per_phase: 2\n    number_of_phases: 3\n    number_of_circuits_poles: 1\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Subsea Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 500\n    conductor_type: Subsea Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 250\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.043341867\n    DC_20_resistance: 0.031910864\n  Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Subsea Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 1500\n    conductor_type: Subsea Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 400\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Subsea Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 2000\n    conductor_type: Subsea Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 500\n    conductors_per_phase: 1\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Subsea Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 2400\n    conductor_type: Subsea Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 1400 mm^2\n    voltage_kv: 600\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Subsea Copper Conductor\n    converter_type: LCC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n  Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:\n    installation_method: Subsea\n    current_type: DC\n    capacity_mw: 6000\n    conductor_type: Subsea Copper Conductor\n    converter_type: VSC Converter\n    conductor_specification: XLPE Copper 3000 mm^2\n    voltage_kv: 640\n    conductors_per_phase: 2\n    number_of_phases: 1\n    number_of_circuits_poles: 2\n    AC_75_resistance: 0.016502847\n    DC_20_resistance: 0.009794776\n"
     },
-    "22_primary_bcr_config.yaml": {
-      "filename": "22_primary_bcr_config.yaml",
-      "filepath": "yamls/22_primary_bcr_config.yaml",
-      "category": "Technical",
-      "structure": {
-        "type": "object",
-        "fields": {},
-        "subsections": {
-          "primary_bcr_config": {
-            "type": "object",
-            "fields": {},
-            "subsections": {
-              "operational": {
-                "type": "object",
-                "fields": {
-                  "oandm": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.operational.oandm"
-                  },
-                  "insurance": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.operational.insurance"
-                  },
-                  "delay_costs": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.operational.delay_costs"
-                  }
-                },
-                "subsections": {},
-                "field_count": 3
-              },
-              "risk": {
-                "type": "object",
-                "fields": {
-                  "wildfire": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.risk.wildfire"
-                  },
-                  "outages": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.risk.outages"
-                  }
-                },
-                "subsections": {},
-                "field_count": 2
-              },
-              "energy": {
-                "type": "object",
-                "fields": {
-                  "line_losses": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.energy.line_losses"
-                  },
-                  "emissions": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.energy.emissions"
-                  }
-                },
-                "subsections": {},
-                "field_count": 2
-              },
-              "benefits": {
-                "type": "object",
-                "fields": {
-                  "congestion": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.benefits.congestion"
-                  },
-                  "curtailment": {
-                    "type": "bool",
-                    "default": true,
-                    "units": null,
-                    "description": "",
-                    "path": "22_primary_bcr_config.primary_bcr_config.benefits.curtailment"
-                  }
-                },
-                "subsections": {},
-                "field_count": 2
-              }
-            },
-            "field_count": 9
-          }
-        },
-        "field_count": 9
-      },
-      "field_count": 9,
-      "comments": {
-        "operational": "Operational costs that can be included/excluded from Primary BCR",
-        "risk": "Risk costs that can be included/excluded from Primary BCR",
-        "energy": "Energy-related costs that can be included/excluded from Primary BCR",
-        "benefits": "Benefits that can be included/excluded from Primary BCR"
-      },
-      "raw_content": "# ============================================================================\n# Primary BCR Configuration\n# ============================================================================\n#\n# PURPOSE:\n# This file controls which cost and benefit modules are included in the\n# Primary BCR calculation. The Primary BCR is a customizable benefit-cost\n# ratio that allows you to selectively include/exclude modules based on your\n# analysis needs.\n#\n# HOW IT WORKS:\n# - Setting a module to 'false' excludes it from the Primary BCR calculation\n# - Setting a module to 'true' includes it in the Primary BCR calculation\n# - If this file doesn't exist, all modules default to enabled\n#   (Primary BCR = Capital+Delay BCR)\n# - YAML configuration overrides command-line flags (--no_* flags)\n#\n# PRIMARY BCR FORMULA:\n#   Primary BCR = (Included Benefits) / (Included Costs)\n#\n#   Included Benefits = Revenue (always) + checked benefit modules\n#   Included Costs = Capital (always) + Delay (always) + checked cost modules\n#\n# ============================================================================\n# COMMON BCR CONFIGURATIONS\n# ============================================================================\n#\n# 1. CAPITAL+DELAY BCR (Default):\n#    - All modules: true\n#    - This is the default Primary BCR when no customization is done\n#    - Formula: All Benefits / (Capital Costs + Delay Costs)\n#\n# 2. SYSTEM BCR (All-inclusive):\n#    - All modules: true\n#    - Note: System BCR is always calculated separately and includes everything\n#    - Primary BCR matches System BCR when all modules are enabled\n#\n# 3. CAPITAL-ONLY BCR:\n#    - All modules: false\n#    - Only capital costs included (build, ROW, environmental)\n#    - Formula: All Benefits / Capital Costs\n#\n# 4. EXCLUDE RISK COSTS:\n#    - risk.wildfire: false\n#    - risk.outages: false\n#    - All others: true\n#    - Formula: All Benefits / (All Costs - Risk Costs)\n#\n# 5. EXCLUDE EMISSIONS:\n#    - energy.emissions: false\n#    - All others: true\n#    - Formula: All Benefits / (All Costs - Emissions)\n#\n# 6. EXCLUDE OPERATIONAL COSTS:\n#    - operational.oandm: false\n#    - operational.insurance: false\n#    - All others: true\n#    - Formula: All Benefits / (Capital + Delay + Risk + Energy)\n#\n# ============================================================================\n# MODULE DESCRIPTIONS\n# ============================================================================\n#\n# OPERATIONAL COSTS:\n#   - oandm: Operations and maintenance costs (vegetation management, etc.)\n#   - insurance: General operational insurance (conductors, structures, converters)\n#   - delay_costs: Construction delay costs (legal, admin, regulatory, etc.)\n#     NOTE: Delay costs are ALWAYS included in Primary BCR if calculated,\n#           even if set to false here (the flag controls calculation, not inclusion)\n#\n# RISK COSTS:\n#   - wildfire: Expected wildfire costs + wildfire liability insurance\n#   - outages: Expected outage costs based on reliability parameters\n#\n# ENERGY COSTS:\n#   - line_losses: Economic cost of energy losses (I²R and converter losses)\n#   - emissions: Carbon and other emissions costs from line losses\n#\n# BENEFITS:\n#   - congestion: Benefits from reduced transmission congestion\n#   - curtailment: Benefits from reduced renewable energy curtailment\n#   - revenue: Rate-based revenue requirement (ALWAYS included, not configurable)\n#\n# ALWAYS INCLUDED (Not configurable):\n#   - Capital Costs: Build, ROW, Environmental Mitigation\n#   - Delay Costs: Always included in Primary BCR if calculated\n#   - Revenue: Rate-based revenue requirement\n#\n# ============================================================================\n# CONFIGURATION\n# ============================================================================\n\nprimary_bcr_config:\n  # Operational costs that can be included/excluded from Primary BCR\n  operational:\n    oandm: true # Operations and maintenance costs\n    insurance: true # General operational insurance\n    delay_costs: true # Delay costs (always in Primary BCR if calculated)\n\n  # Risk costs that can be included/excluded from Primary BCR\n  risk:\n    wildfire: true # Wildfire expected costs + liability insurance\n    outages: true # Outage expected costs\n\n  # Energy-related costs that can be included/excluded from Primary BCR\n  energy:\n    line_losses: true # Economic cost of energy losses\n    emissions: true # Emissions costs from line losses\n\n  # Benefits that can be included/excluded from Primary BCR\n  benefits:\n    congestion: true # Congestion reduction benefits\n    curtailment: true # Curtailment reduction benefits\n    # Note: Revenue is always included and not configurable here\n"
-    },
     "project_category_template.yaml": {
       "filename": "project_category_template.yaml",
       "filepath": "yamls/project_category_template.yaml",
@@ -33655,10 +33577,10 @@
       "default": 0.7,
       "description": ""
     },
-    "01_project_technical_details.project.baseline_electricity_price_per_mwh": {
+    "01_project_technical_details.project.value_of_load_per_mwh": {
       "yaml_file": "01_project_technical_details",
-      "field_name": "baseline_electricity_price_per_mwh",
-      "full_path": "01_project_technical_details.project.baseline_electricity_price_per_mwh",
+      "field_name": "value_of_load_per_mwh",
+      "full_path": "01_project_technical_details.project.value_of_load_per_mwh",
       "type": "float",
       "default": 50.0,
       "description": ""
@@ -33709,14 +33631,14 @@
       "full_path": "01_project_technical_details.project.greenfield_comparison_capacity_mw",
       "type": "NoneType",
       "default": null,
-      "description": "Greenfield capacity comparison (only used when reconductoring: False)"
+      "description": "Design comparison fields (set via Design Comparison subtab, not Project tab)"
     },
     "01_project_technical_details.project.greenfield_comparison_conductor_type": {
       "yaml_file": "01_project_technical_details",
       "field_name": "greenfield_comparison_conductor_type",
       "full_path": "01_project_technical_details.project.greenfield_comparison_conductor_type",
-      "type": "str",
-      "default": "Standard Aluminum Conductor",
+      "type": "NoneType",
+      "default": null,
       "description": ""
     },
     "01_project_technical_details.timeline.construction_years": {
@@ -34037,54 +33959,6 @@
       "full_path": "04_insurance.insurance.insurable_components.converters",
       "type": "bool",
       "default": true,
-      "description": ""
-    },
-    "04_insurance.insurance.premium_by_construction_type.overhead": {
-      "yaml_file": "04_insurance",
-      "field_name": "overhead",
-      "full_path": "04_insurance.insurance.premium_by_construction_type.overhead",
-      "type": "float",
-      "default": 0.002,
-      "description": ""
-    },
-    "04_insurance.insurance.premium_by_construction_type.underground": {
-      "yaml_file": "04_insurance",
-      "field_name": "underground",
-      "full_path": "04_insurance.insurance.premium_by_construction_type.underground",
-      "type": "float",
-      "default": 0.0015,
-      "description": ""
-    },
-    "04_insurance.insurance.premium_by_construction_type.subsea": {
-      "yaml_file": "04_insurance",
-      "field_name": "subsea",
-      "full_path": "04_insurance.insurance.premium_by_construction_type.subsea",
-      "type": "float",
-      "default": 0.0025,
-      "description": ""
-    },
-    "04_insurance.insurance.wildfire_liability.enabled": {
-      "yaml_file": "04_insurance",
-      "field_name": "enabled",
-      "full_path": "04_insurance.insurance.wildfire_liability.enabled",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "04_insurance.insurance.wildfire_liability.liability_limit": {
-      "yaml_file": "04_insurance",
-      "field_name": "liability_limit",
-      "full_path": "04_insurance.insurance.wildfire_liability.liability_limit",
-      "type": "int",
-      "default": 5400000,
-      "description": ""
-    },
-    "04_insurance.insurance.wildfire_liability.rate_on_line": {
-      "yaml_file": "04_insurance",
-      "field_name": "rate_on_line",
-      "full_path": "04_insurance.insurance.wildfire_liability.rate_on_line",
-      "type": "float",
-      "default": 0.3,
       "description": ""
     },
     "05_delays.annual_delay_costs.legal": {
@@ -34924,68 +34798,52 @@
       "default": 1000,
       "description": ""
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.palustrine": {
+    "09_environmental_mitigation.environmental_mitigation.wetland_credit_cost_per_acre": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "palustrine",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.palustrine",
-      "type": "int",
-      "default": 50000,
-      "description": ""
-    },
-    "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.estuarine": {
-      "yaml_file": "09_environmental_mitigation",
-      "field_name": "estuarine",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.estuarine",
-      "type": "int",
-      "default": 100000,
-      "description": ""
-    },
-    "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.other": {
-      "yaml_file": "09_environmental_mitigation",
-      "field_name": "other",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.wetlands.other",
+      "field_name": "wetland_credit_cost_per_acre",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.wetland_credit_cost_per_acre",
       "type": "int",
       "default": 25000,
-      "description": ""
+      "description": "Credit purchases (off-site mitigation via banks)"
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.habitat.default": {
+    "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.forested": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "default",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_cost_per_acre.habitat.default",
+      "field_name": "forested",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.forested",
       "type": "int",
       "default": 30000,
       "description": ""
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.palustrine": {
+    "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.scrubbed_flat": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "palustrine",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.palustrine",
-      "type": "float",
-      "default": 1.5,
+      "field_name": "scrubbed_flat",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.scrubbed_flat",
+      "type": "int",
+      "default": 30000,
       "description": ""
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.estuarine": {
+    "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.desert_barren": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "estuarine",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.estuarine",
-      "type": "float",
-      "default": 2.5,
+      "field_name": "desert_barren",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.desert_barren",
+      "type": "int",
+      "default": 30000,
       "description": ""
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.other": {
+    "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.rolling_hills": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "other",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.wetlands.other",
-      "type": "float",
-      "default": 1.0,
+      "field_name": "rolling_hills",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.rolling_hills",
+      "type": "int",
+      "default": 30000,
       "description": ""
     },
-    "09_environmental_mitigation.environmental_mitigation.credit_ratios.habitat.default": {
+    "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.mountain": {
       "yaml_file": "09_environmental_mitigation",
-      "field_name": "default",
-      "full_path": "09_environmental_mitigation.environmental_mitigation.credit_ratios.habitat.default",
-      "type": "float",
-      "default": 1.0,
+      "field_name": "mountain",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.mountain",
+      "type": "int",
+      "default": 30000,
       "description": ""
     },
     "10_project_category_build_costs.project_categories_build_costs.Overhead/AC/140MW/Standard Aluminum Conductor/NA.installation_method": {
@@ -49324,14 +49182,6 @@
       "default": 0.25,
       "description": "near baseline congestion energy = H_n * X mwh/yr"
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "saturation_factor",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.constraints.saturation_factor",
-      "type": "float",
-      "default": 0.3,
-      "description": ""
-    },
     "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.congestion.costs.average_congestion_price": {
       "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "average_congestion_price",
@@ -49380,14 +49230,6 @@
       "default": 30,
       "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price"
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "curtailment_saturation_factor",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor",
-      "type": "float",
-      "default": 0.1,
-      "description": "Higher values mean more saturation (less benefit per MW of capacity added)"
-    },
     "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.binding_hours": {
       "yaml_file": "17_congestion_curtailment_reductions",
       "field_name": "binding_hours",
@@ -49427,14 +49269,6 @@
       "type": "float",
       "default": 0.25,
       "description": "near baseline congestion energy = H_n * X mwh/yr"
-    },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "saturation_factor",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.saturation_factor",
-      "type": "float",
-      "default": 0.35,
-      "description": ""
     },
     "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.congestion.constraints.hot_hour_weights": {
       "yaml_file": "17_congestion_curtailment_reductions",
@@ -49491,14 +49325,6 @@
       "type": "int",
       "default": 30,
       "description": "Used to monetize the benefit: Benefit = (curtailed MWh relieved) × average_curtailment_price"
-    },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "curtailment_saturation_factor",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.curtailment.curtailment_saturation_factor",
-      "type": "float",
-      "default": 0.1,
-      "description": "Higher values mean more saturation (less benefit per MW of capacity added)"
     },
     "18_energy_source_mix.energy_source_mix.coal.percentage": {
       "yaml_file": "18_energy_source_mix",
@@ -49624,6 +49450,134 @@
       "yaml_file": "18_energy_source_mix",
       "field_name": "rate_of_change",
       "full_path": "18_energy_source_mix.energy_source_mix.other.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.coal.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.coal.percentage",
+      "type": "int",
+      "default": 10,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.coal.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.coal.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.oil.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.oil.percentage",
+      "type": "int",
+      "default": 2,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.oil.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.oil.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.percentage",
+      "type": "int",
+      "default": 38,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.solar.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.solar.percentage",
+      "type": "int",
+      "default": 10,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.solar.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.solar.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.wind.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.wind.percentage",
+      "type": "int",
+      "default": 26,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.wind.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.wind.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.hydro.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.hydro.percentage",
+      "type": "int",
+      "default": 5,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.hydro.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.hydro.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.percentage",
+      "type": "int",
+      "default": 5,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.nuclear.rate_of_change",
+      "type": "float",
+      "default": 0.0,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.other.percentage": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "percentage",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.other.percentage",
+      "type": "int",
+      "default": 4,
+      "description": ""
+    },
+    "18_energy_source_mix.counterfactual_energy_source_mix.other.rate_of_change": {
+      "yaml_file": "18_energy_source_mix",
+      "field_name": "rate_of_change",
+      "full_path": "18_energy_source_mix.counterfactual_energy_source_mix.other.rate_of_change",
       "type": "float",
       "default": 0.0,
       "description": ""
@@ -62804,78 +62758,6 @@
       "default": 0.009794776,
       "description": ""
     },
-    "22_primary_bcr_config.primary_bcr_config.operational.oandm": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "oandm",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.operational.oandm",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.operational.insurance": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "insurance",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.operational.insurance",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.operational.delay_costs": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "delay_costs",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.operational.delay_costs",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.risk.wildfire": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "wildfire",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.risk.wildfire",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.risk.outages": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "outages",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.risk.outages",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.energy.line_losses": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "line_losses",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.energy.line_losses",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.energy.emissions": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "emissions",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.energy.emissions",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.benefits.congestion": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "congestion",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.benefits.congestion",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
-    "22_primary_bcr_config.primary_bcr_config.benefits.curtailment": {
-      "yaml_file": "22_primary_bcr_config",
-      "field_name": "curtailment",
-      "full_path": "22_primary_bcr_config.primary_bcr_config.benefits.curtailment",
-      "type": "bool",
-      "default": true,
-      "description": ""
-    },
     "project_category_template.project_categories.overhead_ac.Overhead/AC/140MW/Standard Aluminum Conductor/NA.installation_method": {
       "yaml_file": "project_category_template",
       "field_name": "installation_method",
@@ -66483,8 +66365,7 @@
       "07_outage_costs.yaml",
       "11_project_row_details.yaml",
       "18_energy_source_mix.yaml",
-      "19_cost_timing_patterns.yaml",
-      "22_primary_bcr_config.yaml"
+      "19_cost_timing_patterns.yaml"
     ],
     "Physical": [
       "02_project_physical_details.yaml"

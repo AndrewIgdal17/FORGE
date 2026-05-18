@@ -13,7 +13,7 @@ project:
 
   line_utilization: 0.70 # % [0,1]
 
-  baseline_electricity_price_per_mwh: 50.0 # $/MWh (>= 0)
+  value_of_load_per_mwh: 50.0 # $/MWh (>= 0)
 
   reconductoring: False # True or False
   uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)

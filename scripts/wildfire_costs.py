@@ -64,7 +64,7 @@ def calculate_wildfire_costs(
 
     wildfire_config = wildfire_yaml["wildfire"]
     severity = wildfire_config["severity_per_event"]
-    growth_rate = wildfire_config["risk_growth_rate"]
+    growth_rate = wildfire_config["risk_growth_rate"] or 0.0
     ignition_rates_by_terrain = wildfire_config["ignition_rates_by_terrain"]
     ignition_rate_multiplier = wildfire_config["ignition_rate_multiplier"]
 

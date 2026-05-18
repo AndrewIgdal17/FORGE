@@ -13,7 +13,7 @@
         "converter_type": "VSC Converter",
         "converter_loss_percentage": null,
         "line_utilization": 0.95,
-        "baseline_electricity_price_per_mwh": 30.0,
+        "value_of_load_per_mwh": 30.0,
         "reconductoring": false,
         "uses_existing_row": false,
         "old_capacity_mw": null,
@@ -58,18 +58,12 @@
       "financial": {
         "inflation_rate": 0.03,
         "base_year": 2025,
-        "wacc_nominal": 0.08,
+        "wacc_nominal": 0.075,
         "social_discount_rate": 0.03,
         "contingencies": {
           "conductor_contingency": 0.1,
           "structure_contingency": 0.1,
           "converter_contingency": 0.1
-        },
-        "capital_structure": {
-          "equity_percent": 0.5,
-          "debt_percent": 0.5,
-          "cost_of_equity": 0.1,
-          "cost_of_debt": 0.05
         },
         "afudc": {
           "apply_afudc": true,
@@ -2613,7 +2607,6 @@
           },
           "costs": {
             "average_congestion_price": 30,
-            "residual_exceedance_value": null,
             "value_of_lost_load": 0
           }
         },
@@ -2635,7 +2628,6 @@
           },
           "costs": {
             "average_congestion_price": 30,
-            "residual_exceedance_value": null,
             "value_of_lost_load": 0
           }
         },
@@ -4756,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S9",
-    "timestamp": "2026-05-11T19:30:39.097901",
+    "timestamp": "2026-05-15T12:04:19.717747",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S9_PointToPoint_HVDC_2400MW_StandardAluminumConductor_VSC",
@@ -4774,7 +4766,7 @@
       "old_capacity_mw": 0,
       "old_conductor_type": "",
       "old_ac_dc": "",
-      "baseline_electricity_price_per_mwh": 30.0,
+      "value_of_load_per_mwh": 30.0,
       "social_discount_rate": 0.03,
       "construction_years": 2,
       "delay_years": 5,

@@ -54,7 +54,7 @@ class LineLossProjectDetails:
     number_of_converters: int
     converter_type: str
     line_utilization_percent: float
-    baseline_electricity_price: float
+    value_of_load: float
     wacc_real: float
     reconductoring: bool
     delay_years: float
@@ -84,7 +84,7 @@ def load_project_details() -> LineLossProjectDetails:
             - number_of_converters: Number of converter stations (DC projects only, else 0)
             - converter_type: Converter type (for DC projects) or "NA" for AC
             - line_utilization_percent: Line utilization as decimal (0-1)
-            - baseline_electricity_price: Baseline electricity price in $/MWh
+            - value_of_load: Value of load in $/MWh
             - wacc_real: Real WACC for present value of thermal line loss cost (market-tracked)
             - reconductoring: True if reconductoring project, False for greenfield
             - delay_years: Number of years of project delay
@@ -133,8 +133,8 @@ def load_project_details() -> LineLossProjectDetails:
             raise KeyError("Missing 'project' key in project technical details")
         project = project_details["project"]
 
-        baseline_electricity_price = project.get(
-            "baseline_electricity_price_per_mwh", 0
+        value_of_load = project.get(
+            "value_of_load_per_mwh", 0
         )
         financing = load_financing_details()
         wacc_real = financing.wacc_real
@@ -173,7 +173,7 @@ def load_project_details() -> LineLossProjectDetails:
         number_of_converters=number_of_converters,
         converter_type=converter_type,
         line_utilization_percent=line_utilization_percent,
-        baseline_electricity_price=baseline_electricity_price,
+        value_of_load=value_of_load,
         wacc_real=wacc_real,
         reconductoring=reconductoring,
         delay_years=delay_years,
@@ -320,7 +320,7 @@ def compute_design_comparison(
     primary_loss_pct = to_percent(primary_losses_mwh_yr / primary_delivered_mwh)
     comparison_loss_pct = to_percent(comparison_losses_mwh_yr / comparison_delivered_mwh)
 
-    price = project_details.baseline_electricity_price
+    price = project_details.value_of_load
     lifetime = project_details.project_lifetime
 
     start_year = calculate_cod_year(
@@ -378,7 +378,7 @@ def compute_design_comparison(
             "normalized": normalized,
         },
         "parameters": {
-            "electricity_price": price,
+            "value_of_load": price,
             "wacc_real": project_details.wacc_real,
             "project_lifetime": lifetime,
             "construction_type": project_details.construction_type,
@@ -426,7 +426,7 @@ def main() -> None:
         primary_line_mwh = loss_data["losses_mwh_per_year"]
         primary_converter_mwh = loss_data.get("total_converter_losses_mwh", 0)
         primary_total_mwh = loss_data["total_losses_mwh_per_year"]
-        price = project_details.baseline_electricity_price
+        price = project_details.value_of_load
 
         primary_annual_loss_cost = primary_total_mwh * price
         primary_lifetime_nominal_cost = (
@@ -517,7 +517,7 @@ def main() -> None:
         f"Line Utilization: {to_percent(project_details.line_utilization_percent):.1f}%"
     )
     print(f"Project Lifetime: {project_details.project_lifetime} years")
-    print(f"Electricity Price: ${project_details.baseline_electricity_price:.2f}/MWh")
+    print(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
     print()
 
     print(f"BASELINE CONFIGURATION (Old)")
@@ -626,7 +626,7 @@ def main() -> None:
     # METHOD 1: Direct Comparison - Compare absolute losses
     direct_loss_reduction_mwh = baseline_losses_mwh_per_year - new_losses_mwh_per_year
     direct_annual_benefit = (
-        direct_loss_reduction_mwh * project_details.baseline_electricity_price
+        direct_loss_reduction_mwh * project_details.value_of_load
     )
     direct_lifetime_benefit = direct_annual_benefit * project_details.project_lifetime
 
@@ -635,7 +635,7 @@ def main() -> None:
         counterfactual_baseline_losses_mwh_per_year - new_losses_mwh_per_year
     )
     counterfactual_annual_benefit = (
-        counterfactual_loss_reduction_mwh * project_details.baseline_electricity_price
+        counterfactual_loss_reduction_mwh * project_details.value_of_load
     )
     counterfactual_lifetime_benefit = (
         counterfactual_annual_benefit * project_details.project_lifetime
@@ -647,7 +647,7 @@ def main() -> None:
         from_percent(baseline_loss_percent - new_loss_percent) * new_delivered_mwh
     )
     normalized_annual_benefit = (
-        normalized_loss_reduction_mwh * project_details.baseline_electricity_price
+        normalized_loss_reduction_mwh * project_details.value_of_load
     )
     normalized_lifetime_benefit = (
         normalized_annual_benefit * project_details.project_lifetime
@@ -755,7 +755,7 @@ def main() -> None:
     # Use NEW configuration's total losses (line + converter for DC) for BCR
 
     csv_manager = CTCCOutputManager()
-    price = project_details.baseline_electricity_price
+    price = project_details.value_of_load
 
     new_line_annual_cost = new_line_mwh * price
     new_converter_annual_cost = new_converter_mwh * price

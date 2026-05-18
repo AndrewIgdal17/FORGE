@@ -102,8 +102,8 @@ class JSONOutputManager:
                 ),
                 "old_ac_dc": project.get("old_ac_dc", "") if reconductoring else "",
                 # Financial parameters
-                "baseline_electricity_price_per_mwh": project.get(
-                    "baseline_electricity_price_per_mwh", 0
+                "value_of_load_per_mwh": project.get(
+                    "value_of_load_per_mwh", 0
                 ),
                 "social_discount_rate": financing_data["financial"].get(
                     "social_discount_rate", 0

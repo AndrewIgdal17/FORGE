@@ -51,13 +51,13 @@ E_{cong} &= E_{cong,bc} + E_{cong,non} + E_{near} \\
 where the energy is split between overlap hours (with curtailment) and non-overlap binding hours.
 
 \textbf{Residual Exceedance:}
-Residual exceedance is one cost that can have two sources---congestion binding hours and/or curtailment hours---so it works for congestion-only, curtailment-only, or both. When only one of congestion or curtailment is used, the other term is zero; when both are used, the user should set \texttt{residual\_exceedance\_value} if the single default (\$/MWh) is not appropriate.
+Residual exceedance is the cost of the constraint the project does not relieve. It can have two sources---congestion binding hours and/or curtailment hours. Residual energy is always valued at the average congestion price:
 
 \begin{align}
 E_{res,cong} &= (H_{bc} + H_{bnon}) \times \max(0, X_{cong} - \Delta C_{eff}) \\
 E_{res,curt} &= H_c \times \max(0, C_c - \Delta C_{eff}) \\
 E_{residual} &= E_{res,cong} + E_{res,curt} \\
-\text{Cost}_{residual} &= E_{residual} \times \lambda, \quad \lambda = \text{\texttt{residual\_exceedance\_value}} \text{ if set, else } \lambda_{cong}
+\text{Cost}_{residual} &= E_{residual} \times \gamma_{cong}
 \end{align}
 
 \subsection{Inputs and Outputs}
@@ -65,7 +65,7 @@ E_{residual} &= E_{res,cong} + E_{res,curt} \\
 \textbf{Inputs:}
 \begin{itemize}
     \item Project technical details (capacity, old capacity, reconductoring status)
-    \item Congestion parameters (binding hours, average exceedance, flow factor, congestion price; \texttt{residual\_exceedance\_value} optional, null = use average congestion price)
+    \item Congestion parameters (binding hours, average exceedance, flow factor, congestion price)
     \item Curtailment parameters (curtailment hours, average curtailment MW, curtailment price)
     \item Financing parameters (WACC, timeline)
 \end{itemize}
@@ -166,8 +166,7 @@ total_binding_hours = H_bc + H_bnon
 energy_residual_congestion = total_binding_hours * max(0, average_exceedance - effective_capacity_relief)
 energy_residual_curtailment = curtailment_hours_total * max(0, average_curtailment_mw - effective_capacity_relief)
 energy_residual_exceedance = energy_residual_congestion + energy_residual_curtailment
-residual_exceedance_value_used = residual_exceedance_value or average_congestion_price
-annual_residual_exceedance_cost = energy_residual_exceedance * residual_exceedance_value_used
+annual_residual_exceedance_cost = energy_residual_exceedance * average_congestion_price
 \end{lstlisting}
 
 \subsection{\texttt{main()}}
@@ -253,7 +252,7 @@ Benefits are calculated by multiplying energy relief (MWh) by the applicable pri
 
 \subsection{Residual Exceedance}
 
-The script calculates residual exceedance costs, representing unmet capacity when effective relief is less than the constraint (exceedance or curtailment). Residual exceedance can come from (1) congestion binding hours, (2) curtailment hours, or both. One \$/MWh price is applied (default: average congestion price; the user can set \texttt{residual\_exceedance\_value} when both apply). This is important for partial solutions (e.g., reconductoring or a line that does not fully relieve curtailment). In CTCC, residual exceedance is a system/societal cost categorized under energy/emissions (not under the utility or ratepayer perspective).
+The script calculates residual exceedance costs, representing unmet capacity when effective relief is less than the constraint (exceedance or curtailment). Residual exceedance can come from (1) congestion binding hours, (2) curtailment hours, or both. Residual energy is always valued at the average congestion price. This is important for partial solutions (e.g., reconductoring or a line that does not fully relieve curtailment). In CTCC, residual exceedance is a system/societal cost categorized under energy/emissions (not under the utility or ratepayer perspective).
 
 \subsection{Flow Factor}
 

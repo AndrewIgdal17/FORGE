@@ -8,7 +8,7 @@
       const COMPARISON_METRICS = [
         { group: 'Project Parameters', metrics: [
           { key: 'ac_dc', label: 'AC / DC', path: 'technical_parameters.ac_dc', format: 'text' },
-          { key: 'baseline_price_mwh', label: 'Baseline price ($/MWh)', path: 'technical_parameters.baseline_electricity_price_per_mwh', format: 'number2' },
+          { key: 'baseline_price_mwh', label: 'Value of load ($/MWh)', path: 'technical_parameters.value_of_load_per_mwh', format: 'number2' },
           { key: 'capacity_mw', label: 'Capacity (MW)', path: 'technical_parameters.capacity_mw', format: 'number' },
           { key: 'conductor_type', label: 'Conductor type', path: 'technical_parameters.conductor_type', format: 'text' },
           { key: 'construction_years', label: 'Construction (yr)', path: 'technical_parameters.construction_years', format: 'number' },

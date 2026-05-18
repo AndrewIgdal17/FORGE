@@ -174,8 +174,8 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Project Timing", None, None, 3,
                  "Construction years, delay years, project lifetime."),
     TaxonomyItem("project_utilization", "utility", "project", "utilization",
-                 "Utilization & Reference Price", None, None, 4,
-                 "Line utilization factor and baseline electricity price."),
+                 "Line Utilization", None, None, 4,
+                 "Line utilization factor."),
     TaxonomyItem("route_terrain_miles", "utility", "route", "terrain",
                  "Terrain Miles", None, None, 1,
                  "Route miles by terrain type. Zero-mile terrains hidden from cost calculations."),
@@ -188,9 +188,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("financial_contingencies", "utility", "financial", "contingencies",
                  "Build Contingencies", None, None, 2,
                  "Contingency factors for conductor, structure, converter costs."),
-    TaxonomyItem("financial_capital_structure", "utility", "financial", "capital_structure",
-                 "Capital Structure", None, None, 3,
-                 "Equity/debt split, cost of equity/debt."),
     TaxonomyItem("financial_revenue_config", "utility", "financial", "revenue",
                  "Revenue & Return Configuration", None, None, 4,
                  "Rate-based revenue: enabled flag, allowed return rate."),
@@ -203,7 +200,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 36, f"Expected 36 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 35, f"Expected 35 taxonomy items, got {len(TAXONOMY)}"
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -464,7 +461,7 @@ def taxonomy_to_dict() -> dict:
 
 if __name__ == "__main__":
     # 8a. Item count
-    assert len(TAXONOMY) == 36, f"Expected 36 items, got {len(TAXONOMY)}"
+    assert len(TAXONOMY) == 35, f"Expected 35 items, got {len(TAXONOMY)}"
 
     # 8b. Bucket membership
     _side_bucket_rules: dict[str, set[str]] = {

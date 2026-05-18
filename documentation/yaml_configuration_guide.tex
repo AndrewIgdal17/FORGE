@@ -157,10 +157,10 @@ This file defines the core technical specifications that identify the transmissi
     \end{itemize}
 \end{itemize}
 
-\subsubsection{Electricity Price}
+\subsubsection{Value of Load}
 
 \begin{itemize}
-    \item \textbf{baseline\_electricity\_price\_per\_mwh} (float): Base electricity price
+    \item \textbf{baseline\_electricity\_price\_per\_mwh} (float): Value of load (demand-side marginal value of delivered energy)
     \begin{itemize}
         \item \textbf{Valid Values}: Positive numbers (typical: 30-100 \$/MWh)
         \item \textbf{Meaning}: Used for line loss cost/benefit calculations and congestion/curtailment benefit valuations
@@ -247,7 +247,7 @@ project:
   conductor_type: "Advanced Aluminum Conductor"
   converter_type: "NA"
   line_utilization: 0.70
-  baseline_electricity_price_per_mwh: 50.0
+  value_of_load_per_mwh: 50.0
   social_discount_rate: 0.03
   reconductoring: False
   old_capacity_mw: 0
@@ -362,7 +362,7 @@ terrain:
 
 \subsection{Purpose}
 
-This file defines financial parameters including inflation, discount rates, contingencies, capital structure, and AFUDC (Allowance for Funds Used During Construction) configuration. These parameters affect present value calculations, cost escalation, and regulatory accounting.
+This file defines financial parameters including inflation, discount rates, contingencies, and AFUDC (Allowance for Funds Used During Construction) configuration. These parameters affect present value calculations, cost escalation, and regulatory accounting.
 
 \subsection{Parameter Choices}
 
@@ -388,7 +388,7 @@ This file defines financial parameters including inflation, discount rates, cont
     \item \textbf{wacc\_nominal} (float): Weighted Average Cost of Capital (nominal)
     \begin{itemize}
         \item \textbf{Valid Values}: Typically 0.06 to 0.12 (6\% to 12\%)
-        \item \textbf{Meaning}: Private sector discount rate; used for AFUDC calculations if capital structure not specified
+        \item \textbf{Meaning}: Private sector discount rate; used for AFUDC rate and discounting
         \item \textbf{Note}: Real WACC = (1 + nominal WACC) / (1 + inflation) - 1
     \end{itemize}
     
@@ -409,20 +409,6 @@ This file defines financial parameters including inflation, discount rates, cont
         \item \textbf{structure\_contingency} (float): Range [0, 1] (typical: 0.10 = 10\%)
         \item \textbf{converter\_contingency} (float): Range [0, 1] (typical: 0.10 = 10\%)
         \item \textbf{Meaning}: Applied to base build costs to account for uncertainty
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Capital Structure (Optional)}
-
-\begin{itemize}
-    \item \textbf{capital\_structure} (dictionary, optional): Equity/debt breakdown
-    \begin{itemize}
-        \item \textbf{equity\_percent} (float): Range [0, 1] (typical: 0.50 = 50\%)
-        \item \textbf{debt\_percent} (float): Range [0, 1] (must sum to 1.0 with equity)
-        \item \textbf{cost\_of\_equity} (float): Return on equity (typical: 0.10 = 10\%)
-        \item \textbf{cost\_of\_debt} (float): Interest rate on debt (typical: 0.05 = 5\%)
-        \item \textbf{Meaning}: If specified, used to calculate AFUDC rate; otherwise WACC used as proxy
-        \item \textbf{Note}: WACC = equity\_percent × cost\_of\_equity + debt\_percent × cost\_of\_debt
     \end{itemize}
 \end{itemize}
 
@@ -462,12 +448,6 @@ financial:
     conductor_contingency: 0.10
     structure_contingency: 0.10
     converter_contingency: 0.10
-
-  capital_structure:
-    equity_percent: 0.50
-    debt_percent: 0.50
-    cost_of_equity: 0.10
-    cost_of_debt: 0.05
 
   afudc:
     apply_afudc: true

@@ -24,7 +24,7 @@ This document is the **complete methodology** for the Comprehensive Transmission
   - [Energy losses](#energy-losses)
   - [Thermal line loss costs (3.a)](#thermal-line-loss-costs-3a)
   - [Emissions costs (3.b)](#emissions-costs-3b)
-  - [Residual exceedance costs (3.c)](#residual-exceedance-costs-3c)
+  - [Residual exceedance cost (3.c)](#residual-exceedance-cost-3c)
 - [Risk costs](#risk-costs)
   - [Expected cost of wildfires (4.a)](#expected-cost-of-wildfires-4a)
   - [Expected cost of outages (4.b)](#expected-cost-of-outages-4b)
@@ -92,7 +92,7 @@ $$
 
 ## Financial parameters
 
-This section defines discount rates, inflation, base year, and capital structure used across CTCC. It also summarizes the link to real WACC (Fisher).
+This section defines discount rates, inflation, and base year used across CTCC. It also summarizes the link to real WACC (Fisher).
 
 **Variables**
 
@@ -100,25 +100,13 @@ This section defines discount rates, inflation, base year, and capital structure
 | ------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | $\pi$              | Annual inflation rate, decimal                    | Used in Fisher link for real WACC.                                                    |
 | $Y_{base}$         | Base (reference) year                             | Reference year for all present values; PV is in base-year dollars.                    |
-| $r_{WACC,nom}$     | Nominal weighted average cost of capital, decimal | From capital structure or default. Used for AFUDC/utility perspective.                  |
+| $r_{WACC,nom}$     | Nominal weighted average cost of capital, decimal | Direct input. Used for AFUDC/utility perspective.                  |
 | $r_{WACC,real}$    | Real weighted average cost of capital, decimal    | Used for societal PV of costs and benefits. Calculated via Fisher link.             |
 | $r_{social}$       | Social discount rate, decimal                     | Used for externality costs (emissions, expected wildfire cost, expected outage cost). |
-| $w_{equity}$       | Fraction of funding from equity, decimal          | $w_{equity} + w_{debt} = 1$.                                                          |
-| $w_{debt}$         | Fraction of funding from debt, decimal            |                                                                                       |
-| $r_{equity}$       | Cost of equity, decimal                           |                                                                                       |
-| $r_{debt}$         | Cost of debt, decimal                             |                                                                                       |
 
 **Equations**
 
-1. Nominal WACC from capital structure
-
-$$
-r_{WACC,nom} = w_{equity} \times r_{equity} + w_{debt} \times r_{debt}, \qquad w_{equity} + w_{debt} = 1.
-
-
-$$
-
-2. Real WACC (Fisher link)
+1. Real WACC (Fisher link)
 
 $$
 r_{WACC,real} = \frac{1 + r_{WACC,nom}}{1 + \pi} - 1.
@@ -129,7 +117,7 @@ $$
 **When each rate is used**
 
 - **$r_{WACC,nom}$:** Utility/regulatory perspective (e.g. AFUDC rate when applicable).
-- **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, line loss cost, residual exceedance, benefits, revenue; delay and congestion/curtailment delay costs.
+- **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, energy loss costs, benefits, revenue; delay and congestion/curtailment delay costs.
 - **$r_{social}$:** Societal PV of externality costs: loss-compensation emissions, facilitated emissions, expected wildfire cost, expected outage cost.
 
 **Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
@@ -872,7 +860,7 @@ $P_{lineloss,MW}$ and $P_{converterloss,MW}$ are average power losses (MW) over 
 
 ### Thermal line loss costs (3.a)
 
-Thermal line loss cost is the cost of the energy lost on the transmission path (line and, for DC, converters). It takes the energy losses from the Energy losses section and values them at an electricity price. It is an operational/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the real WACC.
+Thermal line loss cost is the cost of the energy lost on the transmission path (line and, for DC, converters). It takes the energy losses from the Energy losses section and values them at the value of load---the demand-side marginal value of the energy that would have been delivered. It is an operational/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the real WACC.
 
 **Variables**
 
@@ -881,7 +869,7 @@ Thermal line loss cost is the cost of the energy lost on the transmission path (
 | $E_{loss}$                    | Total energy losses (annual), MWh/yr      | From Energy losses (line + converter).                 |
 | $E_{lineloss,MW,annual}$      | Line energy losses (annual), MWh/yr       | Conductor only.                                        |
 | $E_{converterloss,MW,annual}$ | Converter energy losses (annual), MWh/yr  | DC only; 0 for AC.                                     |
-| $\gamma_{electricity}$        | Electricity price, $/MWh                  | e.g. baseline or market price.                         |
+| $v_{load}$        | Value of load, $/MWh                  | Marginal value of energy to end-use load. The value of electricity derives from the services load performs with it, making demand-side valuation the correct welfare measure.                         |
 | $T_{lifetime}$                | Project lifetime, years                   |                                                        |
 | $T_{COD}$                     | Commercial operation date, year           | First year of operation.                               |
 | $r_{WACC,real}$               | Real WACC, decimal                        | Used to discount this cost (market-tracked).           |
@@ -896,13 +884,13 @@ Thermal line loss cost is the cost of the energy lost on the transmission path (
 1. Component costs (line and converter)
 
 $$
-C_{lineloss,annual} = E_{lineloss,MW,annual} \times \gamma_{electricity}
+C_{lineloss,annual} = E_{lineloss,MW,annual} \times v_{load}
 
 
 $$
 
 $$
-C_{converterloss,annual} = E_{converterloss,MW,annual} \times \gamma_{electricity}
+C_{converterloss,annual} = E_{converterloss,MW,annual} \times v_{load}
 
 
 $$
@@ -910,7 +898,7 @@ $$
 2. Total annual thermal loss cost
 
 $$
-C_{loss,annual} = E_{loss} \times \gamma_{electricity} = C_{lineloss,annual} + C_{converterloss,annual}
+C_{loss,annual} = E_{loss} \times v_{load} = C_{lineloss,annual} + C_{converterloss,annual}
 
 
 $$
@@ -942,7 +930,7 @@ Thermal loss cost is not capitalized; there is no AFUDC term. It does not enter 
 The relevant measure is real (present value) total thermal loss cost, $C_{loss,real}$, using $r_{WACC,real}$. Externality-related costs (e.g. emissions, wildfire risk, outage) use the social discount rate; this cost does not.
 
 **Link to Energy losses**
-$E_{loss}$, $E_{lineloss,MW,annual}$, and $E_{converterloss,MW,annual}$ are defined in the Energy losses section. Thermal line loss cost (3.a) is the monetary value of those losses at $\gamma_{electricity}$: total $C_{loss,annual} = E_{loss} \times \gamma_{electricity}$, with line and converter components $C_{lineloss,annual}$ and $C_{converterloss,annual}$.
+$E_{loss}$, $E_{lineloss,MW,annual}$, and $E_{converterloss,MW,annual}$ are defined in the Energy losses section. Thermal line loss cost (3.a) is the monetary value of those losses at $v_{load}$: total $C_{loss,annual} = E_{loss} \times v_{load}$, with line and converter components $C_{lineloss,annual}$ and $C_{converterloss,annual}$.
 
 ---
 
@@ -1043,98 +1031,19 @@ Emissions from line-loss compensation are calculated using an average energy sou
 
 ---
 
-### Residual exceedance costs (3.c)
+### Residual exceedance cost (3.c)
 
-Residual exceedance cost is the societal cost of the constraint that remains after the project: the part of congestion and/or curtailment that the project does not relieve because effective capacity relief is less than the exceedance or curtailment level. It uses the same inputs as the Congestion and Curtailment Reduction Benefits (effective relief, binding hours, curtailment hours, exceedance, curtailment MW). One value per MWh (e.g. average congestion price or a user-set residual value) is applied to total residual energy. It is an operational/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the real WACC. It is grouped under Energy/Emissions and is a system/societal cost only (not in utility or ratepayer cost perspectives).
-
-**Variables**
-
-| Variable               | Meaning / units                                   | Notes                                                  |
-| ---------------------- | ------------------------------------------------- | ------------------------------------------------------ |
-| $\Delta C_{effective}$ | Effective capacity relief, MW                     | From Congestion and Curtailment Reduction Benefits section.      |
-| $H_{congestion}$       | Hours of congestion per year, h/yr                | Total binding hours.                                   |
-| $H_{curtailment}$      | Hours of curtailment per year, h/yr               |                                                        |
-| $X_{congestion}$       | MW of congestion (exceedance), MW                 | Average exceedance during binding hours.               |
-| $MW_{curtailment}$     | MW of curtailed resources, MW                     | Average curtailed MW during curtailment hours.         |
-| $E_{res,cong}$         | Residual congestion energy (annual), MWh/yr       | Unrelieved exceedance over binding hours.              |
-| $E_{res,curt}$         | Residual curtailment energy (annual), MWh/yr      | Unrelieved curtailment over curtailment hours.         |
-| $E_{residual}$         | Total residual exceedance energy (annual), MWh/yr | $E_{res,cong} + E_{res,curt}$.                         |
-| $\gamma_{residual}$    | Value of residual exceedance, $/MWh               | User-set or default to$\gamma_{congestion}$.           |
-| $C_{residual,annual}$  | Residual exceedance cost (annual), $/yr           |                                                        |
-| $C_{residual,nominal}$ | Residual exceedance cost (nominal), $             | Undiscounted sum over lifetime.                        |
-| $C_{residual,real}$    | Residual exceedance cost (real / PV), $           | PV of annual stream from $T_{COD}$ over $T_{lifetime}$. |
-| $T_{lifetime}$         | Project lifetime, years                           |                                                        |
-| $T_{COD}$              | Commercial operation date (year index), years     |                                                        |
-| $r_{WACC,real}$        | Real WACC, decimal                                | Used to discount this cost.                            |
-
-**Equations**
-
-1. Residual congestion energy (annual)
-
-Binding hours × unrelieved exceedance when relief is less than exceedance:
+If the project does not fully relieve the constraint ($X_{congestion} > \Delta C_{effective}$ or $MW_{curtailment} > \Delta C_{effective}$), the remaining congestion and/or curtailment energy is valued at the congestion price $\gamma_{congestion}$:
 
 $$
-E_{res,cong} = H_{congestion} \times \max(0,\, X_{congestion} - \Delta C_{effective})
-
-
+E_{residual} = H_{congestion} \times \max(0,\, X_{congestion} - \Delta C_{effective}) + H_{curtailment} \times \max(0,\, MW_{curtailment} - \Delta C_{effective})
 $$
 
-2. Residual curtailment energy (annual)
-
-Curtailment hours × unrelieved curtailment when relief is less than curtailment MW:
-
 $$
-E_{res,curt} = H_{curtailment} \times \max(0,\, MW_{curtailment} - \Delta C_{effective})
-
-
+C_{residual,annual} = E_{residual} \times \gamma_{congestion}
 $$
 
-3. Total residual exceedance energy (annual)
-
-$$
-E_{residual} = E_{res,cong} + E_{res,curt}
-
-
-$$
-
-4. Annual cost
-
-One price $\gamma_{residual}$ ($/MWh) is applied (user may set a residual value; otherwise default is $\gamma_{congestion}$):
-
-$$
-C_{residual,annual} = E_{residual} \times \gamma_{residual}
-
-
-$$
-
-5. Nominal (undiscounted) lifetime cost
-
-$$
-C_{residual,nominal} = C_{residual,annual} \times T_{lifetime}
-
-
-$$
-
-6. Real (present value) cost
-
-Annual costs at the start of each year from $T_{COD}$ for $T_{lifetime}$ years, discounted at real WACC:
-
-$$
-C_{residual,real} = \sum_{t=0}^{T_{lifetime}-1} \frac{C_{residual,annual}}{(1 + r_{WACC,real})^{T_{COD}+t}}
-
-
-$$
-
----
-
-**Regulatory perspective (AFUDC)**
-Residual exceedance cost is not capitalized; there is no AFUDC term. It does not enter rate base.
-
-**Societal perspective**
-The relevant measure is real (present value) total residual exceedance cost, $C_{residual,real}$, using $r_{WACC,real}$. It is a system/societal cost and is included in total costs and in Energy/Emissions; it is not included in utility or ratepayer cost perspectives.
-
-**Link to Congestion and Curtailment Reduction Benefits**
-$\Delta C_{effective}$, $H_{congestion}$, $H_{curtailment}$, $X_{congestion}$, and $MW_{curtailment}$ are defined in the Congestion and Curtailment Reduction Benefits section. Residual exceedance (3.c) is the unrelieved part: when $\Delta C_{effective}$ is less than $X_{congestion}$ or $MW_{curtailment}$, the remaining MWh (binding hours × residual exceedance MW and curtailment hours × residual curtailment MW) are valued at $\gamma_{residual}$ to give $C_{residual,annual}$, hence $C_{residual,nominal}$ and $C_{residual,real}$.
+$C_{residual,nominal}$ and $C_{residual,real}$ (PV) follow the same discounting convention as thermal loss costs (level annuity from $T_{COD}$ over $T_{lifetime}$, discounted at $r_{WACC,real}$). Residual exceedance cost is not capitalized (no AFUDC), does not enter rate base, and is grouped under Energy/Emissions as a system/societal cost only.
 
 ---
 
@@ -1714,7 +1623,7 @@ $$
 
 ### Benefit of Delivered Energy
 
-The benefit of delivered energy is the societal value of the energy the project enables to be delivered each year. For greenfield, deliverable capacity equals effective capacity ($\Delta C_{effective} = \phi \times C_{new}$). For reconductoring, deliverable capacity is the additional capacity the upgrade enables ($C_{new} - C_{old}$, same as $\Delta C_{effective}$ for reconductoring), including any headroom beyond clearing the constraint. Deliverable energy per year is deliverable capacity × line utilization × hours per year (MWh/year), valued at electricity price $\gamma_{electricity}$ (\$/MWh). Level annual benefit from COD, discounted at real WACC. This benefit is not double-counted with congestion or curtailment (those value constraint relief; this values throughput). The appendix is the source of truth for notation and full definitions.
+The benefit of delivered energy is the societal value of the energy the project enables to be delivered each year. For greenfield, deliverable capacity equals effective capacity ($\Delta C_{effective} = \phi \times C_{new}$). For reconductoring, deliverable capacity is the additional capacity the upgrade enables ($C_{new} - C_{old}$, same as $\Delta C_{effective}$ for reconductoring), including any headroom beyond clearing the constraint. Deliverable energy per year is deliverable capacity × line utilization × hours per year (MWh/year), valued at value of load $v_{load}$ (\$/MWh). Level annual benefit from COD, discounted at real WACC. This benefit is not double-counted with congestion or curtailment (those value constraint relief; this values throughput). The appendix is the source of truth for notation and full definitions.
 
 **Variables**
 
@@ -1723,7 +1632,7 @@ The benefit of delivered energy is the societal value of the energy the project 
 | $\Delta C_{effective}$ | Effective capacity relief, MW | From system constraints. Greenfield: $\phi C_{new}$; reconductoring: $C_{new} - C_{old}$. |
 | $u$ | Line utilization, dimensionless | $0 \le u \le 1$. |
 | $H$ | Hours per year, h/yr | e.g. 8760. |
-| $\gamma_{electricity}$ | Electricity price, \$/MWh | e.g. baseline or market price. |
+| $v_{load}$ | Value of load, \$/MWh | Marginal value of energy to end-use load. From thermal loss costs section. |
 | $E_{delivered,annual}$ | Deliverable energy per year, MWh/yr | |
 | $B_{delivered,annual}$ | Annual benefit from delivered energy, \$/yr | |
 | $T_{lifetime}$ | Project lifetime, years | |
@@ -1736,7 +1645,7 @@ The benefit of delivered energy is the societal value of the energy the project 
 
 1. Deliverable energy (annual): $E_{delivered,annual} = \Delta C_{effective} \times u \times H$.
 
-2. Annual benefit: $B_{delivered,annual} = E_{delivered,annual} \times \gamma_{electricity}$.
+2. Annual benefit: $B_{delivered,annual} = E_{delivered,annual} \times v_{load}$.
 
 3. Nominal lifetime benefit: $B_{delivered,lifetime,nominal} = B_{delivered,annual} \times T_{lifetime}$.
 

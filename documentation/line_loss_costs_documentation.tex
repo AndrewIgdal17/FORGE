@@ -22,7 +22,7 @@ This script calculates line loss costs/benefits by:
 
 \textbf{Greenfield Projects:}
 \begin{align}
-\text{Annual Loss Cost} &= \text{Losses (MWh/year)} \times \text{Electricity Price (\$/MWh)} \\
+\text{Annual Loss Cost} &= \text{Losses (MWh/year)} \times \text{Value of Load (\$/MWh)} \\
 \text{Lifetime Nominal} &= \text{Annual Cost} \times \text{Project Lifetime} \\
 \text{Present Value} &= \sum_{t=1}^{N} \frac{\text{Annual Cost}}{(1 + r)^{t + \text{start\_year} - 1}}
 \end{align}
@@ -30,7 +30,7 @@ This script calculates line loss costs/benefits by:
 \textbf{Reconductoring Projects:}
 \begin{align}
 \text{Loss Reduction} &= \text{Old Losses} - \text{New Losses} \\
-\text{Annual Benefit} &= \text{Loss Reduction} \times \text{Electricity Price} \\
+\text{Annual Benefit} &= \text{Loss Reduction} \times \text{Value of Load} \\
 \text{Lifetime Benefit} &= \text{Annual Benefit} \times \text{Project Lifetime} \\
 \text{Present Value} &= \sum_{t=1}^{N} \frac{\text{Annual Benefit}}{(1 + r)^{t + \text{start\_year} - 1}}
 \end{align}
@@ -45,7 +45,7 @@ The script uses a normalized comparison method that accounts for capacity differ
     \item Old configuration details (for reconductoring: old capacity, old conductor type, old AC/DC)
     \item Physical details (line length)
     \item Circuit and resistance details
-    \item Electricity price
+    \item Value of load
     \item Social discount rate
     \item Project lifetime, delay years, construction years
 \end{itemize}
@@ -114,7 +114,7 @@ Main execution function that orchestrates the line loss cost/benefit calculation
 \textbf{Workflow for Greenfield:}
 \begin{enumerate}
     \item Gets losses via \texttt{get\_total\_energy\_losses()} (line + converter)
-    \item Converts to costs (losses * \texttt{baseline\_electricity\_price}), \texttt{start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}
+    \item Converts to costs (losses * \texttt{value\_of\_load}), \texttt{start\_year} = \texttt{calculate\_cod\_year(delay\_years, construction\_years)}
     \item Calculates present value; writes results (including optional line/converter breakdown) to CSV
 \end{enumerate}
 
@@ -122,7 +122,7 @@ Main execution function that orchestrates the line loss cost/benefit calculation
 \begin{enumerate}
     \item Baseline (old) losses: \texttt{calculate\_configuration\_losses(old\_...)} + \texttt{calculate\_converter\_losses} for old config; new (primary) losses: \texttt{get\_total\_energy\_losses()}
     \item Counterfactual: old conductor at new capacity via \texttt{calculate\_configuration\_losses} with new capacity
-    \item Benefit = (baseline or counterfactual total losses - new total losses) * price; PV and CSV as benefits
+    \item Benefit = (baseline or counterfactual total losses - new total losses) * value of load; PV and CSV as benefits
 \end{enumerate}
 
 \section{Example}
@@ -138,7 +138,7 @@ The following example demonstrates a typical usage:
 #   - Line utilization: 70%
 #   - Line length: 100 miles
 #   - Losses: 5,000 MWh/year
-#   - Electricity price: $50/MWh
+#   - Value of load: $50/MWh
 #   - Project lifetime: 50 years
 #   - Start year: 3 (after 2-year construction)
 #
@@ -159,7 +159,7 @@ The following example demonstrates a typical usage:
 #   - Old: 200 MW, Standard Aluminum, losses: 3,000 MWh/year
 #   - New: 350 MW, Advanced Aluminum, losses: 4,000 MWh/year
 #   - Counterfactual (old conductor @ 350 MW): 5,500 MWh/year
-#   - Electricity price: $50/MWh
+#   - Value of load: $50/MWh
 #
 # Calculation (Normalized Method):
 #   Loss reduction = 5,500 - 4,000 = 1,500 MWh/year

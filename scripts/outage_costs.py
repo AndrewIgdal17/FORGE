@@ -100,7 +100,7 @@ def calculate_outage_costs(
     validate_discount_rate(discount_rate)
 
     outage_config = outage_yaml["outage"]
-    growth_rate = outage_config["risk_growth_rate"]
+    growth_rate = outage_config["risk_growth_rate"] or 0.0
     capacity_at_risk = outage_config["capacity_at_risk_factor"]
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
     duration_by_terrain = outage_config["outage_duration_by_terrain"]

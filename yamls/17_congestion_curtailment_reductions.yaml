@@ -17,9 +17,6 @@ greenfield_congestion_curtailment_reductions:
 
     costs:
       average_congestion_price: 30 # $/mwh (>= 0)
-      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)
-      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease
-      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.
 
   curtailment:
     # Number of hours per year when renewable energy curtailment occurs
@@ -51,13 +48,9 @@ reconductoring_congestion_curtailment_reductions:
       near_binding_relief_factor: 0.25 # [0,1]
 
       hot_hour_weights: 0 # [0,1] fraction of hours at or near MOT
-    # energy loss info is in project_category_circuit_detail.yaml
 
     costs:
       average_congestion_price: 30 # $/mwh (>= 0)
-      residual_exceedance_value: null # $/MWh for residual exceedance (null = use average_congestion_price)
-      value_of_lost_load: 0 # $/mwh (>= 0) # I alredady have this in the outages section will need to think about it (can tie a decrease
-      # in congestion and curtailment to a decrease in outage risk and that has some value), but value of lost load should just live on the outage page, the methodology will reference it.
 
   curtailment:
     # Number of hours per year when renewable energy curtailment occurs

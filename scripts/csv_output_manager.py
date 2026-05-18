@@ -245,8 +245,8 @@ class CTCCOutputManager:
                 ),
                 "old_ac_dc": (project.get("old_ac_dc", "") if reconductoring else ""),
                 # Financial parameters
-                "baseline_electricity_price_per_mwh": project.get(
-                    "baseline_electricity_price_per_mwh", 0
+                "value_of_load_per_mwh": project.get(
+                    "value_of_load_per_mwh", 0
                 ),
                 "social_discount_rate": social_discount_rate,
                 # Timeline (from centralized loader)
@@ -376,7 +376,7 @@ class CTCCOutputManager:
             "old_capacity_mw",
             "old_conductor_type",
             "old_ac_dc",
-            "baseline_electricity_price_per_mwh",
+            "value_of_load_per_mwh",
             "social_discount_rate",
             "construction_years",
             "delay_years",
@@ -1022,7 +1022,7 @@ class CTCCOutputManager:
         Benefits (reduce system cost):
         - Congestion reduction benefit (operational)
         - Curtailment reduction benefit (operational)
-        - Delivered energy benefit (throughput value at electricity price)
+        - Delivered energy benefit (throughput value at value of load)
 
         Costs (increase system cost):
         - Congestion during delay/construction (opportunity cost)

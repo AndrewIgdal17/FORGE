@@ -113,7 +113,7 @@ total_miles = load_physical_details()
 
 The \texttt{financial\_utils.py} module provides shared financial calculation functions: present value (level and growing annuity), COD year, discount rate from config, amortization, and AFUDC capitalization.
 
-\textbf{Nominal WACC (r\_wacc,nominal):} When capital structure is present and valid (equity\_percent, debt\_percent, cost\_of\_equity, cost\_of\_debt; percentages sum to 1.0; not both costs zero), r\_wacc,nominal = equity\_percent $\times$ cost\_of\_equity + debt\_percent $\times$ cost\_of\_debt. Otherwise r\_wacc,nominal = \texttt{financial.wacc\_nominal}. This value is used for both discounting (via real WACC from the Fisher equation) and for the AFUDC rate. The helper \texttt{get\_wacc\_nominal(financing\_yaml)} returns this value.
+\textbf{Nominal WACC (r\_wacc,nominal):} Always read directly from \texttt{financial.wacc\_nominal}. This value is used for both discounting (via real WACC from the Fisher equation) and for the AFUDC rate. The helper \texttt{get\_wacc\_nominal(financing\_yaml)} returns this value.
 
 \subsection{Key Functions}
 
@@ -184,13 +184,13 @@ where $P$ is principal, $r$ is rate, and $n$ is number of years.
 
 \subsubsection{\texttt{get\_wacc\_nominal(financing\_yaml)}}
 
-Returns nominal WACC (r\_wacc,nominal). Calls \texttt{calculate\_afudc\_rate(financing\_yaml)} and returns the rate; same logic so discounting and AFUDC use the same nominal rate when capital structure is present.
+Returns nominal WACC (r\_wacc,nominal) from \texttt{financial.wacc\_nominal}.
 
 \textbf{Returns:} \texttt{float} --- Nominal WACC.
 
 \subsubsection{\texttt{calculate\_afudc\_rate(financing\_yaml)}}
 
-Calculates AFUDC rate from capital structure or falls back to WACC.
+Returns AFUDC rate from \texttt{financial.wacc\_nominal} with source string \texttt{"WACC nominal"}.
 
 \textbf{Parameters:}
 \begin{itemize}
@@ -201,16 +201,6 @@ Calculates AFUDC rate from capital structure or falls back to WACC.
 \begin{itemize}
     \item Tuple: (\texttt{afudc\_rate}, \texttt{source\_description})
 \end{itemize}
-
-\textbf{Key Logic:}
-\begin{lstlisting}
-if capital_structure specified:
-    rate = equity_percent * cost_of_equity + debt_percent * cost_of_debt
-    source = "capital structure"
-else:
-    rate = wacc_nominal
-    source = "WACC nominal"
-\end{lstlisting}
 
 \subsubsection{\texttt{calculate\_afudc\_capitalized\_cost(nominal\_cost, timing\_pattern, delay\_years, construction\_years, afudc\_rate, delay\_has\_active\_work)}}
 

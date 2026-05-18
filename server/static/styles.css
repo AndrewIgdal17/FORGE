@@ -16,7 +16,6 @@
       form {
         display: grid;
         gap: 1rem;
-        max-width: 960px;
       }
       .section {
         display: grid;
@@ -148,8 +147,9 @@
         display: none;
         padding: 1.5rem;
         padding-bottom: 0.5rem;
-        background: transparent;
-        border-radius: 0.5rem;
+        background: rgba(0, 100, 200, 0.015);
+        border-left: 3px solid rgba(0, 102, 204, 0.15);
+        border-radius: 0 0.5rem 0.5rem 0;
         flex: 1;
         overflow-y: auto;
         min-height: 0;
@@ -219,9 +219,9 @@
       .main-tab-button.results-available:hover:not(.disabled) {
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
       }
-      .run-button {
+      .save-scenario-button {
         padding: 0.75rem 2rem;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         border: none;
         border-radius: 0.375rem;
@@ -230,9 +230,9 @@
         font-weight: 600;
         transition: all 0.2s;
       }
-      .run-button:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+      .save-scenario-button:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
       }
       .main-tab-content {
         display: none;
@@ -630,6 +630,63 @@
         cursor: pointer;
         position: relative;
       }
+      .equation-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin-left: 0.25rem;
+        background: rgba(139, 92, 246, 0.1);
+        color: #7c3aed;
+        border-radius: 50%;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        position: relative;
+        vertical-align: middle;
+      }
+      .equation-icon:hover {
+        background: rgba(139, 92, 246, 0.2);
+      }
+      .equation-popover {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        z-index: 10002;
+        width: max-content;
+        max-width: 420px;
+        min-width: 280px;
+      }
+      .equation-math {
+        margin-bottom: 0.75rem;
+        overflow-x: auto;
+      }
+      .equation-math .katex-display {
+        margin: 0.25rem 0;
+      }
+      .equation-context {
+        font-size: 0.8rem;
+        color: #4b5563;
+        line-height: 1.5;
+        margin: 0 0 0.75rem;
+      }
+      .equation-appendix-link {
+        font-size: 0.78rem;
+        color: #7c3aed;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .equation-appendix-link:hover {
+        text-decoration: underline;
+      }
+
       /* Tooltip element (added via JS) */
       .help-tooltip {
         position: fixed;
@@ -664,6 +721,32 @@
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
+      }
+      .methodology-tooltip {
+        position: fixed;
+        background: #1f2937;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.78rem;
+        font-weight: 400;
+        white-space: normal;
+        width: max-content;
+        max-width: 280px;
+        z-index: 10001;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        pointer-events: none;
+      }
+      .methodology-tooltip .tooltip-gloss {
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+      .methodology-tooltip .tooltip-appendix-ref {
+        display: block;
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.6);
+        font-style: italic;
       }
       /* Auto-calculated total display */
       .calculated-total {
@@ -1805,6 +1888,61 @@
       }
       .sub-sub-tab-content {
         min-height: 0.5rem;
+        padding-left: 0.5rem;
+        border-left: 2px solid rgba(0, 102, 204, 0.07);
+        margin-left: 0.15rem;
+      }
+      .row-split-grid {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .row-zone-inputs {
+        min-width: 0;
+      }
+      .row-cost-panel {
+        position: sticky;
+        top: 1rem;
+        border-left: 1px solid #e5e7eb;
+        padding-left: 1.5rem;
+      }
+      .cost-panel-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+      }
+      .cost-panel-subtitle {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin: 0 0 1rem;
+      }
+      .cost-section {
+        margin-bottom: 1.25rem;
+      }
+      .cost-section h5 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin: 0 0 0.5rem;
+      }
+      .cost-line {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        padding: 0.15rem 0;
+        font-variant-numeric: tabular-nums;
+        max-width: 22rem;
+      }
+      .cost-panel-computing {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        font-style: italic;
+      }
+      .row-cost-panel canvas {
+        width: 100% !important;
+        max-height: 280px;
       }
 
       /* =============================================
@@ -1854,13 +1992,13 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .row-zone-table {
-        width: 100%;
+      .ctcc-table {
+        width: fit-content;
         border-collapse: collapse;
         margin-bottom: 0.5rem;
         font-size: 0.85rem;
       }
-      .row-zone-table th {
+      .ctcc-table th {
         text-align: left;
         padding: 0.4rem 0.6rem;
         font-size: 0.75rem;
@@ -1870,12 +2008,12 @@
         letter-spacing: 0.04em;
         border-bottom: 2px solid rgba(0, 0, 0, 0.1);
       }
-      .row-zone-table td {
+      .ctcc-table td {
         padding: 0.2rem 0.4rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         vertical-align: middle;
       }
-      .row-zone-table:not(.terrain-table) td:first-child {
+      .ctcc-table:not(.terrain-table) td:first-child {
         width: 3rem;
         text-align: center;
         color: rgba(0, 0, 0, 0.45);
@@ -1886,7 +2024,27 @@
         width: 10rem;
         color: rgba(0, 0, 0, 0.7);
       }
-      .row-zone-table input {
+      .computed-column-header {
+        color: rgba(0, 0, 0, 0.45);
+        font-weight: 500;
+      }
+      .computed-cell {
+        color: rgba(0, 0, 0, 0.45);
+        text-align: right;
+        padding-right: 0.5rem;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.85rem;
+      }
+      .terrain-total-row td,
+      .row-total-row td {
+        font-weight: 600;
+        border-top: 2px solid #d1d5db;
+        padding-top: 0.5rem;
+      }
+      .terrain-total-row .computed-cell {
+        font-weight: 600;
+      }
+      .ctcc-table input {
         width: 100%;
         border: 1px solid transparent;
         background: transparent;
@@ -1896,16 +2054,75 @@
         transition: border-color 0.15s;
         box-sizing: border-box;
       }
-      .row-zone-table input:hover {
+      .ctcc-table input:hover {
         border-color: rgba(0, 0, 0, 0.12);
       }
-      .row-zone-table input:focus {
+      .ctcc-table input:focus {
         outline: none;
         border-color: #0066cc;
         background: rgba(0, 100, 200, 0.03);
       }
-      .row-zone-table tr:hover td {
+      .ctcc-table tr:hover td {
         background: rgba(0, 0, 0, 0.02);
+      }
+      .ctcc-table caption {
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-align: left;
+        caption-side: top;
+        padding-bottom: 0.5rem;
+      }
+
+      /* Tab guide banners */
+      .tab-guide-banner {
+        background: rgba(0, 100, 200, 0.05);
+        border-left: 3px solid #0066cc;
+        border-radius: 0.25rem;
+        padding: 0.75rem 2.5rem 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        line-height: 1.5;
+        position: relative;
+        clear: both;
+      }
+      .tab-guide-banner-oneliner {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+      }
+      .tab-guide-banner-body {
+        color: rgba(0, 0, 0, 0.7);
+        margin-bottom: 0.5rem;
+      }
+      .tab-guide-banner-items {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: rgba(0, 0, 0, 0.7);
+      }
+      .tab-guide-banner-items li {
+        margin-bottom: 0.15rem;
+      }
+      .tab-guide-banner-dismiss {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.4);
+        padding: 0.2rem 0.4rem;
+        line-height: 1;
+      }
+      .tab-guide-banner-dismiss:hover {
+        color: rgba(0, 0, 0, 0.7);
+      }
+      .tab-guide-banner-footer {
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: rgba(0, 0, 0, 0.5);
       }
 
       /* Conditional column visibility */
@@ -1964,7 +2181,9 @@
       }
 
       .sub-tab-content {
-        padding-top: 0.5rem;
+        padding: 0.75rem 0 0.5rem 0.75rem;
+        border-left: 2px solid rgba(0, 102, 204, 0.1);
+        margin-left: 0.25rem;
       }
 
       /* Environmental uplift factor row */
@@ -1977,8 +2196,9 @@
         font-size: 0.85rem;
       }
       .env-uplift-label {
-        font-weight: 600;
-        color: rgba(0, 0, 0, 0.6);
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #0066cc;
       }
       .env-acres-cell {
         color: rgba(0, 0, 0, 0.5);

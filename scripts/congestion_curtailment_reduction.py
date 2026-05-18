@@ -212,7 +212,6 @@ def calculate_congestion_reduction_costs(
     near_binding_hours: int,
     near_average_exceedance: int,
     average_congestion_price: float,
-    residual_exceedance_value: float | None,
     project_lifetime: int,
     delay_years: int,
     construction_years: int,
@@ -233,7 +232,7 @@ def calculate_congestion_reduction_costs(
     1. Calculates effective capacity relief (greenfield: flow_factor * capacity; reconductoring: capacity - old_capacity)
     2. Allocates capacity relief between curtailment and congestion using allocate_curtailment_then_congestion()
     3. Calculates congestion reduction energy (MWh/yr) for binding hours, near-binding hours, and residual
-    4. Residual exceedance energy is the sum of (1) congestion residual (total_binding_hours x max(0, average_exceedance - effective_capacity_relief)) and (2) curtailment residual (curtailment_hours_total x max(0, average_curtailment_mw - effective_capacity_relief)); one price (residual_exceedance_value or average_congestion_price) is applied.
+    4. Residual exceedance energy is the sum of (1) congestion residual (total_binding_hours x max(0, average_exceedance - effective_capacity_relief)) and (2) curtailment residual (curtailment_hours_total x max(0, average_curtailment_mw - effective_capacity_relief)); valued at average_congestion_price.
     5. Calculates present values using real WACC, starting after construction completion
     6. Calculates opportunity costs during delay/construction periods
 
@@ -247,7 +246,6 @@ def calculate_congestion_reduction_costs(
         near_binding_hours: Number of hours per year when constraints are near-binding
         near_average_exceedance: Average MW exceedance during near-binding hours
         average_congestion_price: Average price of congestion in $/MWh
-        residual_exceedance_value: Price per MWh for residual exceedance ($/MWh, None = use average_congestion_price)
         project_lifetime: Project operational lifetime in years
         delay_years: Number of years of project delay before construction
         construction_years: Number of years of construction
@@ -337,14 +335,8 @@ def calculate_congestion_reduction_costs(
         energy_residual_congestion + energy_residual_curtailment
     )
 
-    # Use residual_exceedance_value (default to average_congestion_price if None)
-    residual_exceedance_value_used = (
-        residual_exceedance_value
-        if residual_exceedance_value is not None
-        else average_congestion_price
-    )
     annual_residual_exceedance_cost = (
-        energy_residual_exceedance * residual_exceedance_value_used
+        energy_residual_exceedance * average_congestion_price
     )
 
     total_annual_congestion_reduction_cost = annual_congestion_reduction_cost_raw
@@ -459,7 +451,6 @@ def main() -> None:
         params.near_binding_hours,
         params.near_average_exceedance,
         params.average_congestion_price,
-        params.residual_exceedance_value,
         project_details_cc.project_lifetime,
         project_details_cc.delay_years,
         project_details_cc.construction_years,
@@ -566,15 +557,15 @@ def main() -> None:
     project_data = get_project_data_raw()
     project = project_data.get("project", {})
     line_utilization = float(project.get("line_utilization", 0.0))
-    baseline_electricity_price_per_mwh = float(
-        project.get("baseline_electricity_price_per_mwh", 0.0)
+    value_of_load_per_mwh = float(
+        project.get("value_of_load_per_mwh", 0.0)
     )
     delta_c_effective = congestion_results.effective_capacity_relief
     energy_delivered_annual_mwh_yr = (
         delta_c_effective * line_utilization * HOURS_PER_YEAR
     )
     delivered_benefit_annual = (
-        energy_delivered_annual_mwh_yr * baseline_electricity_price_per_mwh
+        energy_delivered_annual_mwh_yr * value_of_load_per_mwh
     )
     delivered_benefit_nominal = (
         delivered_benefit_annual * project_details_cc.project_lifetime
@@ -618,7 +609,7 @@ def main() -> None:
         "curtailment_benefit_annual": congestion_results.annual_curtailment_benefit,
         "curtailment_benefit_nominal": congestion_results.lifetime_curtailment_benefit,
         "curtailment_benefit_pv": congestion_results.lifetime_curtailment_benefit_pv,
-        # BENEFITS - Delivered energy (throughput value at electricity price)
+        # BENEFITS - Delivered energy (throughput value at value of load)
         "delivered_benefit_annual": delivered_benefit_annual,
         "delivered_benefit_nominal": delivered_benefit_nominal,
         "delivered_benefit_pv": delivered_benefit_pv,

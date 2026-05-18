@@ -47,7 +47,6 @@ class CongestionCurtailmentParams:
     near_binding_hours: float
     near_average_exceedance: float
     average_congestion_price: float
-    residual_exceedance_value: Optional[float]
     curtailment_hours_total: float
     average_curtailment_mw: float
     average_curtailment_price: float
@@ -584,13 +583,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
                     f"Missing '{key}' key in curtailment section of YAML file"
                 )
 
-        # Get residual_exceedance_value (can be None or empty string)
-        residual_exceedance_value = costs.get("residual_exceedance_value")
-        if residual_exceedance_value not in (None, ""):
-            residual_exceedance_value = float(residual_exceedance_value)
-        else:
-            residual_exceedance_value = None
-
         return CongestionCurtailmentParams(
             flow_factor=float(flow_factor),
             binding_hours=float(constraints["binding_hours"]),
@@ -598,7 +590,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             near_binding_hours=float(constraints["near_binding_hours"]),
             near_average_exceedance=float(constraints["near_average_exceedance"]),
             average_congestion_price=float(costs["average_congestion_price"]),
-            residual_exceedance_value=residual_exceedance_value,
             curtailment_hours_total=float(curtailment_data["curtailment_hours_total"]),
             average_curtailment_mw=float(curtailment_data["average_curtailment_mw"]),
             average_curtailment_price=float(

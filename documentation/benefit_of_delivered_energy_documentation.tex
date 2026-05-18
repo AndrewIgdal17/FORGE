@@ -20,7 +20,7 @@ The benefit of delivered energy is the societal value of the energy the project 
 $\Delta C_{\text{effective}}$ & Effective capacity relief, (MW) & From system constraints. Greenfield: $\phi C_{\text{new}}$; reconductoring: $C_{\text{new}} - C_{\text{old}}$. \\
 $u$ & Line utilization, (dimensionless) & $0 \le u \le 1$. \\
 $H$ & Hours per year, (h/year) & e.g.\ 8760. \\
-$\gamma_{\text{electricity}}$ & Electricity price, (\$/MWh) & e.g.\ baseline or market price. \\
+$v_{\text{load}}$ & Value of load, (\$/MWh) & Marginal value of energy to end-use load. From thermal loss costs section. \\
 $E_{\text{delivered,annual}}$ & Deliverable energy per year, (MWh/year) & \\
 $B_{\text{delivered,annual}}$ & Annual benefit from delivered energy, (\$/year) & \\
 $T_{\text{lifetime}}$ & Project lifetime, (years) & \\
@@ -42,9 +42,9 @@ E_{\text{delivered,annual}} = \Delta C_{\text{effective}} \times u \times H.
 \end{equation*}
 
 \paragraph{2. Annual benefit.}
-Annual benefit is deliverable energy valued at the electricity price:
+Annual benefit is deliverable energy valued at the value of load:
 \begin{equation*}
-B_{\text{delivered,annual}} = E_{\text{delivered,annual}} \times \gamma_{\text{electricity}}.
+B_{\text{delivered,annual}} = E_{\text{delivered,annual}} \times v_{\text{load}}.
 \end{equation*}
 
 \paragraph{3. Nominal lifetime benefit.}

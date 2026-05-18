@@ -250,27 +250,13 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     # Get average_congestion_price - handle missing costs key
     if "costs" in congestion_data:
         average_congestion_price = congestion_data["costs"]["average_congestion_price"]
-        # Get residual_exceedance_value (can be None or string "null" from JSON/front-end)
-        residual_exceedance_value = congestion_data["costs"].get(
-            "residual_exceedance_value"
-        )
-        if residual_exceedance_value is not None:
-            if isinstance(residual_exceedance_value, str) and residual_exceedance_value.strip().lower() in ("null", ""):
-                residual_exceedance_value = None
-            else:
-                try:
-                    residual_exceedance_value = float(residual_exceedance_value)
-                except (TypeError, ValueError):
-                    residual_exceedance_value = None
     else:
-        # Fallback: try to get from greenfield section or use default
         average_congestion_price = (
             data.get("greenfield_congestion_curtailment_reductions", {})
             .get("congestion", {})
             .get("costs", {})
             .get("average_congestion_price", 30)
         )
-        residual_exceedance_value = None
 
     return CongestionCurtailmentParams(
         flow_factor=float(flow_factor),
@@ -281,7 +267,6 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             congestion_data["constraints"]["near_average_exceedance"]
         ),
         average_congestion_price=float(average_congestion_price),
-        residual_exceedance_value=residual_exceedance_value,
         curtailment_hours_total=float(
             curtailment_data.get("curtailment_hours_total", 0)
         ),

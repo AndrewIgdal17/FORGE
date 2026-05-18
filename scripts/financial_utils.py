@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple
-from constants import MIN_DISCOUNT_RATE, EQUITY_DEBT_TOLERANCE, TIMING_PATTERN_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
+from constants import MIN_DISCOUNT_RATE, TIMING_PATTERN_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
 
 
 def validate_discount_rate(
@@ -252,74 +252,16 @@ def calculate_amortized_cost(
 
 
 def calculate_afudc_rate(financing_yaml: Dict[str, Any]) -> Tuple[float, str]:
-    """
-    Calculate AFUDC rate from capital structure or fall back to WACC.
-
-    Per FERC USoA: AFUDC rate should reflect the utility's capital structure
-    (equity return + debt cost). Falls back to WACC if capital structure not specified
-    or if capital structure values are invalid (zero costs or percentages don't sum to 1.0).
-
-    Args:
-        financing_yaml (dict): Loaded financing YAML data
-
-    Returns:
-        tuple: (afudc_rate, source_description)
-    """
+    """Return AFUDC rate from WACC nominal."""
     financial = financing_yaml.get("financial", {})
-    cap_struct = financial.get("capital_structure")
-
-    if cap_struct and all(
-        k in cap_struct
-        for k in ["equity_percent", "cost_of_equity", "debt_percent", "cost_of_debt"]
-    ):
-        # Validate capital structure values
-        cost_of_equity = cap_struct["cost_of_equity"]
-        cost_of_debt = cap_struct["cost_of_debt"]
-        equity_percent = cap_struct["equity_percent"]
-        debt_percent = cap_struct["debt_percent"]
-
-        # Check if both costs are zero (invalid)
-        if cost_of_equity == 0 and cost_of_debt == 0:
-            # Fallback to WACC nominal
-            rate = financial.get("wacc_nominal", 0.08)
-            source = "WACC nominal (capital structure costs are zero)"
-        # Check if percentages don't sum to 1.0 (within tolerance for floating point)
-        elif abs(equity_percent + debt_percent - 1.0) > EQUITY_DEBT_TOLERANCE:
-            # Fallback to WACC nominal
-            rate = financial.get("wacc_nominal", 0.08)
-            source = "WACC nominal (capital structure percentages don't sum to 1.0)"
-        else:
-            # Valid capital structure, calculate AFUDC rate
-            rate = equity_percent * cost_of_equity + debt_percent * cost_of_debt
-            source = "capital structure (equity + debt)"
-    else:
-        # Fallback to WACC nominal
-        rate = financial.get("wacc_nominal", 0.08)
-        source = "WACC nominal (capital structure not specified)"
-
-    return rate, source
+    rate = financial.get("wacc_nominal", 0.075)
+    return rate, "WACC nominal"
 
 
 def get_wacc_nominal(financing_yaml: Dict[str, Any]) -> float:
-    """
-    Return nominal WACC (r_wacc,nominal) from capital structure or config fallback.
-
-    When capital structure is present and valid (equity_percent, debt_percent,
-    cost_of_equity, cost_of_debt; percentages sum to 1.0; not both costs zero),
-    returns equity_percent * cost_of_equity + debt_percent * cost_of_debt.
-    Otherwise returns financial["wacc_nominal"] (default 0.08).
-
-    Used for discounting (via real WACC) and for AFUDC rate; same logic as
-    calculate_afudc_rate so both stay consistent.
-
-    Args:
-        financing_yaml (dict): Loaded financing data (YAML or JSON shape with "financial" key).
-
-    Returns:
-        float: Nominal WACC.
-    """
-    rate, _ = calculate_afudc_rate(financing_yaml)
-    return rate
+    """Return nominal WACC from financing config."""
+    financial = financing_yaml.get("financial", {})
+    return financial.get("wacc_nominal", 0.075)
 
 
 def calculate_afudc_capitalized_cost(
