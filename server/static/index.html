@@ -28,9 +28,10 @@
 
     <!-- Main Tabs -->
     <div class="main-tabs">
-      <button type="button" class="main-tab-button active" data-tab="inputs">Inputs</button>
+      <button type="button" class="main-tab-button disabled" data-tab="inputs">Inputs</button>
       <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
-      <button type="button" class="main-tab-button" data-tab="scenarios">Scenarios</button>
+      <button type="button" class="main-tab-button active" data-tab="scenarios">Scenarios</button>
+      <span id="scenario-breadcrumb" style="display:none; font-size:0.9rem; color:#666; align-self:center;">/ <span id="scenario-breadcrumb-name"></span></span>
       <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
     </div>
 
@@ -46,7 +47,7 @@
     </div>
 
     <!-- Inputs Tab -->
-    <div class="main-tab-content active" id="main-tab-inputs">
+    <div class="main-tab-content" id="main-tab-inputs">
     <form id="demo-form" novalidate>
 
       <div id="simple-section" class="section">
@@ -81,10 +82,6 @@
       <div id="ctcc-section" class="section" hidden>
         <div id="ctcc-json-inputs" hidden>
           <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
-          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0 0.25rem 0;">
-            <label for="scenario-id" style="font-size: 0.9rem; font-weight: 500;">Scenario ID</label>
-            <input id="scenario-id" name="scenario-id" type="text" placeholder="Leave blank for timestamp" form="demo-form" style="width: 200px; padding: 0.25rem 0.4rem; font-size: 0.85rem;" />
-          </div>
           <div id="tabs-container" class="tabs-hidden">
             <div class="tabs" id="tab-buttons"></div>
             <div id="tab-contents"></div>
@@ -109,7 +106,7 @@
     </div>
 
     <!-- Scenarios Tab -->
-    <div class="main-tab-content" id="main-tab-scenarios">
+    <div class="main-tab-content active" id="main-tab-scenarios">
       <!-- Subtab navigation strip -->
       <div class="tabs" id="scenario-subtabs" style="padding-left: 1rem;">
         <button type="button" class="tab-button active" data-scenario-tab="scenario-comparison">Scenario Comparison</button>
@@ -121,12 +118,13 @@
       <div class="scenario-subtab-content active" id="scenario-subtab-scenario-comparison">
         <h2 style="margin: 0 0 1rem; padding: 0 1rem;">Scenario Comparison</h2>
         <div class="scenario-toolbar">
+          <button type="button" id="new-scenario-btn">+ New Scenario</button>
           <button type="button" id="scenario-upload-btn">Load from file</button>
           <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
           <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
         </div>
         <div class="scenario-list" id="scenario-list">
-          <div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>
+          <div class="scenario-empty">No scenarios yet.</div>
         </div>
         <div class="scenario-divider" id="scenario-divider">
           <span class="scenario-divider-hint" id="scenario-divider-hint">Click to show scenarios list</span>
@@ -378,7 +376,6 @@
       const bulkSection = document.getElementById("bulk-section");
       const ctccSection = document.getElementById("ctcc-section");
       console.log('Sections found:', {simpleSection, bulkSection, ctccSection});
-      const scenarioIdInput = document.getElementById("scenario-id");
       const loadStatus = document.getElementById("load-status");
       const tabsContainer = document.getElementById("tabs-container");
       const tabButtonsContainer = document.getElementById("tab-buttons");
@@ -418,9 +415,10 @@
 
       // Scenario management state
       let sessionScenarios = [];
+      let activeScenarioId = null;
+      let activeScenarioName = '';
       let lastRunResults = null;
       let scenarioCounter = 0;
-      let lastRunScenarioId = '';
       let comparisonScenarioIds = new Set();
       let comparisonBaselineId = null;
       let showDeltaVsBaseline = false;
@@ -443,6 +441,7 @@
       let autoCalcQueued = false;
 
       const autoCalculate = debounce(async function() {
+        if (!activeScenarioId) return;
         if (autoCalcInFlight) { autoCalcQueued = true; return; }
         autoCalcInFlight = true;
         document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
@@ -452,7 +451,7 @@
             mode: 'calculate',
             input_mode: 'json',
             output_mode: 'json',
-            scenario_id: scenarioIdInput.value.trim() || null,
+            scenario_id: activeScenarioId,
             combined_data: collectJsonData()
           };
           const resp = await fetch(
@@ -818,6 +817,53 @@
         return scenario;
       }
 
+      function setActiveScenario(scenario) {
+        activeScenarioId = scenario.id;
+        activeScenarioName = scenario.customName;
+        updateScenarioBreadcrumb();
+        const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
+        if (inputsBtn) inputsBtn.classList.remove('disabled');
+        if (scenario.inputs) {
+          renderJsonInputs(scenario.inputs);
+        }
+        if (scenario.results) {
+          renderCTCCResults(scenario.results);
+          lastRunResults = JSON.parse(JSON.stringify(scenario.results));
+          markResultsAvailable(0);
+        }
+        renderScenarioList();
+        autoCalculate();
+      }
+
+      function updateScenarioBreadcrumb() {
+        const crumb = document.getElementById('scenario-breadcrumb');
+        const nameEl = document.getElementById('scenario-breadcrumb-name');
+        if (!crumb || !nameEl) return;
+        if (activeScenarioId) {
+          nameEl.textContent = activeScenarioName;
+          crumb.style.display = '';
+        } else {
+          crumb.style.display = 'none';
+        }
+      }
+
+      function createNewScenario(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        const scenario = addScenarioToSession(null, null,
+          { timestamp: new Date().toISOString(), source: 'manual' },
+          trimmed
+        );
+        activeScenarioId = scenario.id;
+        activeScenarioName = trimmed;
+        updateScenarioBreadcrumb();
+        const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
+        if (inputsBtn) inputsBtn.classList.remove('disabled');
+        switchMainTab('inputs');
+        switchTab(0);
+        autoCalculate();
+      }
+
       function removeScenarioFromSession(id) {
         sessionScenarios = sessionScenarios.filter(s => s.id !== id);
         comparisonScenarioIds.delete(id);
@@ -831,23 +877,16 @@
         const scenario = sessionScenarios.find(s => s.id === id);
         if (scenario && newName.trim()) {
           scenario.customName = newName.trim();
+          if (id === activeScenarioId) {
+            activeScenarioName = scenario.customName;
+            updateScenarioBreadcrumb();
+          }
           renderScenarioList();
         }
       }
 
       function loadScenarioIntoUI(scenario) {
-        if (!scenario.inputs) {
-          alert('This scenario was imported from CSV and contains only results, not full inputs.');
-          return;
-        }
-        renderJsonInputs(scenario.inputs);
-        scenarioIdInput.value = scenario.metadata?.scenario_id || '';
-        if (scenario.results) {
-          renderCTCCResults(scenario.results);
-          lastRunResults = JSON.parse(JSON.stringify(scenario.results));
-          markResultsAvailable(0);
-        }
-        switchMainTab('inputs');
+        setActiveScenario(scenario);
       }
 
       function formatTimestamp(dateStr) {
@@ -909,7 +948,7 @@
         container.innerHTML = '';
 
         if (sessionScenarios.length === 0) {
-          container.innerHTML = '<div class="scenario-empty">No scenarios yet. Run a calculation or upload a file to get started.</div>';
+          container.innerHTML = '<div class="scenario-empty">No scenarios yet.</div>';
           renderComparisonTable();
           return;
         }
@@ -967,8 +1006,9 @@
         table.appendChild(tbody);
 
         sessionScenarios.forEach(scenario => {
+          const isActive = scenario.id === activeScenarioId;
           const card = document.createElement('tr');
-          card.className = 'scenario-card';
+          card.className = 'scenario-card' + (isActive ? ' scenario-card-active' : '');
           card.dataset.scenarioId = scenario.id;
 
           // Row click toggles checkbox (except buttons, checkbox, radio, name editing)
@@ -1076,12 +1116,19 @@
           const actions = document.createElement('div');
           actions.className = 'scenario-card-actions';
 
-          const loadBtn = document.createElement('button');
-          loadBtn.type = 'button';
-          loadBtn.className = 'load-btn';
-          loadBtn.textContent = 'Load';
-          loadBtn.addEventListener('click', () => loadScenarioIntoUI(scenario));
-          actions.appendChild(loadBtn);
+          if (isActive) {
+            const badge = document.createElement('span');
+            badge.className = 'active-badge';
+            badge.textContent = 'Active';
+            actions.appendChild(badge);
+          } else {
+            const setActiveBtn = document.createElement('button');
+            setActiveBtn.type = 'button';
+            setActiveBtn.className = 'load-btn';
+            setActiveBtn.textContent = 'Set Active';
+            setActiveBtn.addEventListener('click', () => setActiveScenario(scenario));
+            actions.appendChild(setActiveBtn);
+          }
 
           const removeBtn = document.createElement('button');
           removeBtn.type = 'button';
@@ -1214,14 +1261,13 @@
       function showSaveDialog() {
         const overlay = document.getElementById('save-overlay');
         const nameInput = document.getElementById('save-memory-name');
-        nameInput.value = scenarioIdInput.value.trim() || generateScenarioName('Scenario');
+        nameInput.value = activeScenarioName || generateScenarioName('Scenario');
         // Reset selection
         document.querySelectorAll('.save-dialog .save-option').forEach(o => o.classList.remove('selected'));
         document.getElementById('save-opt-memory').classList.add('selected');
         // Update status indicators
         const notCalcIndicator = document.getElementById('save-status-indicator');
         const savedIndicator = document.getElementById('save-saved-indicator');
-        const scenarioIdChanged = scenarioIdInput.value.trim() !== lastRunScenarioId;
 
         if (!latestValidResults) {
           notCalcIndicator.textContent = 'Calculating initial results\u2026';
@@ -1263,10 +1309,24 @@
         const resultsToSave = latestValidResults;
 
         if (option === 'memory') {
-          const name = document.getElementById('save-memory-name').value.trim() || generateScenarioName('Scenario');
-          addScenarioToSession(currentInputs, resultsToSave,
-            { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'manual' },
-            name);
+          const name = document.getElementById('save-memory-name').value.trim() || activeScenarioName || generateScenarioName('Scenario');
+          if (activeScenarioId) {
+            const s = sessionScenarios.find(s => s.id === activeScenarioId);
+            if (s) {
+              s.customName = name;
+              s.inputs = JSON.parse(JSON.stringify(currentInputs));
+              s.results = resultsToSave ? JSON.parse(JSON.stringify(resultsToSave)) : null;
+              s.metadata.timestamp = new Date().toISOString();
+              activeScenarioName = name;
+              updateScenarioBreadcrumb();
+              renderScenarioList();
+              updateScenarioBadge();
+            }
+          } else {
+            addScenarioToSession(currentInputs, resultsToSave,
+              { timestamp: new Date().toISOString(), source: 'manual' },
+              name);
+          }
           hideSaveDialog();
         } else if (option === 'ctcc') {
           const scenario = {
@@ -1274,7 +1334,7 @@
             customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
             inputs: currentInputs,
             results: resultsToSave,
-            metadata: { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'export' }
+            metadata: { timestamp: new Date().toISOString(), source: 'export' }
           };
           exportAsCtcc(scenario);
           hideSaveDialog();
@@ -1284,7 +1344,7 @@
             customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
             inputs: currentInputs,
             results: resultsToSave,
-            metadata: { timestamp: new Date().toISOString(), scenario_id: scenarioIdInput.value.trim(), source: 'export' }
+            metadata: { timestamp: new Date().toISOString(), source: 'export' }
           };
           exportAsCsv(scenario);
           hideSaveDialog();
@@ -1293,6 +1353,34 @@
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
       document.getElementById('save-scenario-main-btn').addEventListener('click', showSaveDialog);
+
+      document.getElementById('new-scenario-btn').addEventListener('click', () => {
+        if (document.getElementById('new-scenario-form')) return;
+        const formEl = document.createElement('div');
+        formEl.id = 'new-scenario-form';
+        formEl.style.cssText = 'padding: 0.5rem 1rem; display: flex; gap: 0.5rem; align-items: center;';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'new-scenario-name';
+        input.placeholder = 'Scenario name';
+        input.style.cssText = 'flex: 1; padding: 0.25rem 0.4rem; font-size: 0.85rem;';
+        const createBtn = document.createElement('button');
+        createBtn.type = 'button';
+        createBtn.textContent = 'Create';
+        const dismiss = () => formEl.remove();
+        createBtn.addEventListener('click', () => {
+          createNewScenario(input.value);
+          dismiss();
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { createNewScenario(input.value); dismiss(); }
+          if (e.key === 'Escape') dismiss();
+        });
+        formEl.appendChild(input);
+        formEl.appendChild(createBtn);
+        document.getElementById('scenario-list').appendChild(formEl);
+        input.focus();
+      });
 
       document.getElementById('scenario-toggle-btn').addEventListener('click', function() {
         const list = document.getElementById('scenario-list');
@@ -4259,7 +4347,6 @@
         'converter': 'Converter',
         'base-mitigation': 'Base Mitigation',
         'credits': 'Habitat Credits',
-        'identity': 'Identity',
         'technology': 'Technology',
         'conductor-details': 'Conductor Details',
         'structure-details': 'Structure Details',
@@ -4302,7 +4389,6 @@
         'delay-costs': { gloss: 'Pre-construction delay period expenses', appendixRef: 'Base Delay Costs', appendixPage: 27 },
         'emissions': { gloss: 'Fuel mix, line losses, and emission costs', appendixRef: 'Emissions Costs', appendixPage: 37 },
         'risk': { gloss: 'Wildfire and outage risk assumptions', appendixRef: 'Risk Costs', appendixPage: 32 },
-        'identity': { gloss: 'Scenario name and tracking', appendixRef: null },
         'technology': { gloss: 'Construction type, AC/DC, capacity', appendixRef: 'Utilities', appendixPage: 2 },
         'timeline': { gloss: 'Construction years, delay, lifetime', appendixRef: 'Financial Parameters', appendixPage: 3 },
         'routing': { gloss: 'Route terrain and right-of-way zones', appendixRef: 'Weighted Miles', appendixPage: 2 },
@@ -4390,11 +4476,6 @@
           items: ['Value of delivered energy (Value of Load)', 'Cost of unserved energy by outage duration (Value of Lost Load)', 'Congestion severity on the targeted transmission constraint', 'Renewable curtailment levels on the targeted constraint', 'Congestion and curtailment pricing'],
         },
         // L3 sub-tabs: Project Details
-        'identity': {
-          oneliner: 'Name your project scenario for tracking and comparison.',
-          body: 'Descriptive names help distinguish alternatives when running multiple scenarios. Include key attributes \u2014 region, voltage class, capacity \u2014 so comparisons are easy to navigate at a glance.',
-          items: ['Name'],
-        },
         'technology': {
           oneliner: 'Set the core engineering choices that define your transmission line.',
           body: 'Construction Type, AC/DC, and Capacity MW together form the \u201cproject category\u201d that determines which cost databases apply. Line Utilization \u2014 the average fraction of nameplate capacity used \u2014 scales energy delivery benefits and line loss costs.',
@@ -8880,7 +8961,7 @@
           const tabFields = metadataList.filter(f => f.input_tab === tabId && f.condition !== 'always_hidden');
           let subTabIds = [...new Set(tabFields.map(f => f.sub_tab).filter(Boolean))];
           if (tabId === 'project-technical') {
-            subTabIds = ['identity', 'technology', 'timeline', 'routing', 'conductor-details', 'structure-details', 'converter-details'];
+            subTabIds = ['technology', 'timeline', 'routing', 'conductor-details', 'structure-details', 'converter-details'];
           }
           if (tabId === 'financial') {
             subTabIds = ['rates', 'afudc'];
@@ -9179,7 +9260,7 @@
               } else if (stId === 'system-constraints') {
                 renderTabGuideBanner(stId, stContent);
                 stContent.appendChild(renderConstraintsPanel(data));
-              } else if (stId === 'identity' || stId === 'technology' || stId === 'timeline') {
+              } else if (stId === 'technology' || stId === 'timeline') {
                 renderTabGuideBanner(stId, stContent);
                 renderTaxonomySections(stContent, stFields, data, taxById, tabContent);
                 if (stId === 'technology') {
@@ -10058,7 +10139,7 @@
               document.querySelectorAll('input[name="ctcc-input-mode"]')
             ).find((input) => input.checked)?.value ?? "json";
 
-            const scenarioId = scenarioIdInput.value.trim() || null;
+            const scenarioId = activeScenarioId;
 
             // Build CTCC payload (calculator is JSON-out only; output_mode accepted but ignored server-side)
             payload = {
@@ -10132,8 +10213,7 @@
       form.addEventListener('input', () => autoCalculate());
       form.addEventListener('change', () => autoCalculate());
 
-      // Initial calculation on page load
-      setTimeout(() => autoCalculate(), 100);
+      // Initial calculation removed — gated on activeScenarioId (§13 Scenarios Tab)
 
       // =============================================
       // Conditional Field Visibility
