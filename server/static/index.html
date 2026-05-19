@@ -2731,6 +2731,24 @@
         icon.style.position = 'relative';
         icon.appendChild(tooltip);
 
+        const iconRect = icon.getBoundingClientRect();
+        const ttRect = tooltip.getBoundingClientRect();
+        const spaceAbove = iconRect.top;
+        const ttHeight = ttRect.height + 12;
+        if (spaceAbove < ttHeight) {
+          tooltip.style.bottom = 'auto';
+          tooltip.style.top = 'calc(100% + 8px)';
+        }
+        const ttRect2 = tooltip.getBoundingClientRect();
+        if (ttRect2.left < 8) {
+          tooltip.style.left = '0';
+          tooltip.style.transform = 'none';
+        } else if (ttRect2.right > window.innerWidth - 8) {
+          tooltip.style.left = 'auto';
+          tooltip.style.right = '0';
+          tooltip.style.transform = 'none';
+        }
+
         const dismiss = function(ev) {
           if (!tooltip.contains(ev.target) && ev.target !== icon) {
             tooltip.remove();
@@ -4071,12 +4089,13 @@
           section.appendChild(subtotalPairRow('Bucket Subtotal', bucketNom, bucketPV));
           grandTotalPV += bucketPV;
           grandTotalNom += bucketNom;
-          container.appendChild(createCategory(BUCKET_LABELS[bucket] || bucket, section));
+          container.appendChild(createCategory(BUCKET_LABELS[bucket] || bucket, section, true));
         });
 
         const totalSection = document.createElement('div');
         totalSection.className = 'cost-section-items';
-        totalSection.appendChild(subtotalPairRow('Total Costs (C)', grandTotalNom, grandTotalPV));
+        totalSection.appendChild(pairHeader());
+        totalSection.appendChild(currencyPairItem('Total Costs (C)', grandTotalNom, grandTotalPV));
         container.appendChild(totalSection);
 
         return container;
@@ -4101,7 +4120,7 @@
           remNom += r?.value_nominal || 0;
         });
         remSection.appendChild(subtotalPairRow('Remedial Subtotal', remNom, remPV));
-        container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection));
+        container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection, true));
 
         // Enabling
         const enItems = (taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
@@ -4116,7 +4135,43 @@
           enNom += r?.value_nominal || 0;
         });
         enSection.appendChild(subtotalPairRow('Enabling Subtotal', enNom, enPV));
-        container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection));
+        container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection, true));
+
+        // Total Benefits (non-collapsible)
+        const totalPV = remPV + enPV;
+        const totalNom = remNom + enNom;
+        const totalSection = document.createElement('div');
+        totalSection.className = 'cost-section-items';
+        totalSection.appendChild(pairHeader());
+        totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling'));
+        container.appendChild(totalSection);
+
+        return container;
+      }
+
+      function renderTransfersAndReporting(results) {
+        const container = document.createElement('div');
+        if (!taxonomy) return container;
+        const resultById = buildResultById(results);
+
+        // Revenue (transfer)
+        const revItems = (taxonomyBySide['transfer'] || []);
+        if (revItems.length > 0) {
+          const revSection = document.createElement('div');
+          revSection.className = 'cost-section-items';
+          revSection.appendChild(pairHeader());
+          revItems.forEach(item => {
+            const r = resultById[item.id];
+            if (r?.value_annual) revSection.appendChild(currencyItem('Annual Revenue', r.value_annual));
+            revSection.appendChild(currencyPairItem(item.label, r?.value_nominal || 0, r?.value_pv || 0, 'Financial transfer between parties; excluded from societal system benefits.'));
+          });
+          const revFoot = document.createElement('div');
+          revFoot.className = 'results-note';
+          revFoot.style.marginTop = '0.35rem';
+          revFoot.textContent = 'Revenue is a transfer in the accounting: it is not an additional societal benefit line in BCR_system.';
+          revSection.appendChild(revFoot);
+          container.appendChild(createCategory('Revenue', revSection, true));
+        }
 
         // Displacement (reporting only)
         const dispItems = (taxonomyBySide['reporting_only'] || []);
@@ -4141,38 +4196,10 @@
               dispSection.appendChild(note);
             }
           });
-          container.appendChild(createCategory('Displacement (reporting only)', dispSection));
+          container.appendChild(createCategory('Displacement (reporting only)', dispSection, true));
         }
 
-        // Total Benefits
-        const totalPV = remPV + enPV;
-        const totalNom = remNom + enNom;
-        const totalSection = document.createElement('div');
-        totalSection.className = 'cost-section-items';
-        totalSection.appendChild(pairHeader());
-        totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling'));
-        container.appendChild(createCategory('Total Benefits', totalSection));
-
-        // Revenue (transfer)
-        const revItems = (taxonomyBySide['transfer'] || []);
-        if (revItems.length > 0) {
-          const revSection = document.createElement('div');
-          revSection.className = 'cost-section-items';
-          revSection.appendChild(pairHeader());
-          revItems.forEach(item => {
-            const r = resultById[item.id];
-            if (r?.value_annual) revSection.appendChild(currencyItem('Annual Revenue', r.value_annual));
-            revSection.appendChild(currencyPairItem(item.label, r?.value_nominal || 0, r?.value_pv || 0, 'Financial transfer between parties; excluded from societal system benefits.'));
-          });
-          const revFoot = document.createElement('div');
-          revFoot.className = 'results-note';
-          revFoot.style.marginTop = '0.35rem';
-          revFoot.textContent = 'Revenue is a transfer in the accounting: it is not an additional societal benefit line in BCR_system.';
-          revSection.appendChild(revFoot);
-          container.appendChild(createCategory('Revenue', revSection));
-        }
-
-        // Physical Metrics (not from taxonomy — direct from results)
+        // Physical Metrics
         const cc = results.benefits?.congestion_curtailment || {};
         const physGrid = document.createElement('div');
         physGrid.className = 'phys-metrics-grid';
@@ -4190,7 +4217,7 @@
         physEntries.forEach(([label, val, unit]) => {
           if (val !== undefined) { appendPhysMetric(physGrid, label, val, unit); hasPhys = true; }
         });
-        if (hasPhys) container.appendChild(createCategory('Physical Metrics', physGrid));
+        if (hasPhys) container.appendChild(createCategory('Physical Metrics', physGrid, true));
 
         return container;
       }
@@ -9779,7 +9806,6 @@
         });
 
         container.appendChild(cards);
-        container.appendChild(createNote('Benefits = congestion + curtailment (conservative). Revenue is a transfer and excluded from system benefits.'));
         return container;
       }
 
@@ -9806,10 +9832,16 @@
         // Ratepayer costs = revenue + energy losses
         const ratepayerCosts = (bcr.revenue_pv || 0) + (bcr.energy_losses_pv || 0);
 
+        const capitalCosts = bcr.hard_costs_pv || 0;
+        const capitalDelayCosts = capitalCosts + (bcr.delay_costs_pv || 0);
+        const sysBenefits = bcr.total_benefits_pv || 0;
+
         const rows = [
-          { name: 'System (Societal)', benefits: bcr.total_benefits_pv || 0, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
+          { name: 'System (Societal)', benefits: sysBenefits, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
           { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0 },
           { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0 },
+          { name: 'Capital', benefits: sysBenefits, costs: capitalCosts, bcrVal: bcr.bcr_capital || 0, netBenefit: sysBenefits - capitalCosts },
+          { name: 'Capital + Delay', benefits: sysBenefits, costs: capitalDelayCosts, bcrVal: bcr.bcr_capital_and_delay || 0, netBenefit: sysBenefits - capitalDelayCosts },
         ];
 
         rows.forEach((r, idx) => {
@@ -9915,6 +9947,7 @@
           { id: 'costs', label: 'Costs' },
           { id: 'benefits', label: 'Benefits' },
           { id: 'bcr', label: 'Benefit-Cost Ratio' },
+          { id: 'transfers', label: 'Transfers & Reporting' },
         ];
 
         tabs.forEach((tab, index) => {
@@ -9952,96 +9985,152 @@
           content.style.padding = '1.5rem';
 
           if (tab.id === 'summary') {
-            // Taxonomy-driven cost bucket cards
             const _rid = buildResultById(results);
-            const costsHeading = document.createElement('div');
-            costsHeading.className = 'results-section-heading';
-            const costsTitle = document.createElement('div');
-            costsTitle.className = 'results-section-title';
-            costsTitle.textContent = 'Total Costs';
-            const costsSubtitle = document.createElement('div');
-            costsSubtitle.className = 'results-section-subtitle';
-            costsSubtitle.textContent = 'Present Value';
-            costsHeading.appendChild(costsTitle);
-            costsHeading.appendChild(costsSubtitle);
-            content.appendChild(costsHeading);
+            const bcr = results.bcr || {};
 
-            const summaryGrid = document.createElement('div');
-            summaryGrid.className = 'results-summary-grid';
+            // === Section 1: At a Glance ===
+            const glanceHeading = document.createElement('div');
+            glanceHeading.className = 'results-section-heading';
+            const glanceTitle = document.createElement('div');
+            glanceTitle.className = 'results-section-title';
+            glanceTitle.textContent = 'At a Glance';
+            glanceHeading.appendChild(glanceTitle);
+            content.appendChild(glanceHeading);
+
             let _totalCostPV = 0;
+            COST_BUCKET_ORDER.forEach(b => {
+              _totalCostPV += (taxonomyByBucket[b] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            });
+            const remPV = (taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            const enPV = (taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            const totalBenefitsPV = remPV + enPV;
+            const netBenefitPV = bcr.net_benefit_pv != null ? bcr.net_benefit_pv : (totalBenefitsPV - _totalCostPV);
+
+            const heroGrid = document.createElement('div');
+            heroGrid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem';
+            [{label:'Total Costs',value:_totalCostPV}, {label:'Total Benefits',value:totalBenefitsPV}].forEach(m => {
+              const card = document.createElement('div');
+              card.className = 'results-summary-card highlight';
+              const lbl = document.createElement('div');
+              lbl.className = 'results-summary-label';
+              lbl.textContent = m.label;
+              const val = document.createElement('div');
+              val.className = 'results-summary-value large';
+              val.textContent = formatCurrency(m.value, 0);
+              if (m.value < 0) val.style.color = '#b00020';
+              card.appendChild(lbl);
+              card.appendChild(val);
+              heroGrid.appendChild(card);
+            });
+            content.appendChild(heroGrid);
+
+            const cbGrid = document.createElement('div');
+            cbGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem';
+
+            // Left: Costs breakdown
+            const costsCard = document.createElement('div');
+            costsCard.className = 'results-summary-card';
+            costsCard.style.padding = '1.25rem';
+            const costsHdr = document.createElement('div');
+            costsHdr.className = 'results-section-heading';
+            costsHdr.style.marginTop = '0';
+            const costsTitleEl = document.createElement('div');
+            costsTitleEl.className = 'results-section-title';
+            costsTitleEl.textContent = 'Costs';
+            const costsSubEl = document.createElement('div');
+            costsSubEl.className = 'results-section-subtitle';
+            costsSubEl.textContent = 'Present Value';
+            costsHdr.appendChild(costsTitleEl);
+            costsHdr.appendChild(costsSubEl);
+            costsCard.appendChild(costsHdr);
+
             COST_BUCKET_ORDER.forEach(b => {
               const items = (taxonomyByBucket[b] || []);
               const pv = items.reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-              _totalCostPV += pv;
-              const card = document.createElement('div');
-              card.className = 'results-summary-card';
-              const lbl = document.createElement('div');
-              lbl.className = 'results-summary-label';
-              lbl.textContent = BUCKET_LABELS[b] || b;
-              const val = document.createElement('div');
-              val.className = 'results-summary-value';
-              val.textContent = formatCurrency(pv, 0);
-              if (pv < 0) val.style.color = '#b00020';
-              card.appendChild(lbl);
-              card.appendChild(val);
-              summaryGrid.appendChild(card);
+              const row = document.createElement('div');
+              row.style.cssText = 'display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06)';
+              const rlbl = document.createElement('span');
+              rlbl.style.cssText = 'font-size:0.85rem;color:rgba(0,0,0,0.7)';
+              rlbl.textContent = BUCKET_LABELS[b] || b;
+              const rval = document.createElement('span');
+              rval.style.cssText = 'font-size:0.85rem;font-weight:600;font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace';
+              rval.textContent = formatCurrency(pv, 0);
+              if (pv < 0) rval.style.color = '#b00020';
+              row.appendChild(rlbl);
+              row.appendChild(rval);
+              costsCard.appendChild(row);
             });
-            const totalCard = document.createElement('div');
-            totalCard.className = 'results-summary-card highlight';
-            totalCard.innerHTML = `<div class="results-summary-label">Total Costs</div><div class="results-summary-value">${formatCurrency(_totalCostPV, 0)}</div>`;
-            summaryGrid.appendChild(totalCard);
-            content.appendChild(summaryGrid);
+            const costTotal = document.createElement('div');
+            costTotal.style.cssText = 'display:flex;justify-content:space-between;padding:0.6rem 0 0;margin-top:0.25rem;border-top:2px solid rgba(0,0,0,0.15)';
+            costTotal.innerHTML = '<span style="font-size:0.85rem;font-weight:700">TOTAL</span>';
+            const costTotalVal = document.createElement('span');
+            costTotalVal.style.cssText = 'font-size:0.85rem;font-weight:700;color:#0066cc;font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace';
+            costTotalVal.textContent = formatCurrency(_totalCostPV, 0);
+            costTotal.appendChild(costTotalVal);
+            costsCard.appendChild(costTotal);
+            cbGrid.appendChild(costsCard);
 
-            // Net Benefits heading + Three Perspectives table
-            const benefitsHeading = document.createElement('div');
-            benefitsHeading.className = 'results-section-heading';
-            benefitsHeading.style.marginTop = '2rem';
-            const benefitsTitle = document.createElement('div');
-            benefitsTitle.className = 'results-section-title';
-            benefitsTitle.textContent = 'Net Benefits';
-            const benefitsSubtitle = document.createElement('div');
-            benefitsSubtitle.className = 'results-section-subtitle';
-            benefitsSubtitle.textContent = 'Present Value';
-            benefitsHeading.appendChild(benefitsTitle);
-            benefitsHeading.appendChild(benefitsSubtitle);
-            content.appendChild(benefitsHeading);
-            content.appendChild(renderPerspectivesTable(results));
+            // Right: Benefits breakdown
+            const benCard = document.createElement('div');
+            benCard.className = 'results-summary-card';
+            benCard.style.padding = '1.25rem';
+            const benHdr = document.createElement('div');
+            benHdr.className = 'results-section-heading';
+            benHdr.style.marginTop = '0';
+            const benTitleEl = document.createElement('div');
+            benTitleEl.className = 'results-section-title';
+            benTitleEl.textContent = 'Benefits';
+            const benSubEl = document.createElement('div');
+            benSubEl.className = 'results-section-subtitle';
+            benSubEl.textContent = 'Present Value';
+            benHdr.appendChild(benTitleEl);
+            benHdr.appendChild(benSubEl);
+            benCard.appendChild(benHdr);
 
-            // Total Benefits cards (taxonomy-driven)
-            const tbHeading = document.createElement('div');
-            tbHeading.className = 'results-section-heading';
-            tbHeading.style.marginTop = '2rem';
-            const tbTitle = document.createElement('div');
-            tbTitle.className = 'results-section-title';
-            tbTitle.textContent = 'Total Benefits';
-            const tbSubtitle = document.createElement('div');
-            tbSubtitle.className = 'results-section-subtitle';
-            tbSubtitle.textContent = 'Conservative, Present Value';
-            tbHeading.appendChild(tbTitle);
-            tbHeading.appendChild(tbSubtitle);
-            content.appendChild(tbHeading);
-
-            const remPV = (taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-            const enPV = (taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-            const tbGrid = document.createElement('div');
-            tbGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem';
-            [{label:'Remedial',value:remPV}, {label:'Enabling',value:enPV}, {label:'Total Benefits',value:remPV+enPV,highlight:true}].forEach(m => {
-              const card = document.createElement('div');
-              card.className = 'results-summary-card' + (m.highlight ? ' highlight' : '');
-              card.innerHTML = `<div class="results-summary-label">${m.label}</div><div class="results-summary-value">${formatCurrency(m.value, 0)}</div>`;
-              tbGrid.appendChild(card);
+            [{label:'Remedial',value:remPV},{label:'Enabling',value:enPV}].forEach(m => {
+              const row = document.createElement('div');
+              row.style.cssText = 'display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06)';
+              const rlbl = document.createElement('span');
+              rlbl.style.cssText = 'font-size:0.85rem;color:rgba(0,0,0,0.7)';
+              rlbl.textContent = m.label;
+              const rval = document.createElement('span');
+              rval.style.cssText = 'font-size:0.85rem;font-weight:600;font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace';
+              rval.textContent = formatCurrency(m.value, 0);
+              row.appendChild(rlbl);
+              row.appendChild(rval);
+              benCard.appendChild(row);
             });
-            content.appendChild(tbGrid);
+            const benTotal = document.createElement('div');
+            benTotal.style.cssText = 'display:flex;justify-content:space-between;padding:0.6rem 0 0;margin-top:0.25rem;border-top:2px solid rgba(0,0,0,0.15)';
+            benTotal.innerHTML = '<span style="font-size:0.85rem;font-weight:700">TOTAL</span>';
+            const benTotalVal = document.createElement('span');
+            benTotalVal.style.cssText = 'font-size:0.85rem;font-weight:700;color:#0066cc;font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace';
+            benTotalVal.textContent = formatCurrency(totalBenefitsPV, 0);
+            benTotal.appendChild(benTotalVal);
+            benCard.appendChild(benTotal);
+            const benNote = document.createElement('div');
+            benNote.style.cssText = 'font-size:0.75rem;color:rgba(0,0,0,0.45);line-height:1.4;margin-top:0.75rem';
+            benNote.textContent = 'Benefits = congestion + curtailment. Revenue is a transfer and excluded from system benefits.';
+            benCard.appendChild(benNote);
+            cbGrid.appendChild(benCard);
+            content.appendChild(cbGrid);
 
-            const bcrHeading = document.createElement('div');
-            bcrHeading.className = 'results-section-heading';
-            bcrHeading.style.marginTop = '2rem';
-            const bcrTitle = document.createElement('div');
-            bcrTitle.className = 'results-section-title';
-            bcrTitle.textContent = 'Benefit-Cost Ratios';
-            bcrHeading.appendChild(bcrTitle);
-            content.appendChild(bcrHeading);
             content.appendChild(renderBCRHeadline(results));
+
+            // === Section 2: Perspectives table ===
+            const perspHeading = document.createElement('div');
+            perspHeading.className = 'results-section-heading';
+            perspHeading.style.marginTop = '2rem';
+            const perspTitle = document.createElement('div');
+            perspTitle.className = 'results-section-title';
+            perspTitle.textContent = 'Perspectives';
+            const perspSub = document.createElement('div');
+            perspSub.className = 'results-section-subtitle';
+            perspSub.textContent = 'Present Value';
+            perspHeading.appendChild(perspTitle);
+            perspHeading.appendChild(perspSub);
+            content.appendChild(perspHeading);
+            content.appendChild(renderPerspectivesTable(results));
 
           } else if (tab.id === 'benefits') {
             content.appendChild(renderBenefitsByTaxonomy(results));
@@ -10053,6 +10142,9 @@
             content.appendChild(renderBCRHeadline(results));
             content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityByTaxonomy(results)));
             content.appendChild(createCategory('Custom BCR', renderCustomBCRByTaxonomy(results)));
+
+          } else if (tab.id === 'transfers') {
+            content.appendChild(renderTransfersAndReporting(results));
           }
 
           tabContents.appendChild(content);
