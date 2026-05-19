@@ -9755,7 +9755,9 @@
         cards.className = 'bcr-headline-cards';
 
         const metrics = [
-          { label: 'Net Benefit (PV)', value: bcr.net_benefit_pv, currency: true },
+          { label: 'System BCR', value: bcr.bcr_system, currency: false },
+          { label: 'Utility BCR', value: bcr.bcr_utility, currency: false },
+          { label: 'Ratepayer BCR', value: bcr.bcr_ratepayer, currency: false },
           { label: 'Capital BCR', value: bcr.bcr_capital, currency: false },
           { label: 'Capital + Delay BCR', value: bcr.bcr_capital_and_delay, currency: false },
         ];
@@ -10036,7 +10038,7 @@
             bcrHeading.style.marginTop = '2rem';
             const bcrTitle = document.createElement('div');
             bcrTitle.className = 'results-section-title';
-            bcrTitle.textContent = 'Capital Benefit-Cost Ratio';
+            bcrTitle.textContent = 'Benefit-Cost Ratios';
             bcrHeading.appendChild(bcrTitle);
             content.appendChild(bcrHeading);
             content.appendChild(renderBCRHeadline(results));
