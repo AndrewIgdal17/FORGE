@@ -31,7 +31,7 @@ DiscountRate = Literal["wacc_real", "social", "wacc_nominal"]
 Condition = Literal["dc_only", "greenfield_only", "reconductoring_only"]
 NumeratorRule = Literal["all_benefits", "revenue"]
 DenominatorRule = Literal[
-    "all_costs", "hard", "hard_delay", "hard_delay_operational", "revenue_loss",
+    "all_costs", "hard", "hard_delay", "hard_base_delay_operational", "revenue_loss",
 ]
 Perspective = Literal["societal", "stakeholder"]
 
@@ -293,7 +293,7 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     ),
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "stakeholder",
-        "revenue", "hard_delay_operational", frozenset(), 4,
+        "revenue", "hard_base_delay_operational", frozenset(), 4,
         "Whether utility recovers out-of-pocket costs.",
     ),
     "bcr_ratepayer": BCRDefinition(

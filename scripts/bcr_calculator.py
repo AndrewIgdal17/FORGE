@@ -119,6 +119,7 @@ _OPERATIONAL_IDS = frozenset(
 _DELAY_IDS = frozenset(
     tid for tid in _ALL_COST_IDS if TAXONOMY[tid].subgroup == "delay"
 )
+_BASE_DELAY_IDS = frozenset({"base_delay"})
 _ENERGY_EMISSIONS_IDS = frozenset(
     tid for tid in _ALL_COST_IDS
     if TAXONOMY[tid].subgroup == "energy" or TAXONOMY[tid].bucket == "emissions"
@@ -134,7 +135,7 @@ _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
     "hard": _HARD_IDS,
     "hard_delay": _HARD_IDS | _DELAY_IDS,
-    "hard_delay_operational": _HARD_IDS | _DELAY_IDS | _OPERATIONAL_IDS,
+    "hard_base_delay_operational": _HARD_IDS | _BASE_DELAY_IDS | _OPERATIONAL_IDS,
     "revenue_loss": frozenset({"revenue", "line_loss_conductor", "line_loss_converter"}),
 }
 _NUMER_SETS: dict[str, frozenset[str]] = {
