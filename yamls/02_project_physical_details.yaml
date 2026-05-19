@@ -2,15 +2,15 @@
 # Physical characteristics and terrain information
 
 terrain:
-  terrain_miles: # miles by terrain type (>= 0) - Scenario 1: 100 mi total, direct route, high wildfire risk
-    forested: 20 # miles (>= 0)
-    scrubbed_flat: 40 # miles (>= 0)
-    wetland: 5 # miles (>= 0)
-    farmland: 25 # miles (>= 0)
+  terrain_miles: # miles by terrain type (>= 0)
+    forested: 0 # miles (>= 0)
+    scrubbed_flat: 0 # miles (>= 0)
+    wetland: 0 # miles (>= 0)
+    farmland: 0 # miles (>= 0)
     desert_barren: 0 # miles (>= 0)
     urban: 0 # miles (>= 0)
-    rolling_hills: 10 # miles (>= 0)
-    mountain: 0 # miles (>= 0) - Note: mountainous terrain included in forested/rolling_hills
+    rolling_hills: 0 # miles (>= 0)
+    mountain: 0 # miles (>= 0)
     subsea: 0 # miles (>= 0)
 
   terrain_multipliers: # terrain multipliers

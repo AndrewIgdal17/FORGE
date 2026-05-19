@@ -3,10 +3,10 @@
 
 wildfire:
   # Event severity (consequence)
-  severity_per_event: 5000000000 # Mean loss per wildfire event ($/event) (>= 0)
+  severity_per_event: 0 # Mean loss per wildfire event ($/event) (>= 0)
 
   # Risk growth (optional - wildfire risk increases over time)
-  risk_growth_rate: 0.01 # Annual increase in ignition probability (>= 0) (2% = 0.02)
+  risk_growth_rate: 0 # Annual increase in ignition probability (>= 0) (2% = 0.02)
 
   # Discount rate configuration
   discount_rate_source: "social" # Options: "social" | "wacc_real" | "custom"

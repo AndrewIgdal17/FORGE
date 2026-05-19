@@ -5,27 +5,27 @@
 
 right_of_way:
   zone_1:
-    miles: 25
+    miles: 0
     acquisition_cost: 299 #$/acre
     rent_cost: 9.70 #$/acre * year
     hold_cost: .97 #$/acre (default .1 of rent cost per year during holding(permitting) period  )
   zone_2:
-    miles: 25
+    miles: 0
     acquisition_cost: 579 #$/acre
     rent_cost: 18.78 #$/acre * year
     hold_cost: 1.878 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_3:
-    miles: 30
+    miles: 0
     acquisition_cost: 1132 #$/acre
     rent_cost: 36.72 #$/acre * year
     hold_cost: 3.67 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_4:
-    miles: 15
+    miles: 0
     acquisition_cost: 1706 #$/acre
     rent_cost: 55.34 #$/acre * year
     hold_cost: 5.53 #$/acre (default .1 of rent cost per year during holding(permitting) period)
   zone_5:
-    miles: 5
+    miles: 0
     acquisition_cost: 2350 #$/acre
     rent_cost: 76.23 #$/acre * year
     hold_cost: 7.62 #$/acre (default .1 of rent cost per year during holding(permitting) period)
