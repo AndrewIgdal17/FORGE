@@ -2731,11 +2731,10 @@
         icon.style.position = 'relative';
         icon.appendChild(tooltip);
 
-        const iconRect = icon.getBoundingClientRect();
         const ttRect = tooltip.getBoundingClientRect();
-        const spaceAbove = iconRect.top;
-        const ttHeight = ttRect.height + 12;
-        if (spaceAbove < ttHeight) {
+        const tabBar = icon.closest('.tabs, .sub-tabs, .sub-sub-tabs');
+        const clearance = tabBar ? tabBar.getBoundingClientRect().top : 0;
+        if (ttRect.top < clearance) {
           tooltip.style.bottom = 'auto';
           tooltip.style.top = 'calc(100% + 8px)';
         }
