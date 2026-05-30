@@ -72,7 +72,7 @@ Use this section to reduce context burn and improve answers: start in the right 
 
 - **Calculation logic:** `scripts/` + `documentation/CTCC_METHODOLOGY.md`
 - **API / server:** `ctcc.py` + `server/app/`
-- **Paper–appendix consistency:** `papers/paper1/` + `documentation/METHODOLOGY_CONSISTENCY.md`
+- **Paper and appendix:** Maintained externally (not in this repo).
 - **Config:** `yamls/` (or directory set by `CTCC_YAMLS_DIR`); loader mappings in `scripts/yaml_loaders.py`. Server template/merge uses `server/json/`; the merged request is written as a temp YAML directory for the calculator. `json_loaders.py` exists for server-side use; the calculator does not use it.
 - **Testing:** `testing/` and root-level `test_*.py`
 
@@ -82,18 +82,17 @@ See [File Structure](#file-structure) for the full tree.
 
 - Prefer **grep** for exact names/symbols; prefer **semantic search** with a target directory.
 - Avoid loading full large files when a targeted read or search result suffices.
-- Scope searches to the relevant subtree (scripts, documentation, server, papers).
+- Scope searches to the relevant subtree (scripts, documentation, server).
 
 ### Canonical references
 
 - **Methodology (variables, equations, notation):** `documentation/CTCC_METHODOLOGY.md`
-- **Paper–appendix consistency:** `documentation/METHODOLOGY_CONSISTENCY.md` and the methodology-consistency Cursor rule
+- **Paper, appendix, and module LaTeX:** Maintained externally (not in this repo).
 - **Developer reference:** this file (CLAUDE.md)
 
 ### Large files
 
 - **documentation/CTCC_METHODOLOGY.md** (~1850 lines): search for variable/section names, then read the specific section (offset/limit).
-- **papers/paper1/p1appendix.tex** (~1590 lines): search for notation or section names, then read the relevant block.
 - Long scripts (e.g. `ctcc.py`, `json_output_manager.py`, `yaml_loaders.py`): grep for the function or symbol first, then targeted read.
 
 ### Script–cost mapping
@@ -301,34 +300,6 @@ Output: ctcc_results_{scenario_id}.json
 ---
 
 ## Development Workflows
-
-### Refreshing paper results
-
-After methodology or input changes, refresh the paper's results and LaTeX tables with this pipeline. Run all commands from the **project root** with the CLI venv activated.
-
-**Note:** The calculator output is JSON only (`ctcc_results_*.json`). If the paper pipeline expects CSV (e.g. `outputs/batch_summary.csv`), it may require a separate export-from-JSON step or a batch runner that writes CSV; align with the current batch scripts.
-
-1. **Run batch scenarios**  
-   `python papers/batch_craft/run_scenarios.py papers/paper1/scenarios_for_paper_1_formatted.tex`  
-   Appends results to `outputs/*.csv` (e.g. `outputs/batch_summary.csv`, `build_costs.csv`, etc.), if the batch pipeline produces CSV.
-
-2. **Convert CSVs to Markdown**  
-   `python papers/convert_results_to_md.py paper1`  
-   Writes `papers/paper1/outputs_md/batch_summary.md` (and other `.md`). If `outputs_md` already exists, the script may prompt to overwrite, use a new folder (e.g. `outputs_md2`), or cancel.
-
-3. **Update LaTeX results tables**  
-   `python papers/update_results_tables.py paper1`  
-   Reads `papers/paper1/outputs_md/batch_summary.md` and overwrites `papers/paper1/results_tables.tex` with per-scenario cost/BCR tables and all-scenarios summary tables.
-
-4. **Verify**  
-   `python verify_results_tables.py`  
-   Compares LaTeX values to the CSV source of truth. Expect "Found 11 scenarios" and no errors (or only rounding notes).
-
-5. **Generate paper figures (optional)**  
-   `python papers/paper1/generate_figures.py`  
-   Reads `outputs/batch_summary.csv` and writes stacked bar charts (one per case study) and pie charts (cost mix by scenario, one combo figure per case study) to `papers/paper1/figures/`. Run after the batch pipeline so the charts match the tables. Requires `matplotlib` (in project `requirements.txt`).
-
-**Key artifacts:** `papers/paper1/scenarios_for_paper_1_formatted.tex` (scenario definitions), `papers/paper1/results_tables.tex` (updated tables), `papers/paper1/figures/` (generated PDFs). To run the full pipeline in one go, use `papers/refresh_paper1_results.sh` from the project root (see script for non-interactive behavior of step 2).
 
 ### Adding a New Cost Module
 

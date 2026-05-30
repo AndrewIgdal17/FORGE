@@ -1,10 +1,10 @@
 # CTCC Methodology
 
-**Purpose (for editors and readers):** This document captures only the **logic and method** of the CTCC—variables, equations, and procedural logic. It is written to be **paper-ready**: the same content can be transferred into the LaTeX paper as the method section. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
+**Purpose (for editors and readers):** This document captures only the **logic and method** of the CTCC—variables, equations, and procedural logic. It is the canonical method reference for running CTCC. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
 
 ---
 
-This document is the **complete methodology** for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue. It is the single source of truth for the method so that the entirety can be transferred consistently into the LaTeX paper. **This methodology takes precedence** for categorization and notation.
+This document is the **complete methodology** for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue. It is the single source of truth for the method. **This methodology takes precedence** for categorization and notation.
 
 ---
 
@@ -1753,10 +1753,3 @@ AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}
 
 ---
 
-## Related (Andy’s Workshop vault)
-
-- [[Projects/CTCC/CTCC MOC]] — project hub
-- [[Projects/CTCC/PROJECT_MEMORY]] — CTCC state and key files
-- [[Projects/CTCC/docs/audits/2026-04-24__ctcc-method-webapp-alignment-audit]] — paper vs app alignment audit
-
----
