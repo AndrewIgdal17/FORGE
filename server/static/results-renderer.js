@@ -943,7 +943,7 @@ function updateEmissionsImpactPanel(results) {
 
   ['co2', 'sox', 'nox'].forEach(p => {
     const intensities = {};
-    FUEL_SOURCES.forEach(f => {
+    C.FUEL_SOURCES.forEach(f => {
       const inp = document.querySelector(`[data-path*="${p}_intensity_kg_per_mwh.${f}"]`);
       intensities[f] = inp ? (parseFloat(inp.value) || 0) : 0;
     });
@@ -958,7 +958,7 @@ function updateEmissionsImpactPanel(results) {
         const pMix = projectFuelMix(projShares, projRates, y);
         const cMix = projectFuelMix(cfShares, cfRates, y);
         let pAnn = 0, cAnn = 0;
-        FUEL_SOURCES.forEach(f => {
+        C.FUEL_SOURCES.forEach(f => {
           pAnn += (pMix[f] || 0) * intensities[f] * gwh;
           cAnn += (cMix[f] || 0) * intensities[f] * gwh;
         });
