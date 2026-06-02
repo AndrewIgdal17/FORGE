@@ -1,6 +1,10 @@
 // CTCC Utility Functions
 // Extracted from index.html — loaded via <script src="/static/utils.js">
 
+(function() {
+'use strict';
+
+
 let activeTooltip = null;
 
 // --- Always-solving architecture ---
@@ -553,3 +557,41 @@ function hideFirstDuplicateSubheader(tabHeader, matchTexts) {
   }
 }
 
+
+
+  // Public API
+  window.debounce = debounce;
+  window.showToast = showToast;
+  window.showRestoreDefaultsDialog = showRestoreDefaultsDialog;
+  window.showModal = showModal;
+  window.hideModal = hideModal;
+  window.getValueAtPath = getValueAtPath;
+  window.setValueAtPath = setValueAtPath;
+  window.btnLabel = btnLabel;
+  window.formatTimestamp = formatTimestamp;
+  window.flattenObject = flattenObject;
+  window.csvEscape = csvEscape;
+  window.parseCsvLine = parseCsvLine;
+  window.showTooltip = showTooltip;
+  window.hideTooltip = hideTooltip;
+  window.showMethodologyTooltip = showMethodologyTooltip;
+  window.makeMethodologyIcon = makeMethodologyIcon;
+  window.makeHelpIcon = makeHelpIcon;
+  window.formatDollar = formatDollar;
+  window.deriveDefaultApiBase = deriveDefaultApiBase;
+  window.parseValues = parseValues;
+  window.readFileAsJson = readFileAsJson;
+  window.formatNumber = formatNumber;
+  window.formatCurrency = formatCurrency;
+  window.formatSignedCurrencyValue = formatSignedCurrencyValue;
+  window.formatSignedNumberValue = formatSignedNumberValue;
+  window.humanizeLabel = humanizeLabel;
+  window.safeGet = safeGet;
+  window.showMultiplierConfirmDialog = showMultiplierConfirmDialog;
+  window.calculateTerrainMilesTotal = calculateTerrainMilesTotal;
+  window.hideFirstDuplicateSubheader = hideFirstDuplicateSubheader;
+  window.milesToAcres = milesToAcres;
+  window.computeTerrainAcres = computeTerrainAcres;
+  window.computeEffectiveAcres = computeEffectiveAcres;
+  window.computeTotalEffectiveAcres = computeTotalEffectiveAcres;
+})();

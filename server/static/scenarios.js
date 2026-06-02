@@ -3,7 +3,10 @@
 // Forward references: autoCalculate, switchMainTab, switchTab, collectJsonData,
 // renderJsonInputs, renderCTCCResults are exposed as window globals from inline script.
 
-const C = window.CTCC;
+(function() {
+'use strict';
+
+  const C = window.CTCC;
 
 const RESULTS_EXPORT_FIELDS = [
   { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
@@ -758,7 +761,7 @@ function loadCsvFile(text, fileName) {
 
 async function loadCtccJson() {
   try {
-    const baseUrl = apiBaseInput.value.trim();
+    const baseUrl = document.getElementById('api-base').value.trim();
     // Ensure C.taxonomy + input metadata are loaded before rendering
     if (!C.taxonomy || !C.inputMetadata) {
       try {
@@ -792,8 +795,8 @@ async function loadCtccJson() {
     const data = await fetchFinalCombined(baseUrl);
     renderJsonInputs(data);
   } catch (error) {
-    loadStatus.textContent = '✗ ' + error.message;
-    loadStatus.style.color = '#b00020';
+    const _ls = document.getElementById('load-status');
+    if (_ls) { _ls.textContent = '✗ ' + error.message; _ls.style.color = '#b00020'; }
   }
 }
 
@@ -893,3 +896,30 @@ async function downloadAllCsvFiles() {
   });
 }
 
+
+
+  // Public API
+  window.generateScenarioName = generateScenarioName;
+  window.updateScenarioBadge = updateScenarioBadge;
+  window.addScenarioToSession = addScenarioToSession;
+  window.setActiveScenario = setActiveScenario;
+  window.updateBreadcrumb = updateBreadcrumb;
+  window.updateScenarioBreadcrumb = updateScenarioBreadcrumb;
+  window.createNewScenario = createNewScenario;
+  window.removeScenarioFromSession = removeScenarioFromSession;
+  window.renameScenario = renameScenario;
+  window.loadScenarioIntoUI = loadScenarioIntoUI;
+  window.getScenarioParams = getScenarioParams;
+  window.renderScenarioList = renderScenarioList;
+  window.showSaveDialog = showSaveDialog;
+  window.hideSaveDialog = hideSaveDialog;
+  window.exportAsCtcc = exportAsCtcc;
+  window.exportAsCsv = exportAsCsv;
+  window.validateCtccFile = validateCtccFile;
+  window.loadCtccFile = loadCtccFile;
+  window.loadCsvFile = loadCsvFile;
+  window.loadCtccJson = loadCtccJson;
+  window.displayCsvFiles = displayCsvFiles;
+  window.downloadCsvFile = downloadCsvFile;
+  window.downloadAllCsvFiles = downloadAllCsvFiles;
+})();

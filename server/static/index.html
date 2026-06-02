@@ -1530,6 +1530,14 @@
       window.collectJsonData = collectJsonData;
       window.renderJsonInputs = renderJsonInputs;
       window.renderCTCCResults = renderCTCCResults;
+      window.markResultsAvailable = markResultsAvailable;
+      window.enableResultsTab = enableResultsTab;
+      window.showCalculating = showCalculating;
+      window.hideStatusBar = hideStatusBar;
+      window.fetchFinalCombined = fetchFinalCombined;
+      window.fetchTaxonomy = fetchTaxonomy;
+      window.fetchInputMetadata = fetchInputMetadata;
+      window.fetchFuelMixPresets = fetchFuelMixPresets;
 
       function collectJsonData() {
         if (!C.ctccJsonData) return null;
@@ -4512,7 +4520,7 @@
         const entry = getCircuitDetailsEntry();
         const recon = isReconductoring();
         const oldCat = recon ? buildOldCategoryString() : null;
-        const oldEntry = (recon && oldCat && circuitDetailsLookup) ? (circuitDetailsLookup[oldCat] ?? null) : null;
+        const oldEntry = (recon && oldCat && C.circuitDetailsLookup) ? (C.circuitDetailsLookup[oldCat] ?? null) : null;
 
         // Table
         const table = document.createElement('table');
@@ -4611,7 +4619,7 @@
 
         const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
         const constructionType = ctEl ? normalizeCT(ctEl.value) : '';
-        const entry = structureDetailsLookup ? (structureDetailsLookup[constructionType] ?? null) : null;
+        const entry = C.structureDetailsLookup ? (C.structureDetailsLookup[constructionType] ?? null) : null;
 
         const ctxDisplay = document.createElement('div');
         ctxDisplay.className = 'readonly-miles-display';
@@ -4695,12 +4703,12 @@
         wrapper.id = 'converter-details-wrapper';
 
         const cat = buildCategoryString();
-        const entry = converterDetailsLookup ? (converterDetailsLookup[cat] ?? null) : null;
+        const entry = C.converterDetailsLookup ? (C.converterDetailsLookup[cat] ?? null) : null;
         const recon = isReconductoring();
         const oldAcDcEl = document.querySelector('[data-path="01_project_technical_details.project.old_ac_dc"]');
         const oldIsDC = recon && oldAcDcEl && oldAcDcEl.value === 'DC';
         const oldCat = oldIsDC ? buildOldCategoryString() : null;
-        const oldEntry = (oldIsDC && oldCat) ? (converterDetailsLookup?.[oldCat] ?? null) : null;
+        const oldEntry = (oldIsDC && oldCat) ? (C.converterDetailsLookup?.[oldCat] ?? null) : null;
 
         const ctxDisplay = document.createElement('div');
         ctxDisplay.className = 'readonly-miles-display';
@@ -4810,7 +4818,7 @@
       function rebuildStructureDetails() {
         const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
         const constructionType = ctEl ? ctEl.value : '';
-        const entry = structureDetailsLookup ? (structureDetailsLookup[constructionType] ?? null) : null;
+        const entry = C.structureDetailsLookup ? (C.structureDetailsLookup[constructionType] ?? null) : null;
 
         document.querySelectorAll('[data-structure-field]').forEach(cell => {
           const key = cell.dataset.structureField;
@@ -4843,7 +4851,7 @@
         const wrapper = document.createElement('div');
         wrapper.id = 'conductor-maintenance-wrapper';
         const cat = buildCategoryString();
-        const entry = conductorOmLookup ? (conductorOmLookup[cat] ?? null) : null;
+        const entry = C.conductorOmLookup ? (C.conductorOmLookup[cat] ?? null) : null;
 
         const table = document.createElement('table');
         table.className = 'ctcc-table capital-cost-table conductor-maintenance-table';
@@ -4925,7 +4933,7 @@
         wrapper.id = 'structure-maintenance-wrapper';
         const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
         const constructionType = ctEl ? ctEl.value : '';
-        const entry = structureDetailsLookup ? (structureDetailsLookup[constructionType] ?? null) : null;
+        const entry = C.structureDetailsLookup ? (C.structureDetailsLookup[constructionType] ?? null) : null;
 
         const table = document.createElement('table');
         table.className = 'ctcc-table capital-cost-table structure-maintenance-table';
@@ -5038,7 +5046,7 @@
         const wrapper = document.createElement('div');
         wrapper.id = 'converter-maintenance-wrapper';
         const cat = buildCategoryString();
-        const entry = converterDetailsLookup ? (converterDetailsLookup[cat] ?? null) : null;
+        const entry = C.converterDetailsLookup ? (C.converterDetailsLookup[cat] ?? null) : null;
 
         const table = document.createElement('table');
         table.className = 'ctcc-table capital-cost-table converter-maintenance-table';
@@ -5232,7 +5240,7 @@
 
         const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
         const constructionType = ctEl ? ctEl.value : '';
-        const entry = vegetationManagementLookup ? (vegetationManagementLookup[constructionType] ?? null) : null;
+        const entry = C.vegetationManagementLookup ? (C.vegetationManagementLookup[constructionType] ?? null) : null;
 
         const ctxDisplay = document.createElement('div');
         ctxDisplay.className = 'readonly-miles-display';
@@ -5438,7 +5446,7 @@
         const recon = isReconductoring();
         const oldEntry = recon ? (function() {
           const oldCat = buildOldCategoryString();
-          return (oldCat && circuitDetailsLookup) ? (circuitDetailsLookup[oldCat] ?? null) : null;
+          return (oldCat && C.circuitDetailsLookup) ? (C.circuitDetailsLookup[oldCat] ?? null) : null;
         })() : null;
 
         const ROWS = [

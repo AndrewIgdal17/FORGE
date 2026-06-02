@@ -1,73 +1,73 @@
 // CTCC Lookup Data Tables
 // Extracted from index.html — loaded via <script src="/static/lookup-data.js">
 
-// -----------------------------------------------------------------
-// Derived parameter utilities (client-side subset)
-// ROW width lookup table loaded once at startup; enables live
-// acres calculations without a server round-trip.
-// -----------------------------------------------------------------
-let rowWidthLookup = null;
-let buildCostLookup = null;
-let circuitDetailsLookup = null;
-let structureDetailsLookup = null;
-let converterDetailsLookup = null;
-let conductorOmLookup = null;
-let vegetationManagementLookup = null;
+(function() {
+'use strict';
+const C = window.CTCC;
+
+// Lookup caches on CTCC namespace so index.html input-renderers can access them
+C.rowWidthLookup = null;
+C.buildCostLookup = null;
+C.circuitDetailsLookup = null;
+C.structureDetailsLookup = null;
+C.converterDetailsLookup = null;
+C.conductorOmLookup = null;
+C.vegetationManagementLookup = null;
 
 async function fetchRowWidths(baseUrl) {
-  if (rowWidthLookup) return rowWidthLookup;
+  if (C.rowWidthLookup) return C.rowWidthLookup;
   const resp = await fetch(new URL("/static/row_widths.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load row_widths.json: " + resp.status);
-  rowWidthLookup = await resp.json();
-  return rowWidthLookup;
+  C.rowWidthLookup = await resp.json();
+  return C.rowWidthLookup;
 }
 
 async function fetchBuildCosts(baseUrl) {
-  if (buildCostLookup) return buildCostLookup;
+  if (C.buildCostLookup) return C.buildCostLookup;
   const resp = await fetch(new URL("/static/build_costs.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load build_costs.json: " + resp.status);
-  buildCostLookup = await resp.json();
-  return buildCostLookup;
+  C.buildCostLookup = await resp.json();
+  return C.buildCostLookup;
 }
 
 async function fetchCircuitDetails(baseUrl) {
-  if (circuitDetailsLookup) return circuitDetailsLookup;
+  if (C.circuitDetailsLookup) return C.circuitDetailsLookup;
   const resp = await fetch(new URL("/static/circuit_details.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load circuit_details.json: " + resp.status);
-  circuitDetailsLookup = await resp.json();
-  return circuitDetailsLookup;
+  C.circuitDetailsLookup = await resp.json();
+  return C.circuitDetailsLookup;
 }
 
 async function fetchStructureDetails(baseUrl) {
-  if (structureDetailsLookup) return structureDetailsLookup;
+  if (C.structureDetailsLookup) return C.structureDetailsLookup;
   const resp = await fetch(new URL("/static/structure_details.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load structure_details.json: " + resp.status);
-  structureDetailsLookup = await resp.json();
-  return structureDetailsLookup;
+  C.structureDetailsLookup = await resp.json();
+  return C.structureDetailsLookup;
 }
 
 async function fetchConverterDetails(baseUrl) {
-  if (converterDetailsLookup) return converterDetailsLookup;
+  if (C.converterDetailsLookup) return C.converterDetailsLookup;
   const resp = await fetch(new URL("/static/converter_details.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load converter_details.json: " + resp.status);
-  converterDetailsLookup = await resp.json();
-  return converterDetailsLookup;
+  C.converterDetailsLookup = await resp.json();
+  return C.converterDetailsLookup;
 }
 
 async function fetchConductorOm(baseUrl) {
-  if (conductorOmLookup) return conductorOmLookup;
+  if (C.conductorOmLookup) return C.conductorOmLookup;
   const resp = await fetch(new URL("/static/conductor_om.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load conductor_om.json: " + resp.status);
-  conductorOmLookup = await resp.json();
-  return conductorOmLookup;
+  C.conductorOmLookup = await resp.json();
+  return C.conductorOmLookup;
 }
 
 async function fetchVegetationManagement(baseUrl) {
-  if (vegetationManagementLookup) return vegetationManagementLookup;
+  if (C.vegetationManagementLookup) return C.vegetationManagementLookup;
   const resp = await fetch(new URL("/static/vegetation_management.json", baseUrl).toString());
   if (!resp.ok) throw new Error("Failed to load vegetation_management.json: " + resp.status);
-  vegetationManagementLookup = await resp.json();
-  return vegetationManagementLookup;
+  C.vegetationManagementLookup = await resp.json();
+  return C.vegetationManagementLookup;
 }
 
 function normalizeCT(ct) {
@@ -94,9 +94,9 @@ function buildCategoryString() {
 }
 
 function getRowWidthFeet() {
-  if (!rowWidthLookup) return null;
+  if (!C.rowWidthLookup) return null;
   const cat = buildCategoryString();
-  return cat ? (rowWidthLookup[cat] ?? null) : null;
+  return cat ? (C.rowWidthLookup[cat] ?? null) : null;
 }
 
 function validateCategoryString() {
@@ -104,12 +104,12 @@ function validateCategoryString() {
   if (!cat) return { valid: false, reason: 'Incomplete category fields' };
 
   const missing = [];
-  if (buildCostLookup && !(cat in buildCostLookup)) missing.push('build_costs');
-  if (circuitDetailsLookup && !(cat in circuitDetailsLookup)) missing.push('circuit_details');
-  if (rowWidthLookup && !(cat in rowWidthLookup)) missing.push('row_widths');
+  if (C.buildCostLookup && !(cat in C.buildCostLookup)) missing.push('build_costs');
+  if (C.circuitDetailsLookup && !(cat in C.circuitDetailsLookup)) missing.push('circuit_details');
+  if (C.rowWidthLookup && !(cat in C.rowWidthLookup)) missing.push('row_widths');
 
   const acDc = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]')?.value;
-  if (acDc === 'DC' && converterDetailsLookup && !(cat in converterDetailsLookup)) {
+  if (acDc === 'DC' && C.converterDetailsLookup && !(cat in C.converterDetailsLookup)) {
     missing.push('converter_details');
   }
 
@@ -121,8 +121,8 @@ function validateCategoryString() {
     const oldCat = buildOldCategoryString();
     if (oldCat) {
       const oldMissing = [];
-      if (buildCostLookup && !(oldCat in buildCostLookup)) oldMissing.push('build_costs');
-      if (circuitDetailsLookup && !(oldCat in circuitDetailsLookup)) oldMissing.push('circuit_details');
+      if (C.buildCostLookup && !(oldCat in C.buildCostLookup)) oldMissing.push('build_costs');
+      if (C.circuitDetailsLookup && !(oldCat in C.circuitDetailsLookup)) oldMissing.push('circuit_details');
       if (oldMissing.length > 0) {
         return { valid: false, reason: `Old-line configuration "${oldCat}" not found in: ${oldMissing.join(', ')}` };
       }
@@ -133,15 +133,15 @@ function validateCategoryString() {
 }
 
 function getBuildCostEntry() {
-  if (!buildCostLookup) return null;
+  if (!C.buildCostLookup) return null;
   const cat = buildCategoryString();
-  return cat ? (buildCostLookup[cat] ?? null) : null;
+  return cat ? (C.buildCostLookup[cat] ?? null) : null;
 }
 
 function getCircuitDetailsEntry() {
-  if (!circuitDetailsLookup) return null;
+  if (!C.circuitDetailsLookup) return null;
   const cat = buildCategoryString();
-  const entry = cat ? circuitDetailsLookup[cat] : null;
+  const entry = cat ? C.circuitDetailsLookup[cat] : null;
   if (entry) return entry;
   const get = path => document.querySelector(`[data-path="${path}"]`)?.value || '';
   const acDc = get('01_project_technical_details.project.ac_dc');
@@ -152,16 +152,16 @@ function getCircuitDetailsEntry() {
     const cap = String(get('01_project_technical_details.project.capacity_mw')).replace(/\s*MW\s*/i, '');
     const cond = get('01_project_technical_details.project.conductor_type');
     if (ct && cap && cond) {
-      return circuitDetailsLookup[`${ct}/${acDc}/${cap}MW/${cond}/VSC Converter`] ?? null;
+      return C.circuitDetailsLookup[`${ct}/${acDc}/${cap}MW/${cond}/VSC Converter`] ?? null;
     }
   }
   return null;
 }
 
 function getOldCircuitDetailsEntry() {
-  if (!circuitDetailsLookup) return null;
+  if (!C.circuitDetailsLookup) return null;
   const oldCat = buildOldCategoryString();
-  return oldCat ? (circuitDetailsLookup[oldCat] ?? null) : null;
+  return oldCat ? (C.circuitDetailsLookup[oldCat] ?? null) : null;
 }
 
 function buildOldCategoryString() {
@@ -182,3 +182,22 @@ function buildOldCategoryString() {
   return `${ct}/${oldAcDc}/${capNum}MW/${oldCond}/${oldConv}`;
 }
 
+
+
+  // Public API
+  window.fetchRowWidths = fetchRowWidths;
+  window.fetchBuildCosts = fetchBuildCosts;
+  window.fetchCircuitDetails = fetchCircuitDetails;
+  window.fetchStructureDetails = fetchStructureDetails;
+  window.fetchConverterDetails = fetchConverterDetails;
+  window.fetchConductorOm = fetchConductorOm;
+  window.fetchVegetationManagement = fetchVegetationManagement;
+  window.normalizeCT = normalizeCT;
+  window.buildCategoryString = buildCategoryString;
+  window.getRowWidthFeet = getRowWidthFeet;
+  window.validateCategoryString = validateCategoryString;
+  window.getBuildCostEntry = getBuildCostEntry;
+  window.getCircuitDetailsEntry = getCircuitDetailsEntry;
+  window.getOldCircuitDetailsEntry = getOldCircuitDetailsEntry;
+  window.buildOldCategoryString = buildOldCategoryString;
+})();

@@ -1,7 +1,10 @@
 // CTCC Comparison Table
 // Extracted from index.html — loaded via <script src="/static/comparison.js">
 
-const C = window.CTCC;
+(function() {
+'use strict';
+
+  const C = window.CTCC;
 
 let cmpMetricPickerPanelEl = null;
 
@@ -859,3 +862,12 @@ function comparisonMetricLabel(metricKey) {
   return metricKey;
 }
 
+
+
+  // Public API
+  window.renderComparisonTable = renderComparisonTable;
+  window.syncComparisonSelectAllCheckbox = syncComparisonSelectAllCheckbox;
+  window.sortComparisonColumnsByCatalog = sortComparisonColumnsByCatalog;
+  window.initComparisonToolbar = initComparisonToolbar;
+  window.updateComparisonDeltaControlState = updateComparisonDeltaControlState;
+})();
