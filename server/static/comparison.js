@@ -870,4 +870,9 @@ function comparisonMetricLabel(metricKey) {
   window.sortComparisonColumnsByCatalog = sortComparisonColumnsByCatalog;
   window.initComparisonToolbar = initComparisonToolbar;
   window.updateComparisonDeltaControlState = updateComparisonDeltaControlState;
+  window.comparisonMetricLabel = comparisonMetricLabel;
+  window.getMetricConfig = getMetricConfig;
+  window.getDeltaDisplayParts = getDeltaDisplayParts;
+  window.formatDeltaLine = formatDeltaLine;
+  window.formatPercentDeltaLine = formatPercentDeltaLine;
 })();

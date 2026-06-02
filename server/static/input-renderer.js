@@ -1576,7 +1576,7 @@ function updateFuelMixChart() {
   }
 }
 
-const emissionsChartInstances = { co2: null, sox: null, nox: null };
+C.emissionsChartInstances = { co2: null, sox: null, nox: null };
 
 function renderEmissionsImpactPanel() {
   const panel = document.createElement('div');
@@ -5316,92 +5316,18 @@ function renderJsonInputs(data) {
 }
 
 
-// Public API
-window.applyEnergySourceMixPreset = applyEnergySourceMixPreset;
-window.calculateROWMilesTotal = calculateROWMilesTotal;
-window.createFieldFromMetadata = createFieldFromMetadata;
-window.formatCurrencyInput = formatCurrencyInput;
-window.formatNumberInput = formatNumberInput;
-window.formatPercentageInput = formatPercentageInput;
-window.getActiveConstructionType = getActiveConstructionType;
-window.getActiveTerrains = getActiveTerrains;
+// Public API — only exports actually used by other modules
 window.getEnergyDeliveredGWh = getEnergyDeliveredGWh;
-window.getTerrainMiles = getTerrainMiles;
-window.getTerrainMilesFromDOM = getTerrainMilesFromDOM;
-window.getUpliftFactorFromDOM = getUpliftFactorFromDOM;
-window.getValueAtFieldPath = getValueAtFieldPath;
-window.isCurrencyField = isCurrencyField;
 window.isGreenfieldROW = isGreenfieldROW;
-window.isPercentageField = isPercentageField;
 window.isReconductoring = isReconductoring;
-window.makeEmissionIntensitiesCollapsible = makeEmissionIntensitiesCollapsible;
-window.makeEquationIcon = makeEquationIcon;
-window.normalizeEnergySourceMixInCombinedData = normalizeEnergySourceMixInCombinedData;
 window.parseCurrencyInput = parseCurrencyInput;
 window.parseNumberInput = parseNumberInput;
 window.parsePercentageInput = parsePercentageInput;
 window.projectFuelMix = projectFuelMix;
 window.readFuelRates = readFuelRates;
 window.readFuelShares = readFuelShares;
-window.rebuildCapitalCosts = rebuildCapitalCosts;
-window.rebuildConductorDetails = rebuildConductorDetails;
-window.rebuildConductorMaintenance = rebuildConductorMaintenance;
-window.rebuildConstraintsPanel = rebuildConstraintsPanel;
-window.rebuildConverterDetails = rebuildConverterDetails;
-window.rebuildConverterMaintenance = rebuildConverterMaintenance;
-window.rebuildEnvBaseMitigation = rebuildEnvBaseMitigation;
-window.rebuildLineLossParameters = rebuildLineLossParameters;
-window.rebuildRiskPanels = rebuildRiskPanels;
-window.rebuildStructureDetails = rebuildStructureDetails;
-window.rebuildStructureMaintenance = rebuildStructureMaintenance;
-window.rebuildVegetationManagement = rebuildVegetationManagement;
-window.renderCapitalCostSubTab = renderCapitalCostSubTab;
-window.renderConductorDetailsTable = renderConductorDetailsTable;
-window.renderConductorMaintenanceTable = renderConductorMaintenanceTable;
-window.renderConstraintsPanel = renderConstraintsPanel;
-window.renderConverterDetailsTable = renderConverterDetailsTable;
-window.renderConverterMaintenanceTable = renderConverterMaintenanceTable;
-window.renderDelayCostPanel = renderDelayCostPanel;
-window.renderEconomicDetailsPanel = renderEconomicDetailsPanel;
-window.renderEmissionsImpactPanel = renderEmissionsImpactPanel;
-window.renderEnergyImpactPanel = renderEnergyImpactPanel;
-window.renderEnergyMixTable = renderEnergyMixTable;
-window.renderEnvBaseMitigationTable = renderEnvBaseMitigationTable;
-window.renderEnvCreditsTable = renderEnvCreditsTable;
-window.renderExternalityCostTable = renderExternalityCostTable;
-window.renderFinancialAFUDCPanel = renderFinancialAFUDCPanel;
-window.renderFinancialRatesPanel = renderFinancialRatesPanel;
-window.renderInputsFromTaxonomy = renderInputsFromTaxonomy;
-window.renderInsurableAssetsTable = renderInsurableAssetsTable;
-window.renderIntensityTable = renderIntensityTable;
 window.renderJsonInputs = renderJsonInputs;
-window.renderLineLossParametersTable = renderLineLossParametersTable;
-window.renderLossesPanel = renderLossesPanel;
-window.renderOutageRiskPanel = renderOutageRiskPanel;
-window.renderROWCostPanel = renderROWCostPanel;
-window.renderROWZoneTable = renderROWZoneTable;
-window.renderStructureDetailsTable = renderStructureDetailsTable;
-window.renderStructureMaintenanceTable = renderStructureMaintenanceTable;
-window.renderTabGuideBanner = renderTabGuideBanner;
-window.renderTaxonomySections = renderTaxonomySections;
-window.renderTerrainTable = renderTerrainTable;
-window.renderVegetationManagementTable = renderVegetationManagementTable;
-window.renderWildfireRiskPanel = renderWildfireRiskPanel;
-window.resetFieldToDefault = resetFieldToDefault;
-window.resetSectionToDefaults = resetSectionToDefaults;
-window.setupTaxonomyConditionalVisibility = setupTaxonomyConditionalVisibility;
-window.showBuildCostConfirmDialog = showBuildCostConfirmDialog;
 window.syncFuelMixPresetBarVisibility = syncFuelMixPresetBarVisibility;
-window.terrainDisplayLabel = terrainDisplayLabel;
-window.updateAcDcWarning = updateAcDcWarning;
-window.updateCapitalCostSubTabVisibility = updateCapitalCostSubTabVisibility;
-window.updateEnvironmentalAcres = updateEnvironmentalAcres;
 window.updateFuelMixChart = updateFuelMixChart;
-window.updateLockedDiscountRate = updateLockedDiscountRate;
-window.updateMaintenanceSubTabVisibility = updateMaintenanceSubTabVisibility;
-window.updateProjectTechnicalSubTabVisibility = updateProjectTechnicalSubTabVisibility;
-window.updateROWColumnVisibility = updateROWColumnVisibility;
-window.updateRoutingValidation = updateRoutingValidation;
-window.updateSliderFill = updateSliderFill;
 window.validateCostTimingPatterns = validateCostTimingPatterns;
 })();

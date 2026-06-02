@@ -982,13 +982,13 @@ function updateEmissionsImpactPanel(results) {
     const canvas = document.getElementById(canvasId);
     if (canvas && typeof Chart !== 'undefined') {
       const yLabel = p === 'co2' ? 'Cumulative CO₂ (kt)' : p === 'sox' ? 'Cumulative SOₓ (t)' : 'Cumulative NOₓ (t)';
-      if (emissionsChartInstances[p]) {
-        emissionsChartInstances[p].data.labels = years;
-        emissionsChartInstances[p].data.datasets[0].data = cfCumData;
-        emissionsChartInstances[p].data.datasets[1].data = projCumData;
-        emissionsChartInstances[p].update();
+      if (C.emissionsChartInstances[p]) {
+        C.emissionsChartInstances[p].data.labels = years;
+        C.emissionsChartInstances[p].data.datasets[0].data = cfCumData;
+        C.emissionsChartInstances[p].data.datasets[1].data = projCumData;
+        C.emissionsChartInstances[p].update();
       } else {
-        emissionsChartInstances[p] = new Chart(canvas, {
+        C.emissionsChartInstances[p] = new Chart(canvas, {
           type: 'line',
           data: {
             labels: years,

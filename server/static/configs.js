@@ -120,6 +120,18 @@
 
       const UNKNOWN_METRIC_CATALOG_INDEX = Number.MAX_SAFE_INTEGER;
 
+      const CONDUCTOR_TYPE_BY_CONSTRUCTION = {
+        'Overhead': ['Standard Aluminum Conductor', 'Advanced Aluminum Conductor'],
+        'Underground Direct-Buried': ['Underground Copper Conductor'],
+        'Underground Tunnel': ['Underground Copper Conductor'],
+        'Subsea': ['Subsea Copper Conductor']
+      };
+
+      const CAPACITY_OPTIONS_BY_AC_DC = {
+        'AC': [140, 329, 394, 460, 657, 1792, 2598, 6625],
+        'DC': [500, 1500, 2000, 2400, 6000]
+      };
+
 // =============================================
 // Input Form Configs — DELETED in Phase 4
 // TAB_CONFIG, TAB_HIERARCHY, FIELD_METADATA, FIELD_CONFIG, CONDITIONAL_FIELDS,

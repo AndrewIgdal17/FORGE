@@ -806,8 +806,8 @@ async function displayCsvFiles(apiResponse, baseUrl) {
     const outputDir = apiResponse.output_dir || '../outputs';
 
     if (csvFiles.length === 0) {
-      resultEl.textContent = "No CSV files generated.";
-      statusEl.textContent = "Success (no CSV files)";
+      document.getElementById('result').textContent = "No CSV files generated.";
+      document.getElementById('status').textContent = "Success (no CSV files)";
       return;
     }
 
@@ -851,11 +851,11 @@ async function displayCsvFiles(apiResponse, baseUrl) {
     }
 
     html += '</div>';
-    resultEl.innerHTML = html;
-    statusEl.textContent = `Success - ${csvFiles.length} CSV file(s) displayed`;
+    document.getElementById('result').innerHTML = html;
+    document.getElementById('status').textContent = `Success - ${csvFiles.length} CSV file(s) displayed`;
   } catch (error) {
-    resultEl.textContent = `Error displaying CSV files: ${error.message}`;
-    statusEl.textContent = "Error";
+    document.getElementById('result').textContent = `Error displaying CSV files: ${error.message}`;
+    document.getElementById('status').textContent = "Error";
   }
 }
 
@@ -874,7 +874,7 @@ function downloadCsvFile(filename, url) {
 
 async function downloadAllCsvFiles() {
   // Get all download buttons
-  const buttons = resultEl.querySelectorAll('button[onclick^="downloadCsvFile"]');
+  const buttons = document.getElementById('result').querySelectorAll('button[onclick^="downloadCsvFile"]');
 
   if (buttons.length === 0) {
     alert('No CSV files to download');
