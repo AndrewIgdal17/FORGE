@@ -44,8 +44,6 @@ function showRestoreDefaultsDialog(storageKey, scopeLabel, onConfirm) {
   });
 }
 
-// getRowWidthFeet moved to lookup-data.js (depends on rowWidthLookup, buildCategoryString)
-
 function milesToAcres(miles, rowWidthFeet) {
   return (miles * 5280 * rowWidthFeet) / 43560;
 }
