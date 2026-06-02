@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S2",
-    "timestamp": "2026-05-15T12:04:16.440266",
+    "timestamp": "2026-06-01T20:55:19.616465",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S2_California_Highway_Route_AC_1792MW",
@@ -5046,8 +5046,8 @@
       "net_benefit_capital_only_pv": 5116647117.248524,
       "bcr_capital_and_delay": 11.66280631699707,
       "net_benefit_capital_and_delay_pv": 5073131539.098172,
-      "bcr_utility": 1.4423588731988626,
-      "net_benefit_utility_pv": 254464507.4137267,
+      "bcr_utility": 1.5259722659587969,
+      "net_benefit_utility_pv": 285984178.58733404,
       "bcr_ratepayer": 2.079118345783195,
       "net_benefit_ratepayer_pv": 2880033445.8398747,
       "bcr_excluding_emissions": 0.46629203093514776,

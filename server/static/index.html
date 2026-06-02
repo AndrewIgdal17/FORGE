@@ -31,9 +31,12 @@
       <button type="button" class="main-tab-button disabled" data-tab="inputs">Inputs</button>
       <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
       <button type="button" class="main-tab-button active" data-tab="scenarios">Scenarios</button>
-      <span id="scenario-breadcrumb" style="display:none; font-size:0.9rem; color:#666; align-self:center;">/ <span id="scenario-breadcrumb-name"></span></span>
       <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
+      <button type="button" class="save-scenario-button" id="save-copy-btn">Save as Copy</button>
     </div>
+
+    <!-- Scenario Breadcrumb (subtitle below tabs) -->
+    <div id="scenario-breadcrumb" style="display:none;"><span id="scenario-breadcrumb-pill"></span></div>
 
     <!-- Status Bar -->
     <div id="status-bar" class="status-bar">
@@ -835,17 +838,95 @@
         autoCalculate();
       }
 
-      function updateScenarioBreadcrumb() {
-        const crumb = document.getElementById('scenario-breadcrumb');
-        const nameEl = document.getElementById('scenario-breadcrumb-name');
-        if (!crumb || !nameEl) return;
-        if (activeScenarioId) {
-          nameEl.textContent = activeScenarioName;
-          crumb.style.display = '';
-        } else {
-          crumb.style.display = 'none';
-        }
+      function btnLabel(btn) {
+        return btn.childNodes[0]?.textContent?.trim() || btn.textContent.trim();
       }
+
+      function updateBreadcrumb() {
+        const pill = document.getElementById('scenario-breadcrumb-pill');
+        const crumb = document.getElementById('scenario-breadcrumb');
+        if (!pill || !crumb) return;
+
+        const segments = [];
+
+        if (!activeScenarioId) {
+          crumb.style.display = 'none';
+          return;
+        }
+
+        segments.push({ label: 'Scenarios', action: () => switchMainTab('scenarios') });
+        segments.push({ label: activeScenarioName, editable: true });
+
+        const activeL1 = document.querySelector('.main-tab-button.active')?.dataset.tab;
+
+        if (activeL1 === 'inputs') {
+          segments.push({ label: 'Inputs', action: () => switchMainTab('inputs') });
+          const activeL2Btn = document.querySelector('#tab-buttons .tab-button.active');
+          if (activeL2Btn) {
+            const tabId = INPUT_TAB_ORDER[activeTabIndex];
+            const tabLabel = INPUT_TAB_LABELS[tabId] || tabId;
+            segments.push({ label: tabLabel, action: () => activeL2Btn.click() });
+            const activeL2Content = document.querySelector('#tab-contents .tab-content.active');
+            if (activeL2Content) {
+              const l3Btn = activeL2Content.querySelector(':scope > .sub-tabs .sub-tab-button.active');
+              if (l3Btn) {
+                segments.push({ label: btnLabel(l3Btn), action: () => l3Btn.click() });
+                let visibleL3Content = null;
+                activeL2Content.querySelectorAll(':scope > .sub-tab-content').forEach(c => {
+                  if (c.style.display !== 'none') visibleL3Content = c;
+                });
+                if (!visibleL3Content && tabId === 'project-technical') {
+                  const routingPanel = activeL2Content.querySelector('.routing-panel');
+                  if (routingPanel) visibleL3Content = routingPanel;
+                }
+                if (visibleL3Content) {
+                  const l4Btn = visibleL3Content.querySelector('.sub-sub-tabs .sub-sub-tab-button.active');
+                  if (l4Btn) {
+                    segments.push({ label: btnLabel(l4Btn) });
+                  }
+                }
+              }
+            }
+          }
+        } else if (activeL1 === 'results') {
+          segments.push({ label: 'Results', action: () => switchMainTab('results') });
+          const activeResultBtn = document.querySelector('.results-tabs-container .tab-button.active');
+          if (activeResultBtn) {
+            segments.push({ label: btnLabel(activeResultBtn) });
+          }
+        } else if (activeL1 === 'scenarios') {
+          const activeScnBtn = document.querySelector('#scenario-subtabs .tab-button.active');
+          if (activeScnBtn && activeScnBtn.dataset.scenarioTab !== 'scenario-comparison') {
+            segments.push({ label: btnLabel(activeScnBtn) });
+          }
+        }
+
+        pill.innerHTML = '';
+        segments.forEach((seg, i) => {
+          if (i > 0) {
+            const sep = document.createElement('span');
+            sep.className = 'breadcrumb-separator';
+            sep.textContent = ' / ';
+            pill.appendChild(sep);
+          }
+          const span = document.createElement('span');
+          span.textContent = seg.label;
+          if (seg.editable) {
+            span.id = 'scenario-breadcrumb-name';
+            span.title = 'Click to rename';
+          } else if (seg.action && i < segments.length - 1) {
+            span.style.cursor = 'pointer';
+            span.addEventListener('click', (e) => { e.stopPropagation(); seg.action(); });
+            span.addEventListener('mouseenter', () => { span.style.textDecoration = 'underline'; });
+            span.addEventListener('mouseleave', () => { span.style.textDecoration = ''; });
+          }
+          pill.appendChild(span);
+        });
+
+        crumb.style.display = '';
+      }
+
+      function updateScenarioBreadcrumb() { updateBreadcrumb(); }
 
       function createNewScenario(name) {
         const trimmed = name.trim();
@@ -1352,7 +1433,70 @@
       });
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
-      document.getElementById('save-scenario-main-btn').addEventListener('click', showSaveDialog);
+      document.getElementById('save-scenario-main-btn').addEventListener('click', () => {
+        if (!activeScenarioId) {
+          showToast('No active scenario to save.');
+          return;
+        }
+        const scenario = sessionScenarios.find(s => s.id === activeScenarioId);
+        if (!scenario) return;
+        scenario.inputs = collectJsonData();
+        scenario.results = lastRunResults;
+        scenario.metadata.timestamp = new Date().toISOString();
+        scenario.metadata.source = 'manual';
+        renderScenarioList();
+        showToast('Scenario saved.');
+      });
+
+      document.getElementById('save-copy-btn').addEventListener('click', () => {
+        if (!activeScenarioId) {
+          showToast('No active scenario to copy.');
+          return;
+        }
+        const copyName = activeScenarioName + ' (copy)';
+        addScenarioToSession(collectJsonData(), lastRunResults,
+          { timestamp: new Date().toISOString(), source: 'manual' }, copyName);
+        showToast('Saved as "' + copyName + '".');
+      });
+
+      document.getElementById('scenario-breadcrumb').addEventListener('click', (e) => {
+        const nameEl = e.target.closest('#scenario-breadcrumb-name');
+        if (!nameEl || !activeScenarioId) return;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'scenario-card-name-input';
+        input.value = activeScenarioName;
+        input.size = Math.max(activeScenarioName.length, 5);
+        nameEl.replaceWith(input);
+        input.focus();
+        input.select();
+        input.addEventListener('input', () => { input.size = Math.max(input.value.length, 5); });
+        const finishEdit = () => {
+          const newName = input.value.trim();
+          const restored = document.createElement('span');
+          restored.id = 'scenario-breadcrumb-name';
+          restored.title = 'Click to rename';
+          if (newName && newName !== activeScenarioName) {
+            input.replaceWith(restored);
+            renameScenario(activeScenarioId, newName);
+          } else {
+            restored.textContent = activeScenarioName;
+            input.replaceWith(restored);
+          }
+        };
+        input.addEventListener('blur', finishEdit);
+        input.addEventListener('keydown', (e2) => {
+          if (e2.key === 'Enter') { e2.preventDefault(); input.blur(); }
+          if (e2.key === 'Escape') { input.value = activeScenarioName; input.blur(); }
+        });
+      });
+
+      document.getElementById('tab-contents').addEventListener('click', (e) => {
+        if (e.target.closest('.sub-sub-tab-button')) {
+          setTimeout(updateBreadcrumb, 0);
+        }
+      });
 
       document.getElementById('new-scenario-btn').addEventListener('click', () => {
         if (document.getElementById('new-scenario-form')) return;
@@ -2815,6 +2959,8 @@
           }
           statusBar.classList.remove('visible');
         }
+
+        updateBreadcrumb();
       }
 
       function enableResultsTab() {
@@ -2873,6 +3019,7 @@
         document.querySelectorAll('.scenario-subtab-content').forEach(pane => {
           pane.classList.toggle('active', pane.id === 'scenario-subtab-' + tabId);
         });
+        updateBreadcrumb();
       }
 
       document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
@@ -3341,6 +3488,7 @@
         });
 
         activeTabIndex = index;
+        updateBreadcrumb();
       }
 
       function collectJsonData() {
@@ -9034,6 +9182,7 @@
                 subTabBar.querySelectorAll('.sub-tab-button').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 subTabContents.forEach(c => { c.style.display = c.dataset.subTab === stId ? '' : 'none'; });
+                updateBreadcrumb();
               });
             });
 
@@ -9973,6 +10122,7 @@
                 });
               }
             }
+            updateBreadcrumb();
           });
 
           tabButtons.appendChild(button);

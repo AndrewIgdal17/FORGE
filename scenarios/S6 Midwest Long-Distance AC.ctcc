@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S6",
-    "timestamp": "2026-05-15T12:04:18.109297",
+    "timestamp": "2026-06-01T20:55:21.317861",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S6_LongDistance_AC_6500MW",
@@ -5064,8 +5064,8 @@
       "net_benefit_capital_only_pv": 10100762257.184452,
       "bcr_capital_and_delay": 3.4428407302914774,
       "net_benefit_capital_and_delay_pv": 8317170600.502649,
-      "bcr_utility": 0.6726332622805142,
-      "net_benefit_utility_pv": -1187691008.3429446,
+      "bcr_utility": 1.2660909815004404,
+      "net_benefit_utility_pv": 512876143.0683129,
       "bcr_ratepayer": 2.1144110409463597,
       "net_benefit_ratepayer_pv": 6178077866.648336,
       "bcr_excluding_emissions": 0.16278774406055666,

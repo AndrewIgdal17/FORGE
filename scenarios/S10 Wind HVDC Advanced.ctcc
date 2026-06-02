@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S10",
-    "timestamp": "2026-05-15T12:04:15.444203",
+    "timestamp": "2026-06-01T20:55:18.780753",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S10_PointToPoint_HVDC_2400MW_AdvancedAluminumConductor_VSC",
@@ -5064,8 +5064,8 @@
       "net_benefit_capital_only_pv": 16276614546.896648,
       "bcr_capital_and_delay": 3.665903614991754,
       "net_benefit_capital_and_delay_pv": 12689201207.89169,
-      "bcr_utility": 0.4034269142231203,
-      "net_benefit_utility_pv": -2905102930.2095118,
+      "bcr_utility": 1.4689290502623031,
+      "net_benefit_utility_pv": 627146575.0510471,
       "bcr_ratepayer": 7.296640924992547,
       "net_benefit_ratepayer_pv": 15057637426.129543,
       "bcr_excluding_emissions": 0.793466811656182,

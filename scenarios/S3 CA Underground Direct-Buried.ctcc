@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S3",
-    "timestamp": "2026-05-15T12:04:16.843571",
+    "timestamp": "2026-06-01T20:55:20.062517",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S3_California_Underground_AC_657MW",
@@ -5100,8 +5100,8 @@
       "net_benefit_capital_only_pv": -2576471004.3328247,
       "bcr_capital_and_delay": 0.43586603502361126,
       "net_benefit_capital_and_delay_pv": -2682780714.1449604,
-      "bcr_utility": 1.616077716980353,
-      "net_benefit_utility_pv": 3061034100.7647963,
+      "bcr_utility": 1.6362504324900164,
+      "net_benefit_utility_pv": 3122289906.426223,
       "bcr_ratepayer": 0.25724513056875836,
       "net_benefit_ratepayer_pv": -5984864197.086439,
       "bcr_excluding_emissions": 0.36299775230156295,

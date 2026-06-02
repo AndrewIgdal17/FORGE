@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S7",
-    "timestamp": "2026-05-15T12:04:18.567402",
+    "timestamp": "2026-06-01T20:55:21.741152",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S7_Reconductoring_329to657MW",
@@ -5082,8 +5082,8 @@
       "net_benefit_capital_only_pv": 1430684631.1170835,
       "bcr_capital_and_delay": 42.20446430973472,
       "net_benefit_capital_and_delay_pv": 1408194445.1486177,
-      "bcr_utility": 0.43570622155770455,
-      "net_benefit_utility_pv": -29425638.142117728,
+      "bcr_utility": 0.6395253763014798,
+      "net_benefit_utility_pv": -12806525.086187895,
       "bcr_ratepayer": 4.413079416040677,
       "net_benefit_ratepayer_pv": 1115530367.787814,
       "bcr_excluding_emissions": 0.695855655314807,

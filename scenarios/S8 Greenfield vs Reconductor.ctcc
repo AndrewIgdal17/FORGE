@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S8",
-    "timestamp": "2026-05-15T12:04:19.291308",
+    "timestamp": "2026-06-01T20:55:22.463116",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S8_Greenfield_657MW_StandardAC",
@@ -5118,8 +5118,8 @@
       "net_benefit_capital_only_pv": 1316651591.8405392,
       "bcr_capital_and_delay": 5.74452164428479,
       "net_benefit_capital_and_delay_pv": 1181885046.8226836,
-      "bcr_utility": 0.6896369568868894,
-      "net_benefit_utility_pv": -85109560.54094747,
+      "bcr_utility": 0.9256346489582011,
+      "net_benefit_utility_pv": -15193572.506099671,
       "bcr_ratepayer": 2.867874331286625,
       "net_benefit_ratepayer_pv": 932017813.4992484,
       "bcr_excluding_emissions": 0.1581825972221215,

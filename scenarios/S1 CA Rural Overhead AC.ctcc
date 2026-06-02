@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S1",
-    "timestamp": "2026-05-15T12:04:14.974399",
+    "timestamp": "2026-06-01T20:55:18.302088",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S1_California_Rural_Overhead_AC_657MW",
@@ -5100,8 +5100,8 @@
       "net_benefit_capital_only_pv": 2041422533.7574534,
       "bcr_capital_and_delay": 9.874287652624945,
       "net_benefit_capital_and_delay_pv": 1944262599.426129,
-      "bcr_utility": 0.8705393756267749,
-      "net_benefit_utility_pv": -31848183.372139126,
+      "bcr_utility": 1.1044753733882815,
+      "net_benefit_utility_pv": 20257846.808475137,
       "bcr_ratepayer": 2.9173878760575005,
       "net_benefit_ratepayer_pv": 1421814693.107139,
       "bcr_excluding_emissions": 0.20362279601907593,

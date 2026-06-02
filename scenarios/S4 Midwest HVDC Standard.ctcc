@@ -4748,7 +4748,7 @@
   },
   "results": {
     "scenario_id": "S4",
-    "timestamp": "2026-05-15T12:04:17.270878",
+    "timestamp": "2026-06-01T20:55:20.467529",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S4_LongDistance_HVDC_6000MW_StandardAluminumConductor_VSC",
@@ -5064,8 +5064,8 @@
       "net_benefit_capital_only_pv": 11497816931.586823,
       "bcr_capital_and_delay": 3.2012591175065888,
       "net_benefit_capital_and_delay_pv": 9595700178.917585,
-      "bcr_utility": 0.7901496575189481,
-      "net_benefit_utility_pv": -967096973.7366295,
+      "bcr_utility": 1.3054386156238211,
+      "net_benefit_utility_pv": 851995273.6620641,
       "bcr_ratepayer": 2.4212067612605344,
       "net_benefit_ratepayer_pv": 8191278977.52285,
       "bcr_excluding_emissions": 0.21003196785269673,
