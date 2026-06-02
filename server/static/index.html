@@ -363,10 +363,12 @@
     </div>
 
     <script src="/static/configs.js"></script>
-    <!-- hierarchy-engine.js deleted in Phase 4 — form rendering is taxonomy-driven -->
+    <!-- hierarchy-engine.js deleted in Phase 4 — form rendering is C.taxonomy-driven -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, initializing...');
+      window.CTCC = {};
+      const C = window.CTCC;
       const form = document.getElementById("demo-form");
       console.log('Form element:', form);
       const apiBaseInput = document.getElementById("api-base");
@@ -402,36 +404,36 @@
         showSaveDialog();
       });
 
-      let ctccJsonData = null;
+      C.ctccJsonData = null;
       /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
-      let cachedFuelMixPresets = [];
+      C.cachedFuelMixPresets = [];
 
-      // Taxonomy state (loaded once from GET /api/taxonomy)
-      let taxonomy = null;
-      let taxonomyById = {};
-      let taxonomyBySide = {};
-      let taxonomyByBucket = {};
+      // Taxonomy state (loaded once from GET /api/C.taxonomy)
+      C.taxonomy = null;
+      C.taxonomyById = {};
+      C.taxonomyBySide = {};
+      C.taxonomyByBucket = {};
 
       // Input metadata state (loaded once from GET /api/input_metadata)
-      let inputMetadata = null;
-      let activeTabIndex = 0;
+      C.inputMetadata = null;
+      C.activeTabIndex = 0;
 
       // Scenario management state
-      let sessionScenarios = [];
-      let activeScenarioId = null;
-      let activeScenarioName = '';
-      let lastRunResults = null;
-      let scenarioCounter = 0;
-      let comparisonScenarioIds = new Set();
-      let comparisonBaselineId = null;
-      let showDeltaVsBaseline = false;
+      C.sessionScenarios = [];
+      C.activeScenarioId = null;
+      C.activeScenarioName = '';
+      C.lastRunResults = null;
+      C.scenarioCounter = 0;
+      C.comparisonScenarioIds = new Set();
+      C.comparisonBaselineId = null;
+      C.showDeltaVsBaseline = false;
       /** @type {'values_plus_delta'|'delta_only'} */
-      let comparisonDeltaDisplayMode = 'values_plus_delta';
-      let showComparisonPercentDelta = false;
-      let comparisonAutoSort = false;
-      let comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
+      C.comparisonDeltaDisplayMode = 'values_plus_delta';
+      C.showComparisonPercentDelta = false;
+      C.comparisonAutoSort = false;
+      C.comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
-      let routingValid = true;
+      C.routingValid = true;
 
       // --- Always-solving architecture ---
       function debounce(fn, ms) {
@@ -439,14 +441,14 @@
         return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
       }
 
-      let latestValidResults = null;
-      let autoCalcInFlight = false;
-      let autoCalcQueued = false;
+      C.latestValidResults = null;
+      C.autoCalcInFlight = false;
+      C.autoCalcQueued = false;
 
       const autoCalculate = debounce(async function() {
-        if (!activeScenarioId) return;
-        if (autoCalcInFlight) { autoCalcQueued = true; return; }
-        autoCalcInFlight = true;
+        if (!C.activeScenarioId) return;
+        if (C.autoCalcInFlight) { C.autoCalcQueued = true; return; }
+        C.autoCalcInFlight = true;
         document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
         try {
           const baseUrl = apiBaseInput.value.trim();
@@ -454,7 +456,7 @@
             mode: 'calculate',
             input_mode: 'json',
             output_mode: 'json',
-            scenario_id: activeScenarioId,
+            scenario_id: C.activeScenarioId,
             combined_data: collectJsonData()
           };
           const resp = await fetch(
@@ -464,8 +466,8 @@
           );
           const json = await resp.json();
           if (json.results) {
-            latestValidResults = json.results;
-            lastRunResults = json.results;
+            C.latestValidResults = json.results;
+            C.lastRunResults = json.results;
             renderCTCCResults(json.results);
             renderDesignComparison(json.results);
             updateDesignCmpPrimaryReadout();
@@ -483,8 +485,8 @@
           const ind = document.getElementById('rcp-computing');
           if (ind) ind.style.display = 'none';
         }
-        autoCalcInFlight = false;
-        if (autoCalcQueued) { autoCalcQueued = false; autoCalculate(); }
+        C.autoCalcInFlight = false;
+        if (C.autoCalcQueued) { C.autoCalcQueued = false; autoCalculate(); }
       }, 300);
 
       function showToast(msg, durationMs = 4000) {
@@ -720,11 +722,11 @@
 
 
       /**
-       * Sort `comparisonColumns` in place by COMPARISON_METRICS catalog order.
+       * Sort `C.comparisonColumns` in place by COMPARISON_METRICS catalog order.
        * Keys not present in the catalog sort last; ties broken by localeCompare for stability.
        */
       function sortComparisonColumnsByCatalog() {
-        comparisonColumns.sort((a, b) => {
+        C.comparisonColumns.sort((a, b) => {
           const ia = COMPARISON_METRIC_KEY_ORDER.has(a) ? COMPARISON_METRIC_KEY_ORDER.get(a) : UNKNOWN_METRIC_CATALOG_INDEX;
           const ib = COMPARISON_METRIC_KEY_ORDER.has(b) ? COMPARISON_METRIC_KEY_ORDER.get(b) : UNKNOWN_METRIC_CATALOG_INDEX;
           if (ia !== ib) return ia - ib;
@@ -732,7 +734,7 @@
         });
       }
 
-      if (comparisonAutoSort) sortComparisonColumnsByCatalog();
+      if (C.comparisonAutoSort) sortComparisonColumnsByCatalog();
 
       const RESULTS_EXPORT_FIELDS = [
         { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
@@ -794,7 +796,7 @@
       }
 
       function generateScenarioName(baseName) {
-        const existingNames = sessionScenarios.map(s => s.customName);
+        const existingNames = C.sessionScenarios.map(s => s.customName);
         if (!existingNames.includes(baseName)) return baseName;
         let counter = 2;
         while (existingNames.includes(`${baseName} (${counter})`)) counter++;
@@ -814,15 +816,15 @@
           results: results ? JSON.parse(JSON.stringify(results)) : null,
           metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' }
         };
-        sessionScenarios.push(scenario);
+        C.sessionScenarios.push(scenario);
         renderScenarioList();
         updateScenarioBadge();
         return scenario;
       }
 
       function setActiveScenario(scenario) {
-        activeScenarioId = scenario.id;
-        activeScenarioName = scenario.customName;
+        C.activeScenarioId = scenario.id;
+        C.activeScenarioName = scenario.customName;
         updateScenarioBreadcrumb();
         const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
         if (inputsBtn) inputsBtn.classList.remove('disabled');
@@ -831,7 +833,7 @@
         }
         if (scenario.results) {
           renderCTCCResults(scenario.results);
-          lastRunResults = JSON.parse(JSON.stringify(scenario.results));
+          C.lastRunResults = JSON.parse(JSON.stringify(scenario.results));
           markResultsAvailable(0);
         }
         renderScenarioList();
@@ -849,13 +851,13 @@
 
         const segments = [];
 
-        if (!activeScenarioId) {
+        if (!C.activeScenarioId) {
           crumb.style.display = 'none';
           return;
         }
 
         segments.push({ label: 'Scenarios', action: () => switchMainTab('scenarios') });
-        segments.push({ label: activeScenarioName, editable: true });
+        segments.push({ label: C.activeScenarioName, editable: true });
 
         const activeL1 = document.querySelector('.main-tab-button.active')?.dataset.tab;
 
@@ -863,8 +865,8 @@
           segments.push({ label: 'Inputs', action: () => switchMainTab('inputs') });
           const activeL2Btn = document.querySelector('#tab-buttons .tab-button.active');
           if (activeL2Btn) {
-            const tabId = INPUT_TAB_ORDER[activeTabIndex];
-            const tabLabel = INPUT_TAB_LABELS[tabId] || tabId;
+            const tabId = C.INPUT_TAB_ORDER[C.activeTabIndex];
+            const tabLabel = C.INPUT_TAB_LABELS[tabId] || tabId;
             segments.push({ label: tabLabel, action: () => activeL2Btn.click() });
             const activeL2Content = document.querySelector('#tab-contents .tab-content.active');
             if (activeL2Content) {
@@ -935,8 +937,8 @@
           { timestamp: new Date().toISOString(), source: 'manual' },
           trimmed
         );
-        activeScenarioId = scenario.id;
-        activeScenarioName = trimmed;
+        C.activeScenarioId = scenario.id;
+        C.activeScenarioName = trimmed;
         updateScenarioBreadcrumb();
         const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
         if (inputsBtn) inputsBtn.classList.remove('disabled');
@@ -946,20 +948,20 @@
       }
 
       function removeScenarioFromSession(id) {
-        sessionScenarios = sessionScenarios.filter(s => s.id !== id);
-        comparisonScenarioIds.delete(id);
-        if (comparisonBaselineId === id) comparisonBaselineId = null;
+        C.sessionScenarios = C.sessionScenarios.filter(s => s.id !== id);
+        C.comparisonScenarioIds.delete(id);
+        if (C.comparisonBaselineId === id) C.comparisonBaselineId = null;
         renderScenarioList();
         updateScenarioBadge();
         renderComparisonTable();
       }
 
       function renameScenario(id, newName) {
-        const scenario = sessionScenarios.find(s => s.id === id);
+        const scenario = C.sessionScenarios.find(s => s.id === id);
         if (scenario && newName.trim()) {
           scenario.customName = newName.trim();
-          if (id === activeScenarioId) {
-            activeScenarioName = scenario.customName;
+          if (id === C.activeScenarioId) {
+            C.activeScenarioName = scenario.customName;
             updateScenarioBreadcrumb();
           }
           renderScenarioList();
@@ -1014,9 +1016,9 @@
        * indeterminate when some but not all. Pass the checkbox element from the current thead.
        */
       function syncComparisonSelectAllCheckbox(input) {
-        if (!input || sessionScenarios.length === 0) return;
-        const n = sessionScenarios.length;
-        const k = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id)).length;
+        if (!input || C.sessionScenarios.length === 0) return;
+        const n = C.sessionScenarios.length;
+        const k = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id)).length;
         input.checked = n > 0 && k === n;
         input.indeterminate = k > 0 && k < n;
       }
@@ -1028,7 +1030,7 @@
         if (!container) return;
         container.innerHTML = '';
 
-        if (sessionScenarios.length === 0) {
+        if (C.sessionScenarios.length === 0) {
           container.innerHTML = '<div class="scenario-empty">No scenarios yet.</div>';
           renderComparisonTable();
           return;
@@ -1051,10 +1053,10 @@
         selectAllCmp.addEventListener('click', (e) => e.stopPropagation());
         selectAllCmp.addEventListener('change', () => {
           if (selectAllCmp.checked) {
-            sessionScenarios.forEach(s => comparisonScenarioIds.add(s.id));
+            C.sessionScenarios.forEach(s => C.comparisonScenarioIds.add(s.id));
           } else {
-            comparisonScenarioIds.clear();
-            comparisonBaselineId = null;
+            C.comparisonScenarioIds.clear();
+            C.comparisonBaselineId = null;
           }
           renderScenarioList();
         });
@@ -1086,8 +1088,8 @@
         const tbody = document.createElement('tbody');
         table.appendChild(tbody);
 
-        sessionScenarios.forEach(scenario => {
-          const isActive = scenario.id === activeScenarioId;
+        C.sessionScenarios.forEach(scenario => {
+          const isActive = scenario.id === C.activeScenarioId;
           const card = document.createElement('tr');
           card.className = 'scenario-card' + (isActive ? ' scenario-card-active' : '');
           card.dataset.scenarioId = scenario.id;
@@ -1104,14 +1106,14 @@
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
           checkbox.className = 'scenario-card-checkbox';
-          checkbox.checked = comparisonScenarioIds.has(scenario.id);
+          checkbox.checked = C.comparisonScenarioIds.has(scenario.id);
           checkbox.title = 'Select for comparison';
           checkbox.addEventListener('change', () => {
             if (checkbox.checked) {
-              comparisonScenarioIds.add(scenario.id);
+              C.comparisonScenarioIds.add(scenario.id);
             } else {
-              comparisonScenarioIds.delete(scenario.id);
-              if (comparisonBaselineId === scenario.id) comparisonBaselineId = null;
+              C.comparisonScenarioIds.delete(scenario.id);
+              if (C.comparisonBaselineId === scenario.id) C.comparisonBaselineId = null;
             }
             renderScenarioList();
           });
@@ -1124,14 +1126,14 @@
           const baseRadio = document.createElement('input');
           baseRadio.type = 'radio';
           baseRadio.name = 'comparison-baseline';
-          baseRadio.checked = comparisonBaselineId === scenario.id;
+          baseRadio.checked = C.comparisonBaselineId === scenario.id;
           baseRadio.title = 'Set as comparison baseline';
           baseRadio.setAttribute('aria-label', 'Set as comparison baseline');
           baseRadio.addEventListener('click', (e) => e.stopPropagation());
           baseRadio.addEventListener('change', () => {
             if (baseRadio.checked) {
-              comparisonBaselineId = scenario.id;
-              comparisonScenarioIds.add(scenario.id);
+              C.comparisonBaselineId = scenario.id;
+              C.comparisonScenarioIds.add(scenario.id);
               renderScenarioList();
             }
           });
@@ -1226,7 +1228,7 @@
           saveHereBtn.addEventListener('click', () => {
             const currentInputs = collectJsonData();
             scenario.inputs = currentInputs;
-            scenario.results = lastRunResults;
+            scenario.results = C.lastRunResults;
             scenario.metadata.timestamp = new Date().toISOString();
             scenario.metadata.source = 'manual';
             renderScenarioList();
@@ -1287,7 +1289,7 @@
               e.dataTransfer.effectAllowed = 'move';
               e.dataTransfer.setData('text/plain', '' + rowIdx);
               const ghost = document.createElement('div');
-              ghost.textContent = sessionScenarios[rowIdx].customName;
+              ghost.textContent = C.sessionScenarios[rowIdx].customName;
               ghost.style.cssText = 'position:absolute;top:-9999px;padding:4px 10px;background:rgba(0,0,0,0.08);border:1px solid rgba(0,0,0,0.2);border-radius:4px;font-size:0.8rem;font-weight:600;color:rgba(0,0,0,0.5);white-space:nowrap;';
               document.body.appendChild(ghost);
               e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
@@ -1299,9 +1301,9 @@
               row.classList.remove('scenario-row-dragging');
               clearRowDropIndicators();
               if (dragRowIdx !== null && dropRowIdx !== null && dragRowIdx !== dropRowIdx) {
-                const moved = sessionScenarios.splice(dragRowIdx, 1)[0];
+                const moved = C.sessionScenarios.splice(dragRowIdx, 1)[0];
                 const insertAt = dropRowIdx > dragRowIdx ? dropRowIdx - 1 : dropRowIdx;
-                sessionScenarios.splice(insertAt, 0, moved);
+                C.sessionScenarios.splice(insertAt, 0, moved);
                 renderScenarioList();
               }
               dragRowIdx = null;
@@ -1342,7 +1344,7 @@
       function showSaveDialog() {
         const overlay = document.getElementById('save-overlay');
         const nameInput = document.getElementById('save-memory-name');
-        nameInput.value = activeScenarioName || generateScenarioName('Scenario');
+        nameInput.value = C.activeScenarioName || generateScenarioName('Scenario');
         // Reset selection
         document.querySelectorAll('.save-dialog .save-option').forEach(o => o.classList.remove('selected'));
         document.getElementById('save-opt-memory').classList.add('selected');
@@ -1350,7 +1352,7 @@
         const notCalcIndicator = document.getElementById('save-status-indicator');
         const savedIndicator = document.getElementById('save-saved-indicator');
 
-        if (!latestValidResults) {
+        if (!C.latestValidResults) {
           notCalcIndicator.textContent = 'Calculating initial results\u2026';
           notCalcIndicator.style.color = '#b00020';
         } else {
@@ -1387,18 +1389,18 @@
         if (!selected) return;
         const option = selected.dataset.option;
         const currentInputs = collectJsonData();
-        const resultsToSave = latestValidResults;
+        const resultsToSave = C.latestValidResults;
 
         if (option === 'memory') {
-          const name = document.getElementById('save-memory-name').value.trim() || activeScenarioName || generateScenarioName('Scenario');
-          if (activeScenarioId) {
-            const s = sessionScenarios.find(s => s.id === activeScenarioId);
+          const name = document.getElementById('save-memory-name').value.trim() || C.activeScenarioName || generateScenarioName('Scenario');
+          if (C.activeScenarioId) {
+            const s = C.sessionScenarios.find(s => s.id === C.activeScenarioId);
             if (s) {
               s.customName = name;
               s.inputs = JSON.parse(JSON.stringify(currentInputs));
               s.results = resultsToSave ? JSON.parse(JSON.stringify(resultsToSave)) : null;
               s.metadata.timestamp = new Date().toISOString();
-              activeScenarioName = name;
+              C.activeScenarioName = name;
               updateScenarioBreadcrumb();
               renderScenarioList();
               updateScenarioBadge();
@@ -1434,14 +1436,14 @@
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
       document.getElementById('save-scenario-main-btn').addEventListener('click', () => {
-        if (!activeScenarioId) {
+        if (!C.activeScenarioId) {
           showToast('No active scenario to save.');
           return;
         }
-        const scenario = sessionScenarios.find(s => s.id === activeScenarioId);
+        const scenario = C.sessionScenarios.find(s => s.id === C.activeScenarioId);
         if (!scenario) return;
         scenario.inputs = collectJsonData();
-        scenario.results = lastRunResults;
+        scenario.results = C.lastRunResults;
         scenario.metadata.timestamp = new Date().toISOString();
         scenario.metadata.source = 'manual';
         renderScenarioList();
@@ -1449,25 +1451,25 @@
       });
 
       document.getElementById('save-copy-btn').addEventListener('click', () => {
-        if (!activeScenarioId) {
+        if (!C.activeScenarioId) {
           showToast('No active scenario to copy.');
           return;
         }
-        const copyName = activeScenarioName + ' (copy)';
-        addScenarioToSession(collectJsonData(), lastRunResults,
+        const copyName = C.activeScenarioName + ' (copy)';
+        addScenarioToSession(collectJsonData(), C.lastRunResults,
           { timestamp: new Date().toISOString(), source: 'manual' }, copyName);
         showToast('Saved as "' + copyName + '".');
       });
 
       document.getElementById('scenario-breadcrumb').addEventListener('click', (e) => {
         const nameEl = e.target.closest('#scenario-breadcrumb-name');
-        if (!nameEl || !activeScenarioId) return;
+        if (!nameEl || !C.activeScenarioId) return;
 
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'scenario-card-name-input';
-        input.value = activeScenarioName;
-        input.size = Math.max(activeScenarioName.length, 5);
+        input.value = C.activeScenarioName;
+        input.size = Math.max(C.activeScenarioName.length, 5);
         nameEl.replaceWith(input);
         input.focus();
         input.select();
@@ -1477,18 +1479,18 @@
           const restored = document.createElement('span');
           restored.id = 'scenario-breadcrumb-name';
           restored.title = 'Click to rename';
-          if (newName && newName !== activeScenarioName) {
+          if (newName && newName !== C.activeScenarioName) {
             input.replaceWith(restored);
-            renameScenario(activeScenarioId, newName);
+            renameScenario(C.activeScenarioId, newName);
           } else {
-            restored.textContent = activeScenarioName;
+            restored.textContent = C.activeScenarioName;
             input.replaceWith(restored);
           }
         };
         input.addEventListener('blur', finishEdit);
         input.addEventListener('keydown', (e2) => {
           if (e2.key === 'Enter') { e2.preventDefault(); input.blur(); }
-          if (e2.key === 'Escape') { input.value = activeScenarioName; input.blur(); }
+          if (e2.key === 'Escape') { input.value = C.activeScenarioName; input.blur(); }
         });
       });
 
@@ -1548,17 +1550,17 @@
       // Copy comparison table to clipboard (Excel-compatible TSV).
       // One column per metric. With Δ enabled, each scenario gets sub-rows for delta and optional % delta.
       document.getElementById('copy-table-btn').addEventListener('click', function() {
-        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
-        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+        const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || C.comparisonColumns.length === 0) {
           alert('No scenarios or columns selected for comparison.');
           return;
         }
-        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
-        const hasDelta = !!(showDeltaVsBaseline && baselineScenario);
-        const hasPercent = hasDelta && showComparisonPercentDelta;
+        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
+        const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario);
+        const hasPercent = hasDelta && C.showComparisonPercentDelta;
 
         const headers = ['Scenario'];
-        comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
+        C.comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
 
         const rows = [];
         selectedScenarios.forEach(s => {
@@ -1568,7 +1570,7 @@
 
           // Value row
           const valCells = [nameCell];
-          comparisonColumns.forEach(key => {
+          C.comparisonColumns.forEach(key => {
             const cfg = getMetricConfig(key);
             if (!cfg) { valCells.push(''); return; }
             const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
@@ -1579,7 +1581,7 @@
           // Delta row
           if (hasDelta && !isBase) {
             const deltaCells = [''];
-            comparisonColumns.forEach(key => {
+            C.comparisonColumns.forEach(key => {
               const cfg = getMetricConfig(key);
               if (!cfg) { deltaCells.push(''); return; }
               const dline = formatDeltaLine(baselineScenario, s, key);
@@ -1591,7 +1593,7 @@
           // Percent delta row
           if (hasPercent && !isBase) {
             const pctCells = [''];
-            comparisonColumns.forEach(key => {
+            C.comparisonColumns.forEach(key => {
               const cfg = getMetricConfig(key);
               if (!cfg) { pctCells.push(''); return; }
               const pline = formatPercentDeltaLine(baselineScenario, s, key);
@@ -1611,14 +1613,14 @@
 
       // Export comparison table as PNG — one column per metric, delta/% nested as sub-lines.
       document.getElementById('export-png-btn').addEventListener('click', function() {
-        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
-        if (selectedScenarios.length === 0 || comparisonColumns.length === 0) {
+        const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
+        if (selectedScenarios.length === 0 || C.comparisonColumns.length === 0) {
           alert('No scenarios or columns selected for comparison.');
           return;
         }
-        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
-        const hasDelta = !!(showDeltaVsBaseline && baselineScenario);
-        const hasPercent = hasDelta && showComparisonPercentDelta;
+        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
+        const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario);
+        const hasPercent = hasDelta && C.showComparisonPercentDelta;
 
         const scale = 2;
         const font = '13px system-ui, -apple-system, sans-serif';
@@ -1638,7 +1640,7 @@
 
         // Headers: one per metric
         const headers = ['Scenario'];
-        comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
+        C.comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
 
         // Measure column widths
         const mCtx = document.createElement('canvas').getContext('2d');
@@ -1652,7 +1654,7 @@
               if (hasDelta && baselineScenario && s.id === baselineScenario.id) nt += ' (Baseline)';
               w = Math.max(w, mCtx.measureText(nt).width);
             } else {
-              const key = comparisonColumns[i - 1];
+              const key = C.comparisonColumns[i - 1];
               const cfg = getMetricConfig(key);
               if (!cfg) return;
               const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
@@ -1730,8 +1732,8 @@
           const isBase = baselineScenario && s.id === baselineScenario.id;
 
           // Metric columns
-          for (let ci = 0; ci < comparisonColumns.length; ci++) {
-            const key = comparisonColumns[ci];
+          for (let ci = 0; ci < C.comparisonColumns.length; ci++) {
+            const key = C.comparisonColumns[ci];
             const cfg = getMetricConfig(key);
             const colRight = x + colWidths[ci + 1] - padX;
             ctx.textAlign = 'right';
@@ -1978,7 +1980,7 @@
           let inputs = null;
           if (sections.INPUTS && sections.INPUTS.length > 1) {
             // Skip header row
-            inputs = ctccJsonData ? JSON.parse(JSON.stringify(ctccJsonData)) : {};
+            inputs = C.ctccJsonData ? JSON.parse(JSON.stringify(C.ctccJsonData)) : {};
             for (let i = 1; i < sections.INPUTS.length; i++) {
               const parts = parseCsvLine(sections.INPUTS[i]);
               if (parts.length >= 3) {
@@ -2362,8 +2364,8 @@
           if (!key) return;
           ev.preventDefault();
           cmpMetricPickerReopen = true;
-          comparisonColumns.push(key);
-          if (comparisonAutoSort) sortComparisonColumnsByCatalog();
+          C.comparisonColumns.push(key);
+          if (C.comparisonAutoSort) sortComparisonColumnsByCatalog();
           renderComparisonTable();
         });
 
@@ -2392,17 +2394,17 @@
       }
 
       function updateComparisonDeltaControlState() {
-        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
-        const can = showDeltaVsBaseline && !!baselineScenario;
+        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
+        const can = C.showDeltaVsBaseline && !!baselineScenario;
         const modeSel = document.getElementById('cmp-delta-display-mode');
         const pctCb = document.getElementById('cmp-show-percent-delta');
         if (modeSel) {
           modeSel.disabled = !can;
-          modeSel.value = comparisonDeltaDisplayMode;
+          modeSel.value = C.comparisonDeltaDisplayMode;
         }
         if (pctCb) {
           pctCb.disabled = !can;
-          pctCb.checked = showComparisonPercentDelta;
+          pctCb.checked = C.showComparisonPercentDelta;
         }
       }
 
@@ -2417,17 +2419,17 @@
         container.innerHTML = '';
 
         // Auto-activate exclusions panel if custom columns are added
-        const hasCustom = comparisonColumns.includes('custom_bcr') || comparisonColumns.includes('custom_nb');
+        const hasCustom = C.comparisonColumns.includes('custom_bcr') || C.comparisonColumns.includes('custom_nb');
         if (hasCustom && activeToolbarPanel !== 'exclusions') {
           activeToolbarPanel = 'exclusions';
           updateToolbarRow2();
         }
 
-        const selectedScenarios = sessionScenarios.filter(s => comparisonScenarioIds.has(s.id));
+        const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
         const hintEl = document.getElementById('cmp-delta-hint');
         if (hintEl) {
-          if (showDeltaVsBaseline && selectedScenarios.length > 0) {
-            const baseOk = comparisonBaselineId && comparisonScenarioIds.has(comparisonBaselineId);
+          if (C.showDeltaVsBaseline && selectedScenarios.length > 0) {
+            const baseOk = C.comparisonBaselineId && C.comparisonScenarioIds.has(C.comparisonBaselineId);
             if (!baseOk) {
               hintEl.style.display = 'block';
               hintEl.textContent = 'Select a baseline (Base column) to see Δ.';
@@ -2445,7 +2447,7 @@
           return;
         }
 
-        const baselineScenario = sessionScenarios.find(s => s.id === comparisonBaselineId && comparisonScenarioIds.has(s.id)) || null;
+        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'comparison-table-wrapper';
@@ -2459,7 +2461,7 @@
         scenarioTh.textContent = 'Scenario';
         headerRow.appendChild(scenarioTh);
 
-        comparisonColumns.forEach((colKey, colIdx) => {
+        C.comparisonColumns.forEach((colKey, colIdx) => {
           const config = getMetricConfig(colKey);
           const th = document.createElement('th');
           th.className = 'metric-col';
@@ -2472,8 +2474,8 @@
         // Filler column with add-column dropdown
         const fillerTh = document.createElement('th');
         fillerTh.style.cssText = 'width: 100%; border: none; background: transparent; text-align: left; padding-left: 0.75rem; white-space: nowrap;';
-        if (comparisonColumns.length < 10) {
-          const existingKeys = new Set(comparisonColumns);
+        if (C.comparisonColumns.length < 10) {
+          const existingKeys = new Set(C.comparisonColumns);
           const addWrap = document.createElement('span');
           addWrap.id = 'cmp-add-metric-wrap';
           addWrap.style.cssText = 'display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;';
@@ -2522,7 +2524,7 @@
           const row = document.createElement('tr');
           const nameTd = document.createElement('td');
           nameTd.appendChild(document.createTextNode(scenario.customName));
-          if (showDeltaVsBaseline && baselineScenario && scenario.id === baselineScenario.id) {
+          if (C.showDeltaVsBaseline && baselineScenario && scenario.id === baselineScenario.id) {
             const badge = document.createElement('span');
             badge.className = 'baseline-badge';
             badge.textContent = 'Baseline';
@@ -2530,13 +2532,13 @@
           }
           row.appendChild(nameTd);
 
-          comparisonColumns.forEach((colKey, colIdx) => {
+          C.comparisonColumns.forEach((colKey, colIdx) => {
             const config = getMetricConfig(colKey);
             const td = document.createElement('td');
             td.className = 'metric-val';
             td.dataset.colIdx = colIdx;
-            const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, showComparisonPercentDelta);
-            const hasDelta = !!(showDeltaVsBaseline && baselineScenario && parts.deltaLineText);
+            const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, C.showComparisonPercentDelta);
+            const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario && parts.deltaLineText);
 
             if (!config) {
               td.textContent = '';
@@ -2550,12 +2552,12 @@
               main.className = 'comparison-metric-line';
               main.textContent = parts.absText;
               td.appendChild(main);
-            } else if (comparisonDeltaDisplayMode === 'delta_only') {
+            } else if (C.comparisonDeltaDisplayMode === 'delta_only') {
               const line1 = document.createElement('span');
               line1.className = 'comparison-metric-line';
               line1.textContent = parts.deltaLineText;
               td.appendChild(line1);
-              if (showComparisonPercentDelta && parts.percentText) {
+              if (C.showComparisonPercentDelta && parts.percentText) {
                 const linePct = document.createElement('span');
                 linePct.className = 'comparison-percent-line';
                 linePct.textContent = parts.percentText;
@@ -2570,7 +2572,7 @@
               line2.className = 'comparison-delta-line';
               line2.textContent = parts.deltaLineText;
               td.appendChild(line2);
-              if (showComparisonPercentDelta && parts.percentText) {
+              if (C.showComparisonPercentDelta && parts.percentText) {
                 const linePct = document.createElement('span');
                 linePct.className = 'comparison-percent-line';
                 linePct.textContent = parts.percentText;
@@ -2593,14 +2595,14 @@
         const tfoot = document.createElement('tfoot');
         const footRow = document.createElement('tr');
         footRow.appendChild(document.createElement('td'));
-        comparisonColumns.forEach((colKey, colIdx) => {
+        C.comparisonColumns.forEach((colKey, colIdx) => {
           const td = document.createElement('td');
           const removeBtn = document.createElement('button');
           removeBtn.className = 'remove-col-btn';
           removeBtn.innerHTML = '<span>\u00d7</span><span>remove</span>';
           removeBtn.title = 'Remove column';
           removeBtn.addEventListener('click', () => {
-            comparisonColumns.splice(colIdx, 1);
+            C.comparisonColumns.splice(colIdx, 1);
             renderComparisonTable();
           });
           td.appendChild(removeBtn);
@@ -2650,9 +2652,9 @@
               if (dragIdx !== null) setDraggingClass(dragIdx, false);
               clearDropIndicators();
               if (dragIdx !== null && dropIdx !== null && dragIdx !== dropIdx) {
-                const moved = comparisonColumns.splice(dragIdx, 1)[0];
+                const moved = C.comparisonColumns.splice(dragIdx, 1)[0];
                 const insertAt = dropIdx > dragIdx ? dropIdx - 1 : dropIdx;
-                comparisonColumns.splice(insertAt, 0, moved);
+                C.comparisonColumns.splice(insertAt, 0, moved);
                 renderComparisonTable();
               }
               dragIdx = null;
@@ -2695,10 +2697,10 @@
 
         wrapper.appendChild(table);
         container.appendChild(wrapper);
-        if (shouldReopenCmpPicker && comparisonColumns.length < 10) {
+        if (shouldReopenCmpPicker && C.comparisonColumns.length < 10) {
           const wrapEl = document.getElementById('cmp-add-metric-wrap');
           if (wrapEl) {
-            openComparisonMetricPicker(wrapEl, new Set(comparisonColumns));
+            openComparisonMetricPicker(wrapEl, new Set(C.comparisonColumns));
           }
         }
         updateComparisonDeltaControlState();
@@ -2751,9 +2753,9 @@
 
       const cmpShowDeltaEl = document.getElementById('cmp-show-delta');
       if (cmpShowDeltaEl) {
-        cmpShowDeltaEl.checked = showDeltaVsBaseline;
+        cmpShowDeltaEl.checked = C.showDeltaVsBaseline;
         cmpShowDeltaEl.addEventListener('change', () => {
-          showDeltaVsBaseline = cmpShowDeltaEl.checked;
+          C.showDeltaVsBaseline = cmpShowDeltaEl.checked;
           renderComparisonTable();
         });
       }
@@ -2761,7 +2763,7 @@
       const cmpDeltaModeEl = document.getElementById('cmp-delta-display-mode');
       if (cmpDeltaModeEl) {
         cmpDeltaModeEl.addEventListener('change', () => {
-          comparisonDeltaDisplayMode = cmpDeltaModeEl.value === 'delta_only' ? 'delta_only' : 'values_plus_delta';
+          C.comparisonDeltaDisplayMode = cmpDeltaModeEl.value === 'delta_only' ? 'delta_only' : 'values_plus_delta';
           renderComparisonTable();
         });
       }
@@ -2769,7 +2771,7 @@
       const cmpPctDeltaEl = document.getElementById('cmp-show-percent-delta');
       if (cmpPctDeltaEl) {
         cmpPctDeltaEl.addEventListener('change', () => {
-          showComparisonPercentDelta = cmpPctDeltaEl.checked;
+          C.showComparisonPercentDelta = cmpPctDeltaEl.checked;
           renderComparisonTable();
         });
       }
@@ -2777,8 +2779,8 @@
       const cmpAutoSortEl = document.getElementById('cmp-auto-sort-columns');
       if (cmpAutoSortEl) {
         cmpAutoSortEl.addEventListener('change', () => {
-          comparisonAutoSort = cmpAutoSortEl.checked;
-          if (comparisonAutoSort) {
+          C.comparisonAutoSort = cmpAutoSortEl.checked;
+          if (C.comparisonAutoSort) {
             sortComparisonColumnsByCatalog();
             renderComparisonTable();
           }
@@ -3083,7 +3085,7 @@
         if (!isReconductoring) {
           populateDesignCmpDropdowns();
           updateDesignCmpPrimaryReadout();
-          if (lastRunResults) renderDesignComparison(lastRunResults);
+          if (C.lastRunResults) renderDesignComparison(C.lastRunResults);
         }
       }
 
@@ -3297,7 +3299,7 @@
           ctccJsonInputs.hidden = false;
           ctccYamlMessage.hidden = true;
           // Auto-load JSON data if not already loaded
-          if (!ctccJsonData) {
+          if (!C.ctccJsonData) {
             loadCtccJson();
           }
         } else {
@@ -3487,15 +3489,15 @@
           content.classList.toggle('active', i === index);
         });
 
-        activeTabIndex = index;
+        C.activeTabIndex = index;
         updateBreadcrumb();
       }
 
       function collectJsonData() {
-        if (!ctccJsonData) return null;
+        if (!C.ctccJsonData) return null;
 
         // Deep clone the original data to preserve nested structures
-        const result = JSON.parse(JSON.stringify(ctccJsonData));
+        const result = JSON.parse(JSON.stringify(C.ctccJsonData));
 
         // Helper function to set value at path
         function setValueAtPath(path, value) {
@@ -3549,8 +3551,8 @@
           if (!path) return;
 
           let value = select.value;
-          const meta = inputMetadata
-            ? inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path)
+          const meta = C.inputMetadata
+            ? C.inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path)
             : null;
           if (meta && meta.input_type === 'dynamic_dropdown') {
             const parsed = parseInt(value, 10);
@@ -3583,12 +3585,12 @@
       async function loadCtccJson() {
         try {
           const baseUrl = apiBaseInput.value.trim();
-          // Ensure taxonomy + input metadata are loaded before rendering
-          if (!taxonomy || !inputMetadata) {
+          // Ensure C.taxonomy + input metadata are loaded before rendering
+          if (!C.taxonomy || !C.inputMetadata) {
             try {
               const [taxData, metaData] = await Promise.all([
-                taxonomy ? Promise.resolve(taxonomy) : fetchTaxonomy(baseUrl),
-                inputMetadata ? Promise.resolve(inputMetadata) : fetchInputMetadata(baseUrl),
+                C.taxonomy ? Promise.resolve(C.taxonomy) : fetchTaxonomy(baseUrl),
+                C.inputMetadata ? Promise.resolve(C.inputMetadata) : fetchInputMetadata(baseUrl),
                 rowWidthLookup ? Promise.resolve(rowWidthLookup) : fetchRowWidths(baseUrl),
                 buildCostLookup ? Promise.resolve(buildCostLookup) : fetchBuildCosts(baseUrl),
                 circuitDetailsLookup ? Promise.resolve(circuitDetailsLookup) : fetchCircuitDetails(baseUrl),
@@ -3597,18 +3599,18 @@
                 conductorOmLookup ? Promise.resolve(conductorOmLookup) : fetchConductorOm(baseUrl),
                 vegetationManagementLookup ? Promise.resolve(vegetationManagementLookup) : fetchVegetationManagement(baseUrl),
               ]);
-              if (!taxonomy) {
-                taxonomy = taxData;
-                taxonomyById = {};
-                taxonomyBySide = {};
-                taxonomyByBucket = {};
+              if (!C.taxonomy) {
+                C.taxonomy = taxData;
+                C.taxonomyById = {};
+                C.taxonomyBySide = {};
+                C.taxonomyByBucket = {};
                 (taxData.items || []).forEach(item => {
-                  taxonomyById[item.id] = item;
-                  (taxonomyBySide[item.side] ??= []).push(item);
-                  (taxonomyByBucket[item.bucket] ??= []).push(item);
+                  C.taxonomyById[item.id] = item;
+                  (C.taxonomyBySide[item.side] ??= []).push(item);
+                  (C.taxonomyByBucket[item.bucket] ??= []).push(item);
                 });
               }
-              if (!inputMetadata) inputMetadata = metaData;
+              if (!C.inputMetadata) C.inputMetadata = metaData;
             } catch (err) {
               console.warn('Taxonomy/metadata pre-load failed, using legacy renderer:', err);
             }
@@ -4196,9 +4198,9 @@
 
       function renderCostsByTaxonomy(results) {
         const container = document.createElement('div');
-        if (!taxonomy) return container;
+        if (!C.taxonomy) return container;
         const resultById = buildResultById(results);
-        const costItems = taxonomy.items.filter(i => i.side === 'cost');
+        const costItems = C.taxonomy.items.filter(i => i.side === 'cost');
         let grandTotalPV = 0;
         let grandTotalNom = 0;
 
@@ -4250,12 +4252,12 @@
 
       function renderBenefitsByTaxonomy(results) {
         const container = document.createElement('div');
-        if (!taxonomy) return container;
+        if (!C.taxonomy) return container;
         const resultById = buildResultById(results);
         const bcr = results.bcr || {};
 
         // Remedial
-        const remItems = (taxonomyByBucket['remedial'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+        const remItems = (C.taxonomyByBucket['remedial'] || []).slice().sort((a,b) => a.display_order - b.display_order);
         const remSection = document.createElement('div');
         remSection.className = 'cost-section-items';
         remSection.appendChild(pairHeader());
@@ -4270,7 +4272,7 @@
         container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection, true));
 
         // Enabling
-        const enItems = (taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+        const enItems = (C.taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
         const enSection = document.createElement('div');
         enSection.className = 'cost-section-items';
         enSection.appendChild(pairHeader());
@@ -4298,11 +4300,11 @@
 
       function renderTransfersAndReporting(results) {
         const container = document.createElement('div');
-        if (!taxonomy) return container;
+        if (!C.taxonomy) return container;
         const resultById = buildResultById(results);
 
         // Revenue (transfer)
-        const revItems = (taxonomyBySide['transfer'] || []);
+        const revItems = (C.taxonomyBySide['transfer'] || []);
         if (revItems.length > 0) {
           const revSection = document.createElement('div');
           revSection.className = 'cost-section-items';
@@ -4321,7 +4323,7 @@
         }
 
         // Displacement (reporting only)
-        const dispItems = (taxonomyBySide['reporting_only'] || []);
+        const dispItems = (C.taxonomyBySide['reporting_only'] || []);
         if (dispItems.length > 0) {
           const dispSection = document.createElement('div');
           dispSection.className = 'cost-section-items';
@@ -4371,11 +4373,11 @@
 
       function renderSensitivityByTaxonomy(results) {
         const container = document.createElement('div');
-        if (!taxonomy) return container;
+        if (!C.taxonomy) return container;
         const bcr = results.bcr || {};
         const totalCostsPV = bcr.total_costs_pv || 0;
 
-        const exclDefs = Object.values(taxonomy.bcr_definitions)
+        const exclDefs = Object.values(C.taxonomy.bcr_definitions)
           .filter(d => d.exclude_groups.length > 0)
           .sort((a, b) => a.display_order - b.display_order);
 
@@ -4439,14 +4441,14 @@
 
       function renderCustomBCRByTaxonomy(results) {
         const container = document.createElement('div');
-        if (!taxonomy) return container;
+        if (!C.taxonomy) return container;
         const bcr = results.bcr || {};
         const resultById = buildResultById(results);
         const totalBenefitsPV = bcr.total_benefits_pv || 0;
         const totalCostsPV = bcr.total_costs_pv || 0;
 
         const toggles = [];
-        Object.entries(taxonomy.excludable_groups).forEach(([gid, group]) => {
+        Object.entries(C.taxonomy.excludable_groups).forEach(([gid, group]) => {
           const groupPV = group.taxonomy_ids.reduce((sum, tid) => sum + (resultById[tid]?.value_pv || 0), 0);
           toggles.push({ id: `custom-exc-${gid}`, label: `Exclude ${group.label}`, pv: groupPV });
         });
@@ -4506,14 +4508,14 @@
 
       // ===== Taxonomy-Driven Input Form Renderer (Phase 4) =====
 
-      const INPUT_TAB_ORDER = ['project-technical', 'benefits', 'financial', 'capital-costs', 'operational', 'delay-costs', 'emissions', 'risk'];
-      const INPUT_TAB_LABELS = {
+      C.INPUT_TAB_ORDER = ['project-technical', 'benefits', 'financial', 'capital-costs', 'operational', 'delay-costs', 'emissions', 'risk'];
+      C.INPUT_TAB_LABELS = {
         'project-technical': 'Project Details', 'financial': 'Financial',
         'capital-costs': 'Capital Costs',
         'operational': 'Operational Costs', 'delay-costs': 'Delay Costs',
         'risk': 'Risk Profiles', 'emissions': 'Energy and Emissions', 'benefits': 'System Details',
       };
-      const SUB_TAB_LABELS = {
+      C.SUB_TAB_LABELS = {
         'terrain-mix': 'Terrain Mix',
         'rights-of-way': 'Rights of Way',
         'conductor': 'Conductor',
@@ -6423,7 +6425,7 @@
             banner.querySelector('.banner-text').textContent =
               `Terrain miles (${formatNumberInput(terrainTotal)}) and zone miles (${formatNumberInput(zoneTotal)}) do not match. Adjust terrain miles or zone miles so both equal your intended total.`;
           }
-          routingValid = matches;
+          C.routingValid = matches;
         }
       }
 
@@ -8039,7 +8041,7 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-          btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+          btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
           btn.appendChild(makeMethodologyIcon(l4Id));
           l4Bar.appendChild(btn);
 
@@ -8170,7 +8172,7 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-          btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+          btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
           btn.appendChild(makeMethodologyIcon(l4Id));
           l4Bar.appendChild(btn);
 
@@ -8723,7 +8725,7 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-          btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+          btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
           btn.appendChild(makeMethodologyIcon(l4Id));
           l4Bar.appendChild(btn);
 
@@ -8889,7 +8891,7 @@
           wrapper.appendChild(display);
         });
 
-        // Contingency rate — render via taxonomy sections for the matching field
+        // Contingency rate — render via C.taxonomy sections for the matching field
         const contingencyDiv = document.createElement('div');
         contingencyDiv.className = 'capital-cost-contingency';
         wrapper.appendChild(contingencyDiv);
@@ -9112,13 +9114,13 @@
 
         tabButtonsContainer.innerHTML = '';
         tabContentsContainer.innerHTML = '';
-        ctccJsonData = data;
+        C.ctccJsonData = data;
 
         const taxById = {};
         (taxonomyData.items || []).forEach(item => { taxById[item.id] = item; });
 
-        INPUT_TAB_ORDER.forEach((tabId, tabIndex) => {
-          const tabLabel = INPUT_TAB_LABELS[tabId] || tabId;
+        C.INPUT_TAB_ORDER.forEach((tabId, tabIndex) => {
+          const tabLabel = C.INPUT_TAB_LABELS[tabId] || tabId;
 
           const tabButton = document.createElement('button');
           tabButton.type = 'button';
@@ -9168,7 +9170,7 @@
               const btn = document.createElement('button');
               btn.type = 'button';
               btn.className = 'sub-tab-button' + (stIndex === 0 ? ' active' : '');
-              btn.textContent = SUB_TAB_LABELS[stId] || stId;
+              btn.textContent = C.SUB_TAB_LABELS[stId] || stId;
               btn.appendChild(makeMethodologyIcon(stId));
               subTabBar.appendChild(btn);
 
@@ -9215,7 +9217,7 @@
                   const btn = document.createElement('button');
                   btn.type = 'button';
                   btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
                   btn.appendChild(makeMethodologyIcon(l4Id));
                   subSubBar.appendChild(btn);
 
@@ -9272,7 +9274,7 @@
                   const btn = document.createElement('button');
                   btn.type = 'button';
                   btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
                   btn.appendChild(makeMethodologyIcon(l4Id));
                   envL4Bar.appendChild(btn);
                   const panel = document.createElement('div');
@@ -9340,7 +9342,7 @@
                   const btn = document.createElement('button');
                   btn.type = 'button';
                   btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
                   btn.appendChild(makeMethodologyIcon(l4Id));
                   l4Bar.appendChild(btn);
                   const panel = document.createElement('div');
@@ -9376,7 +9378,7 @@
                   const btn = document.createElement('button');
                   btn.type = 'button';
                   btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-                  btn.textContent = SUB_TAB_LABELS[l4Id] || l4Id;
+                  btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
                   btn.appendChild(makeMethodologyIcon(l4Id));
                   eL4Bar.appendChild(btn);
                   const panel = document.createElement('div');
@@ -9498,7 +9500,7 @@
                   const el = document.querySelector(`[data-path="${p}"]`);
                   if (el) el.addEventListener('change', () => {
                     setTimeout(() => rebuildCapitalCosts(true), 0);
-                    setTimeout(() => rebuildEnvBaseMitigation(ctccJsonData, true), 0);
+                    setTimeout(() => rebuildEnvBaseMitigation(C.ctccJsonData, true), 0);
                   });
                 });
                 const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
@@ -9665,7 +9667,7 @@
                 const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
                 if (ctEl) {
                   ctEl.addEventListener('change', () => {
-                    setTimeout(() => rebuildRiskPanels(ctccJsonData), 0);
+                    setTimeout(() => rebuildRiskPanels(C.ctccJsonData), 0);
                   });
                 }
               }, 0);
@@ -9674,7 +9676,7 @@
                 const reconEl = document.querySelector('[data-path="01_project_technical_details.project.reconductoring"]');
                 if (reconEl) {
                   reconEl.addEventListener('change', () => {
-                    setTimeout(() => rebuildConstraintsPanel(ctccJsonData), 0);
+                    setTimeout(() => rebuildConstraintsPanel(C.ctccJsonData), 0);
                   });
                 }
               }, 0);
@@ -9770,11 +9772,11 @@
           tabRestoreBtn.className = 'restore-defaults-btn tab-restore';
           tabRestoreBtn.textContent = 'Restore Tab Defaults';
           tabRestoreBtn.addEventListener('click', () => {
-            showRestoreDefaultsDialog('ctcc-restore-tab-' + tabId, INPUT_TAB_LABELS[tabId], () => {
+            showRestoreDefaultsDialog('ctcc-restore-tab-' + tabId, C.INPUT_TAB_LABELS[tabId], () => {
               tabContent.querySelectorAll('input[data-path], select[data-path]').forEach(el => {
                 if (el.dataset.path) resetFieldToDefault(el.dataset.path);
               });
-              if (tabId === 'capital-costs') { rebuildCapitalCosts(); rebuildEnvBaseMitigation(ctccJsonData); }
+              if (tabId === 'capital-costs') { rebuildCapitalCosts(); rebuildEnvBaseMitigation(C.ctccJsonData); }
               updateRoutingValidation();
               updateEnvironmentalAcres();
               showToast('Tab defaults restored');
@@ -9795,7 +9797,7 @@
               if (el.dataset.path) resetFieldToDefault(el.dataset.path);
             });
             rebuildCapitalCosts();
-            rebuildEnvBaseMitigation(ctccJsonData);
+            rebuildEnvBaseMitigation(C.ctccJsonData);
             rebuildConductorDetails();
             rebuildConverterDetails();
             rebuildStructureDetails();
@@ -9892,8 +9894,8 @@
 
           document.querySelectorAll('.form-field[data-conditional="true"]').forEach(field => {
             const path = field.dataset.fieldPath;
-            if (!path || !inputMetadata) return;
-            const meta = inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path);
+            if (!path || !C.inputMetadata) return;
+            const meta = C.inputMetadata.find(m => m.yaml_section + '.' + m.field_path === path);
             if (!meta) return;
             if (meta.condition === 'dc_only') {
               field.style.display = isDC ? '' : 'none';
@@ -10148,10 +10150,10 @@
 
             let _totalCostPV = 0;
             COST_BUCKET_ORDER.forEach(b => {
-              _totalCostPV += (taxonomyByBucket[b] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+              _totalCostPV += (C.taxonomyByBucket[b] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
             });
-            const remPV = (taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-            const enPV = (taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            const remPV = (C.taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+            const enPV = (C.taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
             const totalBenefitsPV = remPV + enPV;
             const netBenefitPV = bcr.net_benefit_pv != null ? bcr.net_benefit_pv : (totalBenefitsPV - _totalCostPV);
 
@@ -10194,7 +10196,7 @@
             costsCard.appendChild(costsHdr);
 
             COST_BUCKET_ORDER.forEach(b => {
-              const items = (taxonomyByBucket[b] || []);
+              const items = (C.taxonomyByBucket[b] || []);
               const pv = items.reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
               const row = document.createElement('div');
               row.style.cssText = 'display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06)';
@@ -10339,7 +10341,7 @@
           return;
         }
 
-        if (!routingValid) {
+        if (!C.routingValid) {
           showToast('Cannot run — terrain and zone miles don\'t match');
           return;
         }
@@ -10382,7 +10384,7 @@
               document.querySelectorAll('input[name="ctcc-input-mode"]')
             ).find((input) => input.checked)?.value ?? "json";
 
-            const scenarioId = activeScenarioId;
+            const scenarioId = C.activeScenarioId;
 
             // Build CTCC payload (calculator is JSON-out only; output_mode accepted but ignored server-side)
             payload = {
@@ -10395,7 +10397,7 @@
 
             // If input mode is JSON, use the edited data or fetch from server
             if (inputMode === "json") {
-              if (ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
+              if (C.ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
                 payload.combined_data = collectJsonData();
               } else {
                 payload.combined_data = await fetchFinalCombined(baseUrl);
@@ -10427,8 +10429,8 @@
             await displayCsvFiles(json, baseUrl);
           } else if (mode === "ctcc" && json.results) {
             renderCTCCResults(json.results);
-            lastRunResults = json.results;
-            latestValidResults = json.results;
+            C.lastRunResults = json.results;
+            C.latestValidResults = json.results;
             renderDesignComparison(json.results);
             updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
@@ -10456,7 +10458,7 @@
       form.addEventListener('input', () => autoCalculate());
       form.addEventListener('change', () => autoCalculate());
 
-      // Initial calculation removed — gated on activeScenarioId (§13 Scenarios Tab)
+      // Initial calculation removed — gated on C.activeScenarioId (§13 Scenarios Tab)
 
       // =============================================
       // Conditional Field Visibility
@@ -10703,7 +10705,7 @@
       function renderJsonInputs(data) {
         const normalized = normalizeEnergySourceMixInCombinedData(data);
         originalJsonData = JSON.parse(JSON.stringify(normalized));
-        renderInputsFromTaxonomy(normalized, taxonomy, inputMetadata);
+        renderInputsFromTaxonomy(normalized, C.taxonomy, C.inputMetadata);
       }
 
       console.log('Calling initialiseApiBase and updateModeVisibility...');
