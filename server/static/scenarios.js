@@ -67,6 +67,7 @@ function addScenarioToSession(inputs, results, metadata, customName) {
   };
   C.sessionScenarios.push(scenario);
   renderScenarioList();
+  renderCompareSelector();
   updateScenarioBadge();
   return scenario;
 }
@@ -85,6 +86,7 @@ function setActiveScenario(scenario) {
     markResultsAvailable(0);
   }
   renderScenarioList();
+  renderCompareSelector();
   autoCalculate();
 }
 
@@ -196,8 +198,8 @@ function removeScenarioFromSession(id) {
   C.comparisonScenarioIds.delete(id);
   if (C.comparisonBaselineId === id) C.comparisonBaselineId = null;
   renderScenarioList();
+  renderCompareSelector();
   updateScenarioBadge();
-  renderComparisonTable();
 }
 
 function renameScenario(id, newName) {
@@ -209,6 +211,7 @@ function renameScenario(id, newName) {
       updateScenarioBreadcrumb();
     }
     renderScenarioList();
+    renderCompareSelector();
   }
 }
 
@@ -249,7 +252,6 @@ function renderScenarioList() {
 
   if (C.sessionScenarios.length === 0) {
     container.innerHTML = '<div class="scenario-empty">No scenarios yet.</div>';
-    renderComparisonTable();
     return;
   }
 
@@ -259,32 +261,6 @@ function renderScenarioList() {
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  const thCmp = document.createElement('th');
-  thCmp.className = 'scenario-compare-col';
-  thCmp.title = 'Include in comparison table';
-  const selectAllCmp = document.createElement('input');
-  selectAllCmp.type = 'checkbox';
-  selectAllCmp.id = 'scenario-compare-select-all';
-  selectAllCmp.setAttribute('aria-label', 'Select all scenarios for comparison');
-  selectAllCmp.title = 'Select all scenarios for comparison';
-  selectAllCmp.addEventListener('click', (e) => e.stopPropagation());
-  selectAllCmp.addEventListener('change', () => {
-    if (selectAllCmp.checked) {
-      C.sessionScenarios.forEach(s => C.comparisonScenarioIds.add(s.id));
-    } else {
-      C.comparisonScenarioIds.clear();
-      C.comparisonBaselineId = null;
-    }
-    renderScenarioList();
-  });
-  thCmp.appendChild(selectAllCmp);
-  syncComparisonSelectAllCheckbox(selectAllCmp);
-  const thBase = document.createElement('th');
-  thBase.className = 'scenario-base-col';
-  thBase.innerHTML = 'Set as<br>baseline';
-  thBase.style.textAlign = 'center';
-  thBase.style.lineHeight = '1.1';
-  thBase.title = 'Set as baseline for Δ comparison';
   const thScenario = document.createElement('th');
   thScenario.textContent = 'Scenario';
   const thActions = document.createElement('th');
@@ -293,8 +269,6 @@ function renderScenarioList() {
   thFill.style.width = '100%';
   const thDrag = document.createElement('th');
   thDrag.style.width = '20px';
-  headRow.appendChild(thCmp);
-  headRow.appendChild(thBase);
   headRow.appendChild(thScenario);
   headRow.appendChild(thActions);
   headRow.appendChild(thDrag);
@@ -311,57 +285,9 @@ function renderScenarioList() {
     card.className = 'scenario-card' + (isActive ? ' scenario-card-active' : '');
     card.dataset.scenarioId = scenario.id;
 
-    // Row click toggles checkbox (except buttons, checkbox, radio, name editing)
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('.scenario-card-actions') || e.target.closest('.scenario-drag-handle') || e.target.closest('.scenario-card-name') || e.target.closest('.scenario-card-name-input') || e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
-      checkbox.checked = !checkbox.checked;
-      checkbox.dispatchEvent(new Event('change'));
-    });
-
-    // Checkbox cell
-    const checkTd = document.createElement('td');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'scenario-card-checkbox';
-    checkbox.checked = C.comparisonScenarioIds.has(scenario.id);
-    checkbox.title = 'Select for comparison';
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) {
-        C.comparisonScenarioIds.add(scenario.id);
-      } else {
-        C.comparisonScenarioIds.delete(scenario.id);
-        if (C.comparisonBaselineId === scenario.id) C.comparisonBaselineId = null;
-      }
-      renderScenarioList();
-    });
-    checkTd.appendChild(checkbox);
-    card.appendChild(checkTd);
-
-    // Baseline radio cell
-    const baseTd = document.createElement('td');
-    baseTd.className = 'scenario-base-cell';
-    const baseRadio = document.createElement('input');
-    baseRadio.type = 'radio';
-    baseRadio.name = 'comparison-baseline';
-    baseRadio.checked = C.comparisonBaselineId === scenario.id;
-    baseRadio.title = 'Set as comparison baseline';
-    baseRadio.setAttribute('aria-label', 'Set as comparison baseline');
-    baseRadio.addEventListener('click', (e) => e.stopPropagation());
-    baseRadio.addEventListener('change', () => {
-      if (baseRadio.checked) {
-        C.comparisonBaselineId = scenario.id;
-        C.comparisonScenarioIds.add(scenario.id);
-        renderScenarioList();
-      }
-    });
-    baseTd.appendChild(baseRadio);
-    card.appendChild(baseTd);
-
-    // Info cell
     const infoTd = document.createElement('td');
     infoTd.className = 'scenario-card-info';
 
-    // Editable name
     const nameSpan = document.createElement('span');
     nameSpan.className = 'scenario-card-name';
     nameSpan.textContent = scenario.customName;
@@ -392,13 +318,11 @@ function renderScenarioList() {
     });
     infoTd.appendChild(nameSpan);
 
-    // Params
     const params = document.createElement('span');
     params.className = 'scenario-card-params';
     params.textContent = getScenarioParams(scenario);
     infoTd.appendChild(params);
 
-    // Meta
     const meta = document.createElement('span');
     meta.className = 'scenario-card-meta';
     const sourceLabel = scenario.metadata?.source === 'run' ? 'Calculated' :
@@ -410,7 +334,6 @@ function renderScenarioList() {
 
     card.appendChild(infoTd);
 
-    // Actions cell
     const actionsTd = document.createElement('td');
     actionsTd.className = 'scenario-actions-cell';
     const actions = document.createElement('div');
@@ -449,6 +372,7 @@ function renderScenarioList() {
       scenario.metadata.timestamp = new Date().toISOString();
       scenario.metadata.source = 'manual';
       renderScenarioList();
+      renderCompareSelector();
     });
     actions.appendChild(saveHereBtn);
 
@@ -466,7 +390,6 @@ function renderScenarioList() {
     actionsTd.appendChild(actions);
     card.appendChild(actionsTd);
 
-    // Drag handle cell
     const dragTd = document.createElement('td');
     dragTd.className = 'scenario-drag-cell';
     const dragHandle = document.createElement('span');
@@ -476,7 +399,6 @@ function renderScenarioList() {
     dragTd.appendChild(dragHandle);
     card.appendChild(dragTd);
 
-    // Filler cell
     const fillerTd = document.createElement('td');
     fillerTd.style.cssText = 'width: 100%;';
     card.appendChild(fillerTd);
@@ -522,6 +444,7 @@ function renderScenarioList() {
           const insertAt = dropRowIdx > dragRowIdx ? dropRowIdx - 1 : dropRowIdx;
           C.sessionScenarios.splice(insertAt, 0, moved);
           renderScenarioList();
+          renderCompareSelector();
         }
         dragRowIdx = null;
         dropRowIdx = null;
@@ -552,7 +475,137 @@ function renderScenarioList() {
   })();
 
   container.appendChild(table);
+}
 
+function renderCompareSelector() {
+  const container = document.getElementById('compare-scenario-selector');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (C.sessionScenarios.length === 0) {
+    container.innerHTML = '<p style="color: rgba(0,0,0,0.5); padding: 1rem;">No scenarios to compare.</p>';
+    renderComparisonTable();
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'scenario-list-table';
+  table.style.cssText = 'width: 100%; border-collapse: collapse;';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+
+  const thCmp = document.createElement('th');
+  thCmp.className = 'scenario-compare-col';
+  thCmp.title = 'Include in comparison table';
+  const selectAllCmp = document.createElement('input');
+  selectAllCmp.type = 'checkbox';
+  selectAllCmp.setAttribute('aria-label', 'Select all scenarios for comparison');
+  selectAllCmp.title = 'Select all scenarios for comparison';
+  selectAllCmp.addEventListener('click', (e) => e.stopPropagation());
+  selectAllCmp.addEventListener('change', () => {
+    if (selectAllCmp.checked) {
+      C.sessionScenarios.forEach(s => C.comparisonScenarioIds.add(s.id));
+    } else {
+      C.comparisonScenarioIds.clear();
+      C.comparisonBaselineId = null;
+    }
+    renderCompareSelector();
+  });
+  thCmp.appendChild(selectAllCmp);
+  syncComparisonSelectAllCheckbox(selectAllCmp);
+
+  const thBase = document.createElement('th');
+  thBase.className = 'scenario-base-col';
+  thBase.innerHTML = 'Set as<br>baseline';
+  thBase.style.textAlign = 'center';
+  thBase.style.lineHeight = '1.1';
+  thBase.title = 'Set as baseline for Δ comparison';
+
+  const thScenario = document.createElement('th');
+  thScenario.textContent = 'Scenario';
+
+  const thFill = document.createElement('th');
+  thFill.style.width = '100%';
+
+  headRow.appendChild(thCmp);
+  headRow.appendChild(thBase);
+  headRow.appendChild(thScenario);
+  headRow.appendChild(thFill);
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  C.sessionScenarios.forEach(scenario => {
+    const row = document.createElement('tr');
+    row.className = 'scenario-card';
+
+    row.addEventListener('click', (e) => {
+      if (e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event('change'));
+    });
+
+    const checkTd = document.createElement('td');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'scenario-card-checkbox';
+    checkbox.checked = C.comparisonScenarioIds.has(scenario.id);
+    checkbox.title = 'Select for comparison';
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        C.comparisonScenarioIds.add(scenario.id);
+      } else {
+        C.comparisonScenarioIds.delete(scenario.id);
+        if (C.comparisonBaselineId === scenario.id) C.comparisonBaselineId = null;
+      }
+      renderCompareSelector();
+    });
+    checkTd.appendChild(checkbox);
+    row.appendChild(checkTd);
+
+    const baseTd = document.createElement('td');
+    baseTd.className = 'scenario-base-cell';
+    const baseRadio = document.createElement('input');
+    baseRadio.type = 'radio';
+    baseRadio.name = 'comparison-baseline';
+    baseRadio.checked = C.comparisonBaselineId === scenario.id;
+    baseRadio.title = 'Set as comparison baseline';
+    baseRadio.setAttribute('aria-label', 'Set as comparison baseline');
+    baseRadio.addEventListener('click', (e) => e.stopPropagation());
+    baseRadio.addEventListener('change', () => {
+      if (baseRadio.checked) {
+        C.comparisonBaselineId = scenario.id;
+        C.comparisonScenarioIds.add(scenario.id);
+        renderCompareSelector();
+      }
+    });
+    baseTd.appendChild(baseRadio);
+    row.appendChild(baseTd);
+
+    const infoTd = document.createElement('td');
+    infoTd.className = 'scenario-card-info';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'scenario-card-name';
+    nameSpan.style.cursor = 'default';
+    nameSpan.textContent = scenario.customName;
+    infoTd.appendChild(nameSpan);
+    const params = document.createElement('span');
+    params.className = 'scenario-card-params';
+    params.textContent = getScenarioParams(scenario);
+    infoTd.appendChild(params);
+    row.appendChild(infoTd);
+
+    const fillerTd = document.createElement('td');
+    fillerTd.style.width = '100%';
+    row.appendChild(fillerTd);
+
+    tbody.appendChild(row);
+  });
+
+  container.appendChild(table);
   renderComparisonTable();
 }
 
@@ -909,6 +962,7 @@ async function downloadAllCsvFiles() {
   window.loadScenarioIntoUI = loadScenarioIntoUI;
   window.getScenarioParams = getScenarioParams;
   window.renderScenarioList = renderScenarioList;
+  window.renderCompareSelector = renderCompareSelector;
   window.showSaveDialog = showSaveDialog;
   window.hideSaveDialog = hideSaveDialog;
   window.exportAsCtcc = exportAsCtcc;

@@ -1319,7 +1319,7 @@
         color: rgba(0, 0, 0, 0.6);
         border-color: rgba(0, 0, 0, 0.2);
       }
-      .comparison-section { margin-top: 0; flex: 1 1 0; overflow-y: auto; min-height: 0; }
+      .comparison-section { margin-top: 0; flex: 1 1 auto; overflow-y: auto; }
       .comparison-section > h3,
       .comparison-section > #cmp-toolbar-row2,
       .comparison-section > #cmp-delta-hint { user-select: none; -webkit-user-select: none; }

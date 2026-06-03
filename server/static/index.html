@@ -130,16 +130,15 @@
 
     <!-- Scenarios Tab -->
     <div class="main-tab-content active" id="main-tab-scenarios">
-      <!-- Subtab navigation strip -->
       <div class="tabs" id="scenario-subtabs" style="padding-left: 1rem;">
-        <button type="button" class="tab-button active" data-scenario-tab="scenario-comparison">Scenario Comparison</button>
-        <button type="button" class="tab-button" data-scenario-tab="design-comparison">Counterfactual Calculators</button>
-        <button type="button" class="tab-button" data-scenario-tab="sensitivity-analysis">Sensitivity Analysis</button>
+        <button type="button" class="tab-button active" data-scenario-tab="manage">Manage</button>
+        <button type="button" class="tab-button" data-scenario-tab="compare">Compare</button>
+        <button type="button" class="tab-button" data-scenario-tab="sensitivity">Sensitivity</button>
+        <button type="button" class="tab-button" data-scenario-tab="what-if">What-If</button>
       </div>
 
-      <!-- Subtab 1: Scenario Comparison (existing Scenario Manager, wrapped) -->
-      <div class="scenario-subtab-content active" id="scenario-subtab-scenario-comparison">
-        <h2 style="margin: 0 0 1rem; padding: 0 1rem;">Scenario Comparison</h2>
+      <!-- Manage subtab -->
+      <div class="scenario-subtab-content active" id="scenario-subtab-manage">
         <div class="scenario-toolbar">
           <button type="button" id="new-scenario-btn">+ New Scenario</button>
           <button type="button" id="scenario-upload-btn">Load from file</button>
@@ -149,12 +148,11 @@
         <div class="scenario-list" id="scenario-list">
           <div class="scenario-empty">No scenarios yet.</div>
         </div>
-        <div class="scenario-divider" id="scenario-divider">
-          <span class="scenario-divider-hint" id="scenario-divider-hint">Click to show scenarios list</span>
-          <button type="button" class="scenario-toggle-btn" id="scenario-toggle-btn" title="Hide scenario list">
-            <svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
+      </div>
+
+      <!-- Compare subtab -->
+      <div class="scenario-subtab-content" id="scenario-subtab-compare">
+        <div id="compare-scenario-selector"></div>
         <div class="comparison-section" id="comparison-section">
           <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (&Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios. <strong>Sign convention:</strong> &Delta; is always <em>scenario value &minus; baseline value</em>. For benefits and net benefit, positive &Delta; means the scenario scores higher (better). For cost PV rows (capital, emissions, risk, etc.), positive &Delta; means the scenario is more expensive; negative &Delta; means cheaper (avoided cost). For ratios such as BCR, positive &Delta; means the scenario&rsquo;s ratio is numerically higher. <em>Note for paper readers:</em> the appendix defines &Delta;C<sup>P:B</sup> = baseline &minus; scenario (avoided-cost convention); cost &Delta; in this table uses the opposite sign so every row follows the same scenario &minus; baseline direction.</p>
           <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
@@ -198,17 +196,31 @@
         </div>
       </div>
 
-      <!-- Subtab 2: Counterfactual Calculators -->
-      <div class="scenario-subtab-content" id="scenario-subtab-design-comparison">
-        <div style="padding: 1.5rem 1rem; max-width: 60rem;">
+      <!-- Sensitivity subtab -->
+      <div class="scenario-subtab-content" id="scenario-subtab-sensitivity">
+        <div style="padding: 2rem; max-width: 40rem;">
+          <h2 style="margin: 0 0 0.75rem;">Sensitivity Analysis</h2>
+          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">
+            Systematic sensitivity analysis tools for understanding which input parameters
+            most affect project economics.
+          </p>
+          <div style="background: rgba(0,0,0,0.03); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.08);">
+            <p style="font-weight: 600; margin: 0 0 0.5rem; font-size: 0.85rem;">Under Development</p>
+            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: rgba(0,0,0,0.6); line-height: 1.6;">
+              <li><strong>One-At-a-Time (OAT)</strong> &mdash; vary a single parameter while holding all others fixed to isolate its effect on BCR, costs, and benefits.</li>
+              <li><strong>Latin Hypercube Sampling (LHS)</strong> &mdash; simultaneously vary multiple parameters across their ranges to capture interaction effects and identify the most influential inputs.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
-          <!-- Reconductoring guard -->
+      <!-- What-If subtab -->
+      <div class="scenario-subtab-content" id="scenario-subtab-what-if">
+        <div style="padding: 1.5rem 1rem; max-width: 60rem;">
           <div id="design-comparison-reconductoring-guard" style="display: none; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 0.5rem; border: 1px solid rgba(0,0,0,0.08);">
             <p style="margin: 0; font-size: 0.9rem; color: rgba(0,0,0,0.55);">Counterfactual calculators are available for greenfield (non-reconductoring) projects. Your current project is set to reconductoring mode.</p>
           </div>
-
           <div id="design-comparison-main">
-            <!-- Calculator 1: Line Losses Under Alternative Designs -->
             <div class="cf-calculator">
               <div class="collapsible-header expanded cf-calculator-header" id="cf-calc-lineloss-header">
                 Line Losses Under Alternative Designs
@@ -218,17 +230,13 @@
                   How would line losses change if this route used a different capacity or conductor?
                   Set an alternative configuration below and run the calculation.
                 </p>
-
                 <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                  <!-- Primary config readout -->
                   <div style="flex: 1 1 14rem; background: rgba(0,0,0,0.02); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,0,0,0.06);">
                     <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.4rem; color: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 0.03em;">Your Project</p>
                     <div id="design-cmp-primary-readout" style="font-size: 0.85rem; line-height: 1.5;">
                       <span style="color: rgba(0,0,0,0.4);">Run a calculation first</span>
                     </div>
                   </div>
-
-                  <!-- Comparison config controls -->
                   <div style="flex: 1 1 14rem; background: rgba(0,100,200,0.04); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,100,200,0.12);">
                     <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.5rem; color: rgba(0,100,200,0.7); text-transform: uppercase; letter-spacing: 0.03em;">Alternative Design</p>
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -247,38 +255,15 @@
                     </div>
                   </div>
                 </div>
-
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                   <button type="button" id="design-cmp-run-btn" disabled style="padding: 0.5rem 1.25rem; background: #ccc; color: white; border: none; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 600; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Run Comparison</button>
                   <span id="design-cmp-run-hint" style="font-size: 0.8rem; color: rgba(0,0,0,0.45);">
                     Select an alternative capacity and conductor, then run.
                   </span>
                 </div>
-
-                <!-- Results area -->
                 <div id="design-comparison-results" style="display: none;"></div>
               </div>
             </div>
-
-            <!-- Future calculators go here with the same cf-calculator pattern -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Subtab 3: Sensitivity Analysis (placeholder) -->
-      <div class="scenario-subtab-content" id="scenario-subtab-sensitivity-analysis">
-        <div style="padding: 2rem; max-width: 40rem;">
-          <h2 style="margin: 0 0 0.75rem;">Sensitivity Analysis</h2>
-          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">
-            Systematic sensitivity analysis tools for understanding which input parameters
-            most affect project economics.
-          </p>
-          <div style="background: rgba(0,0,0,0.03); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.08);">
-            <p style="font-weight: 600; margin: 0 0 0.5rem; font-size: 0.85rem;">Under Development</p>
-            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: rgba(0,0,0,0.6); line-height: 1.6;">
-              <li><strong>One-At-a-Time (OAT)</strong> &mdash; vary a single parameter while holding all others fixed to isolate its effect on BCR, costs, and benefits.</li>
-              <li><strong>Latin Hypercube Sampling (LHS)</strong> &mdash; simultaneously vary multiple parameters across their ranges to capture interaction effects and identify the most influential inputs.</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -479,6 +464,7 @@
       document.getElementById('home-btn').addEventListener('click', function() {
         appShell.style.display = 'none';
         landingPage.style.display = '';
+        sessionStorage.removeItem('ctcc-session-active');
         enableGotoScenarios();
       });
 
@@ -627,6 +613,7 @@
               C.activeScenarioName = name;
               updateScenarioBreadcrumb();
               renderScenarioList();
+              renderCompareSelector();
               updateScenarioBadge();
             }
           } else {
@@ -671,6 +658,7 @@
         scenario.metadata.timestamp = new Date().toISOString();
         scenario.metadata.source = 'manual';
         renderScenarioList();
+        renderCompareSelector();
         showToast('Scenario saved.');
       });
 
@@ -752,24 +740,6 @@
         input.focus();
       });
 
-      document.getElementById('scenario-toggle-btn').addEventListener('click', function() {
-        const list = document.getElementById('scenario-list');
-        const cmpSection = document.getElementById('comparison-section');
-        const hint = document.getElementById('scenario-divider-hint');
-        const btn = this;
-        const collapsed = list.classList.toggle('collapsed');
-        if (collapsed) {
-          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,4 6,8 10,4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-          btn.title = 'Show scenario list';
-          if (cmpSection) { cmpSection.style.flex = '1 1 auto'; }
-          if (hint) { hint.style.display = 'block'; }
-        } else {
-          btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-          btn.title = 'Hide scenario list';
-          if (cmpSection) { cmpSection.style.flex = ''; }
-          if (hint) { hint.style.display = 'none'; }
-        }
-      });
 
       // Copy comparison table to clipboard (Excel-compatible TSV).
       // One column per metric. With Δ enabled, each scenario gets sub-rows for delta and optional % delta.
@@ -1177,8 +1147,11 @@
       document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
         btn.addEventListener('click', () => {
           switchScenarioSubtab(btn.dataset.scenarioTab);
-          if (btn.dataset.scenarioTab === 'design-comparison') {
+          if (btn.dataset.scenarioTab === 'what-if') {
             updateDesignComparisonState();
+          }
+          if (btn.dataset.scenarioTab === 'compare') {
+            renderCompareSelector();
           }
         });
       });
@@ -1203,7 +1176,7 @@
           form.requestSubmit();
           const onResults = () => {
             switchMainTab('scenarios');
-            switchScenarioSubtab('design-comparison');
+            switchScenarioSubtab('what-if');
             updateDesignComparisonState();
             document.removeEventListener('ctcc-results-ready', onResults);
           };
