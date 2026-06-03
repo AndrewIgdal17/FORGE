@@ -22,14 +22,34 @@
       </div>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem 1rem 2rem; background: rgba(0, 100, 200, 0.03); border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
-      <h1 style="margin: 0; padding: 0; background: none; border: none;">Comprehensive Transmission Cost Calculator</h1>
+    <!-- Landing Page (shown on fresh load, hidden once user enters the app) -->
+    <div id="landing-page" class="landing-page">
+      <div class="landing-title">CTCC</div>
+      <div class="landing-name">Comprehensive Transmission Cost Calculator</div>
+      <div class="landing-tagline">Full-cost benefit-cost analysis for transmission projects</div>
+      <div class="landing-buttons">
+        <button type="button" class="landing-btn landing-btn-primary" id="landing-new-scenario-btn">+ New Scenario</button>
+        <button type="button" class="landing-btn landing-btn-secondary" id="landing-load-file-btn">Load from File</button>
+        <button type="button" class="landing-btn landing-btn-disabled" disabled>Guided Tour</button>
+        <button type="button" class="landing-btn landing-btn-disabled" id="landing-goto-scenarios-btn" disabled>Go to Scenarios</button>
+      </div>
+    </div>
+
+    <!-- App Shell (hidden while landing page is visible) -->
+    <div id="app-shell">
+
+    <div class="identity-header">
+      <button type="button" class="home-btn" id="home-btn" title="Back to home">&#8962;</button>
+      <div class="identity-header-text">
+        <div class="identity-title"><strong>CTCC</strong> &middot; Comprehensive Transmission Cost Calculator</div>
+        <div class="identity-tagline">Full-cost benefit-cost analysis for transmission projects</div>
+      </div>
     </div>
 
     <!-- Main Tabs -->
     <div class="main-tabs">
-      <button type="button" class="main-tab-button disabled" data-tab="inputs">Inputs</button>
-      <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
+      <button type="button" class="main-tab-button" data-tab="inputs">Inputs</button>
+      <button type="button" class="main-tab-button" data-tab="results">Results</button>
       <button type="button" class="main-tab-button active" data-tab="scenarios">Scenarios</button>
       <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
       <button type="button" class="save-scenario-button" id="save-copy-btn">Save as Copy</button>
@@ -362,6 +382,8 @@
       </div>
     </div>
 
+    </div><!-- end #app-shell -->
+
     <script>window.CTCC = {};</script>
     <script src="/static/configs.js"></script>
     <script src="/static/utils.js"></script>
@@ -408,6 +430,56 @@
       document.getElementById('status-bar-save-btn').addEventListener('click', function(e) {
         e.preventDefault();
         showSaveDialog();
+      });
+
+      // --- Landing page gate ---
+      const landingPage = document.getElementById('landing-page');
+      const appShell = document.getElementById('app-shell');
+      const gotoScenariosBtn = document.getElementById('landing-goto-scenarios-btn');
+
+      function showApp() {
+        landingPage.style.display = 'none';
+        appShell.style.display = '';
+        sessionStorage.setItem('ctcc-session-active', '1');
+      }
+
+      function enableGotoScenarios() {
+        gotoScenariosBtn.disabled = false;
+        gotoScenariosBtn.classList.remove('landing-btn-disabled');
+        gotoScenariosBtn.classList.add('landing-btn-secondary');
+      }
+
+      if (sessionStorage.getItem('ctcc-session-active')) {
+        showApp();
+        enableGotoScenarios();
+      } else {
+        landingPage.style.display = '';
+        appShell.style.display = 'none';
+      }
+
+      document.getElementById('landing-new-scenario-btn').addEventListener('click', function() {
+        showApp();
+        document.getElementById('new-scenario-btn').click();
+      });
+
+      document.getElementById('landing-load-file-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        showApp();
+        switchMainTab('scenarios');
+        document.getElementById('scenario-upload-btn').click();
+      });
+
+      gotoScenariosBtn.addEventListener('click', function() {
+        if (!gotoScenariosBtn.disabled) {
+          showApp();
+          switchMainTab('scenarios');
+        }
+      });
+
+      document.getElementById('home-btn').addEventListener('click', function() {
+        appShell.style.display = 'none';
+        landingPage.style.display = '';
+        enableGotoScenarios();
       });
 
       C.ctccJsonData = null;
@@ -474,8 +546,6 @@
             updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
               { detail: { results: json.results } }));
-            const resultsBtn = document.querySelector('.main-tab-button[data-tab="results"]');
-            if (resultsBtn) resultsBtn.classList.remove('disabled');
           } else {
             if (json.error) console.warn('Calculator error:', json.error);
             const ind = document.getElementById('rcp-computing');
@@ -1007,9 +1077,8 @@
       function switchMainTab(tabName) {
         mainTabButtons.forEach(btn => {
           const isActive = btn.dataset.tab === tabName;
-          const isDisabled = btn.classList.contains('disabled');
 
-          if (isActive && !isDisabled) {
+          if (isActive) {
             btn.classList.add('active');
           } else {
             btn.classList.remove('active');
@@ -1039,12 +1108,6 @@
         updateBreadcrumb();
       }
 
-      function enableResultsTab() {
-        const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
-        if (resultsButton) {
-          resultsButton.classList.remove('disabled');
-        }
-      }
 
       function showCalculating() {
         const now = new Date();
@@ -1066,7 +1129,6 @@
         const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
 
         if (resultsButton) {
-          resultsButton.classList.remove('disabled');
           resultsButton.classList.add('results-available');
         }
       }
@@ -1244,7 +1306,6 @@
       window.switchTab = switchTab;
       window.collectJsonData = collectJsonData;
       window.markResultsAvailable = markResultsAvailable;
-      window.enableResultsTab = enableResultsTab;
       window.showCalculating = showCalculating;
       window.hideStatusBar = hideStatusBar;
       window.fetchFinalCombined = fetchFinalCombined;

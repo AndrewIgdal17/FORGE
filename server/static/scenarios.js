@@ -75,8 +75,6 @@ function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;
   C.activeScenarioName = scenario.customName;
   updateScenarioBreadcrumb();
-  const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
-  if (inputsBtn) inputsBtn.classList.remove('disabled');
   if (scenario.inputs) {
     renderJsonInputs(scenario.inputs);
   }
