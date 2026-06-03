@@ -75,6 +75,7 @@ function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;
   C.activeScenarioName = scenario.customName;
   updateScenarioBreadcrumb();
+  updateTabStates();
   if (scenario.inputs) {
     renderJsonInputs(scenario.inputs);
   }
@@ -184,8 +185,7 @@ function createNewScenario(name) {
   C.activeScenarioId = scenario.id;
   C.activeScenarioName = trimmed;
   updateScenarioBreadcrumb();
-  const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
-  if (inputsBtn) inputsBtn.classList.remove('disabled');
+  updateTabStates();
   switchMainTab('inputs');
   switchTab(0);
   autoCalculate();

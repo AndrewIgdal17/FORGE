@@ -48,8 +48,8 @@
 
     <!-- Main Tabs -->
     <div class="main-tabs">
-      <button type="button" class="main-tab-button" data-tab="inputs">Inputs</button>
-      <button type="button" class="main-tab-button" data-tab="results">Results</button>
+      <button type="button" class="main-tab-button disabled" data-tab="inputs">Inputs</button>
+      <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
       <button type="button" class="main-tab-button active" data-tab="scenarios">Scenarios</button>
       <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
       <button type="button" class="save-scenario-button" id="save-copy-btn">Save as Copy</button>
@@ -1077,8 +1077,9 @@
       function switchMainTab(tabName) {
         mainTabButtons.forEach(btn => {
           const isActive = btn.dataset.tab === tabName;
+          const isDisabled = btn.classList.contains('disabled');
 
-          if (isActive) {
+          if (isActive && !isDisabled) {
             btn.classList.add('active');
           } else {
             btn.classList.remove('active');
@@ -1108,6 +1109,18 @@
         updateBreadcrumb();
       }
 
+      function updateTabStates() {
+        const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
+        const resultsBtn = document.querySelector('.main-tab-button[data-tab="results"]');
+        if (C.activeScenarioId) {
+          if (inputsBtn) inputsBtn.classList.remove('disabled');
+          if (resultsBtn && C.latestValidResults) resultsBtn.classList.remove('disabled');
+        } else {
+          if (inputsBtn) inputsBtn.classList.add('disabled');
+          if (resultsBtn) resultsBtn.classList.add('disabled');
+        }
+      }
+
 
       function showCalculating() {
         const now = new Date();
@@ -1129,6 +1142,7 @@
         const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
 
         if (resultsButton) {
+          resultsButton.classList.remove('disabled');
           resultsButton.classList.add('results-available');
         }
       }
@@ -1306,6 +1320,7 @@
       window.switchTab = switchTab;
       window.collectJsonData = collectJsonData;
       window.markResultsAvailable = markResultsAvailable;
+      window.updateTabStates = updateTabStates;
       window.showCalculating = showCalculating;
       window.hideStatusBar = hideStatusBar;
       window.fetchFinalCombined = fetchFinalCombined;
