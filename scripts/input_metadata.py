@@ -476,7 +476,7 @@ _TAB6: list[InputField] = [
 ]
 
 # ===================================================================
-# Tab 7 — Risk Costs (64 fields: 16 wildfire + 48 outage)
+# Tab 7 — Risk Costs (24 fields: 8 wildfire + 16 outage)
 # ===================================================================
 
 _TAB7: list[InputField] = [
@@ -501,14 +501,13 @@ _TAB7: list[InputField] = [
        label="Discount Rate Custom", condition="always_hidden", display_order=4,
        sub_tab="wildfire-risk"),
 ]
-for _i, _t in enumerate(TERRAINS):
-    _TAB7.append(_f(
-        f"wf_ignition_{_t}", taxonomy_id="wildfire_eac", input_tab="risk",
-        yaml_section="06_wildfire_costs", field_path=f"wildfire.ignition_rates_by_terrain.{_t}",
-        label=_terrain_label(_t), help_text=f"Overhead baseline ignition rate for {_terrain_label(_t).lower()} (events/mi/yr)",
-        section_label="Base Ignition Rates by Terrain",
-        unit="events/mi/yr", condition="always_hidden", tier="working",
-        display_order=10 + _i, validation={"min": 0}, sub_tab="wildfire-risk"))
+_TAB7.append(_f(
+    "wf_base_ignition_rate", taxonomy_id="wildfire_eac", input_tab="risk",
+    yaml_section="06_wildfire_costs", field_path="wildfire.base_ignition_rate",
+    label="Base Ignition Rate", help_text="Line-level ignition rate for overhead baseline (events/mi/yr)",
+    section_label="Base Ignition Rate",
+    unit="events/mi/yr", condition="always_hidden", tier="working",
+    display_order=10, validation={"min": 0}, sub_tab="wildfire-risk"))
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
     _TAB7.append(_f(
         f"wf_mult_{_ct}", taxonomy_id="wildfire_eac", input_tab="risk",
@@ -518,7 +517,7 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         condition="always_hidden", tier="working", display_order=20 + _ci,
         validation={"min": 0}, sub_tab="wildfire-risk"))
 
-# Outage (48 fields) — all always_hidden, custom rendered
+# Outage (16 fields) — all always_hidden, custom rendered
 _TAB7 += [
     _f("out_growth_rate", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
@@ -533,15 +532,19 @@ _TAB7 += [
        sub_tab="outage-risk"),
     _f("out_capacity_at_risk", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.capacity_at_risk_factor",
-       label="Capacity at Risk (\u03C6)", help_text="Fraction of capacity lost per outage (1.0 = radial, <1.0 = meshed); MW_lost = phi x C_new",
+       label="Capacity at Risk (\u03C6)", help_text="Fraction of capacity lost per outage. Default 'auto' = 1/N_poles from conductor table (1.0 for AC, 0.5 for DC bipole). Numeric override accepted.",
        input_type="percent", condition="always_hidden", tier="working", display_order=3,
        validation={"min": 0, "max": 1, "step": 0.01},
        sub_tab="outage-risk"),
 ]
-# VoLL tiers (3 tiers × 2 fields = 6) — moved to System Details (Economic Details)
+# VoLL tiers (10 tiers × 2 fields = 20) — moved to System Details (Economic Details)
 # Fields are always_hidden; rendered via custom table in renderEconomicDetailsPanel()
-for _ti in range(3):
-    _tier_label = ["Short (0-4h)", "Medium (4-24h)", "Long (>24h)"][_ti]
+_VOLL_TIER_LABELS = [
+    "0-1h", "1-2h", "2-4h", "4-8h", "8-16h",
+    "16-32h", "32-64h", "64h-7d", "7-30d", ">30d",
+]
+for _ti in range(10):
+    _tier_label = _VOLL_TIER_LABELS[_ti]
     _TAB7.append(_f(
         f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_eac", input_tab="benefits",
         yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].max_hours",
@@ -557,15 +560,14 @@ for _ti in range(3):
         unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
         display_order=11 + _ti * 2, sub_tab="economic-details"))
 
-# Duration by terrain (9)
-for _i, _t in enumerate(TERRAINS):
-    _TAB7.append(_f(
-        f"out_duration_{_t}", taxonomy_id="outage_eac", input_tab="risk",
-        yaml_section="07_outage_costs", field_path=f"outage.outage_duration_by_terrain.{_t}",
-        label=_terrain_label(_t), help_text=f"Base outage duration for {_terrain_label(_t).lower()} terrain (hrs/event)",
-        section_label="Outage Duration by Terrain",
-        unit="hrs/event", condition="always_hidden", tier="working",
-        display_order=20 + _i, validation={"min": 0}, sub_tab="outage-risk"))
+# Base outage duration (single scalar)
+_TAB7.append(_f(
+    "out_duration", taxonomy_id="outage_eac", input_tab="risk",
+    yaml_section="07_outage_costs", field_path="outage.outage_duration",
+    label="Base Outage Duration", help_text="Base outage duration (hrs/event); effective = base × construction multiplier",
+    section_label="Outage Duration",
+    unit="hrs/event", condition="always_hidden", tier="working",
+    display_order=20, validation={"min": 0}, sub_tab="outage-risk"))
 
 # Duration multiplier by construction type (3)
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
@@ -577,17 +579,16 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         condition="always_hidden", tier="working", display_order=30 + _ci,
         validation={"min": 0}, sub_tab="outage-risk"))
 
-# Outage rates: 3 construction types × 9 terrains = 27
+# Outage rates by construction type (3)
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
-    for _ti, _t in enumerate(TERRAINS):
-        _TAB7.append(_f(
-            f"out_rate_{_ct}_{_t}", taxonomy_id="outage_eac", input_tab="risk",
-            yaml_section="07_outage_costs", field_path=f"outage.outage_rates.{_ct}.{_t}",
-            label=_terrain_label(_t), help_text=f"Outage frequency for {_terrain_label(_t).lower()} under {_ct} construction",
-            section_label=f"Outage Frequency — {_ct.title()}",
-            unit="outages/mi/yr", condition="always_hidden", tier="working",
-            display_order=40 + _ci * 9 + _ti, validation={"min": 0},
-            sub_tab="outage-risk"))
+    _TAB7.append(_f(
+        f"out_rate_{_ct}", taxonomy_id="outage_eac", input_tab="risk",
+        yaml_section="07_outage_costs", field_path=f"outage.outage_rate.{_ct}",
+        label=_ct.title(), help_text=f"Line-level outage frequency for {_ct} construction",
+        section_label="Outage Frequency by Construction Type",
+        unit="outages/mi/yr", condition="always_hidden", tier="working",
+        display_order=40 + _ci, validation={"min": 0},
+        sub_tab="outage-risk"))
 
 # ===================================================================
 # Tab 8 — Energy and Emissions (60 fields: 28 reductions + 32 energy mix)

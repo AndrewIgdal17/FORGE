@@ -1051,19 +1051,17 @@ $C_{residual,nominal}$ and $C_{residual,real}$ (PV) follow the same discounting 
 
 ### Expected cost of wildfires (4.a)
 
-Expected cost of wildfires is the expected annual loss (EAL) from wildfire events over the project's operating life, valued at expected loss per event (severity). It uses ignition rates by terrain and construction type, multiplies by severity ($ per event), and can apply risk growth over the lifetime. It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
+Expected cost of wildfires is the expected annual loss (EAL) from wildfire events over the project's operating life, valued at expected loss per event (severity). It uses a line-level base ignition rate scaled by construction type, multiplied by severity ($ per event), with optional risk growth over the lifetime. It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
 
 **Variables**
 
 | Variable            | Meaning / units                                                 | Notes                                                                                              |
 | ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| terrain             | Terrain index                                                   | e.g. forested, wetland, urban.                                                                     |
-| $L_{terrain}$       | Line length in terrain, miles                                   | From physical details.                                                                             |
-| $f_{base,terrain}$  | Base ignition rate for terrain, events/(mi·yr)                  | Overhead baseline.                                                                                 |
-| $k_t$               | Construction-type multiplier, dimensionless                     | Overhead 1; underground&lt; 1; subsea 0.                                                           |
-| $f_{terrain,t}$     | Effective ignition rate for terrain and type $t$, events/(mi·yr) | $f_{terrain,t}=f_{base,terrain} \times k_t$.                                                       |
-| $\lambda_{terrain}$ | Annual event rate for terrain, events/yr                        | $\lambda_{terrain} = L_{terrain} \times f_{terrain,t}$.                                            |
-| $\lambda$           | Total annual event rate, events/yr                              | $\lambda = \sum_{terrain} \lambda_{terrain}$.                                                      |
+| $L$                 | Total line length, miles                                        | Sum of all terrain segment lengths from physical details.                                          |
+| $f$                 | Base ignition rate, events/(mi·yr)                              | Overhead baseline; line-level scalar.                                                              |
+| $k_t$               | Construction-type multiplier, dimensionless                     | Overhead 1; underground &lt; 1; subsea 0.                                                         |
+| $f_t$               | Effective ignition rate for type $t$, events/(mi·yr)            | $f_t = f \times k_t$.                                                                             |
+| $\lambda$           | Total annual event rate, events/yr                              | $\lambda = L \times f_t$.                                                                         |
 | $S$                 | Severity (expected loss per event), $                           | Expected loss per wildfire event.                                                                  |
 | $EAL$               | Expected annual loss, $/yr                                      | $EAL=\lambda \times S$.                                                                            |
 | $g_{wf}$            | Wildfire risk growth rate, decimal                              | Annual increase in expected loss (e.g. escalation of risk).                                        |
@@ -1075,18 +1073,18 @@ Expected cost of wildfires is the expected annual loss (EAL) from wildfire event
 
 **Equations**
 
-1. Effective ignition rate (terrain and construction type)
+1. Effective ignition rate (construction type)
 
 $$
-f_{terrain,t} = f_{base,terrain} \times k_t
+f_t = f \times k_t
 
 
 $$
 
-2. Segment and total annual event rate
+2. Total annual event rate
 
 $$
-\lambda_{terrain} = L_{terrain} \times f_{terrain,t}, \qquad \lambda = \sum_{terrain} \lambda_{terrain}
+\lambda = L \times f_t
 
 
 $$
@@ -1133,28 +1131,26 @@ The relevant measure is real (present value) expected wildfire cost, $C_{wf,real
 
 ### Expected cost of outages (4.b)
 
-Expected cost of outages is the expected annual cost (EAC) from transmission outages over the project's operating life. It uses outage rates by terrain and construction type, effective duration (hours per event) by terrain and type, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
+Expected cost of outages is the expected annual cost (EAC) from transmission outages over the project's operating life. It uses a line-level outage rate by construction type, a base duration with construction-type multiplier, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
 
 **Variables**
 
 | Variable             | Meaning / units                                              | Notes                                                                                              |
 | -------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| terrain              | Terrain index                                                | e.g. forested, wetland, urban.                                                                     |
 | $t$                  | Construction type index                                      | e.g. overhead, underground, subsea.                                                                |
-| $L_{terrain}$        | Line length in terrain, miles                                | From physical details.                                                                             |
-| $r_{terrain,t}$      | Outage rate for terrain and type $t$, events/(mi·yr)          | Direct outages per mile per year.                                                                  |
-| $\lambda_{terrain}$  | Annual outage rate for terrain, events/yr                    | $\lambda_{terrain} = L_{terrain} \times r_{terrain,t}$.                                            |
-| $\lambda$            | Total annual outage rate, events/yr                          | $\lambda = \sum_{terrain} \lambda_{terrain}$.                                                      |
-| $H_{base,terrain}$   | Base outage duration for terrain, h/event                    | Hours per outage event (by terrain).                                                               |
-| $k_t$                | Duration multiplier for construction type $t$, dimensionless  | Overhead 1; underground, subsea can be&gt; 1.                                                      |
-| $H_{eff,terrain}$    | Effective outage duration for terrain (and type $t$), h/event | $H_{eff,terrain} = H_{base,terrain} \times k_t$.                                                   |
+| $L$                  | Total line length, miles                                     | Sum of all terrain segment lengths from physical details.                                          |
+| $r_t$                | Outage rate for construction type $t$, events/(mi·yr)        | Line-level outages per mile per year.                                                              |
+| $\lambda$            | Total annual outage rate, events/yr                          | $\lambda = L \times r_t$.                                                                         |
+| $H_{base}$           | Base outage duration, h/event                                | Hours per outage event; line-level scalar.                                                         |
+| $k_t$                | Duration multiplier for construction type $t$, dimensionless | Overhead 1; underground, subsea can be &gt; 1.                                                     |
+| $H_{eff}$            | Effective outage duration, h/event                           | $H_{eff} = H_{base} \times k_t$.                                                                  |
 | $\phi$               | Capacity-at-risk factor, dimensionless                       | Fraction of line capacity lost per event; e.g. 1 = radial.                                         |
 | $C$                  | Line capacity, MW                                            | Project capacity.                                                                                  |
 | $MW_{lost}$          | MW lost per event, MW                                        | $MW_{lost} = \phi \times C$.                                                                       |
-| $U_{terrain}$        | Unserved energy per event (terrain), MWh/event               | $U_{terrain} = H_{eff,terrain} \times MW_{lost}$.                                                  |
+| $U$                  | Unserved energy per event, MWh/event                         | $U = H_{eff} \times MW_{lost}$.                                                                   |
 | $v(h)$               | Value of lost load (VoLL), $/MWh                             | Piecewise by duration (e.g. tier 1: 0–4 h, tier 2: 4–24 h, tier 3: 24+ h).                         |
-| $C_{event,terrain}$  | Cost per outage event (terrain), $/event                     | Piecewise VoLL over $U_{terrain}$ (unserved MWh valued at $v(h)$ by duration tier).                 |
-| $EAC$                | Expected annual cost, $/yr                                   | $EAC = \sum_{terrain} \lambda_{terrain} \times C_{event,terrain}$.                                 |
+| $C_{event}$          | Cost per outage event, $/event                               | Piecewise VoLL over $U$ (unserved MWh valued at $v(h)$ by duration tier).                          |
+| $EAC$                | Expected annual cost, $/yr                                   | $EAC = \lambda \times C_{event}$.                                                                 |
 | $g_{outages}$        | Outage risk growth rate, decimal                             | Annual increase in expected cost (optional).                                                       |
 | $T_{lifetime}$       | Project lifetime, years                                      |                                                                                                    |
 | $T_{COD}$            | Commercial operation date (year index), years                | First year of operation; cost stream starts here.                                                  |
@@ -1164,43 +1160,35 @@ Expected cost of outages is the expected annual cost (EAC) from transmission out
 
 **Equations**
 
-1. Outage rate and effective duration (by terrain and construction type)
+1. Outage rate and effective duration (by construction type)
 
 $$
-\lambda_{terrain} = L_{terrain} \times r_{terrain,t}, \qquad H_{eff,terrain} = H_{base,terrain} \times k_t
-
-
-$$
-
-2. Total annual outage rate
-
-$$
-\lambda = \sum_{terrain} \lambda_{terrain}
+\lambda = L \times r_t, \qquad H_{eff} = H_{base} \times k_t
 
 
 $$
 
-3. MW lost and unserved energy per event (terrain)
+2. MW lost and unserved energy per event
 
 $$
-MW_{lost} = \phi \times C, \qquad U_{terrain} = H_{eff,terrain} \times MW_{lost}
-
-
-$$
-
-4. Cost per event (piecewise VoLL)
-
-Cost per event for a given terrain is the piecewise VoLL applied to unserved energy: duration is split into tiers (e.g. 0–4 h at $v_1$ $/MWh$, 4–24 h at $v_2$ $/MWh$, 24+ h at $v_3$ $/MWh$). Total cost = $\sum_{tiers} (\text{hours in tier}) \times MW_{lost} \times v_{tier}$. Denote this $C_{event,terrain}$.
-
-5. Expected annual cost
-
-$$
-EAC = \sum_{terrain} \lambda_{terrain} \times C_{event,terrain}
+MW_{lost} = \phi \times C, \qquad U = H_{eff} \times MW_{lost}
 
 
 $$
 
-6. Nominal (undiscounted) total cost
+3. Cost per event (piecewise VoLL)
+
+Cost per event is the piecewise VoLL applied to unserved energy: duration is split into tiers (e.g. 0–4 h at $v_1$ $/MWh$, 4–24 h at $v_2$ $/MWh$, 24+ h at $v_3$ $/MWh$). Total cost = $\sum_{tiers} (\text{hours in tier}) \times MW_{lost} \times v_{tier}$. Denote this $C_{event}$.
+
+4. Expected annual cost
+
+$$
+EAC = \lambda \times C_{event}
+
+
+$$
+
+5. Nominal (undiscounted) total cost
 
 Growing annual cost at rate $g_{outages}$ over $T_{lifetime}$ years:
 
@@ -1752,4 +1740,9 @@ Both use the same capital spending: same nominal amounts ($C^{nom}$ for build, R
 AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views.
 
 ---
+
+## Related
+
+- [[Projects/CTCC/CTCC MOC]]
+- [[Projects/CTCC/CODEMAP]]
 

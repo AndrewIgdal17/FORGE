@@ -3,30 +3,21 @@
 
 wildfire:
   # Event severity (consequence)
-  severity_per_event: 0 # Mean loss per wildfire event ($/event) (>= 0)
+  severity_per_event: 8000000 # Mean loss per wildfire event ($/event) (>= 0) (Eagleston et al. 2025 size-class decomposition; see docs/audits/2026-06-12__severity-calibration.md)
 
-  # Risk growth (optional - wildfire risk increases over time)
-  risk_growth_rate: 0 # Annual increase in ignition probability (>= 0) (2% = 0.02)
+  # Risk growth (wildfire risk increases over time)
+  risk_growth_rate: 0.015 # Annual increase in ignition probability (>= 0) (1.5%/yr, Warner/Callaway/Fowlie 2025)
 
   # Discount rate configuration
   discount_rate_source: "social" # Options: "social" | "wacc_real" | "custom"
   discount_rate_custom: 0.03 # Used only if discount_rate_source = "custom"
 
-  # Base ignition rates by terrain (for overhead baseline)
+  # Base ignition rate (overhead baseline, line-level)
   # Units: events per mile per year (>= 0)
-  ignition_rates_by_terrain:
-    forested: 0.002 # Higher risk in forested areas (>= 0)
-    scrubbed_flat: 0.0002 # (>= 0)
-    wetland: 0.0001 # Lower risk in wet areas (>= 0)
-    farmland: 0.0002 # (>= 0)
-    desert_barren: 0.0001 # (>= 0)
-    urban: 0.0001 # (>= 0)
-    rolling_hills: 0.001 # (>= 0)
-    mountain: 0.002 # (>= 0)
-    subsea: 0.0 # No wildfire risk subsea (>= 0)
+  base_ignition_rate: 0.002 # PG&E SOM Metric 3.16 + Johnson/SDG&E 2014; see docs/audits/2026-06-12__ignition-rate-sourcing.md
 
   # Ignition rate multiplier by construction type
-  # Effective rate = ignition_rates_by_terrain × multiplier
+  # Effective rate = base_ignition_rate × multiplier
   # All multipliers (>= 0)
   ignition_rate_multiplier:
     overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)

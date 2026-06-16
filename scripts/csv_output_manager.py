@@ -811,39 +811,19 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows - columns ordered: row_type, PV values, annual values, nominal values, module-specific
-        detail_rows = []
-        for terrain, data in results.get("lambda_by_terrain", {}).items():
-            detail_rows.append(
-                {
-                    "row_type": "detail",
-                    "terrain": terrain,
-                    "annual_cost": data["events_per_year"] * results.get("severity", 0),
-                    "miles": data["miles"],
-                    "base_ignition_rate": data["base_rate"],
-                    "construction_multiplier": data["construction_multiplier"],
-                    "effective_rate": data["rate_per_mile"],
-                    "events_per_year": data["events_per_year"],
-                    "severity_per_event": results.get("severity", 0),
-                    "growth_rate": results.get("growth_rate", 0),
-                    "discount_rate": results.get("discount_rate", 0),
-                }
-            )
-
-        # Summary row - columns ordered: row_type, PV values, annual values, module-specific
         summary_row = {
             "row_type": "summary",
-            "terrain": "all",
             "annual_cost": results.get("EAL", 0),
-            "miles": sum(d["miles"] for d in detail_rows),
+            "total_miles": results.get("total_miles", 0),
+            "base_ignition_rate": results.get("base_ignition_rate", 0),
+            "construction_multiplier": results.get("construction_multiplier", 0),
             "events_per_year": results.get("lambda_total", 0),
             "severity_per_event": results.get("severity", 0),
             "growth_rate": results.get("growth_rate", 0),
-            "discount_rate": results.get("discount_rate", 0),
         }
 
         self.write_module_csv(
-            "wildfire_costs", detail_rows=detail_rows, summary_row=summary_row
+            "wildfire_costs", detail_rows=[], summary_row=summary_row
         )
 
     def add_outage_costs(self, results: Dict[str, Any]) -> None:
@@ -857,38 +837,19 @@ class CTCCOutputManager:
             }
         )
 
-        # Write detail rows - columns ordered: row_type, annual values, module-specific
-        detail_rows = []
-        for terrain, data in results.get("outage_by_terrain", {}).items():
-            detail_rows.append(
-                {
-                    "row_type": "detail",
-                    "terrain": terrain,
-                    "annual_cost": data["annual_cost"],
-                    "miles": data["miles"],
-                    "outage_rate": data["outage_rate"],
-                    "outages_per_year": data["outages_per_year"],
-                    "duration_base": data["duration_base"],
-                    "duration_multiplier": data["duration_multiplier"],
-                    "duration_effective": data["duration_effective"],
-                    "unserved_mwh_per_event": data["unserved_mwh_per_event"],
-                    "cost_per_event": data["cost_per_event"],
-                    "capacity_at_risk": results.get("capacity_at_risk", 1.0),
-                }
-            )
-
-        # Summary row - columns ordered: row_type, annual values, module-specific
         summary_row = {
             "row_type": "summary",
-            "terrain": "all",
             "annual_cost": results.get("EAC", 0),
-            "miles": sum(d["miles"] for d in detail_rows),
+            "total_miles": results.get("total_miles", 0),
+            "outage_rate": results.get("outage_rate", 0),
             "outages_per_year": results.get("lambda_total", 0),
+            "duration_effective": results.get("duration_effective", 0),
+            "cost_per_event": results.get("cost_per_event", 0),
             "capacity_at_risk": results.get("capacity_at_risk", 1.0),
         }
 
         self.write_module_csv(
-            "outage_costs", detail_rows=detail_rows, summary_row=summary_row
+            "outage_costs", detail_rows=[], summary_row=summary_row
         )
 
     def add_oandm_costs(self, results: Dict[str, float]) -> None:

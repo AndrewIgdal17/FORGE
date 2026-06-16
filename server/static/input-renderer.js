@@ -262,7 +262,7 @@ const TAB_GUIDE_CONTENT = {
   // L3 sub-tabs: System Details
   'economic-details': {
     oneliner: 'Set the economic value of served and unserved electricity on your system.',
-    body: 'Value of Load is what each megawatt-hour is worth to end users \u2014 it prices thermal line losses and the benefit of delivered energy. Value of Lost Load captures the cost of power interruptions, tiered by duration (short, medium, long) because longer outages impose escalating economic harm.',
+    body: 'Value of Load is what each megawatt-hour is worth to end users \u2014 it prices thermal line losses and the benefit of delivered energy. Value of Lost Load captures the cost of power interruptions, tiered by duration (10 tiers from 1h to 30d, based on ERCOT 2024 survey data with extrapolation for longer durations).',
     items: ['Value of Load ($/MWh)', 'Value of Lost Load by outage duration tier'],
   },
   'system-constraints': {
@@ -3861,9 +3861,16 @@ function renderEconomicDetailsPanel(data) {
   vollTable.appendChild(vollThead);
 
   const VOLL_TIERS = [
-    {label: 'Short (0\u20134h)', tierIdx: 0, hoursEditable: true},
-    {label: 'Medium (4\u201324h)', tierIdx: 1, hoursEditable: true},
-    {label: 'Long (>24h)', tierIdx: 2, hoursEditable: false},
+    {label: '0\u20131h',    tierIdx: 0, hoursEditable: true},
+    {label: '1\u20132h',    tierIdx: 1, hoursEditable: true},
+    {label: '2\u20134h',    tierIdx: 2, hoursEditable: true},
+    {label: '4\u20138h',    tierIdx: 3, hoursEditable: true},
+    {label: '8\u201316h',   tierIdx: 4, hoursEditable: true},
+    {label: '16\u201332h',  tierIdx: 5, hoursEditable: true},
+    {label: '32\u201364h',  tierIdx: 6, hoursEditable: true},
+    {label: '64h\u20137d',  tierIdx: 7, hoursEditable: true},
+    {label: '7\u201330d',   tierIdx: 8, hoursEditable: true},
+    {label: '>30d',          tierIdx: 9, hoursEditable: false},
   ];
   const vollTbody = document.createElement('tbody');
   VOLL_TIERS.forEach(tier => {

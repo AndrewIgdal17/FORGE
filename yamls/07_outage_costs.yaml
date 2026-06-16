@@ -9,71 +9,49 @@ outage:
   discount_rate_type: "social" # Options: "social" | "wacc_real"
 
   # Capacity at risk factor (φ)
-  capacity_at_risk_factor: 1.0 # [0,1] 1.0 = radial, <1.0 = meshed/redundant
+  capacity_at_risk_factor: "auto" # "auto" derives phi = 1/N_poles from conductor table (1.0 AC, 0.5 DC bipole)
 
   # Value of lost load (tiered by outage duration)
-  # Piecewise valuation: different hours valued at different rates
+  # Piecewise VoLL: 10 tiers. Tiers 1-5 from Brattle/ERCOT 2024 system-wide survey (Table 13, 2024$).
+  # Tiers 6-9 extrapolated via V(t) = 32210/t + 3339 + 492t ($/MWh), OLS fit to observed data.
+  # Tier 10 is a flat cap at the 30-day extrapolated value.
   value_of_lost_load:
     tiers:
-      - max_hours: 4 # Short: 0-4 hours (>= 0)
-        value_per_mwh: 5000 # $/MWh (>= 0)
-      - max_hours: 24 # Medium: 4-24 hours (>= 0)
-        value_per_mwh: 10000 # $/MWh (>= 0)
-      - max_hours: .inf # Long: >24 hours (use .inf for infinity) (>= 0)
-        value_per_mwh: 15000 # $/MWh (>= 0)
+      - max_hours: 1     # 0-1h (>= 0)
+        value_per_mwh: 35685 # $/MWh — ERCOT observed
+      - max_hours: 2     # 1-2h (>= 0)
+        value_per_mwh: 21326 # $/MWh — ERCOT observed
+      - max_hours: 4     # 2-4h (>= 0)
+        value_per_mwh: 13340 # $/MWh — ERCOT observed
+      - max_hours: 8     # 4-8h (>= 0)
+        value_per_mwh: 10435 # $/MWh — ERCOT observed
+      - max_hours: 16    # 8-16h (>= 0)
+        value_per_mwh: 13581 # $/MWh — ERCOT observed
+      - max_hours: 32    # 16h-32h (>= 0)
+        value_per_mwh: 20102 # $/MWh — extrapolated
+      - max_hours: 64    # 32h-64h (>= 0)
+        value_per_mwh: 35356 # $/MWh — extrapolated
+      - max_hours: 168   # 64h-7d (>= 0)
+        value_per_mwh: 86253 # $/MWh — extrapolated
+      - max_hours: 720   # 7d-30d (>= 0)
+        value_per_mwh: 357907 # $/MWh — extrapolated
+      - max_hours: .inf  # >30d — flat cap (>= 0)
+        value_per_mwh: 357907 # $/MWh — capped at 30-day value
 
-  # Outage duration by terrain (hours per event) (>= 0)
-  outage_duration_by_terrain:
-    forested: 8 # hours (>= 0)
-    scrubbed_flat: 4 # hours (>= 0)
-    wetland: 6 # hours (>= 0)
-    farmland: 3 # hours (>= 0)
-    desert_barren: 5 # hours (>= 0)
-    urban: 2 # hours (>= 0)
-    rolling_hills: 6 # hours (>= 0)
-    mountain: 12 # hours (>= 0)
-    subsea: 240 # hours (>= 0)
+  # Base outage duration (hours per event) (>= 0)
+  outage_duration: 6 # hours/event
 
   # Duration multiplier by construction type
-  # H_eff[construction][terrain] = duration_by_terrain[terrain] × multiplier[construction]
+  # H_eff = outage_duration × multiplier
   # All multipliers (>= 0)
   outage_duration_multiplier:
     overhead: 1.0 # (>= 0)
-    underground: 2.0 # (>= 0)
-    subsea: 3.0 # (>= 0)
+    underground: 2.0 # Assumes meshed/switching redundancy; radial UG systems may need 10-20x (>= 0)
+    subsea: 250.0 # 6h × 250 = 1500h (~62 days) effective subsea duration (CIGRE TB 815, IEA Wind TEM95, Leadvent; see docs/audits/2026-06-12__outage-parameter-sourcing.md)
 
-  # Outage rates by construction type × terrain (SIMPLIFIED)
-  # Direct: outages per mile per year (no f × p split)
-  # All rates (>= 0)
-  outage_rates: # [construction_type][terrain]
-    overhead:
-      forested: 0.04 # outages/mile/year
-      scrubbed_flat: 0.021
-      wetland: 0.012
-      farmland: 0.016
-      desert_barren: 0.03
-      urban: 0.0075
-      rolling_hills: 0.025
-      mountain: 0.051
-      subsea: 0.009
-    underground:
-      forested: 0.005
-      scrubbed_flat: 0.0032
-      wetland: 0.009
-      farmland: 0.0025
-      desert_barren: 0.004
-      urban: 0.0015
-      rolling_hills: 0.0045
-      mountain: 0.006
-      subsea: 0.0056
-    subsea:
-      # All terrain values same for subsea (irrelevant once underwater)
-      forested: 0.00475
-      scrubbed_flat: 0.00475
-      wetland: 0.00475
-      farmland: 0.00475
-      desert_barren: 0.00475
-      urban: 0.00475
-      rolling_hills: 0.00475
-      mountain: 0.00475
-      subsea: 0.00475
+  # Outage rates by construction type (line-level)
+  # Units: outages per mile per year (>= 0)
+  outage_rate:
+    overhead: 0.025 # outages/mile/year
+    underground: 0.004
+    subsea: 0.00475

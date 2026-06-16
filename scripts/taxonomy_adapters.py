@@ -218,48 +218,29 @@ def adapt_delay(delay: dict) -> list[TaxonomyResult]:
 
 
 def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
-    """Adapt costs.wildfire -> wildfire_eac with terrain detail."""
+    """Adapt costs.wildfire -> wildfire_eac."""
     if not wildfire:
         return []
-    severity = _safe(wildfire, "severity")
-    terrain_data = wildfire.get("lambda_by_terrain", {}) or {}
-    detail_rows: list[DetailRow] = []
-    for terrain, tdata in terrain_data.items():
-        if isinstance(tdata, dict):
-            events = _safe(tdata, "events_per_year")
-            detail_rows.append(
-                DetailRow("terrain", terrain, value_pv=0.0, value_annual=events * severity)
-            )
     return [
         TaxonomyResult(
             "wildfire_eac",
             value_pv=_safe(wildfire, "pv_cost"),
             value_nominal=_safe(wildfire, "nominal_total"),
             value_annual=_safe(wildfire, "EAL"),
-            detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
 
 
 def adapt_outage(outage: dict) -> list[TaxonomyResult]:
-    """Adapt costs.outage -> outage_eac with terrain detail."""
+    """Adapt costs.outage -> outage_eac."""
     if not outage:
         return []
-    terrain_data = outage.get("outage_by_terrain", {}) or {}
-    detail_rows: list[DetailRow] = []
-    for terrain, tdata in terrain_data.items():
-        if isinstance(tdata, dict):
-            ann_cost = _safe(tdata, "annual_cost")
-            detail_rows.append(
-                DetailRow("terrain", terrain, value_pv=0.0, value_annual=ann_cost)
-            )
     return [
         TaxonomyResult(
             "outage_eac",
             value_pv=_safe(outage, "pv_cost"),
             value_nominal=_safe(outage, "nominal_total"),
             value_annual=_safe(outage, "EAC"),
-            detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
 

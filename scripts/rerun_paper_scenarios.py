@@ -61,11 +61,14 @@ for cs, scenarios in CASE_STUDY_SCENARIOS.items():
 
 
 def extract_scenario_id(filename: str) -> str:
-    """Extract 'S1' from 'S1 CA Rural Overhead AC.ctcc' or 'S_A1' from 'S_A1 Greenfield 345kV MISO.ctcc'."""
+    """Extract scenario ID from filename: 'S1' from 'S1 CA Rural...', 'CTT_Actual_Delay2' from 'CTT_Actual_Delay2.ctcc'."""
     match = re.match(r"(S[\w]*\d+)", filename)
-    if not match:
-        raise ValueError(f"Cannot extract scenario ID from: {filename}")
-    return match.group(1)
+    if match:
+        return match.group(1)
+    stem = Path(filename).stem
+    if stem:
+        return stem
+    raise ValueError(f"Cannot extract scenario ID from: {filename}")
 
 
 def run_scenario(inputs: dict, scenario_id: str) -> dict:

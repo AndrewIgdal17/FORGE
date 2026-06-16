@@ -79,27 +79,21 @@ def calculate_energy_mix_by_year(
             "rate_of_change", 0.0
         )
 
-    # Calculate mix for each year
     energy_mix_by_year = []
-    current_mix = initial_mix.copy()
-
-    # Convert project_lifetime to int for range() (it may be a float)
     project_lifetime_int = int(project_lifetime)
-    for year in range(1, project_lifetime_int + 1):
-        # Apply growth/decay rates
-        next_mix = {}
-        for source in sources:
-            next_mix[source] = current_mix[source] * (1 + rates[source])
 
-        # Normalize to sum to 1.0
-        total = sum(next_mix.values())
-        if total > 0:
-            normalized_mix = {source: next_mix[source] / total for source in sources}
-        else:
-            normalized_mix = next_mix
-
-        energy_mix_by_year.append(normalized_mix)
-        current_mix = normalized_mix
+    for tau in range(1, project_lifetime_int + 1):
+        raw = {
+            source: initial_mix[source] * (1 + rates[source]) ** (tau - 1)
+            for source in sources
+        }
+        total = sum(raw.values())
+        normalized = (
+            {source: raw[source] / total for source in sources}
+            if total > 0
+            else raw
+        )
+        energy_mix_by_year.append(normalized)
 
     return energy_mix_by_year
 

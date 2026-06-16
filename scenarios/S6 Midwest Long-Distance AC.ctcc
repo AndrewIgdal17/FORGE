@@ -106,100 +106,78 @@
     },
     "06_wildfire_costs": {
       "wildfire": {
-        "severity_per_event": 5000000000,
-        "risk_growth_rate": 0.01,
+        "severity_per_event": 8000000,
+        "risk_growth_rate": 0.015,
         "discount_rate_source": "social",
         "discount_rate_custom": 0.03,
-        "ignition_rates_by_terrain": {
-          "forested": 0.002,
-          "scrubbed_flat": 0.0002,
-          "wetland": 0.0001,
-          "farmland": 0.0002,
-          "desert_barren": 0.0001,
-          "urban": 0.0001,
-          "rolling_hills": 0.001,
-          "mountain": 0.002,
-          "subsea": 0.0
-        },
         "ignition_rate_multiplier": {
           "overhead": 1.0,
           "underground": 0.02,
           "subsea": 0.0
-        }
+        },
+        "base_ignition_rate": 0.002
       }
     },
     "07_outage_costs": {
       "outage": {
         "risk_growth_rate": 0.0,
         "discount_rate_type": "social",
-        "capacity_at_risk_factor": 1.0,
+        "capacity_at_risk_factor": "auto",
         "value_of_lost_load": {
           "tiers": [
             {
-              "max_hours": 4,
-              "value_per_mwh": 5000
+              "max_hours": 1,
+              "value_per_mwh": 35685
             },
             {
-              "max_hours": 24,
-              "value_per_mwh": 10000
+              "max_hours": 2,
+              "value_per_mwh": 21326
+            },
+            {
+              "max_hours": 4,
+              "value_per_mwh": 13340
+            },
+            {
+              "max_hours": 8,
+              "value_per_mwh": 10435
+            },
+            {
+              "max_hours": 16,
+              "value_per_mwh": 13581
+            },
+            {
+              "max_hours": 32,
+              "value_per_mwh": 20102
+            },
+            {
+              "max_hours": 64,
+              "value_per_mwh": 35356
+            },
+            {
+              "max_hours": 168,
+              "value_per_mwh": 86253
+            },
+            {
+              "max_hours": 720,
+              "value_per_mwh": 357907
             },
             {
               "max_hours": null,
-              "value_per_mwh": 15000
+              "value_per_mwh": 357907
             }
           ]
-        },
-        "outage_duration_by_terrain": {
-          "forested": 8,
-          "scrubbed_flat": 4,
-          "wetland": 6,
-          "farmland": 3,
-          "desert_barren": 5,
-          "urban": 2,
-          "rolling_hills": 6,
-          "mountain": 12,
-          "subsea": 240
         },
         "outage_duration_multiplier": {
           "overhead": 1.0,
           "underground": 2.0,
-          "subsea": 3.0
+          "subsea": 250.0
         },
-        "outage_rates": {
-          "overhead": {
-            "forested": 0.04,
-            "scrubbed_flat": 0.021,
-            "wetland": 0.012,
-            "farmland": 0.016,
-            "desert_barren": 0.03,
-            "urban": 0.0075,
-            "rolling_hills": 0.025,
-            "mountain": 0.051,
-            "subsea": 0.009
-          },
-          "underground": {
-            "forested": 0.005,
-            "scrubbed_flat": 0.0032,
-            "wetland": 0.009,
-            "farmland": 0.0025,
-            "desert_barren": 0.004,
-            "urban": 0.0015,
-            "rolling_hills": 0.0045,
-            "mountain": 0.006,
-            "subsea": 0.0056
-          },
-          "subsea": {
-            "forested": 0.00475,
-            "scrubbed_flat": 0.00475,
-            "wetland": 0.00475,
-            "farmland": 0.00475,
-            "desert_barren": 0.00475,
-            "urban": 0.00475,
-            "rolling_hills": 0.00475,
-            "mountain": 0.00475,
-            "subsea": 0.00475
-          }
-        }
+        "outage_rate": {
+          "overhead": 0.025,
+          "underground": 0.004,
+          "subsea": 0.00475
+        },
+        "outage_duration": 6
       }
     },
     "08_environmental_reporting(couldbeuseless)": {
@@ -4748,7 +4726,7 @@
   },
   "results": {
     "scenario_id": "S6",
-    "timestamp": "2026-06-01T20:55:21.317861",
+    "timestamp": "2026-06-16T12:51:19.849788",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "S6_LongDistance_AC_6500MW",
@@ -4818,78 +4796,30 @@
         "total_pv": 83024505.2705445
       },
       "wildfire": {
-        "lambda_total": 0.22400000000000003,
-        "EAL": 1120000000.0000002,
-        "lambda_by_terrain": {
-          "scrubbed_flat": {
-            "miles": 400,
-            "base_rate": 0.0002,
-            "construction_multiplier": 1.0,
-            "rate_per_mile": 0.0002,
-            "events_per_year": 0.08
-          },
-          "farmland": {
-            "miles": 320,
-            "base_rate": 0.0002,
-            "construction_multiplier": 1.0,
-            "rate_per_mile": 0.0002,
-            "events_per_year": 0.064
-          },
-          "rolling_hills": {
-            "miles": 80,
-            "base_rate": 0.001,
-            "construction_multiplier": 1.0,
-            "rate_per_mile": 0.001,
-            "events_per_year": 0.08
-          }
-        },
-        "severity": 5000000000,
-        "growth_rate": 0.01,
-        "nominal_total": 72198764046.51488,
-        "pv_cost": 25278588868.7443
+        "lambda_total": 1.6,
+        "EAL": 12800000.0,
+        "severity": 8000000,
+        "growth_rate": 0.015,
+        "nominal_total": 943140198.9183701,
+        "pv_cost": 320426346.5534779,
+        "total_miles": 800,
+        "base_ignition_rate": 0.002,
+        "construction_multiplier": 1.0
       },
       "outage": {
-        "lambda_total": 15.52,
-        "EAC": 2151800000.0,
-        "outage_by_terrain": {
-          "scrubbed_flat": {
-            "miles": 400,
-            "outage_rate": 0.021,
-            "outages_per_year": 8.4,
-            "duration_base": 4,
-            "duration_multiplier": 1.0,
-            "duration_effective": 4.0,
-            "unserved_mwh_per_event": 26500.0,
-            "cost_per_event": 132500000.0,
-            "annual_cost": 1113000000.0
-          },
-          "farmland": {
-            "miles": 320,
-            "outage_rate": 0.016,
-            "outages_per_year": 5.12,
-            "duration_base": 3,
-            "duration_multiplier": 1.0,
-            "duration_effective": 3.0,
-            "unserved_mwh_per_event": 19875.0,
-            "cost_per_event": 99375000.0,
-            "annual_cost": 508800000.0
-          },
-          "rolling_hills": {
-            "miles": 80,
-            "outage_rate": 0.025,
-            "outages_per_year": 2.0,
-            "duration_base": 6,
-            "duration_multiplier": 1.0,
-            "duration_effective": 6.0,
-            "unserved_mwh_per_event": 39750.0,
-            "cost_per_event": 265000000.0,
-            "annual_cost": 530000000.0
-          }
-        },
+        "lambda_total": 20.0,
+        "EAC": 8312599500.0,
         "capacity_at_risk": 1.0,
         "growth_rate": 0.0,
-        "nominal_total": 107590000000.0,
-        "pv_cost": 39997075177.2636
+        "nominal_total": 415629975000.0,
+        "pv_cost": 154512346463.41846,
+        "total_miles": 800,
+        "outage_rate": 0.025,
+        "outage_duration": 6,
+        "duration_multiplier": 1.0,
+        "duration_effective": 6.0,
+        "cost_per_event": 415629975.0,
+        "unserved_mwh_per_event": 23850.0
       },
       "oandm": {
         "total_annual": 13847417.2512,
@@ -4909,29 +4839,29 @@
         "vegetation_pv": 55503670.26154719
       },
       "emissions": {
-        "total_nominal": 2951253102.818803,
-        "total_pv": 1361537650.4715252,
-        "annual_cost": 59025062.056376055,
-        "co2_emissions_kg": 36167979933.37761,
-        "co2_cost_nominal": 1844566976.602257,
-        "co2_cost_pv": 799211590.2533469,
-        "sox_emissions_kg": 137023785.12487626,
-        "sox_cost_nominal": 849547467.7742331,
-        "sox_cost_pv": 434483346.2462563,
-        "nox_emissions_kg": 51427731.68846225,
-        "nox_cost_nominal": 257138658.44231126,
-        "nox_cost_pv": 127842713.97192109
+        "total_nominal": 3077037621.3413677,
+        "total_pv": 1421377292.5932043,
+        "annual_cost": 61540752.426827356,
+        "co2_emissions_kg": 37187724859.27799,
+        "co2_cost_nominal": 1896573967.8231773,
+        "co2_cost_pv": 822337208.5724212,
+        "sox_emissions_kg": 146400473.33202237,
+        "sox_cost_nominal": 907682934.6585389,
+        "sox_cost_pv": 463513282.24377,
+        "nox_emissions_kg": 54556143.7719299,
+        "nox_cost_nominal": 272780718.8596495,
+        "nox_cost_pv": 135526801.7770129
       },
       "facilitated_emissions": {
-        "fac_emissions_project_pv": 4496425326.789608,
-        "fac_emissions_project_nominal": 9746399001.661993,
+        "fac_emissions_project_pv": 4694043425.920958,
+        "fac_emissions_project_nominal": 10161797499.534616,
         "fac_emissions_noline_pv": 8999537648.35437,
         "fac_emissions_noline_nominal": 24208276512.6,
-        "displacement_avoided_cost_pv": 4503112321.564762,
-        "displacement_avoided_cost_nominal": 14461877510.938005,
-        "project_co2_pv": 2639365304.8334165,
-        "project_sox_pv": 1434864413.3736527,
-        "project_nox_pv": 422195608.5825393,
+        "displacement_avoided_cost_pv": 4305494222.433413,
+        "displacement_avoided_cost_nominal": 14046479013.065382,
+        "project_co2_pv": 2715736763.141268,
+        "project_sox_pv": 1530734652.003556,
+        "project_nox_pv": 447572010.77613586,
         "noline_co2_pv": 4318026786.151267,
         "noline_sox_pv": 3671811298.3932257,
         "noline_nox_pv": 1009699563.8098769,
@@ -4995,17 +4925,17 @@
     "summary": {
       "total_capital_pv": 1621120937.7042646,
       "total_operational_pv": 223301102.47477373,
-      "total_energy_emissions_pv": 8961445616.983616,
-      "total_risk_pv": 65275664046.007904,
+      "total_energy_emissions_pv": 9218903358.236645,
+      "total_risk_pv": 154832772809.97192,
       "total_delay_pv": 1783591656.6818018,
-      "total_costs_pv": 77865123359.85236,
+      "total_costs_pv": 167679689865.06943,
       "total_benefits_pv": 11721883194.888716,
       "reporting_bucket_hard_pv": 1621120937.7042646,
       "reporting_bucket_soft_pv": 5110375398.879059,
-      "reporting_bucket_risk_pv": 65275664046.007904,
-      "reporting_bucket_emissions_pv": 5857962977.261133,
-      "fac_emissions_project_pv": 4496425326.789608,
-      "displacement_avoided_cost_pv": 4503112321.564762,
+      "reporting_bucket_risk_pv": 154832772809.97192,
+      "reporting_bucket_emissions_pv": 6115420718.514162,
+      "fac_emissions_project_pv": 4694043425.920958,
+      "displacement_avoided_cost_pv": 4305494222.433413,
       "benefits_remedial_pv": 2497665161.7696233,
       "benefits_enabling_pv": 9224218033.119093
     },
@@ -5022,11 +4952,11 @@
       "energy_losses_pv": 3103482639.722483,
       "conductor_loss_pv": 3103482639.722483,
       "converter_loss_pv": 0.0,
-      "emissions_comp_cost_pv": 1361537650.4715252,
-      "fac_emissions_project_pv": 4496425326.789608,
-      "displacement_avoided_cost_pv": 4503112321.564762,
-      "wildfire_pv": 25278588868.7443,
-      "outage_pv": 39997075177.2636,
+      "emissions_comp_cost_pv": 1421377292.5932043,
+      "fac_emissions_project_pv": 4694043425.920958,
+      "displacement_avoided_cost_pv": 4305494222.433413,
+      "wildfire_pv": 320426346.5534779,
+      "outage_pv": 154512346463.41846,
       "delay_cost_pv": 83024505.2705445,
       "congestion_delay_cost_pv": 1700567151.4112573,
       "curtailment_delay_cost_pv": 0.0,
@@ -5037,29 +4967,29 @@
       "delivered_benefit_nominal": 36562050000.0,
       "revenue_pv": 2440322688.5178957,
       "energy_losses_nominal": 12301279852.694086,
-      "total_costs_pv": 77865123359.85236,
-      "total_costs_nominal": 210412849697.10474,
+      "total_costs_pv": 167679689865.06943,
+      "total_costs_nominal": 447738383865.9034,
       "total_benefits_pv": 11721883194.888716,
       "total_benefits_nominal": 46462050000.0,
       "hard_costs_pv": 1621120937.7042646,
       "soft_costs_pv": 5110375398.879059,
-      "risk_costs_pv": 65275664046.007904,
-      "risk_costs_nominal": 179788764046.5149,
-      "emissions_costs_pv": 5857962977.261133,
+      "risk_costs_pv": 154832772809.97192,
+      "risk_costs_nominal": 416573115198.9184,
+      "emissions_costs_pv": 6115420718.514162,
       "capital_costs_pv": 1621120937.7042646,
       "capital_costs_nominal": 2461894702.430138,
       "operational_costs_pv": 223301102.47477373,
       "operational_costs_nominal": 885098990.9848319,
       "delay_costs_pv": 1783591656.6818018,
       "delay_costs_nominal": 2278160000.0,
-      "energy_emissions_costs_pv": 8961445616.983616,
-      "energy_emissions_costs_nominal": 24998931957.17488,
+      "energy_emissions_costs_pv": 9218903358.236645,
+      "energy_emissions_costs_nominal": 25540114973.57007,
       "benefits_remedial_pv": 2497665161.7696233,
       "benefits_enabling_pv": 9224218033.119093,
       "line_loss_benefit_pv": 0,
-      "bcr_system": 0.15054086719565357,
-      "net_benefit_pv": -66143240164.96364,
-      "net_benefit_nominal": -163950799697.10474,
+      "bcr_system": 0.06990639834986113,
+      "net_benefit_pv": -155957806670.18073,
+      "net_benefit_nominal": -401276333865.9034,
       "bcr_capital": 7.230727160608111,
       "net_benefit_capital_only_pv": 10100762257.184452,
       "bcr_capital_and_delay": 3.4428407302914774,
@@ -5068,48 +4998,48 @@
       "net_benefit_utility_pv": 512876143.0683129,
       "bcr_ratepayer": 2.1144110409463597,
       "net_benefit_ratepayer_pv": 6178077866.648336,
-      "bcr_excluding_emissions": 0.16278774406055666,
-      "net_benefit_excluding_emissions_pv": -60285277187.702515,
-      "total_costs_excluding_emissions_pv": 72007160382.59123,
-      "bcr_excluding_linelosses": 0.15679007418750443,
-      "net_benefit_excluding_linelosses_pv": -63039757525.241165,
-      "total_costs_excluding_linelosses_pv": 74761640720.12988,
-      "bcr_excluding_outage_risk": 0.3095454811499444,
-      "net_benefit_excluding_outage_risk_pv": -26146164987.700043,
-      "total_costs_excluding_outage_risk_pv": 37868048182.58876,
-      "bcr_excluding_wildfire_risk": 0.22290655408887586,
-      "net_benefit_excluding_wildfire_risk_pv": -40864651296.219345,
-      "total_costs_excluding_wildfire_risk_pv": 52586534491.10806,
-      "bcr_excluding_emissions_and_linelosses": 0.17011984815428643,
-      "net_benefit_excluding_emissions_and_linelosses_pv": -57181794547.98003,
-      "total_costs_excluding_emissions_and_linelosses_pv": 68903677742.86874,
-      "bcr_excluding_emissions_and_outage_risk": 0.3661934393394796,
-      "net_benefit_excluding_emissions_and_outage_risk_pv": -20288202010.43891,
-      "total_costs_excluding_emissions_and_outage_risk_pv": 32010085205.327625,
-      "bcr_excluding_emissions_and_wildfire_risk": 0.2508504500595574,
-      "net_benefit_excluding_emissions_and_wildfire_risk_pv": -35006688318.958206,
-      "total_costs_excluding_emissions_and_wildfire_risk_pv": 46728571513.846924,
-      "bcr_excluding_linelosses_and_outage_risk": 0.3371790503302884,
-      "net_benefit_excluding_linelosses_and_outage_risk_pv": -23042682347.977554,
-      "total_costs_excluding_linelosses_and_outage_risk_pv": 34764565542.86627,
-      "bcr_excluding_linelosses_and_wildfire_risk": 0.23688682804151845,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": -37761168656.49686,
-      "total_costs_excluding_linelosses_and_wildfire_risk_pv": 49483051851.385574,
-      "bcr_excluding_wildfire_risk_and_outage_risk": 0.9310871025253897,
-      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -867576118.95574,
-      "total_costs_excluding_wildfire_risk_and_outage_risk_pv": 12589459313.844456,
-      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 0.4055088510759869,
-      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": -17184719370.716423,
-      "total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv": 28906602565.60514,
-      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 0.2686959155249165,
-      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": -31903205679.235725,
-      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 43625088874.12444,
+      "bcr_excluding_emissions": 0.07255244774607789,
+      "net_benefit_excluding_emissions_pv": -149842385951.66656,
+      "total_costs_excluding_emissions_pv": 161564269146.55527,
+      "bcr_excluding_linelosses": 0.07122465265491541,
+      "net_benefit_excluding_linelosses_pv": -152854324030.45822,
+      "total_costs_excluding_linelosses_pv": 164576207225.34692,
+      "bcr_excluding_outage_risk": 0.8902238543743751,
+      "net_benefit_excluding_outage_risk_pv": -1445460206.762247,
+      "total_costs_excluding_outage_risk_pv": 13167343401.650963,
+      "bcr_excluding_wildfire_risk": 0.07004024126571193,
+      "net_benefit_excluding_wildfire_risk_pv": -155637380323.62723,
+      "total_costs_excluding_wildfire_risk_pv": 167359263518.51593,
+      "bcr_excluding_emissions_and_linelosses": 0.07397340031745503,
+      "net_benefit_excluding_emissions_and_linelosses_pv": -146738903311.94406,
+      "total_costs_excluding_emissions_and_linelosses_pv": 158460786506.83276,
+      "bcr_excluding_emissions_and_outage_risk": 1.6622251436362383,
+      "net_benefit_excluding_emissions_and_outage_risk_pv": 4669960511.751915,
+      "total_costs_excluding_emissions_and_outage_risk_pv": 7051922683.136801,
+      "bcr_excluding_emissions_and_wildfire_risk": 0.0726966251320859,
+      "net_benefit_excluding_emissions_and_wildfire_risk_pv": -149521959605.11307,
+      "total_costs_excluding_emissions_and_wildfire_risk_pv": 161243842800.00177,
+      "bcr_excluding_linelosses_and_outage_risk": 1.1647501363723676,
+      "net_benefit_excluding_linelosses_and_outage_risk_pv": 1658022432.9602356,
+      "total_costs_excluding_linelosses_and_outage_risk_pv": 10063860761.92848,
+      "bcr_excluding_linelosses_and_wildfire_risk": 0.07136359604620826,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": -152533897683.90475,
+      "total_costs_excluding_linelosses_and_wildfire_risk_pv": 164255780878.79346,
+      "bcr_excluding_wildfire_risk_and_outage_risk": 0.9124277166744553,
+      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -1125033860.2087688,
+      "total_costs_excluding_wildfire_risk_and_outage_risk_pv": 12846917055.097485,
+      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 2.968737796700213,
+      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": 7773443151.474398,
+      "total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv": 3948440043.414318,
+      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 0.07412328631987614,
+      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": -146418476965.3906,
+      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 158140360160.2793,
       "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 1.741348818862812,
       "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 4990386858.305392,
       "total_costs_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 6731496336.5833235,
-      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 1.2357065168488515,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 2235906520.7667427,
-      "total_costs_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 9485976674.121973,
+      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 1.2030545591184716,
+      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 1978448779.5137138,
+      "total_costs_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 9743434415.375002,
       "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 3.230936863615246,
       "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 8093869498.027876,
       "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 3628013696.8608403
@@ -5118,6 +5048,7 @@
   "metadata": {
     "timestamp": "2026-03-19T10:17:19.658227",
     "scenario_id": "S6",
-    "source": "paper"
+    "source": "paper",
+    "updated": "2026-06-11T23:46:48.398746"
   }
 }

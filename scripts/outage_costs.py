@@ -1,7 +1,7 @@
 # Author: Andrew Igdal
 # Date: 2025-10-29
 # Description: This script calculates expected outage costs using simplified probabilistic
-#              reliability approach with direct outage rates, multiplicative duration model,
+#              reliability approach with line-level outage rates, multiplicative duration model,
 #              and piecewise value of lost load (VoLL).
 
 from __future__ import annotations
@@ -37,7 +37,8 @@ def calculate_voll_cost_piecewise(
 ) -> float:
     """
     Calculate total cost using piecewise VoLL.
-    Hours 0-4 at tier 1, hours 4-24 at tier 2, hours 24+ at tier 3.
+    Iterates over an arbitrary number of duration tiers, each with a max_hours
+    threshold and a value_per_mwh rate.
 
     Args:
         duration_hours: Duration of outage in hours
@@ -52,7 +53,7 @@ def calculate_voll_cost_piecewise(
     prev_threshold = 0
 
     for tier in tiers:
-        max_hours = float("inf") if tier["max_hours"] == ".inf" else tier["max_hours"]
+        max_hours = float("inf") if tier["max_hours"] in (".inf", None) else tier["max_hours"]
         value_per_mwh = tier["value_per_mwh"]
 
         hours_in_tier = min(hours_remaining, max_hours - prev_threshold)
@@ -76,93 +77,80 @@ def calculate_outage_costs(
     discount_rate: float,
     delay_years: float = 0,
     construction_years: float = 0,
+    number_of_circuits_poles: int = 1,
+    line_utilization: float = 1.0,
 ) -> Dict[str, Any]:
     """
-    Calculate expected outage costs using simplified outage rate model.
+    Calculate expected outage costs using line-level outage rate model.
 
     Args:
         outage_yaml: Loaded outage YAML data
         construction_type: Construction type (overhead, underground, subsea)
-        terrain_miles: Dictionary of terrain type to miles
+        terrain_miles: Dictionary of terrain type to miles (summed for total length)
         capacity_mw: Project capacity in MW
         project_lifetime: Project lifetime in years
         discount_rate: Discount rate for PV calculation
         delay_years: Years of delay before construction starts
         construction_years: Years of construction
+        number_of_circuits_poles: Number of circuits (AC) or poles (DC); used to
+            auto-derive phi = 1/N_poles when capacity_at_risk_factor is "auto"
+        line_utilization: Average fraction of line capacity in use (0-1)
 
     Returns:
-        dict: Contains EAC, outage_by_terrain, nominal_cost, pv_cost
+        dict: Contains EAC, nominal_cost, pv_cost
 
     Raises:
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
-    # Validate discount_rate to prevent division by zero
     validate_discount_rate(discount_rate)
 
     outage_config = outage_yaml["outage"]
     growth_rate = outage_config["risk_growth_rate"] or 0.0
-    capacity_at_risk = outage_config["capacity_at_risk_factor"]
+    phi_config = outage_config.get("capacity_at_risk_factor", "auto")
+    if phi_config in ("auto", None):
+        capacity_at_risk = 1.0 / number_of_circuits_poles
+    else:
+        capacity_at_risk = float(phi_config)
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
-    duration_by_terrain = outage_config["outage_duration_by_terrain"]
-    duration_multiplier = outage_config["outage_duration_multiplier"]
-    outage_rates = outage_config["outage_rates"]
+    outage_duration = outage_config.get("outage_duration", 6)
+    duration_multiplier_dict = outage_config["outage_duration_multiplier"]
+    outage_rate_dict = outage_config.get(
+        "outage_rate",
+        {"overhead": 0.025, "underground": 0.004, "subsea": 0.00475},
+    )
 
-    # Map construction type to YAML keys
     yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
 
-    # Calculate outages and costs by terrain
-    outage_by_terrain = {}
-    lambda_total = 0.0
-    EAC = 0.0
+    total_miles = sum(terrain_miles.values())
 
-    for terrain, miles in terrain_miles.items():
-        if miles > 0:
-            # Step 1: Outages per year for this terrain
-            outage_rate = outage_rates[yaml_construction_type].get(terrain, 0.0)
-            lambda_segment = miles * outage_rate
+    # Outage rate for this construction type
+    outage_rate = outage_rate_dict.get(yaml_construction_type, 0.025)
+    lambda_total = total_miles * outage_rate
 
-            # Step 2: Effective duration (multiplicative model)
-            H_base = duration_by_terrain.get(terrain, 0)
-            duration_mult = duration_multiplier.get(yaml_construction_type, 1.0)
-            H_eff = H_base * duration_mult
+    # Effective duration (multiplicative model)
+    dur_mult = duration_multiplier_dict.get(yaml_construction_type, 1.0)
+    duration_effective = outage_duration * dur_mult
 
-            # Step 3: MW lost per event
-            mw_lost_per_event = capacity_at_risk * capacity_mw
+    # MW lost per event
+    mw_lost_per_event = capacity_at_risk * capacity_mw * line_utilization
 
-            # Step 4: Unserved energy per event
-            unserved_mwh_per_event = H_eff * mw_lost_per_event
+    # Unserved energy per event
+    unserved_mwh_per_event = duration_effective * mw_lost_per_event
 
-            # Step 5: Cost per event (piecewise VoLL)
-            cost_per_event = calculate_voll_cost_piecewise(
-                H_eff, mw_lost_per_event, voll_tiers
-            )
+    # Cost per event (piecewise VoLL)
+    cost_per_event = calculate_voll_cost_piecewise(
+        duration_effective, mw_lost_per_event, voll_tiers
+    )
 
-            # Step 6: Annual cost for this terrain
-            annual_cost = lambda_segment * cost_per_event
+    # Expected Annual Cost
+    EAC = lambda_total * cost_per_event
 
-            outage_by_terrain[terrain] = {
-                "miles": miles,
-                "outage_rate": outage_rate,
-                "outages_per_year": lambda_segment,
-                "duration_base": H_base,
-                "duration_multiplier": duration_mult,
-                "duration_effective": H_eff,
-                "unserved_mwh_per_event": unserved_mwh_per_event,
-                "cost_per_event": cost_per_event,
-                "annual_cost": annual_cost,
-            }
-
-            lambda_total += lambda_segment
-            EAC += annual_cost
-
-    # Calculate nominal total cost (sum of growing annual costs)
     nominal_total = calculate_nominal_growing_series(
         annual_amount=EAC,
         growth_rate=growth_rate,
         project_lifetime=project_lifetime,
     )
 
-    # Present value with growing annuity (with delay period discounting)
     pv_cost = calculate_growing_annuity_pv(
         annual_amount=EAC,
         growth_rate=growth_rate,
@@ -175,39 +163,38 @@ def calculate_outage_costs(
     return {
         "lambda_total": lambda_total,
         "EAC": EAC,
-        "outage_by_terrain": outage_by_terrain,
         "capacity_at_risk": capacity_at_risk,
         "growth_rate": growth_rate,
         "nominal_total": nominal_total,
         "pv_cost": pv_cost,
+        "total_miles": total_miles,
+        "outage_rate": outage_rate,
+        "outage_duration": outage_duration,
+        "duration_multiplier": dur_mult,
+        "duration_effective": duration_effective,
+        "cost_per_event": cost_per_event,
+        "unserved_mwh_per_event": unserved_mwh_per_event,
     }
 
 
 def main() -> None:
     """Main function to calculate and display outage costs."""
-    # Load project specifications
     project_details = load_project_technical_details()
 
-    # Construct category identifier
     from calculation_utils import build_category_string
     category = build_category_string(project_details=project_details)
 
-    # Load terrain details
-    from smart_loaders import load_terrain_miles
+    from smart_loaders import load_terrain_miles, load_circuit_and_resistance_details
     terrain_miles = load_terrain_miles()
+    circuit_details = load_circuit_and_resistance_details(category)
 
-    # Load outage parameters
     outage_yaml = load_outage_costs()
-
-    # Load financing data for discount rate
     financing_yaml = get_financing_data_raw()
 
-    # Get discount rate
     discount_rate, discount_source = get_discount_rate_from_config(
         outage_yaml, financing_yaml, rate_key="discount_rate_type"
     )
 
-    # Calculate outage costs
     results = calculate_outage_costs(
         outage_yaml,
         project_details.construction_type,
@@ -217,21 +204,18 @@ def main() -> None:
         discount_rate,
         delay_years=project_details.delay_years,
         construction_years=project_details.construction_years,
+        number_of_circuits_poles=circuit_details.number_of_circuits_poles,
+        line_utilization=project_details.line_utilization,
     )
 
     from run_context import add_derived
-    _out_dur_mult = next(
-        (d["duration_multiplier"] for d in results["outage_by_terrain"].values()),
-        1.0,
-    )
     add_derived({
         "lambda_total_outage": results["lambda_total"],
         "EAC_outage": results["EAC"],
         "mw_lost_per_event": results["capacity_at_risk"] * project_details.capacity_mw,
-        "construction_type_multiplier_outage_duration": _out_dur_mult,
+        "construction_type_multiplier_outage_duration": results["duration_multiplier"],
     })
 
-    # Display results
     print("=" * 80)
     print("EXPECTED OUTAGE COST CALCULATION RESULTS")
     print("=" * 80)
@@ -245,20 +229,15 @@ def main() -> None:
 
     print("[OUTAGE RELIABILITY ASSESSMENT]")
     print()
-    print("OUTAGE EXPOSURE BY TERRAIN:")
-    for terrain, data in results["outage_by_terrain"].items():
-        print(f"  {terrain.replace('_', ' ').title():20} ({data['miles']:5.1f} mi):")
-        print(f"    Outage Rate: {data['outage_rate']:.4f} outages/mi/yr")
-        print(f"    Outages/Year: {data['outages_per_year']:.4f}")
-        print(
-            f"    Duration: {data['duration_base']:.1f}h (base) x {data['duration_multiplier']:.1f} = {data['duration_effective']:.1f}h"
-        )
-        print(f"    Unserved Energy/Event: {data['unserved_mwh_per_event']:,.0f} MWh")
-        print(f"    Cost/Event (piecewise VoLL): ${data['cost_per_event']:,.0f}")
-        print(f"    Annual Cost: ${data['annual_cost']:,.2f}/yr")
-        print()
-    print(f"  {'-' * 76}")
+    print("OUTAGE EXPOSURE (LINE-LEVEL):")
+    print(f"  Total Line Length: {results['total_miles']:.1f} miles")
+    print(f"  Outage Rate: {results['outage_rate']:.4f} outages/mi/yr")
     print(f"  Total Outages/Year: {results['lambda_total']:.4f} events/year")
+    print(f"  Base Duration: {results['outage_duration']:.1f}h")
+    print(f"  Duration Multiplier: {results['duration_multiplier']:.1f}x")
+    print(f"  Effective Duration: {results['duration_effective']:.1f}h")
+    print(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
+    print(f"  Cost/Event (piecewise VoLL): ${results['cost_per_event']:,.0f}")
     print()
 
     print("EXPECTED ANNUAL COST:")
@@ -288,14 +267,7 @@ def main() -> None:
     print("      No AFUDC applies to expected loss calculations.")
     print("=" * 80)
 
-    # ========================================================================
-    # CSV OUTPUT - Write results to batch summary and detail CSV
-    # ========================================================================
-
-    # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
-
-    # Write to CSV (results dict already has all needed values)
     csv_manager.add_outage_costs(results)
     csv_manager.write_batch_summary()
 
