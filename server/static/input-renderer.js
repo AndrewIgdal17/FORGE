@@ -3304,7 +3304,7 @@ function renderWildfireRiskPanel(data) {
       multTable.className = 'ctcc-table capital-cost-table'; multTable.style.marginTop = '1rem';
       const wfMultCaption = document.createElement('caption');
       wfMultCaption.textContent = 'Construction Type Multiplier';
-      wfMultCaption.appendChild(makeHelpIcon('Ignition rate multiplier by construction method. Locked values from SOURCE.'));
+      wfMultCaption.appendChild(makeHelpIcon('Ignition rate multiplier by construction method. Locked values from PG&E SOM / SDG&E CPUC / CIGRE data.'));
       multTable.appendChild(wfMultCaption);
       const multThead = document.createElement('thead'); const multHR = document.createElement('tr');
       const thCT = document.createElement('th'); thCT.textContent = 'Construction Type'; thCT.appendChild(makeHelpIcon('Construction method')); multHR.appendChild(thCT);
@@ -3329,32 +3329,6 @@ function renderWildfireRiskPanel(data) {
         if (!multLocked) { multLocked = true; multInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F512}</span> Multiplier'; }
         else { showBuildCostConfirmDialog('wildfire-multiplier', () => { multLocked = false; multInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F513}</span> Multiplier'; }); }
       });
-
-      // Terrain table
-      const miles = getTerrainMiles();
-      const tTable = document.createElement('table');
-      tTable.className = 'ctcc-table conductor-details-table'; tTable.style.marginTop = '1rem';
-      const wfTerrCaption = document.createElement('caption');
-      wfTerrCaption.textContent = 'Ignition Rates by Terrain';
-      wfTerrCaption.appendChild(makeHelpIcon('Base wildfire ignition frequency by terrain type for the active construction type.'));
-      tTable.appendChild(wfTerrCaption);
-      const WF_TERR_TOOLTIPS = {'Miles': 'Route miles from Routing (read-only echo)', 'Ignition Rate (events/mi/yr)': 'Expected wildfire ignitions per mile per year'};
-      const tThead = document.createElement('thead'); const tHR = document.createElement('tr');
-      ['Terrain', 'Miles', 'Ignition Rate (events/mi/yr)'].forEach(txt => { const th = document.createElement('th'); th.textContent = txt; if (WF_TERR_TOOLTIPS[txt]) th.appendChild(makeHelpIcon(WF_TERR_TOOLTIPS[txt])); tHR.appendChild(th); });
-      tThead.appendChild(tHR); tTable.appendChild(tThead);
-      const tTbody = document.createElement('tbody');
-      TERRAINS_LIST.forEach(t => {
-        const tr = document.createElement('tr');
-        const tdT = document.createElement('td'); tdT.textContent = TERRAIN_LABELS_MAP[t] || t; tdT.style.fontWeight = '500'; tr.appendChild(tdT);
-        const tdM = document.createElement('td'); tdM.textContent = String(miles[t] || 0); tdM.style.color = '#666'; tr.appendChild(tdM);
-        const tdR = document.createElement('td');
-        const rInput = document.createElement('input'); rInput.type = 'text'; rInput.className = 'number-input';
-        rInput.dataset.path = `06_wildfire_costs.wildfire.ignition_rates_by_terrain.${t}`;
-        const rVal = getValueAtFieldPath(data, '06_wildfire_costs', `wildfire.ignition_rates_by_terrain.${t}`);
-        rInput.value = rVal != null ? String(rVal) : '0';
-        tdR.appendChild(rInput); tr.appendChild(tdR); tTbody.appendChild(tr);
-      });
-      tTable.appendChild(tTbody); panel.appendChild(tTable);
     }
 
     renderTabGuideBanner(l4Id, panel);
