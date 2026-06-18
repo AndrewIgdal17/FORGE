@@ -981,10 +981,10 @@ function updateEmissionsImpactPanel(results) {
   const emisComp = byId['emissions_comp'];
   const emisFac = byId['emissions_fac'];
   const displ = byId['displacement_avoided'];
-  const costNom = (emisComp?.value_nominal || 0) + (emisFac?.value_nominal || 0);
-  const costPv = (emisComp?.value_pv || 0) + (emisFac?.value_pv || 0);
-  setVal('emis_cost_nominal', fmt(costNom));
-  setVal('emis_cost_pv', fmt(costPv));
+  setVal('comp_cost_nominal', fmt(emisComp?.value_nominal || 0));
+  setVal('comp_cost_pv', fmt(emisComp?.value_pv || 0));
+  setVal('fac_cost_nominal', fmt(emisFac?.value_nominal || 0));
+  setVal('fac_cost_pv', fmt(emisFac?.value_pv || 0));
   setVal('displ_nominal', fmt(displ?.value_nominal || 0));
   setVal('displ_pv', fmt(displ?.value_pv || 0));
 

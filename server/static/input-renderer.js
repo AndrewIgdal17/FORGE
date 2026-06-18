@@ -1653,12 +1653,18 @@ function renderEmissionsImpactPanel() {
     return section;
   }
 
-  panel.appendChild(makeDollarSection('ecp', 'EMISSIONS COST', null, [
-    ['Nominal:', 'emis_cost_nominal', EQ_EMISSIONS],
-    ['PV:', 'emis_cost_pv', EQ_EMISSIONS],
+  panel.appendChild(makeDollarSection('ecp', 'LOSS-COMP EMISSIONS (cost)',
+    'C_emissions = C_comp only', [
+    ['Nominal:', 'comp_cost_nominal', EQ_EMISSIONS],
+    ['PV:', 'comp_cost_pv', EQ_EMISSIONS],
   ]));
-  panel.appendChild(makeDollarSection('edp', 'DISPLACEMENT (reported)',
-    'Avoided emissions — not in NB or BCR', [
+  panel.appendChild(makeDollarSection('efp', 'FACILITATED EMISSIONS (intermediate)',
+    'C_fac — does not enter NB directly', [
+    ['Nominal:', 'fac_cost_nominal', EQ_EMISSIONS],
+    ['PV:', 'fac_cost_pv', EQ_EMISSIONS],
+  ]));
+  panel.appendChild(makeDollarSection('edp', 'AVOIDED EMISSIONS (benefit)',
+    'B_avoided = C_fac,no − C_fac,proj · Enters NB and BCR', [
     ['Nominal:', 'displ_nominal', EQ_DISPLACEMENT],
     ['PV:', 'displ_pv', EQ_DISPLACEMENT],
   ]));
