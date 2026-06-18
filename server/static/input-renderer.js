@@ -3249,7 +3249,7 @@ function renderExternalityCostTable(data) {
   co2GrowthDiv.appendChild(makeHelpIcon('Real annual escalation of CO\u2082 societal cost. Default 2%/yr (Rennert et al. 2022). Locked by default; click lock to override.'));
   const co2GrowthInput = document.createElement('input');
   co2GrowthInput.type = 'text';
-  co2GrowthInput.className = 'number-input env-uplift-input locked-cell';
+  co2GrowthInput.className = 'percentage-input env-uplift-input locked-cell';
   co2GrowthInput.readOnly = true;
   co2GrowthInput.dataset.path = co2GrowthPath;
   co2GrowthInput.value = (co2GrowthVal * 100).toFixed(1) + '%';

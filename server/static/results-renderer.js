@@ -624,7 +624,7 @@ function renderTransfersAndReporting(results) {
     container.appendChild(createCategory('Revenue', revSection, true));
   }
 
-  // Displacement (reporting only)
+  // Facilitated Emissions (intermediate / reporting_only)
   const dispItems = (C.taxonomyBySide['reporting_only'] || []);
   if (dispItems.length > 0) {
     const dispSection = document.createElement('div');
