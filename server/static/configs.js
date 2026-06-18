@@ -39,6 +39,7 @@
         { group: 'Benefits', metrics: [
           { key: 'benefits_remedial_pv', label: 'Remedial Benefits', path: 'bcr.benefits_remedial_pv', format: 'currency' },
           { key: 'benefits_enabling_pv', label: 'Enabling Benefits', path: 'bcr.benefits_enabling_pv', format: 'currency' },
+          { key: 'benefits_avoided_emissions_pv', label: 'Avoided Emissions Benefits', path: 'bcr.benefits_avoided_emissions_pv', format: 'currency', zeroIfMissing: true },
           { key: 'congestion_pv', label: 'Congestion Benefits', path: 'bcr.congestion_benefit_pv', format: 'currency' },
           { key: 'curtailment_pv', label: 'Curtailment Benefits', path: 'bcr.curtailment_benefit_pv', format: 'currency' },
           { key: 'custom_nb', label: 'Custom Net Benefit', path: '__custom__', format: 'currency' },
