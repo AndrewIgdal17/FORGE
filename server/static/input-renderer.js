@@ -3235,6 +3235,53 @@ function renderExternalityCostTable(data) {
   });
   extTable.appendChild(extTbody);
   wrapper.appendChild(extTable);
+
+  // CO₂ cost annual growth (Pattern 7 locked)
+  const co2GrowthDiv = document.createElement('div');
+  co2GrowthDiv.className = 'env-uplift-row';
+  co2GrowthDiv.style.marginTop = '0.75rem';
+  const co2GrowthPath = '16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth';
+  const co2GrowthVal = getValueAtFieldPath(data, '16_emissions_reductions', 'emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth') ?? 0.02;
+  const co2GrowthLabel = document.createElement('span');
+  co2GrowthLabel.className = 'env-uplift-label';
+  co2GrowthLabel.textContent = 'CO\u2082 Cost Annual Growth';
+  co2GrowthDiv.appendChild(co2GrowthLabel);
+  co2GrowthDiv.appendChild(makeHelpIcon('Real annual escalation of CO\u2082 societal cost. Default 2%/yr (Rennert et al. 2022). Locked by default; click lock to override.'));
+  const co2GrowthInput = document.createElement('input');
+  co2GrowthInput.type = 'text';
+  co2GrowthInput.className = 'number-input env-uplift-input locked-cell';
+  co2GrowthInput.readOnly = true;
+  co2GrowthInput.dataset.path = co2GrowthPath;
+  co2GrowthInput.value = (co2GrowthVal * 100).toFixed(1) + '%';
+  co2GrowthDiv.appendChild(co2GrowthInput);
+  const co2GrowthLock = document.createElement('span');
+  co2GrowthLock.className = 'lock-icon';
+  co2GrowthLock.textContent = '\u{1F512}';
+  co2GrowthLock.style.cursor = 'pointer';
+  co2GrowthLock.style.marginLeft = '0.5rem';
+  let co2GrowthLocked = true;
+  co2GrowthLock.addEventListener('click', () => {
+    if (co2GrowthLocked) {
+      showBuildCostConfirmDialog('co2-growth', () => {
+        co2GrowthLocked = false;
+        co2GrowthInput.readOnly = false;
+        co2GrowthInput.classList.remove('locked-cell');
+        co2GrowthLock.textContent = '\u{1F513}';
+        co2GrowthInput.value = String(co2GrowthVal);
+        co2GrowthInput.focus();
+      });
+    } else {
+      co2GrowthLocked = true;
+      co2GrowthInput.readOnly = true;
+      co2GrowthInput.classList.add('locked-cell');
+      co2GrowthLock.textContent = '\u{1F512}';
+      const raw = parseFloat(co2GrowthInput.value) || 0;
+      co2GrowthInput.value = (raw * 100).toFixed(1) + '%';
+    }
+  });
+  co2GrowthDiv.appendChild(co2GrowthLock);
+  wrapper.appendChild(co2GrowthDiv);
+
   return wrapper;
 }
 

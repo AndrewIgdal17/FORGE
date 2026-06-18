@@ -536,6 +536,11 @@ _TAB7 += [
        input_type="percent", condition="always_hidden", tier="working", display_order=3,
        validation={"min": 0, "max": 1, "step": 0.01},
        sub_tab="outage-risk"),
+    _f("out_redispatch_cost", taxonomy_id="outage_eac", input_tab="risk",
+       yaml_section="07_outage_costs", field_path="outage.redispatch_cost_per_mwh",
+       label="Redispatch Cost", help_text="Congestion premium for rerouting power during outage ($/MWh). Default $20 from LBNL empirical data.",
+       unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
+       display_order=4, sub_tab="outage-risk"),
 ]
 # VoLL tiers (10 tiers × 2 fields = 20) — moved to System Details (Economic Details)
 # Fields are always_hidden; rendered via custom table in renderEconomicDetailsPanel()
@@ -614,6 +619,16 @@ for _pi, (_pk, _pl) in enumerate([("co2_cost_per_kg", "CO\u2082 Cost per kg"),
         label=_pl, help_text=f"Social cost per kg of {_pl.split()[0]} emissions (externality value)",
         unit="$/kg", input_type="currency", condition="always_hidden", tier="first-glance",
         display_order=2 + _pi, sub_tab="energy-emissions-emissions"))
+
+_TAB8.append(_f(
+    "co2_cost_annual_growth", taxonomy_id="emissions_comp", input_tab="emissions",
+    yaml_section="16_emissions_reductions",
+    field_path="emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth",
+    label="CO\u2082 Cost Annual Growth",
+    help_text="Real annual escalation rate for CO\u2082 societal cost (Rennert et al. 2022). Default 2%/yr.",
+    input_type="percent", condition="always_hidden", tier="working",
+    display_order=6, sub_tab="energy-emissions-emissions",
+    validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True}))
 
 # Emission intensities: 3 pollutants × 8 fuels = 24
 _POLLUTANTS = [("co2", "CO\u2082"), ("sox", "SO\u2093"), ("nox", "NO\u2093")]
