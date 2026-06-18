@@ -3,7 +3,7 @@
 # Energy source mix lives in 18_energy_source_mix.yaml (merged at load for emissions.py).
 
 emissions_reductions:
-  compensation_percent: 0.9 # [0,1]
+  compensation_percent: 1.0 # [0,1]
 
   # User Inputs - Emission Intensities (Blue)
   emission_intensities:
@@ -37,6 +37,7 @@ emissions_reductions:
 
   # User Inputs - Societal Costs (Yellow)
   societal_costs_per_kg:
-    co2_cost_per_kg: 0.051 # $/KGCO2
-    sox_cost_per_kg: 6.2 # $/KGSOX
-    nox_cost_per_kg: 5.0 # $/KGNOX
+    co2_cost_per_kg: 0.190 # $/kg CO2 = $190/tCO2. EPA SC-GHG 2023, 2% Ramsey rate, 2020$
+    co2_cost_annual_growth: 0.02 # real annual escalation (Rennert et al. 2022)
+    sox_cost_per_kg: 57.0   # $/kg SOx. EPA BPT TSD 2023, EGU sector, 2025, 2% DR (PM2.5-related)
+    nox_cost_per_kg: 106.6  # $/kg NOx. EPA BPT TSD 2023, EGU sector, 2025, 2% DR (PM2.5 + ozone)

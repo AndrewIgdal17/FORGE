@@ -456,7 +456,7 @@ function deriveTaxonomyResultsFromLegacy(results) {
   const wf = costs.wildfire || {};
   const out = costs.outage || {};
   const em = costs.emissions || {};
-  const fac = costs.facilitated_emissions || {};
+  const fac = benefits.facilitated_emissions || {};
   const ll = costs.line_loss || {};
   const build = costs.build || {};
   const row = costs.row || {};

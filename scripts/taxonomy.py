@@ -142,10 +142,10 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("emissions_comp", "cost", "emissions", "loss_compensation",
                  "Loss-Compensation Emissions", "social", None, 1,
                  "Social cost of emissions from generation compensating for line losses."),
-    TaxonomyItem("emissions_fac", "cost", "emissions", "facilitated",
+    TaxonomyItem("emissions_fac", "reporting_only", "reporting", "facilitated",
                  "Facilitated Emissions", "social", None, 2,
-                 "Social cost of project-path generation mix over delivered energy."),
-    # --- Benefits (buckets: remedial, enabling) ---
+                 "Intermediate: social cost of project-path generation mix over delivered energy. Difference with no-line forms B_avoided_emissions."),
+    # --- Benefits (buckets: remedial, enabling, avoided_emissions) ---
     TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
                  "Congestion Reduction Benefit", "wacc_real", None, 1,
                  "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."),
@@ -159,10 +159,10 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("revenue", "transfer", "transfer", "revenue",
                  "Revenue (Rate-Based)", "wacc_real", None, 1,
                  "Utility-ratepayer transfer: allowed return x rate base. Not in societal NB."),
-    # --- Reporting-only ---
-    TaxonomyItem("displacement_avoided", "reporting_only", "reporting", "displacement",
-                 "Displacement Avoided Emissions", "social", None, 1,
-                 "Reported for transparency; not in NB or BCR."),
+    # --- Avoided emissions benefit ---
+    TaxonomyItem("displacement_avoided", "benefit", "avoided_emissions", "displacement",
+                 "Avoided Emissions Benefit", "social", None, 1,
+                 "B_avoided_emissions = C_fac,no - C_fac,proj. Enters NB and BCR."),
     # --- Utility (shared input groups, no scenario_results) ---
     TaxonomyItem("project_identity", "utility", "project", "configuration",
                  "Project Identity", None, None, 1,
@@ -252,8 +252,12 @@ DIMENSIONS_BY_ITEM: dict[str, list[str]] = dict(_dim_map)
 
 EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
     "emissions": ExcludableGroup(
-        "emissions", "Emissions (loss-comp + facilitated)",
-        frozenset({"emissions_comp", "emissions_fac"}),
+        "emissions", "Emissions (loss-comp)",
+        frozenset({"emissions_comp"}),
+    ),
+    "avoided_emissions": ExcludableGroup(
+        "avoided_emissions", "Avoided Emissions",
+        frozenset({"displacement_avoided"}),
     ),
     "line_losses": ExcludableGroup(
         "line_losses", "Line Losses (conductor + converter)",
@@ -464,7 +468,7 @@ if __name__ == "__main__":
     # 8b. Bucket membership
     _side_bucket_rules: dict[str, set[str]] = {
         "cost": {"hard", "soft", "risk", "emissions"},
-        "benefit": {"remedial", "enabling"},
+        "benefit": {"remedial", "enabling", "avoided_emissions"},
         "transfer": {"transfer"},
         "reporting_only": {"reporting"},
         "utility": {"project", "route", "financial"},
@@ -497,16 +501,16 @@ if __name__ == "__main__":
     assert len(BCR_DEFINITIONS) == 5, (
         f"Expected 5 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
-    assert len(BCR_EXCLUSION_VARIANTS) == 15, (
-        f"Expected 15 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
+    assert len(BCR_EXCLUSION_VARIANTS) == 31, (
+        f"Expected 31 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 20, (
-        f"Expected 20 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 36, (
+        f"Expected 36 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups
-    assert len(EXCLUDABLE_GROUPS) == 4, (
-        f"Expected 4 excludable groups, got {len(EXCLUDABLE_GROUPS)}"
+    assert len(EXCLUDABLE_GROUPS) == 5, (
+        f"Expected 5 excludable groups, got {len(EXCLUDABLE_GROUPS)}"
     )
     _all_excl_ids: set[str] = set()
     for _g in EXCLUDABLE_GROUPS.values():
@@ -528,7 +532,7 @@ if __name__ == "__main__":
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 36 items (24 cost/benefit + 12 utility), 20 BCR definitions, 4 excludable groups")
+    print("Taxonomy verification passed: 35 items, 36 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"

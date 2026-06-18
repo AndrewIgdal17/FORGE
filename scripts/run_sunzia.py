@@ -216,14 +216,19 @@ def print_results(results: dict, label: str):
     print(f"  Wildfire:               {fmt(costs['wildfire']['pv_cost'])}")
     print(f"  Outage:                 {fmt(costs['outage']['pv_cost'])}")
     print(f"  Emissions (loss-comp):  {fmt(costs['emissions']['total_pv'])}")
-    print(f"  Facilitated emissions:  {fmt(costs['facilitated_emissions']['fac_emissions_project_pv'])}")
 
     cc = benefits["congestion_curtailment"]
+    fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
+    print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
     print(f"  Revenue (transfer):     {fmt(benefits['revenue']['revenue_pv'])}")
+
+    print(f"\n  --- TRANSPARENCY ---")
+    print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")
+    print(f"  Fac. emissions (no-line): {fmt(fac.get('fac_emissions_noline_pv', 0))}")
 
     print(f"\n  --- DELAY COSTS (embedded) ---")
     print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")

@@ -51,10 +51,10 @@ def test_hand_calculated():
       - E_delivered=1000 MWh, gas intensity=400 kg CO2/MWh, cost=$0.05/kg
       - lifetime=3, r_social=0, delay=0, construction=0
 
-    Expected (from hand calculation using emissions.py evolution engine):
-      - proj_nominal = proj_pv = 21326.419078 (no discounting)
+    Expected (from hand calculation using fixed evolution engine, tau-1 exponent):
+      - proj_nominal = proj_pv = 22651.965548 (no discounting)
       - cf_nominal = cf_pv = 24000.000000
-      - displacement = 2673.580922
+      - displacement = 1348.034452
     """
     print("\n=== Test 1: Hand-calculated 3-year case ===")
 
@@ -74,12 +74,12 @@ def test_hand_calculated():
     )
 
     ok = True
-    ok &= assert_close(r.fac_emissions_project_nominal, 21326.419078, "proj_nominal", tol=0.01)
-    ok &= assert_close(r.fac_emissions_project_pv, 21326.419078, "proj_pv", tol=0.01)
+    ok &= assert_close(r.fac_emissions_project_nominal, 22651.965548, "proj_nominal", tol=0.01)
+    ok &= assert_close(r.fac_emissions_project_pv, 22651.965548, "proj_pv", tol=0.01)
     ok &= assert_close(r.fac_emissions_noline_nominal, 24000.0, "cf_nominal")
     ok &= assert_close(r.fac_emissions_noline_pv, 24000.0, "cf_pv")
-    ok &= assert_close(r.displacement_avoided_cost_pv, 2673.580922, "displacement_pv", tol=0.01)
-    ok &= assert_close(r.displacement_avoided_cost_nominal, 2673.580922, "displacement_nom", tol=0.01)
+    ok &= assert_close(r.displacement_avoided_cost_pv, 1348.034452, "displacement_pv", tol=0.01)
+    ok &= assert_close(r.displacement_avoided_cost_nominal, 1348.034452, "displacement_nom", tol=0.01)
 
     if r.displacement_avoided_cost_pv <= 0:
         print("  FAIL displacement should be positive (cleaner project)")

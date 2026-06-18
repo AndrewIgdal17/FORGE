@@ -194,10 +194,12 @@ def calculate_lifetime_emissions(
         )
         yearly_emissions.append(emissions)
 
-        # Calculate costs for this year: C_k = E_k x c_k
+        # Calculate costs for this year: C_k = E_k x c_k(tau)
         year_cost = 0.0
         for pollutant, emissions_kg in emissions.items():
-            cost_per_kg = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
+            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
+            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
+            cost_per_kg = base_cost * (1 + growth) ** (year - 1)
             pollutant_cost = emissions_kg * cost_per_kg
             year_cost += pollutant_cost
             total_emissions[pollutant] += emissions_kg
@@ -213,7 +215,9 @@ def calculate_lifetime_emissions(
 
         # Track PV by pollutant
         for pollutant, emissions_kg in emissions.items():
-            cost_per_kg = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
+            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
+            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
+            cost_per_kg = base_cost * (1 + growth) ** (year - 1)
             pollutant_cost = emissions_kg * cost_per_kg
             pollutant_pv = pollutant_cost / (
                 (1 + social_discount_rate) ** year_discount_year

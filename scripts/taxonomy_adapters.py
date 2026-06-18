@@ -383,7 +383,7 @@ def adapt_all_results(json_results: dict) -> list[TaxonomyResult]:
     results += adapt_wildfire(costs.get("wildfire", {}))
     results += adapt_outage(costs.get("outage", {}))
     results += adapt_emissions_comp(costs.get("emissions", {}))
-    results += adapt_facilitated_emissions(costs.get("facilitated_emissions", {}))
+    results += adapt_facilitated_emissions(benefits.get("facilitated_emissions", {}))
     results += adapt_congestion_curtailment(benefits.get("congestion_curtailment", {}))
     results += adapt_revenue(benefits.get("revenue", {}))
 

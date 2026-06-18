@@ -57,8 +57,6 @@ BATCH_SUMMARY_FIELDS = [
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
-    "fac_emissions_project_pv",
-    "displacement_avoided_cost_pv",
     "energy_losses_pv",
     "conductor_loss_pv",
     "converter_loss_pv",
@@ -80,10 +78,14 @@ BATCH_SUMMARY_FIELDS = [
     "rate_base",
     "rate_base_real",
     "annual_revenue_real",
+    "displacement_avoided_cost_pv",
     "total_benefits_pv",
     # 9a. Appendix-aligned benefit buckets
     "benefits_remedial_pv",
     "benefits_enabling_pv",
+    # 9b. Transparency (intermediate quantities)
+    "fac_emissions_project_pv",
+    "fac_emissions_noline_pv",
     # 10. BCR Metrics
     "bcr_system",
     "bcr_capital",
