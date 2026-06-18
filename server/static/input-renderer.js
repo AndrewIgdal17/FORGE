@@ -3407,7 +3407,7 @@ function renderOutageRiskPanel(data) {
       durTable.className = 'ctcc-table capital-cost-table'; durTable.style.marginTop = '1rem';
       const outMultCaption = document.createElement('caption');
       outMultCaption.textContent = 'Duration Multiplier';
-      outMultCaption.appendChild(makeHelpIcon('Outage duration multiplier by construction method. Locked values from SOURCE.'));
+      outMultCaption.appendChild(makeHelpIcon('Outage duration multiplier by construction method. Locked values from CIGRE TB 815 / IEA Wind TEM95 data.'));
       durTable.appendChild(outMultCaption);
       const durThead = document.createElement('thead'); const durHR = document.createElement('tr');
       const thCT = document.createElement('th'); thCT.textContent = 'Construction Type'; thCT.appendChild(makeHelpIcon('Construction method')); durHR.appendChild(thCT);
@@ -3432,39 +3432,6 @@ function renderOutageRiskPanel(data) {
         if (!durLocked) { durLocked = true; durInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F512}</span> Duration Mult'; }
         else { showBuildCostConfirmDialog('outage-duration', () => { durLocked = false; durInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F513}</span> Duration Mult'; }); }
       });
-
-      // Terrain table
-      const miles = getTerrainMiles();
-      const normCT = activeCT.includes('underground') ? 'underground' : activeCT;
-      const tTable = document.createElement('table');
-      tTable.className = 'ctcc-table conductor-details-table'; tTable.style.marginTop = '1rem';
-      const outTerrCaption = document.createElement('caption');
-      outTerrCaption.textContent = 'Outage Rates by Terrain';
-      outTerrCaption.appendChild(makeHelpIcon('Base outage frequency and duration by terrain type for the active construction type.'));
-      tTable.appendChild(outTerrCaption);
-      const OUT_TERR_TOOLTIPS = {'Miles': 'Route miles from Routing (read-only echo)', 'Outage Rate (outages/mi/yr)': 'Expected outages per mile per year', 'Duration (hrs/outage)': 'Base outage duration in hours per event'};
-      const tThead = document.createElement('thead'); const tHR = document.createElement('tr');
-      ['Terrain', 'Miles', 'Outage Rate (outages/mi/yr)', 'Duration (hrs/outage)'].forEach(txt => { const th = document.createElement('th'); th.textContent = txt; if (OUT_TERR_TOOLTIPS[txt]) th.appendChild(makeHelpIcon(OUT_TERR_TOOLTIPS[txt])); tHR.appendChild(th); });
-      tThead.appendChild(tHR); tTable.appendChild(tThead);
-      const tTbody = document.createElement('tbody');
-      TERRAINS_LIST.forEach(t => {
-        const tr = document.createElement('tr');
-        const tdT = document.createElement('td'); tdT.textContent = TERRAIN_LABELS_MAP[t] || t; tdT.style.fontWeight = '500'; tr.appendChild(tdT);
-        const tdM = document.createElement('td'); tdM.textContent = String(miles[t] || 0); tdM.style.color = '#666'; tr.appendChild(tdM);
-        const tdR = document.createElement('td');
-        const rInput = document.createElement('input'); rInput.type = 'text'; rInput.className = 'number-input';
-        rInput.dataset.path = `07_outage_costs.outage.outage_rates.${normCT}.${t}`;
-        const rVal = getValueAtFieldPath(data, '07_outage_costs', `outage.outage_rates.${normCT}.${t}`);
-        rInput.value = rVal != null ? String(rVal) : '0';
-        tdR.appendChild(rInput); tr.appendChild(tdR);
-        const tdD = document.createElement('td');
-        const dInput = document.createElement('input'); dInput.type = 'text'; dInput.className = 'number-input';
-        dInput.dataset.path = `07_outage_costs.outage.outage_duration_by_terrain.${t}`;
-        const dVal = getValueAtFieldPath(data, '07_outage_costs', `outage.outage_duration_by_terrain.${t}`);
-        dInput.value = dVal != null ? String(dVal) : '0';
-        tdD.appendChild(dInput); tr.appendChild(tdD); tTbody.appendChild(tr);
-      });
-      tTable.appendChild(tTbody); panel.appendChild(tTable);
     }
 
     renderTabGuideBanner(l4Id, panel);
