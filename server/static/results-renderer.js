@@ -329,63 +329,20 @@ function createResultItem(label, value, isCurrency = false) {
 function renderObjectAsResults(obj, container, isCurrency = false) {
   Object.entries(obj).forEach(([key, value]) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      // Check if this is a "by terrain" section that should be full-width
-      const isByTerrainSection = key === 'lambda_by_terrain' || key === 'outage_by_terrain';
+      const subcategory = document.createElement('div');
+      subcategory.className = 'results-subcategory';
 
-      if (isByTerrainSection) {
-        // Create full-width section with title
-        const terrainSection = document.createElement('div');
-        terrainSection.className = 'results-terrain-section';
+      const title = document.createElement('div');
+      title.className = 'results-subcategory-title';
+      title.textContent = humanizeLabel(key);
+      subcategory.appendChild(title);
 
-        const title = document.createElement('div');
-        title.className = 'results-subcategory-title';
-        title.textContent = humanizeLabel(key);
-        terrainSection.appendChild(title);
+      const grid = document.createElement('div');
+      grid.className = 'results-grid';
+      renderObjectAsResults(value, grid, isCurrency);
+      subcategory.appendChild(grid);
 
-        // Create grid where each terrain type gets its own column
-        const grid = document.createElement('div');
-        grid.className = 'results-grid';
-
-        // Each child (terrain type) becomes a column
-        Object.entries(value).forEach(([terrainKey, terrainValue]) => {
-          if (terrainValue && typeof terrainValue === 'object' && !Array.isArray(terrainValue)) {
-            const terrainColumn = document.createElement('div');
-            terrainColumn.className = 'results-terrain-column';
-
-            const terrainTitle = document.createElement('div');
-            terrainTitle.className = 'results-terrain-title';
-            terrainTitle.textContent = humanizeLabel(terrainKey);
-            terrainColumn.appendChild(terrainTitle);
-
-            // Render the terrain data items
-            Object.entries(terrainValue).forEach(([itemKey, itemValue]) => {
-              const item = createResultItem(itemKey, itemValue, isCurrency);
-              terrainColumn.appendChild(item);
-            });
-
-            grid.appendChild(terrainColumn);
-          }
-        });
-
-        terrainSection.appendChild(grid);
-        container.appendChild(terrainSection);
-      } else {
-        // Normal nested object - create subcategory
-        const subcategory = document.createElement('div');
-        subcategory.className = 'results-subcategory';
-
-        const title = document.createElement('div');
-        title.className = 'results-subcategory-title';
-        title.textContent = humanizeLabel(key);
-        subcategory.appendChild(title);
-
-        const grid = document.createElement('div');
-        grid.className = 'results-grid';
-        renderObjectAsResults(value, grid, isCurrency);
-        subcategory.appendChild(grid);
-
-        container.appendChild(subcategory);
-      }
+      container.appendChild(subcategory);
     } else {
       // Primitive value - create item
       const item = createResultItem(key, value, isCurrency);
@@ -616,13 +573,28 @@ function renderBenefitsByTaxonomy(results) {
   enSection.appendChild(subtotalPairRow('Enabling Subtotal', enNom, enPV));
   container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection, true));
 
+  // Avoided Emissions
+  const avItems = (C.taxonomyByBucket['avoided_emissions'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+  const avSection = document.createElement('div');
+  avSection.className = 'cost-section-items';
+  avSection.appendChild(pairHeader());
+  let avPV = 0, avNom = 0;
+  avItems.forEach(item => {
+    const r = resultById[item.id];
+    avSection.appendChild(renderTaxonomyItem(item, r, false));
+    avPV += r?.value_pv || 0;
+    avNom += r?.value_nominal || 0;
+  });
+  avSection.appendChild(subtotalPairRow('Avoided Emissions Subtotal', avNom, avPV));
+  container.appendChild(createCategory('Avoided Emissions Benefits (B_avoided_emissions)', avSection, true));
+
   // Total Benefits (non-collapsible)
-  const totalPV = remPV + enPV;
-  const totalNom = remNom + enNom;
+  const totalPV = remPV + enPV + avPV;
+  const totalNom = remNom + enNom + avNom;
   const totalSection = document.createElement('div');
   totalSection.className = 'cost-section-items';
   totalSection.appendChild(pairHeader());
-  totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling'));
+  totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling + B_avoided_emissions'));
   container.appendChild(totalSection);
 
   return container;
@@ -661,21 +633,20 @@ function renderTransfersAndReporting(results) {
       const r = resultById[item.id];
       if (r && (r.value_pv || r.value_pv === 0)) {
         dispSection.appendChild(pairHeader());
-        dispSection.appendChild(currencyPairItem(item.label, r.value_nominal || 0, r.value_pv, 'Reported for transparency; does not enter NB or BCR.'));
-        const sign = (r.value_pv || 0) >= 0 ? 'cleaner' : 'dirtier';
+        dispSection.appendChild(currencyPairItem(item.label, r.value_nominal || 0, r.value_pv, 'Intermediate quantity (C_fac). Does not enter NB directly; difference with no-line forms B_avoided_emissions.'));
         const note = document.createElement('div');
         note.className = 'results-note';
         note.style.marginTop = '0.35rem';
-        note.textContent = `Positive = project enables cleaner generation than no-line counterfactual. This scenario: ${sign} project.`;
+        note.textContent = `Absolute social cost of project-path facilitated generation. The displacement benefit (B_avoided_emissions) is on the Benefits tab.`;
         dispSection.appendChild(note);
       } else {
         const note = document.createElement('div');
         note.className = 'results-note';
-        note.textContent = 'Displacement not computed for this scenario.';
+        note.textContent = 'Facilitated emissions not computed for this scenario (E_delivered_annual may be zero).';
         dispSection.appendChild(note);
       }
     });
-    container.appendChild(createCategory('Displacement (reporting only)', dispSection, true));
+    container.appendChild(createCategory('Facilitated Emissions (intermediate)', dispSection, true));
   }
 
   // Physical Metrics
@@ -1251,7 +1222,8 @@ function renderCTCCResults(results) {
       });
       const remPV = (C.taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
       const enPV = (C.taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-      const totalBenefitsPV = remPV + enPV;
+      const avEmPV = (C.taxonomyByBucket['avoided_emissions'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+      const totalBenefitsPV = remPV + enPV + avEmPV;
       const netBenefitPV = bcr.net_benefit_pv != null ? bcr.net_benefit_pv : (totalBenefitsPV - _totalCostPV);
 
       const heroGrid = document.createElement('div');
@@ -1335,7 +1307,7 @@ function renderCTCCResults(results) {
       benHdr.appendChild(benSubEl);
       benCard.appendChild(benHdr);
 
-      [{label:'Remedial',value:remPV},{label:'Enabling',value:enPV}].forEach(m => {
+      [{label:'Remedial',value:remPV},{label:'Enabling',value:enPV},{label:'Avoided Emissions',value:avEmPV}].forEach(m => {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06)';
         const rlbl = document.createElement('span');
@@ -1358,7 +1330,7 @@ function renderCTCCResults(results) {
       benCard.appendChild(benTotal);
       const benNote = document.createElement('div');
       benNote.style.cssText = 'font-size:0.75rem;color:rgba(0,0,0,0.45);line-height:1.4;margin-top:0.75rem';
-      benNote.textContent = 'Benefits = congestion + curtailment. Revenue is a transfer and excluded from system benefits.';
+      benNote.textContent = 'B = remedial + enabling + avoided emissions. Revenue is a transfer, excluded from system benefits.';
       benCard.appendChild(benNote);
       cbGrid.appendChild(benCard);
       content.appendChild(cbGrid);
