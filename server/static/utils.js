@@ -326,7 +326,9 @@ function deriveDefaultApiBase(currentUrl, defaultPort) {
       return `http://127.0.0.1:${defaultPort}`;
     }
 
-    url.port = String(defaultPort);
+    if (url.hostname === "127.0.0.1" || url.hostname === "localhost") {
+      url.port = String(defaultPort);
+    }
     url.pathname = "";
     url.search = "";
     url.hash = "";
