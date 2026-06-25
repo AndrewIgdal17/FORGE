@@ -23,7 +23,7 @@ from typing import Dict, Any, List, Tuple, Optional, Callable
 # ============================================================================
 
 BCR_COLUMNS = [
-    "bcr_system",
+    "bcr_societal",
     "bcr_capital",
     "bcr_capital_and_delay",
     "bcr_excluding_risk",

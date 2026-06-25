@@ -26,7 +26,7 @@ project_categories_row_widths:
     capacity_mw: 329
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 100
+    row_width_feet: 90
 
   "Overhead/AC/329MW/Advanced Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -34,7 +34,7 @@ project_categories_row_widths:
     capacity_mw: 329
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 100
+    row_width_feet: 90
 
   "Overhead/AC/394MW/Standard Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -42,7 +42,7 @@ project_categories_row_widths:
     capacity_mw: 394
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 100
+    row_width_feet: 95
 
   "Overhead/AC/394MW/Advanced Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -50,7 +50,7 @@ project_categories_row_widths:
     capacity_mw: 394
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 100
+    row_width_feet: 95
 
   "Overhead/AC/460MW/Standard Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -74,7 +74,7 @@ project_categories_row_widths:
     capacity_mw: 657
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 120
+    row_width_feet: 125
 
   "Overhead/AC/657MW/Advanced Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -82,7 +82,7 @@ project_categories_row_widths:
     capacity_mw: 657
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 120
+    row_width_feet: 125
 
   "Overhead/AC/1792MW/Standard Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -90,7 +90,7 @@ project_categories_row_widths:
     capacity_mw: 1792
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 150
+    row_width_feet: 175
 
   "Overhead/AC/1792MW/Advanced Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -98,7 +98,7 @@ project_categories_row_widths:
     capacity_mw: 1792
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 150
+    row_width_feet: 175
 
   "Overhead/AC/2598MW/Standard Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -106,7 +106,7 @@ project_categories_row_widths:
     capacity_mw: 2598
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/AC/2598MW/Advanced Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -114,7 +114,7 @@ project_categories_row_widths:
     capacity_mw: 2598
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/AC/6625MW/Standard Aluminum Conductor/NA":
     installation_method: "Overhead"
@@ -172,7 +172,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 150
+    row_width_feet: 180
 
   "Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -180,7 +180,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 150
+    row_width_feet: 180
 
   "Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -188,7 +188,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 150
+    row_width_feet: 180
 
   "Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -196,7 +196,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 150
+    row_width_feet: 180
 
   "Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -204,7 +204,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -212,7 +212,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -220,7 +220,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -228,7 +228,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 180
+    row_width_feet: 200
 
   "Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -236,7 +236,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 200
+    row_width_feet: 215
 
   "Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -244,7 +244,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 200
+    row_width_feet: 215
 
   "Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -252,7 +252,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 200
+    row_width_feet: 215
 
   "Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -260,7 +260,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 200
+    row_width_feet: 215
 
   "Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -310,7 +310,7 @@ project_categories_row_widths:
     capacity_mw: 329
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 31
 
   "Underground direct-buried/AC/394MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -318,7 +318,7 @@ project_categories_row_widths:
     capacity_mw: 394
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 32
 
   "Underground direct-buried/AC/460MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -326,7 +326,7 @@ project_categories_row_widths:
     capacity_mw: 460
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 33
 
   "Underground direct-buried/AC/657MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -334,7 +334,7 @@ project_categories_row_widths:
     capacity_mw: 657
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 35
 
   "Underground direct-buried/AC/1792MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -342,7 +342,7 @@ project_categories_row_widths:
     capacity_mw: 1792
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground direct-buried/AC/2598MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -350,7 +350,7 @@ project_categories_row_widths:
     capacity_mw: 2598
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 42
 
   "Underground direct-buried/AC/6625MW/Underground Copper Conductor/NA":
     installation_method: "Underground direct-buried"
@@ -358,7 +358,7 @@ project_categories_row_widths:
     capacity_mw: 6625
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 50
 
   # UNDERGROUND DIRECT-BURIED DC CONFIGURATIONS (10 total)
 
@@ -384,7 +384,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -392,7 +392,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -400,7 +400,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -408,7 +408,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -416,7 +416,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -424,7 +424,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -432,7 +432,7 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 50
 
   "Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -440,7 +440,7 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 50
 
   # UNDERGROUND TUNNEL AC CONFIGURATIONS (8 total)
 
@@ -458,7 +458,7 @@ project_categories_row_widths:
     capacity_mw: 329
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 31
 
   "Underground tunnel/AC/394MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -466,7 +466,7 @@ project_categories_row_widths:
     capacity_mw: 394
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 32
 
   "Underground tunnel/AC/460MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -474,7 +474,7 @@ project_categories_row_widths:
     capacity_mw: 460
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 33
 
   "Underground tunnel/AC/657MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -482,7 +482,7 @@ project_categories_row_widths:
     capacity_mw: 657
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 35
 
   "Underground tunnel/AC/1792MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -490,7 +490,7 @@ project_categories_row_widths:
     capacity_mw: 1792
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground tunnel/AC/2598MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -498,7 +498,7 @@ project_categories_row_widths:
     capacity_mw: 2598
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 42
 
   "Underground tunnel/AC/6625MW/Underground Copper Conductor/NA":
     installation_method: "Underground tunnel"
@@ -506,7 +506,7 @@ project_categories_row_widths:
     capacity_mw: 6625
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 50
 
   # UNDERGROUND TUNNEL DC CONFIGURATIONS (10 total)
 
@@ -532,7 +532,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -540,7 +540,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -548,7 +548,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -556,7 +556,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -564,7 +564,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -572,7 +572,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -580,7 +580,7 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 50
 
   "Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -588,7 +588,7 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 50
 
   # SUBSEA AC CONFIGURATIONS (8 total)
 
@@ -606,7 +606,7 @@ project_categories_row_widths:
     capacity_mw: 329
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 31
 
   "Subsea/AC/394MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -614,7 +614,7 @@ project_categories_row_widths:
     capacity_mw: 394
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 32
 
   "Subsea/AC/460MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -622,7 +622,7 @@ project_categories_row_widths:
     capacity_mw: 460
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 33
 
   "Subsea/AC/657MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -630,7 +630,7 @@ project_categories_row_widths:
     capacity_mw: 657
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 35
 
   "Subsea/AC/1792MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -638,7 +638,7 @@ project_categories_row_widths:
     capacity_mw: 1792
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Subsea/AC/2598MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -646,7 +646,7 @@ project_categories_row_widths:
     capacity_mw: 2598
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 42
 
   "Subsea/AC/6625MW/Subsea Copper Conductor/NA":
     installation_method: "Subsea"
@@ -654,7 +654,7 @@ project_categories_row_widths:
     capacity_mw: 6625
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    row_width_feet: 30
+    row_width_feet: 50
 
   # SUBSEA DC CONFIGURATIONS (10 total)
 
@@ -680,7 +680,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -688,7 +688,7 @@ project_categories_row_widths:
     capacity_mw: 1500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 38
 
   "Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -696,7 +696,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -704,7 +704,7 @@ project_categories_row_widths:
     capacity_mw: 2000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 43
 
   "Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -712,7 +712,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -720,7 +720,7 @@ project_categories_row_widths:
     capacity_mw: 2400
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 48
 
   "Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -728,7 +728,7 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    row_width_feet: 30
+    row_width_feet: 50
 
   "Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -736,4 +736,4 @@ project_categories_row_widths:
     capacity_mw: 6000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    row_width_feet: 30
+    row_width_feet: 50

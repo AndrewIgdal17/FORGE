@@ -1777,11 +1777,11 @@
         font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
       }
       .bcr-headline-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
+        display: flex;
+        gap: 1.5rem;
         margin-top: 1rem;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
       }
       .bcr-headline-card {
         background: #e3f2fd;
@@ -1803,6 +1803,39 @@
         font-weight: 700;
         color: #0066cc;
         font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      }
+      .bcr-family-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .bcr-family-header {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgba(0, 0, 0, 0.4);
+        padding-left: 0.25rem;
+      }
+      .bcr-family-cards {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .bcr-family-cards .bcr-headline-card {
+        flex: 1 1 0;
+        min-width: 140px;
+      }
+      .persp-family-header {
+        grid-column: 1 / -1;
+        font-size: 0.72rem;
+        font-weight: 700;
+        font-style: italic;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(0, 0, 0, 0.45);
+        padding: 0.6rem 0.5rem 0.25rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       }
       .cost-section-items {
         display: flex;

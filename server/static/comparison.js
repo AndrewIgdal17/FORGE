@@ -65,7 +65,7 @@ function getExcludedCosts(scenario) {
   return excluded;
 }
 
-const MAIN_EXCLUSION_KEYS = new Set(['bcr_system', 'grand_total_pv', 'net_benefit_pv']);
+const MAIN_EXCLUSION_KEYS = new Set(['bcr_societal', 'grand_total_pv', 'net_benefit_pv']);
 
 function getMetricValue(scenario, metricKey) {
   if (metricKey === 'custom_bcr' || metricKey === 'custom_nb') {
@@ -89,7 +89,7 @@ function computeMainWithExclusions(scenario, metricKey) {
   const bcr = scenario.results.bcr || {};
   const totalBenefitsPV = bcr.total_benefits_pv || 0;
   const totalCostsPV = (bcr.total_costs_pv || 0) - getExcludedCosts(scenario);
-  if (metricKey === 'bcr_system') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
+  if (metricKey === 'bcr_societal') return totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0;
   if (metricKey === 'grand_total_pv') return totalCostsPV;
   if (metricKey === 'net_benefit_pv') return totalBenefitsPV - totalCostsPV;
   return undefined;

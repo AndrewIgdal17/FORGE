@@ -11,6 +11,14 @@ outage:
   # Capacity at risk factor (φ)
   capacity_at_risk_factor: "auto" # "auto" derives phi = 1/N_poles from conductor table (1.0 AC, 0.5 DC bipole)
 
+  # Load-shed fraction (rho) — fraction of lost flow that becomes unserved energy
+  # "auto" derives from AC/DC: AC meshed = 0.05, DC point-to-point = 0.80
+  load_shed_fraction: "auto"
+
+  # Redispatch cost ($/MWh) — congestion premium for rerouting power during outage
+  # Default $20/MWh from LBNL empirical congestion relief values (Millstein et al. 2022)
+  redispatch_cost_per_mwh: 20
+
   # Value of lost load (tiered by outage duration)
   # Piecewise VoLL: 10 tiers. Tiers 1-5 from Brattle/ERCOT 2024 system-wide survey (Table 13, 2024$).
   # Tiers 6-9 extrapolated via V(t) = 32210/t + 3339 + 492t ($/MWh), OLS fit to observed data.

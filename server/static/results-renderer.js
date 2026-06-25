@@ -384,10 +384,10 @@ function createCategory(title, content, isCollapsed = false) {
 }
 
 C.BUCKET_LABELS = {
-  hard: 'Hard Costs (C_hard)', soft: 'Soft Costs (C_soft)',
-  risk: 'Risk Costs (C_risk)', emissions: 'Emissions Costs (C_emissions)',
-  remedial: 'Remedial Benefits (B_remedial)', enabling: 'Enabling Benefits (B_enabling)',
-  transfer: 'Revenue (Transfer)', reporting: 'Reporting Only',
+  hard: 'Hard Costs', soft: 'Soft Costs',
+  risk: 'Risk Costs', emissions: 'Line Loss Compensation Emissions',
+  remedial: 'Remedial Benefits', enabling: 'Enabling Benefits',
+  transfer: 'Revenue (Transfer)', reporting: 'Transfers & Reporting',
 };
 
 C.COST_BUCKET_ORDER = ['hard', 'soft', 'risk', 'emissions'];
@@ -399,8 +399,8 @@ function buildResultById(results) {
 }
 
 function exclOutputSuffix(groups) {
-  const ORDER = ['emissions', 'line_losses', 'wildfire', 'outage'];
-  const MAP = { emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
+  const ORDER = ['avoided_emissions', 'emissions', 'line_losses', 'wildfire', 'outage'];
+  const MAP = { avoided_emissions: 'avoided_emissions', emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
   return ORDER.filter(g => groups.includes(g)).map(g => MAP[g]).join('_and_');
 }
 
@@ -442,7 +442,10 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'congestion_delay', value_pv: cc.congestion_delay_cost_pv||0, value_nominal: cc.congestion_delay_cost_nominal||0, detail: [] },
     { taxonomy_id: 'curtailment_delay', value_pv: cc.curtailment_delay_cost_pv||0, value_nominal: cc.curtailment_delay_cost_nominal||0, detail: [] },
     { taxonomy_id: 'wildfire_eac', value_pv: wf.pv_cost||0, value_nominal: wf.nominal_total||0, value_annual: wf.EAL||null, detail: [] },
-    { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.EAC||null, detail: [] },
+    { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.EAC||null, detail: [
+      { dimension: 'component', dimension_key: 'load_shed_per_event', value_pv: 0, value_annual: out.cost_loadshed || 0 },
+      { dimension: 'component', dimension_key: 'redispatch_per_event', value_pv: 0, value_annual: out.cost_redispatch || 0 },
+    ] },
     { taxonomy_id: 'emissions_comp', value_pv: em.total_pv||0, value_nominal: em.total_nominal||0, value_annual: em.annual_cost||null, detail: [] },
     { taxonomy_id: 'emissions_fac', value_pv: fac.fac_emissions_project_pv||0, value_nominal: fac.fac_emissions_project_nominal||0, detail: [] },
     { taxonomy_id: 'congestion_benefit', value_pv: cc.congestion_benefit_pv||0, value_nominal: cc.congestion_benefit_nominal||0, value_annual: cc.congestion_benefit_annual||null, detail: [] },
@@ -470,12 +473,17 @@ function renderTaxonomyItem(item, result, showDetail) {
     detailDiv.style.paddingLeft = '1.5rem';
     detailDiv.style.opacity = '0.85';
     detailDiv.style.fontSize = '0.85em';
+    const DETAIL_LABELS = {
+      'load_shed_per_event': 'Load-Shed Cost/Event',
+      'redispatch_per_event': 'Redispatch Cost/Event',
+    };
     result.detail.forEach(d => {
-      const val = d.value_pv || d.value_annual || d.value_nominal || 0;
-      const fmt = d.value_pv ? formatCurrency(val, 0) : formatNumber(val, 2);
+      const val = d.value_annual ?? d.value_nominal ?? d.value_pv ?? 0;
+      const fmt = formatCurrency(val, 0);
       const row = document.createElement('div');
       row.className = 'results-line-item';
-      row.innerHTML = `<span class="label">${d.dimension}: ${d.dimension_key}</span><span class="value">${fmt}</span>`;
+      const detailLabel = DETAIL_LABELS[d.dimension_key] || `${d.dimension}: ${d.dimension_key}`;
+      row.innerHTML = `<span class="label">${detailLabel}</span><span class="value">${fmt}</span>`;
       detailDiv.appendChild(row);
     });
     container.appendChild(detailDiv);
@@ -556,7 +564,7 @@ function renderBenefitsByTaxonomy(results) {
     remNom += r?.value_nominal || 0;
   });
   remSection.appendChild(subtotalPairRow('Remedial Subtotal', remNom, remPV));
-  container.appendChild(createCategory('Remedial Benefits (B_remedial)', remSection, true));
+  container.appendChild(createCategory('Remedial Benefits', remSection, true));
 
   // Enabling
   const enItems = (C.taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
@@ -571,7 +579,7 @@ function renderBenefitsByTaxonomy(results) {
     enNom += r?.value_nominal || 0;
   });
   enSection.appendChild(subtotalPairRow('Enabling Subtotal', enNom, enPV));
-  container.appendChild(createCategory('Enabling Benefits (B_enabling)', enSection, true));
+  container.appendChild(createCategory('Enabling Benefits', enSection, true));
 
   // Avoided Emissions
   const avItems = (C.taxonomyByBucket['avoided_emissions'] || []).slice().sort((a,b) => a.display_order - b.display_order);
@@ -586,7 +594,12 @@ function renderBenefitsByTaxonomy(results) {
     avNom += r?.value_nominal || 0;
   });
   avSection.appendChild(subtotalPairRow('Avoided Emissions Subtotal', avNom, avPV));
-  container.appendChild(createCategory('Avoided Emissions Benefits (B_avoided_emissions)', avSection, true));
+  const avNote = document.createElement('div');
+  avNote.className = 'results-note';
+  avNote.style.marginTop = '0.5rem';
+  avNote.innerHTML = 'This project enables cleaner energy to serve loads that would otherwise require higher-emission generation. The benefit equals the difference in societal emission costs (CO\u2082, SO\u2093, NO\u2093) between the no-line counterfactual and the project-path generation mixes. See <em>Transfers &amp; Reporting</em> for the underlying facilitated emission quantities.';
+  avSection.appendChild(avNote);
+  container.appendChild(createCategory('Avoided Emissions Benefits', avSection, true));
 
   // Total Benefits (non-collapsible)
   const totalPV = remPV + enPV + avPV;
@@ -594,7 +607,7 @@ function renderBenefitsByTaxonomy(results) {
   const totalSection = document.createElement('div');
   totalSection.className = 'cost-section-items';
   totalSection.appendChild(pairHeader());
-  totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = B_remedial + B_enabling + B_avoided_emissions'));
+  totalSection.appendChild(currencyPairItem('Total Benefits', totalNom, totalPV, 'B = remedial + enabling + avoided emissions. Revenue is a transfer, excluded from system benefits.'));
   container.appendChild(totalSection);
 
   return container;
@@ -633,11 +646,11 @@ function renderTransfersAndReporting(results) {
       const r = resultById[item.id];
       if (r && (r.value_pv || r.value_pv === 0)) {
         dispSection.appendChild(pairHeader());
-        dispSection.appendChild(currencyPairItem(item.label, r.value_nominal || 0, r.value_pv, 'Intermediate quantity (C_fac). Does not enter NB directly; difference with no-line forms B_avoided_emissions.'));
+        dispSection.appendChild(currencyPairItem(item.label, r.value_nominal || 0, r.value_pv, 'Intermediate quantity. Social cost of generation emissions for energy delivered by this project path. Does not enter the BCR. The Avoided Emissions Benefit = no-line value minus this value.'));
         const note = document.createElement('div');
         note.className = 'results-note';
         note.style.marginTop = '0.35rem';
-        note.textContent = `Absolute social cost of project-path facilitated generation. The displacement benefit (B_avoided_emissions) is on the Benefits tab.`;
+        note.textContent = `Total societal cost of CO\u2082, SO\u2093, and NO\u2093 emissions from energy delivered by this project, based on the project-path fuel mix. This intermediate quantity does not enter the BCR directly. The Avoided Emissions Benefit (Benefits tab) equals the no-line version minus this value.`;
         dispSection.appendChild(note);
       } else {
         const note = document.createElement('div');
@@ -677,6 +690,7 @@ function renderSensitivityByTaxonomy(results) {
   if (!C.taxonomy) return container;
   const bcr = results.bcr || {};
   const totalCostsPV = bcr.total_costs_pv || 0;
+  const totalBenefitsPV = bcr.total_benefits_pv || 0;
 
   const exclDefs = Object.values(C.taxonomy.bcr_definitions)
     .filter(d => d.exclude_groups.length > 0)
@@ -688,11 +702,13 @@ function renderSensitivityByTaxonomy(results) {
   exclDefs.forEach(def => {
     const suffix = exclOutputSuffix(def.exclude_groups);
     const exclCosts = bcr[`total_costs_excluding_${suffix}_pv`] || 0;
+    const exclBenefits = bcr[`total_benefits_excluding_${suffix}_pv`] || 0;
     const row = {
       label: def.label,
       bcr: bcr[`bcr_excluding_${suffix}`] || 0,
       nb: bcr[`net_benefit_excluding_${suffix}_pv`] || 0,
-      excluded: totalCostsPV - exclCosts,
+      excludedCosts: totalCostsPV - exclCosts,
+      excludedBenefits: totalBenefitsPV - exclBenefits,
     };
     const hasWf = def.exclude_groups.includes('wildfire');
     const hasOut = def.exclude_groups.includes('outage');
@@ -703,12 +719,12 @@ function renderSensitivityByTaxonomy(results) {
     const table = document.createElement('table');
     table.className = 'sensitivity-table';
     const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Exclusion</th><th>BCR</th><th>Net Benefit (PV)</th><th>Excluded $ (PV)</th></tr>';
+    thead.innerHTML = '<tr><th>Exclusion</th><th>BCR</th><th>Net Benefit (PV)</th><th>Excluded Costs (PV)</th><th>Excluded Benefits (PV)</th></tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      [r.label, formatNumber(r.bcr, 3), formatCurrency(r.nb, 0), formatCurrency(r.excluded, 0)].forEach((text, i) => {
+      [r.label, formatNumber(r.bcr, 3), formatCurrency(r.nb, 0), formatCurrency(r.excludedCosts, 0), formatCurrency(r.excludedBenefits, 0)].forEach((text, i) => {
         const td = document.createElement('td');
         td.textContent = text;
         if (i === 2 && r.nb < 0) td.className = 'negative';
@@ -753,6 +769,8 @@ function renderCustomBCRByTaxonomy(results) {
     const groupPV = group.taxonomy_ids.reduce((sum, tid) => sum + (resultById[tid]?.value_pv || 0), 0);
     toggles.push({ id: `custom-exc-${gid}`, label: `Exclude ${group.label}`, pv: groupPV });
   });
+
+  container.appendChild(createNote('Societal BCR with selected cost components excluded.'));
 
   const togglesDiv = document.createElement('div');
   togglesDiv.className = 'custom-bcr-toggles';
@@ -851,10 +869,25 @@ function updateDelayCostPanel(results) {
   const fmt = v => '$' + Math.round(v).toLocaleString();
 
   const base = byId['base_delay'];
+  const delayYears = parseInt(document.querySelector('[data-path*="delay_years"]')?.value) || 4;
+
   if (base) {
     panel.querySelector('[data-delay-cost="base_nominal"]').textContent = fmt(base.value_nominal);
     panel.querySelector('[data-delay-cost="base_pv"]').textContent = fmt(base.value_pv);
+    const baseAnnualEl = panel.querySelector('[data-delay-cost="base_annual"]');
+    if (baseAnnualEl) {
+      const nominal = base.value_nominal || 0;
+      baseAnnualEl.textContent = fmt(nominal / delayYears);
+    }
   }
+  let baseCtx = document.querySelector('#dcp-base .period-context');
+  if (!baseCtx) {
+    baseCtx = document.createElement('div');
+    baseCtx.className = 'period-context';
+    baseCtx.style.cssText = 'font-size:0.75rem;color:#6b7280;margin-top:-0.25rem;padding-left:0;';
+    document.querySelector('#dcp-base')?.appendChild(baseCtx);
+  }
+  baseCtx.textContent = `(${delayYears} yr \u00d7 annual)`;
 
   const cong = byId['congestion_delay'];
   if (cong) {
@@ -891,6 +924,12 @@ function updateEnergyImpactPanel(results) {
   const pvEl = panel.querySelector('[data-energy-cost="ll_pv"]');
   if (nomEl) nomEl.textContent = fmt(llNom);
   if (pvEl) pvEl.textContent = fmt(llPv);
+
+  const deliveredEl = document.querySelector('[data-energy-cost="delivered_gwh"]');
+  if (deliveredEl) {
+    const gwh = getEnergyDeliveredGWh();
+    deliveredEl.textContent = gwh > 0 ? gwh.toLocaleString(undefined, {maximumFractionDigits: 0}) + ' GWh' : '---';
+  }
 
   updateFuelMixChart();
   const ind = document.getElementById('eip-computing');
@@ -996,31 +1035,57 @@ function renderBCRHeadline(results) {
   const container = document.createElement('div');
   const bcr = results.bcr || {};
 
+  const coreDefs = [
+    { id: 'bcr_societal', label: 'Societal BCR', family: 'societal' },
+    { id: 'bcr_system', label: 'System BCR', family: 'system' },
+    { id: 'bcr_system_delivered', label: 'System + Delivered BCR', family: 'system' },
+    { id: 'bcr_utility', label: 'Utility BCR', family: 'firm' },
+    { id: 'bcr_ratepayer', label: 'Ratepayer BCR', family: 'firm' },
+    { id: 'bcr_capital', label: 'Capital BCR', family: 'screening' },
+    { id: 'bcr_capital_and_delay', label: 'Capital + Delay BCR', family: 'screening' },
+  ];
+
+  const families = C.taxonomy?.bcr_families || {
+    societal: { label: 'Societal', order: 1 },
+    system: { label: 'System', order: 2 },
+    firm: { label: 'Firm', order: 3 },
+    screening: { label: 'Capital Screening', order: 4 },
+  };
+  const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
+
   const cards = document.createElement('div');
   cards.className = 'bcr-headline-cards';
 
-  const metrics = [
-    { label: 'System BCR', value: bcr.bcr_system, currency: false },
-    { label: 'Utility BCR', value: bcr.bcr_utility, currency: false },
-    { label: 'Ratepayer BCR', value: bcr.bcr_ratepayer, currency: false },
-    { label: 'Capital BCR', value: bcr.bcr_capital, currency: false },
-    { label: 'Capital + Delay BCR', value: bcr.bcr_capital_and_delay, currency: false },
-  ];
+  familyOrder.forEach(fam => {
+    const group = document.createElement('div');
+    group.className = 'bcr-family-group';
 
-  metrics.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'bcr-headline-card';
-    const lbl = document.createElement('div');
-    lbl.className = 'label';
-    lbl.textContent = m.label;
-    const val = document.createElement('div');
-    val.className = 'value';
-    const num = Number(m.value || 0);
-    val.textContent = m.currency ? formatCurrency(num, 0) : formatNumber(num, 3);
-    if (num < 0) val.style.color = '#b00020';
-    card.appendChild(lbl);
-    card.appendChild(val);
-    cards.appendChild(card);
+    const header = document.createElement('div');
+    header.className = 'bcr-family-header';
+    header.textContent = families[fam].label;
+    group.appendChild(header);
+
+    const groupCards = document.createElement('div');
+    groupCards.className = 'bcr-family-cards';
+
+    coreDefs.filter(d => d.family === fam).forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'bcr-headline-card';
+      const lbl = document.createElement('div');
+      lbl.className = 'label';
+      lbl.textContent = m.label;
+      const val = document.createElement('div');
+      val.className = 'value';
+      const num = Number(bcr[m.id] || 0);
+      val.textContent = formatNumber(num, 3);
+      if (num < 0) val.style.color = '#b00020';
+      card.appendChild(lbl);
+      card.appendChild(val);
+      groupCards.appendChild(card);
+    });
+
+    group.appendChild(groupCards);
+    cards.appendChild(group);
   });
 
   container.appendChild(cards);
@@ -1043,49 +1108,83 @@ function renderPerspectivesTable(results) {
     grid.appendChild(cell);
   });
 
-  // Utility costs = capital + delay + operational
-  const utilityCosts = (bcr.capital_costs_pv || 0) + (bcr.delay_costs_pv || 0) + (bcr.operational_costs_pv || 0);
-  // Ratepayer benefits = congestion + curtailment + delivered electricity
-  const ratepayerBenefits = (bcr.congestion_benefit_pv || 0) + (bcr.curtailment_benefit_pv || 0) + (cc.delivered_benefit_pv || 0);
-  // Ratepayer costs = revenue + energy losses
-  const ratepayerCosts = (bcr.revenue_pv || 0) + (bcr.energy_losses_pv || 0);
+  // Per-perspective numerators and denominators (must match bcr_calculator.py)
+  const allBenefits = bcr.total_benefits_pv || 0;
+  const allCosts = bcr.total_costs_pv || 0;
+  const remedialBenefits = bcr.benefits_remedial_pv || 0;
+  const enablingBenefits = bcr.benefits_enabling_pv || 0;
+  const hardCosts = bcr.hard_costs_pv || 0;
+  const operationalCosts = bcr.operational_costs_pv || 0;
+  const energyLosses = bcr.energy_losses_pv || 0;
+  const allDelayCosts = bcr.delay_costs_pv || 0;
+  const baseDelayCost = bcr.delay_cost_pv || 0;
+  const systemCosts = hardCosts + operationalCosts + energyLosses;
+  const systemBenefits = remedialBenefits;
+  const systemDeliveredBenefits = remedialBenefits + enablingBenefits;
+  const utilityCosts = hardCosts + baseDelayCost + operationalCosts;
+  const ratepayerBenefits = allBenefits;
+  const ratepayerCosts = (bcr.revenue_pv || 0) + energyLosses;
+  const capitalDelayCosts = hardCosts + allDelayCosts;
 
-  const capitalCosts = bcr.hard_costs_pv || 0;
-  const capitalDelayCosts = capitalCosts + (bcr.delay_costs_pv || 0);
-  const sysBenefits = bcr.total_benefits_pv || 0;
+  const families = C.taxonomy?.bcr_families || {
+    societal: { label: 'Societal', order: 1 },
+    system: { label: 'System (Grid-Operational)', order: 2 },
+    firm: { label: 'Firm', order: 3 },
+    screening: { label: 'Capital Screening', order: 4 },
+  };
+  const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
 
-  const rows = [
-    { name: 'System (Societal)', benefits: sysBenefits, costs: bcr.total_costs_pv || 0, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_pv || 0 },
-    { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0 },
-    { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0 },
-    { name: 'Capital', benefits: sysBenefits, costs: capitalCosts, bcrVal: bcr.bcr_capital || 0, netBenefit: sysBenefits - capitalCosts },
-    { name: 'Capital + Delay', benefits: sysBenefits, costs: capitalDelayCosts, bcrVal: bcr.bcr_capital_and_delay || 0, netBenefit: sysBenefits - capitalDelayCosts },
-  ];
+  const rowsByFamily = {
+    societal: [
+      { name: 'Societal', benefits: allBenefits, costs: allCosts, bcrVal: bcr.bcr_societal || 0, netBenefit: bcr.net_benefit_pv || 0 },
+    ],
+    system: [
+      { name: 'System', benefits: systemBenefits, costs: systemCosts, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_system_pv || (systemBenefits - systemCosts) },
+      { name: 'System + Delivered', benefits: systemDeliveredBenefits, costs: systemCosts, bcrVal: bcr.bcr_system_delivered || 0, netBenefit: bcr.net_benefit_system_delivered_pv || (systemDeliveredBenefits - systemCosts) },
+    ],
+    firm: [
+      { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0, tooltip: 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.' },
+      { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0, tooltip: 'Costs include revenue (what ratepayers pay the utility) plus energy losses passed through.' },
+    ],
+    screening: [
+      { name: 'Capital', benefits: allBenefits, costs: hardCosts, bcrVal: bcr.bcr_capital || 0, netBenefit: allBenefits - hardCosts },
+      { name: 'Capital + Delay', benefits: allBenefits, costs: capitalDelayCosts, bcrVal: bcr.bcr_capital_and_delay || 0, netBenefit: allBenefits - capitalDelayCosts },
+    ],
+  };
 
-  rows.forEach((r, idx) => {
-    const evenClass = idx % 2 === 1 ? ' persp-row-even' : '';
-    const vals = [
-      { text: r.name, isLabel: true },
-      { text: formatCurrency(r.benefits, 0) },
-      { text: formatCurrency(r.costs, 0) },
-      { text: formatNumber(r.bcrVal, 3) },
-      { text: formatCurrency(r.netBenefit, 0), negative: r.netBenefit < 0 },
-    ];
-    vals.forEach(v => {
-      const cell = document.createElement('div');
-      cell.className = 'persp-cell' + evenClass + (v.isLabel ? ' persp-label' : '') + (v.negative ? ' negative' : '');
-      cell.textContent = v.text;
-      if (v.isLabel && r.name === 'Utility / Transm. Service Provider') {
-        cell.title = 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.';
-      } else if (v.isLabel && r.name === 'Ratepayer') {
-        cell.title = 'Costs include revenue (what ratepayers pay the utility) plus energy losses passed through.';
-      }
-      grid.appendChild(cell);
+  let dataRowIdx = 0;
+  familyOrder.forEach(fam => {
+    const famRows = rowsByFamily[fam] || [];
+    if (famRows.length === 0) return;
+
+    // Family header row (spans all 5 columns)
+    const famHeader = document.createElement('div');
+    famHeader.className = 'persp-family-header';
+    famHeader.textContent = families[fam].label;
+    grid.appendChild(famHeader);
+
+    famRows.forEach(r => {
+      const evenClass = dataRowIdx % 2 === 1 ? ' persp-row-even' : '';
+      const vals = [
+        { text: r.name, isLabel: true },
+        { text: formatCurrency(r.benefits, 0) },
+        { text: formatCurrency(r.costs, 0) },
+        { text: formatNumber(r.bcrVal, 3) },
+        { text: formatCurrency(r.netBenefit, 0), negative: r.netBenefit < 0 },
+      ];
+      vals.forEach(v => {
+        const cell = document.createElement('div');
+        cell.className = 'persp-cell' + evenClass + (v.isLabel ? ' persp-label' : '') + (v.negative ? ' negative' : '');
+        cell.textContent = v.text;
+        if (v.isLabel && r.tooltip) cell.title = r.tooltip;
+        grid.appendChild(cell);
+      });
+      dataRowIdx++;
     });
   });
 
   container.appendChild(grid);
-  container.appendChild(createNote('System: societal welfare (all real resource costs). Utility / Transm. Service Provider: revenue vs costs borne by the provider (revenue is a transfer). Ratepayer: benefits received vs costs passed through (revenue + energy losses).'));
+  container.appendChild(createNote('Societal: full welfare (all real resource costs & benefits). System: congestion + curtailment relief vs grid costs. Firm: utility revenue vs costs; ratepayer benefits vs charges. Capital Screening: benefits vs hard-cost-only denominators.'));
   return container;
 }
 
@@ -1360,8 +1459,8 @@ function renderCTCCResults(results) {
 
     } else if (tab.id === 'bcr') {
       content.appendChild(renderBCRHeadline(results));
-      content.appendChild(createCategory('BCR with Sensitivity Exclusions', renderSensitivityByTaxonomy(results)));
-      content.appendChild(createCategory('Custom BCR', renderCustomBCRByTaxonomy(results)));
+      content.appendChild(createCategory('Societal BCR with Exclusions', renderSensitivityByTaxonomy(results)));
+      content.appendChild(createCategory('Custom Societal BCR', renderCustomBCRByTaxonomy(results)));
 
     } else if (tab.id === 'transfers') {
       content.appendChild(renderTransfersAndReporting(results));

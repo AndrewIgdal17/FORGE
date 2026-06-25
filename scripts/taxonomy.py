@@ -29,11 +29,13 @@ Bucket = Literal[
 ]
 DiscountRate = Literal["wacc_real", "social", "wacc_nominal"]
 Condition = Literal["dc_only", "greenfield_only", "reconductoring_only"]
-NumeratorRule = Literal["all_benefits", "revenue"]
+NumeratorRule = Literal["all_benefits", "remedial", "remedial_enabling", "revenue"]
 DenominatorRule = Literal[
-    "all_costs", "hard", "hard_delay", "hard_base_delay_operational", "revenue_loss",
+    "all_costs", "hard", "hard_delay", "hard_operational_loss",
+    "hard_base_delay_operational", "revenue_loss",
 ]
-Perspective = Literal["societal", "stakeholder"]
+Perspective = Literal["societal", "system", "system_delivered", "stakeholder"]
+Family = Literal["societal", "system", "firm", "screening"]
 
 # ---------------------------------------------------------------------------
 # Core data structures
@@ -71,6 +73,7 @@ class ExcludableGroup:
 class BCRDefinition:
     id: str
     label: str
+    family: Family
     perspective: Perspective
     numerator_rule: NumeratorRule
     denominator_rule: DenominatorRule
@@ -144,7 +147,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Social cost of emissions from generation compensating for line losses."),
     TaxonomyItem("emissions_fac", "reporting_only", "reporting", "facilitated",
                  "Facilitated Emissions", "social", None, 2,
-                 "Intermediate: social cost of project-path generation mix over delivered energy. Difference with no-line forms B_avoided_emissions."),
+                 "Intermediate quantity (not a BCR cost or benefit). Social cost of pollutant emissions from the energy delivered via this project path. The Avoided Emissions Benefit equals the no-line equivalent minus this value."),
     # --- Benefits (buckets: remedial, enabling, avoided_emissions) ---
     TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
                  "Congestion Reduction Benefit", "wacc_real", None, 1,
@@ -162,7 +165,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     # --- Avoided emissions benefit ---
     TaxonomyItem("displacement_avoided", "benefit", "avoided_emissions", "displacement",
                  "Avoided Emissions Benefit", "social", None, 1,
-                 "B_avoided_emissions = C_fac,no - C_fac,proj. Enters NB and BCR."),
+                 "Benefit from cleaner generation enabled by this project. Equals the difference between the no-line and project-path societal emission costs, discounted at the social rate."),
     # --- Utility (shared input groups, no scenario_results) ---
     TaxonomyItem("project_identity", "utility", "project", "configuration",
                  "Project Identity", None, None, 1,
@@ -252,7 +255,7 @@ DIMENSIONS_BY_ITEM: dict[str, list[str]] = dict(_dim_map)
 
 EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
     "emissions": ExcludableGroup(
-        "emissions", "Emissions (loss-comp)",
+        "emissions", "Line Loss Compensation Emissions",
         frozenset({"emissions_comp"}),
     ),
     "avoided_emissions": ExcludableGroup(
@@ -278,31 +281,50 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
 # ---------------------------------------------------------------------------
 
 BCR_DEFINITIONS: dict[str, BCRDefinition] = {
-    "bcr_system": BCRDefinition(
-        "bcr_system", "System (Societal)", "societal",
+    "bcr_societal": BCRDefinition(
+        "bcr_societal", "Societal", "societal", "societal",
         "all_benefits", "all_costs", frozenset(), 1,
         "Full societal benchmark. Revenue excluded.",
     ),
+    "bcr_system": BCRDefinition(
+        "bcr_system", "System", "system", "system",
+        "remedial", "hard_operational_loss",
+        frozenset(), 2,
+        "Congestion and curtailment relief only; pure grid-operational.",
+    ),
+    "bcr_system_delivered": BCRDefinition(
+        "bcr_system_delivered", "System + Delivered", "system", "system_delivered",
+        "remedial_enabling", "hard_operational_loss",
+        frozenset(), 3,
+        "Adds energy throughput value to System.",
+    ),
     "bcr_capital": BCRDefinition(
-        "bcr_capital", "Capital Only", "societal",
-        "all_benefits", "hard", frozenset(), 2,
+        "bcr_capital", "Capital Only", "screening", "societal",
+        "all_benefits", "hard", frozenset(), 4,
         "Capital screening; shows what narrow views miss.",
     ),
     "bcr_capital_and_delay": BCRDefinition(
-        "bcr_capital_and_delay", "Capital + Delay", "societal",
-        "all_benefits", "hard_delay", frozenset(), 3,
+        "bcr_capital_and_delay", "Capital + Delay", "screening", "societal",
+        "all_benefits", "hard_delay", frozenset(), 5,
         "Capital and delay exposure.",
     ),
     "bcr_utility": BCRDefinition(
-        "bcr_utility", "Utility / TSP", "stakeholder",
-        "revenue", "hard_base_delay_operational", frozenset(), 4,
+        "bcr_utility", "Utility / TSP", "firm", "stakeholder",
+        "revenue", "hard_base_delay_operational", frozenset(), 6,
         "Whether utility recovers out-of-pocket costs.",
     ),
     "bcr_ratepayer": BCRDefinition(
-        "bcr_ratepayer", "Ratepayer", "stakeholder",
-        "all_benefits", "revenue_loss", frozenset(), 5,
+        "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
+        "all_benefits", "revenue_loss", frozenset(), 7,
         "Whether ratepayers receive more value than they pay.",
     ),
+}
+
+BCR_FAMILY_META: dict[Family, dict[str, str | int]] = {
+    "societal": {"label": "Societal", "order": 1},
+    "system": {"label": "System (Grid-Operational)", "order": 2},
+    "firm": {"label": "Firm", "order": 3},
+    "screening": {"label": "Capital Screening", "order": 4},
 }
 
 # ---------------------------------------------------------------------------
@@ -322,7 +344,7 @@ for _r in range(1, len(EXCLUDABLE_GROUPS) + 1):
                 g.replace("_", " ").title() for g in _combo
             )
         _excl_variants[_variant_id] = BCRDefinition(
-            _variant_id, _label, "societal",
+            _variant_id, _label, "societal", "societal",
             "all_benefits", "all_costs", frozenset(_combo),
             _display_base, None,
         )
@@ -441,10 +463,15 @@ def taxonomy_to_dict() -> dict:
             gid: {"id": g.id, "label": g.label, "taxonomy_ids": sorted(g.taxonomy_ids)}
             for gid, g in EXCLUDABLE_GROUPS.items()
         },
+        "bcr_families": {
+            fid: {"id": fid, "label": meta["label"], "order": meta["order"]}
+            for fid, meta in BCR_FAMILY_META.items()
+        },
         "bcr_definitions": {
             did: {
                 "id": d.id,
                 "label": d.label,
+                "family": d.family,
                 "perspective": d.perspective,
                 "numerator_rule": d.numerator_rule,
                 "denominator_rule": d.denominator_rule,
@@ -498,14 +525,14 @@ if __name__ == "__main__":
     )
 
     # 8d. BCR coverage
-    assert len(BCR_DEFINITIONS) == 5, (
-        f"Expected 5 core BCR definitions, got {len(BCR_DEFINITIONS)}"
+    assert len(BCR_DEFINITIONS) == 7, (
+        f"Expected 7 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
     assert len(BCR_EXCLUSION_VARIANTS) == 31, (
         f"Expected 31 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 36, (
-        f"Expected 36 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 38, (
+        f"Expected 38 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups

@@ -87,7 +87,9 @@ BATCH_SUMMARY_FIELDS = [
     "fac_emissions_project_pv",
     "fac_emissions_noline_pv",
     # 10. BCR Metrics
+    "bcr_societal",
     "bcr_system",
+    "bcr_system_delivered",
     "bcr_capital",
     "bcr_capital_and_delay",
     # Combined risk BCRs (renamed)
@@ -1316,7 +1318,7 @@ class CTCCOutputManager:
                 - total_benefits_pv
                 - total_costs_pv
                 - capital_costs_pv
-                - bcr_system, bcr_capital, bcr_capital_and_delay
+                - bcr_societal, bcr_capital, bcr_capital_and_delay
                 - bcr_excluding_* variants
                 - bcr_utility, bcr_ratepayer
                 - net_benefit_pv and all net benefit variants

@@ -232,15 +232,26 @@ def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
 
 
 def adapt_outage(outage: dict) -> list[TaxonomyResult]:
-    """Adapt costs.outage -> outage_eac."""
+    """Adapt costs.outage -> outage_eac with two-tier detail rows."""
     if not outage:
         return []
+    detail_rows: list[DetailRow] = []
+    ls = _safe(outage, "cost_loadshed")
+    rd = _safe(outage, "cost_redispatch")
+    if ls or rd:
+        detail_rows.append(
+            DetailRow("component", "load_shed_per_event", value_pv=0.0, value_annual=ls)
+        )
+        detail_rows.append(
+            DetailRow("component", "redispatch_per_event", value_pv=0.0, value_annual=rd)
+        )
     return [
         TaxonomyResult(
             "outage_eac",
             value_pv=_safe(outage, "pv_cost"),
             value_nominal=_safe(outage, "nominal_total"),
             value_annual=_safe(outage, "EAC"),
+            detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
 

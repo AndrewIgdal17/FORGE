@@ -35,7 +35,7 @@ const RESULTS_EXPORT_FIELDS = [
   { key: 'soft_costs_pv', path: 'bcr.soft_costs_pv' },
   { key: 'emissions_costs_pv', path: 'bcr.emissions_costs_pv' },
   { key: 'revenue_pv', path: 'bcr.revenue_pv' },
-  { key: 'bcr_system', path: 'bcr.bcr_system' },
+  { key: 'bcr_societal', path: 'bcr.bcr_societal' },
   { key: 'bcr_capital', path: 'bcr.bcr_capital' },
   { key: 'bcr_utility', path: 'bcr.bcr_utility' },
   { key: 'bcr_ratepayer', path: 'bcr.bcr_ratepayer' },
@@ -190,6 +190,10 @@ function createNewScenario(name) {
   updateTabStates();
   switchMainTab('inputs');
   switchTab(0);
+  setTimeout(() => {
+    const techBtn = document.querySelector('[data-sub-tab="technology"]');
+    if (techBtn) techBtn.click();
+  }, 50);
   autoCalculate();
 }
 

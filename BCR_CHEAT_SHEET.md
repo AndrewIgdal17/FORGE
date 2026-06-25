@@ -2,19 +2,19 @@
 
 Quick reference guide for all BCR perspectives calculated by CTCC.
 
-**Important Note on Revenue:** Revenue (rate-based revenue requirement) is a **transfer** from ratepayers to the utility/TSP, not a net social benefit. System/societal BCRs exclude revenue from total benefits. Revenue appears only in stakeholder BCRs where it's a benefit to utilities and a cost to ratepayers.
+**Important Note on Revenue:** Revenue (rate-based revenue requirement) is a **transfer** from ratepayers to the utility/TSP, not a net social benefit. Societal BCRs exclude revenue from total benefits. Revenue appears only in stakeholder BCRs where it's a benefit to utilities and a cost to ratepayers.
 
-**Cost categories:** **Capital** = build + ROW capital (acquisition + holding) + environmental mitigation. **Operational** = O&M + insurance + ROW rent. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a system/societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs). Rate base = AFUDC capital (build + row capital + env) at COD.
+**Cost categories:** **Capital** = build + ROW capital (acquisition + holding) + environmental mitigation. **Operational** = O&M + insurance + ROW rent. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs). Rate base = AFUDC capital (build + row capital + env) at COD.
 
 ---
 
-## System/Societal Perspectives
+## Societal Perspectives
 
-### `bcr_system`
+### `bcr_societal`
 
 **Equation:** `Total Benefits / Total Costs`
 
-**Perspective:** Full societal/system-wide analysis
+**Perspective:** Full societal/all-in analysis
 
 **Includes:**
 
@@ -341,7 +341,7 @@ Quick reference guide for all BCR perspectives calculated by CTCC.
 
 **Use Case:** Custom analysis with specific module inclusions/exclusions via command-line flags from societal perspective
 
-**Note:** If no flags are set, equals `bcr_system`
+**Note:** If no flags are set, equals `bcr_societal`
 
 ---
 
@@ -402,7 +402,7 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | Should a utility/TSP build this?                             | `bcr_utility`                                                              |
 | Do ratepayers benefit?                                       | `bcr_ratepayer`                                                            |
-| Is it good for society overall?                              | `bcr_system` or `bcr_excluding_wildfire_risk_and_outage_risk`              |
+| Is it good for society overall?                              | `bcr_societal` or `bcr_excluding_wildfire_risk_and_outage_risk`            |
 | Is the capital investment attractive?                        | `bcr_capital` or `bcr_capital_and_delay`                                   |
 | What if we ignore wildfire risk (but keep outage)?           | `bcr_excluding_wildfire_risk`                                              |
 | What if we ignore outage risk (but keep wildfire)?           | `bcr_excluding_outage_risk`                                                |
@@ -440,7 +440,7 @@ Systematic exploration of all combinations excluding emissions, line losses, wil
 
 - `bcr_utility = 0.36` → Utility loses money (revenue doesn't cover costs)
 - `bcr_ratepayer = 0.22` → Ratepayers lose money (benefits don't cover revenue + line losses)
-- `bcr_system = 0.02` → Very poor societal return (wildfire risk dominates)
+- `bcr_societal = 0.02` → Very poor societal return (wildfire risk dominates)
 - `bcr_excluding_wildfire_risk_and_outage_risk = 0.24` → Better but still negative (excluding both risks)
 - `bcr_excluding_wildfire_risk = 0.XX` → Better if only wildfire risk excluded (keeps outage risk)
 

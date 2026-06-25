@@ -174,7 +174,7 @@ def main() -> None:
 
             total = (bcr.get("total_costs_pv", 0) or 0) / 1e9
             risk = (summary.get("total_risk_pv", 0) or 0) / 1e9
-            bcr_sys = bcr.get("bcr_system", 0) or 0
+            bcr_sys = bcr.get("bcr_societal", 0) or 0
             bcr_xwf = bcr.get("bcr_excluding_wildfire_risk", 0) or 0
             bcr_xwfo = bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0) or 0
             benefits = (bcr.get("total_benefits_pv", 0) or 0) / 1e9

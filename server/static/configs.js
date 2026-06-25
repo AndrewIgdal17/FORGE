@@ -19,11 +19,20 @@
           { key: 'line_length', label: 'Line length (mi)', path: 'technical_parameters.line_length_miles', format: 'number2' },
           { key: 'line_utilization', label: 'Line utilization', path: 'technical_parameters.line_utilization', format: 'number2' },
         ]},
-        { group: 'Benefit-Cost Ratio', metrics: [
-          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
-          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+        { group: 'BCR — Societal', metrics: [
+          { key: 'bcr_societal', label: 'BCR Societal', path: 'bcr.bcr_societal', format: 'number3' },
+        ]},
+        { group: 'BCR — System', metrics: [
           { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
+          { key: 'bcr_system_delivered', label: 'BCR System + Delivered', path: 'bcr.bcr_system_delivered', format: 'number3' },
+        ]},
+        { group: 'BCR — Firm', metrics: [
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
+          { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
+        ]},
+        { group: 'BCR — Capital Screening', metrics: [
+          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
+          { key: 'bcr_capital_and_delay', label: 'BCR Capital + Delay', path: 'bcr.bcr_capital_and_delay', format: 'number3' },
           { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
         { group: 'Costs (PV)', metrics: [
@@ -52,10 +61,13 @@
         { group: 'Cost Buckets (PV)', metrics: [
           { key: 'hard_costs_pv', label: 'Hard Costs', path: 'bcr.hard_costs_pv', format: 'currency' },
           { key: 'soft_costs_pv', label: 'Soft Costs', path: 'bcr.soft_costs_pv', format: 'currency' },
-          { key: 'emissions_costs_pv', label: 'Emissions Costs', path: 'bcr.emissions_costs_pv', format: 'currency' },
+          { key: 'emissions_costs_pv', label: 'Line Loss Compensation Emissions', path: 'bcr.emissions_costs_pv', format: 'currency' },
         ]},
         { group: 'Risk Costs (PV)', metrics: [
           { key: 'outage_pv', label: 'Outage Cost', path: 'costs.outage.pv_cost', format: 'currency', zeroIfMissing: true },
+          { key: 'outage_loadshed_per_event', label: 'Outage Load-Shed Cost/Event', path: 'costs.outage.cost_loadshed', format: 'currency', zeroIfMissing: true },
+          { key: 'outage_redispatch_per_event', label: 'Outage Redispatch Cost/Event', path: 'costs.outage.cost_redispatch', format: 'currency', zeroIfMissing: true },
+          { key: 'outage_rho', label: 'Load-Shed Fraction (\u03C1)', path: 'costs.outage.rho', format: 'number2', zeroIfMissing: true },
           { key: 'total_risk_pv', label: 'Total Risk Cost', path: 'summary.total_risk_pv', format: 'currency' },
           { key: 'wildfire_pv', label: 'Wildfire Cost', path: 'costs.wildfire.pv_cost', format: 'currency', zeroIfMissing: true },
         ]},
@@ -63,13 +75,12 @@
           { key: 'delay_pv', label: 'Base Delay Cost', path: 'costs.delay.total_pv', format: 'currency', zeroIfMissing: true },
         ]},
         { group: 'Energy / Emissions (PV)', metrics: [
-          { key: 'emissions_pv', label: 'Loss-Comp Emissions', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
-          { key: 'fac_emissions_pv', label: 'Facilitated Emissions', path: 'bcr.fac_emissions_project_pv', format: 'currency', zeroIfMissing: true },
-          { key: 'displacement_pv', label: 'Displacement Avoided', path: 'bcr.displacement_avoided_cost_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'emissions_pv', label: 'Line Loss Compensation Emissions', path: 'costs.emissions.total_pv', format: 'currency', zeroIfMissing: true },
+          { key: 'fac_emissions_pv', label: 'Facilitated Emissions (intermediate)', path: 'bcr.fac_emissions_project_pv', format: 'currency', zeroIfMissing: true, description: 'Intermediate quantity. Social cost of generation emissions for energy delivered by this project path. Not a BCR cost or benefit.' },
           { key: 'line_loss_pv', label: 'Line Loss Cost', path: 'costs.line_loss.total_pv', format: 'currency', zeroIfMissing: true },
-          { key: 'total_energy_emissions_pv', label: 'Total Energy/Emissions Cost', path: 'summary.total_energy_emissions_pv', format: 'currency' },
+          { key: 'total_energy_emissions_pv', label: 'Line Loss + Line Loss Compensation Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency', description: 'Sum of line loss costs and line loss compensation emissions. Does not include facilitated emissions or avoided emissions.' },
         ]},
-        { group: 'BCR Sensitivity Exclusions', metrics: [
+        { group: 'BCR — Societal Exclusions', metrics: [
           { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
           { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
           { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
@@ -84,14 +95,17 @@
       /** Maps each COMPARISON_METRICS `group` to a super-group for the hierarchical add-column picker. */
       const COMPARISON_GROUP_SUPERGROUP = {
         'Project Parameters': 'project',
-        'Benefit-Cost Ratio': 'bcr',
+        'BCR — Societal': 'bcr',
+        'BCR — System': 'bcr',
+        'BCR — Firm': 'bcr',
+        'BCR — Capital Screening': 'bcr',
         'Costs (PV)': 'costs',
         'Cost Buckets (PV)': 'costs',
         'Benefits': 'benefits',
         'Risk Costs (PV)': 'costs',
         'Delay Costs (PV)': 'costs',
         'Energy / Emissions (PV)': 'costs',
-        'BCR Sensitivity Exclusions': 'sensitivity',
+        'BCR — Societal Exclusions': 'sensitivity',
       };
 
       const COMPARISON_SUPERGROUP_ORDER = ['project', 'bcr', 'costs', 'benefits', 'sensitivity'];
@@ -100,12 +114,12 @@
         bcr: 'Benefit-Cost Ratio (BCR)',
         costs: 'Costs',
         benefits: 'Benefits',
-        sensitivity: 'BCR Sensitivity Adjustments',
+        sensitivity: 'BCR — Societal Exclusions',
       };
 
       const CMP_PICKER_STORAGE_KEY = 'ctcc-cmp-picker-details';
 
-      // Comparison catalog: group order is fixed (BCR Sensitivity Exclusions last); within each group,
+      // Comparison catalog: group order is fixed (BCR — Societal Exclusions last); within each group,
       // metrics are alphabetical by label. Flatten order drives sortComparisonColumnsByCatalog(); add-column UI is the
       // hierarchical popover (super-groups → catalog group → metric buttons), not a flat <select>.
       const COMPARISON_METRIC_KEY_ORDER = (() => {

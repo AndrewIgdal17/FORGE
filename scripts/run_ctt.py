@@ -98,12 +98,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     wf["discount_rate_source"] = "social"
     wf["base_ignition_rate"] = 0.0
 
-    # --- 07: Outage (ZEROED) ---
-    out = inputs["07_outage_costs"]["outage"]
-    out["risk_growth_rate"] = 0.0
-    out["capacity_at_risk_factor"] = 1.0
-    out["outage_rate"] = {"overhead": 0.0, "underground": 0.0, "subsea": 0.0}
-
     # --- 11: ROW Details ---
     row = inputs["11_project_row_details"]["right_of_way"]
     for zone_key in row:
@@ -120,13 +114,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     row["zone_3"]["acquisition_cost"] = 1132
     row["zone_3"]["rent_cost"] = 36.72
     row["zone_3"]["hold_cost"] = 3.67
-
-    # --- 16: Emissions ---
-    em = inputs["16_emissions_reductions"]["emissions_reductions"]
-    em["compensation_percent"] = 0.90
-    em["societal_costs_per_kg"]["co2_cost_per_kg"] = 0.190
-    em["societal_costs_per_kg"]["sox_cost_per_kg"] = 6.2
-    em["societal_costs_per_kg"]["nox_cost_per_kg"] = 5.0
 
     # --- 17: Congestion/Curtailment ---
     cc = inputs["17_congestion_curtailment_reductions"]
@@ -249,7 +236,9 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment delay cost: {fmt(cc['curtailment_delay_cost_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
-    print(f"  BCR System (societal):  {bcr.get('bcr_system', 'N/A'):.3f}")
+    print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
+    print(f"  BCR System:             {bcr.get('bcr_system', 'N/A'):.3f}")
+    print(f"  BCR System + Delivered: {bcr.get('bcr_system_delivered', 'N/A'):.3f}")
     print(f"  BCR Capital Only:       {bcr.get('bcr_capital', 'N/A'):.3f}")
     if "bcr_capital_and_delay" in bcr:
         print(f"  BCR Capital + Delay:    {bcr['bcr_capital_and_delay']:.3f}")
@@ -312,7 +301,7 @@ def main():
     print(f"\n{'='*60}")
     print(f"  DELAY IMPACT COMPARISON: CTT Panhandle CREZ")
     print(f"{'='*60}")
-    print(f"  BCR System:  {bcr_a.get('bcr_system',0):.3f} (2yr) vs {bcr_b.get('bcr_system',0):.3f} (7yr)")
+    print(f"  BCR Societal: {bcr_a.get('bcr_societal',0):.3f} (2yr) vs {bcr_b.get('bcr_societal',0):.3f} (7yr)")
     print(f"  Net Benefit: {fmt(bcr_a.get('net_benefit_pv',0))} (2yr) vs {fmt(bcr_b.get('net_benefit_pv',0))} (7yr)")
     delta_nb = bcr_a.get("net_benefit_pv", 0) - bcr_b.get("net_benefit_pv", 0)
     print(f"  Value of CREZ mandate (avoided delay cost): {fmt(delta_nb)}")

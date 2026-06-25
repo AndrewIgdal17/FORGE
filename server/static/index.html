@@ -184,7 +184,7 @@
             </span>
             <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
               <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Emissions</label>
+              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Line Loss Compensation Emissions</label>
               <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
               <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
               <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
@@ -495,7 +495,7 @@
       C.comparisonDeltaDisplayMode = 'values_plus_delta';
       C.showComparisonPercentDelta = false;
       C.comparisonAutoSort = false;
-      C.comparisonColumns = ['bcr_system', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
+      C.comparisonColumns = ['bcr_societal', 'grand_total_pv', 'total_capital_pv', 'total_benefits_pv'];
 
       C.routingValid = true;
 

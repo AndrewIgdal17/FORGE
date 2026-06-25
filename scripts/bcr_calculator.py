@@ -130,22 +130,29 @@ _REMEDIAL_IDS = frozenset(
 _ENABLING_IDS = frozenset(
     tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].bucket == "enabling"
 )
+_AVOIDED_EMISSIONS_IDS = frozenset(
+    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].bucket == "avoided_emissions"
+)
 
 _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
     "hard": _HARD_IDS,
     "hard_delay": _HARD_IDS | _DELAY_IDS,
     "hard_base_delay_operational": _HARD_IDS | _BASE_DELAY_IDS | _OPERATIONAL_IDS,
+    "hard_operational_loss": _HARD_IDS | _OPERATIONAL_IDS | frozenset({"line_loss_conductor", "line_loss_converter"}),
     "revenue_loss": frozenset({"revenue", "line_loss_conductor", "line_loss_converter"}),
 }
 _NUMER_SETS: dict[str, frozenset[str]] = {
     "all_benefits": _ALL_BENEFIT_IDS,
+    "remedial": _REMEDIAL_IDS,
+    "remedial_enabling": _REMEDIAL_IDS | _ENABLING_IDS,
     "revenue": frozenset({"revenue"}),
 }
 
 # Backward-compat key naming for exclusion variants
-_EXCL_KEY_ORDER = ["emissions", "line_losses", "wildfire", "outage"]
+_EXCL_KEY_ORDER = ["avoided_emissions", "emissions", "line_losses", "wildfire", "outage"]
 _GROUP_TO_SUFFIX: dict[str, str] = {
+    "avoided_emissions": "avoided_emissions",
     "emissions": "emissions",
     "line_losses": "linelosses",
     "wildfire": "wildfire_risk",
@@ -230,6 +237,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         "energy_emissions_costs_nominal": _sum_nom(_ENERGY_EMISSIONS_IDS),
         "benefits_remedial_pv": _sum_pv(_REMEDIAL_IDS),
         "benefits_enabling_pv": _sum_pv(_ENABLING_IDS),
+        "benefits_avoided_emissions_pv": _sum_pv(_AVOIDED_EMISSIONS_IDS),
         "line_loss_benefit_pv": 0,
     })
 
@@ -246,7 +254,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         if {"emissions", "line_losses"} <= bcr_def.exclude_groups:
             excluded_ids.add("residual_exceedance")
 
-        numerator = _sum_pv(_NUMER_SETS[bcr_def.numerator_rule])
+        numerator = _sum_pv(_NUMER_SETS[bcr_def.numerator_rule] - excluded_ids)
         denominator = _sum_pv(_DENOM_SETS[bcr_def.denominator_rule] - excluded_ids)
         bcr_value = safe_divide(numerator, denominator)
         net_benefit = numerator - denominator
@@ -256,10 +264,17 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             out[f"bcr_excluding_{suffix}"] = bcr_value
             out[f"net_benefit_excluding_{suffix}_pv"] = net_benefit
             out[f"total_costs_excluding_{suffix}_pv"] = denominator
-        elif bcr_def.id == "bcr_system":
-            out["bcr_system"] = bcr_value
+            out[f"total_benefits_excluding_{suffix}_pv"] = numerator
+        elif bcr_def.id == "bcr_societal":
+            out["bcr_societal"] = bcr_value
             out["net_benefit_pv"] = net_benefit
             out["net_benefit_nominal"] = total_benefits_nominal - total_costs_nominal
+        elif bcr_def.id == "bcr_system":
+            out["bcr_system"] = bcr_value
+            out["net_benefit_system_pv"] = net_benefit
+        elif bcr_def.id == "bcr_system_delivered":
+            out["bcr_system_delivered"] = bcr_value
+            out["net_benefit_system_delivered_pv"] = net_benefit
         elif bcr_def.id == "bcr_capital":
             out["bcr_capital"] = bcr_value
             out["net_benefit_capital_only_pv"] = net_benefit
@@ -348,9 +363,9 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     print()
 
     print("BENEFIT-COST RATIOS:")
-    bcr_system = _g("bcr_system")
-    viable_symbol, viable_text = format_bcr_viability(bcr_system)
-    print(f"  System BCR:                  {bcr_system:>6.3f}  {viable_symbol} ({viable_text})")
+    bcr_societal = _g("bcr_societal")
+    viable_symbol, viable_text = format_bcr_viability(bcr_societal)
+    print(f"  Societal BCR:                {bcr_societal:>6.3f}  {viable_symbol} ({viable_text})")
     print(f"  Capital BCR:                 {_g('bcr_capital'):>6.3f}")
     print(f"  Capital + Delay BCR:         {_g('bcr_capital_and_delay'):>6.3f}")
     print()

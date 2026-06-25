@@ -79,6 +79,7 @@ def calculate_outage_costs(
     construction_years: float = 0,
     number_of_circuits_poles: int = 1,
     line_utilization: float = 1.0,
+    ac_dc: str = "AC",
 ) -> Dict[str, Any]:
     """
     Calculate expected outage costs using line-level outage rate model.
@@ -95,6 +96,7 @@ def calculate_outage_costs(
         number_of_circuits_poles: Number of circuits (AC) or poles (DC); used to
             auto-derive phi = 1/N_poles when capacity_at_risk_factor is "auto"
         line_utilization: Average fraction of line capacity in use (0-1)
+        ac_dc: "AC" or "DC"; used to auto-derive rho when load_shed_fraction is "auto"
 
     Returns:
         dict: Contains EAC, nominal_cost, pv_cost
@@ -111,6 +113,13 @@ def calculate_outage_costs(
         capacity_at_risk = 1.0 / number_of_circuits_poles
     else:
         capacity_at_risk = float(phi_config)
+    rho_config = outage_config.get("load_shed_fraction", "auto")
+    if rho_config in ("auto", None):
+        rho = 0.05 if ac_dc == "AC" else 0.80
+    else:
+        rho = float(rho_config)
+    redispatch_cost = outage_config.get("redispatch_cost_per_mwh", 20)
+
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
     outage_duration = outage_config.get("outage_duration", 6)
     duration_multiplier_dict = outage_config["outage_duration_multiplier"]
@@ -137,10 +146,14 @@ def calculate_outage_costs(
     # Unserved energy per event
     unserved_mwh_per_event = duration_effective * mw_lost_per_event
 
-    # Cost per event (piecewise VoLL)
-    cost_per_event = calculate_voll_cost_piecewise(
-        duration_effective, mw_lost_per_event, voll_tiers
+    # Two-tier cost per event: load-shed (VoLL) + redispatch (flat rate)
+    mw_shed = rho * mw_lost_per_event
+    mw_redisp = (1 - rho) * mw_lost_per_event
+    cost_loadshed = calculate_voll_cost_piecewise(
+        duration_effective, mw_shed, voll_tiers
     )
+    cost_redispatch = mw_redisp * duration_effective * redispatch_cost
+    cost_per_event = cost_loadshed + cost_redispatch
 
     # Expected Annual Cost
     EAC = lambda_total * cost_per_event
@@ -173,6 +186,10 @@ def calculate_outage_costs(
         "duration_multiplier": dur_mult,
         "duration_effective": duration_effective,
         "cost_per_event": cost_per_event,
+        "cost_loadshed": cost_loadshed,
+        "cost_redispatch": cost_redispatch,
+        "rho": rho,
+        "redispatch_cost_per_mwh": redispatch_cost,
         "unserved_mwh_per_event": unserved_mwh_per_event,
     }
 
@@ -206,6 +223,7 @@ def main() -> None:
         construction_years=project_details.construction_years,
         number_of_circuits_poles=circuit_details.number_of_circuits_poles,
         line_utilization=project_details.line_utilization,
+        ac_dc=project_details.ac_dc,
     )
 
     from run_context import add_derived
@@ -237,7 +255,13 @@ def main() -> None:
     print(f"  Duration Multiplier: {results['duration_multiplier']:.1f}x")
     print(f"  Effective Duration: {results['duration_effective']:.1f}h")
     print(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
-    print(f"  Cost/Event (piecewise VoLL): ${results['cost_per_event']:,.0f}")
+    print()
+    print("TWO-TIER COST PER EVENT:")
+    print(f"  Load-shed fraction (rho): {results['rho']:.2f} ({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})")
+    print(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
+    print(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
+    print(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
+    print(f"  Total cost/event: ${results['cost_per_event']:,.0f}")
     print()
 
     print("EXPECTED ANNUAL COST:")

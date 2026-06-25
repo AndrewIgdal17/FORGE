@@ -145,7 +145,7 @@ const TAB_GUIDE_CONTENT = {
   },
   'risk': {
     oneliner: 'Define the wildfire and outage risk assumptions that drive the project\u2019s expected risk costs.',
-    body: 'Transmission lines face two probabilistic risks: wildfires they may ignite and service outages they may experience. The calculator converts your terrain-specific risk assumptions into an expected annual cost for each, then discounts that stream over the project lifetime. These risk costs are societal externalities \u2014 they don\u2019t enter rate base, but they can significantly shift the cost-effectiveness picture between project alternatives.',
+    body: 'Transmission lines face two probabilistic risks: wildfires they may ignite and service outages they may experience. The calculator converts your line-level risk assumptions into an expected annual cost for each, then discounts that stream over the project lifetime. These risk costs are societal externalities \u2014 they don\u2019t enter rate base, but they can significantly shift the cost-effectiveness picture between project alternatives.',
     items: ['Wildfire ignition rates and expected loss per event', 'Outage frequency, duration, and network exposure', 'Whether each risk escalates over the project lifetime', 'Construction-type adjustments for each risk domain'],
   },
   'emissions': {
@@ -240,13 +240,13 @@ const TAB_GUIDE_CONTENT = {
   // L3 sub-tabs: Risk Profiles
   'wildfire-risk': {
     oneliner: 'Specify how likely the line is to ignite wildfires and how costly each event would be.',
-    body: 'The calculator multiplies terrain-specific ignition rates by expected loss per event to produce an expected annual wildfire cost. These assumptions vary dramatically by terrain and construction method \u2014 underground lines nearly eliminate ignition risk, while forested corridors carry the highest exposure.',
-    items: ['Loss per wildfire event (severity)', 'Ignition rates by terrain', 'Construction-type multipliers on ignition risk'],
+    body: 'The calculator multiplies line-level ignition rates by expected loss per event to produce an expected annual wildfire cost. Risk varies by construction method \u2014 underground lines nearly eliminate ignition risk, while overhead lines carry the highest exposure.',
+    items: ['Loss per wildfire event (severity)', 'Base ignition rate (line-level)', 'Construction-type multipliers on ignition risk'],
   },
   'outage-risk': {
     oneliner: 'Define how often outages occur, how long they last, and how much capacity is at risk.',
     body: 'The calculator combines outage frequency, duration, and capacity exposure to estimate an expected annual outage cost, valued using tiered estimates of what lost electricity costs society (value of lost load).',
-    items: ['Network exposure (capacity at risk)', 'Outage rates and durations by terrain', 'Construction-type duration multipliers'],
+    items: ['Network exposure (capacity at risk, load-shed fraction, redispatch cost)', 'Outage rates by construction type', 'Base duration and construction-type duration multipliers'],
   },
   // L3 sub-tabs: Energy and Emissions
   'energy-emissions-energy': {
@@ -337,20 +337,20 @@ const TAB_GUIDE_CONTENT = {
     items: ['Severity in dollars per event'],
   },
   'wf-ignition-profile': {
-    oneliner: 'Define terrain-specific ignition rates and how they vary by construction type.',
-    body: 'Ignition rates set the frequency side of wildfire risk. Each terrain has a baseline rate for overhead lines, adjusted by a construction-type multiplier. You can also model escalating risk over time with an optional growth rate.',
-    items: ['Base ignition rate per terrain (events per mile per year)', 'Construction-type multiplier on ignition rates', 'Optional wildfire risk growth rate'],
+    oneliner: 'Define line-level ignition rates and how they vary by construction type.',
+    body: 'Ignition rates set the frequency side of wildfire risk. A single base rate applies to the whole line, adjusted by a construction-type multiplier. You can also model escalating risk over time with an optional growth rate.',
+    items: ['Base ignition rate (events per mile per year)', 'Construction-type multiplier on ignition rates', 'Optional wildfire risk growth rate'],
   },
   // L4 sub-sub-tabs: Risk — Outage
   'out-exposure': {
-    oneliner: 'Set the fraction of line capacity lost during a typical outage event.',
-    body: 'A radial line with no alternative path loses all capacity per outage; a meshed network loses less. This single factor scales the economic impact of every outage event.',
-    items: ['Capacity-at-risk factor (1.0 for radial, less than 1.0 for meshed networks)'],
+    oneliner: 'Set line-level outage exposure parameters.',
+    body: 'Capacity-at-risk determines what fraction of capacity is lost per outage. Load-shed fraction splits the impact between load-shedding (VoLL) and redispatch (congestion cost).',
+    items: ['Capacity-at-risk factor (1.0 for radial, less for meshed)', 'Load-shed fraction (auto-derived: AC=0.05, DC=0.80)', 'Redispatch cost ($/MWh)'],
   },
   'out-outage-profile': {
-    oneliner: 'Define terrain-specific outage rates, durations, and how construction type affects them.',
-    body: 'Outage rates set event frequency per mile; duration determines how much energy goes unserved per event. Both vary by terrain, and duration adjusts by construction type. You can model increasing risk over time with an optional growth rate.',
-    items: ['Outage rate and base duration per terrain', 'Construction-type duration multiplier', 'Optional outage risk growth rate'],
+    oneliner: 'Define line-level outage rates, durations, and how construction type affects them.',
+    body: 'Outage rates set event frequency per mile by construction type; base duration determines how much energy goes unserved per event, scaled by a construction-type multiplier. You can model increasing risk over time with an optional growth rate.',
+    items: ['Base outage duration (hrs/event)', 'Construction-type duration multiplier', 'Outage rate by construction type (outages/mi/yr)', 'Optional outage risk growth rate'],
   },
   // L4 sub-sub-tabs: System Details — Constraints
   'congestion': {
@@ -995,7 +995,7 @@ function renderTerrainTable(data) {
   const thMult = document.createElement('th');
   thMult.className = 'multiplier-lock-toggle';
   thMult.innerHTML = '<span class="lock-icon">🔒</span> Multiplier ';
-  thMult.appendChild(makeHelpIcon('Cost multiplier by terrain type for weighted miles. Sourced from SOURCE. Click the lock to override.'));
+  thMult.appendChild(makeHelpIcon('Cost multiplier by terrain type for weighted miles. Sourced from MISO. Click the lock to override.'));
   headerRow.appendChild(thMult);
   const thWeighted = document.createElement('th');
   thWeighted.textContent = 'Weighted Miles';
@@ -1438,6 +1438,7 @@ function renderDelayCostPanel() {
   }
 
   panel.appendChild(makeSection('dcp-base', 'BASE DELAY', [
+    ['Annual total:', 'base_annual', EQ_DELAY_NOMINAL],
     ['Nominal:', 'base_nominal', EQ_DELAY_NOMINAL],
     ['PV:', 'base_pv', EQ_DELAY_PV],
   ], ''));
@@ -1507,6 +1508,10 @@ function renderEnergyImpactPanel() {
   panel.appendChild(makeSection('eip-lineloss', 'LINE LOSSES', [
     ['Nominal:', 'll_nominal', EQ_LINE_LOSS],
     ['PV:', 'll_pv', EQ_LINE_LOSS],
+  ]));
+
+  panel.appendChild(makeSection('eip-delivered', 'ENERGY DELIVERED', [
+    ['Annual:', 'delivered_gwh'],
   ]));
 
   const chartTitle = document.createElement('h5');
@@ -2065,7 +2070,7 @@ function showBuildCostConfirmDialog(component, onConfirm) {
   const dialog = document.createElement('div');
   dialog.className = 'confirm-dialog';
   const title = `Override ${component} costs?`;
-  const body = 'These values are sourced from SOURCE for your project configuration. Most users should keep the defaults.';
+  const body = 'These values are sourced from the NREL/DOE database for your project configuration. Most users should keep the defaults.';
   const checkId = `suppress-${component}-cost-check`;
   dialog.innerHTML = `
     <div class="confirm-dialog-title">${title}</div>
@@ -2117,7 +2122,7 @@ function renderConductorDetailsTable() {
   table.className = 'ctcc-table conductor-details-table';
   const cdCaption = document.createElement('caption');
   cdCaption.textContent = 'Conductor Parameters';
-  cdCaption.appendChild(makeHelpIcon('Read-only parameters from SOURCE for your selected configuration.'));
+  cdCaption.appendChild(makeHelpIcon('Read-only parameters from the NREL/DOE database for your selected configuration.'));
   table.appendChild(cdCaption);
 
   const thead = document.createElement('thead');
@@ -2163,8 +2168,8 @@ function renderConductorDetailsTable() {
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
   footnote.textContent = recon
-    ? 'Comparison shows new vs existing line parameters. Sourced from SOURCE.'
-    : 'Values determined by project configuration. Sourced from SOURCE.';
+    ? 'Comparison shows new vs existing line parameters. Sourced from the NREL/DOE database.'
+    : 'Values determined by project configuration. Sourced from the NREL/DOE database.';
   wrapper.appendChild(footnote);
 
   return wrapper;
@@ -2181,7 +2186,7 @@ function updateAcDcWarning() {
     banner.id = 'ac-dc-conversion-warning';
     banner.className = 'routing-validation-banner visible';
     banner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text">AC↔DC conversion scenario — capacity comparisons may not be directly comparable. Review results carefully.</span>';
-    const configSubTab = document.querySelector('[data-sub-tab-id="configuration"]');
+    const configSubTab = document.querySelector('[data-sub-tab="technology"]');
     if (configSubTab) configSubTab.prepend(banner);
   } else if (banner) {
     if (shouldShow) { banner.classList.add('visible'); }
@@ -2243,7 +2248,7 @@ function renderStructureDetailsTable() {
   table.className = 'ctcc-table conductor-details-table structure-details-table';
   const sdCaption = document.createElement('caption');
   sdCaption.textContent = 'Structure Density';
-  sdCaption.appendChild(makeHelpIcon('Tower/pole density by terrain from SOURCE.'));
+  sdCaption.appendChild(makeHelpIcon('Tower/pole density by terrain from the NREL/DOE database.'));
   table.appendChild(sdCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -2282,7 +2287,7 @@ function renderStructureDetailsTable() {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Structure density values from SOURCE. Only applicable to overhead installations — underground and subsea projects have no structures.';
+  footnote.textContent = 'Structure density values from the NREL/DOE database. Only applicable to overhead installations — underground and subsea projects have no structures.';
   wrapper.appendChild(footnote);
 
   return wrapper;
@@ -2347,14 +2352,14 @@ function renderConverterDetailsTable() {
     { label: 'Converter Type', value: convTypeEl ? convTypeEl.value : '—', oldValue: oldConvType || '—', tooltip: 'AC-to-DC converter technology (LCC or VSC).' },
     { label: 'Number of Converters', value: convCountEl ? convCountEl.value : '—', oldValue: convCountEl ? convCountEl.value : '—', tooltip: 'Number of converter stations on the line.' },
     { label: 'Converter Loss (%)', value: convLoss, oldValue: oldConvLoss, tooltip: 'Electrical energy lost in AC/DC conversion. Fixed physical constant: 0.75% for LCC, 1.0% for VSC.' },
-    { label: 'O&M Cost Rate ($/mi/yr)', value: entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString() : '—', oldValue: oldEntry ? '$' + Number(oldEntry.converter_om_cost_per_mile_year).toLocaleString() : '—', tooltip: 'Annual converter O&M cost per mile from SOURCE.' },
+    { label: 'O&M Cost Rate ($/mi/yr)', value: entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString() : '—', oldValue: oldEntry ? '$' + Number(oldEntry.converter_om_cost_per_mile_year).toLocaleString() : '—', tooltip: 'Annual converter O&M cost per mile from the NREL/DOE database.' },
   ];
 
   const table = document.createElement('table');
   table.className = 'ctcc-table conductor-details-table converter-details-table';
   const cvCaption = document.createElement('caption');
   cvCaption.textContent = 'Converter Parameters';
-  cvCaption.appendChild(makeHelpIcon('Read-only converter parameters from SOURCE.'));
+  cvCaption.appendChild(makeHelpIcon('Read-only converter parameters from the NREL/DOE database.'));
   table.appendChild(cvCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -2398,8 +2403,8 @@ function renderConverterDetailsTable() {
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
   footnote.textContent = oldIsDC
-    ? 'Comparison shows new vs existing line converter parameters. O&M cost rate sourced from SOURCE.'
-    : 'Values determined by project configuration. O&M cost rate sourced from SOURCE.';
+    ? 'Comparison shows new vs existing line converter parameters. O&M cost rate sourced from the NREL/DOE database.'
+    : 'Values determined by project configuration. O&M cost rate sourced from the NREL/DOE database.';
   wrapper.appendChild(footnote);
 
   return wrapper;
@@ -2443,13 +2448,13 @@ function renderConductorMaintenanceTable() {
   table.className = 'ctcc-table capital-cost-table conductor-maintenance-table';
   const cmCaption = document.createElement('caption');
   cmCaption.textContent = 'Conductor Maintenance Costs';
-  cmCaption.appendChild(makeHelpIcon('Annual per-mile maintenance cost for conductor from SOURCE.'));
+  cmCaption.appendChild(makeHelpIcon('Annual per-mile maintenance cost for conductor from the NREL/DOE database.'));
   table.appendChild(cmCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   const thParam = document.createElement('th');
   thParam.textContent = 'Parameter';
-  thParam.appendChild(makeHelpIcon('Conductor O&M cost from SOURCE, determined by project configuration.'));
+  thParam.appendChild(makeHelpIcon('Conductor O&M cost from the NREL/DOE database, determined by project configuration.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
   thValue.className = 'multiplier-lock-toggle';
@@ -2501,7 +2506,7 @@ function renderConductorMaintenanceTable() {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Conductor maintenance cost from SOURCE. Determined by project configuration.';
+  footnote.textContent = 'Conductor maintenance cost from the NREL/DOE database. Determined by project configuration.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -2525,7 +2530,7 @@ function renderStructureMaintenanceTable() {
   table.className = 'ctcc-table capital-cost-table structure-maintenance-table';
   const smCaption = document.createElement('caption');
   smCaption.textContent = 'Structure Maintenance Costs';
-  smCaption.appendChild(makeHelpIcon('Annual per-structure maintenance cost by terrain from SOURCE.'));
+  smCaption.appendChild(makeHelpIcon('Annual per-structure maintenance cost by terrain from the NREL/DOE database.'));
   table.appendChild(smCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -2540,7 +2545,7 @@ function renderStructureMaintenanceTable() {
   const thValue = document.createElement('th');
   thValue.className = 'multiplier-lock-toggle';
   thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
-  thValue.appendChild(makeHelpIcon('Structure density and unit cost from SOURCE. Click the lock to override.'));
+  thValue.appendChild(makeHelpIcon('Structure density and unit cost from the NREL/DOE database. Click the lock to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -2615,7 +2620,7 @@ function renderStructureMaintenanceTable() {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Structure density and unit cost from SOURCE. Only applicable to Overhead construction.';
+  footnote.textContent = 'Structure density and unit cost from the NREL/DOE database. Only applicable to Overhead construction.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -2638,13 +2643,13 @@ function renderConverterMaintenanceTable() {
   table.className = 'ctcc-table capital-cost-table converter-maintenance-table';
   const cvmCaption = document.createElement('caption');
   cvmCaption.textContent = 'Converter Maintenance Costs';
-  cvmCaption.appendChild(makeHelpIcon('Annual converter O&M cost from SOURCE.'));
+  cvmCaption.appendChild(makeHelpIcon('Annual converter O&M cost from the NREL/DOE database.'));
   table.appendChild(cvmCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   const thParam = document.createElement('th');
   thParam.textContent = 'Parameter';
-  thParam.appendChild(makeHelpIcon('Converter O&M cost from SOURCE, determined by project configuration.'));
+  thParam.appendChild(makeHelpIcon('Converter O&M cost from the NREL/DOE database, determined by project configuration.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
   thValue.className = 'multiplier-lock-toggle';
@@ -2696,7 +2701,7 @@ function renderConverterMaintenanceTable() {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Converter maintenance cost from SOURCE. Only applicable to DC projects.';
+  footnote.textContent = 'Converter maintenance cost from the NREL/DOE database. Only applicable to DC projects.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -2769,7 +2774,8 @@ function renderInsurableAssetsTable(data) {
     const tdIncl = document.createElement('td');
     const cb = document.createElement('input');
     cb.type = 'checkbox';
-    cb.checked = true;
+    const savedVal = getValueAtFieldPath(data, '04_insurance', `insurance.insurable_components.${asset.label.toLowerCase()}`);
+    cb.checked = savedVal !== false && savedVal !== 0;
     cb.dataset.path = asset.togglePath;
     cb.dataset.insurableToggle = asset.label.toLowerCase();
     tdIncl.appendChild(cb);
@@ -2791,6 +2797,7 @@ function renderInsurableAssetsTable(data) {
   const totalValTd = document.createElement('td');
   totalValTd.textContent = '\u2014';
   totalValTd.id = 'insurable-total-value';
+  totalValTd.dataset.insurableValue = 'total';
   totalTr.appendChild(totalValTd);
   tbody.appendChild(totalTr);
   table.appendChild(tbody);
@@ -2808,6 +2815,7 @@ function renderInsurableAssetsTable(data) {
   const premValue = document.createElement('span');
   premValue.className = 'readonly-display-value';
   premValue.id = 'insurance-annual-premium';
+  premValue.dataset.insurableValue = 'annual-premium';
   premValue.textContent = '\u2014';
   premiumDisplay.appendChild(premValue);
   wrapper.appendChild(premiumDisplay);
@@ -2816,6 +2824,27 @@ function renderInsurableAssetsTable(data) {
   footnote.className = 'conductor-details-footnote';
   footnote.textContent = 'Asset values derived from Capital Costs (with contingencies). Values populate after running a calculation.';
   wrapper.appendChild(footnote);
+
+  function recalcInsurance() {
+    const rate = parseFloat(premiumInput.value.replace(/,/g, '')) || 0;
+    let total = 0;
+    wrapper.querySelectorAll('[data-insurable-toggle]').forEach(cb => {
+      if (cb.checked) {
+        const valEl = wrapper.querySelector(`[data-insurable-value="${cb.dataset.insurableToggle}"]`);
+        const raw = valEl?.textContent?.replace(/[$,\u2014]/g, '');
+        const num = parseFloat(raw);
+        if (!isNaN(num)) total += num;
+      }
+    });
+    const totalEl = wrapper.querySelector('[data-insurable-value="total"]');
+    if (totalEl) totalEl.textContent = total > 0 ? '$' + total.toLocaleString() : '\u2014';
+    const annualEl = wrapper.querySelector('[data-insurable-value="annual-premium"]');
+    if (annualEl) annualEl.textContent = total > 0 ? '$' + Math.round(total * rate).toLocaleString() : '\u2014';
+  }
+  wrapper.querySelectorAll('[data-insurable-toggle]').forEach(cb => {
+    cb.addEventListener('change', recalcInsurance);
+  });
+  premiumInput.addEventListener('blur', recalcInsurance);
 
   return wrapper;
 }
@@ -2851,7 +2880,7 @@ function renderVegetationManagementTable() {
   table.className = 'ctcc-table capital-cost-table veg-mgmt-table';
   const vmCaption = document.createElement('caption');
   vmCaption.textContent = 'Vegetation Management Costs';
-  vmCaption.appendChild(makeHelpIcon('Annual per-mile vegetation management cost by terrain from SOURCE.'));
+  vmCaption.appendChild(makeHelpIcon('Annual per-mile vegetation management cost by terrain from the NREL/DOE database.'));
   table.appendChild(vmCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -2911,7 +2940,7 @@ function renderVegetationManagementTable() {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Vegetation management costs per terrain from SOURCE. Values update when construction type changes.';
+  footnote.textContent = 'Vegetation management costs per terrain from the NREL/DOE database. Values update when construction type changes.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -3042,7 +3071,7 @@ function renderLineLossParametersTable() {
   table.className = 'ctcc-table conductor-details-table';
   const llCaption = document.createElement('caption');
   llCaption.textContent = 'Line Loss Parameters';
-  llCaption.appendChild(makeHelpIcon('Electrical parameters from SOURCE that determine resistive line losses.'));
+  llCaption.appendChild(makeHelpIcon('Electrical parameters from the NREL/DOE database that determine resistive line losses.'));
   table.appendChild(llCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -3084,8 +3113,8 @@ function renderLineLossParametersTable() {
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
   footnote.textContent = recon
-    ? 'Loss-relevant circuit parameters. New vs existing line values from SOURCE.'
-    : 'Loss-relevant circuit parameters from SOURCE. These drive the conductor and converter loss calculations.';
+    ? 'Loss-relevant circuit parameters. New vs existing line values from the NREL/DOE database.'
+    : 'Loss-relevant circuit parameters from the NREL/DOE database. These drive the conductor and converter loss calculations.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -3382,6 +3411,19 @@ function renderWildfireRiskPanel(data) {
         if (!multLocked) { multLocked = true; multInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F512}</span> Multiplier'; }
         else { showBuildCostConfirmDialog('wildfire-multiplier', () => { multLocked = false; multInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F513}</span> Multiplier'; }); }
       });
+
+      const birDiv = document.createElement('div');
+      birDiv.className = 'env-uplift-row';
+      birDiv.style.marginTop = '1rem';
+      const birPath = '06_wildfire_costs.wildfire.base_ignition_rate';
+      const birVal = getValueAtFieldPath(data, '06_wildfire_costs', 'wildfire.base_ignition_rate') ?? 0.003;
+      birDiv.innerHTML = '<span class="env-uplift-label">Base Ignition Rate (events/mi/yr)</span> ';
+      birDiv.appendChild(makeHelpIcon('Line-level overhead baseline ignition rate. Effective rate = base \u00d7 construction type multiplier.'));
+      const birInput = document.createElement('input');
+      birInput.type = 'text'; birInput.className = 'number-input env-uplift-input'; birInput.dataset.path = birPath;
+      birInput.value = String(birVal);
+      birDiv.appendChild(birInput);
+      panel.appendChild(birDiv);
     }
 
     renderTabGuideBanner(l4Id, panel);
@@ -3437,6 +3479,32 @@ function renderOutageRiskPanel(data) {
       capInput.value = String(capVal);
       capDiv.appendChild(capInput);
       panel.appendChild(capDiv);
+
+      const rhoDiv = document.createElement('div');
+      rhoDiv.className = 'env-uplift-row';
+      rhoDiv.style.marginTop = '0.75rem';
+      const acDcEl2 = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+      const rhoVal = (acDcEl2?.value === 'DC') ? '0.80' : '0.05';
+      rhoDiv.innerHTML = '<span class="env-uplift-label">Load-Shed Fraction (\u03C1)</span> ';
+      rhoDiv.appendChild(makeHelpIcon('Fraction of outage impact from load-shedding vs redispatch. Auto-derived: AC=0.05, DC=0.80.'));
+      const rhoDisplay = document.createElement('span');
+      rhoDisplay.className = 'readonly-miles-display';
+      rhoDisplay.textContent = rhoVal;
+      rhoDiv.appendChild(rhoDisplay);
+      panel.appendChild(rhoDiv);
+
+      const rdDiv = document.createElement('div');
+      rdDiv.className = 'env-uplift-row';
+      rdDiv.style.marginTop = '0.75rem';
+      const rdPath = '07_outage_costs.outage.redispatch_cost_per_mwh';
+      const rdVal = getValueAtFieldPath(data, '07_outage_costs', 'outage.redispatch_cost_per_mwh') ?? 20;
+      rdDiv.innerHTML = '<span class="env-uplift-label">Redispatch Cost ($/MWh)</span> ';
+      rdDiv.appendChild(makeHelpIcon('Congestion premium for rerouting power during an outage. LBNL empirical median.'));
+      const rdInput = document.createElement('input');
+      rdInput.type = 'text'; rdInput.className = 'number-input env-uplift-input'; rdInput.dataset.path = rdPath;
+      rdInput.value = String(rdVal);
+      rdDiv.appendChild(rdInput);
+      panel.appendChild(rdDiv);
     } else if (l4Id === 'out-outage-profile') {
       // Growth rate toggle (first)
       const growthDiv = document.createElement('div');
@@ -3485,6 +3553,45 @@ function renderOutageRiskPanel(data) {
         if (!durLocked) { durLocked = true; durInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F512}</span> Duration Mult'; }
         else { showBuildCostConfirmDialog('outage-duration', () => { durLocked = false; durInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F513}</span> Duration Mult'; }); }
       });
+
+      const bodDiv = document.createElement('div');
+      bodDiv.className = 'env-uplift-row';
+      bodDiv.style.marginTop = '1rem';
+      const bodPath = '07_outage_costs.outage.outage_duration';
+      const bodVal = getValueAtFieldPath(data, '07_outage_costs', 'outage.outage_duration') ?? 6;
+      bodDiv.innerHTML = '<span class="env-uplift-label">Base Outage Duration (hrs/event)</span> ';
+      bodDiv.appendChild(makeHelpIcon('Effective duration = base \u00d7 construction type multiplier.'));
+      const bodInput = document.createElement('input');
+      bodInput.type = 'text'; bodInput.className = 'number-input env-uplift-input'; bodInput.dataset.path = bodPath;
+      bodInput.value = String(bodVal);
+      bodDiv.appendChild(bodInput);
+      panel.appendChild(bodDiv);
+
+      const rateTable = document.createElement('table');
+      rateTable.className = 'ctcc-table capital-cost-table'; rateTable.style.marginTop = '1rem';
+      const rateCaption = document.createElement('caption');
+      rateCaption.textContent = 'Outage Rate by Construction Type';
+      rateCaption.appendChild(makeHelpIcon('Line-level outage frequency per construction type (outages/mi/yr).'));
+      rateTable.appendChild(rateCaption);
+      const rateThead = document.createElement('thead');
+      const rateHR = document.createElement('tr');
+      const rateThCT = document.createElement('th'); rateThCT.textContent = 'Construction Type'; rateHR.appendChild(rateThCT);
+      const rateThVal = document.createElement('th'); rateThVal.textContent = 'Outage Rate (outages/mi/yr)'; rateHR.appendChild(rateThVal);
+      rateThead.appendChild(rateHR); rateTable.appendChild(rateThead);
+      const rateTbody = document.createElement('tbody');
+      const OUTAGE_RATE_DEFAULTS = { overhead: 0.025, underground: 0.004, subsea: 0.00475 };
+      CT_LIST.forEach(ct => {
+        const tr = document.createElement('tr');
+        const tdCT = document.createElement('td'); tdCT.textContent = ct.charAt(0).toUpperCase() + ct.slice(1); tdCT.style.fontWeight = '500'; tr.appendChild(tdCT);
+        const tdVal = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text'; input.className = 'number-input';
+        input.dataset.path = `07_outage_costs.outage.outage_rate.${ct}`;
+        const val = getValueAtFieldPath(data, '07_outage_costs', `outage.outage_rate.${ct}`);
+        input.value = val != null ? String(val) : String(OUTAGE_RATE_DEFAULTS[ct] || 0);
+        tdVal.appendChild(input); tr.appendChild(tdVal); rateTbody.appendChild(tr);
+      });
+      rateTable.appendChild(rateTbody); panel.appendChild(rateTable);
     }
 
     renderTabGuideBanner(l4Id, panel);
@@ -4114,14 +4221,14 @@ function renderCapitalCostSubTab(subTabId, data) {
   table.className = 'ctcc-table capital-cost-table';
   const ccCaption = document.createElement('caption');
   ccCaption.textContent = (SUBTAB_LABELS[subTabId] || subTabId) + ' Build Costs';
-  ccCaption.appendChild(makeHelpIcon('Unit build costs from SOURCE. Locked values are defaults; unlock to override.'));
+  ccCaption.appendChild(makeHelpIcon('Unit build costs from the NREL/DOE database. Locked values are defaults; unlock to override.'));
   table.appendChild(ccCaption);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   const thParam = document.createElement('th');
   thParam.textContent = 'Parameter';
-  thParam.appendChild(makeHelpIcon('Build cost parameters for this component, sourced from SOURCE.'));
+  thParam.appendChild(makeHelpIcon('Build cost parameters for this component, sourced from the NREL/DOE database.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
   thValue.className = 'multiplier-lock-toggle';
@@ -4215,8 +4322,7 @@ function updateProjectTechnicalSubTabVisibility() {
     let hidden = false;
     if (stId === 'structure-details') hidden = !isOverhead;
     if (stId === 'converter-details') {
-      const isOldDC = document.querySelector('[data-path="01_project_technical_details.project.old_ac_dc"]')?.value === 'DC';
-      hidden = !isDC && !(isReconductoring() && isOldDC);
+      hidden = !isDC;
     }
 
     btn.style.display = hidden ? 'none' : '';
@@ -5056,7 +5162,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
 
   // Fix 6: Inject category validation banner and wire listeners on Configuration
   setTimeout(() => {
-    const configPanel = document.querySelector('[data-tab-id="project-technical"] [data-sub-tab="configuration"]');
+    const configPanel = document.querySelector('[data-tab-id="project-technical"] [data-sub-tab="technology"]');
     if (configPanel && !document.getElementById('category-validation-banner')) {
       const banner = document.createElement('div');
       banner.className = 'routing-validation-banner';
