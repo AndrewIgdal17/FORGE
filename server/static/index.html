@@ -40,9 +40,39 @@
       </div>
     </div>
 
+    <!-- Profile Completion Gate (shown once after first signup) -->
+    <div id="profile-gate" style="display:none; position:fixed; inset:0; z-index:9998; background:#f8f9fa; align-items:center; justify-content:center;">
+      <div style="max-width:420px; width:100%; padding:2rem; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <div style="font-size:1.5rem; font-weight:700; color:#1a1a1a;">Complete Your Profile</div>
+          <div style="font-size:0.85rem; color:#666; margin-top:0.25rem;">This information is shown alongside your scenarios.</div>
+        </div>
+        <div id="profile-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
+        <form id="profile-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
+          <input id="profile-username" type="text" placeholder="Username *" required maxlength="40" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          <div style="display:flex; gap:0.5rem;">
+            <input id="profile-first-name" type="text" placeholder="First name" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+            <input id="profile-last-name" type="text" placeholder="Last name" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          </div>
+          <input id="profile-org" type="text" placeholder="Organization" maxlength="120" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          <select id="profile-org-type" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem; color:#333; background:#fff;">
+            <option value="" disabled selected>Organization type *</option>
+            <option value="utility">Utility</option>
+            <option value="iso_rto">ISO / RTO</option>
+            <option value="consultant">Consultant</option>
+            <option value="academic">Academic</option>
+            <option value="government">Government</option>
+            <option value="other">Other</option>
+          </select>
+          <button type="button" id="profile-submit-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-top:0.25rem;">Complete Profile</button>
+        </form>
+      </div>
+    </div>
+
     <script>
     (function() {
-      const gate = document.getElementById('auth-gate');
+      const authGate = document.getElementById('auth-gate');
+      const profileGate = document.getElementById('profile-gate');
       const errEl = document.getElementById('auth-error');
       const msgEl = document.getElementById('auth-message');
       const emailEl = document.getElementById('auth-email');
@@ -52,8 +82,30 @@
       function showMsg(msg) { msgEl.textContent = msg; msgEl.style.display = 'block'; errEl.style.display = 'none'; }
       function clearMessages() { errEl.style.display = 'none'; msgEl.style.display = 'none'; }
 
-      function showGate() { gate.style.display = 'flex'; }
-      function hideGate() { gate.style.display = 'none'; }
+      function showAuthGate() { authGate.style.display = 'flex'; profileGate.style.display = 'none'; }
+      function showProfileGate() { authGate.style.display = 'none'; profileGate.style.display = 'flex'; }
+      function hideAllGates() { authGate.style.display = 'none'; profileGate.style.display = 'none'; }
+
+      function setUserDisplay(profile) {
+        const displayName = profile?.username || '';
+        document.querySelectorAll('.ctcc-user-display').forEach(el => {
+          el.textContent = displayName;
+        });
+      }
+
+      async function checkProfileAndEnter(session) {
+        if (!session) { showAuthGate(); return; }
+        const { data: profile, error } = await _sb.from('profiles')
+          .select('*').eq('id', session.user.id).single();
+        if (error || !profile?.username) {
+          showProfileGate();
+          return;
+        }
+        window.CTCC.userProfile = profile;
+        window.CTCC.currentUserId = session.user.id;
+        setUserDisplay(profile);
+        hideAllGates();
+      }
 
       document.getElementById('auth-login-btn').addEventListener('click', async () => {
         clearMessages();
@@ -72,16 +124,37 @@
         else showMsg('Check your email for a confirmation link.');
       });
 
-      _sb.auth.onAuthStateChange((event, session) => {
-        if (session) {
-          hideGate();
-        } else {
-          showGate();
+      document.getElementById('profile-submit-btn').addEventListener('click', async () => {
+        const profErr = document.getElementById('profile-error');
+        profErr.style.display = 'none';
+        const username = document.getElementById('profile-username').value.trim();
+        const orgType = document.getElementById('profile-org-type').value;
+        if (!username) { profErr.textContent = 'Username is required.'; profErr.style.display = 'block'; return; }
+        if (!orgType) { profErr.textContent = 'Organization type is required.'; profErr.style.display = 'block'; return; }
+        const { data: { session } } = await _sb.auth.getSession();
+        if (!session) { showAuthGate(); return; }
+        const updates = {
+          username,
+          first_name: document.getElementById('profile-first-name').value.trim() || null,
+          last_name: document.getElementById('profile-last-name').value.trim() || null,
+          org: document.getElementById('profile-org').value.trim() || null,
+          org_type: orgType,
+        };
+        const { error } = await _sb.from('profiles').update(updates).eq('id', session.user.id);
+        if (error) {
+          const msg = error.message.includes('unique') ? 'That username is already taken.' : error.message;
+          profErr.textContent = msg; profErr.style.display = 'block';
+          return;
         }
+        await checkProfileAndEnter(session);
       });
 
-      _sb.auth.getSession().then(({ data }) => {
-        if (!data.session) showGate();
+      _sb.auth.onAuthStateChange(async (event, session) => {
+        await checkProfileAndEnter(session);
+      });
+
+      _sb.auth.getSession().then(async ({ data }) => {
+        if (!data.session) showAuthGate();
       });
     })();
     </script>
@@ -101,15 +174,9 @@
     <!-- Landing Page (shown on fresh load, hidden once user enters the app) -->
     <div id="landing-page" class="landing-page">
       <div id="landing-auth-bar" style="position:absolute; top:1rem; right:1.5rem; display:flex; align-items:center; gap:0.75rem;">
-        <span id="landing-user-email" style="font-size:0.8rem; color:#888;"></span>
+        <span class="ctcc-user-display" style="font-size:0.8rem; color:#888;"></span>
         <button type="button" style="padding:0.35rem 0.75rem; background:transparent; color:#888; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
       </div>
-      <script>
-        _sb.auth.onAuthStateChange((_, session) => {
-          const el = document.getElementById('landing-user-email');
-          if (el) el.textContent = session?.user?.email || '';
-        });
-      </script>
       <div class="landing-title">CTCC</div>
       <div class="landing-name">Comprehensive Transmission Cost Calculator</div>
       <div class="landing-tagline">Full-cost benefit-cost analysis for transmission projects</div>
@@ -131,16 +198,10 @@
         <div class="identity-tagline">Full-cost benefit-cost analysis for transmission projects</div>
       </div>
       <div style="margin-left:auto; display:flex; align-items:center; gap:0.75rem; padding-right:1rem;">
-        <span id="auth-user-email" style="font-size:0.8rem; color:#666;"></span>
+        <span class="ctcc-user-display" style="font-size:0.8rem; color:#666;"></span>
         <button type="button" id="logout-btn" style="padding:0.35rem 0.75rem; background:transparent; color:#666; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
       </div>
     </div>
-    <script>
-      _sb.auth.onAuthStateChange((_, session) => {
-        const el = document.getElementById('auth-user-email');
-        if (el) el.textContent = session?.user?.email || '';
-      });
-    </script>
 
     <!-- Main Tabs -->
     <div class="main-tabs">
