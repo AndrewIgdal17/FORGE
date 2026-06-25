@@ -100,6 +100,16 @@
 
     <!-- Landing Page (shown on fresh load, hidden once user enters the app) -->
     <div id="landing-page" class="landing-page">
+      <div id="landing-auth-bar" style="position:absolute; top:1rem; right:1.5rem; display:flex; align-items:center; gap:0.75rem;">
+        <span id="landing-user-email" style="font-size:0.8rem; color:#888;"></span>
+        <button type="button" style="padding:0.35rem 0.75rem; background:transparent; color:#888; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
+      </div>
+      <script>
+        _sb.auth.onAuthStateChange((_, session) => {
+          const el = document.getElementById('landing-user-email');
+          if (el) el.textContent = session?.user?.email || '';
+        });
+      </script>
       <div class="landing-title">CTCC</div>
       <div class="landing-name">Comprehensive Transmission Cost Calculator</div>
       <div class="landing-tagline">Full-cost benefit-cost analysis for transmission projects</div>
