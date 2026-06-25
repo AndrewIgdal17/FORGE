@@ -8,6 +8,50 @@
 
   const C = window.CTCC;
 
+async function loadScenariosFromDB() {
+  const [scenarioRes, profileRes] = await Promise.all([
+    _sb.from('scenario').select('*').order('updated_at', { ascending: false }),
+    _sb.from('profiles').select('id, username, org')
+  ]);
+  if (scenarioRes.error) {
+    console.error('Failed to load scenarios:', scenarioRes.error);
+    return;
+  }
+  const profileMap = {};
+  (profileRes.data || []).forEach(p => { profileMap[p.id] = p; });
+  C.sessionScenarios = scenarioRes.data.map(row => ({
+    id: row.id,
+    user_id: row.user_id,
+    customName: row.name,
+    inputs: row.inputs,
+    results: row.results,
+    metadata: row.metadata || {},
+    _owner: profileMap[row.user_id] || null
+  }));
+  renderScenarioList();
+  renderCompareSelector();
+}
+
+async function saveScenarioToDB(scenario) {
+  const userId = C.currentUserId;
+  if (!userId) return;
+  const { error } = await _sb.from('scenario').upsert({
+    id: scenario.id,
+    user_id: userId,
+    name: scenario.customName,
+    inputs: scenario.inputs,
+    results: scenario.results,
+    metadata: scenario.metadata,
+    updated_at: new Date().toISOString()
+  });
+  if (error) console.error('Failed to save scenario:', error);
+}
+
+async function deleteScenarioFromDB(id) {
+  const { error } = await _sb.from('scenario').delete().eq('id', id);
+  if (error) console.error('Failed to delete scenario:', error);
+}
+
 const RESULTS_EXPORT_FIELDS = [
   { key: 'capacity_mw', path: 'technical_parameters.capacity_mw' },
   { key: 'line_length_miles', path: 'technical_parameters.line_length_miles' },
@@ -56,19 +100,27 @@ function updateScenarioBadge() {
   // No-op: badge removed by design
 }
 
-function addScenarioToSession(inputs, results, metadata, customName) {
-  const scenario = {
-    version: '1.0',
-    id: crypto.randomUUID(),
-    customName: customName || generateScenarioName('Scenario'),
+async function addScenarioToSession(inputs, results, metadata, customName) {
+  const userId = C.currentUserId;
+  const name = customName || generateScenarioName('Scenario');
+  const row = {
+    user_id: userId || null,
+    name: name,
     inputs: inputs ? JSON.parse(JSON.stringify(inputs)) : null,
     results: results ? JSON.parse(JSON.stringify(results)) : null,
-    metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' }
+    metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' },
+    updated_at: new Date().toISOString()
+  };
+  const { data, error } = await _sb.from('scenario').insert(row).select('id').single();
+  const id = (data && !error) ? data.id : crypto.randomUUID();
+  if (error) console.error('Failed to insert scenario:', error);
+  const scenario = {
+    ...row, id, customName: name,
+    _owner: C.userProfile ? { username: C.userProfile.username, org: C.userProfile.org } : null
   };
   C.sessionScenarios.push(scenario);
   renderScenarioList();
   renderCompareSelector();
-  updateScenarioBadge();
   return scenario;
 }
 
@@ -177,10 +229,10 @@ function updateBreadcrumb() {
 function updateScenarioBreadcrumb() { updateBreadcrumb(); }
 
 
-function createNewScenario(name) {
+async function createNewScenario(name) {
   const trimmed = name.trim();
   if (!trimmed) return;
-  const scenario = addScenarioToSession(null, null,
+  const scenario = await addScenarioToSession(null, null,
     { timestamp: new Date().toISOString(), source: 'manual' },
     trimmed
   );
@@ -197,7 +249,8 @@ function createNewScenario(name) {
   autoCalculate();
 }
 
-function removeScenarioFromSession(id) {
+async function removeScenarioFromSession(id) {
+  await deleteScenarioFromDB(id);
   C.sessionScenarios = C.sessionScenarios.filter(s => s.id !== id);
   C.comparisonScenarioIds.delete(id);
   if (C.comparisonBaselineId === id) C.comparisonBaselineId = null;
@@ -210,6 +263,8 @@ function renameScenario(id, newName) {
   const scenario = C.sessionScenarios.find(s => s.id === id);
   if (scenario && newName.trim()) {
     scenario.customName = newName.trim();
+    _sb.from('scenario').update({ name: scenario.customName, updated_at: new Date().toISOString() })
+      .eq('id', id).then(({ error }) => { if (error) console.error('Failed to rename:', error); });
     if (id === C.activeScenarioId) {
       C.activeScenarioName = scenario.customName;
       updateScenarioBreadcrumb();
@@ -285,6 +340,7 @@ function renderScenarioList() {
 
   C.sessionScenarios.forEach(scenario => {
     const isActive = scenario.id === C.activeScenarioId;
+    const isOwner = !C.currentUserId || scenario.user_id === C.currentUserId;
     const card = document.createElement('tr');
     card.className = 'scenario-card' + (isActive ? ' scenario-card-active' : '');
     card.dataset.scenarioId = scenario.id;
@@ -295,6 +351,7 @@ function renderScenarioList() {
     const nameSpan = document.createElement('span');
     nameSpan.className = 'scenario-card-name';
     nameSpan.textContent = scenario.customName;
+    if (isOwner) {
     nameSpan.title = 'Click to rename';
     nameSpan.addEventListener('click', () => {
       const input = document.createElement('input');
@@ -320,6 +377,10 @@ function renderScenarioList() {
         if (e.key === 'Escape') { input.value = scenario.customName; input.blur(); }
       });
     });
+    } else {
+      nameSpan.style.cursor = 'default';
+      nameSpan.title = '';
+    }
     infoTd.appendChild(nameSpan);
 
     const params = document.createElement('span');
@@ -335,6 +396,16 @@ function renderScenarioList() {
     const ts = scenario.metadata?.timestamp ? formatTimestamp(scenario.metadata.timestamp) : '';
     meta.textContent = sourceLabel + (ts ? ' ' + ts : '');
     infoTd.appendChild(meta);
+
+    if (scenario._owner) {
+      const owner = document.createElement('span');
+      owner.className = 'scenario-card-meta';
+      owner.style.fontStyle = 'italic';
+      const ownerParts = [scenario._owner.username];
+      if (scenario._owner.org) ownerParts.push(scenario._owner.org);
+      owner.textContent = 'Created by ' + ownerParts.join(' \u00b7 ');
+      infoTd.appendChild(owner);
+    }
 
     card.appendChild(infoTd);
 
@@ -357,50 +428,55 @@ function renderScenarioList() {
       actions.appendChild(setActiveBtn);
     }
 
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.textContent = 'Remove';
-    removeBtn.addEventListener('click', () => {
-      removeScenarioFromSession(scenario.id);
-    });
-    actions.appendChild(removeBtn);
-
-    const saveHereBtn = document.createElement('button');
-    saveHereBtn.type = 'button';
-    saveHereBtn.textContent = 'Save here';
-    saveHereBtn.dataset.tooltip = 'Overwrite with current inputs and results';
-    saveHereBtn.addEventListener('click', () => {
-      const currentInputs = collectJsonData();
-      scenario.inputs = currentInputs;
-      scenario.results = C.lastRunResults;
-      scenario.metadata.timestamp = new Date().toISOString();
-      scenario.metadata.source = 'manual';
-      renderScenarioList();
-      renderCompareSelector();
-    });
-    actions.appendChild(saveHereBtn);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', () => {
-      showModal('Delete Scenario', `Delete "${scenario.customName}"?`, () => {
+    if (isOwner) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => {
         removeScenarioFromSession(scenario.id);
       });
-    });
-    actions.appendChild(deleteBtn);
+      actions.appendChild(removeBtn);
+
+      const saveHereBtn = document.createElement('button');
+      saveHereBtn.type = 'button';
+      saveHereBtn.textContent = 'Save here';
+      saveHereBtn.dataset.tooltip = 'Overwrite with current inputs and results';
+      saveHereBtn.addEventListener('click', async () => {
+        const currentInputs = collectJsonData();
+        scenario.inputs = currentInputs;
+        scenario.results = C.lastRunResults;
+        scenario.metadata.timestamp = new Date().toISOString();
+        scenario.metadata.source = 'manual';
+        await saveScenarioToDB(scenario);
+        renderScenarioList();
+        renderCompareSelector();
+      });
+      actions.appendChild(saveHereBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => {
+        showModal('Delete Scenario', `Delete "${scenario.customName}"?`, () => {
+          removeScenarioFromSession(scenario.id);
+        });
+      });
+      actions.appendChild(deleteBtn);
+    }
 
     actionsTd.appendChild(actions);
     card.appendChild(actionsTd);
 
     const dragTd = document.createElement('td');
     dragTd.className = 'scenario-drag-cell';
-    const dragHandle = document.createElement('span');
-    dragHandle.className = 'scenario-drag-handle';
-    dragHandle.title = 'Drag to reorder';
-    dragHandle.draggable = true;
-    dragTd.appendChild(dragHandle);
+    if (isOwner) {
+      const dragHandle = document.createElement('span');
+      dragHandle.className = 'scenario-drag-handle';
+      dragHandle.title = 'Drag to reorder';
+      dragHandle.draggable = true;
+      dragTd.appendChild(dragHandle);
+    }
     card.appendChild(dragTd);
 
     const fillerTd = document.createElement('td');
@@ -954,6 +1030,8 @@ async function downloadAllCsvFiles() {
 
 
   // Public API
+  window.loadScenariosFromDB = loadScenariosFromDB;
+  window.saveScenarioToDB = saveScenarioToDB;
   window.generateScenarioName = generateScenarioName;
   window.updateScenarioBadge = updateScenarioBadge;
   window.addScenarioToSession = addScenarioToSession;
