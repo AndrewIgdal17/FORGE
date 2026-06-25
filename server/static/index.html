@@ -8,8 +8,84 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const SUPABASE_URL = 'https://fsjppprwigmuypyzpbir.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_LNsNVlF7rOtKNShrC3qbVQ_D5_Mncx1';
+      const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      function _getAuthToken() {
+        return _sb.auth.getSession().then(({ data }) => data.session?.access_token || null);
+      }
+      window._sb = _sb;
+      window._getAuthToken = _getAuthToken;
+    </script>
   </head>
   <body>
+    <!-- Auth Gate (shown when not logged in) -->
+    <div id="auth-gate" style="display:none; position:fixed; inset:0; z-index:9999; background:#f8f9fa; display:flex; align-items:center; justify-content:center;">
+      <div style="max-width:380px; width:100%; padding:2rem; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <div style="font-size:1.75rem; font-weight:700; color:#1a1a1a;">CTCC</div>
+          <div style="font-size:0.9rem; color:#666; margin-top:0.25rem;">Comprehensive Transmission Cost Calculator</div>
+        </div>
+        <div id="auth-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
+        <div id="auth-message" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#efe; color:#060; border-radius:6px; font-size:0.85rem;"></div>
+        <form id="auth-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
+          <input id="auth-email" type="email" placeholder="Email" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          <input id="auth-password" type="password" placeholder="Password" required minlength="6" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          <button type="button" id="auth-login-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Log In</button>
+          <button type="button" id="auth-signup-btn" style="padding:0.65rem; background:#fff; color:#2563eb; border:1px solid #2563eb; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Sign Up</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      const gate = document.getElementById('auth-gate');
+      const errEl = document.getElementById('auth-error');
+      const msgEl = document.getElementById('auth-message');
+      const emailEl = document.getElementById('auth-email');
+      const pwEl = document.getElementById('auth-password');
+
+      function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; msgEl.style.display = 'none'; }
+      function showMsg(msg) { msgEl.textContent = msg; msgEl.style.display = 'block'; errEl.style.display = 'none'; }
+      function clearMessages() { errEl.style.display = 'none'; msgEl.style.display = 'none'; }
+
+      function showGate() { gate.style.display = 'flex'; }
+      function hideGate() { gate.style.display = 'none'; }
+
+      document.getElementById('auth-login-btn').addEventListener('click', async () => {
+        clearMessages();
+        const { error } = await _sb.auth.signInWithPassword({
+          email: emailEl.value, password: pwEl.value
+        });
+        if (error) showError(error.message);
+      });
+
+      document.getElementById('auth-signup-btn').addEventListener('click', async () => {
+        clearMessages();
+        const { error } = await _sb.auth.signUp({
+          email: emailEl.value, password: pwEl.value
+        });
+        if (error) showError(error.message);
+        else showMsg('Check your email for a confirmation link.');
+      });
+
+      _sb.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          hideGate();
+        } else {
+          showGate();
+        }
+      });
+
+      _sb.auth.getSession().then(({ data }) => {
+        if (!data.session) showGate();
+      });
+    })();
+    </script>
+
     <!-- Custom Modal Dialog -->
     <div id="modal-overlay" class="modal-overlay">
       <div class="modal-dialog">
@@ -44,7 +120,17 @@
         <div class="identity-title"><strong>CTCC</strong> &middot; Comprehensive Transmission Cost Calculator</div>
         <div class="identity-tagline">Full-cost benefit-cost analysis for transmission projects</div>
       </div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:0.75rem; padding-right:1rem;">
+        <span id="auth-user-email" style="font-size:0.8rem; color:#666;"></span>
+        <button type="button" id="logout-btn" style="padding:0.35rem 0.75rem; background:transparent; color:#666; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
+      </div>
     </div>
+    <script>
+      _sb.auth.onAuthStateChange((_, session) => {
+        const el = document.getElementById('auth-user-email');
+        if (el) el.textContent = session?.user?.email || '';
+      });
+    </script>
 
     <!-- Main Tabs -->
     <div class="main-tabs">
@@ -518,9 +604,12 @@
             scenario_id: C.activeScenarioId,
             combined_data: collectJsonData()
           };
+          const _authToken = await _getAuthToken();
+          const _calcHeaders = { 'Content-Type': 'application/json' };
+          if (_authToken) _calcHeaders['Authorization'] = 'Bearer ' + _authToken;
           const resp = await fetch(
             new URL('/api/ctcc/calculate', baseUrl).toString(),
-            { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            { method: 'POST', headers: _calcHeaders,
               body: JSON.stringify(payload) }
           );
           const json = await resp.json();
@@ -1596,11 +1685,12 @@
             endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
           }
 
+          const _fAuthToken = await _getAuthToken();
+          const _fHeaders = { "Content-Type": "application/json" };
+          if (_fAuthToken) _fHeaders["Authorization"] = "Bearer " + _fAuthToken;
           const response = await fetch(endpoint, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: _fHeaders,
             body: JSON.stringify(payload),
           });
 

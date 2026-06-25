@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import yaml
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException
+import jwt
+from jwt import PyJWKClient
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 
@@ -45,6 +49,44 @@ PRESERVED_JSON_NAMES = frozenset(
 SKIP_BASENAME = "project_category_template"
 
 app = FastAPI(title="CTCC API Server")
+
+# --- Supabase JWT auth (Phase B) ---
+_SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+_security = HTTPBearer(auto_error=False)
+_jwks_client: PyJWKClient | None = None
+
+def _get_jwks_client() -> PyJWKClient | None:
+    global _jwks_client
+    if _jwks_client is None and _SUPABASE_URL:
+        _jwks_client = PyJWKClient(
+            f"{_SUPABASE_URL}/auth/v1/.well-known/jwks.json",
+            cache_keys=True, lifespan=3600,
+        )
+    return _jwks_client
+
+async def require_auth(
+    cred: HTTPAuthorizationCredentials | None = Depends(_security),
+) -> dict:
+    """Verify Supabase JWT. Returns decoded token payload or raises 401."""
+    if not _SUPABASE_URL:
+        return {}  # auth disabled when SUPABASE_URL is not set (local dev)
+    if cred is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
+    client = _get_jwks_client()
+    if client is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Auth not configured")
+    try:
+        signing_key = client.get_signing_key_from_jwt(cred.credentials)
+        return jwt.decode(
+            cred.credentials,
+            signing_key.key,
+            algorithms=[signing_key.algorithm_name],
+            audience="authenticated",
+            options={"require": ["exp", "sub"]},
+            leeway=30,
+        )
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
 
 # Allow frontend apps to reach the API locally or across origins.
 app.add_middleware(GZipMiddleware, minimum_size=500)
@@ -173,7 +215,10 @@ async def process_payload(payload: InputPayload) -> OutputPayload:
 
 
 @app.post("/api/ctcc/calculate", response_model=CTCCOutputPayload)
-async def calculate_ctcc(payload: CTCCInputPayload) -> CTCCOutputPayload:
+async def calculate_ctcc(
+    payload: CTCCInputPayload,
+    _user: dict = Depends(require_auth),
+) -> CTCCOutputPayload:
     """
     Run CTCC calculations with JSON input and output.
 
