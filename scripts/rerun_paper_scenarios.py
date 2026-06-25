@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Re-run all 11 CTCC scenarios via the web API, update .ctcc files with fresh
-results, and generate paper CSVs for figure generation.
+Re-run all CTCC real-world case study scenarios via the web API, update .ctcc
+files with fresh results, and generate paper CSVs for figure generation.
 
 Prerequisites:
     CTCC server running at http://127.0.0.1:8000
@@ -28,10 +28,11 @@ SCENARIOS_DIR = Path(__file__).resolve().parent.parent / "scenarios"
 PAPER_DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "Projects" / "CTCC" / "Paper1" / "data"
 
 CASE_STUDY_SCENARIOS = {
-    1: ["S1", "S2", "S3"],
-    2: ["S4", "S5", "S6"],
-    3: ["S7", "S8"],
-    4: ["S9", "S10", "S11"],
+    1: ["CTT_Actual_Delay2", "CTT_Counterfactual_Delay7"],
+    2: ["SunZia_Delay17", "SunZia_Delay2", "SunZia_NoDelay"],
+    3: ["AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"],
+    4: ["TBC_Delay4", "TBC_NoDelay"],
+    5: ["VW1_Delay2", "VW1_Delay6"],
 }
 
 # Map paper CSV line_item names -> extraction path from API response
@@ -163,7 +164,7 @@ def main() -> None:
 
     # Print summary table for paper verification
     print("\n" + "=" * 100)
-    header = f"{'Scen':<5} {'Total($B)':<11} {'Risk($B)':<11} {'BCR_sys':<9} {'BCR_xWF':<9} {'BCR_xWF+O':<10} {'NetBen($B)':<11}"
+    header = f"{'Scenario':<30} {'Total($B)':<11} {'Risk($B)':<11} {'BCR_sys':<9} {'BCR_xWF':<9} {'BCR_xWF+O':<10} {'NetBen($B)':<11}"
     print(header)
     print("-" * 100)
     for cs_num in sorted(CASE_STUDY_SCENARIOS.keys()):
@@ -180,7 +181,7 @@ def main() -> None:
             benefits = (bcr.get("total_benefits_pv", 0) or 0) / 1e9
             net_ben = benefits - total
 
-            print(f"{sid:<5} {total:<11.2f} {risk:<11.2f} {bcr_sys:<9.3f} {bcr_xwf:<9.3f} {bcr_xwfo:<10.3f} {net_ben:<11.2f}")
+            print(f"{sid:<30} {total:<11.2f} {risk:<11.2f} {bcr_sys:<9.3f} {bcr_xwf:<9.3f} {bcr_xwfo:<10.3f} {net_ben:<11.2f}")
         print()
 
     print("Done. Use these values to update main.tex tables.")
