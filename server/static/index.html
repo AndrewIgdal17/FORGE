@@ -692,6 +692,7 @@
             C.latestValidResults = json.results;
             C.lastRunResults = json.results;
             renderCTCCResults(json.results);
+            markResultsAvailable(0);
             renderDesignComparison(json.results);
             updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
