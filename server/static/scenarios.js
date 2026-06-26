@@ -196,7 +196,7 @@ async function addScenarioToSession(inputs, results, metadata, customName) {
   const row = {
     user_id: userId || null,
     name: name,
-    inputs: inputs ? extractScenarioInputs(inputs) : null,
+    inputs: inputs ? extractScenarioInputs(inputs) : {},
     results: results ? JSON.parse(JSON.stringify(results)) : null,
     metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' },
     updated_at: new Date().toISOString(),
