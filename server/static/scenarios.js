@@ -222,13 +222,13 @@ function setActiveScenario(scenario) {
   C.activeScenarioName = scenario.customName;
   updateScenarioBreadcrumb();
   updateTabStates();
-  if (scenario.inputs) {
-    let inputsToRender = scenario.inputs;
-    if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
-        inputsToRender = assembleFullInputs(
-            _snapshotCache[scenario.ref_snapshot_id], scenario.overrides, scenario.inputs);
-    }
-    renderJsonInputs(inputsToRender);
+  if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
+    const snap = _snapshotCache[scenario.ref_snapshot_id];
+    const inputs = scenario.inputs || extractScenarioInputs(snap);
+    const full = assembleFullInputs(snap, scenario.overrides, inputs);
+    renderJsonInputs(full);
+  } else if (scenario.inputs) {
+    renderJsonInputs(scenario.inputs);
   }
   if (scenario.results) {
     renderCTCCResults(scenario.results);
@@ -334,17 +334,13 @@ async function createNewScenario(name) {
     { timestamp: new Date().toISOString(), source: 'manual' },
     trimmed
   );
-  C.activeScenarioId = scenario.id;
-  C.activeScenarioName = trimmed;
-  updateScenarioBreadcrumb();
-  updateTabStates();
+  setActiveScenario(scenario);
   switchMainTab('inputs');
   switchTab(0);
   setTimeout(() => {
     const techBtn = document.querySelector('[data-sub-tab="technology"]');
     if (techBtn) techBtn.click();
   }, 50);
-  autoCalculate();
 }
 
 async function removeScenarioFromSession(id) {
