@@ -73,6 +73,23 @@ const SCENARIO_SPECIFIC_SECTIONS = new Set([
   '17_congestion_curtailment_reductions',
 ]);
 
+const NEW_SCENARIO_BLANK_FIELDS = [
+  { path: '01_project_technical_details.project.name', value: null },
+  { path: '01_project_technical_details.project.construction_type', value: null },
+  { path: '01_project_technical_details.project.ac_dc', value: null },
+  { path: '01_project_technical_details.project.capacity_mw', value: null },
+  { path: '01_project_technical_details.project.conductor_type', value: null },
+  { path: '01_project_technical_details.project.converter_type', value: null },
+  { path: '01_project_technical_details.project.old_ac_dc', value: null },
+  { path: '01_project_technical_details.project.old_capacity_mw', value: null },
+  { path: '01_project_technical_details.project.old_conductor_type', value: null },
+  { path: '01_project_technical_details.project.old_converter_type', value: null },
+  { path: '01_project_technical_details.timeline.construction_years', value: 0 },
+  { path: '01_project_technical_details.timeline.delay_years', value: 0 },
+  { path: '01_project_technical_details.timeline.project_lifetime', value: 0 },
+  { path: '01_project_technical_details.project.line_utilization', value: 0 },
+];
+
 async function loadSnapshot(snapshotId) {
   if (_snapshotCache[snapshotId]) return _snapshotCache[snapshotId];
   const { data, error } = await _sb.from('ref_snapshot')
@@ -84,25 +101,32 @@ async function loadSnapshot(snapshotId) {
 
 function assembleFullInputs(snapshotData, overrides, scenarioInputs) {
   const full = JSON.parse(JSON.stringify(snapshotData));
-  for (const section of SCENARIO_SPECIFIC_SECTIONS) {
-    delete full[section];
-  }
-  if (full['02_project_physical_details']?.terrain?.terrain_miles) {
-    delete full['02_project_physical_details'].terrain.terrain_miles;
-  }
   for (const [path, value] of Object.entries(overrides || {})) {
     setValueAtPath(full, path, value);
   }
-  for (const section of SCENARIO_SPECIFIC_SECTIONS) {
-    if (scenarioInputs[section]) {
-      full[section] = JSON.parse(JSON.stringify(scenarioInputs[section]));
+  const hasInputs = Object.keys(scenarioInputs || {}).length > 0;
+  if (hasInputs) {
+    for (const section of SCENARIO_SPECIFIC_SECTIONS) {
+      if (scenarioInputs[section]) {
+        full[section] = JSON.parse(JSON.stringify(scenarioInputs[section]));
+      }
     }
-  }
-  if (scenarioInputs['02_project_physical_details']?.terrain?.terrain_miles) {
-    if (!full['02_project_physical_details']) full['02_project_physical_details'] = {};
-    if (!full['02_project_physical_details'].terrain) full['02_project_physical_details'].terrain = {};
-    full['02_project_physical_details'].terrain.terrain_miles =
-      JSON.parse(JSON.stringify(scenarioInputs['02_project_physical_details'].terrain.terrain_miles));
+    if (scenarioInputs['02_project_physical_details']?.terrain?.terrain_miles) {
+      if (!full['02_project_physical_details']) full['02_project_physical_details'] = {};
+      if (!full['02_project_physical_details'].terrain) full['02_project_physical_details'].terrain = {};
+      full['02_project_physical_details'].terrain.terrain_miles =
+        JSON.parse(JSON.stringify(scenarioInputs['02_project_physical_details'].terrain.terrain_miles));
+    }
+  } else {
+    for (const { path, value } of NEW_SCENARIO_BLANK_FIELDS) {
+      setValueAtPath(full, path, value);
+    }
+    const terrainMiles = full['02_project_physical_details']?.terrain?.terrain_miles;
+    if (terrainMiles) {
+      for (const key of Object.keys(terrainMiles)) {
+        terrainMiles[key] = 0;
+      }
+    }
   }
   return full;
 }

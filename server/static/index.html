@@ -697,7 +697,17 @@
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
               { detail: { results: json.results } }));
           } else {
-            if (json.error) console.warn('Calculator error:', json.error);
+            if (json.error) {
+              console.warn('Calculator error:', json.error);
+              clearResults();
+              const _re = document.getElementById('result');
+              if (_re) {
+                _re.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; min-height:300px; color:#b00020; font-size:1.1rem; text-align:center;">' +
+                  '<div><div style="font-size:2rem; margin-bottom:0.5rem;">&#9888;</div>' +
+                  'Calculation error \u2014 check inputs and try again.<br>' +
+                  '<span style="font-size:0.85rem; color:#999;">' + (json.error || '') + '</span></div></div>';
+              }
+            }
             const ind = document.getElementById('rcp-computing');
             if (ind) ind.style.display = 'none';
           }

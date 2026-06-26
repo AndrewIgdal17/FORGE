@@ -482,6 +482,14 @@ function createFieldFromMetadata(meta, value) {
     input = document.createElement('select');
     input.id = fullPath;
     input.dataset.path = fullPath;
+    if (value === undefined || value === null) {
+      const ph = document.createElement('option');
+      ph.value = '';
+      ph.textContent = '\u2014 Select \u2014';
+      ph.disabled = true;
+      ph.selected = true;
+      input.appendChild(ph);
+    }
     (v.options || []).forEach(opt => {
       const o = document.createElement('option');
       o.value = opt; o.textContent = opt;
@@ -494,10 +502,17 @@ function createFieldFromMetadata(meta, value) {
     input = document.createElement('select');
     input.id = fullPath;
     input.dataset.path = fullPath;
+    const needsPlaceholder = (value === undefined || value === null);
     const setOpts = (depVal) => {
       const opts = v.optionSets?.[depVal] || [];
       input.innerHTML = '';
-      if (v.allowBlank) input.appendChild(new Option('', ''));
+      if (needsPlaceholder || v.allowBlank) {
+        const ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = needsPlaceholder ? '\u2014 Select \u2014' : '';
+        if (needsPlaceholder) { ph.disabled = true; ph.selected = true; }
+        input.appendChild(ph);
+      }
       opts.forEach(o => input.appendChild(new Option(o + (v.suffix || ''), o)));
     };
     const depPath = v.dependsOn;
