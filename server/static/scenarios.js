@@ -263,12 +263,20 @@ function setActiveScenario(scenario) {
     if (!hasInputs) {
       const form = document.getElementById('demo-form');
       if (form) {
-        SCENARIO_SPECIFIC_SECTIONS.forEach(section => {
-          form.querySelectorAll(`[data-path^="${section}."]`).forEach(el => {
+        const blankPaths = [
+          '01_project_technical_details.project.name',
+          '01_project_technical_details.project.capacity_mw',
+          '01_project_technical_details.project.ac_dc',
+          '01_project_technical_details.project.construction_type',
+          '01_project_technical_details.project.conductor_type',
+          '01_project_technical_details.project.converter_type',
+        ];
+        blankPaths.forEach(path => {
+          const el = form.querySelector(`[data-path="${path}"]`);
+          if (el) {
             if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            else if (el.type === 'checkbox') el.checked = false;
             else el.value = '';
-          });
+          }
         });
         form.querySelectorAll('[data-path*="terrain_miles"]').forEach(el => {
           if (el.type === 'number') el.value = '0';
