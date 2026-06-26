@@ -79,7 +79,6 @@ const NEW_SCENARIO_BLANK_FIELDS = [
   { path: '01_project_technical_details.project.ac_dc', value: null },
   { path: '01_project_technical_details.project.capacity_mw', value: null },
   { path: '01_project_technical_details.project.conductor_type', value: null },
-  { path: '01_project_technical_details.project.converter_type', value: null },
   { path: '01_project_technical_details.project.old_ac_dc', value: null },
   { path: '01_project_technical_details.project.old_capacity_mw', value: null },
   { path: '01_project_technical_details.project.old_conductor_type', value: null },
@@ -253,7 +252,12 @@ function hasRequiredFields() {
   const constructionType = form.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
   const acDc = form.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
   const capacityMw = form.querySelector('[data-path="01_project_technical_details.project.capacity_mw"]');
-  if (!constructionType?.value || !acDc?.value || !capacityMw?.value) return false;
+  const conductorType = form.querySelector('[data-path="01_project_technical_details.project.conductor_type"]');
+  if (!constructionType?.value || !acDc?.value || !capacityMw?.value || !conductorType?.value) return false;
+  if (acDc.value === 'DC') {
+    const converterType = form.querySelector('[data-path="01_project_technical_details.project.converter_type"]');
+    if (!converterType?.value) return false;
+  }
   const terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
   let hasAnyMiles = false;
   terrainInputs.forEach(input => {
