@@ -669,6 +669,7 @@
         if (typeof hasRequiredFields === 'function' && !hasRequiredFields()) return;
         if (C.autoCalcInFlight) { C.autoCalcQueued = true; return; }
         C.autoCalcInFlight = true;
+        const calcScenarioId = C.activeScenarioId;
         document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
         try {
           const baseUrl = apiBaseInput.value.trim();
@@ -688,6 +689,7 @@
               body: JSON.stringify(payload) }
           );
           const json = await resp.json();
+          if (calcScenarioId !== C.activeScenarioId) return;
           if (json.results) {
             C.latestValidResults = json.results;
             C.lastRunResults = json.results;
@@ -697,6 +699,17 @@
             updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
               { detail: { results: json.results } }));
+            if (json.results._partial) {
+              const warnings = json.results._warnings || [];
+              const banner = document.createElement('div');
+              banner.className = 'partial-results-banner';
+              banner.innerHTML = '\u26a0\ufe0f Partial results \u2014 some modules failed: ' +
+                  warnings.join(', ') +
+                  ' <button onclick="this.parentElement.remove()" style="margin-left:1rem;cursor:pointer;border:none;background:none;color:#856404;font-weight:600;">Dismiss</button>';
+              banner.style.cssText = 'background:#fff3cd;color:#856404;padding:0.75rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.9rem;';
+              const resultEl = document.getElementById('result');
+              if (resultEl) resultEl.insertBefore(banner, resultEl.firstChild);
+            }
           } else {
             if (json.error) {
               console.warn('Calculator error:', json.error);
@@ -709,16 +722,15 @@
                   '<span style="font-size:0.85rem; color:#999;">' + (json.error || '') + '</span></div></div>';
               }
             }
-            const ind = document.getElementById('rcp-computing');
-            if (ind) ind.style.display = 'none';
           }
         } catch (e) {
           console.error('Auto-calculate error:', e);
+        } finally {
+          C.autoCalcInFlight = false;
           const ind = document.getElementById('rcp-computing');
           if (ind) ind.style.display = 'none';
+          if (C.autoCalcQueued) { C.autoCalcQueued = false; autoCalculate(); }
         }
-        C.autoCalcInFlight = false;
-        if (C.autoCalcQueued) { C.autoCalcQueued = false; autoCalculate(); }
       }, 300);
 
 
@@ -769,7 +781,7 @@
         if (e.target === this && saveOverlayMouseDownTarget === this) hideSaveDialog();
       });
 
-      document.getElementById('save-confirm-btn').addEventListener('click', function() {
+      document.getElementById('save-confirm-btn').addEventListener('click', async function() {
         const selected = document.querySelector('.save-dialog .save-option.selected');
         if (!selected) return;
         const option = selected.dataset.option;
@@ -790,7 +802,7 @@
               renderScenarioList();
               renderCompareSelector();
               updateScenarioBadge();
-              saveScenarioToDB(s);
+              await saveScenarioToDB(s);
             }
           } else {
             addScenarioToSession(currentInputs, resultsToSave,
@@ -822,7 +834,7 @@
       });
 
       document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
-      document.getElementById('save-scenario-main-btn').addEventListener('click', () => {
+      document.getElementById('save-scenario-main-btn').addEventListener('click', async () => {
         if (!C.activeScenarioId) {
           showToast('No active scenario to save.');
           return;
@@ -835,7 +847,7 @@
         scenario.metadata.source = 'manual';
         renderScenarioList();
         renderCompareSelector();
-        saveScenarioToDB(scenario);
+        await saveScenarioToDB(scenario);
         showToast('Scenario saved.');
       });
 
@@ -1819,6 +1831,17 @@
           statusBarViewBtn.style.display = 'none';
           resultEl.textContent = error.message;
         }
+      });
+
+      C.unsavedChanges = false;
+      form.addEventListener('input', () => {
+          if (C.activeScenarioId) C.unsavedChanges = true;
+      });
+      window.addEventListener('beforeunload', (e) => {
+          if (C.unsavedChanges) {
+              e.preventDefault();
+              e.returnValue = '';
+          }
       });
 
       // Always-solving: auto-calculate on every input change

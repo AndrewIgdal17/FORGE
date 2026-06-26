@@ -225,15 +225,20 @@ def calculate_lifetime_emissions(
             total_costs_by_pollutant_pv[pollutant] += pollutant_pv
 
     # Calculate average annual emissions and costs
-    avg_annual_costs = lifetime_cost / project_lifetime
-    avg_annual_emissions = {
-        pollutant: total_emissions[pollutant] / project_lifetime
-        for pollutant in total_emissions
-    }
-    avg_annual_costs_by_pollutant = {
-        pollutant: total_costs_by_pollutant[pollutant] / project_lifetime
-        for pollutant in total_costs_by_pollutant
-    }
+    if project_lifetime > 0:
+        avg_annual_costs = lifetime_cost / project_lifetime
+        avg_annual_emissions = {
+            pollutant: total_emissions[pollutant] / project_lifetime
+            for pollutant in total_emissions
+        }
+        avg_annual_costs_by_pollutant = {
+            pollutant: total_costs_by_pollutant[pollutant] / project_lifetime
+            for pollutant in total_costs_by_pollutant
+        }
+    else:
+        avg_annual_costs = 0.0
+        avg_annual_emissions = {p: 0.0 for p in total_emissions}
+        avg_annual_costs_by_pollutant = {p: 0.0 for p in total_costs_by_pollutant}
 
     return LifetimeEmissionsResults(
         yearly_emissions=yearly_emissions,

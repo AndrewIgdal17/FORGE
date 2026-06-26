@@ -709,7 +709,8 @@ function renderTaxonomySections(container, fields, data, taxById, scopeEl) {
     resetBtn.textContent = 'Reset';
     resetBtn.dataset.sectionPath = taxId;
     resetBtn.addEventListener('click', () => {
-      const origData = typeof originalJsonData !== 'undefined' ? originalJsonData : data;
+      const restoreSource = snapshotOriginalData || originalJsonData;
+      const origData = restoreSource !== undefined && restoreSource !== null ? restoreSource : data;
       tFields.forEach(f => {
         const origVal = getValueAtFieldPath(origData, f.yaml_section, f.field_path);
         const fullPath = f.yaml_section + '.' + f.field_path;
@@ -5259,13 +5260,15 @@ function setupTaxonomyConditionalVisibility() {
 // Reset to Defaults
 // =============================================
 let originalJsonData = null;
+let snapshotOriginalData = null;
 
 function resetFieldToDefault(path) {
-  if (!originalJsonData) return;
+  const restoreSource = snapshotOriginalData || originalJsonData;
+  if (!restoreSource) return;
 
   // Navigate to the value in original data
   const keys = path.split('.');
-  let value = originalJsonData;
+  let value = restoreSource;
   for (const key of keys) {
     if (value && typeof value === 'object') {
       value = value[key];
@@ -5449,6 +5452,9 @@ window.projectFuelMix = projectFuelMix;
 window.readFuelRates = readFuelRates;
 window.readFuelShares = readFuelShares;
 window.renderJsonInputs = renderJsonInputs;
+window.setSnapshotOriginalData = function(data) {
+  snapshotOriginalData = data ? JSON.parse(JSON.stringify(data)) : null;
+};
 window.syncFuelMixPresetBarVisibility = syncFuelMixPresetBarVisibility;
 window.updateFuelMixChart = updateFuelMixChart;
 window.validateCostTimingPatterns = validateCostTimingPatterns;

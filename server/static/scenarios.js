@@ -34,6 +34,8 @@ async function loadScenariosFromDB() {
   await Promise.all(snapshotIds.map(id => loadSnapshot(id)));
   renderScenarioList();
   renderCompareSelector();
+  const newBtn = document.getElementById('new-scenario-btn');
+  if (newBtn) newBtn.removeAttribute('disabled');
 }
 
 async function saveScenarioToDB(scenario) {
@@ -55,6 +57,7 @@ async function saveScenarioToDB(scenario) {
     updated_at: new Date().toISOString()
   });
   if (error) console.error('Failed to save scenario:', error);
+  if (!error) C.unsavedChanges = false;
   scenario.inputs = slimInputs;
   scenario.overrides = overrides;
 }
@@ -85,8 +88,6 @@ const NEW_SCENARIO_BLANK_FIELDS = [
   { path: '01_project_technical_details.project.old_converter_type', value: null },
   { path: '01_project_technical_details.timeline.construction_years', value: 0 },
   { path: '01_project_technical_details.timeline.delay_years', value: 0 },
-  { path: '01_project_technical_details.timeline.project_lifetime', value: 0 },
-  { path: '01_project_technical_details.project.line_utilization', value: 0 },
 ];
 
 async function loadSnapshot(snapshotId) {
@@ -258,6 +259,12 @@ function hasRequiredFields() {
     const converterType = form.querySelector('[data-path="01_project_technical_details.project.converter_type"]');
     if (!converterType?.value) return false;
   }
+  if (constructionType.value === 'Reconductoring') {
+    const oldAcDc = form.querySelector('[data-path="01_project_technical_details.project.old_ac_dc"]');
+    const oldCapacity = form.querySelector('[data-path="01_project_technical_details.project.old_capacity_mw"]');
+    const oldConductor = form.querySelector('[data-path="01_project_technical_details.project.old_conductor_type"]');
+    if (!oldAcDc?.value || !oldCapacity?.value || !oldConductor?.value) return false;
+  }
   const terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
   let hasAnyMiles = false;
   terrainInputs.forEach(input => {
@@ -286,11 +293,15 @@ function clearResults() {
 
 function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;
+  C.unsavedChanges = false;
   C.activeScenarioName = scenario.customName;
   updateScenarioBreadcrumb();
   updateTabStates();
   if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
     const snap = _snapshotCache[scenario.ref_snapshot_id];
+    if (typeof setSnapshotOriginalData === 'function') {
+      setSnapshotOriginalData(snap);
+    }
     const full = assembleFullInputs(snap, scenario.overrides, scenario.inputs || {});
     renderJsonInputs(full);
   } else if (scenario.inputs && Object.keys(scenario.inputs).length > 0) {
@@ -305,7 +316,7 @@ function setActiveScenario(scenario) {
   }
   renderScenarioList();
   renderCompareSelector();
-  if (scenario.results || hasRequiredFields()) {
+  if (!scenario.results && hasRequiredFields()) {
     autoCalculate();
   }
 }
@@ -401,7 +412,7 @@ async function createNewScenario(name) {
   const trimmed = name.trim();
   if (!trimmed) return;
   const scenario = await addScenarioToSession(null, null,
-    { timestamp: new Date().toISOString(), source: 'manual' },
+    { timestamp: new Date().toISOString(), source: 'new' },
     trimmed
   );
   setActiveScenario(scenario);
@@ -556,7 +567,8 @@ function renderScenarioList() {
     meta.className = 'scenario-card-meta';
     const sourceLabel = scenario.metadata?.source === 'run' ? 'Calculated' :
                         scenario.metadata?.source === 'upload-ctcc' ? 'Uploaded (.ctcc)' :
-                        scenario.metadata?.source === 'upload-csv' ? 'Uploaded (.csv)' : 'Saved';
+                        scenario.metadata?.source === 'upload-csv' ? 'Uploaded (.csv)' :
+                        scenario.metadata?.source === 'new' ? 'Draft' : 'Saved';
     const ts = scenario.metadata?.timestamp ? formatTimestamp(scenario.metadata.timestamp) : '';
     meta.textContent = sourceLabel + (ts ? ' ' + ts : '');
     infoTd.appendChild(meta);
@@ -865,7 +877,7 @@ function showSaveDialog() {
   const savedIndicator = document.getElementById('save-saved-indicator');
 
   if (!C.latestValidResults) {
-    notCalcIndicator.textContent = 'Calculating initial results\u2026';
+    notCalcIndicator.textContent = 'No results yet \u2014 fill required fields to calculate';
     notCalcIndicator.style.color = '#b00020';
   } else {
     notCalcIndicator.textContent = '';
@@ -879,10 +891,20 @@ function hideSaveDialog() {
 }
 
 function exportAsCtcc(scenario) {
+  let fullInputs = scenario.inputs;
+  if (scenario.id === C.activeScenarioId && typeof collectJsonData === 'function') {
+    fullInputs = collectJsonData() || fullInputs;
+  } else if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
+    fullInputs = assembleFullInputs(
+      _snapshotCache[scenario.ref_snapshot_id],
+      scenario.overrides,
+      scenario.inputs || {}
+    );
+  }
   const data = {
     version: '1.0',
     customName: scenario.customName,
-    inputs: scenario.inputs,
+    inputs: fullInputs,
     results: scenario.results,
     metadata: scenario.metadata
   };

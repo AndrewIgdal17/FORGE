@@ -176,12 +176,16 @@ def calculate_line_losses(
 
     total_line_loss_mw = losses_mw_per_mile * line_length
 
-    line_loss_per_mile_percent = to_percent(
-        losses_mw_per_mile / (capacity_mw_numeric * line_utilization_percent)
-    )
-    total_line_loss_percent = to_percent(
-        total_line_loss_mw / (capacity_mw_numeric * line_utilization_percent)
-    )
+    if capacity_mw_numeric * line_utilization_percent > 0:
+        line_loss_per_mile_percent = to_percent(
+            losses_mw_per_mile / (capacity_mw_numeric * line_utilization_percent)
+        )
+        total_line_loss_percent = to_percent(
+            total_line_loss_mw / (capacity_mw_numeric * line_utilization_percent)
+        )
+    else:
+        line_loss_per_mile_percent = 0.0
+        total_line_loss_percent = 0.0
 
     losses_mwh_per_year = total_line_loss_mw * HOURS_PER_YEAR
     lifetime_losses_mwh = losses_mwh_per_year * project_lifetime
@@ -229,9 +233,12 @@ def calculate_converter_losses(
             converter_loss_percentage * line_utilization_percent * capacity_mw_numeric
         )
         total_converter_losses_mw = converter_losses_mw * number_of_converters
-        converter_loss_percent = to_percent(
-            total_converter_losses_mw / (capacity_mw_numeric * line_utilization_percent)
-        )
+        if capacity_mw_numeric * line_utilization_percent > 0:
+            converter_loss_percent = to_percent(
+                total_converter_losses_mw / (capacity_mw_numeric * line_utilization_percent)
+            )
+        else:
+            converter_loss_percent = 0.0
         total_converter_losses_mwh = total_converter_losses_mw * HOURS_PER_YEAR
     else:
         total_converter_losses_mw = 0

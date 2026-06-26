@@ -473,9 +473,8 @@ def run_calculation(
                 results["derived_parameters"] = _ctx.derived_parameters
 
             if failed_scripts:
-                raise RuntimeError(
-                    f"Calculator modules failed: {', '.join(failed_scripts)}"
-                )
+                results["_warnings"] = [f"Module failed: {s}" for s in failed_scripts]
+                results["_partial"] = True
 
             return results
 
