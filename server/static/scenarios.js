@@ -270,6 +270,9 @@ function setActiveScenario(scenario) {
           '01_project_technical_details.project.construction_type',
           '01_project_technical_details.project.conductor_type',
           '01_project_technical_details.project.converter_type',
+          '01_project_technical_details.project.construction_years',
+          '01_project_technical_details.project.delay_years',
+          '01_project_technical_details.project.project_lifetime_years',
         ];
         blankPaths.forEach(path => {
           const el = form.querySelector(`[data-path="${path}"]`);
