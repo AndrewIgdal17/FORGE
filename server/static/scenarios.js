@@ -84,6 +84,12 @@ async function loadSnapshot(snapshotId) {
 
 function assembleFullInputs(snapshotData, overrides, scenarioInputs) {
   const full = JSON.parse(JSON.stringify(snapshotData));
+  for (const section of SCENARIO_SPECIFIC_SECTIONS) {
+    delete full[section];
+  }
+  if (full['02_project_physical_details']?.terrain?.terrain_miles) {
+    delete full['02_project_physical_details'].terrain.terrain_miles;
+  }
   for (const [path, value] of Object.entries(overrides || {})) {
     setValueAtPath(full, path, value);
   }
@@ -227,7 +233,8 @@ function hasRequiredFields() {
   const terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
   let hasAnyMiles = false;
   terrainInputs.forEach(input => {
-    if (input.type === 'number' && parseFloat(input.value) > 0) hasAnyMiles = true;
+    const val = parseFloat(input.value.replace(/,/g, ''));
+    if (!isNaN(val) && val > 0) hasAnyMiles = true;
   });
   return hasAnyMiles;
 }
@@ -256,36 +263,8 @@ function setActiveScenario(scenario) {
   updateTabStates();
   if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
     const snap = _snapshotCache[scenario.ref_snapshot_id];
-    const hasInputs = scenario.inputs && Object.keys(scenario.inputs).length > 0;
-    const inputs = hasInputs ? scenario.inputs : {};
-    const full = assembleFullInputs(snap, scenario.overrides, inputs);
+    const full = assembleFullInputs(snap, scenario.overrides, scenario.inputs || {});
     renderJsonInputs(full);
-    if (!hasInputs) {
-      const form = document.getElementById('demo-form');
-      if (form) {
-        const blankPaths = [
-          '01_project_technical_details.project.name',
-          '01_project_technical_details.project.capacity_mw',
-          '01_project_technical_details.project.ac_dc',
-          '01_project_technical_details.project.construction_type',
-          '01_project_technical_details.project.conductor_type',
-          '01_project_technical_details.project.converter_type',
-          '01_project_technical_details.project.construction_years',
-          '01_project_technical_details.project.delay_years',
-          '01_project_technical_details.project.project_lifetime_years',
-        ];
-        blankPaths.forEach(path => {
-          const el = form.querySelector(`[data-path="${path}"]`);
-          if (el) {
-            if (el.tagName === 'SELECT') el.selectedIndex = 0;
-            else el.value = '';
-          }
-        });
-        form.querySelectorAll('[data-path*="terrain_miles"]').forEach(el => {
-          if (el.type === 'number') el.value = '0';
-        });
-      }
-    }
   } else if (scenario.inputs && Object.keys(scenario.inputs).length > 0) {
     renderJsonInputs(scenario.inputs);
   }
