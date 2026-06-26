@@ -217,6 +217,38 @@ async function addScenarioToSession(inputs, results, metadata, customName) {
   return scenario;
 }
 
+function hasRequiredFields() {
+  const form = document.getElementById('demo-form');
+  if (!form) return false;
+  const constructionType = form.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+  const acDc = form.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+  const capacityMw = form.querySelector('[data-path="01_project_technical_details.project.capacity_mw"]');
+  if (!constructionType?.value || !acDc?.value || !capacityMw?.value) return false;
+  const terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
+  let hasAnyMiles = false;
+  terrainInputs.forEach(input => {
+    if (input.type === 'number' && parseFloat(input.value) > 0) hasAnyMiles = true;
+  });
+  return hasAnyMiles;
+}
+
+function clearResults() {
+  const resultEl = document.getElementById('result');
+  if (resultEl) {
+    resultEl.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; min-height:300px; color:#999; font-size:1.1rem; text-align:center;">' +
+      '<div><div style="font-size:2rem; margin-bottom:0.5rem;">&#9432;</div>' +
+      'Fill in required project fields to calculate results.<br>' +
+      '<span style="font-size:0.85rem; color:#bbb;">Construction Type, AC/DC, Capacity MW, and at least one terrain with miles &gt; 0</span></div></div>';
+  }
+  C.lastRunResults = null;
+  C.latestValidResults = null;
+  const resultsBtn = document.querySelector('.main-tab-button[data-tab="results"]');
+  if (resultsBtn) {
+    resultsBtn.classList.add('disabled');
+    resultsBtn.classList.remove('results-available');
+  }
+}
+
 function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;
   C.activeScenarioName = scenario.customName;
@@ -224,20 +256,40 @@ function setActiveScenario(scenario) {
   updateTabStates();
   if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
     const snap = _snapshotCache[scenario.ref_snapshot_id];
-    const inputs = scenario.inputs || extractScenarioInputs(snap);
+    const hasInputs = scenario.inputs && Object.keys(scenario.inputs).length > 0;
+    const inputs = hasInputs ? scenario.inputs : {};
     const full = assembleFullInputs(snap, scenario.overrides, inputs);
     renderJsonInputs(full);
-  } else if (scenario.inputs) {
+    if (!hasInputs) {
+      const form = document.getElementById('demo-form');
+      if (form) {
+        SCENARIO_SPECIFIC_SECTIONS.forEach(section => {
+          form.querySelectorAll(`[data-path^="${section}."]`).forEach(el => {
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else if (el.type === 'checkbox') el.checked = false;
+            else el.value = '';
+          });
+        });
+        form.querySelectorAll('[data-path*="terrain_miles"]').forEach(el => {
+          if (el.type === 'number') el.value = '0';
+        });
+      }
+    }
+  } else if (scenario.inputs && Object.keys(scenario.inputs).length > 0) {
     renderJsonInputs(scenario.inputs);
   }
   if (scenario.results) {
     renderCTCCResults(scenario.results);
     C.lastRunResults = JSON.parse(JSON.stringify(scenario.results));
     markResultsAvailable(0);
+  } else {
+    clearResults();
   }
   renderScenarioList();
   renderCompareSelector();
-  autoCalculate();
+  if (scenario.results || hasRequiredFields()) {
+    autoCalculate();
+  }
 }
 
 function updateBreadcrumb() {
@@ -1150,6 +1202,8 @@ async function downloadAllCsvFiles() {
   window.displayCsvFiles = displayCsvFiles;
   window.downloadCsvFile = downloadCsvFile;
   window.downloadAllCsvFiles = downloadAllCsvFiles;
+  window.hasRequiredFields = hasRequiredFields;
+  window.clearResults = clearResults;
   window.loadSnapshot = loadSnapshot;
   window.assembleFullInputs = assembleFullInputs;
   window.extractScenarioInputs = extractScenarioInputs;

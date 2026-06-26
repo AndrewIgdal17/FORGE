@@ -666,6 +666,7 @@
 
       const autoCalculate = debounce(async function() {
         if (!C.activeScenarioId) return;
+        if (typeof hasRequiredFields === 'function' && !hasRequiredFields()) return;
         if (C.autoCalcInFlight) { C.autoCalcQueued = true; return; }
         C.autoCalcInFlight = true;
         document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
