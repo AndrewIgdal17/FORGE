@@ -106,6 +106,8 @@
         setUserDisplay(profile);
         hideAllGates();
         loadScenariosFromDB();
+        _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
+          .then(({ data }) => { if (data) loadSnapshot(data.id); });
       }
 
       document.getElementById('auth-login-btn').addEventListener('click', async () => {

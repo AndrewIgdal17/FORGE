@@ -26,8 +26,12 @@ async function loadScenariosFromDB() {
     inputs: row.inputs,
     results: row.results,
     metadata: row.metadata || {},
+    ref_snapshot_id: row.ref_snapshot_id,
+    overrides: row.overrides || {},
     _owner: profileMap[row.user_id] || null
   }));
+  const snapshotIds = [...new Set(C.sessionScenarios.map(s => s.ref_snapshot_id).filter(Boolean))];
+  await Promise.all(snapshotIds.map(id => loadSnapshot(id)));
   renderScenarioList();
   renderCompareSelector();
 }
@@ -35,21 +39,106 @@ async function loadScenariosFromDB() {
 async function saveScenarioToDB(scenario) {
   const userId = C.currentUserId;
   if (!userId) return;
+  const fullInputs = typeof collectJsonData === 'function' ? collectJsonData() : null;
+  const snap = scenario.ref_snapshot_id ? _snapshotCache[scenario.ref_snapshot_id] : null;
+  const slimInputs = (fullInputs && snap) ? extractScenarioInputs(fullInputs) : scenario.inputs;
+  const overrides = (fullInputs && snap) ? computeOverrides(fullInputs, snap) : (scenario.overrides || {});
   const { error } = await _sb.from('scenario').upsert({
     id: scenario.id,
     user_id: userId,
     name: scenario.customName,
-    inputs: scenario.inputs,
+    inputs: slimInputs,
     results: scenario.results,
     metadata: scenario.metadata,
+    overrides: overrides,
+    ref_snapshot_id: scenario.ref_snapshot_id,
     updated_at: new Date().toISOString()
   });
   if (error) console.error('Failed to save scenario:', error);
+  scenario.inputs = slimInputs;
+  scenario.overrides = overrides;
 }
 
 async function deleteScenarioFromDB(id) {
   const { error } = await _sb.from('scenario').delete().eq('id', id);
   if (error) console.error('Failed to delete scenario:', error);
+}
+
+let _snapshotCache = {};
+
+const SCENARIO_SPECIFIC_SECTIONS = new Set([
+  '01_project_technical_details',
+  '03_financing',
+  '05_delays',
+  '17_congestion_curtailment_reductions',
+]);
+
+async function loadSnapshot(snapshotId) {
+  if (_snapshotCache[snapshotId]) return _snapshotCache[snapshotId];
+  const { data, error } = await _sb.from('ref_snapshot')
+    .select('data').eq('id', snapshotId).single();
+  if (error) { console.error('Failed to load snapshot:', error); return null; }
+  _snapshotCache[snapshotId] = data.data;
+  return data.data;
+}
+
+function assembleFullInputs(snapshotData, overrides, scenarioInputs) {
+  const full = JSON.parse(JSON.stringify(snapshotData));
+  for (const [path, value] of Object.entries(overrides || {})) {
+    setValueAtPath(full, path, value);
+  }
+  for (const section of SCENARIO_SPECIFIC_SECTIONS) {
+    if (scenarioInputs[section]) {
+      full[section] = JSON.parse(JSON.stringify(scenarioInputs[section]));
+    }
+  }
+  if (scenarioInputs['02_project_physical_details']?.terrain?.terrain_miles) {
+    if (!full['02_project_physical_details']) full['02_project_physical_details'] = {};
+    if (!full['02_project_physical_details'].terrain) full['02_project_physical_details'].terrain = {};
+    full['02_project_physical_details'].terrain.terrain_miles =
+      JSON.parse(JSON.stringify(scenarioInputs['02_project_physical_details'].terrain.terrain_miles));
+  }
+  return full;
+}
+
+function extractScenarioInputs(fullData) {
+  const inputs = {};
+  for (const section of SCENARIO_SPECIFIC_SECTIONS) {
+    if (fullData[section]) inputs[section] = JSON.parse(JSON.stringify(fullData[section]));
+  }
+  if (fullData['02_project_physical_details']?.terrain?.terrain_miles) {
+    inputs['02_project_physical_details'] = {
+      terrain: { terrain_miles: JSON.parse(JSON.stringify(
+        fullData['02_project_physical_details'].terrain.terrain_miles)) }
+    };
+  }
+  return inputs;
+}
+
+function computeOverrides(fullData, snapshotData) {
+  const overrides = {};
+  const refSections = Object.keys(snapshotData).filter(k => !SCENARIO_SPECIFIC_SECTIONS.has(k));
+  for (const section of refSections) {
+    if (section === '02_project_physical_details') {
+      diffObjects(snapshotData[section], fullData[section], section, overrides,
+        new Set(['02_project_physical_details.terrain.terrain_miles']));
+    } else {
+      diffObjects(snapshotData[section], fullData[section], section, overrides);
+    }
+  }
+  return overrides;
+}
+
+function diffObjects(ref, current, path, overrides, skipPaths) {
+  if (skipPaths && skipPaths.has(path)) return;
+  if (ref === current) return;
+  if (ref == null || current == null || typeof ref !== 'object' || typeof current !== 'object') {
+    if (ref !== current) overrides[path] = current;
+    return;
+  }
+  for (const key of new Set([...Object.keys(ref), ...Object.keys(current)])) {
+    diffObjects(ref[key], current[key], path + '.' + key, overrides, skipPaths);
+  }
 }
 
 const RESULTS_EXPORT_FIELDS = [
@@ -103,13 +192,17 @@ function updateScenarioBadge() {
 async function addScenarioToSession(inputs, results, metadata, customName) {
   const userId = C.currentUserId;
   const name = customName || generateScenarioName('Scenario');
+  const latestSnapshotId = Object.keys(_snapshotCache)[0] || null;
   const row = {
     user_id: userId || null,
     name: name,
-    inputs: inputs ? JSON.parse(JSON.stringify(inputs)) : null,
+    inputs: inputs ? extractScenarioInputs(inputs) : null,
     results: results ? JSON.parse(JSON.stringify(results)) : null,
     metadata: metadata || { timestamp: new Date().toISOString(), source: 'manual' },
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    ref_snapshot_id: latestSnapshotId,
+    overrides: (inputs && latestSnapshotId && _snapshotCache[latestSnapshotId])
+        ? computeOverrides(inputs, _snapshotCache[latestSnapshotId]) : {}
   };
   const { data, error } = await _sb.from('scenario').insert(row).select('id').single();
   const id = (data && !error) ? data.id : crypto.randomUUID();
@@ -130,7 +223,12 @@ function setActiveScenario(scenario) {
   updateScenarioBreadcrumb();
   updateTabStates();
   if (scenario.inputs) {
-    renderJsonInputs(scenario.inputs);
+    let inputsToRender = scenario.inputs;
+    if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
+        inputsToRender = assembleFullInputs(
+            _snapshotCache[scenario.ref_snapshot_id], scenario.overrides, scenario.inputs);
+    }
+    renderJsonInputs(inputsToRender);
   }
   if (scenario.results) {
     renderCTCCResults(scenario.results);
@@ -1056,4 +1154,8 @@ async function downloadAllCsvFiles() {
   window.displayCsvFiles = displayCsvFiles;
   window.downloadCsvFile = downloadCsvFile;
   window.downloadAllCsvFiles = downloadAllCsvFiles;
+  window.loadSnapshot = loadSnapshot;
+  window.assembleFullInputs = assembleFullInputs;
+  window.extractScenarioInputs = extractScenarioInputs;
+  window.computeOverrides = computeOverrides;
 })();
