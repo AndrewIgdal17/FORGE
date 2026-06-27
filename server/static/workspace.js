@@ -5,10 +5,7 @@
       const C = window.CTCC;
       const form = document.getElementById("demo-form");
       const resultEl = document.getElementById("result");
-      const ctccSection = document.getElementById("ctcc-section");
       const loadStatus = document.getElementById("load-status");
-      // Legacy tab container references removed — sidebar now drives navigation.
-      const ctccJsonInputs = document.getElementById("ctcc-json-inputs");
 
       // Main tab elements
       const mainTabButtons = document.querySelectorAll('.main-tab-button');
@@ -282,13 +279,6 @@
         });
       });
 
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('.sub-sub-tab-button')) {
-          setTimeout(updateBreadcrumb, 0);
-        }
-      });
-
-
       // Smart tooltip positioning (activeTooltip moved to utils.js)
 
 
@@ -322,14 +312,9 @@
           }
         });
 
-        // Both inputs and results render into #main-tab-inputs (sidebar layout).
-        // #main-tab-results is the legacy pre-sidebar results container — keep it hidden.
+        // Inputs and results both render into #content-panel inside #main-tab-inputs.
         mainTabContents.forEach(content => {
-          if (content.id === 'main-tab-inputs') {
-            content.classList.add('active');
-          } else {
-            content.classList.remove('active');
-          }
+          content.classList.toggle('active', content.id === 'main-tab-inputs');
         });
 
         // Only show status bar on Inputs tab
@@ -408,8 +393,6 @@
       }
 
       function initCtccInputs() {
-        var ctccJsonInputs = document.getElementById("ctcc-json-inputs");
-        if (ctccJsonInputs) ctccJsonInputs.hidden = false;
         if (!C.ctccJsonData) {
           return loadCtccJson();
         }
@@ -838,8 +821,10 @@
                 window.renderSubItemContent(subItemId);
               }
             }
+            if (typeof updateBreadcrumb === 'function') updateBreadcrumb();
           };
           if (typeof initSidebar === 'function') initSidebar();
+          if (typeof initSidebarSearch === 'function') initSidebarSearch();
 
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {

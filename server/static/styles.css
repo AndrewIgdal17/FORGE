@@ -318,27 +318,6 @@
         color: #0066cc;
         padding: 0.4rem 0;
       }
-      #ctcc-json-inputs {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-      }
-      #tabs-container {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-      }
-      #tabs-container.tabs-hidden {
-        display: none;
-      }
-      #tab-contents {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-      }
       .status-bar {
         display: none;
         align-items: center;

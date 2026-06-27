@@ -38,6 +38,23 @@ function setActiveScenario(scenario) {
   }
 }
 
+function lookupSidebarLabels(view, sectionId, subItemId) {
+  var sections = window.SIDEBAR_SECTIONS && window.SIDEBAR_SECTIONS[view];
+  if (!sections || !sectionId) return null;
+  for (var i = 0; i < sections.length; i++) {
+    if (sections[i].id !== sectionId) continue;
+    var section = sections[i];
+    if (!subItemId) return { section: section, subItem: null };
+    for (var j = 0; j < section.subItems.length; j++) {
+      if (section.subItems[j].id === subItemId) {
+        return { section: section, subItem: section.subItems[j] };
+      }
+    }
+    return { section: section, subItem: null };
+  }
+  return null;
+}
+
 function updateBreadcrumb() {
   const pill = document.getElementById('scenario-breadcrumb-pill');
   const crumb = document.getElementById('scenario-breadcrumb');
@@ -55,40 +72,34 @@ function updateBreadcrumb() {
 
   const activeL1 = document.querySelector('.main-tab-button.active')?.dataset.tab;
 
-  if (activeL1 === 'inputs') {
-    segments.push({ label: 'Inputs', action: () => switchMainTab('inputs') });
-    const activeL2Btn = document.querySelector('#tab-buttons .tab-button.active');
-    if (activeL2Btn) {
-      const tabId = C.INPUT_TAB_ORDER[C.activeTabIndex];
-      const tabLabel = C.INPUT_TAB_LABELS[tabId] || tabId;
-      segments.push({ label: tabLabel, action: () => activeL2Btn.click() });
-      const activeL2Content = document.querySelector('#tab-contents .tab-content.active');
-      if (activeL2Content) {
-        const l3Btn = activeL2Content.querySelector(':scope > .sub-tabs .sub-tab-button.active');
-        if (l3Btn) {
-          segments.push({ label: btnLabel(l3Btn), action: () => l3Btn.click() });
-          let visibleL3Content = null;
-          activeL2Content.querySelectorAll(':scope > .sub-tab-content').forEach(c => {
-            if (c.style.display !== 'none') visibleL3Content = c;
-          });
-          if (!visibleL3Content && tabId === 'project-technical') {
-            const routingPanel = activeL2Content.querySelector('.routing-panel');
-            if (routingPanel) visibleL3Content = routingPanel;
-          }
-          if (visibleL3Content) {
-            const l4Btn = visibleL3Content.querySelector('.sub-sub-tabs .sub-sub-tab-button.active');
-            if (l4Btn) {
-              segments.push({ label: btnLabel(l4Btn) });
+  if (activeL1 === 'inputs' || activeL1 === 'results') {
+    const viewKey = activeL1 === 'results' ? 'results' : 'inputs';
+    const viewLabel = activeL1 === 'results' ? 'Results' : 'Inputs';
+    segments.push({ label: viewLabel, action: () => switchMainTab(activeL1) });
+
+    if (typeof getCurrentSubItem === 'function') {
+      const current = getCurrentSubItem();
+      const labels = lookupSidebarLabels(viewKey, current.sectionId, current.subItemId);
+      if (labels && labels.section) {
+        segments.push({
+          label: labels.section.label,
+          action: labels.section.subItems.length ? () => {
+            if (typeof navigateToSubItem === 'function') {
+              navigateToSubItem(labels.section.id, labels.section.subItems[0].id);
             }
-          }
+          } : null
+        });
+        if (labels.subItem) {
+          segments.push({
+            label: labels.subItem.label,
+            action: () => {
+              if (typeof navigateToSubItem === 'function') {
+                navigateToSubItem(labels.section.id, labels.subItem.id);
+              }
+            }
+          });
         }
       }
-    }
-  } else if (activeL1 === 'results') {
-    segments.push({ label: 'Results', action: () => switchMainTab('results') });
-    const activeResultBtn = document.querySelector('.results-tabs-container .tab-button.active');
-    if (activeResultBtn) {
-      segments.push({ label: btnLabel(activeResultBtn) });
     }
   }
 
@@ -129,11 +140,9 @@ async function createNewScenario(name) {
   );
   setActiveScenario(scenario);
   switchMainTab('inputs');
-  switchTab(0);
-  setTimeout(() => {
-    const techBtn = document.querySelector('[data-sub-tab="technology"]');
-    if (techBtn) techBtn.click();
-  }, 50);
+  if (typeof navigateToSubItem === 'function') {
+    navigateToSubItem('project-identity', 'technology');
+  }
 }
 
 window.setActiveScenario = setActiveScenario;

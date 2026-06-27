@@ -1276,7 +1276,7 @@ function renderCTCCResults(results) {
     button.dataset.tabId = tab.id;
 
     button.addEventListener('click', () => {
-      const scrollContainer = document.getElementById('main-tab-results');
+      const scrollContainer = document.querySelector('.content-area');
       tabButtons.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
       button.classList.add('active');
       tabContents.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -1473,7 +1473,7 @@ function renderCTCCResults(results) {
   resultEl.appendChild(tabsContainer);
 
   // Continuously save scroll position for the active results tab
-  const scrollContainer = document.getElementById('main-tab-results');
+  const scrollContainer = document.querySelector('.content-area');
   if (scrollContainer) {
     scrollContainer.addEventListener('scroll', () => {
       if (scrollContainer._restoringScroll) return;
