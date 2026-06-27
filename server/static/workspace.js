@@ -830,11 +830,11 @@
           } else if (params.get('scenario')) {
             var scenarioId = params.get('scenario');
             var found = window.CTCC.sessionScenarios.find(function(s) { return s.id === scenarioId; });
-            if (found && typeof setActiveScenario === 'function') setActiveScenario(found.id);
+            if (found && typeof setActiveScenario === 'function') setActiveScenario(found);
           } else if (window.CTCC.sessionScenarios.length > 0) {
             var userScenarios = window.CTCC.sessionScenarios.filter(function(s) { return s.user_id === session.user.id; });
             var latest = userScenarios.length > 0 ? userScenarios[0] : window.CTCC.sessionScenarios[0];
-            if (typeof setActiveScenario === 'function') setActiveScenario(latest.id);
+            if (typeof setActiveScenario === 'function') setActiveScenario(latest);
           }
         });
       }
