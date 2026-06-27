@@ -176,20 +176,21 @@
           appShell.style.display = 'none';
         }
 
-        await loadScenariosFromDB();
+        async function runAfterScriptsLoaded() {
+          await loadScenariosFromDB();
 
-        _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
-          .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
+          _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
+            .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
 
-        var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
-        if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
-          gotoBtn.disabled = false;
-          gotoBtn.classList.remove('landing-btn-disabled');
-          gotoBtn.classList.add('landing-btn-secondary');
-        }
+          var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
+          if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
+            gotoBtn.disabled = false;
+            gotoBtn.classList.remove('landing-btn-disabled');
+            gotoBtn.classList.add('landing-btn-secondary');
+          }
 
-        function runOnboarding() {
           if (typeof initAssistant === 'function') initAssistant();
+
           if (window.CTCC.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
             if (typeof showWelcomeBubble === 'function') {
               setTimeout(showWelcomeBubble, 500);
@@ -198,9 +199,9 @@
         }
 
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', runOnboarding);
+          document.addEventListener('DOMContentLoaded', function() { runAfterScriptsLoaded(); });
         } else {
-          runOnboarding();
+          await runAfterScriptsLoaded();
         }
       }
 
