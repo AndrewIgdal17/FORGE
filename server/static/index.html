@@ -22,21 +22,78 @@
     </script>
   </head>
   <body>
-    <!-- Auth Gate (shown when not logged in) -->
-    <div id="auth-gate" style="display:none; position:fixed; inset:0; z-index:9999; background:#f8f9fa; display:flex; align-items:center; justify-content:center;">
-      <div style="max-width:380px; width:100%; padding:2rem; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <div style="font-size:1.75rem; font-weight:700; color:#1a1a1a;">CTCC</div>
-          <div style="font-size:0.9rem; color:#666; margin-top:0.25rem;">Comprehensive Transmission Cost Calculator</div>
+    <!-- Auth Gate / Marketing Landing (shown when not logged in) -->
+    <div id="auth-gate" class="marketing-page" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto;">
+      <header class="marketing-header">
+        <div class="marketing-logo">CTCC</div>
+        <button type="button" class="marketing-login-btn" id="marketing-login-toggle">Log in</button>
+      </header>
+
+      <section class="marketing-hero">
+        <h1>Full-cost benefit-cost analysis for transmission projects</h1>
+        <p class="marketing-subtitle">
+          The Comprehensive Transmission Cost Calculator covers 24 cost and benefit categories
+          across capital, operational, delay, emissions, and risk — with four BCR perspectives
+          and auditable, taxonomy-driven inputs.
+        </p>
+        <div class="marketing-cta">
+          <button type="button" class="marketing-btn-primary" id="auth-show-signup">Get Started</button>
+          <button type="button" class="marketing-btn-secondary" id="auth-show-login">Log in</button>
         </div>
-        <div id="auth-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
-        <div id="auth-message" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#efe; color:#060; border-radius:6px; font-size:0.85rem;"></div>
-        <form id="auth-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
-          <input id="auth-email" type="email" placeholder="Email" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-          <input id="auth-password" type="password" placeholder="Password" required minlength="6" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-          <button type="button" id="auth-login-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Log In</button>
-          <button type="button" id="auth-signup-btn" style="padding:0.65rem; background:#fff; color:#2563eb; border:1px solid #2563eb; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Sign Up</button>
-        </form>
+      </section>
+
+      <section class="marketing-features">
+        <div class="marketing-feature-col">
+          <h3>What it does</h3>
+          <ul>
+            <li>24 cost and benefit categories</li>
+            <li>4 BCR perspectives (societal, ratepayer, utility, custom)</li>
+            <li>Taxonomy-driven input forms</li>
+            <li>Auditable calculations and exports</li>
+          </ul>
+        </div>
+        <div class="marketing-feature-col">
+          <h3>Who it's for</h3>
+          <ul>
+            <li>Utilities</li>
+            <li>ISO / RTOs</li>
+            <li>Consultants</li>
+            <li>Academics</li>
+            <li>Regulators</li>
+          </ul>
+        </div>
+        <div class="marketing-feature-col">
+          <h3>How it works</h3>
+          <ol>
+            <li>Define your project</li>
+            <li>See live results as you edit</li>
+            <li>Compare scenarios side by side</li>
+          </ol>
+        </div>
+      </section>
+
+      <footer class="marketing-footer">
+        <p>Built by Andrew Igdal, Webber Energy Group, The University of Texas at Austin &amp; Dane McFarlane, Horizon Climate Group</p>
+        <button type="button" class="marketing-btn-primary" id="auth-show-signup-bottom">Get Started</button>
+      </footer>
+
+      <div id="auth-modal" class="auth-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="auth-modal-card">
+          <button type="button" class="auth-modal-close" id="auth-modal-close" aria-label="Close">&times;</button>
+          <div class="auth-modal-title" id="auth-modal-title">Log In</div>
+          <div id="auth-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
+          <div id="auth-message" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#efe; color:#060; border-radius:6px; font-size:0.85rem;"></div>
+          <form id="auth-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
+            <input id="auth-email" type="email" placeholder="Email" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+            <input id="auth-password" type="password" placeholder="Password" required minlength="6" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+            <button type="button" id="auth-login-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Log In</button>
+            <button type="button" id="auth-signup-btn" style="display:none; padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Sign Up</button>
+          </form>
+          <div class="auth-modal-toggle">
+            <span id="auth-toggle-prompt">Don't have an account?</span>
+            <button type="button" id="auth-toggle-btn" class="auth-toggle-link">Sign Up</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -73,6 +130,12 @@
     (function() {
       const authGate = document.getElementById('auth-gate');
       const profileGate = document.getElementById('profile-gate');
+      const authModal = document.getElementById('auth-modal');
+      const authModalTitle = document.getElementById('auth-modal-title');
+      const authTogglePrompt = document.getElementById('auth-toggle-prompt');
+      const authToggleBtn = document.getElementById('auth-toggle-btn');
+      const loginBtn = document.getElementById('auth-login-btn');
+      const signupBtn = document.getElementById('auth-signup-btn');
       const errEl = document.getElementById('auth-error');
       const msgEl = document.getElementById('auth-message');
       const emailEl = document.getElementById('auth-email');
@@ -82,7 +145,34 @@
       function showMsg(msg) { msgEl.textContent = msg; msgEl.style.display = 'block'; errEl.style.display = 'none'; }
       function clearMessages() { errEl.style.display = 'none'; msgEl.style.display = 'none'; }
 
-      function showAuthGate() { authGate.style.display = 'flex'; profileGate.style.display = 'none'; }
+      let authMode = 'login';
+
+      function setAuthMode(mode) {
+        authMode = mode;
+        const isLogin = mode === 'login';
+        loginBtn.style.display = isLogin ? '' : 'none';
+        signupBtn.style.display = isLogin ? 'none' : '';
+        authModalTitle.textContent = isLogin ? 'Log In' : 'Sign Up';
+        authTogglePrompt.textContent = isLogin ? "Don't have an account?" : 'Already have an account?';
+        authToggleBtn.textContent = isLogin ? 'Sign Up' : 'Log In';
+      }
+
+      function showAuthModal(mode) {
+        setAuthMode(mode);
+        clearMessages();
+        authModal.style.display = 'flex';
+      }
+
+      function hideAuthModal() {
+        authModal.style.display = 'none';
+        clearMessages();
+      }
+
+      function showAuthGate() {
+        authGate.style.display = 'flex';
+        profileGate.style.display = 'none';
+        hideAuthModal();
+      }
       function showProfileGate() { authGate.style.display = 'none'; profileGate.style.display = 'flex'; }
       function hideAllGates() { authGate.style.display = 'none'; profileGate.style.display = 'none'; }
 
@@ -109,6 +199,14 @@
         _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
           .then(({ data }) => { if (data) loadSnapshot(data.id); });
       }
+
+      document.getElementById('auth-show-signup').addEventListener('click', () => showAuthModal('signup'));
+      document.getElementById('auth-show-signup-bottom').addEventListener('click', () => showAuthModal('signup'));
+      document.getElementById('auth-show-login').addEventListener('click', () => showAuthModal('login'));
+      document.getElementById('marketing-login-toggle').addEventListener('click', () => showAuthModal('login'));
+      document.getElementById('auth-modal-close').addEventListener('click', hideAuthModal);
+      authModal.addEventListener('click', (e) => { if (e.target === authModal) hideAuthModal(); });
+      authToggleBtn.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
 
       document.getElementById('auth-login-btn').addEventListener('click', async () => {
         clearMessages();
@@ -193,6 +291,14 @@
 
     <!-- App Shell (hidden while landing page is visible) -->
     <div id="app-shell">
+
+    <div id="wizard-overlay" class="wizard-overlay" style="display:none;">
+      <div class="wizard-container">
+        <button type="button" class="wizard-close" onclick="hideWizard()">&times;</button>
+        <div id="wizard-content"></div>
+        <div id="wizard-nav" class="wizard-nav"></div>
+      </div>
+    </div>
 
     <div class="identity-header">
       <button type="button" class="home-btn" id="home-btn" title="Back to home">&#8962;</button>
@@ -535,6 +641,10 @@
     <script src="/static/lookup-data.js"></script>
     <script src="/static/comparison.js"></script>
     <script src="/static/scenarios.js"></script>
+    <script src="/static/wizard.js"></script>
+    <script src="/static/tour-content.js"></script>
+    <script src="/static/tour.js"></script>
+    <script src="/static/assistant.js"></script>
     <script src="/static/results-renderer.js"></script>
     <script src="/static/input-renderer.js"></script>
     <!-- hierarchy-engine.js deleted in Phase 4 — form rendering is C.taxonomy-driven -->
@@ -604,7 +714,7 @@
 
       document.getElementById('landing-new-scenario-btn').addEventListener('click', function() {
         showApp();
-        document.getElementById('new-scenario-btn').click();
+        showWizard();
       });
 
       document.getElementById('landing-load-file-btn').addEventListener('click', function(e) {
@@ -902,31 +1012,7 @@
       });
 
       document.getElementById('new-scenario-btn').addEventListener('click', () => {
-        if (document.getElementById('new-scenario-form')) return;
-        const formEl = document.createElement('div');
-        formEl.id = 'new-scenario-form';
-        formEl.style.cssText = 'padding: 0.5rem 1rem; display: flex; gap: 0.5rem; align-items: center;';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'new-scenario-name';
-        input.placeholder = 'Scenario name';
-        input.style.cssText = 'flex: 1; padding: 0.25rem 0.4rem; font-size: 0.85rem;';
-        const createBtn = document.createElement('button');
-        createBtn.type = 'button';
-        createBtn.textContent = 'Create';
-        const dismiss = () => formEl.remove();
-        createBtn.addEventListener('click', () => {
-          createNewScenario(input.value);
-          dismiss();
-        });
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') { createNewScenario(input.value); dismiss(); }
-          if (e.key === 'Escape') dismiss();
-        });
-        formEl.appendChild(input);
-        formEl.appendChild(createBtn);
-        document.getElementById('scenario-list').appendChild(formEl);
-        input.focus();
+        showWizard();
       });
 
 
@@ -1884,6 +1970,16 @@
       bulkSourceInputs.forEach((input) => {
         input.addEventListener("change", updateBulkSourceVisibility);
       });
+
+      if (typeof initAssistant === 'function') initAssistant();
+
+      if (C.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
+        if (typeof showAssistantMessage === 'function') {
+          setTimeout(function() {
+            showAssistantMessage('Welcome to the CTCC! Let\u2019s build your first transmission scenario together. Click <strong>+ New Scenario</strong> to begin.');
+          }, 500);
+        }
+      }
       }); // End DOMContentLoaded
     </script>
   </body>

@@ -2696,3 +2696,286 @@
   }
 }
 
+/* Marketing Landing Page */
+.marketing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.marketing-header {
+  width: 100%;
+  max-width: 1200px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.marketing-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+.marketing-login-btn {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.marketing-hero {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  max-width: 700px;
+}
+.marketing-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+}
+.marketing-subtitle {
+  font-size: 1.1rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 2rem;
+}
+.marketing-cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+.marketing-btn-primary {
+  padding: 0.75rem 2rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.marketing-btn-primary:hover { background: #1d4ed8; }
+.marketing-btn-secondary {
+  padding: 0.75rem 2rem;
+  background: #fff;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.marketing-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  max-width: 900px;
+  padding: 2rem;
+}
+.marketing-feature-col h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: #1a1a1a;
+}
+.marketing-feature-col ul, .marketing-feature-col ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #475569;
+  line-height: 1.8;
+}
+.marketing-footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.marketing-footer p { margin: 0 0 1.5rem; }
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  position: relative;
+}
+.auth-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+}
+.auth-modal-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+.auth-modal-toggle {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+.auth-toggle-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .marketing-hero h1 { font-size: 1.75rem; }
+  .marketing-features { grid-template-columns: 1fr; }
+  .marketing-cta { flex-direction: column; align-items: center; }
+}
+
+.wizard-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: #f8f9fa;
+  display: flex; align-items: center; justify-content: center;
+}
+.wizard-container {
+  max-width: 700px; width: 100%; padding: 3rem 2rem; position: relative;
+}
+.wizard-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer;
+}
+.wizard-step-indicator {
+  text-align: center; font-size: 0.9rem; color: #64748b;
+  margin-bottom: 2rem; line-height: 1.8;
+}
+.wizard-container h2 {
+  font-size: 1.75rem; font-weight: 700; color: #1a1a1a; margin: 0 0 1.5rem;
+}
+.wizard-input {
+  width: 100%; padding: 0.7rem 0.85rem;
+  border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem;
+  outline: none; transition: border-color 0.2s;
+}
+.wizard-input:focus { border-color: #2563eb; }
+.wizard-select {
+  width: 100%; padding: 0.7rem 0.85rem;
+  border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background: #fff;
+}
+.wizard-hint { font-size: 0.85rem; color: #94a3b8; margin-top: 0.75rem; }
+.wizard-field { margin-bottom: 1.25rem; }
+.wizard-field label {
+  display: block; font-weight: 600; font-size: 0.9rem; color: #374151; margin-bottom: 0.4rem;
+}
+.wizard-radio-group { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.wizard-radio {
+  font-size: 0.95rem; color: #374151; cursor: pointer;
+  display: flex; align-items: center; gap: 0.35rem;
+}
+.wizard-nav { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; }
+.wizard-btn {
+  padding: 0.65rem 1.5rem; border-radius: 8px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer; border: none;
+}
+.wizard-btn-back { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+.wizard-btn-next { background: #2563eb; color: #fff; }
+.wizard-btn-next:disabled { background: #93c5fd; cursor: not-allowed; }
+.wizard-route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.wizard-route-grid h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.75rem; }
+.wizard-table { width: 100%; border-collapse: collapse; }
+.wizard-table th, .wizard-table td {
+  padding: 0.4rem 0.5rem; text-align: left;
+  border-bottom: 1px solid #e5e7eb; font-size: 0.9rem;
+}
+.wizard-table input {
+  width: 80px; padding: 0.35rem 0.5rem;
+  border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; text-align: right;
+}
+@media (max-width: 768px) {
+  .wizard-route-grid { grid-template-columns: 1fr; }
+}
+
+/* Tour overlay */
+.tour-overlay {
+  position: fixed; inset: 0; z-index: 8000;
+  background: rgba(0,0,0,0.5);
+  transition: clip-path 0.3s ease;
+}
+.tour-highlighted {
+  position: relative; z-index: 8001;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.5);
+  border-radius: 4px;
+  animation: tour-pulse 2s infinite;
+}
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(37,99,235,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(37,99,235,0.2); }
+}
+.tour-bubble {
+  position: fixed; z-index: 8002;
+  background: #fff; border-radius: 12px; padding: 1.25rem;
+  max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  font-size: 0.9rem; line-height: 1.5; color: #374151;
+}
+.tour-bubble-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #e5e7eb;
+}
+.tour-bubble-progress { font-size: 0.8rem; color: #94a3b8; }
+.tour-bubble-buttons { display: flex; gap: 0.5rem; }
+.tour-btn-skip { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.8rem; }
+.tour-btn-back, .tour-btn-next {
+  padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; border: none;
+}
+.tour-btn-back { background: #f1f5f9; color: #374151; }
+.tour-btn-next { background: #2563eb; color: #fff; }
+/* Assistant */
+.assistant-icon {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 7000;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #2563eb; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+  transition: transform 0.2s;
+}
+.assistant-icon:hover { transform: scale(1.1); }
+.assistant-bubble {
+  position: fixed; bottom: 5rem; right: 1.5rem; z-index: 7001;
+  background: #fff; border-radius: 12px; padding: 1.25rem;
+  max-width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  font-size: 0.9rem; line-height: 1.5; color: #374151;
+}
+.assistant-bubble-close {
+  position: absolute; top: 0.5rem; right: 0.5rem;
+  background: none; border: none; font-size: 1.25rem; color: #999; cursor: pointer;
+}
+.assistant-bubble-actions {
+  margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;
+}
+.assistant-bubble-actions button {
+  padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px;
+  background: #fff; color: #2563eb; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; text-align: left;
+}
+.assistant-bubble-actions button:hover { background: #f8fafc; }

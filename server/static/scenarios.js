@@ -32,6 +32,7 @@ async function loadScenariosFromDB() {
   }));
   const snapshotIds = [...new Set(C.sessionScenarios.map(s => s.ref_snapshot_id).filter(Boolean))];
   await Promise.all(snapshotIds.map(id => loadSnapshot(id)));
+  window._latestSnapshot = snapshotIds.length > 0 ? _snapshotCache[snapshotIds[0]] : null;
   renderScenarioList();
   renderCompareSelector();
   const newBtn = document.getElementById('new-scenario-btn');
@@ -449,6 +450,28 @@ function renameScenario(id, newName) {
   }
 }
 
+async function duplicateScenario(sourceScenario) {
+  const newName = generateScenarioName(sourceScenario.customName + ' (copy)');
+  let fullInputs = sourceScenario.inputs;
+  if (sourceScenario.ref_snapshot_id && _snapshotCache[sourceScenario.ref_snapshot_id]) {
+    fullInputs = assembleFullInputs(
+      _snapshotCache[sourceScenario.ref_snapshot_id],
+      sourceScenario.overrides,
+      sourceScenario.inputs || {}
+    );
+  }
+  if (sourceScenario.id === C.activeScenarioId && typeof collectJsonData === 'function') {
+    fullInputs = collectJsonData() || fullInputs;
+  }
+  const scenario = await addScenarioToSession(
+    fullInputs,
+    sourceScenario.results ? JSON.parse(JSON.stringify(sourceScenario.results)) : null,
+    { timestamp: new Date().toISOString(), source: 'manual' },
+    newName
+  );
+  setActiveScenario(scenario);
+}
+
 function loadScenarioIntoUI(scenario) {
   setActiveScenario(scenario);
 }
@@ -568,7 +591,8 @@ function renderScenarioList() {
     const sourceLabel = scenario.metadata?.source === 'run' ? 'Calculated' :
                         scenario.metadata?.source === 'upload-ctcc' ? 'Uploaded (.ctcc)' :
                         scenario.metadata?.source === 'upload-csv' ? 'Uploaded (.csv)' :
-                        scenario.metadata?.source === 'new' ? 'Draft' : 'Saved';
+                        scenario.metadata?.source === 'new' ? 'Draft' :
+                        scenario.metadata?.source === 'wizard' ? 'Wizard' : 'Saved';
     const ts = scenario.metadata?.timestamp ? formatTimestamp(scenario.metadata.timestamp) : '';
     meta.textContent = sourceLabel + (ts ? ' ' + ts : '');
     infoTd.appendChild(meta);
@@ -639,6 +663,20 @@ function renderScenarioList() {
         });
       });
       actions.appendChild(deleteBtn);
+
+      const dupBtn = document.createElement('button');
+      dupBtn.type = 'button';
+      dupBtn.textContent = 'Duplicate';
+      dupBtn.addEventListener('click', () => duplicateScenario(scenario));
+      actions.appendChild(dupBtn);
+    }
+
+    if (!isOwner) {
+      const dupBtn = document.createElement('button');
+      dupBtn.type = 'button';
+      dupBtn.textContent = 'Duplicate';
+      dupBtn.addEventListener('click', () => duplicateScenario(scenario));
+      actions.appendChild(dupBtn);
     }
 
     actionsTd.appendChild(actions);
@@ -1227,6 +1265,7 @@ async function downloadAllCsvFiles() {
   window.createNewScenario = createNewScenario;
   window.removeScenarioFromSession = removeScenarioFromSession;
   window.renameScenario = renameScenario;
+  window.duplicateScenario = duplicateScenario;
   window.loadScenarioIntoUI = loadScenarioIntoUI;
   window.getScenarioParams = getScenarioParams;
   window.renderScenarioList = renderScenarioList;
