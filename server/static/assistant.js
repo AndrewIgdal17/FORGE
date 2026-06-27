@@ -51,6 +51,18 @@ function hideAssistant() {
   if (_bubbleEl) _bubbleEl.style.display = 'none';
 }
 
+function markTutorialDone() {
+  if (window.CTCC && window.CTCC.currentUserId && typeof _sb !== 'undefined') {
+    _sb.from('profiles').update({ has_done_tutorial: true })
+      .eq('id', window.CTCC.currentUserId);
+  }
+}
+
+function dismissTutorial() {
+  hideAssistant();
+  markTutorialDone();
+}
+
 function getContextualTip() {
   var activeTab = document.querySelector('.main-tab-button.active');
   var tab = activeTab ? activeTab.dataset.tab : '';
@@ -78,7 +90,7 @@ function startFullTour() {
   hideAssistant();
   if (typeof TOUR_CONTENT !== 'undefined' && typeof startTour === 'function') {
     startTour(TOUR_CONTENT, function() {
-      localStorage.setItem('ctcc-tour-complete', 'true');
+      markTutorialDone();
       showAssistantMessage('Tour complete! I\'ll be here if you need me.');
     });
   }
@@ -92,9 +104,9 @@ function showWelcomeBubble() {
     '</div>' +
     '<div class="assistant-bubble-actions">' +
       '<button type="button" onclick="startFullTour()">Start Tour</button>' +
-      '<button type="button" onclick="hideAssistant()">No thanks</button>' +
+      '<button type="button" onclick="dismissTutorial()">No thanks</button>' +
     '</div>' +
-    '<button type="button" class="assistant-bubble-close" onclick="hideAssistant()">&times;</button>';
+    '<button type="button" class="assistant-bubble-close" onclick="dismissTutorial()">&times;</button>';
   _bubbleEl.style.display = '';
 }
 
@@ -105,4 +117,6 @@ window.showAssistantBubble = showAssistantBubble;
 window.hideAssistant = hideAssistant;
 window.startQuickTour = startQuickTour;
 window.startFullTour = startFullTour;
+window.dismissTutorial = dismissTutorial;
+window.markTutorialDone = markTutorialDone;
 })();

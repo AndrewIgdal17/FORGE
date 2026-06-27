@@ -191,7 +191,7 @@
 
           if (typeof initAssistant === 'function') initAssistant();
 
-          if (window.CTCC.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
+          if (!profile.has_done_tutorial) {
             if (typeof showWelcomeBubble === 'function') {
               setTimeout(showWelcomeBubble, 500);
             }
