@@ -408,7 +408,7 @@
         var ctccJsonInputs = document.getElementById("ctcc-json-inputs");
         if (ctccJsonInputs) ctccJsonInputs.hidden = false;
         if (!C.ctccJsonData) {
-          loadCtccJson();
+          return loadCtccJson();
         }
       }
 
@@ -801,7 +801,7 @@
 
 
       initialiseApiBase();
-      initCtccInputs();
+      var dataReady = initCtccInputs();
 
       // --- App entry (waits for auth check to resolve) ---
       if (window._authReady) {
@@ -823,6 +823,8 @@
             .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
 
           if (typeof initAssistant === 'function') initAssistant();
+
+          if (dataReady) await dataReady;
 
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {
