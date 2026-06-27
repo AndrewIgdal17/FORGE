@@ -56,28 +56,28 @@ def _terrain_label(t: str) -> str:
 
 
 # ===================================================================
-# Tab 1 — Project (20 fields)
+# Tab 1 — Project Identity (14 fields)
 # ===================================================================
 
 _TAB1: list[InputField] = [
-    _f("project_name", taxonomy_id="project_identity", input_tab="project-technical",
+    _f("project_name", taxonomy_id="project_identity", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.name",
        label="Name", help_text="Unique identifier for this project scenario",
        input_type="text", tier="first-glance", display_order=1,
        validation={"required": True}, sub_tab="identity", condition="always_hidden"),
-    _f("construction_type", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("construction_type", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.construction_type",
        label="Construction Type", help_text="Overhead, underground, or subsea transmission",
        input_type="dropdown", tier="first-glance", display_order=1,
        validation={"required": True, "options": ["Overhead", "Underground Direct-Buried", "Underground Tunnel", "Subsea"]},
        sub_tab="technology"),
-    _f("ac_dc", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("ac_dc", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.ac_dc",
        label="AC/DC", help_text="Alternating current or direct current transmission",
        input_type="dropdown", tier="first-glance", display_order=2,
        validation={"required": True, "options": ["AC", "DC"]},
        sub_tab="technology"),
-    _f("capacity_mw", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("capacity_mw", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.capacity_mw",
        label="Capacity MW", help_text="Nameplate transfer capacity (C_new); feeds capacity relief and line loss calculations", unit="MW",
        input_type="dynamic_dropdown", tier="first-glance", display_order=3,
@@ -85,7 +85,7 @@ _TAB1: list[InputField] = [
                    "optionSets": {"AC": [140, 329, 394, 460, 657, 1792, 2598, 6625],
                                   "DC": [500, 1500, 2000, 2400, 6000]}, "suffix": " MW"},
        sub_tab="technology"),
-    _f("conductor_type", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("conductor_type", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.conductor_type",
        label="Conductor Type", help_text="Determines resistance, cost per mile, and O&M rates",
        input_type="dynamic_dropdown", tier="first-glance", display_order=4,
@@ -98,12 +98,12 @@ _TAB1: list[InputField] = [
                        "Subsea": ["Subsea Copper Conductor"],
                    }},
        sub_tab="conductor-details"),
-    _f("number_of_converters", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("number_of_converters", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.number_of_converters",
        label="Number Of Converters", help_text="Number of converter stations (DC only)",
        input_type="dropdown", condition="dc_only", tier="first-glance", display_order=5,
        validation={"options": [0, 1, 2]}, sub_tab="converter-details"),
-    _f("converter_type", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("converter_type", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.converter_type",
        label="Converter Type", help_text="LCC or VSC converter station type",
        input_type="dynamic_dropdown", condition="dc_only", tier="first-glance", display_order=6,
@@ -113,22 +113,22 @@ _TAB1: list[InputField] = [
                        "DC": ["LCC Converter", "VSC Converter"],
                    }},
        sub_tab="converter-details"),
-    _f("converter_loss_pct", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("converter_loss_pct", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.converter_loss_percentage",
        label="Converter Loss Percentage", help_text="Loss per converter station (0.75% LCC, 1.0% VSC)", unit="%",
        input_type="percent", condition="always_hidden", tier="first-glance", display_order=7,
        sub_tab="technology"),
-    _f("reconductoring", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("reconductoring", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.reconductoring",
        label="Reconductoring Project", help_text="Upgrade existing conductors; zeroes structure cost, relief = C_new minus C_old",
        input_type="toggle", tier="first-glance", display_order=8,
        sub_tab="technology"),
-    _f("uses_existing_row", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("uses_existing_row", taxonomy_id="project_technology", input_tab="routing",
        yaml_section="01_project_technical_details", field_path="project.uses_existing_row",
        label="Project Uses Existing ROW", help_text="Zeroes acquisition/holding, includes delay in rent",
        input_type="toggle", tier="first-glance", display_order=9,
        sub_tab="rights-of-way"),
-    _f("old_capacity_mw", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("old_capacity_mw", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.old_capacity_mw",
        label="Old Capacity MW", help_text="Existing line capacity (C_old)", unit="MW",
        input_type="dynamic_dropdown", condition="reconductoring_only", tier="first-glance", display_order=11,
@@ -136,7 +136,7 @@ _TAB1: list[InputField] = [
                    "optionSets": {"AC": [140, 329, 394, 460, 657, 1792, 2598, 6625],
                                   "DC": [500, 1500, 2000, 2400, 6000]}, "suffix": " MW"},
        sub_tab="technology"),
-    _f("old_conductor_type", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("old_conductor_type", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.old_conductor_type",
        label="Old Conductor Type", help_text="Original conductor for reconductoring cost comparison",
        input_type="dynamic_dropdown", condition="reconductoring_only",
@@ -150,13 +150,13 @@ _TAB1: list[InputField] = [
                    },
                    "allowBlank": True},
        sub_tab="conductor-details"),
-    _f("old_ac_dc", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("old_ac_dc", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.old_ac_dc",
        label="Old AC/DC", help_text="Original AC/DC type for reconductoring comparison",
        input_type="dropdown", condition="reconductoring_only",
        tier="first-glance", display_order=10, validation={"options": ["", "AC", "DC"]},
        sub_tab="technology"),
-    _f("old_converter_type", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("old_converter_type", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.old_converter_type",
        label="Old Converter Type", help_text="Original converter type for old DC line (used for reconductoring cost lookup)",
        input_type="dynamic_dropdown", condition="old_dc_only",
@@ -164,7 +164,7 @@ _TAB1: list[InputField] = [
        validation={"dependsOn": "01_project_technical_details.project.old_ac_dc",
                    "optionSets": {"AC": [], "DC": ["LCC Converter", "VSC Converter"]}},
        sub_tab="converter-details"),
-    _f("line_utilization", taxonomy_id="project_utilization", input_tab="project-technical",
+    _f("line_utilization", taxonomy_id="project_utilization", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.line_utilization",
        label="Line Utilization", help_text="Fraction of nameplate capacity used on average",
        input_type="percent", tier="first-glance", display_order=1,
@@ -175,39 +175,39 @@ _TAB1: list[InputField] = [
        label="Value of Load per MWh", help_text="Demand-side marginal value of delivered energy; values line losses and delivered energy benefit", unit="$/MWh",
        input_type="currency", condition="always_hidden", tier="first-glance", display_order=2,
        sub_tab="economic-details"),
-    _f("construction_years", taxonomy_id="project_timing", input_tab="project-technical",
+    _f("construction_years", taxonomy_id="project_timing", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="timeline.construction_years",
        label="Construction Years", help_text="Construction duration; affects AFUDC compounding and PV discounting",
        unit="years", tier="first-glance", display_order=1,
        validation={"required": True, "min": 1}, sub_tab="timeline"),
-    _f("delay_years", taxonomy_id="project_timing", input_tab="project-technical",
+    _f("delay_years", taxonomy_id="project_timing", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="timeline.delay_years",
        label="Delay Years", help_text="Pre-construction delay (permitting); drives delay costs and AFUDC timing",
        unit="years", tier="first-glance", display_order=2,
        validation={"required": True, "min": 0}, sub_tab="timeline"),
-    _f("project_lifetime", taxonomy_id="project_timing", input_tab="project-technical",
+    _f("project_lifetime", taxonomy_id="project_timing", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="timeline.project_lifetime",
        label="Project Lifetime", help_text="Operating years after COD; annual costs and benefits accrue over this period",
        unit="years", tier="first-glance", display_order=3,
        validation={"required": True, "min": 1}, sub_tab="timeline"),
-    _f("greenfield_cmp_capacity", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("greenfield_cmp_capacity", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.greenfield_comparison_capacity_mw",
        label="Greenfield Comparison Capacity MW", condition="always_hidden", display_order=99,
        sub_tab="technology"),
-    _f("greenfield_cmp_conductor", taxonomy_id="project_technology", input_tab="project-technical",
+    _f("greenfield_cmp_conductor", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.greenfield_comparison_conductor_type",
        label="Greenfield Comparison Conductor Type", condition="always_hidden", display_order=100,
        sub_tab="technology"),
 ]
 
 # ===================================================================
-# Routing fields (78: 18 terrain + 60 ROW zones) — UI: Project Technical Details → Routing → Terrain Mix / Rights of Way
+# Tab 2 — Routing (79 fields: 18 terrain + 60 ROW + 1 flag)
 # ===================================================================
 
 _TAB2: list[InputField] = []
 for _i, _t in enumerate(TERRAINS):
     _TAB2.append(_f(
-        f"terrain_miles_{_t}", taxonomy_id="route_terrain_miles", input_tab="project-technical",
+        f"terrain_miles_{_t}", taxonomy_id="route_terrain_miles", input_tab="routing",
         yaml_section="02_project_physical_details", field_path=f"terrain.terrain_miles.{_t}",
         label=_terrain_label(_t), help_text=f"Miles through {_terrain_label(_t).lower()} terrain",
         unit="miles", tier="first-glance", display_order=_i + 1, validation={"min": 0},
@@ -215,7 +215,7 @@ for _i, _t in enumerate(TERRAINS):
     ))
 for _i, _t in enumerate(TERRAINS):
     _TAB2.append(_f(
-        f"terrain_mult_{_t}", taxonomy_id="route_terrain_multipliers", input_tab="project-technical",
+        f"terrain_mult_{_t}", taxonomy_id="route_terrain_multipliers", input_tab="routing",
         yaml_section="02_project_physical_details", field_path=f"terrain.terrain_multipliers.{_t}",
         label=_terrain_label(_t), help_text=f"Cost multiplier for {_terrain_label(_t).lower()} terrain",
         tier="advanced", display_order=_i + 1, validation={"min": 0},
@@ -344,7 +344,7 @@ for _z in range(1, 16):
     ]):
         _tid = "row_rent" if _fk == "rent_cost" else ("row_holding" if _fk == "hold_cost" else "row_acquisition")
         _TAB2.append(_f(
-            f"row_{_zn}_{_fk}", taxonomy_id=_tid, input_tab="project-technical",
+            f"row_{_zn}_{_fk}", taxonomy_id=_tid, input_tab="routing",
             yaml_section="11_project_row_details", field_path=f"right_of_way.{_zn}.{_fk}",
             label=f"{_zl} {_fl}", help_text=_fh, unit=_fu,
             input_type="currency" if "cost" in _fk.lower() else "number",
@@ -411,27 +411,27 @@ for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", 
     _env_order += 1
 
 # ===================================================================
-# Tab 5 — Operational Costs (40 fields: 4 insurance + 36 veg mgmt)
+# Tab 5 — Operating Costs (40 fields: 4 insurance + 36 veg mgmt)
 # ===================================================================
 
 _TAB5: list[InputField] = [
-    _f("insurance_premium_rate", taxonomy_id="insurance", input_tab="operational",
+    _f("insurance_premium_rate", taxonomy_id="insurance", input_tab="operating",
        yaml_section="04_insurance", field_path="insurance.premium_rate",
        label="Premium Rate", help_text="Annual insurance premium as % of insurable value",
        input_type="percent", condition="always_hidden", tier="working", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
        sub_tab="operational-insurance"),
-    _f("insurable_conductors", taxonomy_id="insurance", input_tab="operational",
+    _f("insurable_conductors", taxonomy_id="insurance", input_tab="operating",
        yaml_section="04_insurance", field_path="insurance.insurable_components.conductors",
        label="Conductors", help_text="Include conductor costs in insurable value",
        input_type="toggle", condition="always_hidden", tier="working", display_order=2,
        sub_tab="operational-insurance"),
-    _f("insurable_structures", taxonomy_id="insurance", input_tab="operational",
+    _f("insurable_structures", taxonomy_id="insurance", input_tab="operating",
        yaml_section="04_insurance", field_path="insurance.insurable_components.structures",
        label="Structures", help_text="Include structure costs in insurable value",
        input_type="toggle", condition="always_hidden", tier="working", display_order=3,
        sub_tab="operational-insurance"),
-    _f("insurable_converters", taxonomy_id="insurance", input_tab="operational",
+    _f("insurable_converters", taxonomy_id="insurance", input_tab="operating",
        yaml_section="04_insurance", field_path="insurance.insurable_components.converters",
        label="Converters", help_text="Include converter costs in insurable value",
        input_type="toggle", condition="always_hidden", tier="working", display_order=4,
@@ -448,7 +448,7 @@ for _ct_key, _ct_label in _VEG_CT:
     for _t in TERRAINS:
         _TAB5.append(_f(
             f"veg_{_ct_key.lower().replace(' ', '_')}_{_t}", taxonomy_id="oandm",
-            input_tab="operational", yaml_section="12_project_om_vegetation_management",
+            input_tab="operating", yaml_section="12_project_om_vegetation_management",
             field_path=f"vegetation_management_om_costs.{_ct_key}.{_t}",
             label=_terrain_label(_t), help_text=f"Annual vegetation management cost for {_terrain_label(_t).lower()} terrain",
             section_label=f"Vegetation Mgmt — {_ct_label}",
@@ -458,7 +458,7 @@ for _ct_key, _ct_label in _VEG_CT:
         _veg_order += 1
 
 # ===================================================================
-# Tab 6 — Delay Costs (8 fields)
+# Tab 6 — Delay Costs (8 fields, merged into operating tab)
 # ===================================================================
 
 _DELAY_CATS = [
@@ -468,7 +468,8 @@ _DELAY_CATS = [
     ("project_management", "Project Management"), ("miscellaneous", "Miscellaneous"),
 ]
 _TAB6: list[InputField] = [
-    _f(f"delay_{k}", taxonomy_id="base_delay", input_tab="delay-costs",
+    _f(f"delay_{k}", taxonomy_id="base_delay", input_tab="operating",
+       sub_tab="delay-costs",
        yaml_section="05_delays", field_path=f"annual_delay_costs.{k}",
        label=lab, help_text=f"Annual {lab.lower()} costs during delay period", unit="$/year",
        input_type="currency", tier="first-glance", display_order=i + 1)
@@ -596,7 +597,7 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         sub_tab="outage-risk"))
 
 # ===================================================================
-# Tab 8 — Energy and Emissions (60 fields: 28 reductions + 32 energy mix)
+# Tab 8 — Emissions (29 fields) + Energy Mix (32 fields)
 # All fields are condition="always_hidden" — rendered via custom tables, not renderTaxonomySections.
 # ===================================================================
 
@@ -653,7 +654,7 @@ for _instance, _inst_label, _yaml_key in [
 ]:
     for _fi, _fuel in enumerate(FUELS):
         _TAB8.append(_f(
-            f"mix_{_instance}_{_fuel}_pct", taxonomy_id="emissions_fac", input_tab="emissions",
+            f"mix_{_instance}_{_fuel}_pct", taxonomy_id="emissions_fac", input_tab="energy-mix",
             yaml_section="18_energy_source_mix",
             field_path=f"{_yaml_key}.{_fuel}.percentage",
             label="Percentage", help_text=f"Share of {_fuel.replace('_', ' ')} in this generation mix (must sum to 100)",
@@ -661,7 +662,7 @@ for _instance, _inst_label, _yaml_key in [
             input_type="fuel_mix_row", condition="always_hidden", tier="working",
             display_order=_fi * 2 + 1, sub_tab="energy-emissions-energy"))
         _TAB8.append(_f(
-            f"mix_{_instance}_{_fuel}_rate", taxonomy_id="emissions_fac", input_tab="emissions",
+            f"mix_{_instance}_{_fuel}_rate", taxonomy_id="emissions_fac", input_tab="energy-mix",
             yaml_section="18_energy_source_mix",
             field_path=f"{_yaml_key}.{_fuel}.rate_of_change",
             label="Rate Of Change", help_text=f"Annual growth/decline rate for {_fuel.replace('_', ' ')} share (decimal; mix renormalized yearly)",
