@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Transmission Calculator</title>
+    <title>CTCC — Transmission Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -22,242 +22,17 @@
     </script>
   </head>
   <body>
-    <!-- Auth Gate / Marketing Landing (shown when not logged in) -->
-    <div id="auth-gate" class="marketing-page" style="display:none; position:fixed; inset:0; z-index:9999; overflow-y:auto;">
-      <header class="marketing-header">
-        <div class="marketing-logo">CTCC</div>
-        <button type="button" class="marketing-login-btn" id="marketing-login-toggle">Log in</button>
-      </header>
-
-      <section class="marketing-hero">
-        <h1>Full-cost benefit-cost analysis for transmission projects</h1>
-        <p class="marketing-subtitle">
-          The Comprehensive Transmission Cost Calculator covers 24 cost and benefit categories
-          across capital, operational, delay, emissions, and risk.
-        </p>
-        <div class="marketing-cta">
-          <a href="/signup" class="marketing-btn-primary" style="text-decoration:none; text-align:center;">Get Started</a>
-          <button type="button" class="marketing-btn-secondary" id="auth-show-login">Log in</button>
-        </div>
-      </section>
-
-      <section class="marketing-section">
-        <h3>Who it's for</h3>
-        <ul>
-          <li>Utilities</li>
-          <li>ISO/RTOs</li>
-          <li>Consultants</li>
-          <li>Academics</li>
-          <li>Regulators</li>
-        </ul>
-      </section>
-
-      <section class="marketing-section">
-        <h3>What it does</h3>
-        <ul>
-          <li>24 cost and benefit categories</li>
-          <li>4 BCR perspectives (societal, ratepayer, utility, custom)</li>
-          <li>Taxonomy-driven input forms</li>
-          <li>Auditable calculations and exports</li>
-        </ul>
-      </section>
-
-      <section class="marketing-section">
-        <h3>How it works</h3>
-        <ol>
-          <li>Define your project</li>
-          <li>See live results as you edit</li>
-          <li>Compare scenarios side by side</li>
-        </ol>
-      </section>
-
-      <footer class="marketing-footer">
-        <p>Built by Andrew Igdal, Webber Energy Group, The University of Texas at Austin &amp; Dane McFarlane, Horizon Climate Group</p>
-      </footer>
-
-      <div id="auth-modal" class="auth-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
-        <div class="auth-modal-card">
-          <button type="button" class="auth-modal-close" id="auth-modal-close" aria-label="Close">&times;</button>
-          <div class="auth-modal-title" id="auth-modal-title">Log In</div>
-          <div id="auth-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
-          <div id="auth-message" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#efe; color:#060; border-radius:6px; font-size:0.85rem;"></div>
-          <form id="auth-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
-            <input id="auth-email" type="email" placeholder="Email" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-            <input id="auth-password" type="password" placeholder="Password" required minlength="6" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-            <button type="button" id="auth-login-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Log In</button>
-          </form>
-          <div class="auth-modal-toggle">
-            <span>Don't have an account?</span>
-            <a href="/signup" class="auth-toggle-link">Sign Up</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Profile Completion Gate (shown once after first signup) -->
-    <div id="profile-gate" style="display:none; position:fixed; inset:0; z-index:9998; background:#f8f9fa; align-items:center; justify-content:center;">
-      <div style="max-width:420px; width:100%; padding:2rem; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <div style="font-size:1.5rem; font-weight:700; color:#1a1a1a;">Complete Your Profile</div>
-        </div>
-        <div id="profile-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
-        <form id="profile-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
-          <input id="profile-username" type="text" placeholder="Username *" required maxlength="40" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-          <div style="display:flex; gap:0.5rem;">
-            <input id="profile-first-name" type="text" placeholder="First name (optional)" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-            <input id="profile-last-name" type="text" placeholder="Last name (optional)" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-          </div>
-          <input id="profile-org" type="text" placeholder="Organization (optional)" maxlength="120" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-          <select id="profile-org-type" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem; color:#333; background:#fff;">
-            <option value="" disabled selected>User type *</option>
-            <option value="utility">Utility</option>
-            <option value="iso_rto">ISO / RTO</option>
-            <option value="consultant">Consultant</option>
-            <option value="academic">Academic</option>
-            <option value="government">Government</option>
-            <option value="other">Other</option>
-          </select>
-          <button type="button" id="profile-submit-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-top:0.25rem;">Complete Profile</button>
-        </form>
-      </div>
-    </div>
-
     <script>
     (function() {
-      var authGate = document.getElementById('auth-gate');
-      var profileGate = document.getElementById('profile-gate');
-      var authModal = document.getElementById('auth-modal');
-      var errEl = document.getElementById('auth-error');
-      var msgEl = document.getElementById('auth-message');
-      var emailEl = document.getElementById('auth-email');
-      var pwEl = document.getElementById('auth-password');
-
-      function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; msgEl.style.display = 'none'; }
-      function clearMessages() { errEl.style.display = 'none'; msgEl.style.display = 'none'; }
-
-      function showAuthModal() {
-        clearMessages();
-        authModal.style.display = 'flex';
-      }
-
-      function hideAuthModal() {
-        authModal.style.display = 'none';
-        clearMessages();
-      }
-
-      function showAuthGate() {
-        authGate.style.display = 'flex';
-        profileGate.style.display = 'none';
-        hideAuthModal();
-      }
-      function showProfileGate() { authGate.style.display = 'none'; profileGate.style.display = 'flex'; }
-      function hideAllGates() { authGate.style.display = 'none'; profileGate.style.display = 'none'; }
-
-      function setUserDisplay(profile) {
-        var displayName = profile && profile.username ? profile.username : '';
-        document.querySelectorAll('.ctcc-user-display').forEach(function(el) {
-          el.textContent = displayName;
-        });
-      }
-
-      async function enterApp(profile, session) {
-        window.CTCC.userProfile = profile;
-        window.CTCC.currentUserId = session.user.id;
-        setUserDisplay(profile);
-        hideAllGates();
-
-        var landingPage = document.getElementById('landing-page');
-        var appShell = document.getElementById('app-shell');
-        if (sessionStorage.getItem('ctcc-session-active')) {
-          landingPage.style.display = 'none';
-          appShell.style.display = '';
-        } else {
-          landingPage.style.display = '';
-          appShell.style.display = 'none';
+      window._authReady = _sb.auth.getSession().then(async function(result) {
+        var session = result.data.session;
+        if (!session) { window.location.href = '/'; return null; }
+        var profileResult = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
+        if (profileResult.error || !(profileResult.data && profileResult.data.username)) {
+          window.location.href = '/login';
+          return null;
         }
-
-        async function runAfterScriptsLoaded() {
-          await loadScenariosFromDB();
-
-          _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
-            .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
-
-          var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
-          if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
-            gotoBtn.disabled = false;
-            gotoBtn.classList.remove('landing-btn-disabled');
-            gotoBtn.classList.add('landing-btn-secondary');
-          }
-
-          if (typeof initAssistant === 'function') initAssistant();
-
-          if (!profile.has_done_tutorial) {
-            if (typeof showWelcomeBubble === 'function') {
-              setTimeout(showWelcomeBubble, 500);
-            }
-          }
-        }
-
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', function() { runAfterScriptsLoaded(); });
-        } else {
-          await runAfterScriptsLoaded();
-        }
-      }
-
-      async function checkProfileAndEnter(session) {
-        if (!session) { showAuthGate(); return; }
-        var result = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
-        if (result.error || !(result.data && result.data.username)) {
-          showProfileGate();
-          return;
-        }
-        await enterApp(result.data, session);
-      }
-
-      document.getElementById('auth-show-login').addEventListener('click', function() { showAuthModal(); });
-      document.getElementById('marketing-login-toggle').addEventListener('click', function() { showAuthModal(); });
-      document.getElementById('auth-modal-close').addEventListener('click', hideAuthModal);
-      authModal.addEventListener('click', function(e) { if (e.target === authModal) hideAuthModal(); });
-
-      document.getElementById('auth-login-btn').addEventListener('click', async function() {
-        clearMessages();
-        var result = await _sb.auth.signInWithPassword({ email: emailEl.value, password: pwEl.value });
-        if (result.error) showError(result.error.message);
-      });
-
-      document.getElementById('profile-submit-btn').addEventListener('click', async function() {
-        var profErr = document.getElementById('profile-error');
-        profErr.style.display = 'none';
-        var username = document.getElementById('profile-username').value.trim();
-        var orgType = document.getElementById('profile-org-type').value;
-        if (!username) { profErr.textContent = 'Username is required.'; profErr.style.display = 'block'; return; }
-        if (!orgType) { profErr.textContent = 'User type is required.'; profErr.style.display = 'block'; return; }
-        var sessionResult = await _sb.auth.getSession();
-        var session = sessionResult.data.session;
-        if (!session) { showAuthGate(); return; }
-        var updates = {
-          username: username,
-          first_name: document.getElementById('profile-first-name').value.trim() || null,
-          last_name: document.getElementById('profile-last-name').value.trim() || null,
-          org: document.getElementById('profile-org').value.trim() || null,
-          org_type: orgType
-        };
-        var updateResult = await _sb.from('profiles').update(updates).eq('id', session.user.id);
-        if (updateResult.error) {
-          var msg = updateResult.error.message.includes('unique') ? 'That username is already taken.' : updateResult.error.message;
-          profErr.textContent = msg; profErr.style.display = 'block';
-          return;
-        }
-        await checkProfileAndEnter(session);
-      });
-
-      _sb.auth.onAuthStateChange(async function(event, session) {
-        await checkProfileAndEnter(session);
-      });
-
-      _sb.auth.getSession().then(async function(result) {
-        if (!result.data.session) showAuthGate();
+        return { profile: profileResult.data, session: session };
       });
     })();
     </script>
@@ -278,7 +53,7 @@
     <div id="landing-page" class="landing-page">
       <div id="landing-auth-bar" style="position:absolute; top:1rem; right:1.5rem; display:flex; align-items:center; gap:0.75rem;">
         <span class="ctcc-user-display" style="font-size:0.8rem; color:#888;"></span>
-        <button type="button" style="padding:0.35rem 0.75rem; background:transparent; color:#888; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
+        <button type="button" style="padding:0.35rem 0.75rem; background:transparent; color:#888; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut().then(function() { window.location.href = '/'; })">Log out</button>
       </div>
       <div class="landing-title">CTCC</div>
       <div class="landing-name">Comprehensive Transmission Cost Calculator</div>
@@ -310,7 +85,7 @@
       </div>
       <div style="margin-left:auto; display:flex; align-items:center; gap:0.75rem; padding-right:1rem;">
         <span class="ctcc-user-display" style="font-size:0.8rem; color:#666;"></span>
-        <button type="button" id="logout-btn" style="padding:0.35rem 0.75rem; background:transparent; color:#666; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut()">Log out</button>
+        <button type="button" id="logout-btn" style="padding:0.35rem 0.75rem; background:transparent; color:#666; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut().then(function() { window.location.href = '/'; })">Log out</button>
       </div>
     </div>
 
@@ -1967,6 +1742,49 @@
       bulkSourceInputs.forEach((input) => {
         input.addEventListener("change", updateBulkSourceVisibility);
       });
+
+      // --- App entry (waits for auth check to resolve) ---
+      if (window._authReady) {
+        window._authReady.then(async function(auth) {
+          if (!auth) return;
+          var profile = auth.profile;
+          var session = auth.session;
+
+          window.CTCC.userProfile = profile;
+          window.CTCC.currentUserId = session.user.id;
+          var displayName = profile.username || '';
+          document.querySelectorAll('.ctcc-user-display').forEach(function(el) {
+            el.textContent = displayName;
+          });
+
+          if (sessionStorage.getItem('ctcc-session-active')) {
+            showApp();
+          } else {
+            landingPage.style.display = '';
+            appShell.style.display = 'none';
+          }
+
+          await loadScenariosFromDB();
+
+          _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
+            .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
+
+          var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
+          if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
+            gotoBtn.disabled = false;
+            gotoBtn.classList.remove('landing-btn-disabled');
+            gotoBtn.classList.add('landing-btn-secondary');
+          }
+
+          if (typeof initAssistant === 'function') initAssistant();
+
+          if (!profile.has_done_tutorial) {
+            if (typeof showWelcomeBubble === 'function') {
+              setTimeout(showWelcomeBubble, 500);
+            }
+          }
+        });
+      }
 
       }); // End DOMContentLoaded
     </script>

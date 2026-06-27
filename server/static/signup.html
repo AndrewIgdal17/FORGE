@@ -10,13 +10,16 @@
       const SUPABASE_URL = 'https://fsjppprwigmuypyzpbir.supabase.co';
       const SUPABASE_ANON_KEY = 'sb_publishable_LNsNVlF7rOtKNShrC3qbVQ_D5_Mncx1';
       const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      _sb.auth.getSession().then(function(result) {
+        if (result.data.session) window.location.href = '/app';
+      });
     </script>
   </head>
   <body>
     <div class="signup-page">
       <div class="signup-header">
         <a href="/" class="signup-logo">CTCC</a>
-        <a href="/" class="signup-login-link">Log in</a>
+        <a href="/login" class="signup-login-link">Log in</a>
       </div>
       <div class="signup-card">
         <div class="signup-title">Create Your Account</div>
@@ -45,7 +48,7 @@
           <button type="button" id="signup-submit-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-top:0.25rem;">Create Account</button>
         </form>
         <div style="text-align:center; margin-top:1rem; font-size:0.85rem; color:#666;">
-          Already have an account? <a href="/" style="color:#2563eb; font-weight:600; text-decoration:none;">Log in</a>
+          Already have an account? <a href="/login" style="color:#2563eb; font-weight:600; text-decoration:none;">Log in</a>
         </div>
       </div>
     </div>
@@ -99,7 +102,7 @@
           return;
         }
 
-        window.location.href = '/';
+        window.location.href = '/app';
       });
     })();
     </script>

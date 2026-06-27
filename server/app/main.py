@@ -40,8 +40,10 @@ STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
 OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
 YAMLS_DIR = BASE_DIR.parent / "yamls"
-INDEX_FILE = STATIC_DIR / "index.html"
+MARKETING_FILE = STATIC_DIR / "marketing.html"
 SIGNUP_FILE = STATIC_DIR / "signup.html"
+LOGIN_FILE = STATIC_DIR / "login.html"
+APP_FILE = STATIC_DIR / "app.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
 # Kept when syncing YAML→JSON; not derived from a YAML stem.
 PRESERVED_JSON_NAMES = frozenset(
@@ -138,15 +140,27 @@ def _refresh_final_combined() -> None:
 
 
 @app.get("/", response_class=FileResponse)
-async def serve_index() -> FileResponse:
-    """Serve the template HTML page."""
-    return FileResponse(INDEX_FILE)
+async def serve_marketing() -> FileResponse:
+    """Serve the marketing landing page."""
+    return FileResponse(MARKETING_FILE)
 
 
 @app.get("/signup", response_class=FileResponse)
 async def serve_signup() -> FileResponse:
     """Serve the standalone signup page."""
     return FileResponse(SIGNUP_FILE)
+
+
+@app.get("/login", response_class=FileResponse)
+async def serve_login() -> FileResponse:
+    """Serve the login page."""
+    return FileResponse(LOGIN_FILE)
+
+
+@app.get("/app", response_class=FileResponse)
+async def serve_app() -> FileResponse:
+    """Serve the CTCC application."""
+    return FileResponse(APP_FILE)
 
 
 _final_combined_cache: dict | None = None

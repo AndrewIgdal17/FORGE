@@ -88,6 +88,7 @@ function startQuickTour() {
 
 function startFullTour() {
   hideAssistant();
+  if (typeof showApp === 'function') showApp();
   if (typeof TOUR_CONTENT !== 'undefined' && typeof startTour === 'function') {
     startTour(TOUR_CONTENT, function() {
       markTutorialDone();
