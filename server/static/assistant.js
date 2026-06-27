@@ -78,19 +78,19 @@ function getContextualTip() {
 
 function startQuickTour() {
   hideAssistant();
-  if (typeof TOUR_CONTENT !== 'undefined' && typeof startTour === 'function') {
-    var activeTab = document.querySelector('.main-tab-button.active');
-    var tab = activeTab ? activeTab.dataset.tab : '';
-    var pageSteps = TOUR_CONTENT.filter(function(s) { return s.page === tab; });
-    if (pageSteps.length > 0) startTour(pageSteps);
+  var page = window._tourPage || 'home';
+  var steps = (typeof TOUR_CONTENT !== 'undefined' && TOUR_CONTENT[page]) ? TOUR_CONTENT[page] : [];
+  if (steps.length > 0 && typeof startTour === 'function') {
+    startTour(steps);
   }
 }
 
 function startFullTour() {
   hideAssistant();
-  if (typeof showApp === 'function') showApp();
-  if (typeof TOUR_CONTENT !== 'undefined' && typeof startTour === 'function') {
-    startTour(TOUR_CONTENT, function() {
+  var page = window._tourPage || 'home';
+  var steps = (typeof TOUR_CONTENT !== 'undefined' && TOUR_CONTENT[page]) ? TOUR_CONTENT[page] : [];
+  if (steps.length > 0 && typeof startTour === 'function') {
+    startTour(steps, function() {
       markTutorialDone();
       showAssistantMessage('Tour complete! I\'ll be here if you need me.');
     });

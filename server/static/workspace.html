@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>CTCC — Transmission Calculator</title>
+    <title>CTCC — Workspace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -49,25 +49,18 @@
       </div>
     </div>
 
-    <!-- Landing Page (shown on fresh load, hidden once user enters the app) -->
-    <div id="landing-page" class="landing-page">
-      <div id="landing-auth-bar" style="position:absolute; top:1rem; right:1.5rem; display:flex; align-items:center; gap:0.75rem;">
-        <span class="ctcc-user-display" style="font-size:0.8rem; color:#888;"></span>
-        <button type="button" style="padding:0.35rem 0.75rem; background:transparent; color:#888; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut().then(function() { window.location.href = '/'; })">Log out</button>
+    <nav class="app-top-nav">
+      <a href="/app" class="app-top-nav-logo">CTCC</a>
+      <div class="app-top-nav-links">
+        <a href="/app" class="app-top-nav-link" data-nav="home">Home</a>
+        <a href="/app/workspace" class="app-top-nav-link active" data-nav="workspace">Workspace</a>
+        <a href="/app/scenarios-manager" class="app-top-nav-link" data-nav="scenarios">Scenarios</a>
       </div>
-      <div class="landing-title">CTCC</div>
-      <div class="landing-name">Comprehensive Transmission Cost Calculator</div>
-      <div class="landing-tagline">Full-cost benefit-cost analysis for transmission projects</div>
-      <div class="landing-buttons">
-        <button type="button" class="landing-btn landing-btn-primary" id="landing-new-scenario-btn">+ New Scenario</button>
-        <button type="button" class="landing-btn landing-btn-secondary" id="landing-load-file-btn">Load from File</button>
-        <button type="button" class="landing-btn landing-btn-secondary" id="landing-tour-btn">Guided Tour</button>
-        <button type="button" class="landing-btn landing-btn-disabled" id="landing-goto-scenarios-btn" disabled>Go to Scenarios</button>
+      <div class="app-top-nav-user">
+        <span class="ctcc-user-display"></span>
+        <button type="button" class="app-top-nav-logout" onclick="_sb.auth.signOut().then(function(){window.location.href='/';})">Log out</button>
       </div>
-    </div>
-
-    <!-- App Shell (hidden while landing page is visible) -->
-    <div id="app-shell">
+    </nav>
 
     <div id="wizard-overlay" class="wizard-overlay" style="display:none;">
       <div class="wizard-container">
@@ -77,23 +70,10 @@
       </div>
     </div>
 
-    <div class="identity-header">
-      <button type="button" class="home-btn" id="home-btn" title="Back to home">&#8962;</button>
-      <div class="identity-header-text">
-        <div class="identity-title"><strong>CTCC</strong> &middot; Comprehensive Transmission Cost Calculator</div>
-        <div class="identity-tagline">Full-cost benefit-cost analysis for transmission projects</div>
-      </div>
-      <div style="margin-left:auto; display:flex; align-items:center; gap:0.75rem; padding-right:1rem;">
-        <span class="ctcc-user-display" style="font-size:0.8rem; color:#666;"></span>
-        <button type="button" id="logout-btn" style="padding:0.35rem 0.75rem; background:transparent; color:#666; border:1px solid #ccc; border-radius:4px; font-size:0.8rem; cursor:pointer;" onclick="_sb.auth.signOut().then(function() { window.location.href = '/'; })">Log out</button>
-      </div>
-    </div>
-
     <!-- Main Tabs -->
     <div class="main-tabs">
       <button type="button" class="main-tab-button disabled" data-tab="inputs">Inputs</button>
       <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
-      <button type="button" class="main-tab-button active" data-tab="scenarios">Scenarios</button>
       <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
       <button type="button" class="save-scenario-button" id="save-copy-btn">Save as Copy</button>
     </div>
@@ -169,147 +149,6 @@
     <div class="main-tab-content" id="main-tab-results">
       <div id="status" style="display: none;"></div>
       <pre id="result">Submit the form to see the API response.</pre>
-    </div>
-
-    <!-- Scenarios Tab -->
-    <div class="main-tab-content active" id="main-tab-scenarios">
-      <div class="tabs" id="scenario-subtabs" style="padding-left: 1rem;">
-        <button type="button" class="tab-button active" data-scenario-tab="manage">Manage</button>
-        <button type="button" class="tab-button" data-scenario-tab="compare">Compare</button>
-        <button type="button" class="tab-button" data-scenario-tab="sensitivity">Sensitivity</button>
-        <button type="button" class="tab-button" data-scenario-tab="what-if">What-If</button>
-      </div>
-
-      <!-- Manage subtab -->
-      <div class="scenario-subtab-content active" id="scenario-subtab-manage">
-        <div class="scenario-toolbar">
-          <button type="button" id="new-scenario-btn">+ New Scenario</button>
-          <button type="button" id="scenario-upload-btn">Load from file</button>
-          <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
-          <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
-        </div>
-        <div class="scenario-list" id="scenario-list">
-          <div class="scenario-empty">No scenarios yet.</div>
-        </div>
-      </div>
-
-      <!-- Compare subtab -->
-      <div class="scenario-subtab-content" id="scenario-subtab-compare">
-        <div id="compare-scenario-selector"></div>
-        <div class="comparison-section" id="comparison-section">
-          <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (&Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios. <strong>Sign convention:</strong> &Delta; is always <em>scenario value &minus; baseline value</em>. For benefits and net benefit, positive &Delta; means the scenario scores higher (better). For cost PV rows (capital, emissions, risk, etc.), positive &Delta; means the scenario is more expensive; negative &Delta; means cheaper (avoided cost). For ratios such as BCR, positive &Delta; means the scenario&rsquo;s ratio is numerically higher. <em>Note for paper readers:</em> the appendix defines &Delta;C<sup>P:B</sup> = baseline &minus; scenario (avoided-cost convention); cost &Delta; in this table uses the opposite sign so every row follows the same scenario &minus; baseline direction.</p>
-          <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
-            <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
-            <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
-            <button type="button" id="exclusions-btn" class="comparison-toggle-btn">Exclusions</button>
-            <button type="button" id="compare-baseline-btn" class="comparison-toggle-btn">Compare to Baseline</button>
-            <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
-              <input type="checkbox" id="cmp-auto-sort-columns" />
-              Auto-sort Columns
-            </label>
-          </h3>
-          <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
-            <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
-              <label class="cmp-show-delta-label" title="Show Δ = scenario − baseline for each metric. Benefits/NB: positive = better. Cost PVs: positive = more expensive, negative = avoided cost.">
-                <input type="checkbox" id="cmp-show-delta" />
-                Show Δ vs baseline
-              </label>
-              <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
-                <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
-                  <option value="values_plus_delta">Values + Δ</option>
-                  <option value="delta_only">Δ only (except baseline)</option>
-                </select>
-              </label>
-              <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
-                <input type="checkbox" id="cmp-show-percent-delta" disabled />
-                Show % Δ
-              </label>
-            </span>
-            <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
-              <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Line Loss Compensation Emissions</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
-            </span>
-          </div>
-          <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
-          <div id="comparison-table-container"></div>
-        </div>
-      </div>
-
-      <!-- Sensitivity subtab -->
-      <div class="scenario-subtab-content" id="scenario-subtab-sensitivity">
-        <div style="padding: 2rem; max-width: 40rem;">
-          <h2 style="margin: 0 0 0.75rem;">Sensitivity Analysis</h2>
-          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">
-            Systematic sensitivity analysis tools for understanding which input parameters
-            most affect project economics.
-          </p>
-          <div style="background: rgba(0,0,0,0.03); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.08);">
-            <p style="font-weight: 600; margin: 0 0 0.5rem; font-size: 0.85rem;">Under Development</p>
-            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: rgba(0,0,0,0.6); line-height: 1.6;">
-              <li><strong>One-At-a-Time (OAT)</strong> &mdash; vary a single parameter while holding all others fixed to isolate its effect on BCR, costs, and benefits.</li>
-              <li><strong>Latin Hypercube Sampling (LHS)</strong> &mdash; simultaneously vary multiple parameters across their ranges to capture interaction effects and identify the most influential inputs.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- What-If subtab -->
-      <div class="scenario-subtab-content" id="scenario-subtab-what-if">
-        <div style="padding: 1.5rem 1rem; max-width: 60rem;">
-          <div id="design-comparison-reconductoring-guard" style="display: none; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 0.5rem; border: 1px solid rgba(0,0,0,0.08);">
-            <p style="margin: 0; font-size: 0.9rem; color: rgba(0,0,0,0.55);">Counterfactual calculators are available for greenfield (non-reconductoring) projects. Your current project is set to reconductoring mode.</p>
-          </div>
-          <div id="design-comparison-main">
-            <div class="cf-calculator">
-              <div class="collapsible-header expanded cf-calculator-header" id="cf-calc-lineloss-header">
-                Line Losses Under Alternative Designs
-              </div>
-              <div class="collapsible-content expanded" id="cf-calc-lineloss-body">
-                <p style="color: rgba(0,0,0,0.55); line-height: 1.4; font-size: 0.85rem; margin: 0.5rem 0 1.25rem;">
-                  How would line losses change if this route used a different capacity or conductor?
-                  Set an alternative configuration below and run the calculation.
-                </p>
-                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                  <div style="flex: 1 1 14rem; background: rgba(0,0,0,0.02); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,0,0,0.06);">
-                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.4rem; color: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 0.03em;">Your Project</p>
-                    <div id="design-cmp-primary-readout" style="font-size: 0.85rem; line-height: 1.5;">
-                      <span style="color: rgba(0,0,0,0.4);">Run a calculation first</span>
-                    </div>
-                  </div>
-                  <div style="flex: 1 1 14rem; background: rgba(0,100,200,0.04); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,100,200,0.12);">
-                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.5rem; color: rgba(0,100,200,0.7); text-transform: uppercase; letter-spacing: 0.03em;">Alternative Design</p>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                      <label style="font-size: 0.8rem; font-weight: 500;">
-                        Capacity
-                        <select id="design-cmp-capacity" data-path="01_project_technical_details.project.greenfield_comparison_capacity_mw" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
-                          <option value="">(None)</option>
-                        </select>
-                      </label>
-                      <label style="font-size: 0.8rem; font-weight: 500;">
-                        Conductor Type
-                        <select id="design-cmp-conductor" data-path="01_project_technical_details.project.greenfield_comparison_conductor_type" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
-                          <option value="">(None)</option>
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                  <button type="button" id="design-cmp-run-btn" disabled style="padding: 0.5rem 1.25rem; background: #ccc; color: white; border: none; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 600; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Run Comparison</button>
-                  <span id="design-cmp-run-hint" style="font-size: 0.8rem; color: rgba(0,0,0,0.45);">
-                    Select an alternative capacity and conductor, then run.
-                  </span>
-                </div>
-                <div id="design-comparison-results" style="display: none;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Save Dialog Overlay -->
@@ -410,13 +249,12 @@
       </div>
     </div>
 
-    </div><!-- end #app-shell -->
 
     <script>window.CTCC = {};</script>
+    <script>window._tourPage = 'workspace';</script>
     <script src="/static/configs.js"></script>
     <script src="/static/utils.js"></script>
     <script src="/static/lookup-data.js"></script>
-    <script src="/static/comparison.js"></script>
     <script src="/static/scenarios.js"></script>
     <script src="/static/wizard.js"></script>
     <script src="/static/tour-content.js"></script>
@@ -462,52 +300,6 @@
       document.getElementById('status-bar-save-btn').addEventListener('click', function(e) {
         e.preventDefault();
         showSaveDialog();
-      });
-
-      // --- Landing page gate ---
-      const landingPage = document.getElementById('landing-page');
-      const appShell = document.getElementById('app-shell');
-      const gotoScenariosBtn = document.getElementById('landing-goto-scenarios-btn');
-
-      function showApp() {
-        landingPage.style.display = 'none';
-        appShell.style.display = '';
-        sessionStorage.setItem('ctcc-session-active', '1');
-      }
-
-      document.getElementById('landing-new-scenario-btn').addEventListener('click', function() {
-        showApp();
-        showWizard();
-      });
-
-      document.getElementById('landing-load-file-btn').addEventListener('click', function(e) {
-        e.preventDefault();
-        showApp();
-        switchMainTab('scenarios');
-        document.getElementById('scenario-upload-btn').click();
-      });
-
-      document.getElementById('landing-tour-btn').addEventListener('click', function() {
-        showApp();
-        if (typeof startFullTour === 'function') startFullTour();
-      });
-
-      gotoScenariosBtn.addEventListener('click', function() {
-        if (!gotoScenariosBtn.disabled) {
-          showApp();
-          switchMainTab('scenarios');
-        }
-      });
-
-      document.getElementById('home-btn').addEventListener('click', function() {
-        appShell.style.display = 'none';
-        landingPage.style.display = '';
-        sessionStorage.removeItem('ctcc-session-active');
-        if (C.sessionScenarios.length > 0) {
-          gotoScenariosBtn.disabled = false;
-          gotoScenariosBtn.classList.remove('landing-btn-disabled');
-          gotoScenariosBtn.classList.add('landing-btn-secondary');
-        }
       });
 
       C.ctccJsonData = null;
@@ -577,8 +369,6 @@
             C.lastRunResults = json.results;
             renderCTCCResults(json.results);
             markResultsAvailable(0);
-            renderDesignComparison(json.results);
-            updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
               { detail: { results: json.results } }));
             if (json.results._partial) {
@@ -633,9 +423,6 @@
       // Comparison: format 'text' / 'boolean' = absolutes only (no Δ / % Δ); see metricSupportsComparisonDelta.
 
 
-      if (C.comparisonAutoSort) sortComparisonColumnsByCatalog();
-
-
       // --- Scenario Data Layer ---
 
 
@@ -682,7 +469,6 @@
               C.activeScenarioName = name;
               updateScenarioBreadcrumb();
               renderScenarioList();
-              renderCompareSelector();
               updateScenarioBadge();
               await saveScenarioToDB(s);
             }
@@ -715,7 +501,6 @@
         }
       });
 
-      document.getElementById('scenario-save-btn').addEventListener('click', showSaveDialog);
       document.getElementById('save-scenario-main-btn').addEventListener('click', async () => {
         if (!C.activeScenarioId) {
           showToast('No active scenario to save.');
@@ -728,7 +513,6 @@
         scenario.metadata.timestamp = new Date().toISOString();
         scenario.metadata.source = 'manual';
         renderScenarioList();
-        renderCompareSelector();
         await saveScenarioToDB(scenario);
         showToast('Scenario saved.');
       });
@@ -783,295 +567,6 @@
         }
       });
 
-      document.getElementById('new-scenario-btn').addEventListener('click', () => {
-        showWizard();
-      });
-
-
-      // Copy comparison table to clipboard (Excel-compatible TSV).
-      // One column per metric. With Δ enabled, each scenario gets sub-rows for delta and optional % delta.
-      document.getElementById('copy-table-btn').addEventListener('click', function() {
-        const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
-        if (selectedScenarios.length === 0 || C.comparisonColumns.length === 0) {
-          alert('No scenarios or columns selected for comparison.');
-          return;
-        }
-        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
-        const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario);
-        const hasPercent = hasDelta && C.showComparisonPercentDelta;
-
-        const headers = ['Scenario'];
-        C.comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
-
-        const rows = [];
-        selectedScenarios.forEach(s => {
-          const isBase = baselineScenario && s.id === baselineScenario.id;
-          let nameCell = s.customName;
-          if (hasDelta && isBase) nameCell += ' (Baseline)';
-
-          // Value row
-          const valCells = [nameCell];
-          C.comparisonColumns.forEach(key => {
-            const cfg = getMetricConfig(key);
-            if (!cfg) { valCells.push(''); return; }
-            const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
-            valCells.push(parts.absText || '');
-          });
-          rows.push(valCells);
-
-          // Delta row
-          if (hasDelta && !isBase) {
-            const deltaCells = [''];
-            C.comparisonColumns.forEach(key => {
-              const cfg = getMetricConfig(key);
-              if (!cfg) { deltaCells.push(''); return; }
-              const dline = formatDeltaLine(baselineScenario, s, key);
-              deltaCells.push(dline || '');
-            });
-            rows.push(deltaCells);
-          }
-
-          // Percent delta row
-          if (hasPercent && !isBase) {
-            const pctCells = [''];
-            C.comparisonColumns.forEach(key => {
-              const cfg = getMetricConfig(key);
-              if (!cfg) { pctCells.push(''); return; }
-              const pline = formatPercentDeltaLine(baselineScenario, s, key);
-              pctCells.push(pline || '');
-            });
-            rows.push(pctCells);
-          }
-        });
-        const tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-        navigator.clipboard.writeText(tsv).then(() => {
-          const btn = document.getElementById('copy-table-btn');
-          const orig = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = orig; }, 1500);
-        });
-      });
-
-      // Export comparison table as PNG — one column per metric, delta/% nested as sub-lines.
-      document.getElementById('export-png-btn').addEventListener('click', function() {
-        const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
-        if (selectedScenarios.length === 0 || C.comparisonColumns.length === 0) {
-          alert('No scenarios or columns selected for comparison.');
-          return;
-        }
-        const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
-        const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario);
-        const hasPercent = hasDelta && C.showComparisonPercentDelta;
-
-        const scale = 2;
-        const font = '13px system-ui, -apple-system, sans-serif';
-        const monoFont = '12px "SF Mono", Monaco, Consolas, monospace';
-        const deltaMonoFont = '11px "SF Mono", Monaco, Consolas, monospace';
-        const boldFont = 'bold 13px system-ui, -apple-system, sans-serif';
-        const titleFont = 'bold 16px system-ui, -apple-system, sans-serif';
-        const padX = 12;
-        const lineH = 15;
-        const headerH = 32;
-        const titleH = 36;
-        const cellPadY = 6;
-
-        // Determine lines per row: 1 (value) + optional delta + optional %
-        const linesPerRow = 1 + (hasDelta ? 1 : 0) + (hasPercent ? 1 : 0);
-        const rowH = linesPerRow * lineH + cellPadY * 2;
-
-        // Headers: one per metric
-        const headers = ['Scenario'];
-        C.comparisonColumns.forEach(key => headers.push(comparisonMetricLabel(key)));
-
-        // Measure column widths
-        const mCtx = document.createElement('canvas').getContext('2d');
-        const colWidths = headers.map((h, i) => {
-          mCtx.font = boldFont;
-          let w = mCtx.measureText(h).width;
-          selectedScenarios.forEach(s => {
-            if (i === 0) {
-              mCtx.font = font;
-              let nt = s.customName;
-              if (hasDelta && baselineScenario && s.id === baselineScenario.id) nt += ' (Baseline)';
-              w = Math.max(w, mCtx.measureText(nt).width);
-            } else {
-              const key = C.comparisonColumns[i - 1];
-              const cfg = getMetricConfig(key);
-              if (!cfg) return;
-              const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
-              mCtx.font = monoFont;
-              w = Math.max(w, mCtx.measureText(parts.absText || '').width);
-              if (hasDelta) {
-                const dline = formatDeltaLine(baselineScenario, s, key);
-                if (dline) { mCtx.font = deltaMonoFont; w = Math.max(w, mCtx.measureText(dline).width); }
-              }
-              if (hasPercent) {
-                const pline = formatPercentDeltaLine(baselineScenario, s, key);
-                if (pline) { mCtx.font = deltaMonoFont; w = Math.max(w, mCtx.measureText(pline).width); }
-              }
-            }
-          });
-          return w + padX * 2 + 4;
-        });
-
-        const totalW = colWidths.reduce((a, b) => a + b, 0);
-        const totalH = titleH + headerH + selectedScenarios.length * rowH;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = totalW * scale;
-        canvas.height = totalH * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(scale, scale);
-
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, totalW, totalH);
-
-        ctx.font = titleFont;
-        ctx.fillStyle = '#000';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Scenario Comparison', padX, titleH / 2);
-
-        // Header row
-        let y = titleH;
-        ctx.fillStyle = '#f8f9fa';
-        ctx.fillRect(0, y, totalW, headerH);
-        ctx.strokeStyle = '#ddd';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(0, y + headerH); ctx.lineTo(totalW, y + headerH); ctx.stroke();
-        ctx.font = boldFont;
-        ctx.fillStyle = '#000';
-        let x = 0;
-        headers.forEach((h, i) => {
-          ctx.textAlign = i === 0 ? 'left' : 'right';
-          const tx = i === 0 ? x + padX : x + colWidths[i] - padX;
-          ctx.fillText(h, tx, y + headerH / 2);
-          x += colWidths[i];
-        });
-
-        // Data rows
-        y += headerH;
-        selectedScenarios.forEach((s, ri) => {
-          if (ri % 2 === 1) {
-            ctx.fillStyle = 'rgba(0,0,0,0.02)';
-            ctx.fillRect(0, y, totalW, rowH);
-          }
-          ctx.strokeStyle = '#eee';
-          ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(totalW, y + rowH); ctx.stroke();
-
-          x = 0;
-          // Scenario name
-          ctx.font = font;
-          ctx.fillStyle = '#000';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          let nameDraw = s.customName;
-          if (hasDelta && baselineScenario && s.id === baselineScenario.id) nameDraw += ' (Baseline)';
-          ctx.fillText(nameDraw, x + padX, y + rowH / 2);
-          x += colWidths[0];
-
-          const isBase = baselineScenario && s.id === baselineScenario.id;
-
-          // Metric columns
-          for (let ci = 0; ci < C.comparisonColumns.length; ci++) {
-            const key = C.comparisonColumns[ci];
-            const cfg = getMetricConfig(key);
-            const colRight = x + colWidths[ci + 1] - padX;
-            ctx.textAlign = 'right';
-            if (!cfg) { x += colWidths[ci + 1]; continue; }
-
-            const parts = getDeltaDisplayParts(baselineScenario, s, key, hasPercent);
-            let lineY = y + cellPadY + lineH / 2;
-
-            // Line 1: absolute value
-            ctx.font = monoFont;
-            ctx.fillStyle = '#000';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(parts.absText || '', colRight, lineY);
-            lineY += lineH;
-
-            // Line 2: delta (if active and not baseline)
-            if (hasDelta) {
-              if (!isBase) {
-                const dline = formatDeltaLine(baselineScenario, s, key);
-                if (dline) {
-                  ctx.font = deltaMonoFont;
-                  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-                  ctx.fillText(dline, colRight, lineY);
-                }
-              }
-              lineY += lineH;
-            }
-
-            // Line 3: percent delta (if active and not baseline)
-            if (hasPercent) {
-              if (!isBase) {
-                const pline = formatPercentDeltaLine(baselineScenario, s, key);
-                if (pline) {
-                  ctx.font = deltaMonoFont;
-                  ctx.fillStyle = 'rgba(0,0,0,0.38)';
-                  ctx.fillText(pline, colRight, lineY);
-                }
-              }
-            }
-
-            x += colWidths[ci + 1];
-          }
-          y += rowH;
-        });
-
-        canvas.toBlob(function(blob) {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'scenario_comparison.png';
-          a.click();
-          URL.revokeObjectURL(a.href);
-        });
-      });
-
-
-      // --- Upload & Load ---
-
-      document.getElementById('scenario-upload-btn').addEventListener('click', () => {
-        document.getElementById('scenario-file-input').click();
-      });
-
-      document.getElementById('scenario-file-input').addEventListener('change', function(e) {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        // Sort files alphabetically/numerically by name
-        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-        // Load sequentially to preserve sort order
-        let i = 0;
-        function loadNext() {
-          if (i >= files.length) return;
-          const file = files[i++];
-          const reader = new FileReader();
-          reader.onload = function(ev) {
-            const text = ev.target.result;
-            if (file.name.endsWith('.ctcc')) {
-              loadCtccFile(text, file.name);
-            } else if (file.name.endsWith('.csv')) {
-              loadCsvFile(text, file.name);
-            }
-            loadNext();
-          };
-          reader.readAsText(file);
-        }
-        loadNext();
-
-        // Reset file input so same file can be re-uploaded
-        this.value = '';
-      });
-
-
-      // --- Comparison Table ---
-
-
-      // Toolbar row 2 toggle logic — only one of Exclusions / Compare to Baseline active at a time
-      initComparisonToolbar();
 
       // Smart tooltip positioning (activeTooltip moved to utils.js)
 
@@ -1179,58 +674,6 @@
           }
         });
       });
-
-      // Scenario subtab switching
-      function switchScenarioSubtab(tabId) {
-        document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.scenarioTab === tabId);
-        });
-        document.querySelectorAll('.scenario-subtab-content').forEach(pane => {
-          pane.classList.toggle('active', pane.id === 'scenario-subtab-' + tabId);
-        });
-        updateBreadcrumb();
-      }
-
-      document.querySelectorAll('#scenario-subtabs .tab-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          switchScenarioSubtab(btn.dataset.scenarioTab);
-          if (btn.dataset.scenarioTab === 'what-if') {
-            updateDesignComparisonState();
-          }
-          if (btn.dataset.scenarioTab === 'compare') {
-            renderCompareSelector();
-          }
-        });
-      });
-
-      // --- Counterfactual Calculators subtab logic ---
-
-      // Calculator-level collapsible toggle
-      document.getElementById('cf-calc-lineloss-header')?.addEventListener('click', function() {
-        this.classList.toggle('expanded');
-        document.getElementById('cf-calc-lineloss-body')?.classList.toggle('expanded');
-      });
-
-
-      document.getElementById('design-cmp-capacity')?.addEventListener('change', updateDesignCmpRunButton);
-      document.getElementById('design-cmp-conductor')?.addEventListener('change', updateDesignCmpRunButton);
-
-      document.getElementById('design-cmp-run-btn')?.addEventListener('click', () => {
-        const btn = document.getElementById('design-cmp-run-btn');
-        if (btn?.disabled) return;
-        const form = document.getElementById('demo-form');
-        if (form) {
-          form.requestSubmit();
-          const onResults = () => {
-            switchMainTab('scenarios');
-            switchScenarioSubtab('what-if');
-            updateDesignComparisonState();
-            document.removeEventListener('ctcc-results-ready', onResults);
-          };
-          document.addEventListener('ctcc-results-ready', onResults);
-        }
-      });
-
 
       const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
 
@@ -1421,18 +864,6 @@
 
           setValueAtPath(path, value);
         });
-
-        // Collect Design Comparison selects (live outside tabContentsContainer)
-        const dcCapacity = document.getElementById('design-cmp-capacity');
-        if (dcCapacity) {
-          const v = dcCapacity.value;
-          setValueAtPath(dcCapacity.dataset.path, v === '' ? null : parseInt(v, 10));
-        }
-        const dcConductor = document.getElementById('design-cmp-conductor');
-        if (dcConductor) {
-          const v = dcConductor.value;
-          setValueAtPath(dcConductor.dataset.path, v === '' ? null : v);
-        }
 
         return result;
       }
@@ -1668,8 +1099,6 @@
             renderCTCCResults(json.results);
             C.lastRunResults = json.results;
             C.latestValidResults = json.results;
-            renderDesignComparison(json.results);
-            updateDesignCmpPrimaryReadout();
             document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
           } else {
             // Fallback to raw JSON display
@@ -1752,36 +1181,28 @@
 
           window.CTCC.userProfile = profile;
           window.CTCC.currentUserId = session.user.id;
-          var displayName = profile.username || '';
           document.querySelectorAll('.ctcc-user-display').forEach(function(el) {
-            el.textContent = displayName;
+            el.textContent = profile.username || '';
           });
-
-          if (sessionStorage.getItem('ctcc-session-active')) {
-            showApp();
-          } else {
-            landingPage.style.display = '';
-            appShell.style.display = 'none';
-          }
 
           await loadScenariosFromDB();
 
           _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
             .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
 
-          var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
-          if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
-            gotoBtn.disabled = false;
-            gotoBtn.classList.remove('landing-btn-disabled');
-            gotoBtn.classList.add('landing-btn-secondary');
-          }
-
           if (typeof initAssistant === 'function') initAssistant();
 
-          if (!profile.has_done_tutorial) {
-            if (typeof showWelcomeBubble === 'function') {
-              setTimeout(showWelcomeBubble, 500);
-            }
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('new') === '1') {
+            if (typeof showWizard === 'function') showWizard();
+          } else if (params.get('scenario')) {
+            var scenarioId = params.get('scenario');
+            var found = window.CTCC.sessionScenarios.find(function(s) { return s.id === scenarioId; });
+            if (found && typeof setActiveScenario === 'function') setActiveScenario(found.id);
+          } else if (window.CTCC.sessionScenarios.length > 0) {
+            var userScenarios = window.CTCC.sessionScenarios.filter(function(s) { return s.user_id === session.user.id; });
+            var latest = userScenarios.length > 0 ? userScenarios[0] : window.CTCC.sessionScenarios[0];
+            if (typeof setActiveScenario === 'function') setActiveScenario(latest.id);
           }
         });
       }

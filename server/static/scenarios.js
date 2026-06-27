@@ -620,12 +620,18 @@ function renderScenarioList() {
       badge.textContent = 'Active';
       actions.appendChild(badge);
     } else {
-      const setActiveBtn = document.createElement('button');
-      setActiveBtn.type = 'button';
-      setActiveBtn.className = 'load-btn';
-      setActiveBtn.textContent = 'Set Active';
-      setActiveBtn.addEventListener('click', () => setActiveScenario(scenario));
-      actions.appendChild(setActiveBtn);
+      const openBtn = document.createElement('button');
+      openBtn.type = 'button';
+      openBtn.className = 'load-btn';
+      openBtn.textContent = 'Open';
+      openBtn.addEventListener('click', function() {
+        if (window.location.pathname === '/app/workspace') {
+          setActiveScenario(scenario);
+        } else {
+          window.location.href = '/app/workspace?scenario=' + scenario.id;
+        }
+      });
+      actions.appendChild(openBtn);
     }
 
     if (isOwner) {

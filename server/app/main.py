@@ -43,7 +43,9 @@ YAMLS_DIR = BASE_DIR.parent / "yamls"
 LANDING_FILE = STATIC_DIR / "landing.html"
 SIGNUP_FILE = STATIC_DIR / "signup.html"
 LOGIN_FILE = STATIC_DIR / "login.html"
-APP_FILE = STATIC_DIR / "app.html"
+HOME_FILE = STATIC_DIR / "home.html"
+WORKSPACE_FILE = STATIC_DIR / "workspace.html"
+SCENARIOS_FILE = STATIC_DIR / "scenarios-manager.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
 # Kept when syncing YAML→JSON; not derived from a YAML stem.
 PRESERVED_JSON_NAMES = frozenset(
@@ -158,9 +160,21 @@ async def serve_login() -> FileResponse:
 
 
 @app.get("/app", response_class=FileResponse)
-async def serve_app() -> FileResponse:
-    """Serve the CTCC application."""
-    return FileResponse(APP_FILE)
+async def serve_home() -> FileResponse:
+    """Serve the CTCC home page."""
+    return FileResponse(HOME_FILE)
+
+
+@app.get("/app/workspace", response_class=FileResponse)
+async def serve_workspace() -> FileResponse:
+    """Serve the CTCC workspace (inputs + results)."""
+    return FileResponse(WORKSPACE_FILE)
+
+
+@app.get("/app/scenarios-manager", response_class=FileResponse)
+async def serve_scenarios_manager() -> FileResponse:
+    """Serve the scenario manager."""
+    return FileResponse(SCENARIOS_FILE)
 
 
 _final_combined_cache: dict | None = None
