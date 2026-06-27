@@ -4406,17 +4406,17 @@ function updateCapitalCostSubTabVisibility() {
 
 function rebuildCapitalCosts(fromConfigChange) {
   const entry = getBuildCostEntry();
-  const tabContent = document.querySelector('[data-tab-id="capital-costs"]');
-  if (!tabContent) return;
+  // Query across all sub-item containers (content-panel + offscreen holder)
+  const searchRoot = document.querySelector('[data-tab-id="capital-costs"]') || document;
 
-  tabContent.querySelectorAll('.capital-cost-table input[data-cost-key]').forEach(input => {
+  searchRoot.querySelectorAll('.capital-cost-table input[data-cost-key]').forEach(input => {
     const val = entry ? (entry[input.dataset.costKey] ?? 0) : 0;
     input.value = formatCurrencyInput(val);
     input.readOnly = true;
     input.classList.add('locked-cell');
   });
 
-  tabContent.querySelectorAll('.capital-cost-table').forEach(table => {
+  searchRoot.querySelectorAll('.capital-cost-table').forEach(table => {
     const th = table.querySelector('.multiplier-lock-toggle');
     if (th) {
       th.innerHTML = '<span class="lock-icon">🔒</span> Value';
@@ -4425,7 +4425,7 @@ function rebuildCapitalCosts(fromConfigChange) {
   });
 
   // Update context displays
-  tabContent.querySelectorAll('[data-capital-context-value]').forEach(el => {
+  searchRoot.querySelectorAll('[data-capital-context-value]').forEach(el => {
     const path = el.dataset.capitalContextValue;
     const src = document.querySelector(`[data-path="${path}"]`);
     el.textContent = src ? src.value : '—';
@@ -4439,52 +4439,55 @@ function rebuildCapitalCosts(fromConfigChange) {
 }
 
 function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
-    const tabButtonsContainer = document.getElementById('tab-buttons');
-    const tabContentsContainer = document.getElementById('tab-contents');
-    const tabsContainer = document.getElementById('tabs-container');
   if (!taxonomyData || !metadataList) {
     console.error('Taxonomy or input metadata not loaded — cannot render inputs');
     return;
   }
 
-  tabButtonsContainer.innerHTML = '';
-  tabContentsContainer.innerHTML = '';
   C.ctccJsonData = data;
+
+  // Create (or reuse) an off-screen holder so all sub-item containers live in the DOM
+  // while not visible — this lets setTimeout-based event-listener setup find elements.
+  var offscreen = document.getElementById('ctcc-offscreen-inputs');
+  if (offscreen) offscreen.innerHTML = '';
+  if (!offscreen) {
+    offscreen = document.createElement('div');
+    offscreen.id = 'ctcc-offscreen-inputs';
+    offscreen.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;';
+    document.body.appendChild(offscreen);
+  }
+  C._renderedSubItems = {};
+  C._currentSubItemId = null;
 
   const taxById = {};
   (taxonomyData.items || []).forEach(item => { taxById[item.id] = item; });
 
   C.INPUT_TAB_ORDER.forEach((tabId, tabIndex) => {
-    const tabLabel = C.INPUT_TAB_LABELS[tabId] || tabId;
-
-    const tabButton = document.createElement('button');
-    tabButton.type = 'button';
-    tabButton.className = 'tab-button' + (tabIndex === 0 ? ' active' : '');
-    tabButton.textContent = tabLabel;
-    tabButton.appendChild(makeMethodologyIcon(tabId));
-    tabButton.addEventListener('click', () => switchTab(tabIndex));
-    tabButtonsContainer.appendChild(tabButton);
-
-    const tabContent = document.createElement('div');
-    tabContent.className = 'tab-content' + (tabIndex === 0 ? ' active' : '');
-    tabContent.dataset.tabId = tabId;
-
     const tabFields = metadataList.filter(f => f.input_tab === tabId && f.condition !== 'always_hidden');
     let subTabIds = [...new Set(tabFields.map(f => f.sub_tab).filter(Boolean))];
-    if (tabId === 'project-technical') {
-      subTabIds = ['technology', 'timeline', 'routing', 'conductor-details', 'structure-details', 'converter-details'];
+    if (tabId === 'project-identity') {
+      subTabIds = ['technology', 'timeline'];
+    }
+    if (tabId === 'equipment') {
+      subTabIds = ['conductor-details', 'converter-details'];
+    }
+    if (tabId === 'routing') {
+      subTabIds = ['terrain-mix', 'rights-of-way'];
     }
     if (tabId === 'financial') {
       subTabIds = ['rates', 'afudc'];
     }
     if (tabId === 'capital-costs') {
-      subTabIds = ['conductor', 'structure', 'converter', 'environmental-mitigation'];
+      subTabIds = ['conductor', 'base-mitigation', 'credits'];
     }
-    if (tabId === 'operational') {
-      subTabIds = ['operational-insurance', 'maintenance-costs', 'vegetation-management'];
+    if (tabId === 'operating') {
+      subTabIds = ['operational-insurance', 'vegetation-management', 'delay-costs'];
     }
     if (tabId === 'emissions') {
-      subTabIds = ['energy-emissions-energy', 'energy-emissions-emissions'];
+      subTabIds = ['energy-emissions-emissions'];
+    }
+    if (tabId === 'energy-mix') {
+      subTabIds = ['energy-emissions-energy'];
     }
     if (tabId === 'risk') {
       subTabIds = ['wildfire-risk', 'outage-risk'];
@@ -4494,140 +4497,54 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
     }
 
     if (subTabIds.length > 0) {
-      // --- Sub-tabbed rendering ---
-
-      // Sub-tab bar
-      const subTabBar = document.createElement('div');
-      subTabBar.className = 'sub-tabs';
-      const subTabContents = [];
+      // --- Build per-sub-item content containers for sidebar navigation ---
 
       subTabIds.forEach((stId, stIndex) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'sub-tab-button' + (stIndex === 0 ? ' active' : '');
-        btn.textContent = C.SUB_TAB_LABELS[stId] || stId;
-        btn.appendChild(makeMethodologyIcon(stId));
-        subTabBar.appendChild(btn);
+        const stContent = document.createElement('div');
+        stContent.className = 'sub-tab-content';
+        stContent.dataset.subTab = stId;
+        // For 'technology', also include 'identity' sub_tab fields (e.g. project_name)
+        const stFields = tabFields.filter(f =>
+          f.sub_tab === stId || (stId === 'technology' && f.sub_tab === 'identity')
+        );
 
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'sub-tab-content';
-        contentDiv.dataset.subTab = stId;
-        if (stIndex > 0) contentDiv.style.display = 'none';
-        subTabContents.push(contentDiv);
-
-        btn.addEventListener('click', () => {
-          subTabBar.querySelectorAll('.sub-tab-button').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          subTabContents.forEach(c => { c.style.display = c.dataset.subTab === stId ? '' : 'none'; });
-          updateBreadcrumb();
-        });
-      });
-
-      tabContent.appendChild(subTabBar);
-      renderTabGuideBanner(tabId, tabContent);
-
-      subTabIds.forEach((stId, stIndex) => {
-        const stContent = subTabContents[stIndex];
-        const stFields = tabFields.filter(f => f.sub_tab === stId);
-
-        if (stId === 'routing') {
+        if (stId === 'terrain-mix') {
           renderTabGuideBanner(stId, stContent);
-          const routingPanel = document.createElement('div');
-          routingPanel.className = 'routing-panel';
-          routingPanel.id = 'routing-panel';
-
-          const subSubBar = document.createElement('div');
-          subSubBar.className = 'sub-sub-tabs';
-          routingPanel.appendChild(subSubBar);
-
-          const banner = document.createElement('div');
-          banner.className = 'routing-validation-banner';
-          banner.id = 'routing-validation-banner';
-          banner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text"></span>';
-          routingPanel.appendChild(banner);
-
-          const l4Panels = [];
-          const l4Ids = ['terrain-mix', 'rights-of-way'];
-          l4Ids.forEach((l4Id, l4Idx) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-            btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
-            btn.appendChild(makeMethodologyIcon(l4Id));
-            subSubBar.appendChild(btn);
-
-            const panel = document.createElement('div');
-            panel.className = 'sub-sub-tab-content';
-            panel.dataset.subSubTab = l4Id;
-            if (l4Idx > 0) panel.style.display = 'none';
-
-            if (l4Id === 'terrain-mix') {
-              panel.appendChild(renderTerrainTable(data));
-              renderTabGuideBanner(l4Id, panel);
-            } else {
-              renderTabGuideBanner(l4Id, panel);
-              const rowMeta = tabFields.find(f => f.id === 'uses_existing_row');
-              if (rowMeta) {
-                const val = getValueAtFieldPath(data, rowMeta.yaml_section, rowMeta.field_path);
-                const toggleContainer = document.createElement('div');
-                toggleContainer.className = 'row-regime-toggle';
-                const fieldEl = createFieldFromMetadata(rowMeta, val);
-                toggleContainer.appendChild(fieldEl);
-                panel.appendChild(toggleContainer);
-                const cb = fieldEl.querySelector('input[type="checkbox"]');
-                if (cb) cb.addEventListener('change', updateROWColumnVisibility);
-              }
-              const splitGrid = document.createElement('div');
-              splitGrid.className = 'row-split-grid';
-              const rowInputs = document.createElement('div');
-              rowInputs.className = 'row-zone-inputs';
-              rowInputs.appendChild(renderROWZoneTable(data));
-              splitGrid.appendChild(rowInputs);
-              splitGrid.appendChild(renderROWCostPanel());
-              panel.appendChild(splitGrid);
-              updateROWColumnVisibility();
-            }
-            l4Panels.push(panel);
-            routingPanel.appendChild(panel);
-
-            btn.addEventListener('click', () => {
-              subSubBar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
-              btn.classList.add('active');
-              l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
-            });
-          });
-
-          stContent.appendChild(routingPanel);
-
-        } else if (stId === 'environmental-mitigation') {
+          const routingBanner = document.createElement('div');
+          routingBanner.className = 'routing-validation-banner';
+          routingBanner.id = 'routing-validation-banner';
+          routingBanner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text"></span>';
+          stContent.insertBefore(routingBanner, stContent.firstChild);
+          stContent.appendChild(renderTerrainTable(data));
+        } else if (stId === 'rights-of-way') {
           renderTabGuideBanner(stId, stContent);
-          const envL4Bar = document.createElement('div');
-          envL4Bar.className = 'sub-sub-tabs';
-          const envL4Ids = ['base-mitigation', 'credits'];
-          const envL4Panels = [];
-          envL4Ids.forEach((l4Id, l4Idx) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
-            btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
-            btn.appendChild(makeMethodologyIcon(l4Id));
-            envL4Bar.appendChild(btn);
-            const panel = document.createElement('div');
-            panel.className = 'sub-sub-tab-content';
-            panel.dataset.subSubTab = l4Id;
-            if (l4Idx > 0) panel.style.display = 'none';
-            if (l4Id === 'base-mitigation') panel.appendChild(renderEnvBaseMitigationTable(data));
-            else if (l4Id === 'credits') panel.appendChild(renderEnvCreditsTable(data));
-            renderTabGuideBanner(l4Id, panel);
-            envL4Panels.push(panel);
-            btn.addEventListener('click', () => {
-              envL4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
-              btn.classList.add('active');
-              envL4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
-            });
-          });
-          stContent.appendChild(envL4Bar);
-          envL4Panels.forEach(p => stContent.appendChild(p));
+          const rowMeta = tabFields.find(f => f.id === 'uses_existing_row');
+          if (rowMeta) {
+            const val = getValueAtFieldPath(data, rowMeta.yaml_section, rowMeta.field_path);
+            const toggleContainer = document.createElement('div');
+            toggleContainer.className = 'row-regime-toggle';
+            const fieldEl = createFieldFromMetadata(rowMeta, val);
+            toggleContainer.appendChild(fieldEl);
+            stContent.appendChild(toggleContainer);
+            const cb = fieldEl.querySelector('input[type="checkbox"]');
+            if (cb) cb.addEventListener('change', updateROWColumnVisibility);
+          }
+          const splitGrid = document.createElement('div');
+          splitGrid.className = 'row-split-grid';
+          const rowInputs = document.createElement('div');
+          rowInputs.className = 'row-zone-inputs';
+          rowInputs.appendChild(renderROWZoneTable(data));
+          splitGrid.appendChild(rowInputs);
+          splitGrid.appendChild(renderROWCostPanel());
+          stContent.appendChild(splitGrid);
+          updateROWColumnVisibility();
+
+        } else if (stId === 'base-mitigation') {
+          renderTabGuideBanner(stId, stContent);
+          stContent.appendChild(renderEnvBaseMitigationTable(data));
+        } else if (stId === 'credits') {
+          renderTabGuideBanner(stId, stContent);
+          stContent.appendChild(renderEnvCreditsTable(data));
 
         } else if (stId === 'conductor' || stId === 'structure' || stId === 'converter') {
           renderTabGuideBanner(stId, stContent);
@@ -4774,7 +4691,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           stContent.appendChild(renderConstraintsPanel(data));
         } else if (stId === 'technology' || stId === 'timeline') {
           renderTabGuideBanner(stId, stContent);
-          renderTaxonomySections(stContent, stFields, data, taxById, tabContent);
+          renderTaxonomySections(stContent, stFields, data, taxById, stContent);
           if (stId === 'technology') {
             const voltageDisplay = document.createElement('div');
             voltageDisplay.className = 'form-field form-field-readonly';
@@ -4814,14 +4731,88 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
             const oldCapField = stContent.querySelector('[data-field-path="01_project_technical_details.project.old_capacity_mw"]');
             if (oldCapField) oldCapField.after(oldVoltageDisplay);
           }
+        } else if (stId === 'delay-costs') {
+          renderTabGuideBanner(stId, stContent);
+          renderTaxonomySections(stContent, stFields, data, taxById, stContent);
+          // Build delay cost totals table and split grid
+          const delayTable = document.createElement('table');
+          delayTable.className = 'ctcc-table';
+          delayTable.id = 'delay-cost-table';
+          const delayCaption = document.createElement('caption');
+          delayCaption.textContent = 'Annual Delay Costs';
+          delayCaption.appendChild(makeHelpIcon('Annual out-of-pocket costs during the pre-construction delay period.'));
+          delayTable.appendChild(delayCaption);
+          const delayThead = document.createElement('thead');
+          const dHRow = document.createElement('tr');
+          const dThCat = document.createElement('th');
+          dThCat.textContent = 'Category';
+          dHRow.appendChild(dThCat);
+          const dThCost = document.createElement('th');
+          dThCost.textContent = '$/year';
+          dHRow.appendChild(dThCost);
+          delayThead.appendChild(dHRow);
+          delayTable.appendChild(delayThead);
+          const delayTbody = document.createElement('tbody');
+          let delayTotal = 0;
+          const delayInputs = stContent.querySelectorAll('input[data-path*="annual_delay_costs"]');
+          delayInputs.forEach(inp => {
+            const dTr = document.createElement('tr');
+            const dTdLabel = document.createElement('td');
+            const dPathParts = inp.dataset.path.split('.');
+            const dKey = dPathParts[dPathParts.length - 1];
+            dTdLabel.textContent = dKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            dTdLabel.style.fontWeight = '500';
+            dTr.appendChild(dTdLabel);
+            const dTdVal = document.createElement('td');
+            dTdVal.appendChild(inp);
+            dTdVal.appendChild(makeEquationIcon({...EQ_DELAY_ANNUAL, context: `Annual ${dTdLabel.textContent.toLowerCase()} cost during the delay/permitting period.`}));
+            dTr.appendChild(dTdVal);
+            delayTbody.appendChild(dTr);
+            const dRaw = parseFloat(String(inp.value).replace(/[$,]/g, '')) || 0;
+            delayTotal += dRaw;
+          });
+          const dTotalRow = document.createElement('tr');
+          dTotalRow.className = 'row-total-row';
+          const dTdTotLabel = document.createElement('td');
+          dTdTotLabel.textContent = 'TOTAL';
+          dTdTotLabel.style.fontWeight = '700';
+          dTotalRow.appendChild(dTdTotLabel);
+          const dTdTotVal = document.createElement('td');
+          dTdTotVal.id = 'delay-cost-total';
+          dTdTotVal.style.fontWeight = '600';
+          dTdTotVal.textContent = '$' + delayTotal.toLocaleString();
+          dTotalRow.appendChild(dTdTotVal);
+          delayTbody.appendChild(dTotalRow);
+          delayTable.appendChild(delayTbody);
+          const updateDelayTotal = () => {
+            let dSum = 0;
+            delayTable.querySelectorAll('input[data-path*="annual_delay_costs"]').forEach(di => {
+              const dR = parseFloat(String(di.value).replace(/[$,]/g, ''));
+              if (!isNaN(dR)) dSum += dR;
+            });
+            dTdTotVal.textContent = '$' + dSum.toLocaleString();
+          };
+          delayTable.addEventListener('input', updateDelayTotal);
+          const delaySplitGrid = document.createElement('div');
+          delaySplitGrid.className = 'row-split-grid';
+          const delayInputsWrapper = document.createElement('div');
+          delayInputsWrapper.className = 'row-zone-inputs';
+          delayInputsWrapper.appendChild(delayTable);
+          delaySplitGrid.appendChild(delayInputsWrapper);
+          delaySplitGrid.appendChild(renderDelayCostPanel());
+          const dGuideBanner = stContent.querySelector('.tab-guide-banner');
+          while (stContent.firstChild) stContent.removeChild(stContent.firstChild);
+          if (dGuideBanner) stContent.appendChild(dGuideBanner);
+          stContent.appendChild(delaySplitGrid);
         }
 
-        tabContent.appendChild(stContent);
+        // Store in registry and move to offscreen holder (preserves all event listeners)
+        C._renderedSubItems[stId] = stContent;
+        offscreen.appendChild(stContent);
       });
 
       // Wire up tab-specific listeners after DOM is built
       if (tabId === 'capital-costs') {
-        tabContent.addEventListener('input', () => { updateEnvironmentalAcres(); });
         setTimeout(() => {
           const paths = [
             '01_project_technical_details.project.construction_type',
@@ -4845,11 +4836,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           setTimeout(rebuildCapitalCosts, 50);
           updateEnvironmentalAcres();
         }, 0);
-      } else if (tabId === 'project-technical') {
-        tabContent.addEventListener('input', () => {
-          updateRoutingValidation();
-          updateEnvironmentalAcres();
-        });
+      } else if (tabId === 'project-identity') {
         setTimeout(() => {
           const reconEl = document.querySelector('[data-path="01_project_technical_details.project.reconductoring"]');
           const rowEl = document.querySelector('[data-path="01_project_technical_details.project.uses_existing_row"]');
@@ -4935,7 +4922,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
             updateAcDcWarning();
           }, 200);
         }, 0);
-      } else if (tabId === 'operational') {
+      } else if (tabId === 'operating') {
         setTimeout(() => {
           const paths = [
             '01_project_technical_details.project.construction_type',
@@ -5017,133 +5004,22 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         }, 0);
       }
 
-    } else {
-      // --- Standard rendering (no sub-tabs) ---
-      renderTabGuideBanner(tabId, tabContent);
-      renderTaxonomySections(tabContent, tabFields, data, taxById, tabContent);
-
-      // Delay Costs: add derived total row
-      if (tabId === 'delay-costs') {
-        const delayTable = document.createElement('table');
-        delayTable.className = 'ctcc-table';
-        delayTable.id = 'delay-cost-table';
-        const caption = document.createElement('caption');
-        caption.textContent = 'Annual Delay Costs';
-        caption.appendChild(makeHelpIcon('Annual out-of-pocket costs during the pre-construction delay period.'));
-        delayTable.appendChild(caption);
-
-        const thead = document.createElement('thead');
-        const hRow = document.createElement('tr');
-        const thCat = document.createElement('th');
-        thCat.textContent = 'Category';
-        hRow.appendChild(thCat);
-        const thCost = document.createElement('th');
-        thCost.textContent = '$/year';
-        hRow.appendChild(thCost);
-        thead.appendChild(hRow);
-        delayTable.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        let delayTotal = 0;
-        const delayInputs = tabContent.querySelectorAll('input[data-path*="annual_delay_costs"]');
-        delayInputs.forEach(inp => {
-          const tr = document.createElement('tr');
-          const tdLabel = document.createElement('td');
-          const pathParts = inp.dataset.path.split('.');
-          const key = pathParts[pathParts.length - 1];
-          tdLabel.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          tdLabel.style.fontWeight = '500';
-          tr.appendChild(tdLabel);
-          const tdVal = document.createElement('td');
-          tdVal.appendChild(inp);
-          tdVal.appendChild(makeEquationIcon({...EQ_DELAY_ANNUAL, context: `Annual ${tdLabel.textContent.toLowerCase()} cost during the delay/permitting period.`}));
-          tr.appendChild(tdVal);
-          tbody.appendChild(tr);
-          const raw = parseFloat(String(inp.value).replace(/[$,]/g, '')) || 0;
-          delayTotal += raw;
-        });
-
-        const totalRow = document.createElement('tr');
-        totalRow.className = 'row-total-row';
-        const tdTotLabel = document.createElement('td');
-        tdTotLabel.textContent = 'TOTAL';
-        tdTotLabel.style.fontWeight = '700';
-        totalRow.appendChild(tdTotLabel);
-        const tdTotVal = document.createElement('td');
-        tdTotVal.id = 'delay-cost-total';
-        tdTotVal.style.fontWeight = '600';
-        tdTotVal.textContent = '$' + delayTotal.toLocaleString();
-        totalRow.appendChild(tdTotVal);
-        tbody.appendChild(totalRow);
-        delayTable.appendChild(tbody);
-
-        const updateDelayTotal = () => {
-          let sum = 0;
-          delayTable.querySelectorAll('input[data-path*="annual_delay_costs"]').forEach(inp => {
-            const raw = parseFloat(String(inp.value).replace(/[$,]/g, ''));
-            if (!isNaN(raw)) sum += raw;
-          });
-          tdTotVal.textContent = '$' + sum.toLocaleString();
-        };
-        delayTable.addEventListener('input', updateDelayTotal);
-
-        const splitGrid = document.createElement('div');
-        splitGrid.className = 'row-split-grid';
-        const inputsWrapper = document.createElement('div');
-        inputsWrapper.className = 'row-zone-inputs';
-        inputsWrapper.appendChild(delayTable);
-        splitGrid.appendChild(inputsWrapper);
-        splitGrid.appendChild(renderDelayCostPanel());
-
-        const guideBanner = tabContent.querySelector('.tab-guide-banner');
-        while (tabContent.firstChild) tabContent.removeChild(tabContent.firstChild);
-        if (guideBanner) tabContent.appendChild(guideBanner);
-        tabContent.appendChild(splitGrid);
-      }
     }
 
-    const tabRestoreBtn = document.createElement('button');
-    tabRestoreBtn.type = 'button';
-    tabRestoreBtn.className = 'restore-defaults-btn tab-restore';
-    tabRestoreBtn.textContent = 'Restore Tab Defaults';
-    tabRestoreBtn.addEventListener('click', () => {
-      showRestoreDefaultsDialog('ctcc-restore-tab-' + tabId, C.INPUT_TAB_LABELS[tabId], () => {
-        tabContent.querySelectorAll('input[data-path], select[data-path]').forEach(el => {
-          if (el.dataset.path) resetFieldToDefault(el.dataset.path);
-        });
-        if (tabId === 'capital-costs') { rebuildCapitalCosts(); rebuildEnvBaseMitigation(C.ctccJsonData); }
-        updateRoutingValidation();
-        updateEnvironmentalAcres();
-        showToast('Tab defaults restored');
-      });
-    });
-    tabContent.prepend(tabRestoreBtn);
-
-    tabContentsContainer.appendChild(tabContent);
   });
 
-  const globalRestoreBtn = document.createElement('button');
-  globalRestoreBtn.type = 'button';
-  globalRestoreBtn.className = 'restore-defaults-btn global-restore';
-  globalRestoreBtn.textContent = 'Restore All Defaults';
-  globalRestoreBtn.addEventListener('click', () => {
-    showRestoreDefaultsDialog('ctcc-restore-global', 'all tabs', () => {
-      document.querySelectorAll('input[data-path], select[data-path]').forEach(el => {
-        if (el.dataset.path) resetFieldToDefault(el.dataset.path);
-      });
-      rebuildCapitalCosts();
-      rebuildEnvBaseMitigation(C.ctccJsonData);
-      rebuildConductorDetails();
-      rebuildConverterDetails();
-      rebuildStructureDetails();
-      updateRoutingValidation();
+  // Attach global form listeners for cross-tab update functions
+  var ctccFormEl = document.getElementById('demo-form');
+  if (ctccFormEl) {
+    ctccFormEl.addEventListener('input', function() {
       updateEnvironmentalAcres();
-      showToast('All defaults restored');
+      updateRoutingValidation();
     });
-  });
-  tabButtonsContainer.appendChild(globalRestoreBtn);
+  }
 
-  tabsContainer.classList.remove('tabs-hidden');
+  // Clear load status — data is now rendered in sub-item containers
+  var loadStatusEl = document.getElementById('load-status');
+  if (loadStatusEl) loadStatusEl.style.display = 'none';
 
   setupTaxonomyConditionalVisibility();
 
@@ -5176,9 +5052,10 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
     validateCostTimingPatterns();
   }, 0);
 
-  // Fix 6: Inject category validation banner and wire listeners on Configuration
+  // Fix 6: Inject category validation banner and wire listeners on the Technology sub-item
   setTimeout(() => {
-    const configPanel = document.querySelector('[data-tab-id="project-technical"] [data-sub-tab="technology"]');
+    const configPanel = (C._renderedSubItems && C._renderedSubItems['technology']) ||
+      document.querySelector('[data-sub-tab="technology"]');
     if (configPanel && !document.getElementById('category-validation-banner')) {
       const banner = document.createElement('div');
       banner.className = 'routing-validation-banner';
@@ -5361,7 +5238,8 @@ function syncFuelMixPresetBarVisibility() {
 }
 
 function applyEnergySourceMixPreset(mix) {
-  const energyMixTab = document.querySelector('[data-tab-id="emissions"]');
+  const energyMixTab = (C._renderedSubItems && C._renderedSubItems['energy-emissions-energy']) ||
+    document.querySelector('[data-sub-tab="energy-emissions-energy"]');
   if (!energyMixTab || !mix) return;
   FUEL_MIX_SOURCE_KEYS.forEach(src => {
     const block = mix[src];
@@ -5388,7 +5266,9 @@ function applyEnergySourceMixPreset(mix) {
 }
 
 function makeEmissionIntensitiesCollapsible() {
-  const emissionsTab = document.querySelector('[data-tab-id="emissions"]');
+  const emissionsTab = (C._renderedSubItems && C._renderedSubItems['energy-emissions-emissions']) ||
+    document.querySelector('[data-tab-id="emissions"]') ||
+    document.querySelector('[data-sub-tab="energy-emissions-emissions"]');
   if (!emissionsTab) return;
   emissionsTab.querySelectorAll('.subsection-header, .section-header').forEach(h => {
     const text = h.textContent.trim().toLowerCase();
@@ -5440,6 +5320,31 @@ function renderJsonInputs(data) {
   renderInputsFromTaxonomy(normalized, C.taxonomy, C.inputMetadata);
 }
 
+function renderSubItemContent(subItemId) {
+  var contentPanel = document.getElementById('content-panel');
+  var offscreen = document.getElementById('ctcc-offscreen-inputs');
+  if (!contentPanel) return;
+
+  var container = C._renderedSubItems && C._renderedSubItems[subItemId];
+  if (!container) {
+    console.warn('renderSubItemContent: no container for sub-item:', subItemId);
+    return;
+  }
+
+  // Move current sub-item contents back to offscreen (preserves DOM nodes, event listeners, input values)
+  if (offscreen) {
+    Array.from(contentPanel.children).forEach(function(child) {
+      if (child.id !== 'load-status') {
+        offscreen.appendChild(child);
+      }
+    });
+  }
+
+  // Move requested container to content-panel
+  contentPanel.appendChild(container);
+  C._currentSubItemId = subItemId;
+}
+
 
 // Public API — only exports actually used by other modules
 window.getEnergyDeliveredGWh = getEnergyDeliveredGWh;
@@ -5452,6 +5357,7 @@ window.projectFuelMix = projectFuelMix;
 window.readFuelRates = readFuelRates;
 window.readFuelShares = readFuelShares;
 window.renderJsonInputs = renderJsonInputs;
+window.renderSubItemContent = renderSubItemContent;
 window.setSnapshotOriginalData = function(data) {
   snapshotOriginalData = data ? JSON.parse(JSON.stringify(data)) : null;
 };

@@ -7,9 +7,7 @@
       const resultEl = document.getElementById("result");
       const ctccSection = document.getElementById("ctcc-section");
       const loadStatus = document.getElementById("load-status");
-      const tabsContainer = document.getElementById("tabs-container");
-      const tabButtonsContainer = document.getElementById("tab-buttons");
-      const tabContentsContainer = document.getElementById("tab-contents");
+      // Legacy tab container references removed — sidebar now drives navigation.
       const ctccJsonInputs = document.getElementById("ctcc-json-inputs");
 
       // Main tab elements
@@ -284,7 +282,7 @@
         });
       });
 
-      document.getElementById('tab-contents').addEventListener('click', (e) => {
+      document.addEventListener('click', (e) => {
         if (e.target.closest('.sub-sub-tab-button')) {
           setTimeout(updateBreadcrumb, 0);
         }
@@ -310,6 +308,9 @@
 
       // Main tab switching
       function switchMainTab(tabName) {
+        if (typeof switchSidebarView === 'function') {
+          switchSidebarView(tabName === 'inputs' ? 'inputs' : 'results');
+        }
         mainTabButtons.forEach(btn => {
           const isActive = btn.dataset.tab === tabName;
           const isDisabled = btn.classList.contains('disabled');
@@ -447,19 +448,8 @@
 
 
       function switchTab(index) {
-        const buttons = tabButtonsContainer.querySelectorAll('.tab-button');
-        const contents = tabContentsContainer.querySelectorAll('.tab-content');
-
-        buttons.forEach((btn, i) => {
-          btn.classList.toggle('active', i === index);
-        });
-
-        contents.forEach((content, i) => {
-          content.classList.toggle('active', i === index);
-        });
-
+        // Tab buttons/contents no longer exist — sidebar handles navigation.
         C.activeTabIndex = index;
-        updateBreadcrumb();
       }
 
       // Expose closure-scoped functions for external modules
@@ -497,8 +487,15 @@
           current[keys[keys.length - 1]] = value;
         }
 
+        // Collect from content-panel (visible sub-item) and offscreen holder (all others)
+        const allInputContainers = [
+          document.getElementById('content-panel'),
+          document.getElementById('ctcc-offscreen-inputs')
+        ].filter(Boolean);
+
         // Update with edited values from form inputs
-        const inputs = tabContentsContainer.querySelectorAll('input');
+        let inputs = [];
+        allInputContainers.forEach(c => { inputs = inputs.concat(Array.from(c.querySelectorAll('input'))); });
         inputs.forEach(input => {
           const path = input.dataset.path;
           if (!path) return;
@@ -528,7 +525,8 @@
         });
 
         // Update with edited values from select dropdowns
-        const selects = tabContentsContainer.querySelectorAll('select');
+        let selects = [];
+        allInputContainers.forEach(c => { selects = selects.concat(Array.from(c.querySelectorAll('select'))); });
         selects.forEach(select => {
           const path = select.dataset.path;
           if (!path) return;
@@ -559,12 +557,13 @@
 
       // ===== Taxonomy-Driven Input Form Renderer (Phase 4) =====
 
-      C.INPUT_TAB_ORDER = ['project-technical', 'benefits', 'financial', 'capital-costs', 'operational', 'delay-costs', 'emissions', 'risk'];
+      C.INPUT_TAB_ORDER = ['project-identity', 'equipment', 'routing', 'benefits', 'financial', 'capital-costs', 'operating', 'risk', 'emissions', 'energy-mix'];
       C.INPUT_TAB_LABELS = {
-        'project-technical': 'Project Details', 'financial': 'Financial',
-        'capital-costs': 'Capital Costs',
-        'operational': 'Operational Costs', 'delay-costs': 'Delay Costs',
-        'risk': 'Risk Profiles', 'emissions': 'Energy and Emissions', 'benefits': 'System Details',
+        'project-identity': 'Project Identity', 'equipment': 'Equipment',
+        'routing': 'Routing & Terrain', 'benefits': 'Benefits',
+        'financial': 'Financial', 'capital-costs': 'Capital Costs',
+        'operating': 'Operating Costs', 'risk': 'Risk',
+        'emissions': 'Emissions', 'energy-mix': 'Energy Mix',
       };
       C.SUB_TAB_LABELS = {
         'terrain-mix': 'Terrain Mix',
@@ -714,7 +713,7 @@
             combined_data: null
           };
 
-          if (C.ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
+          if (C.ctccJsonData) {
             payload.combined_data = collectJsonData();
           } else {
             payload.combined_data = await fetchFinalCombined(baseUrl);
@@ -825,6 +824,14 @@
           if (typeof initAssistant === 'function') initAssistant();
 
           if (dataReady) await dataReady;
+
+          // Wire sidebar navigation after data+rendering are complete
+          window.onSubItemSelected = function(sectionId, subItemId) {
+            if (typeof window.renderSubItemContent === 'function') {
+              window.renderSubItemContent(subItemId);
+            }
+          };
+          if (typeof initSidebar === 'function') initSidebar();
 
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {
