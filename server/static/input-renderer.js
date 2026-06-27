@@ -1139,7 +1139,21 @@ function renderTerrainTable(data) {
   return wrapper;
 }
 
-function renderROWZoneTable(data) {
+function getInitialVisibleZoneCount(data) {
+  let maxZone = 0;
+  for (let z = 1; z <= 15; z++) {
+    const hasData = ['miles', 'hold_cost', 'acquisition_cost', 'rent_cost'].some(suffix => {
+      const val = getValueAtFieldPath(data, '11_project_row_details', `right_of_way.zone_${z}.${suffix}`);
+      if (val === null || val === undefined || val === '') return false;
+      const n = Number(val);
+      return !isNaN(n) && n !== 0;
+    });
+    if (hasData) maxZone = z;
+  }
+  return maxZone > 0 ? maxZone : 3;
+}
+
+function renderROWZonesTable(data) {
   const wrapper = document.createElement('div');
 
   const table = document.createElement('table');
@@ -1184,9 +1198,10 @@ function renderROWZoneTable(data) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
+  let visibleZones = getInitialVisibleZoneCount(data);
   for (let z = 1; z <= 15; z++) {
     const tr = document.createElement('tr');
-    if (z > 5) tr.style.display = 'none';
+    if (z > visibleZones) tr.style.display = 'none';
     tr.dataset.zone = z;
 
     const basePath = `11_project_row_details.right_of_way.zone_${z}`;
@@ -1302,6 +1317,7 @@ function renderROWZoneTable(data) {
       if (table.querySelector(`tr[data-zone="${zz}"]`)?.style.display !== 'none') totalAcres += ac;
     }
     tdTotalAcresCell.textContent = totalAcres > 0 ? totalAcres.toFixed(1) : '';
+    updateRoutingValidation();
   }
   setTimeout(updateZoneAcres, 0);
 
@@ -1311,22 +1327,51 @@ function renderROWZoneTable(data) {
   const footer = document.createElement('div');
   footer.className = 'zone-table-footer';
 
-  let visibleZones = 5;
+  const zoneActions = document.createElement('div');
+  zoneActions.className = 'zone-table-actions';
+
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'add-zone-btn';
   addBtn.textContent = '+ Add Zone';
+  addBtn.disabled = visibleZones >= 15;
   addBtn.addEventListener('click', () => {
     if (visibleZones >= 15) return;
     visibleZones++;
     const row = tbody.querySelector(`tr[data-zone="${visibleZones}"]`);
     if (row) row.style.display = '';
-    if (visibleZones >= 15) addBtn.disabled = true;
+    addBtn.disabled = visibleZones >= 15;
+    removeBtn.disabled = visibleZones <= 1;
+    updateZoneAcres();
   });
-  footer.appendChild(addBtn);
+  zoneActions.appendChild(addBtn);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'remove-zone-btn';
+  removeBtn.textContent = '− Remove Last';
+  removeBtn.disabled = visibleZones <= 1;
+  removeBtn.addEventListener('click', () => {
+    if (visibleZones <= 1) return;
+    const row = tbody.querySelector(`tr[data-zone="${visibleZones}"]`);
+    if (row) {
+      row.querySelectorAll('input[data-path]').forEach(inp => { inp.value = ''; });
+      row.style.display = 'none';
+    }
+    visibleZones--;
+    addBtn.disabled = false;
+    removeBtn.disabled = visibleZones <= 1;
+    updateZoneAcres();
+  });
+  zoneActions.appendChild(removeBtn);
+  footer.appendChild(zoneActions);
 
   wrapper.appendChild(footer);
   return wrapper;
+}
+
+function renderROWZoneTable(data) {
+  return renderROWZonesTable(data);
 }
 
 function isGreenfieldROW() {
@@ -4533,7 +4578,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           splitGrid.className = 'row-split-grid';
           const rowInputs = document.createElement('div');
           rowInputs.className = 'row-zone-inputs';
-          rowInputs.appendChild(renderROWZoneTable(data));
+          rowInputs.appendChild(renderROWZonesTable(data));
           splitGrid.appendChild(rowInputs);
           splitGrid.appendChild(renderROWCostPanel());
           stContent.appendChild(splitGrid);
