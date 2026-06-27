@@ -100,18 +100,17 @@
       <div style="max-width:420px; width:100%; padding:2rem; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
         <div style="text-align:center; margin-bottom:1.5rem;">
           <div style="font-size:1.5rem; font-weight:700; color:#1a1a1a;">Complete Your Profile</div>
-          <div style="font-size:0.85rem; color:#666; margin-top:0.25rem;">This information is shown alongside your scenarios.</div>
         </div>
         <div id="profile-error" style="display:none; padding:0.5rem 0.75rem; margin-bottom:1rem; background:#fee; color:#c00; border-radius:6px; font-size:0.85rem;"></div>
         <form id="profile-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:0.75rem;">
           <input id="profile-username" type="text" placeholder="Username *" required maxlength="40" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
           <div style="display:flex; gap:0.5rem;">
-            <input id="profile-first-name" type="text" placeholder="First name" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
-            <input id="profile-last-name" type="text" placeholder="Last name" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+            <input id="profile-first-name" type="text" placeholder="First name (optional)" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+            <input id="profile-last-name" type="text" placeholder="Last name (optional)" maxlength="60" style="flex:1; padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
           </div>
-          <input id="profile-org" type="text" placeholder="Organization" maxlength="120" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
+          <input id="profile-org" type="text" placeholder="Organization (optional)" maxlength="120" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
           <select id="profile-org-type" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem; color:#333; background:#fff;">
-            <option value="" disabled selected>Organization type *</option>
+            <option value="" disabled selected>User type *</option>
             <option value="utility">Utility</option>
             <option value="iso_rto">ISO / RTO</option>
             <option value="consultant">Consultant</option>
@@ -228,7 +227,7 @@
         const username = document.getElementById('profile-username').value.trim();
         const orgType = document.getElementById('profile-org-type').value;
         if (!username) { profErr.textContent = 'Username is required.'; profErr.style.display = 'block'; return; }
-        if (!orgType) { profErr.textContent = 'Organization type is required.'; profErr.style.display = 'block'; return; }
+        if (!orgType) { profErr.textContent = 'User type is required.'; profErr.style.display = 'block'; return; }
         const { data: { session } } = await _sb.auth.getSession();
         if (!session) { showAuthGate(); return; }
         const updates = {
