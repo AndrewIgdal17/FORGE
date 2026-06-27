@@ -2785,11 +2785,13 @@
   color: #1a1a1a;
 }
 .marketing-section ul, .marketing-section ol {
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
   list-style-position: inside;
   color: #475569;
   line-height: 1.8;
+  text-align: left;
+  display: inline-block;
 }
 .marketing-inline-list {
   color: #475569;
