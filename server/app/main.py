@@ -40,7 +40,7 @@ STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
 OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
 YAMLS_DIR = BASE_DIR.parent / "yamls"
-MARKETING_FILE = STATIC_DIR / "marketing.html"
+LANDING_FILE = STATIC_DIR / "landing.html"
 SIGNUP_FILE = STATIC_DIR / "signup.html"
 LOGIN_FILE = STATIC_DIR / "login.html"
 APP_FILE = STATIC_DIR / "app.html"
@@ -140,9 +140,9 @@ def _refresh_final_combined() -> None:
 
 
 @app.get("/", response_class=FileResponse)
-async def serve_marketing() -> FileResponse:
-    """Serve the marketing landing page."""
-    return FileResponse(MARKETING_FILE)
+async def serve_landing() -> FileResponse:
+    """Serve the landing page."""
+    return FileResponse(LANDING_FILE)
 
 
 @app.get("/signup", response_class=FileResponse)
