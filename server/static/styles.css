@@ -2778,6 +2778,12 @@
   gap: 2rem;
   max-width: 900px;
   padding: 2rem;
+  justify-items: center;
+  text-align: left;
+}
+.marketing-feature-col {
+  width: 100%;
+  max-width: 240px;
 }
 .marketing-feature-col h3 {
   font-size: 1.1rem;

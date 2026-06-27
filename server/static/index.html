@@ -33,8 +33,7 @@
         <h1>Full-cost benefit-cost analysis for transmission projects</h1>
         <p class="marketing-subtitle">
           The Comprehensive Transmission Cost Calculator covers 24 cost and benefit categories
-          across capital, operational, delay, emissions, and risk — with four BCR perspectives
-          and auditable, taxonomy-driven inputs.
+          across capital, operational, delay, emissions, and risk.
         </p>
         <div class="marketing-cta">
           <button type="button" class="marketing-btn-primary" id="auth-show-signup">Get Started</button>
@@ -74,7 +73,6 @@
 
       <footer class="marketing-footer">
         <p>Built by Andrew Igdal, Webber Energy Group, The University of Texas at Austin &amp; Dane McFarlane, Horizon Climate Group</p>
-        <button type="button" class="marketing-btn-primary" id="auth-show-signup-bottom">Get Started</button>
       </footer>
 
       <div id="auth-modal" class="auth-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
@@ -201,7 +199,6 @@
       }
 
       document.getElementById('auth-show-signup').addEventListener('click', () => showAuthModal('signup'));
-      document.getElementById('auth-show-signup-bottom').addEventListener('click', () => showAuthModal('signup'));
       document.getElementById('auth-show-login').addEventListener('click', () => showAuthModal('login'));
       document.getElementById('marketing-login-toggle').addEventListener('click', () => showAuthModal('login'));
       document.getElementById('auth-modal-close').addEventListener('click', hideAuthModal);
