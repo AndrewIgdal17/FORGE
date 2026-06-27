@@ -2,29 +2,15 @@
 'use strict';
 
       document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded, initializing...');
       const C = window.CTCC;
       const form = document.getElementById("demo-form");
-      console.log('Form element:', form);
-      const apiBaseInput = document.getElementById("api-base");
-      const messageInput = document.getElementById("message");
-      const valuesInput = document.getElementById("values");
       const resultEl = document.getElementById("result");
-      const statusEl = document.getElementById("status");
-      const modeInputs = document.querySelectorAll('input[name="mode"]');
-      const simpleSection = document.getElementById("simple-section");
-      const bulkSection = document.getElementById("bulk-section");
       const ctccSection = document.getElementById("ctcc-section");
-      console.log('Sections found:', {simpleSection, bulkSection, ctccSection});
       const loadStatus = document.getElementById("load-status");
       const tabsContainer = document.getElementById("tabs-container");
       const tabButtonsContainer = document.getElementById("tab-buttons");
       const tabContentsContainer = document.getElementById("tab-contents");
       const ctccJsonInputs = document.getElementById("ctcc-json-inputs");
-      const ctccYamlMessage = document.getElementById("ctcc-yaml-message");
-      const ctccInputModeInputs = document.querySelectorAll('input[name="ctcc-input-mode"]');
-      const bulkSourceInputs = document.querySelectorAll('input[name="bulk-source"]');
-      const bulkFileInput = document.getElementById("bulk-file-input");
 
       // Main tab elements
       const mainTabButtons = document.querySelectorAll('.main-tab-button');
@@ -83,7 +69,7 @@
         const calcScenarioId = C.activeScenarioId;
         document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
         try {
-          const baseUrl = apiBaseInput.value.trim();
+          const baseUrl = C.apiBaseUrl;
           const payload = {
             mode: 'calculate',
             input_mode: 'json',
@@ -412,56 +398,18 @@
         });
       });
 
-      const DEFAULT_PORT = Number(apiBaseInput.dataset.defaultPort || "8000");
-
+      const DEFAULT_PORT = 8000;
 
       function initialiseApiBase() {
-        const derived = deriveDefaultApiBase(window.location.href, DEFAULT_PORT);
-        apiBaseInput.value = derived;
+        C.apiBaseUrl = deriveDefaultApiBase(window.location.href, DEFAULT_PORT);
       }
 
-      function selectedMode() {
-        const checked = Array.from(modeInputs).find((input) => input.checked);
-        return checked ? checked.value : "simple";
-      }
-
-      function updateModeVisibility() {
-        const mode = selectedMode();
-        console.log('updateModeVisibility called, mode:', mode);
-        console.log('Setting hidden properties...');
-        simpleSection.hidden = mode !== "simple";
-        bulkSection.hidden = mode !== "bulk";
-        ctccSection.hidden = mode !== "ctcc";
-        console.log('Hidden states - simple:', simpleSection.hidden, 'bulk:', bulkSection.hidden, 'ctcc:', ctccSection.hidden);
-
-        // Update mode-specific visibility
-        if (mode === "ctcc") {
-          updateCtccInputVisibility();
-        } else if (mode === "bulk") {
-          updateBulkSourceVisibility();
+      function initCtccInputs() {
+        var ctccJsonInputs = document.getElementById("ctcc-json-inputs");
+        if (ctccJsonInputs) ctccJsonInputs.hidden = false;
+        if (!C.ctccJsonData) {
+          loadCtccJson();
         }
-      }
-
-      function updateCtccInputVisibility() {
-        const inputMode = Array.from(ctccInputModeInputs).find((input) => input.checked)?.value ?? "json";
-
-        if (inputMode === "json") {
-          ctccJsonInputs.hidden = false;
-          ctccYamlMessage.hidden = true;
-          // Auto-load JSON data if not already loaded
-          if (!C.ctccJsonData) {
-            loadCtccJson();
-          }
-        } else {
-          ctccJsonInputs.hidden = true;
-          ctccYamlMessage.hidden = false;
-        }
-        syncFuelMixPresetBarVisibility();
-      }
-
-      function updateBulkSourceVisibility() {
-        const bulkSource = Array.from(bulkSourceInputs).find((input) => input.checked)?.value ?? "server";
-        bulkFileInput.hidden = bulkSource !== "file";
       }
 
 
@@ -752,64 +700,27 @@
 
         const startTime = performance.now();
         showCalculating();
-        statusEl.textContent = "";
-        statusEl.classList.remove("error");
         resultEl.textContent = "";
 
         try {
-          const baseUrl = apiBaseInput.value.trim();
-          const mode = selectedMode();
-          let payload = { mode };
-          let endpoint;
+          const baseUrl = C.apiBaseUrl;
+          const scenarioId = C.activeScenarioId;
 
-          if (mode === "simple") {
-            payload.message = messageInput.value;
-            payload.values = parseValues(valuesInput.value);
-            endpoint = new URL("/api/process", baseUrl).toString();
-          } else if (mode === "bulk") {
-            const bulkSource = Array.from(
-              document.querySelectorAll('input[name="bulk-source"]')
-            ).find((input) => input.checked)?.value ?? "server";
-            if (bulkSource === "file") {
-              const fileInput = document.getElementById("bulk-file");
-              const file = fileInput?.files?.[0];
-              if (!file) {
-                throw new Error("Choose a JSON file or switch back to server mode.");
-              }
-              payload.combinedData = await readFileAsJson(file);
-            } else {
-              payload.combinedData = await fetchFinalCombined(baseUrl);
-            }
-            endpoint = new URL("/api/process", baseUrl).toString();
-          } else if (mode === "ctcc") {
+          const payload = {
+            mode: "calculate",
+            input_mode: "json",
+            output_mode: "json",
+            scenario_id: scenarioId,
+            combined_data: null
+          };
 
-            // Get CTCC configuration
-            const inputMode = Array.from(
-              document.querySelectorAll('input[name="ctcc-input-mode"]')
-            ).find((input) => input.checked)?.value ?? "json";
-
-            const scenarioId = C.activeScenarioId;
-
-            // Build CTCC payload (calculator is JSON-out only; output_mode accepted but ignored server-side)
-            payload = {
-              mode: "calculate",
-              input_mode: inputMode,
-              output_mode: "json",
-              scenario_id: scenarioId,
-              combined_data: null
-            };
-
-            // If input mode is JSON, use the edited data or fetch from server
-            if (inputMode === "json") {
-              if (C.ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
-                payload.combined_data = collectJsonData();
-              } else {
-                payload.combined_data = await fetchFinalCombined(baseUrl);
-              }
-            }
-
-            endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
+          if (C.ctccJsonData && !tabsContainer.classList.contains('tabs-hidden')) {
+            payload.combined_data = collectJsonData();
+          } else {
+            payload.combined_data = await fetchFinalCombined(baseUrl);
           }
+
+          const endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
 
           const _fAuthToken = await _getAuthToken();
           const _fHeaders = { "Content-Type": "application/json" };
@@ -827,18 +738,12 @@
 
           const json = await response.json();
 
-          if (json.mode === "bulk" && json.text) {
-            resultEl.textContent = json.text;
-          } else if (mode === "ctcc" && json.csv_files) {
-            // CSV output mode - fetch and display CSV contents
-            await displayCsvFiles(json, baseUrl);
-          } else if (mode === "ctcc" && json.results) {
+          if (json.results) {
             renderCTCCResults(json.results);
             C.lastRunResults = json.results;
             C.latestValidResults = json.results;
             document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
           } else {
-            // Fallback to raw JSON display
             resultEl.textContent = JSON.stringify(json, null, 2);
           }
 
@@ -895,19 +800,8 @@
       // cleanUpProjectOverviewHeaders() — absorbed into TAB_HIERARCHY engine
 
 
-      console.log('Calling initialiseApiBase and updateModeVisibility...');
       initialiseApiBase();
-      updateModeVisibility();
-      console.log('Event listeners being attached to mode inputs:', modeInputs.length);
-      modeInputs.forEach((input) => {
-        input.addEventListener("change", updateModeVisibility);
-      });
-      ctccInputModeInputs.forEach((input) => {
-        input.addEventListener("change", updateCtccInputVisibility);
-      });
-      bulkSourceInputs.forEach((input) => {
-        input.addEventListener("change", updateBulkSourceVisibility);
-      });
+      initCtccInputs();
 
       // --- App entry (waits for auth check to resolve) ---
       if (window._authReady) {

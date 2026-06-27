@@ -467,7 +467,7 @@
 
   async function loadCtccJson() {
     try {
-      const baseUrl = document.getElementById('api-base').value.trim();
+      const baseUrl = C.apiBaseUrl;
       if (!C.taxonomy || !C.inputMetadata) {
         try {
           const [taxData, metaData] = await Promise.all([

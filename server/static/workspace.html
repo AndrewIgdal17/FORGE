@@ -96,49 +96,13 @@
     <div class="main-tab-content active" id="main-tab-inputs">
     <form id="demo-form" novalidate>
 
-      <div id="simple-section" class="section">
-        <h2>Simple Payload</h2>
-        <label for="message">Message</label>
-        <input id="message" name="message" type="text" value="Hello from the browser!" />
-
-        <label for="values">Values (comma separated)</label>
-        <textarea id="values" name="values" rows="3">1, 2, 3.5</textarea>
-      </div>
-
-      <div id="bulk-section" class="section" hidden>
-        <h2>Bulk Payload</h2>
-        <p>
-          When in bulk mode you can either load the server's <code>final_combined.json</code>
-          or select a JSON file manually.
-        </p>
-
-        <label class="radio">
-          <input type="radio" name="bulk-source" value="server" checked />
-          <span>Fetch <code>/api/final_combined</code> from the API server</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="bulk-source" value="file" />
-          <span>Upload a JSON file</span>
-        </label>
-        <div id="bulk-file-input" hidden>
-          <input type="file" id="bulk-file" accept="application/json,.json" />
-        </div>
-      </div>
-
-      <div id="ctcc-section" class="section" hidden>
-        <div id="ctcc-json-inputs" hidden>
+      <div id="ctcc-section" class="section">
+        <div id="ctcc-json-inputs">
           <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
           <div id="tabs-container" class="tabs-hidden">
             <div class="tabs" id="tab-buttons"></div>
             <div id="tab-contents"></div>
           </div>
-        </div>
-
-        <div id="ctcc-yaml-message" hidden>
-          <h3>Input Data</h3>
-          <p style="padding: 1rem; background: rgba(0, 0, 0, 0.05); border-radius: 0.5rem;">
-            YAML mode will use YAML files located on the server. Make sure the server has access to the YAML files in the expected directory.
-          </p>
         </div>
       </div>
 
@@ -147,8 +111,7 @@
 
     <!-- Results Tab -->
     <div class="main-tab-content" id="main-tab-results">
-      <div id="status" style="display: none;"></div>
-      <pre id="result">Submit the form to see the API response.</pre>
+      <pre id="result"></pre>
     </div>
 
     <!-- Save Dialog Overlay -->
@@ -161,8 +124,8 @@
           <input type="text" id="save-memory-name" placeholder="Scenario name" />
         </div>
         <div class="save-option" id="save-opt-memory" data-option="memory" style="position: relative;">
-          <div class="save-option-title">Save to session</div>
-          <div class="save-option-desc">Keep this scenario in the current browser session.</div>
+          <div class="save-option-title">Save</div>
+          <div class="save-option-desc">Save scenario to database.</div>
           <span id="save-saved-indicator" style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 0.75rem; font-weight: 500; color: #10b981;"></span>
         </div>
         <div class="save-option" id="save-opt-ctcc" data-option="ctcc">
@@ -179,76 +142,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Server Config Tab -->
-    <div class="main-tab-content" id="main-tab-server-config">
-      <div class="section">
-        <h2>API Base URL</h2>
-        <label for="api-base">Server URL</label>
-        <input
-          id="api-base"
-          name="api-base"
-          type="url"
-          required
-          data-default-port="8000"
-          placeholder="http://example.com:8000"
-          form="demo-form"
-        />
-      </div>
-
-      <hr />
-
-      <div class="section">
-        <h2>Mode</h2>
-        <div class="mode-selection">
-          <div class="mode-row">
-            <label class="radio">
-              <input type="radio" name="mode" value="simple" form="demo-form" />
-              <span>Simple Test</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="mode" value="bulk" form="demo-form" />
-              <span>Bulk Test</span>
-            </label>
-          </div>
-          <div class="mode-row">
-            <label class="radio">
-              <input type="radio" name="mode" value="ctcc" checked form="demo-form" />
-              <span>CTCC</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <hr />
-
-      <div class="section">
-        <h2>Input Mode</h2>
-        <label class="radio">
-          <input type="radio" name="ctcc-input-mode" value="json" checked form="demo-form" />
-          <span>JSON: use <code>final_combined.json</code> from server</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="ctcc-input-mode" value="yaml" form="demo-form" />
-          <span>YAML: use local YAML files on server (requires server-side YAMLs)</span>
-        </label>
-      </div>
-
-      <hr />
-
-      <div class="section">
-        <h2>Output Mode</h2>
-        <label class="radio">
-          <input type="radio" name="ctcc-output-mode" value="json" checked form="demo-form" />
-          <span>JSON: return results as JSON response to browser</span>
-        </label>
-        <label class="radio">
-          <input type="radio" name="ctcc-output-mode" value="csv" form="demo-form" />
-          <span>CSV: write CSV files to server outputs folder (returns file list)</span>
-        </label>
-      </div>
-    </div>
-
 
     <script>window.CTCC = {};</script>
     <script>window._tourPage = 'workspace';</script>

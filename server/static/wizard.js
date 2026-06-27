@@ -531,7 +531,6 @@
 
     const scenario = await addScenarioToSession(fullInputs, null, metadata, name);
     setActiveScenario(scenario);
-    if (typeof showApp === 'function') showApp();
     switchMainTab('inputs');
     switchTab(0);
   }
