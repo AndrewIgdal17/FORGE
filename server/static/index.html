@@ -188,12 +188,19 @@
           gotoBtn.classList.add('landing-btn-secondary');
         }
 
-        if (typeof initAssistant === 'function') initAssistant();
-
-        if (window.CTCC.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
-          if (typeof showWelcomeBubble === 'function') {
-            setTimeout(showWelcomeBubble, 500);
+        function runOnboarding() {
+          if (typeof initAssistant === 'function') initAssistant();
+          if (window.CTCC.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
+            if (typeof showWelcomeBubble === 'function') {
+              setTimeout(showWelcomeBubble, 500);
+            }
           }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', runOnboarding);
+        } else {
+          runOnboarding();
         }
       }
 
