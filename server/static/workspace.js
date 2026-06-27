@@ -322,8 +322,10 @@
           }
         });
 
+        // Both inputs and results render into #main-tab-inputs (sidebar layout).
+        // #main-tab-results is the legacy pre-sidebar results container — keep it hidden.
         mainTabContents.forEach(content => {
-          if (content.id === `main-tab-${tabName}`) {
+          if (content.id === 'main-tab-inputs') {
             content.classList.add('active');
           } else {
             content.classList.remove('active');
@@ -827,8 +829,14 @@
 
           // Wire sidebar navigation after data+rendering are complete
           window.onSubItemSelected = function(sectionId, subItemId) {
-            if (typeof window.renderSubItemContent === 'function') {
-              window.renderSubItemContent(subItemId);
+            if (subItemId && subItemId.startsWith('r-')) {
+              if (typeof window.renderResultsSubItem === 'function') {
+                window.renderResultsSubItem(subItemId);
+              }
+            } else {
+              if (typeof window.renderSubItemContent === 'function') {
+                window.renderSubItemContent(subItemId);
+              }
             }
           };
           if (typeof initSidebar === 'function') initSidebar();

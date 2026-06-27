@@ -1486,6 +1486,182 @@ function renderCTCCResults(results) {
 }
 
 
+// ============================================================
+// Results Sidebar View — per-section rendering
+// ============================================================
+
+function renderCostsBuckets(results, buckets) {
+  var savedOrder = C.COST_BUCKET_ORDER;
+  C.COST_BUCKET_ORDER = buckets;
+  var el = renderCostsByTaxonomy(results);
+  C.COST_BUCKET_ORDER = savedOrder;
+  return el;
+}
+
+function renderBenefitsBucket(results, bucket, subgroup) {
+  var container = document.createElement('div');
+  if (!C.taxonomy) return container;
+  var resultById = buildResultById(results);
+  var items = (C.taxonomyByBucket[bucket] || []).slice().sort(function(a, b) {
+    return a.display_order - b.display_order;
+  });
+  if (subgroup) {
+    items = items.filter(function(i) { return i.subgroup === subgroup; });
+  }
+  if (!items.length) return container;
+
+  var section = document.createElement('div');
+  section.className = 'cost-section-items';
+  section.appendChild(pairHeader());
+  var bucketPV = 0, bucketNom = 0;
+  items.forEach(function(item) {
+    var r = resultById[item.id];
+    section.appendChild(renderTaxonomyItem(item, r, false));
+    bucketPV += r ? (r.value_pv || 0) : 0;
+    bucketNom += r ? (r.value_nominal || 0) : 0;
+  });
+  var label = subgroup
+    ? subgroup.charAt(0).toUpperCase() + subgroup.slice(1).replace(/_/g, ' ') + ' Benefits'
+    : (C.BUCKET_LABELS[bucket] || bucket);
+  section.appendChild(subtotalPairRow(label + ' Subtotal', bucketNom, bucketPV));
+  container.appendChild(createCategory(label, section, true));
+  return container;
+}
+
+function renderResultsOverview(results) {
+  var container = document.createElement('div');
+  var bcr = results.bcr || {};
+
+  var heroGrid = document.createElement('div');
+  heroGrid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem';
+
+  var rid = buildResultById(results);
+  var totalCostPV = C.COST_BUCKET_ORDER.reduce(function(sum, b) {
+    return sum + (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+      return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+  }, 0);
+  var totalBenefitsPV = bcr.total_benefits_pv || 0;
+  var netBenefit = bcr.net_benefit_pv != null ? bcr.net_benefit_pv : (totalBenefitsPV - totalCostPV);
+  var societalBCR = bcr.bcr_societal || 0;
+
+  [
+    { label: 'Total Costs (PV)', text: formatCurrency(totalCostPV, 0) },
+    { label: 'Total Benefits (PV)', text: formatCurrency(totalBenefitsPV, 0) },
+    { label: 'Net Benefit (PV)', text: formatCurrency(netBenefit, 0), color: netBenefit >= 0 ? '#10b981' : '#b00020' },
+    { label: 'Societal BCR', text: formatNumber(societalBCR, 3), color: societalBCR >= 1 ? '#10b981' : '#b00020' },
+  ].forEach(function(m) {
+    var card = document.createElement('div');
+    card.className = 'results-summary-card highlight';
+    var lbl = document.createElement('div');
+    lbl.className = 'results-summary-label';
+    lbl.textContent = m.label;
+    var val = document.createElement('div');
+    val.className = 'results-summary-value large';
+    val.textContent = m.text;
+    if (m.color) val.style.color = m.color;
+    card.appendChild(lbl);
+    card.appendChild(val);
+    heroGrid.appendChild(card);
+  });
+  container.appendChild(heroGrid);
+
+  var bcrHeading = document.createElement('div');
+  bcrHeading.className = 'results-section-heading';
+  var bcrTitle = document.createElement('div');
+  bcrTitle.className = 'results-section-title';
+  bcrTitle.textContent = 'Benefit-Cost Ratios';
+  bcrHeading.appendChild(bcrTitle);
+  container.appendChild(bcrHeading);
+  container.appendChild(renderBCRHeadline(results));
+
+  var perspHeading = document.createElement('div');
+  perspHeading.className = 'results-section-heading';
+  perspHeading.style.marginTop = '1.5rem';
+  var perspTitle = document.createElement('div');
+  perspTitle.className = 'results-section-title';
+  perspTitle.textContent = 'Perspectives';
+  var perspSub = document.createElement('div');
+  perspSub.className = 'results-section-subtitle';
+  perspSub.textContent = 'Present Value';
+  perspHeading.appendChild(perspTitle);
+  perspHeading.appendChild(perspSub);
+  container.appendChild(perspHeading);
+  container.appendChild(renderPerspectivesTable(results));
+
+  return container;
+}
+
+function renderResultsBCRPanel(results) {
+  var container = document.createElement('div');
+  container.appendChild(renderBCRHeadline(results));
+  container.appendChild(createCategory('Societal BCR with Exclusions', renderSensitivityByTaxonomy(results)));
+  container.appendChild(createCategory('Custom Societal BCR', renderCustomBCRByTaxonomy(results)));
+  return container;
+}
+
+function renderResultsSubItem(subItemId) {
+  var contentPanel = document.getElementById('content-panel');
+  if (!contentPanel) return;
+
+  var results = C.latestValidResults;
+  if (!results) {
+    contentPanel.innerHTML = '';
+    var msg = document.createElement('div');
+    msg.style.cssText = 'display:flex;align-items:center;justify-content:center;min-height:300px;text-align:center;color:#666';
+    msg.innerHTML =
+      '<div>' +
+        '<div style="font-size:2rem;margin-bottom:0.75rem">&#x1F4CA;</div>' +
+        '<p style="font-size:1rem;margin-bottom:1rem">No results available.</p>' +
+        '<p style="font-size:0.85rem;color:#999;margin-bottom:1rem">Edit inputs and calculate first.</p>' +
+        '<button type="button" ' +
+          'onclick="window.switchMainTab&&window.switchMainTab(\'inputs\')" ' +
+          'style="padding:0.5rem 1.25rem;background:#3b82f6;color:white;border:none;border-radius:0.375rem;cursor:pointer;font-size:0.9rem">' +
+          'Go to Inputs' +
+        '</button>' +
+      '</div>';
+    contentPanel.appendChild(msg);
+    return;
+  }
+
+  if (!results.taxonomy_results || results.taxonomy_results.length === 0) {
+    results.taxonomy_results = deriveTaxonomyResultsFromLegacy(results);
+  }
+
+  contentPanel.innerHTML = '';
+  var wrapper = document.createElement('div');
+  wrapper.style.padding = '1.5rem';
+
+  var el;
+  if (subItemId === 'r-overview') {
+    el = renderResultsOverview(results);
+  } else if (subItemId === 'r-bcr') {
+    el = renderResultsBCRPanel(results);
+  } else if (subItemId === 'r-capital') {
+    el = renderCostsBuckets(results, ['hard']);
+  } else if (subItemId === 'r-operational') {
+    el = renderCostsBuckets(results, ['soft']);
+  } else if (subItemId === 'r-risk-costs') {
+    el = renderCostsBuckets(results, ['risk']);
+  } else if (subItemId === 'r-emissions-costs') {
+    el = renderCostsBuckets(results, ['emissions']);
+  } else if (subItemId === 'r-remedial') {
+    el = renderBenefitsBucket(results, 'remedial');
+  } else if (subItemId === 'r-congestion') {
+    el = renderBenefitsBucket(results, 'remedial', 'congestion');
+  } else if (subItemId === 'r-curtailment') {
+    el = renderBenefitsBucket(results, 'remedial', 'curtailment');
+  } else if (subItemId === 'r-loss-comp') {
+    el = renderBenefitsBucket(results, 'enabling');
+  } else {
+    el = document.createElement('div');
+    el.textContent = 'Unknown results section: ' + subItemId;
+  }
+
+  if (el) wrapper.appendChild(el);
+  contentPanel.appendChild(wrapper);
+}
+
 // Public API
 window.populateDesignCmpDropdowns = populateDesignCmpDropdowns;
 window.renderBCRHeadline = renderBCRHeadline;
@@ -1499,4 +1675,5 @@ window.updateDesignComparisonState = updateDesignComparisonState;
 window.updateEmissionsImpactPanel = updateEmissionsImpactPanel;
 window.updateEnergyImpactPanel = updateEnergyImpactPanel;
 window.updateROWCostPanel = updateROWCostPanel;
+window.renderResultsSubItem = renderResultsSubItem;
 })();
