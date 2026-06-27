@@ -134,55 +134,12 @@
 
       <!-- What-If subtab -->
       <div class="scenario-subtab-content" id="scenario-subtab-what-if">
-        <div style="padding: 1.5rem 1rem; max-width: 60rem;">
-          <div id="design-comparison-reconductoring-guard" style="display: none; padding: 1rem; background: rgba(0,0,0,0.03); border-radius: 0.5rem; border: 1px solid rgba(0,0,0,0.08);">
-            <p style="margin: 0; font-size: 0.9rem; color: rgba(0,0,0,0.55);">Counterfactual calculators are available for greenfield (non-reconductoring) projects. Your current project is set to reconductoring mode.</p>
-          </div>
-          <div id="design-comparison-main">
-            <div class="cf-calculator">
-              <div class="collapsible-header expanded cf-calculator-header" id="cf-calc-lineloss-header">
-                Line Losses Under Alternative Designs
-              </div>
-              <div class="collapsible-content expanded" id="cf-calc-lineloss-body">
-                <p style="color: rgba(0,0,0,0.55); line-height: 1.4; font-size: 0.85rem; margin: 0.5rem 0 1.25rem;">
-                  How would line losses change if this route used a different capacity or conductor?
-                  Set an alternative configuration below and run the calculation.
-                </p>
-                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
-                  <div style="flex: 1 1 14rem; background: rgba(0,0,0,0.02); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,0,0,0.06);">
-                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.4rem; color: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 0.03em;">Your Project</p>
-                    <div id="design-cmp-primary-readout" style="font-size: 0.85rem; line-height: 1.5;">
-                      <span style="color: rgba(0,0,0,0.4);">Run a calculation first</span>
-                    </div>
-                  </div>
-                  <div style="flex: 1 1 14rem; background: rgba(0,100,200,0.04); border-radius: 0.4rem; padding: 0.75rem 1rem; border: 1px solid rgba(0,100,200,0.12);">
-                    <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 0.5rem; color: rgba(0,100,200,0.7); text-transform: uppercase; letter-spacing: 0.03em;">Alternative Design</p>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                      <label style="font-size: 0.8rem; font-weight: 500;">
-                        Capacity
-                        <select id="design-cmp-capacity" data-path="01_project_technical_details.project.greenfield_comparison_capacity_mw" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
-                          <option value="">(None)</option>
-                        </select>
-                      </label>
-                      <label style="font-size: 0.8rem; font-weight: 500;">
-                        Conductor Type
-                        <select id="design-cmp-conductor" data-path="01_project_technical_details.project.greenfield_comparison_conductor_type" style="width: 100%; margin-top: 0.15rem; padding: 0.3rem 0.4rem; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.25rem;">
-                          <option value="">(None)</option>
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                  <button type="button" id="design-cmp-run-btn" disabled style="padding: 0.5rem 1.25rem; background: #ccc; color: white; border: none; border-radius: 0.35rem; font-size: 0.85rem; font-weight: 600; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Run Comparison</button>
-                  <span id="design-cmp-run-hint" style="font-size: 0.8rem; color: rgba(0,0,0,0.45);">
-                    Select an alternative capacity and conductor, then run.
-                  </span>
-                </div>
-                <div id="design-comparison-results" style="display: none;"></div>
-              </div>
-            </div>
-          </div>
+        <div style="padding: 2rem; max-width: 40rem;">
+          <h2 style="margin: 0 0 0.75rem;">Design Comparison</h2>
+          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem;">
+            Design comparison calculators are available in the Workspace where you can run live calculations.
+          </p>
+          <a href="/app/workspace" style="display:inline-block; margin-top:1rem; padding:0.5rem 1.25rem; background:#2563eb; color:#fff; text-decoration:none; border-radius:6px; font-size:0.9rem; font-weight:600;">Open Workspace</a>
         </div>
       </div>
     </div>
@@ -203,7 +160,8 @@
     <script>window._tourPage = 'scenarios';</script>
     <script src="/static/configs.js"></script>
     <script src="/static/utils.js"></script>
-    <script src="/static/scenarios.js"></script>
+    <script src="/static/scenario-data.js"></script>
+    <script src="/static/scenario-ui.js"></script>
     <script src="/static/comparison.js"></script>
     <script src="/static/tour-content.js"></script>
     <script src="/static/tour.js"></script>
@@ -253,10 +211,14 @@
             window.location.href = '/app/workspace?new=1';
           });
         }
-        var saveCurrentBtn = document.getElementById('scenario-save-btn');
-        if (saveCurrentBtn) {
-          saveCurrentBtn.addEventListener('click', function() {
-            window.location.href = '/app/workspace';
+        var saveBtn = document.getElementById('scenario-save-btn');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', function() {
+            if (C.activeScenarioId) {
+              window.location.href = '/app/workspace?scenario=' + C.activeScenarioId;
+            } else {
+              window.location.href = '/app/workspace';
+            }
           });
         }
 
@@ -553,8 +515,8 @@
             });
 
             await loadScenariosFromDB();
-            renderScenarioList();
-            renderCompareSelector();
+            if (typeof renderScenarioList === 'function') renderScenarioList();
+            if (typeof renderCompareSelector === 'function') renderCompareSelector();
 
             if (typeof initAssistant === 'function') initAssistant();
 
