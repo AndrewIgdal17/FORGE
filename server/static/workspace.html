@@ -95,17 +95,20 @@
     <!-- Inputs Tab -->
     <div class="main-tab-content active" id="main-tab-inputs">
     <form id="demo-form" novalidate>
-
-      <div id="ctcc-section" class="section">
-        <div id="ctcc-json-inputs">
-          <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
-          <div id="tabs-container" class="tabs-hidden">
-            <div class="tabs" id="tab-buttons"></div>
-            <div id="tab-contents"></div>
+      <div class="workspace-layout">
+        <div class="sidebar" id="sidebar">
+          <div class="sidebar-search">
+            <input type="text" id="sidebar-search-input" placeholder="Search fields...">
+          </div>
+          <div id="sidebar-tree"></div>
+        </div>
+        <div class="content-area">
+          <div class="content-header" id="content-header"></div>
+          <div id="content-panel">
+            <p id="load-status" style="margin: 0; font-size: 0.9rem; flex-shrink: 0;"></p>
           </div>
         </div>
       </div>
-
     </form>
     </div>
 
@@ -151,6 +154,8 @@
     <script src="/static/scenario-data.js"></script>
     <script src="/static/scenario-ui.js"></script>
     <script src="/static/scenario-workspace.js"></script>
+    <script src="/static/sidebar.js"></script>
+    <script src="/static/sidebar-search.js"></script>
     <script src="/static/wizard.js"></script>
     <script src="/static/tour-content.js"></script>
     <script src="/static/tour.js"></script>
