@@ -41,6 +41,7 @@ JSON_DIR = BASE_DIR / "json"
 OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
 YAMLS_DIR = BASE_DIR.parent / "yamls"
 INDEX_FILE = STATIC_DIR / "index.html"
+SIGNUP_FILE = STATIC_DIR / "signup.html"
 FINAL_COMBINED_FILE = JSON_DIR / "final_combined.json"
 # Kept when syncing YAML→JSON; not derived from a YAML stem.
 PRESERVED_JSON_NAMES = frozenset(
@@ -140,6 +141,12 @@ def _refresh_final_combined() -> None:
 async def serve_index() -> FileResponse:
     """Serve the template HTML page."""
     return FileResponse(INDEX_FILE)
+
+
+@app.get("/signup", response_class=FileResponse)
+async def serve_signup() -> FileResponse:
+    """Serve the standalone signup page."""
+    return FileResponse(SIGNUP_FILE)
 
 
 _final_combined_cache: dict | None = None

@@ -36,7 +36,7 @@
           across capital, operational, delay, emissions, and risk.
         </p>
         <div class="marketing-cta">
-          <button type="button" class="marketing-btn-primary" id="auth-show-signup">Get Started</button>
+          <a href="/signup" class="marketing-btn-primary" style="text-decoration:none; text-align:center;">Get Started</a>
           <button type="button" class="marketing-btn-secondary" id="auth-show-login">Log in</button>
         </div>
       </section>
@@ -85,11 +85,10 @@
             <input id="auth-email" type="email" placeholder="Email" required style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
             <input id="auth-password" type="password" placeholder="Password" required minlength="6" style="padding:0.6rem 0.75rem; border:1px solid #ddd; border-radius:6px; font-size:0.95rem;" />
             <button type="button" id="auth-login-btn" style="padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Log In</button>
-            <button type="button" id="auth-signup-btn" style="display:none; padding:0.65rem; background:#2563eb; color:#fff; border:none; border-radius:6px; font-size:0.95rem; font-weight:600; cursor:pointer;">Sign Up</button>
           </form>
           <div class="auth-modal-toggle">
-            <span id="auth-toggle-prompt">Don't have an account?</span>
-            <button type="button" id="auth-toggle-btn" class="auth-toggle-link">Sign Up</button>
+            <span>Don't have an account?</span>
+            <a href="/signup" class="auth-toggle-link">Sign Up</a>
           </div>
         </div>
       </div>
@@ -125,37 +124,18 @@
 
     <script>
     (function() {
-      const authGate = document.getElementById('auth-gate');
-      const profileGate = document.getElementById('profile-gate');
-      const authModal = document.getElementById('auth-modal');
-      const authModalTitle = document.getElementById('auth-modal-title');
-      const authTogglePrompt = document.getElementById('auth-toggle-prompt');
-      const authToggleBtn = document.getElementById('auth-toggle-btn');
-      const loginBtn = document.getElementById('auth-login-btn');
-      const signupBtn = document.getElementById('auth-signup-btn');
-      const errEl = document.getElementById('auth-error');
-      const msgEl = document.getElementById('auth-message');
-      const emailEl = document.getElementById('auth-email');
-      const pwEl = document.getElementById('auth-password');
+      var authGate = document.getElementById('auth-gate');
+      var profileGate = document.getElementById('profile-gate');
+      var authModal = document.getElementById('auth-modal');
+      var errEl = document.getElementById('auth-error');
+      var msgEl = document.getElementById('auth-message');
+      var emailEl = document.getElementById('auth-email');
+      var pwEl = document.getElementById('auth-password');
 
       function showError(msg) { errEl.textContent = msg; errEl.style.display = 'block'; msgEl.style.display = 'none'; }
-      function showMsg(msg) { msgEl.textContent = msg; msgEl.style.display = 'block'; errEl.style.display = 'none'; }
       function clearMessages() { errEl.style.display = 'none'; msgEl.style.display = 'none'; }
 
-      let authMode = 'login';
-
-      function setAuthMode(mode) {
-        authMode = mode;
-        const isLogin = mode === 'login';
-        loginBtn.style.display = isLogin ? '' : 'none';
-        signupBtn.style.display = isLogin ? 'none' : '';
-        authModalTitle.textContent = isLogin ? 'Log In' : 'Sign Up';
-        authTogglePrompt.textContent = isLogin ? "Don't have an account?" : 'Already have an account?';
-        authToggleBtn.textContent = isLogin ? 'Sign Up' : 'Log In';
-      }
-
-      function showAuthModal(mode) {
-        setAuthMode(mode);
+      function showAuthModal() {
         clearMessages();
         authModal.style.display = 'flex';
       }
@@ -174,86 +154,102 @@
       function hideAllGates() { authGate.style.display = 'none'; profileGate.style.display = 'none'; }
 
       function setUserDisplay(profile) {
-        const displayName = profile?.username || '';
-        document.querySelectorAll('.ctcc-user-display').forEach(el => {
+        var displayName = profile && profile.username ? profile.username : '';
+        document.querySelectorAll('.ctcc-user-display').forEach(function(el) {
           el.textContent = displayName;
         });
       }
 
-      async function checkProfileAndEnter(session) {
-        if (!session) { showAuthGate(); return; }
-        const { data: profile, error } = await _sb.from('profiles')
-          .select('*').eq('id', session.user.id).single();
-        if (error || !profile?.username) {
-          showProfileGate();
-          return;
-        }
+      async function enterApp(profile, session) {
         window.CTCC.userProfile = profile;
         window.CTCC.currentUserId = session.user.id;
         setUserDisplay(profile);
         hideAllGates();
-        loadScenariosFromDB().then(function() {
-          if (C.sessionScenarios.length > 0) enableGotoScenarios();
-        });
+
+        var landingPage = document.getElementById('landing-page');
+        var appShell = document.getElementById('app-shell');
+        if (sessionStorage.getItem('ctcc-session-active')) {
+          landingPage.style.display = 'none';
+          appShell.style.display = '';
+        } else {
+          landingPage.style.display = '';
+          appShell.style.display = 'none';
+        }
+
+        await loadScenariosFromDB();
+
         _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
-          .then(({ data }) => { if (data) loadSnapshot(data.id); });
+          .then(function(res) { if (res.data) loadSnapshot(res.data.id); });
+
+        var gotoBtn = document.getElementById('landing-goto-scenarios-btn');
+        if (window.CTCC.sessionScenarios.length > 0 && gotoBtn) {
+          gotoBtn.disabled = false;
+          gotoBtn.classList.remove('landing-btn-disabled');
+          gotoBtn.classList.add('landing-btn-secondary');
+        }
+
+        if (typeof initAssistant === 'function') initAssistant();
+
+        if (window.CTCC.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
+          if (typeof showWelcomeBubble === 'function') {
+            setTimeout(showWelcomeBubble, 500);
+          }
+        }
       }
 
-      document.getElementById('auth-show-signup').addEventListener('click', () => showAuthModal('signup'));
-      document.getElementById('auth-show-login').addEventListener('click', () => showAuthModal('login'));
-      document.getElementById('marketing-login-toggle').addEventListener('click', () => showAuthModal('login'));
+      async function checkProfileAndEnter(session) {
+        if (!session) { showAuthGate(); return; }
+        var result = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
+        if (result.error || !(result.data && result.data.username)) {
+          showProfileGate();
+          return;
+        }
+        await enterApp(result.data, session);
+      }
+
+      document.getElementById('auth-show-login').addEventListener('click', function() { showAuthModal(); });
+      document.getElementById('marketing-login-toggle').addEventListener('click', function() { showAuthModal(); });
       document.getElementById('auth-modal-close').addEventListener('click', hideAuthModal);
-      authModal.addEventListener('click', (e) => { if (e.target === authModal) hideAuthModal(); });
-      authToggleBtn.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'signup' : 'login'));
+      authModal.addEventListener('click', function(e) { if (e.target === authModal) hideAuthModal(); });
 
-      document.getElementById('auth-login-btn').addEventListener('click', async () => {
+      document.getElementById('auth-login-btn').addEventListener('click', async function() {
         clearMessages();
-        const { error } = await _sb.auth.signInWithPassword({
-          email: emailEl.value, password: pwEl.value
-        });
-        if (error) showError(error.message);
+        var result = await _sb.auth.signInWithPassword({ email: emailEl.value, password: pwEl.value });
+        if (result.error) showError(result.error.message);
       });
 
-      document.getElementById('auth-signup-btn').addEventListener('click', async () => {
-        clearMessages();
-        const { error } = await _sb.auth.signUp({
-          email: emailEl.value, password: pwEl.value
-        });
-        if (error) showError(error.message);
-        else showMsg('Check your email for a confirmation link.');
-      });
-
-      document.getElementById('profile-submit-btn').addEventListener('click', async () => {
-        const profErr = document.getElementById('profile-error');
+      document.getElementById('profile-submit-btn').addEventListener('click', async function() {
+        var profErr = document.getElementById('profile-error');
         profErr.style.display = 'none';
-        const username = document.getElementById('profile-username').value.trim();
-        const orgType = document.getElementById('profile-org-type').value;
+        var username = document.getElementById('profile-username').value.trim();
+        var orgType = document.getElementById('profile-org-type').value;
         if (!username) { profErr.textContent = 'Username is required.'; profErr.style.display = 'block'; return; }
         if (!orgType) { profErr.textContent = 'User type is required.'; profErr.style.display = 'block'; return; }
-        const { data: { session } } = await _sb.auth.getSession();
+        var sessionResult = await _sb.auth.getSession();
+        var session = sessionResult.data.session;
         if (!session) { showAuthGate(); return; }
-        const updates = {
-          username,
+        var updates = {
+          username: username,
           first_name: document.getElementById('profile-first-name').value.trim() || null,
           last_name: document.getElementById('profile-last-name').value.trim() || null,
           org: document.getElementById('profile-org').value.trim() || null,
-          org_type: orgType,
+          org_type: orgType
         };
-        const { error } = await _sb.from('profiles').update(updates).eq('id', session.user.id);
-        if (error) {
-          const msg = error.message.includes('unique') ? 'That username is already taken.' : error.message;
+        var updateResult = await _sb.from('profiles').update(updates).eq('id', session.user.id);
+        if (updateResult.error) {
+          var msg = updateResult.error.message.includes('unique') ? 'That username is already taken.' : updateResult.error.message;
           profErr.textContent = msg; profErr.style.display = 'block';
           return;
         }
         await checkProfileAndEnter(session);
       });
 
-      _sb.auth.onAuthStateChange(async (event, session) => {
+      _sb.auth.onAuthStateChange(async function(event, session) {
         await checkProfileAndEnter(session);
       });
 
-      _sb.auth.getSession().then(async ({ data }) => {
-        if (!data.session) showAuthGate();
+      _sb.auth.getSession().then(async function(result) {
+        if (!result.data.session) showAuthGate();
       });
     })();
     </script>
@@ -696,20 +692,6 @@
         sessionStorage.setItem('ctcc-session-active', '1');
       }
 
-      function enableGotoScenarios() {
-        gotoScenariosBtn.disabled = false;
-        gotoScenariosBtn.classList.remove('landing-btn-disabled');
-        gotoScenariosBtn.classList.add('landing-btn-secondary');
-      }
-
-      if (sessionStorage.getItem('ctcc-session-active')) {
-        showApp();
-        enableGotoScenarios();
-      } else {
-        landingPage.style.display = '';
-        appShell.style.display = 'none';
-      }
-
       document.getElementById('landing-new-scenario-btn').addEventListener('click', function() {
         showApp();
         showWizard();
@@ -738,7 +720,11 @@
         appShell.style.display = 'none';
         landingPage.style.display = '';
         sessionStorage.removeItem('ctcc-session-active');
-        enableGotoScenarios();
+        if (C.sessionScenarios.length > 0) {
+          gotoScenariosBtn.disabled = false;
+          gotoScenariosBtn.classList.remove('landing-btn-disabled');
+          gotoScenariosBtn.classList.add('landing-btn-secondary');
+        }
       });
 
       C.ctccJsonData = null;
@@ -1974,15 +1960,6 @@
         input.addEventListener("change", updateBulkSourceVisibility);
       });
 
-      if (typeof initAssistant === 'function') initAssistant();
-
-      if (C.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
-        if (typeof showWelcomeBubble === 'function') {
-          setTimeout(function() {
-            showWelcomeBubble();
-          }, 500);
-        }
-      }
       }); // End DOMContentLoaded
     </script>
   </body>
