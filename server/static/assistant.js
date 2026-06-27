@@ -84,7 +84,22 @@ function startFullTour() {
   }
 }
 
+function showWelcomeBubble() {
+  if (!_bubbleEl) return;
+  _bubbleEl.innerHTML =
+    '<div class="assistant-bubble-content">' +
+      'Looks like you\'re new to the CTCC. We recommend you take a tour with us as we walk through a tutorial!' +
+    '</div>' +
+    '<div class="assistant-bubble-actions">' +
+      '<button type="button" onclick="startFullTour()">Start Tour</button>' +
+      '<button type="button" onclick="hideAssistant()">No thanks</button>' +
+    '</div>' +
+    '<button type="button" class="assistant-bubble-close" onclick="hideAssistant()">&times;</button>';
+  _bubbleEl.style.display = '';
+}
+
 window.initAssistant = initAssistant;
+window.showWelcomeBubble = showWelcomeBubble;
 window.showAssistantMessage = showAssistantMessage;
 window.showAssistantBubble = showAssistantBubble;
 window.hideAssistant = hideAssistant;

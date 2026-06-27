@@ -192,7 +192,9 @@
         window.CTCC.currentUserId = session.user.id;
         setUserDisplay(profile);
         hideAllGates();
-        loadScenariosFromDB();
+        loadScenariosFromDB().then(function() {
+          if (C.sessionScenarios.length > 0) enableGotoScenarios();
+        });
         _sb.from('ref_snapshot').select('id').order('created_at', { ascending: false }).limit(1).single()
           .then(({ data }) => { if (data) loadSnapshot(data.id); });
       }
@@ -280,7 +282,7 @@
       <div class="landing-buttons">
         <button type="button" class="landing-btn landing-btn-primary" id="landing-new-scenario-btn">+ New Scenario</button>
         <button type="button" class="landing-btn landing-btn-secondary" id="landing-load-file-btn">Load from File</button>
-        <button type="button" class="landing-btn landing-btn-disabled" disabled>Guided Tour</button>
+        <button type="button" class="landing-btn landing-btn-secondary" id="landing-tour-btn">Guided Tour</button>
         <button type="button" class="landing-btn landing-btn-disabled" id="landing-goto-scenarios-btn" disabled>Go to Scenarios</button>
       </div>
     </div>
@@ -718,6 +720,11 @@
         showApp();
         switchMainTab('scenarios');
         document.getElementById('scenario-upload-btn').click();
+      });
+
+      document.getElementById('landing-tour-btn').addEventListener('click', function() {
+        showApp();
+        if (typeof startFullTour === 'function') startFullTour();
       });
 
       gotoScenariosBtn.addEventListener('click', function() {
@@ -1970,9 +1977,9 @@
       if (typeof initAssistant === 'function') initAssistant();
 
       if (C.sessionScenarios.length === 0 && !localStorage.getItem('ctcc-tour-complete')) {
-        if (typeof showAssistantMessage === 'function') {
+        if (typeof showWelcomeBubble === 'function') {
           setTimeout(function() {
-            showAssistantMessage('Welcome to the CTCC! Let\u2019s build your first transmission scenario together. Click <strong>+ New Scenario</strong> to begin.');
+            showWelcomeBubble();
           }, 500);
         }
       }
