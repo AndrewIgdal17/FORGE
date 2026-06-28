@@ -225,6 +225,10 @@ function renderSidebarTree(sections, showCounts) {
     sectionEl.appendChild(subitemsEl);
     container.appendChild(sectionEl);
   }
+
+  if (showCounts) {
+    setTimeout(updateSidebarValidation, 0);
+  }
 }
 
 function selectFirstSubItem(sections) {
@@ -278,10 +282,42 @@ function getCurrentSubItem() {
   return { sectionId: currentSectionId, subItemId: currentSubItemId };
 }
 
+function updateSidebarValidation() {
+  var invalidFields = typeof getInvalidFields === 'function' ? getInvalidFields() : [];
+
+  var bySubTab = {};
+  for (var i = 0; i < invalidFields.length; i++) {
+    var st = invalidFields[i].subTab;
+    if (!bySubTab[st]) bySubTab[st] = [];
+    bySubTab[st].push(invalidFields[i].label);
+  }
+
+  var subItems = document.querySelectorAll('.sidebar-subitem');
+  subItems.forEach(function(el) {
+    var subId = el.getAttribute('data-sub-item-id');
+    var existing = el.querySelector('.missing-badge');
+    if (existing) existing.remove();
+
+    if (bySubTab[subId]) {
+      var names = bySubTab[subId];
+      el.classList.add('sidebar-subitem--invalid');
+      el.title = names.length + ' missing: ' + names.join(', ');
+      var badge = document.createElement('span');
+      badge.className = 'missing-badge';
+      badge.textContent = names.length + ' missing';
+      el.appendChild(badge);
+    } else {
+      el.classList.remove('sidebar-subitem--invalid');
+      el.title = '';
+    }
+  });
+}
+
 window.SIDEBAR_SECTIONS = SIDEBAR_SECTIONS;
 window.onSubItemSelected = null;
 window.initSidebar = initSidebar;
 window.navigateToSubItem = navigateToSubItem;
 window.switchSidebarView = switchSidebarView;
 window.getCurrentSubItem = getCurrentSubItem;
+window.updateSidebarValidation = updateSidebarValidation;
 })();

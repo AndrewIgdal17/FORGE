@@ -632,6 +632,49 @@
         color: var(--color-text-secondary);
       }
 
+      /* ── Validation Cues ── */
+      @keyframes validationPulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+        50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2); }
+      }
+
+      .sidebar-subitem--invalid {
+        background: #ef4444 !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 6px;
+        margin: 0.15rem 0.25rem;
+        padding: 0.45rem 0.65rem !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .sidebar-subitem--invalid .missing-badge {
+        font-size: 0.6rem;
+        opacity: 0.9;
+        white-space: nowrap;
+      }
+
+      .form-field--invalid label {
+        color: #dc2626 !important;
+        font-weight: 600;
+      }
+      .form-field--invalid input,
+      .form-field--invalid select {
+        border: 2px solid #ef4444 !important;
+        background: #fef2f2 !important;
+      }
+      .form-field--invalid.pulse input,
+      .form-field--invalid.pulse select {
+        animation: validationPulse 1.5s ease-in-out 2;
+      }
+      .validation-msg {
+        font-size: 0.62rem;
+        color: #ef4444;
+        margin-top: 0.2rem;
+        font-weight: 500;
+      }
+
       /* ── Pill Tabs ── */
       .pill-tabs {
         display: flex;

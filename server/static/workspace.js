@@ -110,6 +110,50 @@
         }
       }, 300);
 
+      function updateFieldValidation(pulseOnEntry) {
+        var invalidFields = typeof getInvalidFields === 'function' ? getInvalidFields() : [];
+        var invalidPaths = {};
+        for (var i = 0; i < invalidFields.length; i++) {
+          invalidPaths[invalidFields[i].path] = invalidFields[i];
+        }
+
+        document.querySelectorAll('.form-field--invalid').forEach(function(el) {
+          el.classList.remove('form-field--invalid', 'pulse');
+          var msg = el.querySelector('.validation-msg');
+          if (msg) msg.remove();
+        });
+
+        for (var path in invalidPaths) {
+          if (path === 'terrain_miles') continue;
+          var input = document.querySelector('[data-path="' + path + '"]');
+          if (!input) continue;
+          var wrapper = input.closest('.form-field');
+          if (!wrapper) continue;
+
+          wrapper.classList.add('form-field--invalid');
+          if (pulseOnEntry) wrapper.classList.add('pulse');
+
+          if (!wrapper.querySelector('.validation-msg')) {
+            var msg = document.createElement('div');
+            msg.className = 'validation-msg';
+            msg.textContent = '\u26A0 Required';
+            wrapper.appendChild(msg);
+          }
+        }
+
+        if (pulseOnEntry) {
+          setTimeout(function() {
+            document.querySelectorAll('.form-field--invalid.pulse').forEach(function(el) {
+              el.classList.remove('pulse');
+            });
+          }, 3000);
+        }
+
+        if (typeof updateSidebarValidation === 'function') {
+          updateSidebarValidation();
+        }
+      }
+
 
       /** Hierarchical add-column picker (fixed popover); see spec Tooling UX 3/23. */
 
@@ -287,6 +331,7 @@
 
       // Expose closure-scoped functions for external modules
       window.autoCalculate = autoCalculate;
+      window.updateFieldValidation = updateFieldValidation;
       window.switchTab = switchTab;
       window.collectJsonData = collectJsonData;
       window.markResultsAvailable = markResultsAvailable;
@@ -598,8 +643,8 @@
       });
 
       // Always-solving: auto-calculate on every input change
-      form.addEventListener('input', () => autoCalculate());
-      form.addEventListener('change', () => autoCalculate());
+      form.addEventListener('input', () => { autoCalculate(); updateFieldValidation(false); });
+      form.addEventListener('change', () => { autoCalculate(); updateFieldValidation(false); });
 
       // Initial calculation removed — gated on C.activeScenarioId (§13 Scenarios Tab)
 
@@ -662,10 +707,12 @@
               }
             }
             if (typeof updateBreadcrumb === 'function') updateBreadcrumb();
+            setTimeout(function() { updateFieldValidation(true); }, 100);
           };
           if (typeof initSidebar === 'function') initSidebar();
           if (typeof initSidebarSearch === 'function') initSidebarSearch();
           if (typeof initWorkspaceHeader === 'function') initWorkspaceHeader();
+          setTimeout(function() { updateFieldValidation(true); }, 500);
 
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {

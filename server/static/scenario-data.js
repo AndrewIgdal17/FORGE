@@ -270,6 +270,50 @@
     return hasAnyMiles;
   }
 
+  function getInvalidFields() {
+    var invalid = [];
+    var form = document.getElementById('demo-form');
+    if (!form) return invalid;
+
+    var checks = [
+      { path: '01_project_technical_details.project.construction_type', label: 'Construction Type', subTab: 'technology' },
+      { path: '01_project_technical_details.project.ac_dc', label: 'AC/DC', subTab: 'technology' },
+      { path: '01_project_technical_details.project.capacity_mw', label: 'Capacity MW', subTab: 'technology' },
+      { path: '01_project_technical_details.project.conductor_type', label: 'Conductor Type', subTab: 'conductor-details' },
+    ];
+
+    var acDcEl = form.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+    if (acDcEl && acDcEl.value === 'DC') {
+      checks.push({ path: '01_project_technical_details.project.converter_type', label: 'Converter Type', subTab: 'converter-details' });
+    }
+
+    var ctEl = form.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+    if (ctEl && ctEl.value === 'Reconductoring') {
+      checks.push({ path: '01_project_technical_details.project.old_ac_dc', label: 'Old AC/DC', subTab: 'technology' });
+      checks.push({ path: '01_project_technical_details.project.old_capacity_mw', label: 'Old Capacity MW', subTab: 'technology' });
+      checks.push({ path: '01_project_technical_details.project.old_conductor_type', label: 'Old Conductor Type', subTab: 'technology' });
+    }
+
+    for (var i = 0; i < checks.length; i++) {
+      var el = form.querySelector('[data-path="' + checks[i].path + '"]');
+      if (!el || !el.value) {
+        invalid.push(checks[i]);
+      }
+    }
+
+    var terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
+    var hasAnyMiles = false;
+    terrainInputs.forEach(function(input) {
+      var val = parseFloat(input.value.replace(/,/g, ''));
+      if (!isNaN(val) && val > 0) hasAnyMiles = true;
+    });
+    if (!hasAnyMiles) {
+      invalid.push({ path: 'terrain_miles', label: 'Terrain miles (at least one > 0)', subTab: 'terrain-mix' });
+    }
+
+    return invalid;
+  }
+
   function clearResults() {
     const resultEl = document.getElementById('result');
     if (resultEl) {
@@ -625,6 +669,7 @@
   window.updateScenarioBadge = updateScenarioBadge;
   window.addScenarioToSession = addScenarioToSession;
   window.hasRequiredFields = hasRequiredFields;
+  window.getInvalidFields = getInvalidFields;
   window.clearResults = clearResults;
   window.loadSnapshot = loadSnapshot;
   window.assembleFullInputs = assembleFullInputs;
