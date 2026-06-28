@@ -7,19 +7,6 @@
       const resultEl = document.getElementById("result");
       const loadStatus = document.getElementById("load-status");
 
-      // Main tab elements
-      const mainTabButtons = document.querySelectorAll('.main-tab-button');
-      const mainTabContents = document.querySelectorAll('.main-tab-content');
-      const statusBar = document.getElementById('status-bar');
-      const statusBarIcon = document.getElementById('status-bar-icon');
-      const statusBarLabel = document.getElementById('status-bar-label');
-      const statusBarTimestamp = document.getElementById('status-bar-timestamp');
-      const statusBarViewBtn = document.getElementById('status-bar-view-btn');
-      document.getElementById('status-bar-save-btn').addEventListener('click', function(e) {
-        e.preventDefault();
-        showSaveDialog();
-      });
-
       C.ctccJsonData = null;
       /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
       C.cachedFuelMixPresets = [];
@@ -218,66 +205,6 @@
         }
       });
 
-      document.getElementById('save-scenario-main-btn').addEventListener('click', async () => {
-        if (!C.activeScenarioId) {
-          showToast('No active scenario to save.');
-          return;
-        }
-        const scenario = C.sessionScenarios.find(s => s.id === C.activeScenarioId);
-        if (!scenario) return;
-        scenario.inputs = collectJsonData();
-        scenario.results = C.lastRunResults;
-        scenario.metadata.timestamp = new Date().toISOString();
-        scenario.metadata.source = 'manual';
-        renderScenarioList();
-        await saveScenarioToDB(scenario);
-        showToast('Scenario saved.');
-      });
-
-      document.getElementById('save-copy-btn').addEventListener('click', () => {
-        if (!C.activeScenarioId) {
-          showToast('No active scenario to copy.');
-          return;
-        }
-        const copyName = C.activeScenarioName + ' (copy)';
-        addScenarioToSession(collectJsonData(), C.lastRunResults,
-          { timestamp: new Date().toISOString(), source: 'manual' }, copyName);
-        showToast('Saved as "' + copyName + '".');
-      });
-
-      document.getElementById('scenario-breadcrumb').addEventListener('click', (e) => {
-        const nameEl = e.target.closest('#scenario-breadcrumb-name');
-        if (!nameEl || !C.activeScenarioId) return;
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'scenario-card-name-input';
-        input.value = C.activeScenarioName;
-        input.size = Math.max(C.activeScenarioName.length, 5);
-        nameEl.replaceWith(input);
-        input.focus();
-        input.select();
-        input.addEventListener('input', () => { input.size = Math.max(input.value.length, 5); });
-        const finishEdit = () => {
-          const newName = input.value.trim();
-          const restored = document.createElement('span');
-          restored.id = 'scenario-breadcrumb-name';
-          restored.title = 'Click to rename';
-          if (newName && newName !== C.activeScenarioName) {
-            input.replaceWith(restored);
-            renameScenario(C.activeScenarioId, newName);
-          } else {
-            restored.textContent = C.activeScenarioName;
-            input.replaceWith(restored);
-          }
-        };
-        input.addEventListener('blur', finishEdit);
-        input.addEventListener('keydown', (e2) => {
-          if (e2.key === 'Enter') { e2.preventDefault(); input.blur(); }
-          if (e2.key === 'Escape') { input.value = C.activeScenarioName; input.blur(); }
-        });
-      });
-
       // Smart tooltip positioning (activeTooltip moved to utils.js)
 
 
@@ -295,95 +222,20 @@
       }, true);
 
 
-      // Main tab switching
-      function switchMainTab(tabName) {
-        if (typeof switchSidebarView === 'function') {
-          switchSidebarView(tabName === 'inputs' ? 'inputs' : 'results');
-        }
-        mainTabButtons.forEach(btn => {
-          const isActive = btn.dataset.tab === tabName;
-          const isDisabled = btn.classList.contains('disabled');
-
-          if (isActive && !isDisabled) {
-            btn.classList.add('active');
-          } else {
-            btn.classList.remove('active');
-          }
-        });
-
-        // Inputs and results both render into #content-panel inside #main-tab-inputs.
-        mainTabContents.forEach(content => {
-          content.classList.toggle('active', content.id === 'main-tab-inputs');
-        });
-
-        // Only show status bar on Inputs tab
-        if (tabName === 'inputs') {
-          if (statusBar.dataset.wasVisible === 'true') {
-            statusBar.classList.add('visible');
-          }
-        } else {
-          if (statusBar.classList.contains('visible')) {
-            statusBar.dataset.wasVisible = 'true';
-          }
-          statusBar.classList.remove('visible');
-        }
-
-        updateBreadcrumb();
-      }
-
-      function updateTabStates() {
-        const inputsBtn = document.querySelector('.main-tab-button[data-tab="inputs"]');
-        const resultsBtn = document.querySelector('.main-tab-button[data-tab="results"]');
-        if (C.activeScenarioId) {
-          if (inputsBtn) inputsBtn.classList.remove('disabled');
-          if (resultsBtn && C.latestValidResults) resultsBtn.classList.remove('disabled');
-        } else {
-          if (inputsBtn) inputsBtn.classList.add('disabled');
-          if (resultsBtn) resultsBtn.classList.add('disabled');
-        }
-      }
-
-
       function showCalculating() {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-        statusBar.classList.remove('success');
-        statusBar.classList.remove('error');
-        statusBar.classList.add('visible');
-        statusBar.dataset.wasVisible = 'true';
-        statusBarIcon.textContent = '⏳';
-        statusBarLabel.textContent = 'Calculating...';
-        statusBarTimestamp.textContent = `Started ${timeStr}`;
-        statusBarViewBtn.style.display = 'none';
-        document.getElementById('status-bar-save-btn').style.display = 'none';
+        if (typeof updateCalcTime === 'function') updateCalcTime('Calculating...');
       }
 
       function markResultsAvailable(durationMs) {
-        const durationSeconds = (durationMs / 1000).toFixed(2);
-        const resultsButton = document.querySelector('.main-tab-button[data-tab="results"]');
-
-        if (resultsButton) {
-          resultsButton.classList.remove('disabled');
-          resultsButton.classList.add('results-available');
-        }
+        var seconds = (durationMs / 1000).toFixed(1);
+        if (typeof updateCalcTime === 'function') updateCalcTime('Calculated in ' + seconds + 's');
+        var resultsBtn = document.querySelector('.view-toggle-btn[data-view="results"]');
+        if (resultsBtn) resultsBtn.classList.add('results-available');
       }
 
       function hideStatusBar() {
-        statusBar.classList.remove('visible');
-        statusBar.classList.remove('success');
-        statusBar.classList.remove('error');
-        statusBar.dataset.wasVisible = 'false';
+        if (typeof updateCalcTime === 'function') updateCalcTime('Not calculated');
       }
-
-      // Attach click handlers to main tabs
-      mainTabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!btn.classList.contains('disabled')) {
-            switchMainTab(btn.dataset.tab);
-          }
-        });
-      });
 
       const DEFAULT_PORT = 8000;
 
@@ -438,11 +290,9 @@
 
       // Expose closure-scoped functions for external modules
       window.autoCalculate = autoCalculate;
-      window.switchMainTab = switchMainTab;
       window.switchTab = switchTab;
       window.collectJsonData = collectJsonData;
       window.markResultsAvailable = markResultsAvailable;
-      window.updateTabStates = updateTabStates;
       window.showCalculating = showCalculating;
       window.hideStatusBar = hideStatusBar;
       window.fetchFinalCombined = fetchFinalCombined;
@@ -658,21 +508,13 @@
         // Pre-run validation: category string (Fix 6)
         const catCheck = validateCategoryString();
         if (!catCheck.valid) {
-          statusBar.classList.add('error');
-          statusBar.classList.add('visible');
-          statusBarIcon.textContent = '✗';
-          statusBarLabel.textContent = 'Invalid configuration';
-          statusBarTimestamp.textContent = catCheck.reason;
+          showToast('Invalid configuration: ' + catCheck.reason);
           return;
         }
 
         // Pre-run validation: AFUDC timing patterns (Fix 5)
         if (!validateCostTimingPatterns()) {
-          statusBar.classList.add('error');
-          statusBar.classList.add('visible');
-          statusBarIcon.textContent = '✗';
-          statusBarLabel.textContent = 'AFUDC timing invalid';
-          statusBarTimestamp.textContent = 'during_delay + during_construction must equal 1.0 for AFUDC-eligible categories';
+          showToast('AFUDC timing invalid: during_delay + during_construction must equal 1.0');
           return;
         }
 
@@ -734,19 +576,17 @@
           const duration = endTime - startTime;
           markResultsAvailable(duration);
         } catch (error) {
-          statusBar.classList.remove('success');
-          statusBar.classList.add('error');
-          statusBarIcon.textContent = '✗';
-          statusBarLabel.textContent = 'Request failed';
-          statusBarTimestamp.textContent = error.message;
-          statusBarViewBtn.style.display = 'none';
+          showToast('Request failed: ' + error.message);
           resultEl.textContent = error.message;
         }
       });
 
       C.unsavedChanges = false;
       form.addEventListener('input', () => {
-          if (C.activeScenarioId) C.unsavedChanges = true;
+          if (C.activeScenarioId) {
+            C.unsavedChanges = true;
+            if (typeof updateSaveState === 'function') updateSaveState();
+          }
       });
       window.addEventListener('beforeunload', (e) => {
           if (C.unsavedChanges) {
@@ -823,6 +663,7 @@
           };
           if (typeof initSidebar === 'function') initSidebar();
           if (typeof initSidebarSearch === 'function') initSidebarSearch();
+          if (typeof initWorkspaceHeader === 'function') initWorkspaceHeader();
 
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {

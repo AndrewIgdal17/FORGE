@@ -1,8 +1,8 @@
 // CTCC Scenario Workspace UI
 // Extracted from scenarios.js — loaded only on workspace.html
 // Depends on: scenario-data.js, scenario-ui.js, workspace inline globals
-// (autoCalculate, switchMainTab, switchTab, renderJsonInputs, renderCTCCResults,
-//  updateTabStates, markResultsAvailable, setSnapshotOriginalData)
+// (autoCalculate, switchTab, renderJsonInputs, renderCTCCResults,
+//  markResultsAvailable, setSnapshotOriginalData)
 
 (function() {
 'use strict';
@@ -11,9 +11,10 @@ var C = window.CTCC;
 function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;
   C.unsavedChanges = false;
+  if (typeof updateSaveState === 'function') updateSaveState();
   C.activeScenarioName = scenario.customName;
+  if (typeof updateScenarioNameDisplay === 'function') updateScenarioNameDisplay(scenario.customName);
   updateScenarioBreadcrumb();
-  updateTabStates();
   if (scenario.ref_snapshot_id && window._snapshotCache[scenario.ref_snapshot_id]) {
     const snap = window._snapshotCache[scenario.ref_snapshot_id];
     if (typeof setSnapshotOriginalData === 'function') {
@@ -56,76 +57,29 @@ function lookupSidebarLabels(view, sectionId, subItemId) {
 }
 
 function updateBreadcrumb() {
-  const pill = document.getElementById('scenario-breadcrumb-pill');
-  const crumb = document.getElementById('scenario-breadcrumb');
-  if (!pill || !crumb) return;
+  if (typeof updateScenarioNameDisplay === 'function') {
+    updateScenarioNameDisplay(C.activeScenarioName || '');
+  }
 
-  const segments = [];
+  var headerCrumb = document.getElementById('header-breadcrumb');
+  if (!headerCrumb) return;
 
-  if (!C.activeScenarioId) {
-    crumb.style.display = 'none';
+  if (typeof getCurrentSubItem !== 'function') {
+    headerCrumb.textContent = '';
     return;
   }
 
-  segments.push({ label: 'Scenarios', action: function() { window.location.href = '/app/scenarios-manager'; } });
-  segments.push({ label: C.activeScenarioName, editable: true });
+  var current = getCurrentSubItem();
+  var labels = lookupSidebarLabels('inputs', current.sectionId, current.subItemId)
+    || lookupSidebarLabels('results', current.sectionId, current.subItemId);
 
-  const activeL1 = document.querySelector('.main-tab-button.active')?.dataset.tab;
-
-  if (activeL1 === 'inputs' || activeL1 === 'results') {
-    const viewKey = activeL1 === 'results' ? 'results' : 'inputs';
-    const viewLabel = activeL1 === 'results' ? 'Results' : 'Inputs';
-    segments.push({ label: viewLabel, action: () => switchMainTab(activeL1) });
-
-    if (typeof getCurrentSubItem === 'function') {
-      const current = getCurrentSubItem();
-      const labels = lookupSidebarLabels(viewKey, current.sectionId, current.subItemId);
-      if (labels && labels.section) {
-        segments.push({
-          label: labels.section.label,
-          action: labels.section.subItems.length ? () => {
-            if (typeof navigateToSubItem === 'function') {
-              navigateToSubItem(labels.section.id, labels.section.subItems[0].id);
-            }
-          } : null
-        });
-        if (labels.subItem) {
-          segments.push({
-            label: labels.subItem.label,
-            action: () => {
-              if (typeof navigateToSubItem === 'function') {
-                navigateToSubItem(labels.section.id, labels.subItem.id);
-              }
-            }
-          });
-        }
-      }
-    }
+  if (labels && labels.section) {
+    headerCrumb.textContent = labels.subItem
+      ? labels.section.label + ' \u203a ' + labels.subItem.label
+      : labels.section.label;
+  } else {
+    headerCrumb.textContent = '';
   }
-
-  pill.innerHTML = '';
-  segments.forEach((seg, i) => {
-    if (i > 0) {
-      const sep = document.createElement('span');
-      sep.className = 'breadcrumb-separator';
-      sep.textContent = ' / ';
-      pill.appendChild(sep);
-    }
-    const span = document.createElement('span');
-    span.textContent = seg.label;
-    if (seg.editable) {
-      span.id = 'scenario-breadcrumb-name';
-      span.title = 'Click to rename';
-    } else if (seg.action && i < segments.length - 1) {
-      span.style.cursor = 'pointer';
-      span.addEventListener('click', (e) => { e.stopPropagation(); seg.action(); });
-      span.addEventListener('mouseenter', () => { span.style.textDecoration = 'underline'; });
-      span.addEventListener('mouseleave', () => { span.style.textDecoration = ''; });
-    }
-    pill.appendChild(span);
-  });
-
-  crumb.style.display = '';
 }
 
 function updateScenarioBreadcrumb() { updateBreadcrumb(); }
@@ -139,7 +93,7 @@ async function createNewScenario(name) {
     trimmed
   );
   setActiveScenario(scenario);
-  switchMainTab('inputs');
+  if (typeof switchSidebarView === 'function') switchSidebarView('inputs');
   if (typeof navigateToSubItem === 'function') {
     navigateToSubItem('project-identity', 'technology');
   }

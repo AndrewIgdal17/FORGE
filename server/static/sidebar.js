@@ -233,17 +233,14 @@ function selectFirstSubItem(sections) {
 }
 
 function updateMainTabButtons(view) {
-  var buttons = document.querySelectorAll('.main-tab-button');
-  if (buttons.length < 2) return;
-
-  if (view === 'inputs') {
-    buttons[0].classList.add('active');
-    buttons[0].classList.remove('results-mode');
-    buttons[1].classList.remove('active', 'results-mode');
-  } else {
-    buttons[0].classList.remove('active');
-    buttons[1].classList.add('active', 'results-mode');
-  }
+  var buttons = document.querySelectorAll('.view-toggle-btn');
+  buttons.forEach(function(btn) {
+    if (btn.dataset.view === view) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 }
 
 function initSidebar() {
