@@ -5343,6 +5343,28 @@ function renderSubItemContent(subItemId) {
   // Move requested container to content-panel
   contentPanel.appendChild(container);
   C._currentSubItemId = subItemId;
+
+  if (subItemId && !subItemId.startsWith('r-')) {
+    var restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'restore-defaults-btn';
+    restoreBtn.textContent = 'Restore Defaults';
+    restoreBtn.style.cssText = 'margin-left:auto;padding:0.3rem 0.75rem;font-size:0.75rem;background:white;border:1px solid rgba(0,0,0,0.15);border-radius:4px;cursor:pointer;color:#666;font-family:inherit;';
+    restoreBtn.addEventListener('click', function() {
+      var subId = C._currentSubItemId;
+      if (!subId) return;
+      showRestoreDefaultsDialog('ctcc-restore-sub-' + subId, subId.replace(/-/g, ' '), function() {
+        var panel = document.getElementById('content-panel');
+        if (!panel) return;
+        panel.querySelectorAll('input[data-path], select[data-path]').forEach(function(el) {
+          if (el.dataset.path) resetFieldToDefault(el.dataset.path);
+        });
+        if (typeof showToast === 'function') showToast('Defaults restored');
+      });
+    });
+    var contentHeader = document.getElementById('content-header');
+    if (contentHeader) contentHeader.appendChild(restoreBtn);
+  }
 }
 
 

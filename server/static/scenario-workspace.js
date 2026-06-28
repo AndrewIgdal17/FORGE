@@ -25,7 +25,7 @@ function setActiveScenario(scenario) {
     renderJsonInputs(scenario.inputs);
   }
   if (scenario.results) {
-    renderCTCCResults(scenario.results);
+    C.latestValidResults = scenario.results;
     C.lastRunResults = JSON.parse(JSON.stringify(scenario.results));
     markResultsAvailable(0);
   } else {

@@ -2,7 +2,7 @@
 'use strict';
 
 var SYN = {
-  'interest rate': ['wacc_nominal','social_discount_rate','utility_discount_rate'],
+  'interest rate': ['wacc_nominal','social_discount_rate'],
   'wire': ['conductor_type','old_conductor_type'], 'cable': ['conductor_type','old_conductor_type'],
   'cost of money': ['wacc_nominal'],
   'discount': ['social_discount_rate','wacc_nominal'],

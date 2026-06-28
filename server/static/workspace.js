@@ -85,7 +85,6 @@
           if (json.results) {
             C.latestValidResults = json.results;
             C.lastRunResults = json.results;
-            renderCTCCResults(json.results);
             markResultsAvailable(0);
             document.dispatchEvent(new CustomEvent('ctcc-results-updated',
               { detail: { results: json.results } }));
@@ -723,7 +722,6 @@
           const json = await response.json();
 
           if (json.results) {
-            renderCTCCResults(json.results);
             C.lastRunResults = json.results;
             C.latestValidResults = json.results;
             document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
