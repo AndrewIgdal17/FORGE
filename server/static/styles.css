@@ -1438,12 +1438,22 @@
 .compare-delta-info {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
-  cursor: help;
+  cursor: pointer;
   opacity: 0.6;
   transition: opacity 0.15s;
+  position: relative;
 }
 .compare-delta-info:hover {
   opacity: 1;
+}
+.compare-delta-info .help-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: normal;
+  width: 260px;
+  pointer-events: none;
 }
       .compare-toolbar .copy-table-split .split-save-menu {
         top: calc(100% + 2px);

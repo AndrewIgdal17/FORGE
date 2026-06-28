@@ -73,7 +73,7 @@
           <h3 style="margin: 0 0 var(--space-sm);">Compare Selected Scenarios</h3>
           <div class="compare-toolbar">
             <button type="button" id="compare-baseline-btn" class="btn btn-secondary btn-sm">Compare to Baseline ▾</button>
-            <span class="compare-delta-info" title="Δ = scenario − baseline. Positive means higher (more expensive for costs, better for benefits).">ⓘ</span>
+            <span class="compare-delta-info" data-tooltip="Δ = scenario − baseline. Positive means higher (more expensive for costs, better for benefits).">ⓘ</span>
             <div class="copy-table-split" style="position:relative;display:inline-flex;">
               <button type="button" id="copy-table-btn" class="btn btn-secondary btn-sm" style="border-radius:var(--radius-md) 0 0 var(--radius-md);">Copy Table</button>
               <button type="button" id="copy-table-drop" class="btn btn-secondary btn-sm" style="border-radius:0 var(--radius-md) var(--radius-md) 0;padding-left:0.3rem;padding-right:0.3rem;border-left:1px solid var(--color-border);">▾</button>
@@ -206,6 +206,23 @@
 
         // Comparison toolbar (comparison.js exports initComparisonToolbar; does not self-init)
         if (typeof initComparisonToolbar === 'function') initComparisonToolbar();
+
+        // Delta info tooltip
+        var deltaInfo = document.querySelector('.compare-delta-info');
+        if (deltaInfo) {
+          var tipText = deltaInfo.getAttribute('data-tooltip');
+          deltaInfo.addEventListener('mouseenter', function() {
+            if (deltaInfo.querySelector('.help-tooltip')) return;
+            var tip = document.createElement('div');
+            tip.className = 'help-tooltip';
+            tip.textContent = tipText;
+            deltaInfo.appendChild(tip);
+          });
+          deltaInfo.addEventListener('mouseleave', function() {
+            var tip = deltaInfo.querySelector('.help-tooltip');
+            if (tip) tip.remove();
+          });
+        }
 
         // Copy Table dropdown
         var copyTableDrop = document.getElementById('copy-table-drop');
