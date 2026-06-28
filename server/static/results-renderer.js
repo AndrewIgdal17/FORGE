@@ -521,6 +521,186 @@ function getSubItemIdForBucket(bucket) {
   return map[bucket] || 'r-capital';
 }
 
+function renderExpandableCard(item, rid, colorIndex, parentTotal) {
+  var r = rid[item.id];
+  var pv = r ? r.value_pv || 0 : 0;
+  var pct = parentTotal > 0 ? ((pv / parentTotal) * 100).toFixed(0) : '0';
+  var hasDetail = r && r.detail_rows && r.detail_rows.length > 0;
+
+  var card = document.createElement('div');
+  card.className = 'results-detail-card';
+  card.style.borderLeftColor = COMPOSITION_COLORS[Math.min(colorIndex, COMPOSITION_COLORS.length - 1)];
+
+  var header = document.createElement('div');
+  header.className = 'detail-header';
+
+  var left = document.createElement('div');
+  var label = document.createElement('div');
+  label.className = 'detail-label';
+  label.textContent = item.label;
+  left.appendChild(label);
+
+  var sublabel = document.createElement('div');
+  sublabel.className = 'detail-sublabel';
+  sublabel.textContent = pct + '% of bucket';
+  if (hasDetail) sublabel.textContent += ' \u00B7 ' + r.detail_rows.length + ' components';
+  left.appendChild(sublabel);
+
+  var right = document.createElement('div');
+  right.style.cssText = 'display:flex;align-items:center;gap:0.5rem';
+  var value = document.createElement('div');
+  value.className = 'detail-value';
+  value.textContent = formatCurrency(pv, 0);
+  right.appendChild(value);
+
+  if (hasDetail) {
+    var chevron = document.createElement('span');
+    chevron.className = 'detail-chevron';
+    chevron.textContent = '\u25B8';
+    right.appendChild(chevron);
+  }
+
+  header.appendChild(left);
+  header.appendChild(right);
+  card.appendChild(header);
+
+  if (hasDetail) {
+    var subrows = document.createElement('div');
+    subrows.className = 'results-detail-subrows';
+    r.detail_rows.forEach(function(row) {
+      var sr = document.createElement('div');
+      sr.className = 'results-detail-subrow';
+      var srLabel = document.createElement('span');
+      srLabel.textContent = row.label || row.key || '';
+      var srValue = document.createElement('span');
+      srValue.className = 'subrow-value';
+      srValue.textContent = formatCurrency(row.value_pv != null ? row.value_pv : (row.value || 0), 0);
+      sr.appendChild(srLabel);
+      sr.appendChild(srValue);
+      subrows.appendChild(sr);
+    });
+    card.appendChild(subrows);
+
+    card.addEventListener('click', function() {
+      card.classList.toggle('expanded');
+    });
+  }
+
+  return card;
+}
+
+function renderDetailDrillIn(results, buckets) {
+  var container = document.createElement('div');
+  if (!C.taxonomy) return container;
+  var rid = buildResultById(results);
+
+  var allItems = [];
+  buckets.forEach(function(b) {
+    var items = (C.taxonomyByBucket[b] || []).slice().sort(function(a, bb) {
+      return a.display_order - bb.display_order;
+    });
+    allItems = allItems.concat(items);
+  });
+
+  var bucketTotal = allItems.reduce(function(s, i) {
+    return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+  }, 0);
+
+  var grandTotal = C.COST_BUCKET_ORDER.reduce(function(s, b) {
+    return s + (C.taxonomyByBucket[b] || []).reduce(function(ss, i) {
+      return ss + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+  }, 0);
+  var pctOfTotal = grandTotal > 0 ? ((bucketTotal / grandTotal) * 100).toFixed(0) : '0';
+
+  var heading = document.createElement('div');
+  heading.className = 'results-section-total';
+  var headLabel = document.createElement('div');
+  headLabel.className = 'total-label';
+  headLabel.textContent = ((C.BUCKET_LABELS && C.BUCKET_LABELS[buckets[0]]) || buckets[0]) + ' Costs (PV)';
+  var headValue = document.createElement('div');
+  headValue.className = 'total-value';
+  headValue.textContent = formatCurrency(bucketTotal, 0);
+  var headPct = document.createElement('div');
+  headPct.className = 'total-pct';
+  headPct.textContent = pctOfTotal + '% of total project costs';
+  heading.appendChild(headLabel);
+  heading.appendChild(headValue);
+  heading.appendChild(headPct);
+  container.appendChild(heading);
+
+  var segments = allItems.map(function(i) {
+    return { label: i.label, value: rid[i.id] ? rid[i.id].value_pv || 0 : 0 };
+  }).filter(function(s) { return s.value > 0; })
+    .sort(function(a, b) { return b.value - a.value; });
+
+  container.appendChild(renderCompositionBar(segments));
+  container.appendChild(renderCompositionLegend(segments));
+
+  var cardsWrapper = document.createElement('div');
+  cardsWrapper.style.marginTop = '1.25rem';
+  allItems.filter(function(i) {
+    return rid[i.id] && (rid[i.id].value_pv || 0) > 0;
+  }).sort(function(a, b) {
+    return (rid[b.id].value_pv || 0) - (rid[a.id].value_pv || 0);
+  }).forEach(function(item, idx) {
+    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, bucketTotal));
+  });
+  container.appendChild(cardsWrapper);
+
+  return container;
+}
+
+function renderBenefitDrillIn(results, bucket, subgroup) {
+  var container = document.createElement('div');
+  if (!C.taxonomy) return container;
+  var rid = buildResultById(results);
+
+  var items = (C.taxonomyByBucket[bucket] || []).slice().sort(function(a, b) {
+    return a.display_order - b.display_order;
+  });
+  if (subgroup) {
+    items = items.filter(function(i) { return i.subgroup === subgroup; });
+  }
+
+  var bucketTotal = items.reduce(function(s, i) {
+    return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+  }, 0);
+
+  var heading = document.createElement('div');
+  heading.className = 'results-section-total';
+  var headLabel = document.createElement('div');
+  headLabel.className = 'total-label';
+  var labelKey = subgroup || bucket;
+  headLabel.textContent = ((C.BUCKET_LABELS && C.BUCKET_LABELS[labelKey]) || labelKey) + ' Benefits (PV)';
+  var headValue = document.createElement('div');
+  headValue.className = 'total-value';
+  headValue.textContent = formatCurrency(bucketTotal, 0);
+  heading.appendChild(headLabel);
+  heading.appendChild(headValue);
+  container.appendChild(heading);
+
+  var segments = items.map(function(i) {
+    return { label: i.label, value: rid[i.id] ? rid[i.id].value_pv || 0 : 0 };
+  }).filter(function(s) { return s.value > 0; });
+
+  if (segments.length > 1) {
+    container.appendChild(renderCompositionBar(segments));
+    container.appendChild(renderCompositionLegend(segments));
+  }
+
+  var cardsWrapper = document.createElement('div');
+  cardsWrapper.style.marginTop = '1.25rem';
+  items.filter(function(i) {
+    return rid[i.id] && (rid[i.id].value_pv || 0) > 0;
+  }).forEach(function(item, idx) {
+    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, bucketTotal));
+  });
+  container.appendChild(cardsWrapper);
+
+  return container;
+}
+
 function exclOutputSuffix(groups) {
   const ORDER = ['avoided_emissions', 'emissions', 'line_losses', 'wildfire', 'outage'];
   const MAP = { avoided_emissions: 'avoided_emissions', emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
@@ -1798,21 +1978,21 @@ function renderResultsSubItem(subItemId) {
   } else if (subItemId === 'r-bcr') {
     el = renderResultsBCRPanel(results);
   } else if (subItemId === 'r-capital') {
-    el = renderCostsBuckets(results, ['hard']);
+    el = renderDetailDrillIn(results, ['hard']);
   } else if (subItemId === 'r-operational') {
-    el = renderCostsBuckets(results, ['soft']);
+    el = renderDetailDrillIn(results, ['soft']);
   } else if (subItemId === 'r-risk-costs') {
-    el = renderCostsBuckets(results, ['risk']);
+    el = renderDetailDrillIn(results, ['risk']);
   } else if (subItemId === 'r-emissions-costs') {
-    el = renderCostsBuckets(results, ['emissions']);
+    el = renderDetailDrillIn(results, ['emissions']);
   } else if (subItemId === 'r-remedial') {
-    el = renderBenefitsBucket(results, 'remedial');
+    el = renderBenefitDrillIn(results, 'remedial');
   } else if (subItemId === 'r-congestion') {
-    el = renderBenefitsBucket(results, 'remedial', 'congestion');
+    el = renderBenefitDrillIn(results, 'remedial', 'congestion');
   } else if (subItemId === 'r-curtailment') {
-    el = renderBenefitsBucket(results, 'remedial', 'curtailment');
+    el = renderBenefitDrillIn(results, 'remedial', 'curtailment');
   } else if (subItemId === 'r-loss-comp') {
-    el = renderBenefitsBucket(results, 'enabling');
+    el = renderBenefitDrillIn(results, 'enabling');
   } else if (subItemId === 'r-costs-overview') {
     el = renderSectionOverview(results, 'costs');
   } else if (subItemId === 'r-benefits-overview') {
