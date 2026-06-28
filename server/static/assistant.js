@@ -67,9 +67,24 @@ function getContextualTip() {
   var activeTab = document.querySelector('.main-tab-button.active');
   var tab = activeTab ? activeTab.dataset.tab : '';
   if (tab === 'inputs') {
-    var subTab = document.querySelector('#tab-buttons .tab-button.active');
-    if (subTab) return 'You\'re on the <strong>' + subTab.textContent.trim() + '</strong> tab. Fields with a lock icon have researched defaults \u2014 unlock to override.';
-    return 'The Inputs tabs contain ~300 fields. Most have researched defaults \u2014 you only need to set project-specific values.';
+    var current = typeof getCurrentSubItem === 'function' ? getCurrentSubItem() : null;
+    var subLabel = '';
+    if (current && typeof SIDEBAR_SECTIONS !== 'undefined') {
+      var sections = SIDEBAR_SECTIONS.inputs || [];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].id === current.sectionId) {
+          for (var j = 0; j < sections[i].subItems.length; j++) {
+            if (sections[i].subItems[j].id === current.subItemId) {
+              subLabel = sections[i].subItems[j].label;
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+    if (subLabel) return 'You\'re on <strong>' + subLabel + '</strong>. Fields with a lock icon have researched defaults \u2014 unlock to override.';
+    return 'The Inputs sidebar contains ~340 fields across 10 sections. Most have researched defaults \u2014 you only need to set project-specific values.';
   }
   if (tab === 'results') return 'Results update live as you change inputs. The <strong>Summary</strong> shows headline BCR and cost/benefit totals.';
   if (tab === 'scenarios') return 'Manage your scenarios here. Use <strong>Compare</strong> for side-by-side metrics. <strong>Duplicate</strong> a scenario to create a variant.';
