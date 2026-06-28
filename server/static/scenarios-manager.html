@@ -71,41 +71,22 @@
         <div id="compare-scenario-selector"></div>
         <div class="comparison-section" id="comparison-section">
           <p style="font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 0.75rem 0;">&Delta; = scenario &minus; baseline. Positive means higher (more expensive for costs, better for benefits).</p>
-          <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
-            <button type="button" id="copy-table-btn" class="btn btn-secondary btn-sm">Copy Table</button>
+          <h3 style="margin: 0 0 var(--space-sm);">Compare Selected Scenarios</h3>
+          <div class="compare-toolbar">
+            <button type="button" id="compare-baseline-btn" class="btn btn-secondary btn-sm">Compare to Baseline ▾</button>
+            <div class="copy-table-split" style="position:relative;display:inline-flex;">
+              <button type="button" id="copy-table-btn" class="btn btn-secondary btn-sm" style="border-radius:var(--radius-md) 0 0 var(--radius-md);">Copy Table</button>
+              <button type="button" id="copy-table-drop" class="btn btn-secondary btn-sm" style="border-radius:0 var(--radius-md) var(--radius-md) 0;padding-left:0.3rem;padding-right:0.3rem;border-left:1px solid var(--color-border);">▾</button>
+              <div id="copy-table-menu" class="split-save-menu" style="display:none;min-width:160px;">
+                <div class="split-menu-item" data-copy-action="current">Copy current view</div>
+                <div class="split-menu-item" data-copy-action="all">Copy all columns</div>
+              </div>
+            </div>
             <button type="button" id="export-png-btn" class="btn btn-secondary btn-sm">Export to PNG</button>
-            <button type="button" id="exclusions-btn" class="btn btn-secondary btn-sm">Exclusions</button>
-            <button type="button" id="compare-baseline-btn" class="btn btn-secondary btn-sm">Compare to Baseline</button>
-            <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
+            <label class="cmp-show-delta-label" style="margin-left: auto;">
               <input type="checkbox" id="cmp-auto-sort-columns" />
               Auto-sort Columns
             </label>
-          </h3>
-          <div id="cmp-toolbar-row2" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.25rem 0 0.35rem 0; font-size: 0.8rem;">
-            <span id="baseline-controls" style="display: none; align-items: center; gap: 0.5rem;">
-              <label class="cmp-show-delta-label" title="Show Δ = scenario − baseline for each metric. Benefits/NB: positive = better. Cost PVs: positive = more expensive, negative = avoided cost.">
-                <input type="checkbox" id="cmp-show-delta" />
-                Show Δ vs baseline
-              </label>
-              <label class="cmp-show-delta-label" title="How each metric cell shows values when Δ vs baseline is on">
-                <select id="cmp-delta-display-mode" disabled aria-label="Delta display mode">
-                  <option value="values_plus_delta">Values + Δ</option>
-                  <option value="delta_only">Δ only (except baseline)</option>
-                </select>
-              </label>
-              <label class="cmp-show-delta-label" title="Percent change vs baseline: (scenario − baseline) / baseline when baseline value is numeric and ≠ 0">
-                <input type="checkbox" id="cmp-show-percent-delta" disabled />
-                Show % Δ
-              </label>
-            </span>
-            <span id="custom-bcr-controls" style="display: none; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 400;">
-              <span style="font-weight: 500; color: rgba(0,0,0,0.6);">Exclude:</span>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-emissions" style="margin-right: 0.15rem; cursor: pointer;">Line Loss Compensation Emissions</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-linelosses" style="margin-right: 0.15rem; cursor: pointer;">Energy Losses</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-wildfire" style="margin-right: 0.15rem; cursor: pointer;">Wildfire</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 400; white-space: nowrap; display: inline-flex; align-items: center;"><input type="checkbox" id="cmp-exc-outage" style="margin-right: 0.15rem; cursor: pointer;">Outage</label>
-              <label style="font-size: 0.75rem; cursor: pointer; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; margin-left: 0.3rem;"><input type="checkbox" id="cmp-exc-apply-main" style="margin-right: 0.15rem; cursor: pointer;">Apply to main columns</label>
-            </span>
           </div>
           <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
           <div id="comparison-table-container"></div>
@@ -226,6 +207,59 @@
         // Comparison toolbar (comparison.js exports initComparisonToolbar; does not self-init)
         if (typeof initComparisonToolbar === 'function') initComparisonToolbar();
 
+        // Copy Table dropdown
+        var copyTableDrop = document.getElementById('copy-table-drop');
+        var copyTableMenu = document.getElementById('copy-table-menu');
+        if (copyTableDrop && copyTableMenu) {
+          copyTableDrop.addEventListener('click', function(e) {
+            e.stopPropagation();
+            copyTableMenu.style.display = copyTableMenu.style.display === 'none' ? 'block' : 'none';
+          });
+          document.addEventListener('click', function(e) {
+            if (!copyTableMenu.contains(e.target) && e.target !== copyTableDrop) {
+              copyTableMenu.style.display = 'none';
+            }
+          });
+          copyTableMenu.addEventListener('click', function(e) {
+            var item = e.target.closest('.split-menu-item');
+            if (!item) return;
+            copyTableMenu.style.display = 'none';
+            if (item.dataset.copyAction === 'current') {
+              document.getElementById('copy-table-btn').click();
+            } else if (item.dataset.copyAction === 'all') {
+              copyAllColumns();
+            }
+          });
+        }
+
+        function copyAllColumns() {
+          var selectedScenarios = C.sessionScenarios.filter(function(s) { return C.comparisonScenarioIds.has(s.id); });
+          if (selectedScenarios.length === 0) { alert('No scenarios selected.'); return; }
+          var allKeys = [];
+          COMPARISON_METRICS.forEach(function(g) {
+            g.metrics.forEach(function(m) { allKeys.push(m.key); });
+          });
+          var headers = ['Scenario'].concat(allKeys.map(function(key) { return comparisonMetricLabel(key); }));
+          var rows = [];
+          selectedScenarios.forEach(function(s) {
+            var row = [s.customName];
+            allKeys.forEach(function(key) {
+              var cfg = getMetricConfig(key);
+              if (!cfg) { row.push(''); return; }
+              var val = getMetricValue(s, key);
+              row.push(typeof formatMetricValue === 'function' ? formatMetricValue(val, cfg.format) : (val != null ? String(val) : ''));
+            });
+            rows.push(row);
+          });
+          var tsv = [headers.join('\t')].concat(rows.map(function(r) { return r.join('\t'); })).join('\n');
+          navigator.clipboard.writeText(tsv).then(function() {
+            var btn = document.getElementById('copy-table-btn');
+            var orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(function() { btn.textContent = orig; }, 1500);
+          });
+        }
+
         // Copy comparison table to clipboard
         var copyTableBtn = document.getElementById('copy-table-btn');
         if (copyTableBtn) {
@@ -260,21 +294,28 @@
               rows.push(valCells);
 
               if (hasDelta && !isBase) {
-                var deltaCells = [''];
+                var deltaCells = ['Δ vs Baseline'];
                 C.comparisonColumns.forEach(function(key) {
                   var cfg = getMetricConfig(key);
                   if (!cfg) { deltaCells.push(''); return; }
-                  deltaCells.push(formatDeltaLine(baselineScenario, s, key) || '');
+                  var deltaText = formatDeltaLine(baselineScenario, s, key) || '';
+                  deltaText = deltaText.replace(/^Δ\s*/, '');
+                  deltaCells.push(deltaText);
                 });
                 rows.push(deltaCells);
               }
 
               if (hasPercent && !isBase) {
-                var pctCells = [''];
+                var pctCells = ['% Δ vs Baseline'];
                 C.comparisonColumns.forEach(function(key) {
                   var cfg = getMetricConfig(key);
                   if (!cfg) { pctCells.push(''); return; }
-                  pctCells.push(formatPercentDeltaLine(baselineScenario, s, key) || '');
+                  var pctText = formatPercentDeltaLine(baselineScenario, s, key) || '';
+                  var pctMatch = pctText.match(/^([+-]?\d+\.?\d*)%$/);
+                  if (pctMatch) {
+                    pctText = String(parseFloat(pctMatch[1]) / 100);
+                  }
+                  pctCells.push(pctText);
                 });
                 rows.push(pctCells);
               }

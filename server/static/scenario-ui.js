@@ -386,23 +386,21 @@ function renderCompareSelector() {
     return;
   }
 
-  const table = document.createElement('table');
-  table.className = 'scenario-list-table';
-  table.style.cssText = 'width: 100%; border-collapse: collapse;';
+  const root = document.createElement('div');
+  root.className = 'compare-selector';
 
-  const thead = document.createElement('thead');
-  const headRow = document.createElement('tr');
+  // --- Header ---
+  const header = document.createElement('div');
+  header.className = 'compare-selector-header';
 
-  const thCmp = document.createElement('th');
-  thCmp.className = 'scenario-compare-col';
-  thCmp.title = 'Include in comparison table';
-  const selectAllCmp = document.createElement('input');
-  selectAllCmp.type = 'checkbox';
-  selectAllCmp.setAttribute('aria-label', 'Select all scenarios for comparison');
-  selectAllCmp.title = 'Select all scenarios for comparison';
-  selectAllCmp.addEventListener('click', (e) => e.stopPropagation());
-  selectAllCmp.addEventListener('change', () => {
-    if (selectAllCmp.checked) {
+  const selectAllLabel = document.createElement('label');
+  selectAllLabel.className = 'compare-select-all';
+  const selectAllCb = document.createElement('input');
+  selectAllCb.type = 'checkbox';
+  selectAllCb.id = 'compare-select-all-cb';
+  selectAllCb.addEventListener('click', (e) => e.stopPropagation());
+  selectAllCb.addEventListener('change', () => {
+    if (selectAllCb.checked) {
       C.sessionScenarios.forEach(s => C.comparisonScenarioIds.add(s.id));
     } else {
       C.comparisonScenarioIds.clear();
@@ -410,48 +408,34 @@ function renderCompareSelector() {
     }
     renderCompareSelector();
   });
-  thCmp.appendChild(selectAllCmp);
-  syncComparisonSelectAllCheckbox(selectAllCmp);
+  syncComparisonSelectAllCheckbox(selectAllCb);
+  selectAllLabel.appendChild(selectAllCb);
+  selectAllLabel.appendChild(document.createTextNode(' Select All'));
 
-  const thBase = document.createElement('th');
-  thBase.className = 'scenario-base-col';
-  thBase.innerHTML = 'Set as<br>baseline';
-  thBase.style.textAlign = 'center';
-  thBase.style.lineHeight = '1.1';
-  thBase.title = 'Set as baseline for Δ comparison';
+  const countSpan = document.createElement('span');
+  countSpan.className = 'compare-selector-count';
+  const selectedCount = C.comparisonScenarioIds.size;
+  const totalCount = C.sessionScenarios.length;
+  countSpan.textContent = `${selectedCount} of ${totalCount} selected`;
 
-  const thScenario = document.createElement('th');
-  thScenario.textContent = 'Scenario';
+  header.appendChild(selectAllLabel);
+  header.appendChild(countSpan);
+  root.appendChild(header);
 
-  const thFill = document.createElement('th');
-  thFill.style.width = '100%';
-
-  headRow.appendChild(thCmp);
-  headRow.appendChild(thBase);
-  headRow.appendChild(thScenario);
-  headRow.appendChild(thFill);
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
-  table.appendChild(tbody);
-
+  // --- Card rows ---
   C.sessionScenarios.forEach(scenario => {
-    const row = document.createElement('tr');
-    row.className = 'scenario-card';
+    const isChecked = C.comparisonScenarioIds.has(scenario.id);
+    const isBaseline = C.comparisonBaselineId === scenario.id;
 
-    row.addEventListener('click', (e) => {
-      if (e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.closest('.scenario-base-cell')) return;
-      checkbox.checked = !checkbox.checked;
-      checkbox.dispatchEvent(new Event('change'));
-    });
+    const row = document.createElement('div');
+    row.className = 'compare-selector-row' +
+      (isChecked ? ' compare-selector-row--checked' : '') +
+      (isBaseline ? ' compare-selector-row--baseline' : '');
 
-    const checkTd = document.createElement('td');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.className = 'scenario-card-checkbox';
-    checkbox.checked = C.comparisonScenarioIds.has(scenario.id);
-    checkbox.title = 'Select for comparison';
+    checkbox.checked = isChecked;
+    checkbox.addEventListener('click', (e) => e.stopPropagation());
     checkbox.addEventListener('change', () => {
       if (checkbox.checked) {
         C.comparisonScenarioIds.add(scenario.id);
@@ -461,49 +445,50 @@ function renderCompareSelector() {
       }
       renderCompareSelector();
     });
-    checkTd.appendChild(checkbox);
-    row.appendChild(checkTd);
 
-    const baseTd = document.createElement('td');
-    baseTd.className = 'scenario-base-cell';
-    const baseRadio = document.createElement('input');
-    baseRadio.type = 'radio';
-    baseRadio.name = 'comparison-baseline';
-    baseRadio.checked = C.comparisonBaselineId === scenario.id;
-    baseRadio.title = 'Set as comparison baseline';
-    baseRadio.setAttribute('aria-label', 'Set as comparison baseline');
-    baseRadio.addEventListener('click', (e) => e.stopPropagation());
-    baseRadio.addEventListener('change', () => {
-      if (baseRadio.checked) {
+    const info = document.createElement('div');
+    info.className = 'compare-selector-info';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'compare-selector-name';
+    nameSpan.textContent = scenario.customName;
+    const paramsSpan = document.createElement('span');
+    paramsSpan.className = 'compare-selector-params';
+    paramsSpan.textContent = getScenarioParams(scenario);
+    info.appendChild(nameSpan);
+    info.appendChild(paramsSpan);
+
+    row.appendChild(checkbox);
+    row.appendChild(info);
+
+    if (isBaseline) {
+      const badge = document.createElement('span');
+      badge.className = 'compare-baseline-badge';
+      badge.textContent = 'Baseline';
+      row.appendChild(badge);
+    } else if (isChecked) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'compare-set-baseline-btn';
+      btn.textContent = 'Set as baseline';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         C.comparisonBaselineId = scenario.id;
         C.comparisonScenarioIds.add(scenario.id);
         renderCompareSelector();
-      }
+      });
+      row.appendChild(btn);
+    }
+
+    row.addEventListener('click', (e) => {
+      if (e.target === checkbox || e.target.closest('button')) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event('change'));
     });
-    baseTd.appendChild(baseRadio);
-    row.appendChild(baseTd);
 
-    const infoTd = document.createElement('td');
-    infoTd.className = 'scenario-card-info';
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'scenario-card-name';
-    nameSpan.style.cursor = 'default';
-    nameSpan.textContent = scenario.customName;
-    infoTd.appendChild(nameSpan);
-    const params = document.createElement('span');
-    params.className = 'scenario-card-params';
-    params.textContent = getScenarioParams(scenario);
-    infoTd.appendChild(params);
-    row.appendChild(infoTd);
-
-    const fillerTd = document.createElement('td');
-    fillerTd.style.width = '100%';
-    row.appendChild(fillerTd);
-
-    tbody.appendChild(row);
+    root.appendChild(row);
   });
 
-  container.appendChild(table);
+  container.appendChild(root);
   renderComparisonTable();
 }
 

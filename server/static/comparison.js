@@ -384,18 +384,7 @@ function openComparisonMetricPicker(anchorEl, excludeKeys) {
 }
 
 function updateComparisonDeltaControlState() {
-  const baselineScenario = C.sessionScenarios.find(s => s.id === C.comparisonBaselineId && C.comparisonScenarioIds.has(s.id)) || null;
-  const can = C.showDeltaVsBaseline && !!baselineScenario;
-  const modeSel = document.getElementById('cmp-delta-display-mode');
-  const pctCb = document.getElementById('cmp-show-percent-delta');
-  if (modeSel) {
-    modeSel.disabled = !can;
-    modeSel.value = C.comparisonDeltaDisplayMode;
-  }
-  if (pctCb) {
-    pctCb.disabled = !can;
-    pctCb.checked = C.showComparisonPercentDelta;
-  }
+  // No-op: delta controls are now in the popover and recreated each open.
 }
 
 function renderComparisonTable() {
@@ -407,13 +396,6 @@ function renderComparisonTable() {
   closeComparisonMetricPicker({ skipFocusReturn: true });
 
   container.innerHTML = '';
-
-  // Auto-activate exclusions panel if custom columns are added
-  const hasCustom = C.comparisonColumns.includes('custom_bcr') || C.comparisonColumns.includes('custom_nb');
-  if (hasCustom && activeToolbarPanel !== 'exclusions') {
-    activeToolbarPanel = 'exclusions';
-    updateToolbarRow2();
-  }
 
   const selectedScenarios = C.sessionScenarios.filter(s => C.comparisonScenarioIds.has(s.id));
   const hintEl = document.getElementById('cmp-delta-hint');
@@ -432,7 +414,17 @@ function renderComparisonTable() {
   }
 
   if (selectedScenarios.length === 0) {
-    container.innerHTML = '<p style="color: rgba(0,0,0,0.4); font-style: italic;">Check scenarios above to compare them.</p>';
+    container.innerHTML = `
+      <div class="compare-empty-state">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="16" height="32" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+          <rect x="28" y="8" width="16" height="32" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+          <path d="M20 24h8" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"/>
+        </svg>
+        <div class="compare-empty-heading">Select scenarios to compare</div>
+        <div class="compare-empty-subtext">Check 2+ scenarios above to see a side-by-side comparison table</div>
+      </div>
+    `;
     updateComparisonDeltaControlState();
     return;
   }
@@ -694,103 +686,104 @@ function renderComparisonTable() {
     }
   }
   updateComparisonDeltaControlState();
+  updateBaselineButtonState();
 }
 
-let activeToolbarPanel = null; // 'exclusions' | 'baseline' | null
-
-function updateToolbarRow2() {
-  const row2 = document.getElementById('cmp-toolbar-row2');
-  const exclBtn = document.getElementById('exclusions-btn');
-  const baseBtn = document.getElementById('compare-baseline-btn');
-  const exclControls = document.getElementById('custom-bcr-controls');
-  const baseControls = document.getElementById('baseline-controls');
-  if (!row2) return;
-
-  if (activeToolbarPanel) {
-    row2.style.display = 'flex';
+function updateBaselineButtonState() {
+  const btn = document.getElementById('compare-baseline-btn');
+  if (!btn) return;
+  if (C.comparisonBaselineId) {
+    btn.className = 'btn btn-primary btn-sm';
   } else {
-    row2.style.display = 'none';
+    btn.className = 'btn btn-secondary btn-sm';
   }
-
-  if (exclBtn) exclBtn.classList.toggle('active', activeToolbarPanel === 'exclusions');
-  if (baseBtn) baseBtn.classList.toggle('active', activeToolbarPanel === 'baseline');
-  if (exclControls) exclControls.style.display = activeToolbarPanel === 'exclusions' ? 'inline-flex' : 'none';
-  if (baseControls) baseControls.style.display = activeToolbarPanel === 'baseline' ? 'inline-flex' : 'none';
-}
-
-const exclusionsBtn = document.getElementById('exclusions-btn');
-
-function updateToolbarRow2() {
-  const row2 = document.getElementById('cmp-toolbar-row2');
-  const exclBtn = document.getElementById('exclusions-btn');
-  const baseBtn = document.getElementById('compare-baseline-btn');
-  const exclControls = document.getElementById('custom-bcr-controls');
-  const baseControls = document.getElementById('baseline-controls');
-  if (!row2) return;
-
-  if (activeToolbarPanel) {
-    row2.style.display = 'flex';
-  } else {
-    row2.style.display = 'none';
-  }
-
-  if (exclBtn) exclBtn.classList.toggle('active', activeToolbarPanel === 'exclusions');
-  if (baseBtn) baseBtn.classList.toggle('active', activeToolbarPanel === 'baseline');
-  if (exclControls) exclControls.style.display = activeToolbarPanel === 'exclusions' ? 'inline-flex' : 'none';
-  if (baseControls) baseControls.style.display = activeToolbarPanel === 'baseline' ? 'inline-flex' : 'none';
 }
 
 function initComparisonToolbar() {
-  const exclusionsBtn = document.getElementById('exclusions-btn');
-  if (exclusionsBtn) {
-    exclusionsBtn.addEventListener('click', () => {
-      activeToolbarPanel = activeToolbarPanel === 'exclusions' ? null : 'exclusions';
-      updateToolbarRow2();
-    });
-  }
-
   const compareBaselineBtn = document.getElementById('compare-baseline-btn');
-  if (compareBaselineBtn) {
-    compareBaselineBtn.addEventListener('click', () => {
-      activeToolbarPanel = activeToolbarPanel === 'baseline' ? null : 'baseline';
-      updateToolbarRow2();
-    });
-  }
+  let deltaPopover = null;
 
-  // Custom BCR checkbox listeners
-  ['cmp-exc-emissions', 'cmp-exc-linelosses', 'cmp-exc-wildfire', 'cmp-exc-outage', 'cmp-exc-apply-main'].forEach(id => {
-    const cb = document.getElementById(id);
-    if (cb) cb.addEventListener('change', () => renderComparisonTable());
-  });
+  function createDeltaPopover() {
+    const pop = document.createElement('div');
+    pop.className = 'delta-popover';
+    pop.innerHTML =
+      '<div class="delta-popover-header">Delta Options</div>' +
+      '<label class="delta-popover-option">' +
+        '<input type="checkbox" id="cmp-show-delta"' + (C.showDeltaVsBaseline ? ' checked' : '') + '>' +
+        ' Show \u0394' +
+      '</label>' +
+      '<label class="delta-popover-option">' +
+        '<input type="checkbox" id="cmp-show-percent-delta"' + (C.showComparisonPercentDelta ? ' checked' : '') + '>' +
+        ' Show % \u0394' +
+      '</label>';
 
-  const cmpShowDeltaEl = document.getElementById('cmp-show-delta');
-  if (cmpShowDeltaEl) {
-    cmpShowDeltaEl.checked = C.showDeltaVsBaseline;
-    cmpShowDeltaEl.addEventListener('change', () => {
-      C.showDeltaVsBaseline = cmpShowDeltaEl.checked;
+    pop.querySelector('#cmp-show-delta').addEventListener('change', function() {
+      C.showDeltaVsBaseline = this.checked;
       renderComparisonTable();
     });
+    pop.querySelector('#cmp-show-percent-delta').addEventListener('change', function() {
+      C.showComparisonPercentDelta = this.checked;
+      renderComparisonTable();
+    });
+
+    return pop;
   }
+
+  function closeDeltaPopoverOutside(e) {
+    if (deltaPopover && !deltaPopover.contains(e.target) && e.target !== compareBaselineBtn) {
+      closeDeltaPopover();
+    }
+  }
+
+  function closeDeltaPopoverEscape(e) {
+    if (e.key === 'Escape') closeDeltaPopover();
+  }
+
+  function closeDeltaPopover() {
+    if (deltaPopover) { deltaPopover.remove(); deltaPopover = null; }
+    document.removeEventListener('click', closeDeltaPopoverOutside);
+    document.removeEventListener('keydown', closeDeltaPopoverEscape);
+  }
+
+  function toggleDeltaPopover() {
+    if (deltaPopover) {
+      closeDeltaPopover();
+      return;
+    }
+    deltaPopover = createDeltaPopover();
+    compareBaselineBtn.parentElement.style.position = 'relative';
+    compareBaselineBtn.parentElement.appendChild(deltaPopover);
+
+    setTimeout(function() {
+      document.addEventListener('click', closeDeltaPopoverOutside);
+      document.addEventListener('keydown', closeDeltaPopoverEscape);
+    }, 0);
+  }
+
+  if (compareBaselineBtn) {
+    compareBaselineBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleDeltaPopover();
+    });
+  }
+
+  // Custom BCR exclusion checkbox listeners
+  ['cmp-exc-emissions', 'cmp-exc-linelosses', 'cmp-exc-wildfire', 'cmp-exc-outage', 'cmp-exc-apply-main'].forEach(function(id) {
+    const cb = document.getElementById(id);
+    if (cb) cb.addEventListener('change', function() { renderComparisonTable(); });
+  });
 
   const cmpDeltaModeEl = document.getElementById('cmp-delta-display-mode');
   if (cmpDeltaModeEl) {
-    cmpDeltaModeEl.addEventListener('change', () => {
+    cmpDeltaModeEl.addEventListener('change', function() {
       C.comparisonDeltaDisplayMode = cmpDeltaModeEl.value === 'delta_only' ? 'delta_only' : 'values_plus_delta';
-      renderComparisonTable();
-    });
-  }
-
-  const cmpPctDeltaEl = document.getElementById('cmp-show-percent-delta');
-  if (cmpPctDeltaEl) {
-    cmpPctDeltaEl.addEventListener('change', () => {
-      C.showComparisonPercentDelta = cmpPctDeltaEl.checked;
       renderComparisonTable();
     });
   }
 
   const cmpAutoSortEl = document.getElementById('cmp-auto-sort-columns');
   if (cmpAutoSortEl) {
-    cmpAutoSortEl.addEventListener('change', () => {
+    cmpAutoSortEl.addEventListener('change', function() {
       C.comparisonAutoSort = cmpAutoSortEl.checked;
       if (C.comparisonAutoSort) {
         sortComparisonColumnsByCatalog();
@@ -870,8 +863,11 @@ function comparisonMetricLabel(metricKey) {
   window.sortComparisonColumnsByCatalog = sortComparisonColumnsByCatalog;
   window.initComparisonToolbar = initComparisonToolbar;
   window.updateComparisonDeltaControlState = updateComparisonDeltaControlState;
+  window.updateBaselineButtonState = updateBaselineButtonState;
   window.comparisonMetricLabel = comparisonMetricLabel;
   window.getMetricConfig = getMetricConfig;
+  window.getMetricValue = getMetricValue;
+  window.formatMetricValue = formatMetricValue;
   window.getDeltaDisplayParts = getDeltaDisplayParts;
   window.formatDeltaLine = formatDeltaLine;
   window.formatPercentDeltaLine = formatPercentDeltaLine;
