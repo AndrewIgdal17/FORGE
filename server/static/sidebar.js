@@ -141,7 +141,7 @@ function applyActiveState(sectionId, subItemId) {
     if (header) header.classList.add('section-active');
   }
 
-  var subEl = document.querySelector('.sidebar-subitem[data-subitem-id="' + subItemId + '"]');
+  var subEl = document.querySelector('.sidebar-subitem[data-sub-item-id="' + subItemId + '"]');
   if (subEl) subEl.classList.add('active');
 
   currentSectionId = sectionId;
@@ -210,7 +210,7 @@ function renderSidebarTree(sections, showCounts) {
       var subItem = section.subItems[j];
       var subEl = document.createElement('div');
       subEl.className = 'sidebar-subitem';
-      subEl.setAttribute('data-subitem-id', subItem.id);
+      subEl.setAttribute('data-sub-item-id', subItem.id);
       subEl.textContent = subItem.label;
       subEl.addEventListener('click', (function(sid, subid) {
         return function(e) {

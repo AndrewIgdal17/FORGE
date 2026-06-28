@@ -4363,89 +4363,44 @@ function renderCapitalCostSubTab(subTabId, data) {
 }
 
 function updateProjectTechnicalSubTabVisibility() {
-  const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
-  const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
-  const isOverhead = ctEl?.value === 'Overhead';
-  const isDC = acDcEl?.value === 'DC';
+  var ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+  var acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+  var isOverhead = ctEl && ctEl.value === 'Overhead';
+  var isDC = acDcEl && acDcEl.value === 'DC';
 
-  const tabContent = document.querySelector('[data-tab-id="project-technical"]');
-  if (!tabContent) return;
+  var converterSubItem = document.querySelector('.sidebar-subitem[data-sub-item-id="converter-details"]');
+  if (converterSubItem) {
+    converterSubItem.style.display = isDC ? '' : 'none';
+  }
 
-  const subTabBar = tabContent.querySelector(':scope > .sub-tabs');
-  const subTabButtons = subTabBar ? subTabBar.querySelectorAll(':scope > .sub-tab-button') : [];
-  const subTabContents = tabContent.querySelectorAll(':scope > .sub-tab-content');
-  let activeHidden = false;
-
-  subTabButtons.forEach((btn, idx) => {
-    const content = subTabContents[idx];
-    if (!content) return;
-    const stId = content.dataset.subTab;
-    let hidden = false;
-    if (stId === 'structure-details') hidden = !isOverhead;
-    if (stId === 'converter-details') {
-      hidden = !isDC;
-    }
-
-    btn.style.display = hidden ? 'none' : '';
-    if (hidden && content.style.display !== 'none') {
-      content.style.display = 'none';
-      btn.classList.remove('active');
-      activeHidden = true;
-    } else if (hidden) {
-      content.style.display = 'none';
-      btn.classList.remove('active');
-    }
-  });
-
-  if (activeHidden) {
-    const firstVisible = [...subTabButtons].find(b => b.style.display !== 'none');
-    const firstContent = firstVisible ? subTabContents[[...subTabButtons].indexOf(firstVisible)] : null;
-    if (firstVisible && firstContent) {
-      firstVisible.classList.add('active');
-      firstContent.style.display = '';
+  var current = typeof getCurrentSubItem === 'function' ? getCurrentSubItem() : null;
+  if (current && current.subItemId === 'converter-details' && !isDC) {
+    if (typeof navigateToSubItem === 'function') {
+      navigateToSubItem('equipment', 'conductor-details');
     }
   }
 }
 
 function updateCapitalCostSubTabVisibility() {
-  const reconEl = document.querySelector('[data-path="01_project_technical_details.project.reconductoring"]');
-  const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
-  const isRecon = reconEl?.checked === true;
-  const isAC = acDcEl?.value === 'AC';
+  var reconEl = document.querySelector('[data-path="01_project_technical_details.project.reconductoring"]');
+  var acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+  var ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+  var isRecon = reconEl && reconEl.checked === true;
+  var isAC = acDcEl && acDcEl.value === 'AC';
+  var isOverhead = ctEl && ctEl.value === 'Overhead';
 
-  const tabContent = document.querySelector('[data-tab-id="capital-costs"]');
-  if (!tabContent) return;
+  // Hide structure contingency field if not overhead greenfield
+  var structField = document.querySelector('[data-path*="structure_contingency"]');
+  if (structField) {
+    var row = structField.closest('.field-row') || structField.closest('.slider-row') || structField.parentElement;
+    if (row) row.style.display = (isOverhead && !isRecon) ? '' : 'none';
+  }
 
-  const subTabButtons = tabContent.querySelectorAll('.sub-tab-button');
-  const subTabContents = tabContent.querySelectorAll('.sub-tab-content');
-  let activeHidden = false;
-
-  subTabButtons.forEach((btn, idx) => {
-    const content = subTabContents[idx];
-    if (!content) return;
-    const stId = content.dataset.subTab;
-    let hidden = false;
-    if (stId === 'structure') hidden = isRecon;
-    if (stId === 'converter') hidden = isRecon || isAC;
-
-    btn.style.display = hidden ? 'none' : '';
-    if (hidden && content.style.display !== 'none') {
-      content.style.display = 'none';
-      btn.classList.remove('active');
-      activeHidden = true;
-    } else if (hidden) {
-      content.style.display = 'none';
-      btn.classList.remove('active');
-    }
-  });
-
-  if (activeHidden) {
-    const firstBtn = subTabButtons[0];
-    const firstContent = subTabContents[0];
-    if (firstBtn && firstContent) {
-      firstBtn.classList.add('active');
-      firstContent.style.display = '';
-    }
+  // Hide converter contingency field if AC
+  var convField = document.querySelector('[data-path*="converter_contingency"]');
+  if (convField) {
+    var row = convField.closest('.field-row') || convField.closest('.slider-row') || convField.parentElement;
+    if (row) row.style.display = isAC ? 'none' : '';
   }
 }
 
