@@ -506,7 +506,7 @@ function renderComparisonTable() {
     const row = document.createElement('tr');
     const nameTd = document.createElement('td');
     nameTd.appendChild(document.createTextNode(scenario.customName));
-    if (C.showDeltaVsBaseline && baselineScenario && scenario.id === baselineScenario.id) {
+    if ((C.showDeltaVsBaseline || C.showComparisonPercentDelta) && baselineScenario && scenario.id === baselineScenario.id) {
       const badge = document.createElement('span');
       badge.className = 'baseline-badge';
       badge.textContent = 'Baseline';
@@ -519,42 +519,25 @@ function renderComparisonTable() {
       const td = document.createElement('td');
       td.className = 'metric-val';
       td.dataset.colIdx = colIdx;
-      const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, C.showComparisonPercentDelta);
-      const hasDelta = !!(C.showDeltaVsBaseline && baselineScenario && parts.deltaLineText);
+      const parts = getDeltaDisplayParts(baselineScenario, scenario, colKey, true);
+      const isBaseline = baselineScenario && scenario.id === baselineScenario.id;
+      const showDelta = C.showDeltaVsBaseline && baselineScenario && !isBaseline && parts.deltaLineText;
+      const showPercent = C.showComparisonPercentDelta && baselineScenario && !isBaseline && parts.percentText;
 
       if (!config) {
         td.textContent = '';
-      } else if (!hasDelta) {
-        const main = document.createElement('span');
-        main.className = 'comparison-metric-line';
-        main.textContent = parts.absText;
-        td.appendChild(main);
-      } else if (scenario.id === baselineScenario.id) {
-        const main = document.createElement('span');
-        main.className = 'comparison-metric-line';
-        main.textContent = parts.absText;
-        td.appendChild(main);
-      } else if (C.comparisonDeltaDisplayMode === 'delta_only') {
-        const line1 = document.createElement('span');
-        line1.className = 'comparison-metric-line';
-        line1.textContent = parts.deltaLineText;
-        td.appendChild(line1);
-        if (C.showComparisonPercentDelta && parts.percentText) {
-          const linePct = document.createElement('span');
-          linePct.className = 'comparison-percent-line';
-          linePct.textContent = parts.percentText;
-          td.appendChild(linePct);
-        }
       } else {
-        const line1 = document.createElement('span');
-        line1.className = 'comparison-metric-line';
-        line1.textContent = parts.absText;
-        td.appendChild(line1);
-        const line2 = document.createElement('span');
-        line2.className = 'comparison-delta-line';
-        line2.textContent = parts.deltaLineText;
-        td.appendChild(line2);
-        if (C.showComparisonPercentDelta && parts.percentText) {
+        const main = document.createElement('span');
+        main.className = 'comparison-metric-line';
+        main.textContent = parts.absText;
+        td.appendChild(main);
+        if (showDelta) {
+          const line2 = document.createElement('span');
+          line2.className = 'comparison-delta-line';
+          line2.textContent = parts.deltaLineText;
+          td.appendChild(line2);
+        }
+        if (showPercent) {
           const linePct = document.createElement('span');
           linePct.className = 'comparison-percent-line';
           linePct.textContent = parts.percentText;

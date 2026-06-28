@@ -1427,14 +1427,24 @@
       .comparison-section > .compare-toolbar,
       .comparison-section > #cmp-delta-hint { user-select: none; -webkit-user-select: none; }
       .comparison-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
-      .compare-toolbar {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        padding: var(--space-sm) 0;
-        margin-bottom: var(--space-md);
-        border-bottom: 1px solid var(--color-border);
-      }
+.compare-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+.compare-delta-info {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  cursor: help;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.compare-delta-info:hover {
+  opacity: 1;
+}
       .compare-toolbar .copy-table-split .split-save-menu {
         top: calc(100% + 2px);
         right: 0;
@@ -3461,6 +3471,7 @@
 /* ── Compare selector card rows ─────────────────────────────── */
 .compare-selector {
   padding: var(--space-md) 0;
+  max-width: 600px;
 }
 .compare-selector-header {
   display: flex;
