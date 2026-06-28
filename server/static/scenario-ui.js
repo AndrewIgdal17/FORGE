@@ -73,7 +73,6 @@ function getScenarioParams(scenario) {
   const parts = [];
   if (scenario.results?.technical_parameters) {
     const tp = scenario.results.technical_parameters;
-    if (tp.project_name) parts.push(tp.project_name);
     if (tp.capacity_mw) parts.push(tp.capacity_mw + ' MW');
     if (tp.ac_dc) parts.push(tp.ac_dc);
     if (tp.construction_type) parts.push(tp.construction_type);
@@ -81,7 +80,6 @@ function getScenarioParams(scenario) {
   } else if (scenario.inputs) {
     const proj = scenario.inputs['01_project_technical_details']?.project;
     if (proj) {
-      if (proj.name) parts.push(proj.name);
       if (proj.capacity_mw) parts.push(proj.capacity_mw + ' MW');
       if (proj.ac_dc) parts.push(proj.ac_dc);
       if (proj.construction_type) parts.push(proj.construction_type);

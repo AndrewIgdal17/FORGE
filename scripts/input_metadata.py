@@ -60,11 +60,6 @@ def _terrain_label(t: str) -> str:
 # ===================================================================
 
 _TAB1: list[InputField] = [
-    _f("project_name", taxonomy_id="project_identity", input_tab="project-identity",
-       yaml_section="01_project_technical_details", field_path="project.name",
-       label="Name", help_text="Unique identifier for this project scenario",
-       input_type="text", tier="first-glance", display_order=1,
-       validation={"required": True}, sub_tab="identity", condition="always_hidden"),
     _f("construction_type", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.construction_type",
        label="Construction Type", help_text="Overhead, underground, or subsea transmission",

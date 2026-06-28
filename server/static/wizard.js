@@ -484,7 +484,6 @@
     const full = JSON.parse(JSON.stringify(snapshot));
     const set = window.setValueAtPath;
 
-    set(full, '01_project_technical_details.project.name', state.name.trim());
     set(full, '01_project_technical_details.project.construction_type', state.constructionType);
     set(full, '01_project_technical_details.project.ac_dc', state.acDc);
     set(full, '01_project_technical_details.project.capacity_mw', state.capacityMw);

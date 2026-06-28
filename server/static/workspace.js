@@ -8,6 +8,7 @@
       const loadStatus = document.getElementById("load-status");
 
       C.ctccJsonData = null;
+      C.refVersion = 'v1.0';
       /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
       C.cachedFuelMixPresets = [];
 
@@ -184,21 +185,17 @@
           hideSaveDialog();
         } else if (option === 'ctcc') {
           const scenario = {
-            version: '1.0',
             customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
             inputs: currentInputs,
             results: resultsToSave,
-            metadata: { timestamp: new Date().toISOString(), source: 'export' }
           };
           exportAsCtcc(scenario);
           hideSaveDialog();
         } else if (option === 'csv') {
           const scenario = {
-            version: '1.0',
             customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
             inputs: currentInputs,
             results: resultsToSave,
-            metadata: { timestamp: new Date().toISOString(), source: 'export' }
           };
           exportAsCsv(scenario);
           hideSaveDialog();
@@ -381,6 +378,11 @@
 
           setValueAtPath(path, value);
         });
+
+        // Stamp scenario name as project identifier for calculator output
+        if (C.activeScenarioName) {
+          setValueAtPath('01_project_technical_details.project.name', C.activeScenarioName);
+        }
 
         return result;
       }

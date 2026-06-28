@@ -4503,10 +4503,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         const stContent = document.createElement('div');
         stContent.className = 'sub-tab-content';
         stContent.dataset.subTab = stId;
-        // For 'technology', also include 'identity' sub_tab fields (e.g. project_name)
-        const stFields = tabFields.filter(f =>
-          f.sub_tab === stId || (stId === 'technology' && f.sub_tab === 'identity')
-        );
+        const stFields = tabFields.filter(f => f.sub_tab === stId);
 
         if (stId === 'terrain-mix') {
           renderTabGuideBanner(stId, stContent);

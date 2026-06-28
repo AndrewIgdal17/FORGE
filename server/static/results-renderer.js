@@ -1207,7 +1207,6 @@ function renderCTCCResults(results) {
   metaLine.className = 'results-metadata-line';
   const parts = [];
   if (results.scenario_id) parts.push('Scenario: ' + results.scenario_id);
-  if (results.technical_parameters?.project_name) parts.push(results.technical_parameters.project_name);
   const metaText = document.createElement('span');
   metaText.textContent = parts.join(' | ');
   metaLine.appendChild(metaText);
@@ -1228,7 +1227,6 @@ function renderCTCCResults(results) {
   const paramsBar = document.createElement('div');
   paramsBar.className = 'project-params-bar';
   const paramEntries = [
-    { label: 'Project', value: tp.project_name },
     { label: 'Type', value: tp.construction_type },
     { label: 'AC/DC', value: tp.ac_dc },
     { label: 'Capacity', value: tp.capacity_mw ? formatNumber(tp.capacity_mw, 0) + ' MW' : null },

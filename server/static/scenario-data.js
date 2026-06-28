@@ -18,7 +18,6 @@
   ]);
 
   const NEW_SCENARIO_BLANK_FIELDS = [
-    { path: '01_project_technical_details.project.name', value: null },
     { path: '01_project_technical_details.project.construction_type', value: null },
     { path: '01_project_technical_details.project.ac_dc', value: null },
     { path: '01_project_technical_details.project.capacity_mw', value: null },
@@ -299,12 +298,18 @@
         scenario.inputs || {}
       );
     }
+
+    const defaults = C.ctccJsonData;
+    const slimInputs = extractScenarioInputs(fullInputs);
+    const overrides = defaults ? computeOverrides(fullInputs, defaults) : {};
+
     const data = {
-      version: '1.0',
+      version: '2.0',
       customName: scenario.customName,
-      inputs: fullInputs,
-      results: scenario.results,
-      metadata: scenario.metadata
+      ref_version: C.refVersion || 'v1.0',
+      inputs: slimInputs,
+      overrides: overrides,
+      results: scenario.results
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -363,10 +368,14 @@
 
   function validateCtccFile(data) {
     const errors = [];
-    if (!data || typeof data !== 'object') errors.push('Invalid JSON structure');
-    if (!data.version) errors.push('Missing version field');
-    if (!data.inputs || typeof data.inputs !== 'object') errors.push('Missing or invalid inputs field');
-    else if (!data.inputs['01_project_technical_details']) errors.push('Missing 01_project_technical_details in inputs');
+    if (!data || typeof data !== 'object') { errors.push('Invalid JSON structure'); return { valid: false, errors }; }
+    if (data.version === '2.0') {
+      if (!data.inputs || typeof data.inputs !== 'object') errors.push('Missing or invalid inputs field');
+      if (data.overrides !== undefined && typeof data.overrides !== 'object') errors.push('Overrides field must be an object');
+    } else {
+      if (!data.inputs || typeof data.inputs !== 'object') errors.push('Missing or invalid inputs field');
+      else if (!data.inputs['01_project_technical_details']) errors.push('Missing 01_project_technical_details in inputs');
+    }
     if (data.results && typeof data.results !== 'object') errors.push('Results field must be an object');
     return { valid: errors.length === 0, errors };
   }
@@ -382,8 +391,26 @@
       if (data.results && data.results.results && data.results.results.bcr) {
         data.results = data.results.results;
       }
+
       const name = data.customName || fileName.replace('.ctcc', '');
-      addScenarioToSession(data.inputs, data.results || null,
+      let inputs;
+
+      if (data.version === '2.0') {
+        const defaults = C.ctccJsonData;
+        if (!defaults) {
+          alert('Cannot import v2.0 .ctcc file: reference data not loaded yet. Open the workspace first.');
+          return;
+        }
+        inputs = assembleFullInputs(defaults, data.overrides || {}, data.inputs);
+        if (data.ref_version && data.ref_version !== (C.refVersion || 'v1.0')) {
+          console.info('Imported scenario built against ref ' + data.ref_version +
+            '; current is ' + (C.refVersion || 'v1.0'));
+        }
+      } else {
+        inputs = data.inputs;
+      }
+
+      addScenarioToSession(inputs, data.results || null,
         { timestamp: data.metadata?.timestamp || new Date().toISOString(),
           scenario_id: data.metadata?.scenario_id || '',
           source: 'upload-ctcc' },

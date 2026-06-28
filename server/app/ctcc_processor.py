@@ -31,17 +31,10 @@ def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str,
     """
     merged = template.copy()
 
-    if "scenario" in user_data:
-        scenario = user_data["scenario"]
-        if "scenario_name" in scenario:
-            merged["01_project_technical_details"]["project"]["name"] = scenario["scenario_name"]
-
     if "project" in user_data:
         project = user_data["project"]
 
         project_tech = merged["01_project_technical_details"]["project"]
-        if "project_name" in project:
-            project_tech["name"] = project["project_name"]
         if "line_miles" in project:
             total_miles = project["line_miles"]
             terrain = merged["02_project_physical_details"]["terrain"]["terrain_miles"]
