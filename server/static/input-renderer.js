@@ -5146,7 +5146,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
       const banner = document.getElementById('category-validation-banner');
       if (!banner) return;
       const result = validateCategoryString();
-      if (result.valid) {
+      if (result.valid || result.reason === 'Incomplete category fields') {
         banner.hidden = true;
       } else {
         banner.hidden = false;
