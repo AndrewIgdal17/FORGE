@@ -215,7 +215,7 @@ function renderScenarioList() {
     } else {
       const openBtn = document.createElement('button');
       openBtn.type = 'button';
-      openBtn.className = 'load-btn';
+      openBtn.className = 'load-btn btn btn-primary btn-sm';
       openBtn.textContent = 'Open';
       openBtn.addEventListener('click', function() {
         if (window.location.pathname === '/app/workspace') {

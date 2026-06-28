@@ -1324,8 +1324,6 @@
       .scenario-card-active td:first-child { box-shadow: inset 3px 0 0 #0066cc; }
       .scenario-card-active .scenario-card-name { color: #0066cc; }
       .scenario-card-actions .active-badge { font-size: 0.75rem; color: #0066cc; font-weight: 600; padding: 0.2rem 0.5rem; }
-      .scenario-card-actions button.load-btn { color: #0066cc; border-color: #0066cc; }
-      .scenario-card-actions button.load-btn:hover { background: #e3f2fd; }
       .scenario-drag-cell { width: 20px; padding: 0 0.5rem 0 0.35rem !important; vertical-align: middle !important; text-align: center; }
       .scenario-drag-handle {
         display: inline-block;
