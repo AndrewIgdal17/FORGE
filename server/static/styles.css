@@ -94,6 +94,11 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 */
+
+@view-transition {
+  navigation: auto;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }

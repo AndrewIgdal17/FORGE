@@ -16,6 +16,15 @@
       window._sb = _sb;
       window._getAuthToken = _getAuthToken;
     </script>
+    <script type="speculationrules">
+    {
+      "prerender": [
+        { "urls": ["/app/workspace", "/app/scenarios-manager"], "eagerness": "moderate" }
+      ]
+    }
+    </script>
+    <link rel="prefetch" href="/app/workspace">
+    <link rel="prefetch" href="/app/scenarios-manager">
   </head>
   <body>
     <script>
