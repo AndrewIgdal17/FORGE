@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  var C = window.CTCC;
 
   /* ── private helpers ── */
 
