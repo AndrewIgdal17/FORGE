@@ -398,6 +398,38 @@ function buildResultById(results) {
   return m;
 }
 
+var COMPOSITION_COLORS = ['#0066cc', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+
+function renderCompositionBar(segments) {
+  var bar = document.createElement('div');
+  bar.className = 'results-composition-bar';
+  var total = segments.reduce(function(s, seg) { return s + seg.value; }, 0);
+  if (total <= 0) return bar;
+
+  segments.forEach(function(seg, i) {
+    var pct = (seg.value / total) * 100;
+    if (pct < 0.5) return;
+    var el = document.createElement('div');
+    el.className = 'results-composition-segment';
+    el.style.width = pct + '%';
+    el.style.background = COMPOSITION_COLORS[Math.min(i, COMPOSITION_COLORS.length - 1)];
+    if (pct > 12) el.textContent = seg.label;
+    el.title = seg.label + ': ' + formatCurrency(seg.value, 0) + ' (' + pct.toFixed(1) + '%)';
+    bar.appendChild(el);
+  });
+
+  return bar;
+}
+
+function renderCompositionLegend(segments) {
+  var legend = document.createElement('div');
+  legend.className = 'results-composition-legend';
+  legend.textContent = segments.map(function(s) {
+    return s.label + ' ' + formatCurrency(s.value, 0);
+  }).join(' \u00B7 ');
+  return legend;
+}
+
 function exclOutputSuffix(groups) {
   const ORDER = ['avoided_emissions', 'emissions', 'line_losses', 'wildfire', 'outage'];
   const MAP = { avoided_emissions: 'avoided_emissions', emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
@@ -1563,6 +1595,45 @@ function renderResultsOverview(results) {
     heroGrid.appendChild(card);
   });
   container.appendChild(heroGrid);
+
+  var costSegments = C.COST_BUCKET_ORDER.map(function(b) {
+    var pv = (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+      return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+    return { label: C.BUCKET_LABELS[b] || b, value: pv };
+  }).filter(function(s) { return s.value > 0; });
+
+  var benefitBuckets = ['remedial', 'enabling'];
+  var benefitSegments = benefitBuckets.map(function(b) {
+    var pv = (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+      return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+    return { label: C.BUCKET_LABELS[b] || b, value: pv };
+  }).filter(function(s) { return s.value > 0; });
+
+  if (costSegments.length > 0) {
+    var costBarSection = document.createElement('div');
+    costBarSection.style.marginBottom = '1.25rem';
+    var costLabel = document.createElement('div');
+    costLabel.style.cssText = 'font-size:0.7rem;font-weight:600;color:#555;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.03em';
+    costLabel.textContent = 'Cost Composition';
+    costBarSection.appendChild(costLabel);
+    costBarSection.appendChild(renderCompositionBar(costSegments));
+    costBarSection.appendChild(renderCompositionLegend(costSegments));
+    container.appendChild(costBarSection);
+  }
+
+  if (benefitSegments.length > 0) {
+    var benBarSection = document.createElement('div');
+    benBarSection.style.marginBottom = '1.5rem';
+    var benLabel = document.createElement('div');
+    benLabel.style.cssText = 'font-size:0.7rem;font-weight:600;color:#555;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.03em';
+    benLabel.textContent = 'Benefit Composition';
+    benBarSection.appendChild(benLabel);
+    benBarSection.appendChild(renderCompositionBar(benefitSegments));
+    benBarSection.appendChild(renderCompositionLegend(benefitSegments));
+    container.appendChild(benBarSection);
+  }
 
   var bcrHeading = document.createElement('div');
   bcrHeading.className = 'results-section-heading';
