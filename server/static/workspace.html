@@ -70,26 +70,31 @@
       </div>
     </div>
 
-    <!-- Main Tabs -->
-    <div class="main-tabs">
-      <button type="button" class="main-tab-button active" data-tab="inputs">Inputs</button>
-      <button type="button" class="main-tab-button disabled" data-tab="results">Results</button>
-      <button type="button" class="save-scenario-button" id="save-scenario-main-btn">Save Scenario</button>
-      <button type="button" class="save-scenario-button" id="save-copy-btn">Save as Copy</button>
-    </div>
-
-    <!-- Scenario Breadcrumb (subtitle below tabs) -->
-    <div id="scenario-breadcrumb" style="display:none;"><span id="scenario-breadcrumb-pill"></span></div>
-
-    <!-- Status Bar -->
-    <div id="status-bar" class="status-bar">
-      <span class="status-bar-icon" id="status-bar-icon">⏳</span>
-      <div class="status-bar-text">
-        <strong id="status-bar-label">Calculating...</strong>
-        <span id="status-bar-timestamp"></span>
+    <div class="scenario-bar" id="scenario-bar">
+      <span class="scenario-name" id="scenario-name-display" title="Click to rename"></span>
+      <span class="mod-dot" id="mod-dot" style="display:none;">●</span>
+      <div style="flex:1;"></div>
+      <div class="split-save" id="split-save">
+        <button type="button" class="split-save-main" id="split-save-main">Saved ✓</button>
+        <button type="button" class="split-save-drop" id="split-save-drop">▾</button>
+        <div class="split-save-menu" id="split-save-menu" style="display:none;">
+          <div class="split-menu-item" data-action="save">Save <span style="float:right;color:#aaa;font-size:0.7rem;">⌘S</span></div>
+          <div class="split-menu-item" data-action="save-copy">Save as Copy</div>
+          <div class="split-menu-item" data-action="rename">Rename</div>
+          <div class="split-menu-sep"></div>
+          <div class="split-menu-item" data-action="export-ctcc">Export .ctcc</div>
+          <div class="split-menu-item" data-action="export-csv">Export .csv</div>
+        </div>
       </div>
-      <button type="button" class="status-bar-button" id="status-bar-view-btn" style="display: none;" onclick="document.querySelector('.main-tab-button[data-tab=&quot;results&quot;]').click()">View Results</button>
-      <a href="#" id="status-bar-save-btn" style="display: none; margin-left: 0.75rem; color: white; text-decoration: underline; font-size: 0.85rem; font-weight: 400;" onmouseover="this.style.fontWeight='700'" onmouseout="this.style.fontWeight='400'">Save Results</a>
+    </div>
+    <div class="context-bar" id="context-bar">
+      <div class="view-toggle" id="view-toggle">
+        <button type="button" class="view-toggle-btn active" data-view="inputs">Inputs</button>
+        <button type="button" class="view-toggle-btn" data-view="results">Results</button>
+      </div>
+      <span class="header-breadcrumb" id="header-breadcrumb"></span>
+      <div style="flex:1;"></div>
+      <span class="calc-time" id="calc-time">Not calculated</span>
     </div>
 
     <!-- Inputs Tab -->
@@ -154,6 +159,7 @@
     <script src="/static/scenario-workspace.js"></script>
     <script src="/static/sidebar.js"></script>
     <script src="/static/sidebar-search.js"></script>
+    <script src="/static/workspace-header.js"></script>
     <script src="/static/wizard.js"></script>
     <script src="/static/tour-content.js"></script>
     <script src="/static/tour.js"></script>

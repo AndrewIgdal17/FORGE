@@ -1653,6 +1653,67 @@
         transition: background 1.5s ease;
       }
 
+      /* ===== Workspace Header (scenario bar + context bar) ===== */
+      .scenario-bar {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 0.45rem 1.5rem; background: white;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+      }
+      .scenario-name {
+        font-weight: 700; color: #333; font-size: 0.88rem;
+        cursor: pointer; border-bottom: 1px dashed transparent;
+        transition: border-color 0.15s;
+      }
+      .scenario-name:hover { border-bottom-color: #0066cc; }
+      .mod-dot { color: #f59e0b; font-size: 1.1rem; margin-left: 2px; }
+
+      .split-save { display: inline-flex; border-radius: 6px; overflow: hidden; position: relative; }
+      .split-save-main {
+        padding: 0.3rem 0.75rem; border: none; font-size: 0.75rem;
+        font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .split-save-drop {
+        padding: 0.3rem 0.4rem; border: none; font-size: 0.7rem; cursor: pointer;
+      }
+      .split-save.saved .split-save-main { background: #ecfdf5; color: #059669; cursor: default; }
+      .split-save.saved .split-save-drop { background: #d1fae5; color: #059669; border-left: 1px solid rgba(5,150,105,0.2); }
+      .split-save.unsaved .split-save-main { background: #3b82f6; color: white; }
+      .split-save.unsaved .split-save-drop { background: #2563eb; color: white; border-left: 1px solid rgba(255,255,255,0.2); }
+
+      .split-save-menu {
+        position: absolute; top: 100%; right: 0; background: white;
+        border: 1px solid rgba(0,0,0,0.12); border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px;
+        z-index: 20; padding: 0.25rem 0;
+      }
+      .split-menu-item {
+        padding: 0.4rem 0.75rem; font-size: 0.78rem; color: #333; cursor: pointer;
+      }
+      .split-menu-item:hover { background: rgba(0,100,200,0.05); }
+      .split-menu-sep { border-top: 1px solid rgba(0,0,0,0.06); margin: 0.2rem 0; }
+
+      .context-bar {
+        display: flex; align-items: center; gap: 1rem;
+        padding: 0.3rem 1.5rem; background: rgba(0,100,200,0.02);
+        border-bottom: 1px solid rgba(0,0,0,0.08); font-size: 0.78rem;
+      }
+      .view-toggle { display: flex; background: rgba(0,0,0,0.04); border-radius: 6px; overflow: hidden; }
+      .view-toggle-btn {
+        padding: 0.3rem 0.9rem; border: none; background: none;
+        font-size: 0.78rem; cursor: pointer; font-family: inherit; color: #666;
+      }
+      .view-toggle-btn.active { background: rgba(0,100,200,0.12); color: #0066cc; font-weight: 700; }
+      .view-toggle-btn.results-available { background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.15)); }
+      .view-toggle-btn.results-available.active { background: rgba(16,185,129,0.2); color: #059669; }
+      .header-breadcrumb { font-size: 0.72rem; color: #aaa; }
+      .calc-time { font-size: 0.68rem; color: #bbb; }
+
+      .scenario-name-input {
+        font-weight: 700; font-size: 0.88rem; border: 1px solid #0066cc;
+        padding: 0.1rem 0.3rem; border-radius: 4px; outline: none;
+        font-family: inherit; background: white; color: #333;
+      }
+
       .results-summary-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
