@@ -4814,26 +4814,10 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
       // Wire up tab-specific listeners after DOM is built
       if (tabId === 'capital-costs') {
         setTimeout(() => {
-          const paths = [
-            '01_project_technical_details.project.construction_type',
-            '01_project_technical_details.project.ac_dc',
-            '01_project_technical_details.project.capacity_mw',
-            '01_project_technical_details.project.conductor_type',
-            '01_project_technical_details.project.converter_type',
-            '01_project_technical_details.project.reconductoring',
-          ];
-          paths.forEach(p => {
-            const el = document.querySelector(`[data-path="${p}"]`);
-            if (el) el.addEventListener('change', () => {
-              setTimeout(() => rebuildCapitalCosts(true), 0);
-              setTimeout(() => rebuildEnvBaseMitigation(C.ctccJsonData, true), 0);
-            });
-          });
           const acDcEl = document.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
           const condEl = document.querySelector('[data-path="01_project_technical_details.project.conductor_type"]');
           if (acDcEl) acDcEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
           if (condEl) condEl.addEventListener('change', () => { updateEnvironmentalAcres(); });
-          setTimeout(rebuildCapitalCosts, 50);
           updateEnvironmentalAcres();
         }, 0);
       } else if (tabId === 'project-identity') {
