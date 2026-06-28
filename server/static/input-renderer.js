@@ -4620,17 +4620,11 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           stContent.appendChild(renderTerrainTable(data));
         } else if (stId === 'rights-of-way') {
           renderTabGuideBanner(stId, stContent);
-          const rowMeta = tabFields.find(f => f.id === 'uses_existing_row');
-          if (rowMeta) {
-            const val = getValueAtFieldPath(data, rowMeta.yaml_section, rowMeta.field_path);
-            const toggleContainer = document.createElement('div');
-            toggleContainer.className = 'row-regime-toggle';
-            const fieldEl = createFieldFromMetadata(rowMeta, val);
-            toggleContainer.appendChild(fieldEl);
-            stContent.appendChild(toggleContainer);
-            const cb = fieldEl.querySelector('input[type="checkbox"]');
-            if (cb) cb.addEventListener('change', updateROWColumnVisibility);
-          }
+          // uses_existing_row toggle is now in Technology tab — wire its change listener here
+          setTimeout(function() {
+            var rowEl = document.querySelector('[data-path="01_project_technical_details.project.uses_existing_row"]');
+            if (rowEl) rowEl.addEventListener('change', updateROWColumnVisibility);
+          }, 0);
           const splitGrid = document.createElement('div');
           splitGrid.className = 'row-split-grid';
           const rowInputs = document.createElement('div');
