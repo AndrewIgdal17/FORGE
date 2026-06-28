@@ -199,9 +199,15 @@ function renderSidebarTree(sections, showCounts) {
       }
     }
 
-    header.addEventListener('click', function(el) {
-      return function() { el.classList.toggle('open'); };
-    }(sectionEl));
+    header.addEventListener('click', (function(el, sec) {
+      return function() {
+        el.classList.toggle('open');
+        if (currentView === 'results' && sec.id.startsWith('r-') && sec.id !== 'r-summary') {
+          var overviewId = sec.id + '-overview';
+          selectSubItem(sec.id, overviewId);
+        }
+      };
+    })(sectionEl, section));
 
     var subitemsEl = document.createElement('div');
     subitemsEl.className = 'sidebar-subitems';

@@ -430,6 +430,97 @@ function renderCompositionLegend(segments) {
   return legend;
 }
 
+function renderSectionOverview(results, sectionType) {
+  var container = document.createElement('div');
+  if (!C.taxonomy) return container;
+  var rid = buildResultById(results);
+
+  var buckets, parentTotal;
+  if (sectionType === 'costs') {
+    buckets = C.COST_BUCKET_ORDER;
+  } else {
+    buckets = ['remedial', 'enabling'];
+  }
+
+  parentTotal = buckets.reduce(function(s, b) {
+    return s + (C.taxonomyByBucket[b] || []).reduce(function(ss, i) {
+      return ss + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+  }, 0);
+
+  var heading = document.createElement('div');
+  heading.className = 'results-section-total';
+  var headLabel = document.createElement('div');
+  headLabel.className = 'total-label';
+  headLabel.textContent = sectionType === 'costs' ? 'Total Costs (PV)' : 'Total Benefits (PV)';
+  var headValue = document.createElement('div');
+  headValue.className = 'total-value';
+  headValue.textContent = formatCurrency(parentTotal, 0);
+  heading.appendChild(headLabel);
+  heading.appendChild(headValue);
+  container.appendChild(heading);
+
+  buckets.forEach(function(b) {
+    var items = (C.taxonomyByBucket[b] || []);
+    var bucketPV = items.reduce(function(s, i) {
+      return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
+    }, 0);
+    if (bucketPV <= 0) return;
+
+    var pct = parentTotal > 0 ? ((bucketPV / parentTotal) * 100).toFixed(0) : '0';
+
+    var card = document.createElement('div');
+    card.className = 'results-bucket-card';
+
+    var title = document.createElement('div');
+    title.className = 'bucket-title';
+    title.textContent = (C.BUCKET_LABELS && C.BUCKET_LABELS[b]) || b;
+    card.appendChild(title);
+
+    var value = document.createElement('div');
+    value.className = 'bucket-value';
+    value.textContent = formatCurrency(bucketPV, 0);
+    card.appendChild(value);
+
+    var pctEl = document.createElement('div');
+    pctEl.className = 'bucket-pct';
+    pctEl.textContent = pct + '% of total ' + sectionType;
+    card.appendChild(pctEl);
+
+    var segments = items.map(function(i) {
+      return { label: i.label, value: rid[i.id] ? rid[i.id].value_pv || 0 : 0 };
+    }).filter(function(s) { return s.value > 0; })
+      .sort(function(a, bb) { return bb.value - a.value; });
+
+    card.appendChild(renderCompositionBar(segments));
+    card.appendChild(renderCompositionLegend(segments));
+
+    var subItemId = getSubItemIdForBucket(b);
+    card.addEventListener('click', function() {
+      if (typeof navigateToSubItem === 'function') {
+        var sectionId = sectionType === 'costs' ? 'r-costs' : 'r-benefits';
+        navigateToSubItem(sectionId, subItemId);
+      }
+    });
+
+    container.appendChild(card);
+  });
+
+  return container;
+}
+
+function getSubItemIdForBucket(bucket) {
+  var map = {
+    hard: 'r-capital',
+    soft: 'r-operational',
+    risk: 'r-risk-costs',
+    emissions: 'r-emissions-costs',
+    remedial: 'r-remedial',
+    enabling: 'r-loss-comp'
+  };
+  return map[bucket] || 'r-capital';
+}
+
 function exclOutputSuffix(groups) {
   const ORDER = ['avoided_emissions', 'emissions', 'line_losses', 'wildfire', 'outage'];
   const MAP = { avoided_emissions: 'avoided_emissions', emissions: 'emissions', line_losses: 'linelosses', wildfire: 'wildfire_risk', outage: 'outage_risk' };
@@ -1722,6 +1813,10 @@ function renderResultsSubItem(subItemId) {
     el = renderBenefitsBucket(results, 'remedial', 'curtailment');
   } else if (subItemId === 'r-loss-comp') {
     el = renderBenefitsBucket(results, 'enabling');
+  } else if (subItemId === 'r-costs-overview') {
+    el = renderSectionOverview(results, 'costs');
+  } else if (subItemId === 'r-benefits-overview') {
+    el = renderSectionOverview(results, 'benefits');
   } else {
     el = document.createElement('div');
     el.textContent = 'Unknown results section: ' + subItemId;
