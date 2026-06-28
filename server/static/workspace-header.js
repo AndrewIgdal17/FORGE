@@ -53,7 +53,7 @@
         C.activeScenarioName = newName;
         var s = C.sessionScenarios.find(function (sc) { return sc.id === C.activeScenarioId; });
         if (s) s.customName = newName;
-        await _sb.from('scenarios').update({ custom_name: newName }).eq('id', C.activeScenarioId);
+        await _sb.from('scenario').update({ name: newName }).eq('id', C.activeScenarioId);
         if (typeof updateScenarioBreadcrumb === 'function') updateScenarioBreadcrumb();
       }
     }

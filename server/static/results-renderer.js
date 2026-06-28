@@ -1613,7 +1613,7 @@ function renderResultsSubItem(subItemId) {
         '<p style="font-size:1rem;margin-bottom:1rem">No results available.</p>' +
         '<p style="font-size:0.85rem;color:#999;margin-bottom:1rem">Edit inputs and calculate first.</p>' +
         '<button type="button" ' +
-          'onclick="window.switchMainTab&&window.switchMainTab(\'inputs\')" ' +
+          'onclick="window.switchSidebarView&&window.switchSidebarView(\'inputs\')" ' +
           'style="padding:0.5rem 1.25rem;background:#3b82f6;color:white;border:none;border-radius:0.375rem;cursor:pointer;font-size:0.9rem">' +
           'Go to Inputs' +
         '</button>' +

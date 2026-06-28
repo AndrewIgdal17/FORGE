@@ -530,7 +530,7 @@
 
     const scenario = await addScenarioToSession(fullInputs, null, metadata, name);
     setActiveScenario(scenario);
-    switchMainTab('inputs');
+    if (typeof switchSidebarView === 'function') switchSidebarView('inputs');
     switchTab(0);
   }
 

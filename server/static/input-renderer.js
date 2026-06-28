@@ -2291,13 +2291,12 @@ function updateAcDcWarning() {
   if (shouldShow && !banner) {
     banner = document.createElement('div');
     banner.id = 'ac-dc-conversion-warning';
-    banner.className = 'routing-validation-banner visible';
-    banner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text">AC↔DC conversion scenario — capacity comparisons may not be directly comparable. Review results carefully.</span>';
+    banner.className = 'ctcc-validation-banner';
+    banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="banner-text">AC\u2194DC conversion scenario \u2014 capacity comparisons may not be directly comparable. Review results carefully.</span>';
     const configSubTab = document.querySelector('[data-sub-tab="technology"]');
     if (configSubTab) configSubTab.prepend(banner);
   } else if (banner) {
-    if (shouldShow) { banner.classList.add('visible'); }
-    else { banner.classList.remove('visible'); }
+    banner.hidden = !shouldShow;
   }
 }
 
@@ -5136,9 +5135,10 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
       document.querySelector('[data-sub-tab="technology"]');
     if (configPanel && !document.getElementById('category-validation-banner')) {
       const banner = document.createElement('div');
-      banner.className = 'routing-validation-banner';
+      banner.className = 'ctcc-validation-banner';
       banner.id = 'category-validation-banner';
-      banner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text"></span>';
+      banner.hidden = true;
+      banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="banner-text"></span>';
       configPanel.prepend(banner);
     }
 
@@ -5147,9 +5147,9 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
       if (!banner) return;
       const result = validateCategoryString();
       if (result.valid) {
-        banner.classList.remove('visible');
+        banner.hidden = true;
       } else {
-        banner.classList.add('visible');
+        banner.hidden = false;
         banner.querySelector('.banner-text').textContent = result.reason;
       }
     }
@@ -5425,25 +5425,30 @@ function renderSubItemContent(subItemId) {
   C._currentSubItemId = subItemId;
 
   if (subItemId && !subItemId.startsWith('r-')) {
-    var restoreBtn = document.createElement('button');
-    restoreBtn.type = 'button';
-    restoreBtn.className = 'restore-defaults-btn';
-    restoreBtn.textContent = 'Restore Defaults';
-    restoreBtn.style.cssText = 'margin-left:auto;padding:0.3rem 0.75rem;font-size:0.75rem;background:white;border:1px solid rgba(0,0,0,0.15);border-radius:4px;cursor:pointer;color:#666;font-family:inherit;';
-    restoreBtn.addEventListener('click', function() {
-      var subId = C._currentSubItemId;
-      if (!subId) return;
-      showRestoreDefaultsDialog('ctcc-restore-sub-' + subId, subId.replace(/-/g, ' '), function() {
-        var panel = document.getElementById('content-panel');
-        if (!panel) return;
-        panel.querySelectorAll('input[data-path], select[data-path]').forEach(function(el) {
-          if (el.dataset.path) resetFieldToDefault(el.dataset.path);
-        });
-        if (typeof showToast === 'function') showToast('Defaults restored');
-      });
-    });
     var contentHeader = document.getElementById('content-header');
-    if (contentHeader) contentHeader.appendChild(restoreBtn);
+    if (contentHeader) {
+      var oldBtn = contentHeader.querySelector('.restore-defaults-btn');
+      if (oldBtn) oldBtn.remove();
+
+      var restoreBtn = document.createElement('button');
+      restoreBtn.type = 'button';
+      restoreBtn.className = 'restore-defaults-btn';
+      restoreBtn.textContent = 'Restore Defaults';
+      restoreBtn.style.cssText = 'margin-left:auto;padding:0.3rem 0.75rem;font-size:0.75rem;background:white;border:1px solid rgba(0,0,0,0.15);border-radius:4px;cursor:pointer;color:#666;font-family:inherit;';
+      restoreBtn.addEventListener('click', function() {
+        var subId = C._currentSubItemId;
+        if (!subId) return;
+        showRestoreDefaultsDialog('ctcc-restore-sub-' + subId, subId.replace(/-/g, ' '), function() {
+          var panel = document.getElementById('content-panel');
+          if (!panel) return;
+          panel.querySelectorAll('input[data-path], select[data-path]').forEach(function(el) {
+            if (el.dataset.path) resetFieldToDefault(el.dataset.path);
+          });
+          if (typeof showToast === 'function') showToast('Defaults restored');
+        });
+      });
+      contentHeader.appendChild(restoreBtn);
+    }
   }
 }
 

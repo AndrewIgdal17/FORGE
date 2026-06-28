@@ -338,9 +338,8 @@
     }
     C.lastRunResults = null;
     C.latestValidResults = null;
-    const resultsBtn = document.querySelector('.main-tab-button[data-tab="results"]');
+    const resultsBtn = document.querySelector('.view-toggle-btn[data-view="results"]');
     if (resultsBtn) {
-      resultsBtn.classList.add('disabled');
       resultsBtn.classList.remove('results-available');
     }
   }
@@ -381,35 +380,56 @@
   }
 
   function exportAsCsv(scenario) {
+    let fullInputs = scenario.inputs;
+    if (scenario.id === C.activeScenarioId && typeof collectJsonData === 'function') {
+      fullInputs = collectJsonData() || fullInputs;
+    } else if (scenario.ref_snapshot_id && _snapshotCache[scenario.ref_snapshot_id]) {
+      fullInputs = assembleFullInputs(
+        _snapshotCache[scenario.ref_snapshot_id],
+        scenario.overrides,
+        scenario.inputs || {}
+      );
+    }
+
+    const defaults = C.ctccJsonData;
+    const slimInputs = extractScenarioInputs(fullInputs);
+    const overrides = defaults ? computeOverrides(fullInputs, defaults) : {};
+
     let csv = '';
     csv += '[METADATA]\n';
-    csv += 'version,' + (scenario.version || '1.0') + '\n';
+    csv += 'version,2.0\n';
     csv += 'customName,' + csvEscape(scenario.customName || '') + '\n';
-    csv += 'scenario_id,' + csvEscape(scenario.metadata?.scenario_id || '') + '\n';
+    csv += 'ref_version,' + csvEscape(C.refVersion || 'v1.0') + '\n';
     csv += 'timestamp,' + (scenario.metadata?.timestamp || new Date().toISOString()) + '\n';
     csv += '\n';
 
-    if (scenario.inputs) {
-      csv += '[INPUTS]\n';
-      csv += 'section,key,value\n';
-      for (const sectionKey of Object.keys(scenario.inputs)) {
-        const flat = flattenObject(scenario.inputs[sectionKey], sectionKey);
-        for (const row of flat) {
-          const lastDot = row.path.lastIndexOf('.');
-          const section = row.path.substring(0, lastDot);
-          const key = row.path.substring(lastDot + 1);
-          csv += csvEscape(section) + ',' + csvEscape(key) + ',' + csvEscape(String(row.value ?? '')) + '\n';
-        }
+    csv += '[INPUTS]\n';
+    csv += 'path,value\n';
+    for (const sectionKey of Object.keys(slimInputs)) {
+      const flat = flattenObject(slimInputs[sectionKey], sectionKey);
+      for (const row of flat) {
+        csv += csvEscape(row.path) + ',' + csvEscape(String(row.value ?? '')) + '\n';
+      }
+    }
+    csv += '\n';
+
+    if (Object.keys(overrides).length > 0) {
+      csv += '[OVERRIDES]\n';
+      csv += 'path,value\n';
+      for (const [path, value] of Object.entries(overrides)) {
+        csv += csvEscape(path) + ',' + csvEscape(String(value ?? '')) + '\n';
       }
       csv += '\n';
     }
 
     if (scenario.results) {
       csv += '[RESULTS]\n';
-      csv += 'field,value\n';
-      const flatResults = flattenObject(scenario.results, '');
-      for (const row of flatResults) {
-        csv += csvEscape(row.path) + ',' + csvEscape(String(row.value ?? '')) + '\n';
+      csv += 'key,value\n';
+      for (const field of RESULTS_EXPORT_FIELDS) {
+        const val = getValueAtPath(scenario.results, field.path);
+        if (val != null) {
+          csv += csvEscape(field.key) + ',' + csvEscape(String(val)) + '\n';
+        }
       }
     }
 
@@ -507,18 +527,59 @@
         }
       }
 
+      const isV2 = metadata.version === '2.0';
       let inputs = null;
-      if (sections.INPUTS && sections.INPUTS.length > 1) {
-        inputs = C.ctccJsonData ? JSON.parse(JSON.stringify(C.ctccJsonData)) : {};
-        for (let i = 1; i < sections.INPUTS.length; i++) {
-          const parts = parseCsvLine(sections.INPUTS[i]);
-          if (parts.length >= 3) {
-            const fullPath = parts[0] + '.' + parts[1];
-            let val = parts[2];
-            if (val !== '' && !isNaN(Number(val))) val = Number(val);
-            else if (val === 'true') val = true;
-            else if (val === 'false') val = false;
-            setValueAtPath(inputs, fullPath, val);
+
+      if (isV2) {
+        const defaults = C.ctccJsonData;
+        if (!defaults) {
+          alert('Cannot import v2.0 CSV file: reference data not loaded yet. Open the workspace first.');
+          return;
+        }
+        const scenarioInputs = {};
+        if (sections.INPUTS && sections.INPUTS.length > 1) {
+          for (let i = 1; i < sections.INPUTS.length; i++) {
+            const parts = parseCsvLine(sections.INPUTS[i]);
+            if (parts.length >= 2) {
+              let val = parts[1];
+              if (val !== '' && !isNaN(Number(val))) val = Number(val);
+              else if (val === 'true') val = true;
+              else if (val === 'false') val = false;
+              setValueAtPath(scenarioInputs, parts[0], val);
+            }
+          }
+        }
+        const overrides = {};
+        if (sections.OVERRIDES && sections.OVERRIDES.length > 1) {
+          for (let i = 1; i < sections.OVERRIDES.length; i++) {
+            const parts = parseCsvLine(sections.OVERRIDES[i]);
+            if (parts.length >= 2) {
+              let val = parts[1];
+              if (val !== '' && !isNaN(Number(val))) val = Number(val);
+              else if (val === 'true') val = true;
+              else if (val === 'false') val = false;
+              overrides[parts[0]] = val;
+            }
+          }
+        }
+        inputs = assembleFullInputs(defaults, overrides, scenarioInputs);
+        if (metadata.ref_version && metadata.ref_version !== (C.refVersion || 'v1.0')) {
+          console.info('Imported CSV built against ref ' + metadata.ref_version +
+            '; current is ' + (C.refVersion || 'v1.0'));
+        }
+      } else {
+        if (sections.INPUTS && sections.INPUTS.length > 1) {
+          inputs = C.ctccJsonData ? JSON.parse(JSON.stringify(C.ctccJsonData)) : {};
+          for (let i = 1; i < sections.INPUTS.length; i++) {
+            const parts = parseCsvLine(sections.INPUTS[i]);
+            if (parts.length >= 3) {
+              const fullPath = parts[0] + '.' + parts[1];
+              let val = parts[2];
+              if (val !== '' && !isNaN(Number(val))) val = Number(val);
+              else if (val === 'true') val = true;
+              else if (val === 'false') val = false;
+              setValueAtPath(inputs, fullPath, val);
+            }
           }
         }
       }
@@ -542,7 +603,6 @@
       const name = metadata.customName || fileName.replace('.csv', '');
       addScenarioToSession(inputs, results,
         { timestamp: metadata.timestamp || new Date().toISOString(),
-          scenario_id: metadata.scenario_id || '',
           source: 'upload-csv' },
         generateScenarioName(name));
     } catch (e) {

@@ -64,8 +64,8 @@ function dismissTutorial() {
 }
 
 function getContextualTip() {
-  var activeTab = document.querySelector('.main-tab-button.active');
-  var tab = activeTab ? activeTab.dataset.tab : '';
+  var activeTab = document.querySelector('.view-toggle-btn.active');
+  var tab = activeTab ? activeTab.dataset.view : '';
   if (tab === 'inputs') {
     var current = typeof getCurrentSubItem === 'function' ? getCurrentSubItem() : null;
     var subLabel = '';
