@@ -552,6 +552,156 @@
         flex-shrink: 0;
       }
 
+      /* ── Results Composition Bar ── */
+      .results-composition-bar {
+        display: flex;
+        height: 24px;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        margin-bottom: 1rem;
+      }
+      .results-composition-segment {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: white;
+        transition: opacity 0.15s;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .results-composition-segment:hover {
+        opacity: 0.85;
+      }
+      .results-composition-legend {
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        margin-top: 0.25rem;
+      }
+
+      /* ── Results Section Overview Cards ── */
+      .results-bucket-card {
+        background: var(--color-bg-white);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: box-shadow 0.15s, border-color 0.15s;
+      }
+      .results-bucket-card:hover {
+        border-color: var(--color-border-medium);
+        box-shadow: var(--shadow-sm);
+      }
+      .results-bucket-card .bucket-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: var(--color-text-secondary);
+        margin-bottom: 0.25rem;
+      }
+      .results-bucket-card .bucket-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--color-text);
+        margin-bottom: 0.15rem;
+      }
+      .results-bucket-card .bucket-pct {
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        margin-bottom: 0.75rem;
+      }
+
+      /* ── Results Detail Cards (expandable) ── */
+      .results-detail-card {
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid var(--color-primary);
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .results-detail-card:hover {
+        background: var(--color-bg-subtle);
+      }
+      .results-detail-card .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .results-detail-card .detail-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+      .results-detail-card .detail-sublabel {
+        font-size: 0.65rem;
+        color: var(--color-text-muted);
+        margin-top: 0.15rem;
+      }
+      .results-detail-card .detail-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--color-text);
+      }
+      .results-detail-card .detail-chevron {
+        color: var(--color-text-muted);
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+        transition: transform 0.2s;
+      }
+      .results-detail-card.expanded {
+        background: var(--color-bg-subtle);
+        border-color: var(--color-border-medium);
+      }
+      .results-detail-card.expanded .detail-chevron {
+        transform: rotate(90deg);
+        color: var(--color-primary);
+      }
+      .results-detail-subrows {
+        display: none;
+        margin-top: 0.6rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid var(--color-border);
+      }
+      .results-detail-card.expanded .results-detail-subrows {
+        display: block;
+      }
+      .results-detail-subrow {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.25rem 0;
+        font-size: 0.7rem;
+        color: var(--color-text-secondary);
+      }
+      .results-detail-subrow .subrow-value {
+        font-weight: 500;
+      }
+
+      /* ── Results Section Total Header ── */
+      .results-section-total {
+        margin-bottom: 1rem;
+      }
+      .results-section-total .total-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-muted);
+      }
+      .results-section-total .total-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--color-text);
+      }
+      .results-section-total .total-pct {
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+      }
+
       /* ── Validation Banner ── */
       .ctcc-validation-banner {
         display: flex;
