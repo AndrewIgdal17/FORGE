@@ -74,7 +74,7 @@ function computeTotalEffectiveAcres(terrainAcres, upliftFactor) {
 }
 
 let _modalCallback = null;
-function showModal(title, message, onConfirm) {
+function showModal(title, message, onConfirm, confirmLabel) {
   const overlay = document.getElementById('modal-overlay');
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-message').textContent = message;
@@ -82,6 +82,7 @@ function showModal(title, message, onConfirm) {
   overlay.classList.add('visible');
   const cancel = document.getElementById('modal-cancel');
   const confirm = document.getElementById('modal-confirm');
+  confirm.textContent = confirmLabel || 'Confirm';
   const onCancel = () => { hideModal(); cancel.removeEventListener('click', onCancel); confirm.removeEventListener('click', onOk); };
   const onOk = () => { if (_modalCallback) _modalCallback(); hideModal(); cancel.removeEventListener('click', onCancel); confirm.removeEventListener('click', onOk); };
   cancel.addEventListener('click', onCancel);

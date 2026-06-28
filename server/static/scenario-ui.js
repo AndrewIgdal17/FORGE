@@ -260,7 +260,7 @@ function renderScenarioList() {
       deleteBtn.addEventListener('click', () => {
         showModal('Delete Scenario', `Delete "${scenario.customName}"?`, () => {
           removeScenarioFromSession(scenario.id);
-        });
+        }, 'Delete');
       });
       actions.appendChild(deleteBtn);
 
