@@ -123,7 +123,7 @@ function updateContentHeader(section, subItem) {
   var header = document.getElementById('content-header');
   if (!header) return;
   header.innerHTML =
-    '<span class="sidebar-dot" style="background:' + section.color + ';width:10px;height:10px;"></span>' +
+    '<span class="sidebar-dot" data-section="' + section.id + '" style="width:10px;height:10px;"></span>' +
     '<h2>' + subItem.label + '</h2>' +
     '<span class="breadcrumb">' + section.label + ' \u2192 ' + subItem.label + '</span>';
 }
@@ -180,7 +180,7 @@ function renderSidebarTree(sections, showCounts) {
 
     var dot = document.createElement('span');
     dot.className = 'sidebar-dot';
-    dot.style.background = section.color;
+    dot.setAttribute('data-section', section.id);
 
     var label = document.createElement('span');
     label.textContent = section.label;
