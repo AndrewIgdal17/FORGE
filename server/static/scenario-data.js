@@ -244,24 +244,24 @@
   }
 
   function hasRequiredFields() {
-    const form = document.getElementById('demo-form');
-    if (!form) return false;
-    const constructionType = form.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
-    const acDc = form.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
-    const capacityMw = form.querySelector('[data-path="01_project_technical_details.project.capacity_mw"]');
-    const conductorType = form.querySelector('[data-path="01_project_technical_details.project.conductor_type"]');
+    if (!document.getElementById('demo-form')) return false;
+    const q = s => document.querySelector('[data-path="' + s + '"]');
+    const constructionType = q('01_project_technical_details.project.construction_type');
+    const acDc = q('01_project_technical_details.project.ac_dc');
+    const capacityMw = q('01_project_technical_details.project.capacity_mw');
+    const conductorType = q('01_project_technical_details.project.conductor_type');
     if (!constructionType?.value || !acDc?.value || !capacityMw?.value || !conductorType?.value) return false;
     if (acDc.value === 'DC') {
-      const converterType = form.querySelector('[data-path="01_project_technical_details.project.converter_type"]');
+      const converterType = q('01_project_technical_details.project.converter_type');
       if (!converterType?.value) return false;
     }
     if (constructionType.value === 'Reconductoring') {
-      const oldAcDc = form.querySelector('[data-path="01_project_technical_details.project.old_ac_dc"]');
-      const oldCapacity = form.querySelector('[data-path="01_project_technical_details.project.old_capacity_mw"]');
-      const oldConductor = form.querySelector('[data-path="01_project_technical_details.project.old_conductor_type"]');
+      const oldAcDc = q('01_project_technical_details.project.old_ac_dc');
+      const oldCapacity = q('01_project_technical_details.project.old_capacity_mw');
+      const oldConductor = q('01_project_technical_details.project.old_conductor_type');
       if (!oldAcDc?.value || !oldCapacity?.value || !oldConductor?.value) return false;
     }
-    const terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
+    const terrainInputs = document.querySelectorAll('[data-path*="terrain_miles"]');
     let hasAnyMiles = false;
     terrainInputs.forEach(input => {
       const val = parseFloat(input.value.replace(/,/g, ''));
@@ -272,8 +272,8 @@
 
   function getInvalidFields() {
     var invalid = [];
-    var form = document.getElementById('demo-form');
-    if (!form) return invalid;
+    if (!document.getElementById('demo-form')) return invalid;
+    var q = function(s) { return document.querySelector('[data-path="' + s + '"]'); };
 
     var checks = [
       { path: '01_project_technical_details.project.construction_type', label: 'Construction Type', subTab: 'technology' },
@@ -282,12 +282,12 @@
       { path: '01_project_technical_details.project.conductor_type', label: 'Conductor Type', subTab: 'conductor-details' },
     ];
 
-    var acDcEl = form.querySelector('[data-path="01_project_technical_details.project.ac_dc"]');
+    var acDcEl = q('01_project_technical_details.project.ac_dc');
     if (acDcEl && acDcEl.value === 'DC') {
       checks.push({ path: '01_project_technical_details.project.converter_type', label: 'Converter Type', subTab: 'converter-details' });
     }
 
-    var ctEl = form.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
+    var ctEl = q('01_project_technical_details.project.construction_type');
     if (ctEl && ctEl.value === 'Reconductoring') {
       checks.push({ path: '01_project_technical_details.project.old_ac_dc', label: 'Old AC/DC', subTab: 'technology' });
       checks.push({ path: '01_project_technical_details.project.old_capacity_mw', label: 'Old Capacity MW', subTab: 'technology' });
@@ -295,13 +295,13 @@
     }
 
     for (var i = 0; i < checks.length; i++) {
-      var el = form.querySelector('[data-path="' + checks[i].path + '"]');
+      var el = q(checks[i].path);
       if (!el || !el.value) {
         invalid.push(checks[i]);
       }
     }
 
-    var terrainInputs = form.querySelectorAll('[data-path*="terrain_miles"]');
+    var terrainInputs = document.querySelectorAll('[data-path*="terrain_miles"]');
     var hasAnyMiles = false;
     terrainInputs.forEach(function(input) {
       var val = parseFloat(input.value.replace(/,/g, ''));
