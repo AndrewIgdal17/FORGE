@@ -267,7 +267,11 @@
       const val = parseFloat(input.value.replace(/,/g, ''));
       if (!isNaN(val) && val > 0) hasAnyMiles = true;
     });
-    return hasAnyMiles;
+    if (!hasAnyMiles) return false;
+    if (typeof calculateTerrainMilesTotal === 'function' && typeof calculateROWMilesTotal === 'function') {
+      if (Math.abs(calculateTerrainMilesTotal() - calculateROWMilesTotal()) >= 0.01) return false;
+    }
+    return true;
   }
 
   function getInvalidFields() {
@@ -309,6 +313,16 @@
     });
     if (!hasAnyMiles) {
       invalid.push({ path: 'terrain_miles', label: 'Terrain miles (at least one > 0)', subTab: 'terrain-mix' });
+    }
+
+    if (hasAnyMiles && typeof calculateTerrainMilesTotal === 'function' && typeof calculateROWMilesTotal === 'function') {
+      var tTotal = calculateTerrainMilesTotal();
+      var zTotal = calculateROWMilesTotal();
+      if (Math.abs(tTotal - zTotal) >= 0.01) {
+        var msg = 'Terrain miles (' + tTotal + ') \u2260 zone miles (' + zTotal + ')';
+        invalid.push({ path: 'routing_mismatch', label: msg, subTab: 'terrain-mix' });
+        invalid.push({ path: 'routing_mismatch_row', label: msg, subTab: 'rights-of-way' });
+      }
     }
 
     return invalid;

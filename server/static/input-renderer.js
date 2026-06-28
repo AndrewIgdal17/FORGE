@@ -554,7 +554,7 @@ function createFieldFromMetadata(meta, value) {
     sliderEl.type = 'range';
     sliderEl.min = v.min ?? 0; sliderEl.max = v.max ?? 1; sliderEl.step = v.step ?? 0.01;
     sliderEl.value = value ?? 0;
-    sliderEl.className = 'slider-input ctcc-slider';
+    sliderEl.className = 'slider-input';
     updateSliderFill(sliderEl);
     const numInput = document.createElement('input');
     numInput.type = 'number';
@@ -762,7 +762,6 @@ function renderTaxonomySections(container, fields, data, taxById, scopeEl) {
           }
         }
       });
-      updateRoutingValidation();
     });
     header.appendChild(resetBtn);
 
@@ -1361,7 +1360,6 @@ function renderROWZonesTable(data) {
       if (table.querySelector(`tr[data-zone="${zz}"]`)?.style.display !== 'none') totalAcres += ac;
     }
     tdTotalAcresCell.textContent = totalAcres > 0 ? totalAcres.toFixed(1) : '';
-    updateRoutingValidation();
   }
   setTimeout(updateZoneAcres, 0);
 
@@ -1810,30 +1808,6 @@ function calculateROWMilesTotal() {
   return total;
 }
 
-function updateRoutingValidation() {
-  const terrainTotal = calculateTerrainMilesTotal();
-  const zoneTotal = calculateROWMilesTotal();
-  const matches = Math.abs(zoneTotal - terrainTotal) < 0.01;
-
-  // Update ROW zone table total row
-  const rowTotalCell = document.getElementById('row-total-miles-cell');
-  if (rowTotalCell) {
-    rowTotalCell.textContent = formatNumberInput(zoneTotal) + (matches ? ' ✓' : ' ⚠️');
-  }
-
-  // Update cross-validation banner
-  const banner = document.getElementById('routing-validation-banner');
-  if (banner) {
-    if (matches) {
-      banner.classList.remove('visible');
-    } else {
-      banner.classList.add('visible');
-      banner.querySelector('.banner-text').textContent =
-        `Terrain miles (${formatNumberInput(terrainTotal)}) and zone miles (${formatNumberInput(zoneTotal)}) do not match. Adjust terrain miles or zone miles so both equal your intended total.`;
-    }
-    C.routingValid = matches;
-  }
-}
 
 function validateCostTimingPatterns() {
   const TOLERANCE = 0.001;
@@ -4643,11 +4617,6 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
 
         if (stId === 'terrain-mix') {
           renderTabGuideBanner(stId, stContent);
-          const routingBanner = document.createElement('div');
-          routingBanner.className = 'ctcc-validation-banner';
-          routingBanner.id = 'routing-validation-banner';
-          routingBanner.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1l7 14H1L8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="8" y="13" text-anchor="middle" font-size="9" fill="currentColor">!</text></svg> <span class="banner-text"></span>';
-          stContent.insertBefore(routingBanner, stContent.firstChild);
           stContent.appendChild(renderTerrainTable(data));
         } else if (stId === 'rights-of-way') {
           renderTabGuideBanner(stId, stContent);
@@ -4982,7 +4951,6 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           });
           if (rowEl) rowEl.addEventListener('change', updateROWColumnVisibility);
           updateROWColumnVisibility();
-          updateRoutingValidation();
 
           const paths = [
             '01_project_technical_details.project.construction_type',
@@ -5130,7 +5098,6 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
   if (ctccFormEl) {
     ctccFormEl.addEventListener('input', function() {
       updateEnvironmentalAcres();
-      updateRoutingValidation();
     });
   }
 
@@ -5318,8 +5285,6 @@ function resetSectionToDefaults(sectionPath) {
     }
   });
 
-  // Update routing validation after reset
-  updateRoutingValidation();
 }
 
 // Shared utility: get terrain names with non-zero miles
