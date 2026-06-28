@@ -481,7 +481,7 @@ function renderComparisonTable() {
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.id = 'cmp-add-metric-btn';
-    addBtn.className = 'cmp-add-metric-btn';
+    addBtn.className = 'cmp-add-metric-btn btn btn-secondary btn-sm';
     addBtn.textContent = 'Add column…';
     addBtn.setAttribute('aria-haspopup', 'dialog');
     addBtn.setAttribute('aria-expanded', 'false');

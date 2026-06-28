@@ -230,6 +230,7 @@ function renderScenarioList() {
     if (isOwner) {
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-secondary btn-sm';
       removeBtn.textContent = 'Remove';
       removeBtn.addEventListener('click', () => {
         removeScenarioFromSession(scenario.id);
@@ -238,6 +239,7 @@ function renderScenarioList() {
 
       const saveHereBtn = document.createElement('button');
       saveHereBtn.type = 'button';
+      saveHereBtn.className = 'btn btn-secondary btn-sm';
       saveHereBtn.textContent = 'Save here';
       saveHereBtn.dataset.tooltip = 'Overwrite with current inputs and results';
       saveHereBtn.addEventListener('click', async () => {
@@ -255,17 +257,18 @@ function renderScenarioList() {
 
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
-      deleteBtn.className = 'delete-btn';
+      deleteBtn.className = 'btn btn-danger btn-sm';
       deleteBtn.textContent = 'Delete';
       deleteBtn.addEventListener('click', () => {
         showModal('Delete Scenario', `Delete "${scenario.customName}"?`, () => {
           removeScenarioFromSession(scenario.id);
-        }, 'Delete');
+        }, 'Delete', 'btn btn-danger');
       });
       actions.appendChild(deleteBtn);
 
       const dupBtn = document.createElement('button');
       dupBtn.type = 'button';
+      dupBtn.className = 'btn btn-secondary btn-sm';
       dupBtn.textContent = 'Duplicate';
       dupBtn.addEventListener('click', () => duplicateScenario(scenario));
       actions.appendChild(dupBtn);
@@ -274,6 +277,7 @@ function renderScenarioList() {
     if (!isOwner) {
       const dupBtn = document.createElement('button');
       dupBtn.type = 'button';
+      dupBtn.className = 'btn btn-secondary btn-sm';
       dupBtn.textContent = 'Duplicate';
       dupBtn.addEventListener('click', () => duplicateScenario(scenario));
       actions.appendChild(dupBtn);

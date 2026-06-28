@@ -705,7 +705,7 @@ function renderTaxonomySections(container, fields, data, taxById, scopeEl) {
 
     const resetBtn = document.createElement('button');
     resetBtn.type = 'button';
-    resetBtn.className = 'section-reset-btn';
+    resetBtn.className = 'section-reset-btn btn btn-secondary btn-sm';
     resetBtn.textContent = 'Reset';
     resetBtn.dataset.sectionPath = taxId;
     resetBtn.addEventListener('click', () => {
@@ -991,7 +991,7 @@ function renderTerrainTable(data) {
 
   const wrapper = document.createElement('div');
   const table = document.createElement('table');
-  table.className = 'ctcc-table terrain-table';
+  table.className = 'ctcc-table ctcc-table--editable terrain-table';
   const terrainCaption = document.createElement('caption');
   terrainCaption.textContent = 'Terrain Miles';
   terrainCaption.appendChild(makeHelpIcon('Route miles by terrain type. Must sum to project total miles.'));
@@ -1157,7 +1157,7 @@ function renderROWZonesTable(data) {
   const wrapper = document.createElement('div');
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table row-table-greenfield';
+  table.className = 'ctcc-table ctcc-table--editable row-table-greenfield';
   table.id = 'row-zone-table';
   const rowCaption = document.createElement('caption');
   rowCaption.textContent = 'Right-of-Way Zones';
@@ -1384,7 +1384,7 @@ function updateROWColumnVisibility() {
   const table = document.getElementById('row-zone-table');
   if (!table) return;
   const gf = isGreenfieldROW();
-  table.className = gf ? 'ctcc-table row-table-greenfield' : 'ctcc-table row-table-existing';
+  table.className = gf ? 'ctcc-table ctcc-table--editable row-table-greenfield' : 'ctcc-table ctcc-table--editable row-table-existing';
   const panel = document.getElementById('row-cost-panel');
   if (panel) {
     panel.querySelectorAll('.greenfield-only').forEach(el => el.style.display = gf ? '' : 'none');
@@ -1892,7 +1892,7 @@ function renderEnvBaseMitigationTable(data) {
 
   // Base mitigation table
   const table = document.createElement('table');
-  table.className = 'ctcc-table terrain-table';
+  table.className = 'ctcc-table ctcc-table--editable terrain-table';
   const ebCaption = document.createElement('caption');
   ebCaption.textContent = 'Base Mitigation Costs';
   ebCaption.appendChild(makeHelpIcon('Per-acre environmental restoration costs by terrain for the active construction type.'));
@@ -2015,7 +2015,7 @@ function renderEnvCreditsTable(data) {
   wrapper.appendChild(totalAcresDisplay);
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table terrain-table';
+  table.className = 'ctcc-table ctcc-table--editable terrain-table';
   const ecCaption = document.createElement('caption');
   ecCaption.textContent = 'Habitat Credit Costs';
   ecCaption.appendChild(makeHelpIcon('Per-acre credit purchase costs for habitat and wetland mitigation.'));
@@ -3049,7 +3049,7 @@ function renderEnergyMixTable(data) {
     'CF Rate of Change': 'Counterfactual (no-line) baseline for displacement calculation.',
   };
   const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table energy-mix-table';
+  table.className = 'ctcc-table ctcc-table--compact ctcc-table--editable conductor-details-table energy-mix-table';
   const emCaption = document.createElement('caption');
   emCaption.textContent = 'Energy Source Mix';
   emCaption.appendChild(makeHelpIcon('Fuel mix percentages for the project line and counterfactual (no-line) baseline. Used for displacement emissions calculation.'));
@@ -3225,7 +3225,7 @@ function renderIntensityTable(data) {
     'NO\u2093 (kg/MWh)': 'Nitrogen oxide emission intensity',
   };
   const intTable = document.createElement('table');
-  intTable.className = 'ctcc-table conductor-details-table';
+  intTable.className = 'ctcc-table ctcc-table--compact conductor-details-table';
   const intCaption = document.createElement('caption');
   intCaption.textContent = 'Emission Intensities';
   intCaption.appendChild(makeHelpIcon('Pollutant emission rates by fuel source in kg per MWh of generation.'));
@@ -3872,7 +3872,7 @@ function renderFinancialAFUDCPanel(data) {
 
   // Cost Timing Matrix table
   const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table';
+  table.className = 'ctcc-table ctcc-table--compact conductor-details-table';
   table.id = 'cost-timing-table';
   table.style.marginTop = '1.5rem';
   const timingCaption = document.createElement('caption');
