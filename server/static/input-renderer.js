@@ -5455,6 +5455,7 @@ function renderSubItemContent(subItemId) {
 
 
 // Public API — only exports actually used by other modules
+window.calculateROWMilesTotal = calculateROWMilesTotal;
 window.getEnergyDeliveredGWh = getEnergyDeliveredGWh;
 window.isGreenfieldROW = isGreenfieldROW;
 window.isReconductoring = isReconductoring;

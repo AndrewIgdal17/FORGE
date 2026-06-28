@@ -956,6 +956,13 @@
         margin-right: 0.5rem;
         cursor: pointer;
       }
+      .form-field input[type="range"] {
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+      }
       .details-editable-inputs {
         display: flex;
         flex-direction: column;
