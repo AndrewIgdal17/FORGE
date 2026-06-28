@@ -525,7 +525,8 @@ function renderExpandableCard(item, rid, colorIndex, parentTotal) {
   var r = rid[item.id];
   var pv = r ? r.value_pv || 0 : 0;
   var pct = parentTotal > 0 ? ((pv / parentTotal) * 100).toFixed(0) : '0';
-  var hasDetail = r && r.detail_rows && r.detail_rows.length > 0;
+  var detailRows = r ? (r.detail_rows || r.detail || []) : [];
+  var hasDetail = detailRows.length > 0;
 
   var card = document.createElement('div');
   card.className = 'results-detail-card';
@@ -543,7 +544,7 @@ function renderExpandableCard(item, rid, colorIndex, parentTotal) {
   var sublabel = document.createElement('div');
   sublabel.className = 'detail-sublabel';
   sublabel.textContent = pct + '% of bucket';
-  if (hasDetail) sublabel.textContent += ' \u00B7 ' + r.detail_rows.length + ' components';
+  if (hasDetail) sublabel.textContent += ' \u00B7 ' + detailRows.length + ' components';
   left.appendChild(sublabel);
 
   var right = document.createElement('div');
@@ -567,7 +568,7 @@ function renderExpandableCard(item, rid, colorIndex, parentTotal) {
   if (hasDetail) {
     var subrows = document.createElement('div');
     subrows.className = 'results-detail-subrows';
-    r.detail_rows.forEach(function(row) {
+    detailRows.forEach(function(row) {
       var sr = document.createElement('div');
       sr.className = 'results-detail-subrow';
       var srLabel = document.createElement('span');
@@ -1790,44 +1791,6 @@ function renderCTCCResults(results) {
 // ============================================================
 // Results Sidebar View — per-section rendering
 // ============================================================
-
-function renderCostsBuckets(results, buckets) {
-  var savedOrder = C.COST_BUCKET_ORDER;
-  C.COST_BUCKET_ORDER = buckets;
-  var el = renderCostsByTaxonomy(results);
-  C.COST_BUCKET_ORDER = savedOrder;
-  return el;
-}
-
-function renderBenefitsBucket(results, bucket, subgroup) {
-  var container = document.createElement('div');
-  if (!C.taxonomy) return container;
-  var resultById = buildResultById(results);
-  var items = (C.taxonomyByBucket[bucket] || []).slice().sort(function(a, b) {
-    return a.display_order - b.display_order;
-  });
-  if (subgroup) {
-    items = items.filter(function(i) { return i.subgroup === subgroup; });
-  }
-  if (!items.length) return container;
-
-  var section = document.createElement('div');
-  section.className = 'cost-section-items';
-  section.appendChild(pairHeader());
-  var bucketPV = 0, bucketNom = 0;
-  items.forEach(function(item) {
-    var r = resultById[item.id];
-    section.appendChild(renderTaxonomyItem(item, r, false));
-    bucketPV += r ? (r.value_pv || 0) : 0;
-    bucketNom += r ? (r.value_nominal || 0) : 0;
-  });
-  var label = subgroup
-    ? subgroup.charAt(0).toUpperCase() + subgroup.slice(1).replace(/_/g, ' ') + ' Benefits'
-    : (C.BUCKET_LABELS[bucket] || bucket);
-  section.appendChild(subtotalPairRow(label + ' Subtotal', bucketNom, bucketPV));
-  container.appendChild(createCategory(label, section, true));
-  return container;
-}
 
 function renderResultsOverview(results) {
   var container = document.createElement('div');
