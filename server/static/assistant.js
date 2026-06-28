@@ -8,7 +8,7 @@ function initAssistant() {
   if (_iconEl) return;
   _iconEl = document.createElement('div');
   _iconEl.className = 'assistant-icon';
-  _iconEl.innerHTML = '<img src="/static/mascot-vector.png" alt="Help" style="width:150%;height:150%;object-fit:cover;object-position:3% 2%;border-radius:50%;">';
+  _iconEl.innerHTML = '?';
   _iconEl.title = 'Help & Tour';
   _iconEl.addEventListener('click', toggleAssistantBubble);
   document.body.appendChild(_iconEl);
