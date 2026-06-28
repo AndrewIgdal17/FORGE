@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from .ctcc_processor import run_ctcc_calculation
@@ -95,6 +96,19 @@ async def require_auth(
 
 # Allow frontend apps to reach the API locally or across origins.
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+class CacheBustMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/static/") and request.url.path.endswith(
+            (".js", ".css")
+        ):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
+
+app.add_middleware(CacheBustMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
