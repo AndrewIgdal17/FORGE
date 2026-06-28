@@ -4573,6 +4573,15 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
 
   C.ctccJsonData = data;
 
+  // Clear content-panel of old rendered sub-items (prevents ghost duplicates
+  // when renderJsonInputs is called multiple times, e.g. default load → scenario load)
+  var contentPanel = document.getElementById('content-panel');
+  if (contentPanel) {
+    Array.from(contentPanel.children).forEach(function(child) {
+      if (child.id !== 'load-status') child.remove();
+    });
+  }
+
   // Create (or reuse) an off-screen holder so all sub-item containers live in the DOM
   // while not visible — this lets setTimeout-based event-listener setup find elements.
   var offscreen = document.getElementById('ctcc-offscreen-inputs');
