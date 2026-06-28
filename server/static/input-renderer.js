@@ -4553,7 +4553,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           // Render contingency field into the designated container
           const contingencyContainer = subTabWrapper.querySelector('.capital-cost-contingency');
           if (contingencyContainer && stFields.length > 0) {
-            renderTaxonomySections(contingencyContainer, stFields, data, taxById, tabContent);
+            renderTaxonomySections(contingencyContainer, stFields, data, taxById, stContent);
           }
         } else if (stId === 'conductor-details') {
           renderTabGuideBanner(stId, stContent);
