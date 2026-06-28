@@ -5301,7 +5301,11 @@ function normalizeEnergySourceMixInCombinedData(data) {
 function renderJsonInputs(data) {
   const normalized = normalizeEnergySourceMixInCombinedData(data);
   originalJsonData = JSON.parse(JSON.stringify(normalized));
+  var activeSubItem = C._currentSubItemId;
   renderInputsFromTaxonomy(normalized, C.taxonomy, C.inputMetadata);
+  if (activeSubItem && C._renderedSubItems && C._renderedSubItems[activeSubItem]) {
+    renderSubItemContent(activeSubItem);
+  }
 }
 
 function renderSubItemContent(subItemId) {
