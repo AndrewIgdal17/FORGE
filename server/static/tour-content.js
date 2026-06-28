@@ -11,6 +11,6 @@ var TOUR_CONTENT = {
   ],
   scenarios: [
     { target: '#scenario-subtab-manage', content: 'Use Duplicate to copy a scenario, change one variable, and compare alternatives side-by-side.', position: 'top' },
-    { target: '.tab-button[data-scenario-tab="compare"]', content: 'The Compare tab shows all selected scenarios in a side-by-side table with delta analysis.', position: 'bottom' }
+    { target: '.pill-tab[data-scenario-tab="compare"]', content: 'The Compare tab shows all selected scenarios in a side-by-side table with delta analysis.', position: 'bottom' }
   ]
 };

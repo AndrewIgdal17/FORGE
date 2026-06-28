@@ -48,20 +48,19 @@
     </nav>
 
     <div id="scenarios-manager-main">
-      <div class="tabs" id="scenario-subtabs" style="padding-left: 1rem;">
-        <button type="button" class="tab-button active" data-scenario-tab="manage">Manage</button>
-        <button type="button" class="tab-button" data-scenario-tab="compare">Compare</button>
-        <button type="button" class="tab-button" data-scenario-tab="sensitivity">Sensitivity</button>
-        <button type="button" class="tab-button" data-scenario-tab="what-if">What-If</button>
+      <div class="pill-tabs" id="scenario-subtabs">
+        <button type="button" class="pill-tab active" data-scenario-tab="manage">Manage</button>
+        <button type="button" class="pill-tab" data-scenario-tab="compare">Compare</button>
+        <button type="button" class="pill-tab" data-scenario-tab="sensitivity">Sensitivity</button>
+        <button type="button" class="pill-tab" data-scenario-tab="what-if">What-If</button>
       </div>
 
       <!-- Manage subtab -->
       <div class="scenario-subtab-content active" id="scenario-subtab-manage">
         <div class="scenario-toolbar">
-          <button type="button" id="new-scenario-btn">+ New Scenario</button>
-          <button type="button" id="scenario-upload-btn">Load from file</button>
+          <button type="button" class="btn btn-primary" id="new-scenario-btn">+ New Scenario</button>
+          <button type="button" class="btn btn-secondary" id="scenario-upload-btn">Load from file</button>
           <input type="file" id="scenario-file-input" accept=".ctcc,.csv" multiple style="display:none;" />
-          <button type="button" id="scenario-save-btn" style="background: #10b981; color: white; border-color: #10b981;">Save Current</button>
         </div>
         <div class="scenario-list" id="scenario-list">
           <div class="scenario-empty">No scenarios yet.</div>
@@ -180,7 +179,7 @@
         C.comparisonAutoSort = false;
 
         // Scenario subtab switching
-        var subtabButtons = document.querySelectorAll('#scenario-subtabs .tab-button');
+        var subtabButtons = document.querySelectorAll('#scenario-subtabs .pill-tab');
         var subtabContents = document.querySelectorAll('.scenario-subtab-content');
         subtabButtons.forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -211,17 +210,6 @@
             window.location.href = '/app/workspace?new=1';
           });
         }
-        var saveBtn = document.getElementById('scenario-save-btn');
-        if (saveBtn) {
-          saveBtn.addEventListener('click', function() {
-            if (C.activeScenarioId) {
-              window.location.href = '/app/workspace?scenario=' + C.activeScenarioId;
-            } else {
-              window.location.href = '/app/workspace';
-            }
-          });
-        }
-
         // Upload handlers
         var uploadBtn = document.getElementById('scenario-upload-btn');
         var fileInput = document.getElementById('scenario-file-input');

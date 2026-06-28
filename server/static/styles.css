@@ -333,6 +333,33 @@
         border-left: 3px solid var(--color-success);
       }
 
+      /* ── Pill Tabs ── */
+      .pill-tabs {
+        display: flex;
+        gap: var(--space-xs);
+        padding: var(--space-md) var(--space-lg);
+      }
+      .pill-tab {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: 20px;
+        border: none;
+        background: var(--color-bg-subtle);
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .pill-tab:hover {
+        background: var(--color-bg-hover);
+        color: var(--color-text);
+      }
+      .pill-tab.active {
+        background: var(--color-primary);
+        color: white;
+        font-weight: 600;
+      }
+
       /* ── Application Styles ── */
       body > h1 {
         margin: 0;
@@ -1305,25 +1332,23 @@
       }
       /* Scenario Management */
       .scenario-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-      .scenario-toolbar button { padding: 0.5rem 1rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 0.375rem; background: white; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
-      .scenario-toolbar button:hover { background: #f0f0f0; }
       .scenario-list { flex: 0 0 auto; max-height: 50%; overflow-y: auto; margin-bottom: 0; border-collapse: collapse; min-height: 0; }
       .scenario-list table { width: 100%; border-collapse: collapse; }
-      .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.06); vertical-align: top; white-space: nowrap; }
+      .scenario-card td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--color-border); vertical-align: top; white-space: nowrap; }
       .scenario-card:hover td { background: rgba(0,0,0,0.02); }
       .scenario-card-checkbox { cursor: pointer; }
       .scenario-card-info { display: flex; flex-direction: column; gap: 0.1rem; }
       .scenario-card-name { font-weight: 600; font-size: 0.85rem; cursor: text; border: 1px solid transparent; padding: 0; border-radius: 0.25rem; display: inline-block; line-height: 1.4; }
       .scenario-card-name:hover { border-color: rgba(0,0,0,0.15); }
       .scenario-card-name-input { font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.15); padding: 0; border-radius: 0.25rem; outline: none; background: transparent; font-family: var(--font-sans); line-height: 1.4; height: 1.4em; margin: 0; box-sizing: content-box; }
-      .scenario-card-params { font-size: 0.75rem; color: rgba(0,0,0,0.45); }
-      .scenario-card-meta { font-size: 0.75rem; color: rgba(0,0,0,0.35); }
+      .scenario-card-params { font-size: 0.75rem; color: var(--color-text-muted); }
+      .scenario-card-meta { font-size: 0.75rem; color: var(--color-text-faint); }
       .scenario-card td.scenario-actions-cell { vertical-align: middle; padding-left: 50px; }
       .scenario-card-actions { display: flex; gap: 0.35rem; justify-content: flex-end; white-space: nowrap; }
       .scenario-card-active td { background: rgba(0, 102, 204, 0.04); }
-      .scenario-card-active td:first-child { box-shadow: inset 3px 0 0 #0066cc; }
-      .scenario-card-active .scenario-card-name { color: #0066cc; }
-      .scenario-card-actions .active-badge { font-size: 0.75rem; color: #0066cc; font-weight: 600; padding: 0.2rem 0.5rem; }
+      .scenario-card-active td:first-child { box-shadow: inset 3px 0 0 var(--color-primary); }
+      .scenario-card-active .scenario-card-name { color: var(--color-primary); }
+      .scenario-card-actions .active-badge { font-size: 0.75rem; color: var(--color-primary); font-weight: 600; padding: 0.2rem 0.5rem; }
       .scenario-drag-cell { width: 20px; padding: 0 0.5rem 0 0.35rem !important; vertical-align: middle !important; text-align: center; }
       .scenario-drag-handle {
         display: inline-block;
@@ -1343,7 +1368,7 @@
       .scenario-card-actions button[data-tooltip] { position: relative; }
       .scenario-card-actions button[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: white; font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.15s; margin-bottom: 0.25rem; }
       .scenario-card-actions button[data-tooltip]:hover::after { opacity: 1; }
-      .scenario-badge { background: #0066cc; color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.35rem; vertical-align: middle; }
+      .scenario-badge { background: var(--color-primary); color: white; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.35rem; vertical-align: middle; }
       .scenario-empty { text-align: center; padding: 2rem; color: rgba(0,0,0,0.4); font-style: italic; }
       .scenario-divider {
         display: flex;
