@@ -289,7 +289,7 @@ function updateSidebarValidation() {
   for (var i = 0; i < invalidFields.length; i++) {
     var st = invalidFields[i].subTab;
     if (!bySubTab[st]) bySubTab[st] = [];
-    bySubTab[st].push(invalidFields[i].label);
+    bySubTab[st].push(invalidFields[i]);
   }
 
   var subItems = document.querySelectorAll('.sidebar-subitem');
@@ -299,12 +299,24 @@ function updateSidebarValidation() {
     if (existing) existing.remove();
 
     if (bySubTab[subId]) {
-      var names = bySubTab[subId];
+      var entries = bySubTab[subId];
+      var missingFields = entries.filter(function(e) { return e.path.indexOf('routing_mismatch') === -1; });
+      var hasMismatch = entries.some(function(e) { return e.path.indexOf('routing_mismatch') !== -1; });
+
       el.classList.add('sidebar-subitem--invalid');
-      el.title = names.length + ' missing: ' + names.join(', ');
       var badge = document.createElement('span');
       badge.className = 'missing-badge';
-      badge.textContent = names.length + ' missing';
+
+      if (missingFields.length > 0 && hasMismatch) {
+        badge.textContent = missingFields.length + ' missing + mismatch';
+        el.title = entries.map(function(e) { return e.label; }).join(', ');
+      } else if (hasMismatch) {
+        badge.textContent = 'Mismatch';
+        el.title = entries[0].label;
+      } else {
+        badge.textContent = missingFields.length + ' missing';
+        el.title = missingFields.length + ' missing: ' + missingFields.map(function(e) { return e.label; }).join(', ');
+      }
       el.appendChild(badge);
     } else {
       el.classList.remove('sidebar-subitem--invalid');
