@@ -91,6 +91,7 @@
       <div class="view-toggle" id="view-toggle">
         <button type="button" class="view-toggle-btn active" data-view="inputs">Inputs</button>
         <button type="button" class="view-toggle-btn" data-view="results">Results</button>
+        <button type="button" class="view-toggle-btn" data-view="sensitivity">Sensitivity</button>
       </div>
       <span class="header-breadcrumb" id="header-breadcrumb"></span>
       <div style="flex:1;"></div>
@@ -115,6 +116,23 @@
         </div>
       </div>
     </form>
+    </div>
+
+    <!-- Sensitivity Panel (placeholder) -->
+    <div id="sensitivity-panel" style="display:none; padding: 2rem; max-width: 40rem;">
+      <h2 style="margin: 0 0 0.75rem; font-size: 1.3rem; font-weight: 700;">Sensitivity Analysis</h2>
+      <p style="color: var(--color-text-secondary); line-height: 1.5; font-size: 0.9rem;">
+        Systematic sensitivity analysis tools for understanding which input parameters
+        most affect project economics.
+      </p>
+      <div style="margin-top: 1rem; padding: 1rem; background: var(--color-bg-subtle); border-radius: var(--radius-lg); font-size: var(--text-sm); color: var(--color-text-muted);">
+        Coming soon:
+        <ul style="margin: 0.5rem 0 0; padding-left: 1.25rem;">
+          <li>Tornado diagrams (one-at-a-time sensitivity)</li>
+          <li>Spider plots (multi-parameter sweeps)</li>
+          <li>Break-even analysis (threshold finding)</li>
+        </ul>
+      </div>
     </div>
 
     <!-- Hidden legacy result sink (visible results render in #content-panel via sidebar) -->

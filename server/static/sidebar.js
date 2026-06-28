@@ -254,7 +254,20 @@ function navigateToSubItem(sectionId, subItemId) {
 }
 
 function switchSidebarView(view) {
+  var sensitivityPanel = document.getElementById('sensitivity-panel');
+  var mainTabInputs = document.getElementById('main-tab-inputs');
+
+  if (view === 'sensitivity') {
+    currentView = view;
+    if (mainTabInputs) mainTabInputs.style.display = 'none';
+    if (sensitivityPanel) sensitivityPanel.style.display = 'block';
+    updateMainTabButtons(view);
+    return;
+  }
+
   if (view !== 'inputs' && view !== 'results') return;
+  if (mainTabInputs) mainTabInputs.style.display = '';
+  if (sensitivityPanel) sensitivityPanel.style.display = 'none';
   currentView = view;
   renderSidebarTree(SIDEBAR_SECTIONS[view], view === 'inputs');
   updateMainTabButtons(view);

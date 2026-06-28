@@ -51,7 +51,6 @@
       <div class="pill-tabs" id="scenario-subtabs">
         <button type="button" class="pill-tab active" data-scenario-tab="manage">Manage</button>
         <button type="button" class="pill-tab" data-scenario-tab="compare">Compare</button>
-        <button type="button" class="pill-tab" data-scenario-tab="sensitivity">Sensitivity</button>
         <button type="button" class="pill-tab" data-scenario-tab="what-if">What-If</button>
       </div>
 
@@ -110,24 +109,6 @@
           </div>
           <p id="cmp-delta-hint" class="cmp-delta-hint" style="display: none;"></p>
           <div id="comparison-table-container"></div>
-        </div>
-      </div>
-
-      <!-- Sensitivity subtab -->
-      <div class="scenario-subtab-content" id="scenario-subtab-sensitivity">
-        <div style="padding: 2rem; max-width: 40rem;">
-          <h2 style="margin: 0 0 0.75rem;">Sensitivity Analysis</h2>
-          <p style="color: rgba(0,0,0,0.55); line-height: 1.5; font-size: 0.9rem; margin-bottom: 1rem;">
-            Systematic sensitivity analysis tools for understanding which input parameters
-            most affect project economics.
-          </p>
-          <div style="background: rgba(0,0,0,0.03); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.08);">
-            <p style="font-weight: 600; margin: 0 0 0.5rem; font-size: 0.85rem;">Under Development</p>
-            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: rgba(0,0,0,0.6); line-height: 1.6;">
-              <li><strong>One-At-a-Time (OAT)</strong> &mdash; vary a single parameter while holding all others fixed to isolate its effect on BCR, costs, and benefits.</li>
-              <li><strong>Latin Hypercube Sampling (LHS)</strong> &mdash; simultaneously vary multiple parameters across their ranges to capture interaction effects and identify the most influential inputs.</li>
-            </ul>
-          </div>
         </div>
       </div>
 
