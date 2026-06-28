@@ -1417,34 +1417,6 @@
         border-color: rgba(0, 0, 0, 0.25);
       }
       .scenario-list.collapsed { display: none; }
-      .comparison-export-btn {
-        font-size: 0.7rem;
-        font-weight: 400;
-        color: rgba(0, 0, 0, 0.35);
-        background: none;
-        border: 1px solid rgba(0, 0, 0, 0.12);
-        border-radius: 0.25rem;
-        padding: 0.15rem 0.5rem;
-        cursor: pointer;
-      }
-      .comparison-export-btn:hover {
-        color: rgba(0, 0, 0, 0.6);
-        border-color: rgba(0, 0, 0, 0.25);
-      }
-      .comparison-toggle-btn {
-        font-size: 0.7rem;
-        font-weight: 400;
-        color: rgba(0, 0, 0, 0.35);
-        background: none;
-        border: 1px solid rgba(0, 0, 0, 0.12);
-        border-radius: 0.25rem;
-        padding: 0.15rem 0.5rem;
-        cursor: pointer;
-      }
-      .comparison-toggle-btn:hover {
-        color: rgba(0, 0, 0, 0.6);
-        border-color: rgba(0, 0, 0, 0.25);
-      }
       .comparison-toggle-btn.active {
         background: rgba(0, 0, 0, 0.08);
         color: rgba(0, 0, 0, 0.6);

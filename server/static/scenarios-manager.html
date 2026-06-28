@@ -70,12 +70,12 @@
       <div class="scenario-subtab-content" id="scenario-subtab-compare">
         <div id="compare-scenario-selector"></div>
         <div class="comparison-section" id="comparison-section">
-          <p style="font-size: 0.8rem; color: rgba(0,0,0,0.65); margin: 0 0 0.75rem 0; max-width: 52rem; line-height: 1.45;">Differences vs a chosen <strong>baseline</strong> column are pairwise changes in each metric (&Delta;NB and &Delta;C<sup>P:B</sup> in the paper appendix). Enable <em>Show &Delta; vs baseline</em> in the toolbar after selecting scenarios. <strong>Sign convention:</strong> &Delta; is always <em>scenario value &minus; baseline value</em>. For benefits and net benefit, positive &Delta; means the scenario scores higher (better). For cost PV rows (capital, emissions, risk, etc.), positive &Delta; means the scenario is more expensive; negative &Delta; means cheaper (avoided cost). For ratios such as BCR, positive &Delta; means the scenario&rsquo;s ratio is numerically higher. <em>Note for paper readers:</em> the appendix defines &Delta;C<sup>P:B</sup> = baseline &minus; scenario (avoided-cost convention); cost &Delta; in this table uses the opposite sign so every row follows the same scenario &minus; baseline direction.</p>
+          <p style="font-size: var(--text-xs); color: var(--color-text-muted); margin: 0 0 0.75rem 0;">&Delta; = scenario &minus; baseline. Positive means higher (more expensive for costs, better for benefits).</p>
           <h3 style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">Compare Selected Scenarios
-            <button type="button" id="copy-table-btn" class="comparison-export-btn">Copy Table</button>
-            <button type="button" id="export-png-btn" class="comparison-export-btn">Export to PNG</button>
-            <button type="button" id="exclusions-btn" class="comparison-toggle-btn">Exclusions</button>
-            <button type="button" id="compare-baseline-btn" class="comparison-toggle-btn">Compare to Baseline</button>
+            <button type="button" id="copy-table-btn" class="btn btn-secondary btn-sm">Copy Table</button>
+            <button type="button" id="export-png-btn" class="btn btn-secondary btn-sm">Export to PNG</button>
+            <button type="button" id="exclusions-btn" class="btn btn-secondary btn-sm">Exclusions</button>
+            <button type="button" id="compare-baseline-btn" class="btn btn-secondary btn-sm">Compare to Baseline</button>
             <label class="cmp-show-delta-label" title="Automatically sort columns by catalog order">
               <input type="checkbox" id="cmp-auto-sort-columns" />
               Auto-sort Columns
