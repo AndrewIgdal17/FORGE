@@ -1388,6 +1388,7 @@
         border: 1px solid rgba(0, 0, 0, 0.12);
         border-radius: 6px;
         font-size: 0.8rem;
+        box-sizing: border-box;
         font-family: inherit;
         background: rgba(0, 100, 200, 0.03);
       }
@@ -1525,7 +1526,7 @@
       .scenario-name:hover { border-bottom-color: #0066cc; }
       .mod-dot { color: #f59e0b; font-size: 1.1rem; margin-left: 2px; }
 
-      .split-save { display: inline-flex; border-radius: 6px; overflow: hidden; position: relative; }
+      .split-save { display: inline-flex; border-radius: 6px; overflow: visible; position: relative; }
       .split-save-main {
         padding: 0.3rem 0.75rem; border: none; font-size: 0.75rem;
         font-weight: 600; cursor: pointer; font-family: inherit;
