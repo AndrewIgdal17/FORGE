@@ -333,6 +333,305 @@
         border-left: 3px solid var(--color-success);
       }
 
+      /* ── Params Card ── */
+      .ctcc-params-card {
+        background: var(--color-bg-white);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+      .ctcc-params-card .card-header {
+        display: flex;
+        align-items: center;
+        padding: 0.6rem 0.85rem;
+        background: var(--color-bg-subtle);
+        border-bottom: 1px solid var(--color-border);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--color-text-secondary);
+      }
+      .ctcc-params-card .card-header .badge-readonly {
+        margin-left: auto;
+        font-size: 0.6rem;
+        color: var(--color-text-muted);
+        background: var(--color-bg-subtle);
+        padding: 0.15rem 0.45rem;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .ctcc-params-card .param-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.55rem 0.85rem;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: var(--text-sm);
+      }
+      .ctcc-params-card .param-row:last-child {
+        border-bottom: none;
+      }
+      .ctcc-params-card .param-key {
+        color: var(--color-text-muted);
+      }
+      .ctcc-params-card .param-value {
+        color: var(--color-text);
+        font-weight: 500;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+      }
+
+      /* ── Table Card ── */
+      .ctcc-table-card {
+        background: var(--color-bg-white);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        margin: 0 1rem 1rem;
+      }
+      .ctcc-table-card .card-header {
+        display: flex;
+        align-items: center;
+        padding: 0.55rem 0.75rem;
+        background: var(--color-bg-subtle);
+        border-bottom: 1px solid var(--color-border);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--color-text-secondary);
+      }
+      .ctcc-table-card th {
+        text-align: left;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        border-bottom: 1px solid var(--color-border);
+        text-transform: none;
+      }
+      .ctcc-table-card td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .ctcc-table-card tfoot td {
+        background: var(--color-bg-subtle);
+        border-top: 2px solid var(--color-border);
+        font-weight: 600;
+      }
+      .ctcc-table-card input {
+        width: 72px;
+        padding: 0.35rem 0.5rem;
+        border: 1px solid var(--color-border);
+        border-radius: 5px;
+        font-size: var(--text-sm);
+        text-align: right;
+        background: var(--color-bg-white);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+
+      /* ── Lock Pill ── */
+      .ctcc-table-card .lock-pill {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.68rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: var(--color-bg-subtle);
+      }
+      .ctcc-table-card .lock-pill svg {
+        opacity: 0.5;
+      }
+      .ctcc-table-card .lock-pill--unlocked {
+        color: var(--color-primary);
+        background: var(--color-primary-bg);
+      }
+      .ctcc-table-card td.locked-value {
+        color: var(--color-text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-align: right;
+      }
+
+      /* ── L4 Tabs ── */
+      .l4-tabs {
+        display: flex;
+        gap: 0.35rem;
+        padding: 0.5rem 1rem;
+        margin: 0 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+      .l4-tab {
+        padding: 0.35rem 0.85rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid var(--color-border);
+        background: transparent;
+        color: var(--color-text-muted);
+        transition: all 0.15s;
+      }
+      .l4-tab:hover {
+        background: var(--color-bg-hover);
+        color: var(--color-text-secondary);
+      }
+      .l4-tab.active {
+        background: #1e293b;
+        color: white;
+        border-color: #1e293b;
+      }
+
+      /* ── Computed Value ── */
+      .ctcc-computed-value {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 0.85rem;
+        background: var(--color-bg-subtle);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        margin: 0 1.25rem 0.75rem;
+      }
+      .ctcc-computed-value .computed-label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+      }
+      .ctcc-computed-value .computed-val {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--color-text);
+        font-family: var(--font-mono);
+      }
+
+      /* ── Citations ── */
+      .ctcc-source {
+        padding: 0.4rem 0.75rem;
+        background: var(--color-bg-subtle);
+        border-top: 1px solid var(--color-border);
+        font-size: 0.68rem;
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+      .ctcc-source svg {
+        flex-shrink: 0;
+        opacity: 0.6;
+      }
+      .ctcc-source-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.15rem 0.45rem;
+        background: var(--color-bg-subtle);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        font-size: 0.62rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        margin-top: 0.3rem;
+      }
+      .ctcc-source-pill:hover {
+        background: var(--color-bg-hover);
+        color: var(--color-text-secondary);
+      }
+      .ctcc-source-pill svg {
+        opacity: 0.5;
+        flex-shrink: 0;
+      }
+
+      /* ── Validation Banner ── */
+      .ctcc-validation-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.75rem;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        color: #92400e;
+        margin: 0.75rem 1rem;
+      }
+      .ctcc-validation-banner svg {
+        flex-shrink: 0;
+      }
+
+      /* ── Slider ── */
+      .ctcc-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        background: var(--color-border);
+        border-radius: 3px;
+        outline: none;
+      }
+      .ctcc-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        background: white;
+        border: 2px solid var(--color-primary);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      }
+      .ctcc-slider::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        background: white;
+        border: 2px solid var(--color-primary);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      }
+
+      /* ── Toggle Switch ── */
+      .ctcc-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+      }
+      .ctcc-toggle-track {
+        width: 36px;
+        height: 20px;
+        background: var(--color-border-medium);
+        border-radius: 10px;
+        position: relative;
+        transition: background 0.2s;
+      }
+      .ctcc-toggle-track.active {
+        background: var(--color-primary);
+      }
+      .ctcc-toggle-thumb {
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      }
+      .ctcc-toggle-track.active .ctcc-toggle-thumb {
+        left: 18px;
+      }
+      .ctcc-toggle-label {
+        font-size: 0.78rem;
+        color: var(--color-text-secondary);
+      }
+
       /* ── Pill Tabs ── */
       .pill-tabs {
         display: flex;
@@ -577,9 +876,8 @@
       .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: var(--space-md);
-        margin-bottom: var(--space-md);
-        max-width: 100%;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
       }
       .form-field {
         display: flex;
@@ -590,24 +888,24 @@
         border-radius: var(--radius-lg);
       }
       .form-field label {
-        display: inline-flex;
-        flex-wrap: wrap;
+        font-size: 0.72rem;
+        color: var(--color-text-muted);
+        font-weight: 500;
+        margin-bottom: 0.35rem;
+        display: flex;
         align-items: center;
-        gap: 0;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: rgba(0, 0, 0, 0.75);
-        text-transform: capitalize;
+        gap: 0.25rem;
       }
       .form-field input,
       .form-field select {
-        padding: 0.6rem;
-        font: inherit;
-        font-size: 0.95rem;
-        border: 1px solid rgba(0, 0, 0, 0.2);
+        width: 100%;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
-        background: white;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        font-size: 0.8rem;
+        background: var(--color-bg-white);
+        color: var(--color-text);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
       }
       .form-field input[type="checkbox"] {
         width: 1.25rem;
@@ -637,9 +935,18 @@
         padding-bottom: 0.5rem;
         border-bottom: 2px solid rgba(0, 100, 200, 0.2);
         color: var(--color-primary);
-        text-transform: uppercase;
         letter-spacing: 0.05em;
         font-size: 0.95rem;
+      }
+      .section-chevron {
+        margin-right: var(--space-xs);
+        opacity: 0.4;
+        display: inline-flex;
+        align-items: center;
+        transition: transform 0.2s;
+      }
+      .collapsible-header.expanded .section-chevron {
+        transform: rotate(180deg);
       }
       .section-header:first-child {
         margin-top: 0;
@@ -652,7 +959,6 @@
         background: rgba(0, 100, 200, 0.08);
         border-radius: var(--radius-sm);
         color: var(--color-primary);
-        text-transform: uppercase;
         letter-spacing: 0.03em;
       }
       .subsection-header:first-child,
@@ -824,17 +1130,13 @@
       .help-icon {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        width: 16px;
-        height: 16px;
-        margin-left: 0.35rem;
-        background: rgba(0, 100, 200, 0.1);
-        color: #0066cc;
-        border-radius: 50%;
-        font-size: 11px;
-        font-weight: 600;
-        cursor: pointer;
-        position: relative;
+        opacity: 0.35;
+        cursor: help;
+        vertical-align: middle;
+        color: var(--color-text-muted);
+      }
+      .help-icon:hover {
+        opacity: 0.6;
       }
       .equation-icon {
         display: inline-flex;
@@ -1010,7 +1312,9 @@
       .section-header-row {
         display: flex;
         align-items: center;
-        margin: 1.5rem 0 1rem 0;
+        padding: 0.6rem 1rem;
+        margin: 0 0.75rem;
+        border-bottom: 1px solid var(--color-border);
         position: relative;
       }
       .section-header-row:first-child {
@@ -2237,16 +2541,10 @@
         user-select: none;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-      }
-      .collapsible-header::before {
-        content: '\25B6';
-        font-size: 0.65rem;
-        transition: transform 0.2s;
-        color: #0066cc;
-      }
-      .collapsible-header.expanded::before {
-        transform: rotate(90deg);
+        padding: 0.6rem 1rem;
+        margin: 0 0.75rem;
+        border-bottom: 1px solid var(--color-border);
+        background: none;
       }
       .collapsible-header .section-reset-btn {
         margin-left: auto;
@@ -2327,32 +2625,6 @@
       /* Level 4: Terrain Mix / Rights of Way under Project Technical Details → Routing */
       .routing-panel {
         margin-top: 0.25rem;
-      }
-      .sub-sub-tabs {
-        display: flex;
-        gap: 0.2rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        margin-bottom: 0.75rem;
-        padding-left: 0.35rem;
-      }
-      .sub-sub-tab-button {
-        padding: 0.28rem 0.55rem;
-        background: transparent;
-        border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        font-size: 0.72rem;
-        color: rgba(0, 0, 0, 0.55);
-        transition: all 0.2s;
-      }
-      .sub-sub-tab-button:hover {
-        color: rgba(0, 0, 0, 0.85);
-        background: rgba(0, 0, 0, 0.04);
-      }
-      .sub-sub-tab-button.active {
-        color: #0066cc;
-        border-bottom-color: rgba(0, 102, 204, 0.55);
-        font-weight: 600;
       }
       .sub-sub-tab-content {
         min-height: 0.5rem;
@@ -2724,10 +2996,6 @@
       }
       .multiplier-lock-toggle:hover {
         color: #0066cc;
-      }
-      .multiplier-lock-toggle .lock-icon {
-        font-size: 0.7rem;
-        margin-right: 0.2rem;
       }
 
       /* Confirmation dialog */

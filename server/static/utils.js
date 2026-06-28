@@ -512,7 +512,7 @@ function showMultiplierConfirmDialog(anchorEl, onConfirm) {
 function makeHelpIcon(text) {
   const icon = document.createElement('span');
   icon.className = 'help-icon';
-  icon.textContent = '?';
+  icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" font-size="10" fill="currentColor">?</text></svg>';
   icon.dataset.tooltip = text;
   return icon;
 }

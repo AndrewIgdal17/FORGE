@@ -5,6 +5,10 @@
 'use strict';
 const C = window.CTCC;
 
+const LOCK_SVG = '<svg width="11" height="11" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const UNLOCK_SVG = '<svg width="11" height="11" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 014 0" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const SOURCE_ICON_SVG = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg>';
+
 // Field type detection and formatting
 function isCurrencyField(path) {
   const lowerPath = path.toLowerCase();
@@ -469,7 +473,7 @@ function createFieldFromMetadata(meta, value) {
   if (meta.help_text) {
     const helpIcon = document.createElement('span');
     helpIcon.className = 'help-icon';
-    helpIcon.textContent = '?';
+    helpIcon.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" font-size="10" fill="currentColor">?</text></svg>';
     helpIcon.dataset.tooltip = meta.help_text;
     label.appendChild(helpIcon);
   }
@@ -550,7 +554,7 @@ function createFieldFromMetadata(meta, value) {
     sliderEl.type = 'range';
     sliderEl.min = v.min ?? 0; sliderEl.max = v.max ?? 1; sliderEl.step = v.step ?? 0.01;
     sliderEl.value = value ?? 0;
-    sliderEl.className = 'slider-input';
+    sliderEl.className = 'slider-input ctcc-slider';
     updateSliderFill(sliderEl);
     const numInput = document.createElement('input');
     numInput.type = 'number';
@@ -638,6 +642,20 @@ function createFieldFromMetadata(meta, value) {
     fieldDiv.appendChild(input);
   }
 
+  if (meta.appendixRef || meta.appendixPage) {
+    const pill = document.createElement('span');
+    pill.className = 'ctcc-source-pill';
+    const ref = meta.appendixRef || 'Appendix';
+    const page = meta.appendixPage;
+    pill.innerHTML = '<svg width="8" height="8" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> ' + ref + (page ? ' p.\u200b' + page : '');
+    if (page) {
+      pill.addEventListener('click', function() {
+        window.open('/static/appendix.pdf#page=' + page, '_blank');
+      });
+    }
+    fieldDiv.appendChild(pill);
+  }
+
   return fieldDiv;
 }
 
@@ -663,7 +681,15 @@ function renderTaxonomySections(container, fields, data, taxById, scopeEl) {
     const header = document.createElement('div');
     header.className = 'collapsible-header';
     if (tier !== 'advanced') header.classList.add('expanded');
-    header.innerHTML = `<span class="section-title" style="font-weight:600;color:#0066cc;text-transform:uppercase;font-size:0.8rem;letter-spacing:0.05em">${sectionLabel}</span>`;
+    const chevron = document.createElement('span');
+    chevron.className = 'section-chevron';
+    chevron.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 3 L5 7 L8 3" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    header.insertBefore(chevron, header.firstChild);
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'section-title';
+    titleSpan.style.cssText = 'font-weight:600;color:#0066cc;font-size:0.8rem;letter-spacing:0.05em';
+    titleSpan.textContent = sectionLabel;
+    header.appendChild(titleSpan);
     section.appendChild(header);
 
     const content = document.createElement('div');
@@ -1009,9 +1035,8 @@ function renderTerrainTable(data) {
   thMiles.appendChild(makeHelpIcon('Route miles through each terrain type. Zero-mile terrains are excluded from cost calculations.'));
   headerRow.appendChild(thMiles);
   const thMult = document.createElement('th');
-  thMult.className = 'multiplier-lock-toggle';
-  thMult.innerHTML = '<span class="lock-icon">🔒</span> Multiplier ';
-  thMult.appendChild(makeHelpIcon('Cost multiplier by terrain type for weighted miles. Sourced from MISO. Click the lock to override.'));
+  thMult.textContent = 'Multiplier ';
+  thMult.appendChild(makeHelpIcon('Cost multiplier by terrain type for weighted miles. Sourced from MISO. Click the lock icon to override.'));
   headerRow.appendChild(thMult);
   const thWeighted = document.createElement('th');
   thWeighted.textContent = 'Weighted Miles';
@@ -1113,13 +1138,24 @@ function renderTerrainTable(data) {
         input.classList.remove('locked-cell');
       }
     });
-    thMult.innerHTML = locked
-      ? '<span class="lock-icon">🔒</span> Multiplier'
-      : '<span class="lock-icon">🔓</span> Multiplier';
-    thMult.title = locked ? 'Click to edit multipliers' : 'Click to lock multipliers';
+    lockPill.className = locked ? 'lock-pill' : 'lock-pill lock-pill--unlocked';
+    lockPill.innerHTML = locked
+      ? (LOCK_SVG + ' Locked \u2014 click to override')
+      : (UNLOCK_SVG + ' Unlocked \u2014 editing');
   }
 
-  thMult.addEventListener('click', () => {
+  table.appendChild(tbody);
+
+  const terrainTableCard = document.createElement('div');
+  terrainTableCard.className = 'ctcc-table-card';
+
+  const terrainCardHeader = document.createElement('div');
+  terrainCardHeader.className = 'card-header';
+  terrainCardHeader.textContent = 'Terrain Multipliers ';
+  const lockPill = document.createElement('span');
+  lockPill.className = 'lock-pill';
+  lockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  lockPill.addEventListener('click', () => {
     if (!multipliersLocked) {
       setMultipliersLocked(true);
       return;
@@ -1134,8 +1170,16 @@ function renderTerrainTable(data) {
       setMultipliersLocked(false);
     });
   });
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+  terrainCardHeader.appendChild(lockPill);
+  terrainTableCard.appendChild(terrainCardHeader);
+  terrainTableCard.appendChild(table);
+
+  const terrainSource = document.createElement('div');
+  terrainSource.className = 'ctcc-source';
+  terrainSource.innerHTML = SOURCE_ICON_SVG + ' Multipliers: MISO Transmission Expansion Planning (2023)';
+  terrainTableCard.appendChild(terrainSource);
+
+  wrapper.appendChild(terrainTableCard);
   return wrapper;
 }
 
@@ -1322,7 +1366,17 @@ function renderROWZonesTable(data) {
   setTimeout(updateZoneAcres, 0);
 
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+
+  const rowTableCard = document.createElement('div');
+  rowTableCard.className = 'ctcc-table-card';
+  rowTableCard.appendChild(table);
+
+  const rowSource = document.createElement('div');
+  rowSource.className = 'ctcc-source';
+  rowSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> BLM ROW Rates, 43 CFR 2806 (2023)';
+  rowTableCard.appendChild(rowSource);
+
+  wrapper.appendChild(rowTableCard);
 
   const footer = document.createElement('div');
   footer.className = 'zone-table-footer';
@@ -1987,7 +2041,17 @@ function renderEnvBaseMitigationTable(data) {
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+
+  const envBaseTableCard = document.createElement('div');
+  envBaseTableCard.className = 'ctcc-table-card';
+  envBaseTableCard.appendChild(table);
+
+  const envBaseSource = document.createElement('div');
+  envBaseSource.className = 'ctcc-source';
+  envBaseSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Environmental mitigation cost estimates';
+  envBaseTableCard.appendChild(envBaseSource);
+
+  wrapper.appendChild(envBaseTableCard);
   return wrapper;
 }
 
@@ -2073,7 +2137,17 @@ function renderEnvCreditsTable(data) {
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+
+  const envCreditsTableCard = document.createElement('div');
+  envCreditsTableCard.className = 'ctcc-table-card';
+  envCreditsTableCard.appendChild(table);
+
+  const envCreditsSource = document.createElement('div');
+  envCreditsSource.className = 'ctcc-source';
+  envCreditsSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Habitat credit market rates';
+  envCreditsTableCard.appendChild(envCreditsSource);
+
+  wrapper.appendChild(envCreditsTableCard);
   return wrapper;
 }
 
@@ -2171,6 +2245,7 @@ function isReconductoring() {
 function renderConductorDetailsTable() {
   const wrapper = document.createElement('div');
   wrapper.id = 'conductor-details-wrapper';
+  wrapper.className = 'ctcc-params-card';
 
   const cat = buildCategoryString();
   const entry = getCircuitDetailsEntry();
@@ -2178,60 +2253,57 @@ function renderConductorDetailsTable() {
   const oldCat = recon ? buildOldCategoryString() : null;
   const oldEntry = (recon && oldCat && C.circuitDetailsLookup) ? (C.circuitDetailsLookup[oldCat] ?? null) : null;
 
-  // Table
-  const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table';
-  const cdCaption = document.createElement('caption');
-  cdCaption.textContent = 'Conductor Parameters';
-  cdCaption.appendChild(makeHelpIcon('Read-only parameters from the NREL/DOE database for your selected configuration.'));
-  table.appendChild(cdCaption);
+  const cardHeader = document.createElement('div');
+  cardHeader.className = 'card-header';
+  cardHeader.innerHTML = 'Derived Parameters <span class="badge-readonly">Read-only</span>';
+  wrapper.appendChild(cardHeader);
 
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  const thParam = document.createElement('th');
-  thParam.textContent = 'Parameter';
-  headerRow.appendChild(thParam);
-  const thValue = document.createElement('th');
-  thValue.textContent = recon ? 'New Value' : 'Value';
-  headerRow.appendChild(thValue);
-  if (recon) {
-    const thOld = document.createElement('th');
-    thOld.textContent = 'Old Value';
-    thOld.appendChild(makeHelpIcon('Value for the existing line being reconductored'));
-    headerRow.appendChild(thOld);
-  }
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
+  const container = document.createElement('div');
+  container.className = 'params-container';
 
-  const tbody = document.createElement('tbody');
+  const CONDUCTOR_VALUE_UNITS = {
+    voltage_kv: ' kV',
+    AC_75_resistance: ' \u03A9/mi',
+    DC_20_resistance: ' \u03A9/mi',
+  };
+
   CONDUCTOR_DETAIL_ROWS.forEach(row => {
-    const tr = document.createElement('tr');
-    const tdLabel = document.createElement('td');
-    tdLabel.textContent = row.label;
-    tdLabel.appendChild(makeHelpIcon(row.tooltip));
-    tr.appendChild(tdLabel);
-    const tdVal = document.createElement('td');
-    tdVal.dataset.circuitField = row.key;
-    tdVal.textContent = entry ? row.format(entry[row.key]) : '—';
-    tr.appendChild(tdVal);
-    if (recon) {
-      const tdOld = document.createElement('td');
-      tdOld.dataset.circuitFieldOld = row.key;
-      tdOld.textContent = oldEntry ? row.format(oldEntry[row.key]) : '—';
-      tr.appendChild(tdOld);
-    }
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+    const paramRow = document.createElement('div');
+    paramRow.className = 'param-row';
 
-  // Footnote
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = recon
-    ? 'Comparison shows new vs existing line parameters. Sourced from the NREL/DOE database.'
-    : 'Values determined by project configuration. Sourced from the NREL/DOE database.';
-  wrapper.appendChild(footnote);
+    const keySpan = document.createElement('span');
+    keySpan.className = 'param-key';
+    keySpan.textContent = row.label;
+    keySpan.appendChild(makeHelpIcon(row.tooltip));
+    paramRow.appendChild(keySpan);
+
+    const rawVal = entry ? row.format(entry[row.key]) : '—';
+    const unit = rawVal !== '—' ? (CONDUCTOR_VALUE_UNITS[row.key] || '') : '';
+    const valSpan = document.createElement('span');
+    valSpan.className = 'param-value';
+    valSpan.dataset.circuitField = row.key;
+    valSpan.textContent = rawVal + unit;
+    paramRow.appendChild(valSpan);
+
+    if (recon) {
+      const oldRaw = oldEntry ? row.format(oldEntry[row.key]) : '—';
+      const oldUnit = oldRaw !== '—' ? (CONDUCTOR_VALUE_UNITS[row.key] || '') : '';
+      const oldSpan = document.createElement('span');
+      oldSpan.className = 'param-value-old';
+      oldSpan.dataset.circuitFieldOld = row.key;
+      oldSpan.textContent = oldRaw + oldUnit;
+      paramRow.appendChild(oldSpan);
+    }
+
+    container.appendChild(paramRow);
+  });
+
+  wrapper.appendChild(container);
+
+  const source = document.createElement('div');
+  source.className = 'ctcc-source';
+  source.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL/DOE Conductor Database (2024)';
+  wrapper.appendChild(source);
 
   return wrapper;
 }
@@ -2305,51 +2377,50 @@ function renderStructureDetailsTable() {
     { key: 'cost_per_structure_per_year', label: 'Maintenance Cost ($/structure/yr)', unit: '', tooltip: 'Annual O&M cost per structure for inspection and repair.', isCurrency: true },
   ];
 
-  const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table structure-details-table';
-  const sdCaption = document.createElement('caption');
-  sdCaption.textContent = 'Structure Density';
-  sdCaption.appendChild(makeHelpIcon('Tower/pole density by terrain from the NREL/DOE database.'));
-  table.appendChild(sdCaption);
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  const thTerrain = document.createElement('th');
-  thTerrain.textContent = 'Terrain';
-  thTerrain.appendChild(makeHelpIcon('Terrain type along the route'));
-  headerRow.appendChild(thTerrain);
-  const thValue = document.createElement('th');
-  thValue.textContent = 'Structures per Mile';
-  thValue.appendChild(makeHelpIcon('Number of structures required per route mile in this terrain'));
-  headerRow.appendChild(thValue);
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
+  const paramsCard = document.createElement('div');
+  paramsCard.className = 'ctcc-params-card';
 
-  const tbody = document.createElement('tbody');
+  const sdCardHeader = document.createElement('div');
+  sdCardHeader.className = 'card-header';
+  sdCardHeader.innerHTML = 'Structure Density <span class="badge-readonly">Read-only</span>';
+  paramsCard.appendChild(sdCardHeader);
+
+  const sdContainer = document.createElement('div');
+  sdContainer.className = 'params-container';
+
   ROWS.forEach(row => {
-    const tr = document.createElement('tr');
-    const tdLabel = document.createElement('td');
-    tdLabel.textContent = row.label;
-    tdLabel.appendChild(makeHelpIcon(row.tooltip));
-    tr.appendChild(tdLabel);
-    const tdVal = document.createElement('td');
-    tdVal.dataset.structureField = row.key;
+    const paramRow = document.createElement('div');
+    paramRow.className = 'param-row';
+
+    const keySpan = document.createElement('span');
+    keySpan.className = 'param-key';
+    keySpan.textContent = row.label;
+    keySpan.appendChild(makeHelpIcon(row.tooltip));
+    paramRow.appendChild(keySpan);
+
+    const valSpan = document.createElement('span');
+    valSpan.className = 'param-value';
+    valSpan.dataset.structureField = row.key;
     if (entry && entry[row.key] != null) {
-      tdVal.textContent = row.isCurrency
+      valSpan.textContent = row.isCurrency
         ? '$' + Number(entry[row.key]).toLocaleString()
         : entry[row.key] + row.unit;
     } else {
-      tdVal.textContent = '—';
+      valSpan.textContent = '—';
     }
-    tr.appendChild(tdVal);
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+    paramRow.appendChild(valSpan);
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Structure density values from the NREL/DOE database. Only applicable to overhead installations — underground and subsea projects have no structures.';
-  wrapper.appendChild(footnote);
+    sdContainer.appendChild(paramRow);
+  });
+
+  paramsCard.appendChild(sdContainer);
+
+  const sdSource = document.createElement('div');
+  sdSource.className = 'ctcc-source';
+  sdSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL Transmission Structure Database (2024)';
+  paramsCard.appendChild(sdSource);
+
+  wrapper.appendChild(paramsCard);
 
   return wrapper;
 }
@@ -2416,57 +2487,52 @@ function renderConverterDetailsTable() {
     { label: 'O&M Cost Rate ($/mi/yr)', value: entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString() : '—', oldValue: oldEntry ? '$' + Number(oldEntry.converter_om_cost_per_mile_year).toLocaleString() : '—', tooltip: 'Annual converter O&M cost per mile from the NREL/DOE database.' },
   ];
 
-  const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table converter-details-table';
-  const cvCaption = document.createElement('caption');
-  cvCaption.textContent = 'Converter Parameters';
-  cvCaption.appendChild(makeHelpIcon('Read-only converter parameters from the NREL/DOE database.'));
-  table.appendChild(cvCaption);
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  const thParam = document.createElement('th');
-  thParam.textContent = 'Parameter';
-  headerRow.appendChild(thParam);
-  const thValue = document.createElement('th');
-  thValue.textContent = oldIsDC ? 'New Value' : 'Value';
-  headerRow.appendChild(thValue);
-  if (oldIsDC) {
-    const thOld = document.createElement('th');
-    thOld.textContent = 'Old Value';
-    thOld.appendChild(makeHelpIcon('Value for the existing converter being replaced'));
-    headerRow.appendChild(thOld);
-  }
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
+  const cvParamsCard = document.createElement('div');
+  cvParamsCard.className = 'ctcc-params-card';
 
-  const tbody = document.createElement('tbody');
+  const cvCardHeader = document.createElement('div');
+  cvCardHeader.className = 'card-header';
+  cvCardHeader.innerHTML = 'Converter Parameters <span class="badge-readonly">Read-only</span>';
+  cvParamsCard.appendChild(cvCardHeader);
+
+  const cvContainer = document.createElement('div');
+  cvContainer.className = 'params-container';
+
   ROWS.forEach(row => {
-    const tr = document.createElement('tr');
-    const tdLabel = document.createElement('td');
-    tdLabel.textContent = row.label;
-    tdLabel.appendChild(makeHelpIcon(row.tooltip));
-    tr.appendChild(tdLabel);
-    const tdVal = document.createElement('td');
-    tdVal.dataset.converterField = row.label.replace(/\s+/g, '_').toLowerCase();
-    tdVal.textContent = row.value || '—';
-    tr.appendChild(tdVal);
-    if (oldIsDC) {
-      const tdOld = document.createElement('td');
-      tdOld.dataset.converterFieldOld = row.label.replace(/\s+/g, '_').toLowerCase();
-      tdOld.textContent = row.oldValue || '—';
-      tr.appendChild(tdOld);
-    }
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+    const paramRow = document.createElement('div');
+    paramRow.className = 'param-row';
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = oldIsDC
-    ? 'Comparison shows new vs existing line converter parameters. O&M cost rate sourced from the NREL/DOE database.'
-    : 'Values determined by project configuration. O&M cost rate sourced from the NREL/DOE database.';
-  wrapper.appendChild(footnote);
+    const keySpan = document.createElement('span');
+    keySpan.className = 'param-key';
+    keySpan.textContent = row.label;
+    keySpan.appendChild(makeHelpIcon(row.tooltip));
+    paramRow.appendChild(keySpan);
+
+    const valSpan = document.createElement('span');
+    valSpan.className = 'param-value';
+    valSpan.dataset.converterField = row.label.replace(/\s+/g, '_').toLowerCase();
+    valSpan.textContent = row.value || '—';
+    paramRow.appendChild(valSpan);
+
+    if (oldIsDC) {
+      const oldSpan = document.createElement('span');
+      oldSpan.className = 'param-value-old';
+      oldSpan.dataset.converterFieldOld = row.label.replace(/\s+/g, '_').toLowerCase();
+      oldSpan.textContent = row.oldValue || '—';
+      paramRow.appendChild(oldSpan);
+    }
+
+    cvContainer.appendChild(paramRow);
+  });
+
+  cvParamsCard.appendChild(cvContainer);
+
+  const cvSource = document.createElement('div');
+  cvSource.className = 'ctcc-source';
+  cvSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL Converter Database (2024)';
+  cvParamsCard.appendChild(cvSource);
+
+  wrapper.appendChild(cvParamsCard);
 
   return wrapper;
 }
@@ -2518,9 +2584,8 @@ function renderConductorMaintenanceTable() {
   thParam.appendChild(makeHelpIcon('Conductor O&M cost from the NREL/DOE database, determined by project configuration.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
-  thValue.className = 'multiplier-lock-toggle';
-  thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value ($/mi/yr)';
-  thValue.appendChild(makeHelpIcon('Annual conductor maintenance cost per mile. Click the lock to override.'));
+  thValue.textContent = 'Value ($/mi/yr)';
+  thValue.appendChild(makeHelpIcon('Annual conductor maintenance cost per mile. Click the lock icon to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -2542,33 +2607,42 @@ function renderConductorMaintenanceTable() {
   tr.appendChild(tdVal);
   tbody.appendChild(tr);
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+  const cmCard = document.createElement('div');
+  cmCard.className = 'ctcc-table-card';
+  const cmCardHeader = document.createElement('div');
+  cmCardHeader.className = 'card-header';
+  cmCardHeader.textContent = 'Conductor Maintenance ';
+  const cmLockPill = document.createElement('span');
+  cmLockPill.className = 'lock-pill';
+  cmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  cmCardHeader.appendChild(cmLockPill);
+  cmCard.appendChild(cmCardHeader);
+  cmCard.appendChild(table);
+  const cmSource = document.createElement('div');
+  cmSource.className = 'ctcc-source';
+  cmSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
+  cmCard.appendChild(cmSource);
+  wrapper.appendChild(cmCard);
 
   let locked = true;
-  thValue.style.cursor = 'pointer';
-  thValue.title = 'Click to edit values';
-  thValue.addEventListener('click', () => {
+  cmLockPill.addEventListener('click', () => {
     if (!locked) {
       locked = true;
       input.readOnly = true;
       input.classList.add('locked-cell');
-      thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
-      thValue.title = 'Click to edit values';
+      cmLockPill.className = 'lock-pill';
+      cmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
     } else {
       showBuildCostConfirmDialog('conductor-maintenance', (suppress) => {
         locked = false;
         input.readOnly = false;
         input.classList.remove('locked-cell');
-        thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
-        thValue.title = 'Click to lock values';
+        cmLockPill.className = 'lock-pill lock-pill--unlocked';
+        cmLockPill.innerHTML = UNLOCK_SVG + ' Unlocked \u2014 editing';
       });
     }
   });
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Conductor maintenance cost from the NREL/DOE database. Determined by project configuration.';
-  wrapper.appendChild(footnote);
   return wrapper;
 }
 
@@ -2604,9 +2678,8 @@ function renderStructureMaintenanceTable() {
   thTerrain.appendChild(makeHelpIcon('Terrain type along the route'));
   headerRow.appendChild(thTerrain);
   const thValue = document.createElement('th');
-  thValue.className = 'multiplier-lock-toggle';
-  thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
-  thValue.appendChild(makeHelpIcon('Structure density and unit cost from the NREL/DOE database. Click the lock to override.'));
+  thValue.textContent = 'Value';
+  thValue.appendChild(makeHelpIcon('Structure density and unit cost from the NREL/DOE database. Click the lock icon to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -2658,31 +2731,41 @@ function renderStructureMaintenanceTable() {
   costTr.appendChild(costValTd);
   tbody.appendChild(costTr);
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+
+  const smCard = document.createElement('div');
+  smCard.className = 'ctcc-table-card';
+  const smCardHeader = document.createElement('div');
+  smCardHeader.className = 'card-header';
+  smCardHeader.textContent = 'Structure Maintenance ';
+  const smLockPill = document.createElement('span');
+  smLockPill.className = 'lock-pill';
+  smLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  smCardHeader.appendChild(smLockPill);
+  smCard.appendChild(smCardHeader);
+  smCard.appendChild(table);
+  const smSource = document.createElement('div');
+  smSource.className = 'ctcc-source';
+  smSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
+  smCard.appendChild(smSource);
+  wrapper.appendChild(smCard);
 
   let locked = true;
-  thValue.style.cursor = 'pointer';
-  thValue.title = 'Click to edit values';
-  thValue.addEventListener('click', () => {
+  smLockPill.addEventListener('click', () => {
     if (!locked) {
       locked = true;
       inputs.forEach(inp => { inp.readOnly = true; inp.classList.add('locked-cell'); });
-      thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
-      thValue.title = 'Click to edit values';
+      smLockPill.className = 'lock-pill';
+      smLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
     } else {
       showBuildCostConfirmDialog('structure-maintenance', (suppress) => {
         locked = false;
         inputs.forEach(inp => { inp.readOnly = false; inp.classList.remove('locked-cell'); });
-        thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
-        thValue.title = 'Click to lock values';
+        smLockPill.className = 'lock-pill lock-pill--unlocked';
+        smLockPill.innerHTML = UNLOCK_SVG + ' Unlocked \u2014 editing';
       });
     }
   });
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Structure density and unit cost from the NREL/DOE database. Only applicable to Overhead construction.';
-  wrapper.appendChild(footnote);
   return wrapper;
 }
 
@@ -2713,9 +2796,8 @@ function renderConverterMaintenanceTable() {
   thParam.appendChild(makeHelpIcon('Converter O&M cost from the NREL/DOE database, determined by project configuration.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
-  thValue.className = 'multiplier-lock-toggle';
-  thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value ($/mi/yr)';
-  thValue.appendChild(makeHelpIcon('Annual converter maintenance cost per mile. Click the lock to override.'));
+  thValue.textContent = 'Value ($/mi/yr)';
+  thValue.appendChild(makeHelpIcon('Annual converter maintenance cost per mile. Click the lock icon to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -2737,33 +2819,42 @@ function renderConverterMaintenanceTable() {
   tr.appendChild(tdVal);
   tbody.appendChild(tr);
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+  const cvmCard = document.createElement('div');
+  cvmCard.className = 'ctcc-table-card';
+  const cvmCardHeader = document.createElement('div');
+  cvmCardHeader.className = 'card-header';
+  cvmCardHeader.textContent = 'Converter Maintenance ';
+  const cvmLockPill = document.createElement('span');
+  cvmLockPill.className = 'lock-pill';
+  cvmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  cvmCardHeader.appendChild(cvmLockPill);
+  cvmCard.appendChild(cvmCardHeader);
+  cvmCard.appendChild(table);
+  const cvmSource = document.createElement('div');
+  cvmSource.className = 'ctcc-source';
+  cvmSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
+  cvmCard.appendChild(cvmSource);
+  wrapper.appendChild(cvmCard);
 
   let locked = true;
-  thValue.style.cursor = 'pointer';
-  thValue.title = 'Click to edit values';
-  thValue.addEventListener('click', () => {
+  cvmLockPill.addEventListener('click', () => {
     if (!locked) {
       locked = true;
       input.readOnly = true;
       input.classList.add('locked-cell');
-      thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Value';
-      thValue.title = 'Click to edit values';
+      cvmLockPill.className = 'lock-pill';
+      cvmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
     } else {
       showBuildCostConfirmDialog('converter-maintenance', (suppress) => {
         locked = false;
         input.readOnly = false;
         input.classList.remove('locked-cell');
-        thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Value';
-        thValue.title = 'Click to lock values';
+        cvmLockPill.className = 'lock-pill lock-pill--unlocked';
+        cvmLockPill.innerHTML = UNLOCK_SVG + ' Unlocked \u2014 editing';
       });
     }
   });
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Converter maintenance cost from the NREL/DOE database. Only applicable to DC projects.';
-  wrapper.appendChild(footnote);
   return wrapper;
 }
 
@@ -2862,7 +2953,17 @@ function renderInsurableAssetsTable(data) {
   totalTr.appendChild(totalValTd);
   tbody.appendChild(totalTr);
   table.appendChild(tbody);
-  wrapper.appendChild(table);
+
+  const insTableCard = document.createElement('div');
+  insTableCard.className = 'ctcc-table-card';
+  insTableCard.appendChild(table);
+
+  const insSource = document.createElement('div');
+  insSource.className = 'ctcc-source';
+  insSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Industry benchmark rates';
+  insTableCard.appendChild(insSource);
+
+  wrapper.appendChild(insTableCard);
 
   const premiumDisplay = document.createElement('div');
   premiumDisplay.className = 'readonly-miles-display';
@@ -2950,9 +3051,8 @@ function renderVegetationManagementTable() {
   thTerrain.appendChild(makeHelpIcon('Terrain type along the route'));
   headerRow.appendChild(thTerrain);
   const thValue = document.createElement('th');
-  thValue.className = 'multiplier-lock-toggle';
-  thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Cost ($/mile/year)';
-  thValue.appendChild(makeHelpIcon('Annual vegetation management cost per mile per terrain. Click the lock to override.'));
+  thValue.textContent = 'Cost ($/mile/year)';
+  thValue.appendChild(makeHelpIcon('Annual vegetation management cost per mile per terrain. Click the lock icon to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -2979,30 +3079,40 @@ function renderVegetationManagementTable() {
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  wrapper.appendChild(table);
 
-  thValue.style.cursor = 'pointer';
-  thValue.title = 'Click to edit values';
-  thValue.addEventListener('click', () => {
+  const vmCard = document.createElement('div');
+  vmCard.className = 'ctcc-table-card';
+  const vmCardHeader = document.createElement('div');
+  vmCardHeader.className = 'card-header';
+  vmCardHeader.textContent = 'Vegetation Management ';
+  const vmLockPill = document.createElement('span');
+  vmLockPill.className = 'lock-pill';
+  vmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  vmCardHeader.appendChild(vmLockPill);
+  vmCard.appendChild(vmCardHeader);
+  vmCard.appendChild(table);
+  const vmSource = document.createElement('div');
+  vmSource.className = 'ctcc-source';
+  vmSource.innerHTML = SOURCE_ICON_SVG + ' Utility vegetation management cost surveys';
+  vmCard.appendChild(vmSource);
+  wrapper.appendChild(vmCard);
+
+  vmLockPill.addEventListener('click', () => {
     if (!locked) {
       locked = true;
       inputs.forEach(inp => { inp.readOnly = true; inp.classList.add('locked-cell'); });
-      thValue.innerHTML = '<span class="lock-icon">\u{1F512}</span> Cost ($/mile/year)';
-      thValue.title = 'Click to edit values';
+      vmLockPill.className = 'lock-pill';
+      vmLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
     } else {
       showBuildCostConfirmDialog('vegetation-management', (suppress) => {
         locked = false;
         inputs.forEach(inp => { inp.readOnly = false; inp.classList.remove('locked-cell'); });
-        thValue.innerHTML = '<span class="lock-icon">\u{1F513}</span> Cost ($/mile/year)';
-        thValue.title = 'Click to lock values';
+        vmLockPill.className = 'lock-pill lock-pill--unlocked';
+        vmLockPill.innerHTML = UNLOCK_SVG + ' Unlocked \u2014 editing';
       });
     }
   });
 
-  const footnote = document.createElement('div');
-  footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'Vegetation management costs per terrain from the NREL/DOE database. Values update when construction type changes.';
-  wrapper.appendChild(footnote);
   return wrapper;
 }
 
@@ -3021,7 +3131,7 @@ function updateMaintenanceSubTabVisibility() {
   const acDc = acDcEl ? acDcEl.value : '';
   const wrapper = document.querySelector('[data-sub-tab="maintenance-costs"]');
   if (!wrapper) return;
-  const buttons = wrapper.querySelectorAll('.sub-sub-tab-button');
+  const buttons = wrapper.querySelectorAll('.l4-tab');
   const panels = wrapper.querySelectorAll('.sub-sub-tab-content');
   const visibility = {'conductor-maintenance': true, 'structure-maintenance': ct === 'Overhead', 'converter-maintenance': acDc === 'DC'};
   let activeHidden = false;
@@ -3345,8 +3455,8 @@ function renderExternalityCostTable(data) {
   co2GrowthInput.value = (co2GrowthVal * 100).toFixed(1) + '%';
   co2GrowthDiv.appendChild(co2GrowthInput);
   const co2GrowthLock = document.createElement('span');
-  co2GrowthLock.className = 'lock-icon';
-  co2GrowthLock.textContent = '\u{1F512}';
+  co2GrowthLock.className = 'lock-pill';
+  co2GrowthLock.innerHTML = LOCK_SVG + ' Locked';
   co2GrowthLock.style.cursor = 'pointer';
   co2GrowthLock.style.marginLeft = '0.5rem';
   let co2GrowthLocked = true;
@@ -3356,7 +3466,8 @@ function renderExternalityCostTable(data) {
         co2GrowthLocked = false;
         co2GrowthInput.readOnly = false;
         co2GrowthInput.classList.remove('locked-cell');
-        co2GrowthLock.textContent = '\u{1F513}';
+        co2GrowthLock.className = 'lock-pill lock-pill--unlocked';
+        co2GrowthLock.innerHTML = UNLOCK_SVG + ' Unlocked';
         co2GrowthInput.value = String(co2GrowthVal);
         co2GrowthInput.focus();
       });
@@ -3364,7 +3475,8 @@ function renderExternalityCostTable(data) {
       co2GrowthLocked = true;
       co2GrowthInput.readOnly = true;
       co2GrowthInput.classList.add('locked-cell');
-      co2GrowthLock.textContent = '\u{1F512}';
+      co2GrowthLock.className = 'lock-pill';
+      co2GrowthLock.innerHTML = LOCK_SVG + ' Locked';
       const raw = parseFloat(co2GrowthInput.value) || 0;
       co2GrowthInput.value = (raw * 100).toFixed(1) + '%';
     }
@@ -3393,14 +3505,14 @@ function renderWildfireRiskPanel(data) {
   const CT_LIST = ['overhead', 'underground', 'subsea'];
 
   const l4Bar = document.createElement('div');
-  l4Bar.className = 'sub-sub-tabs';
+  l4Bar.className = 'l4-tabs';
   const l4Ids = ['wf-severity', 'wf-ignition-profile'];
   const l4Panels = [];
 
   l4Ids.forEach((l4Id, l4Idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+    btn.className = 'l4-tab' + (l4Idx === 0 ? ' active' : '');
     btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
     btn.appendChild(makeMethodologyIcon(l4Id));
     l4Bar.appendChild(btn);
@@ -3451,7 +3563,7 @@ function renderWildfireRiskPanel(data) {
       multTable.appendChild(wfMultCaption);
       const multThead = document.createElement('thead'); const multHR = document.createElement('tr');
       const thCT = document.createElement('th'); thCT.textContent = 'Construction Type'; thCT.appendChild(makeHelpIcon('Construction method')); multHR.appendChild(thCT);
-      const thMult = document.createElement('th'); thMult.className = 'multiplier-lock-toggle'; thMult.innerHTML = '<span class="lock-icon">\u{1F512}</span> Multiplier'; thMult.appendChild(makeHelpIcon('Multiplicative factor applied to base ignition rates')); multHR.appendChild(thMult);
+      const thMult = document.createElement('th'); thMult.className = 'multiplier-lock-toggle'; thMult.innerHTML = '<span class="lock-pill">' + LOCK_SVG + ' Locked</span>'; thMult.appendChild(makeHelpIcon('Multiplicative factor applied to base ignition rates')); multHR.appendChild(thMult);
       multThead.appendChild(multHR); multTable.appendChild(multThead);
       const multInputs = []; let multLocked = true;
       const multTbody = document.createElement('tbody');
@@ -3469,8 +3581,8 @@ function renderWildfireRiskPanel(data) {
       multTable.appendChild(multTbody); panel.appendChild(multTable);
       thMult.style.cursor = 'pointer';
       thMult.addEventListener('click', () => {
-        if (!multLocked) { multLocked = true; multInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F512}</span> Multiplier'; }
-        else { showBuildCostConfirmDialog('wildfire-multiplier', () => { multLocked = false; multInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thMult.innerHTML = '<span class="lock-icon">\u{1F513}</span> Multiplier'; }); }
+        if (!multLocked) { multLocked = true; multInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thMult.innerHTML = '<span class="lock-pill">' + LOCK_SVG + ' Locked</span>'; }
+        else { showBuildCostConfirmDialog('wildfire-multiplier', () => { multLocked = false; multInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thMult.innerHTML = '<span class="lock-pill lock-pill--unlocked">' + UNLOCK_SVG + ' Unlocked</span>'; }); }
       });
 
       const birDiv = document.createElement('div');
@@ -3490,7 +3602,7 @@ function renderWildfireRiskPanel(data) {
     renderTabGuideBanner(l4Id, panel);
     l4Panels.push(panel);
     btn.addEventListener('click', () => {
-      l4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+      l4Bar.querySelectorAll('.l4-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
     });
@@ -3511,14 +3623,14 @@ function renderOutageRiskPanel(data) {
   const activeCT = ctEl ? ctEl.value.toLowerCase().replace(/-/g, '_').replace('underground direct_buried', 'underground').replace('underground tunnel', 'underground') : 'overhead';
 
   const l4Bar = document.createElement('div');
-  l4Bar.className = 'sub-sub-tabs';
+  l4Bar.className = 'l4-tabs';
   const l4Ids = ['out-exposure', 'out-outage-profile'];
   const l4Panels = [];
 
   l4Ids.forEach((l4Id, l4Idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+    btn.className = 'l4-tab' + (l4Idx === 0 ? ' active' : '');
     btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
     btn.appendChild(makeMethodologyIcon(l4Id));
     l4Bar.appendChild(btn);
@@ -3593,7 +3705,7 @@ function renderOutageRiskPanel(data) {
       durTable.appendChild(outMultCaption);
       const durThead = document.createElement('thead'); const durHR = document.createElement('tr');
       const thCT = document.createElement('th'); thCT.textContent = 'Construction Type'; thCT.appendChild(makeHelpIcon('Construction method')); durHR.appendChild(thCT);
-      const thDur = document.createElement('th'); thDur.className = 'multiplier-lock-toggle'; thDur.innerHTML = '<span class="lock-icon">\u{1F512}</span> Duration Mult'; thDur.appendChild(makeHelpIcon('Multiplicative factor applied to base outage duration')); durHR.appendChild(thDur);
+      const thDur = document.createElement('th'); thDur.className = 'multiplier-lock-toggle'; thDur.innerHTML = '<span class="lock-pill">' + LOCK_SVG + ' Locked</span>'; thDur.appendChild(makeHelpIcon('Multiplicative factor applied to base outage duration')); durHR.appendChild(thDur);
       durThead.appendChild(durHR); durTable.appendChild(durThead);
       const durInputs = []; let durLocked = true;
       const durTbody = document.createElement('tbody');
@@ -3611,8 +3723,8 @@ function renderOutageRiskPanel(data) {
       durTable.appendChild(durTbody); panel.appendChild(durTable);
       thDur.style.cursor = 'pointer';
       thDur.addEventListener('click', () => {
-        if (!durLocked) { durLocked = true; durInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F512}</span> Duration Mult'; }
-        else { showBuildCostConfirmDialog('outage-duration', () => { durLocked = false; durInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thDur.innerHTML = '<span class="lock-icon">\u{1F513}</span> Duration Mult'; }); }
+        if (!durLocked) { durLocked = true; durInputs.forEach(i => { i.readOnly = true; i.classList.add('locked-cell'); }); thDur.innerHTML = '<span class="lock-pill">' + LOCK_SVG + ' Locked</span>'; }
+        else { showBuildCostConfirmDialog('outage-duration', () => { durLocked = false; durInputs.forEach(i => { i.readOnly = false; i.classList.remove('locked-cell'); }); thDur.innerHTML = '<span class="lock-pill lock-pill--unlocked">' + UNLOCK_SVG + ' Unlocked</span>'; }); }
       });
 
       const bodDiv = document.createElement('div');
@@ -3658,7 +3770,7 @@ function renderOutageRiskPanel(data) {
     renderTabGuideBanner(l4Id, panel);
     l4Panels.push(panel);
     btn.addEventListener('click', () => {
-      l4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+      l4Bar.querySelectorAll('.l4-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
     });
@@ -3726,19 +3838,10 @@ function renderFinancialRatesPanel(data) {
     wrapper.appendChild(row);
 
     if (rf.id === 'wacc_nominal') {
-      const realRow = document.createElement('div');
-      realRow.className = 'env-uplift-row';
-      const realLabel = document.createElement('span');
-      realLabel.className = 'env-uplift-label';
-      realLabel.textContent = 'WACC (Real)';
-      realRow.appendChild(realLabel);
-      realRow.appendChild(makeHelpIcon('Real WACC derived via Fisher equation: (1 + nominal) / (1 + inflation) − 1'));
-      const realValue = document.createElement('span');
-      realValue.className = 'form-field-readonly-value';
-      realValue.id = 'wacc-real-display';
-      realValue.style.cssText = 'font-size:0.95rem;color:#555;';
-      realRow.appendChild(realValue);
-      wrapper.appendChild(realRow);
+      const computedDiv = document.createElement('div');
+      computedDiv.className = 'ctcc-computed-value';
+      computedDiv.innerHTML = '<div class="computed-label"><svg width="12" height="12" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> Real WACC (computed)</div><span class="computed-val" id="wacc-real-display">\u2014</span>';
+      wrapper.appendChild(computedDiv);
     }
   });
 
@@ -4095,14 +4198,14 @@ function renderConstraintsPanel(data) {
   const yamlSection = '17_congestion_curtailment_reductions';
 
   const l4Bar = document.createElement('div');
-  l4Bar.className = 'sub-sub-tabs';
+  l4Bar.className = 'l4-tabs';
   const l4Ids = ['congestion', 'curtailment'];
   const l4Panels = [];
 
   l4Ids.forEach((l4Id, l4Idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+    btn.className = 'l4-tab' + (l4Idx === 0 ? ' active' : '');
     btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
     btn.appendChild(makeMethodologyIcon(l4Id));
     l4Bar.appendChild(btn);
@@ -4187,7 +4290,7 @@ function renderConstraintsPanel(data) {
     renderTabGuideBanner(l4Id, panel);
     l4Panels.push(panel);
     btn.addEventListener('click', () => {
-      l4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+      l4Bar.querySelectorAll('.l4-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
     });
@@ -4292,9 +4395,8 @@ function renderCapitalCostSubTab(subTabId, data) {
   thParam.appendChild(makeHelpIcon('Build cost parameters for this component, sourced from the NREL/DOE database.'));
   headerRow.appendChild(thParam);
   const thValue = document.createElement('th');
-  thValue.className = 'multiplier-lock-toggle';
-  thValue.innerHTML = '<span class="lock-icon">🔒</span> Value';
-  thValue.appendChild(makeHelpIcon('Canonical cost value for current project config. Click the lock to override.'));
+  thValue.textContent = 'Value';
+  thValue.appendChild(makeHelpIcon('Canonical cost value for current project config. Click the lock icon to override.'));
   headerRow.appendChild(thValue);
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -4335,6 +4437,29 @@ function renderCapitalCostSubTab(subTabId, data) {
   });
   table.appendChild(tbody);
 
+  const CC_SOURCE_LABELS = {
+    conductor: 'NREL Transmission Line Cost Database (2024)',
+    structure: 'NREL Transmission Structure Costs (2024)',
+    converter: 'NREL Converter Station Costs (2024)',
+  };
+
+  const ccCard = document.createElement('div');
+  ccCard.className = 'ctcc-table-card';
+  const ccCardHeader = document.createElement('div');
+  ccCardHeader.className = 'card-header';
+  ccCardHeader.textContent = (SUBTAB_LABELS[subTabId] || subTabId) + ' Build Costs ';
+  const ccLockPill = document.createElement('span');
+  ccLockPill.className = 'lock-pill';
+  ccLockPill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+  ccCardHeader.appendChild(ccLockPill);
+  ccCard.appendChild(ccCardHeader);
+  ccCard.appendChild(table);
+  const ccSource = document.createElement('div');
+  ccSource.className = 'ctcc-source';
+  ccSource.innerHTML = SOURCE_ICON_SVG + ' ' + (CC_SOURCE_LABELS[subTabId] || 'NREL/DOE Cost Database');
+  ccCard.appendChild(ccSource);
+  wrapper.appendChild(ccCard);
+
   function setCostLocked(isLocked) {
     locked = isLocked;
     costInputs.forEach(inp => {
@@ -4342,13 +4467,13 @@ function renderCapitalCostSubTab(subTabId, data) {
       if (isLocked) inp.classList.add('locked-cell');
       else inp.classList.remove('locked-cell');
     });
-    thValue.innerHTML = isLocked
-      ? '<span class="lock-icon">🔒</span> Value'
-      : '<span class="lock-icon">🔓</span> Value';
-    thValue.title = isLocked ? 'Click to edit cost values' : 'Click to lock cost values';
+    ccLockPill.className = isLocked ? 'lock-pill' : 'lock-pill lock-pill--unlocked';
+    ccLockPill.innerHTML = isLocked
+      ? (LOCK_SVG + ' Locked \u2014 click to override')
+      : (UNLOCK_SVG + ' Unlocked \u2014 editing');
   }
 
-  thValue.addEventListener('click', () => {
+  ccLockPill.addEventListener('click', () => {
     if (!locked) { setCostLocked(true); return; }
     const suppressed = localStorage.getItem(storageKey) === 'true';
     if (suppressed) { setCostLocked(false); return; }
@@ -4358,7 +4483,6 @@ function renderCapitalCostSubTab(subTabId, data) {
     });
   });
 
-  wrapper.appendChild(table);
   return wrapper;
 }
 
@@ -4417,10 +4541,13 @@ function rebuildCapitalCosts(fromConfigChange) {
   });
 
   searchRoot.querySelectorAll('.capital-cost-table').forEach(table => {
-    const th = table.querySelector('.multiplier-lock-toggle');
-    if (th) {
-      th.innerHTML = '<span class="lock-icon">🔒</span> Value';
-      th.title = 'Click to edit cost values';
+    const card = table.closest('.ctcc-table-card');
+    if (card) {
+      const pill = card.querySelector('.lock-pill');
+      if (pill) {
+        pill.className = 'lock-pill';
+        pill.innerHTML = LOCK_SVG + ' Locked \u2014 click to override';
+      }
     }
   });
 
@@ -4508,9 +4635,9 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         if (stId === 'terrain-mix') {
           renderTabGuideBanner(stId, stContent);
           const routingBanner = document.createElement('div');
-          routingBanner.className = 'routing-validation-banner';
+          routingBanner.className = 'ctcc-validation-banner';
           routingBanner.id = 'routing-validation-banner';
-          routingBanner.innerHTML = '<span class="banner-icon">⚠️</span> <span class="banner-text"></span>';
+          routingBanner.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1l7 14H1L8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="8" y="13" text-anchor="middle" font-size="9" fill="currentColor">!</text></svg> <span class="banner-text"></span>';
           stContent.insertBefore(routingBanner, stContent.firstChild);
           stContent.appendChild(renderTerrainTable(data));
         } else if (stId === 'rights-of-way') {
@@ -4584,13 +4711,13 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         } else if (stId === 'maintenance-costs') {
           renderTabGuideBanner(stId, stContent);
           const l4Bar = document.createElement('div');
-          l4Bar.className = 'sub-sub-tabs';
+          l4Bar.className = 'l4-tabs';
           const l4Ids = ['conductor-maintenance', 'structure-maintenance', 'converter-maintenance'];
           const l4Panels = [];
           l4Ids.forEach((l4Id, l4Idx) => {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+            btn.className = 'l4-tab' + (l4Idx === 0 ? ' active' : '');
             btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
             btn.appendChild(makeMethodologyIcon(l4Id));
             l4Bar.appendChild(btn);
@@ -4604,7 +4731,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
             renderTabGuideBanner(l4Id, panel);
             l4Panels.push(panel);
             btn.addEventListener('click', () => {
-              l4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+              l4Bar.querySelectorAll('.l4-tab').forEach(b => b.classList.remove('active'));
               btn.classList.add('active');
               l4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
             });
@@ -4620,13 +4747,13 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
         } else if (stId === 'energy-emissions-energy') {
           renderTabGuideBanner(stId, stContent);
           const eL4Bar = document.createElement('div');
-          eL4Bar.className = 'sub-sub-tabs';
+          eL4Bar.className = 'l4-tabs';
           const eL4Ids = ['energy-mix', 'energy-losses'];
           const eL4Panels = [];
           eL4Ids.forEach((l4Id, l4Idx) => {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'sub-sub-tab-button' + (l4Idx === 0 ? ' active' : '');
+            btn.className = 'l4-tab' + (l4Idx === 0 ? ' active' : '');
             btn.textContent = C.SUB_TAB_LABELS[l4Id] || l4Id;
             btn.appendChild(makeMethodologyIcon(l4Id));
             eL4Bar.appendChild(btn);
@@ -4650,7 +4777,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
             }
             eL4Panels.push(panel);
             btn.addEventListener('click', () => {
-              eL4Bar.querySelectorAll('.sub-sub-tab-button').forEach(b => b.classList.remove('active'));
+              eL4Bar.querySelectorAll('.l4-tab').forEach(b => b.classList.remove('active'));
               btn.classList.add('active');
               eL4Panels.forEach(p => { p.style.display = p.dataset.subSubTab === l4Id ? '' : 'none'; });
             });
