@@ -55,9 +55,9 @@ var TUTORIAL_STEPS = {
       target: '[data-path="01_project_technical_details.project.line_utilization"]',
       title: 'Line Utilization',
       body: 'Enter 54%. SunZia Wind\'s 3,500 MW at ~46% capacity factor delivers ~1,610 MW average on a 3,000 MW line.',
-      value: '0.54',
-      expected: 0.54,
-      displayValue: '0.54',
+      value: '54%',
+      expected: 54,
+      displayValue: '54',
       position: 'bottom'
     },
     {
@@ -335,9 +335,9 @@ var TUTORIAL_STEPS = {
       target: '[data-path="03_financing.financial.wacc_nominal"]',
       title: 'WACC (Nominal)',
       body: 'Enter 7.5%. Pattern Energy\'s $11B financing is non-recourse bank debt; no public cost-of-capital disclosure. Typical range for 2023 project finance: 7\u20139%.',
-      value: '0.075',
-      expected: 0.075,
-      displayValue: '0.075',
+      value: '7.5%',
+      expected: 7.5,
+      displayValue: '7.5',
       position: 'bottom'
     },
     {
@@ -345,9 +345,9 @@ var TUTORIAL_STEPS = {
       target: '[data-path="03_financing.financial.social_discount_rate"]',
       title: 'Social Discount Rate',
       body: 'Enter 3%. OMB Circular A-4 standard for public benefit analysis.',
-      value: '0.03',
-      expected: 0.03,
-      displayValue: '0.03',
+      value: '3%',
+      expected: 3,
+      displayValue: '3',
       position: 'bottom'
     },
     {
@@ -355,9 +355,9 @@ var TUTORIAL_STEPS = {
       target: '[data-path="03_financing.financial.inflation_rate"]',
       title: 'Inflation Rate',
       body: 'Enter 3%.',
-      value: '0.03',
-      expected: 0.03,
-      displayValue: '0.03',
+      value: '3%',
+      expected: 3,
+      displayValue: '3',
       position: 'bottom'
     },
     {

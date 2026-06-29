@@ -247,6 +247,8 @@ function _startGotoListener(step) {
   _clearGotoListener();
   var target = document.querySelector(step.target);
   if (!target) return;
+  var parentSection = target.closest('.sidebar-section');
+  if (parentSection) parentSection.classList.add('open');
   var handler = function() {
     target.removeEventListener('click', handler);
     _gotoHandler = null;
