@@ -52,12 +52,36 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
+      target: '[data-path="01_project_technical_details.project.line_utilization"]',
+      title: 'Line Utilization',
+      body: 'Enter 54%. SunZia Wind\'s 3,500 MW at ~46% capacity factor delivers ~1,610 MW average on a 3,000 MW line.',
+      value: '0.54',
+      expected: 0.54,
+      displayValue: '0.54',
+      position: 'bottom'
+    },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="conductor-details"]',
+      title: 'Navigate to Conductors',
+      body: 'Click <strong>Conductors</strong> in the sidebar to continue.',
+      position: 'right'
+    },
+    {
+      type: 'set',
       target: '[data-path="01_project_technical_details.project.conductor_type"]',
       title: 'Conductor Type',
       body: 'Select Standard Aluminum Conductor. SunZia uses 2156 kcmil Bluebird ACSR in three-conductor bundles per pole.',
       value: 'Standard Aluminum Conductor',
       expected: 'Standard Aluminum Conductor',
       position: 'bottom'
+    },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="converter-details"]',
+      title: 'Navigate to Converters',
+      body: 'Click <strong>Converters</strong> in the sidebar to continue.',
+      position: 'right'
     },
     {
       type: 'set',
@@ -76,16 +100,6 @@ var TUTORIAL_STEPS = {
       value: '2',
       expected: 2,
       displayValue: '2',
-      position: 'bottom'
-    },
-    {
-      type: 'set',
-      target: '[data-path="01_project_technical_details.project.line_utilization"]',
-      title: 'Line Utilization',
-      body: 'Enter 54%. SunZia Wind\'s 3,500 MW at ~46% capacity factor delivers ~1,610 MW average on a 3,000 MW line.',
-      value: '0.54',
-      expected: 0.54,
-      displayValue: '0.54',
       position: 'bottom'
     },
 
@@ -310,9 +324,9 @@ var TUTORIAL_STEPS = {
     // ── Section E: Financing ───────────────────────────────────────────
     {
       type: 'goto',
-      target: '.sidebar-subitem[data-sub-item-id="financing"]',
-      title: 'Navigate to Financing',
-      body: 'Click <strong>Financing</strong> in the sidebar to continue.',
+      target: '.sidebar-subitem[data-sub-item-id="rates"]',
+      title: 'Navigate to Rates & Discounting',
+      body: 'Click <strong>Rates & Discounting</strong> in the sidebar to continue.',
       position: 'right'
     },
 
@@ -357,6 +371,13 @@ var TUTORIAL_STEPS = {
       position: 'bottom'
     },
     {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="afudc"]',
+      title: 'Navigate to AFUDC',
+      body: 'Click <strong>AFUDC</strong> in the sidebar to continue.',
+      position: 'right'
+    },
+    {
       type: 'set',
       target: '[data-path="03_financing.financial.afudc.apply_afudc"]',
       title: 'AFUDC',
@@ -370,9 +391,9 @@ var TUTORIAL_STEPS = {
     // ── Section F: Congestion & Curtailment ────────────────────────────
     {
       type: 'goto',
-      target: '.sidebar-subitem[data-sub-item-id="congestion-curtailment"]',
-      title: 'Navigate to Congestion & Curtailment',
-      body: 'Click <strong>Congestion & Curtailment</strong> in the sidebar to continue.',
+      target: '.sidebar-subitem[data-sub-item-id="system-constraints"]',
+      title: 'Navigate to System Constraints',
+      body: 'Click <strong>System Constraints</strong> in the sidebar to continue.',
       position: 'right'
     },
 
