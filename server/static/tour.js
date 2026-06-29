@@ -101,15 +101,18 @@ function _removeOverlay() {
 }
 
 function _highlightStep(step) {
+  console.log('[TOUR DEBUG] _highlightStep called. target =', step.target);
   document.querySelectorAll('.tour-highlighted').forEach(function(el) { el.classList.remove('tour-highlighted'); });
   var target = document.querySelector(step.target);
-  if (!target) { nextTourStep(); return; }
+  console.log('[TOUR DEBUG] querySelector result =', target ? 'FOUND' : 'NOT FOUND');
+  if (!target) { console.log('[TOUR DEBUG] Skipping step — target missing'); nextTourStep(); return; }
   target.classList.add('tour-highlighted');
   target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   setTimeout(function() {
+    console.log('[TOUR DEBUG] 350ms timeout fired. Positioning bubble.');
     var rect = target.getBoundingClientRect();
-    var pad = 8;
+    console.log('[TOUR DEBUG] rect =', JSON.stringify({top: rect.top, left: rect.left, width: rect.width, height: rect.height}));    var pad = 8;
     if (_overlayEl) {
       var l = rect.left - pad, t = rect.top - pad;
       var r = rect.right + pad, b = rect.bottom + pad;
