@@ -138,7 +138,7 @@ function _highlightStep(step) {
 
       var pos = step.position || 'bottom';
       _bubbleEl.style.position = 'fixed';
-      _bubbleEl.style.display = '';
+      _bubbleEl.style.display = 'block';
       _bubbleEl.style.top = '';
       _bubbleEl.style.left = '';
       _bubbleEl.style.right = '';
