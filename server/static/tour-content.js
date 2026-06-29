@@ -223,5 +223,127 @@ var TOUR_STEPS = {
       action: { type: 'navigate', url: '/app/scenarios-manager' }
     }
   ],
-  scenarios: []
+  scenarios: [
+    {
+      target: '#scenarios-manager-main',
+      title: 'Scenario Manager',
+      body: 'This page is your hub for organizing saved scenarios and comparing alternatives side by side.',
+      position: 'bottom'
+    },
+    {
+      target: '#scenario-subtabs',
+      title: 'Page Tabs',
+      body: 'Switch between Manage (your scenario library), Compare (metrics table), and What-If (design tools in Workspace).',
+      position: 'bottom'
+    },
+    {
+      target: '.pill-tab[data-scenario-tab="manage"]',
+      title: 'Manage Tab',
+      body: 'The Manage tab lists every scenario in your account. Upload files, create new runs, and maintain your library here.',
+      position: 'bottom'
+    },
+    {
+      target: '.scenario-toolbar',
+      title: 'Manage Toolbar',
+      body: 'Quick actions live at the top: start a new scenario or import an existing file from disk.',
+      position: 'bottom'
+    },
+    {
+      target: '#new-scenario-btn',
+      title: 'New Scenario',
+      body: 'Opens the Workspace with a fresh scenario so you can build inputs from scratch or use the creation wizard.',
+      tip: 'New scenarios are saved to your account once you calculate and save in the Workspace.',
+      position: 'bottom'
+    },
+    {
+      target: '#scenario-upload-btn',
+      title: 'Load from File',
+      body: 'Browse for one or more scenario files (.ctcc portable JSON or .csv spreadsheet). Imported scenarios appear in the list below.',
+      tip: 'You can also land here with the upload dialog open via Load from File on the Home page.',
+      position: 'bottom'
+    },
+    {
+      target: '#scenario-list',
+      title: 'Scenario List',
+      body: 'Each row is a saved scenario with name, key parameters, and source metadata. Click a name to rename; use Open, Duplicate, Remove, or Delete from the action buttons.',
+      tip: 'Drag the handle at the right edge to reorder scenarios in your list.',
+      position: 'top'
+    },
+    {
+      target: '.pill-tab[data-scenario-tab="compare"]',
+      title: 'Compare Tab',
+      body: 'Switch here to pick scenarios and view benefit-cost metrics in a side-by-side comparison table.',
+      position: 'bottom',
+      action: { type: 'click', target: '.pill-tab[data-scenario-tab="compare"]' }
+    },
+    {
+      target: '#compare-scenario-selector',
+      title: 'Select Scenarios',
+      body: 'Check scenarios to include in the comparison. Use Select All to pick every scenario, or set one row as baseline for delta columns.',
+      tip: 'Baseline scenarios show a badge; other selected rows get a Set as baseline button.',
+      position: 'bottom'
+    },
+    {
+      target: '#comparison-section',
+      title: 'Comparison Table',
+      body: 'Selected scenarios appear here with default columns for societal BCR, total PV cost, capital cost, and total benefits. Add or remove metric columns as needed.',
+      position: 'top'
+    },
+    {
+      target: '#compare-baseline-btn',
+      title: 'Compare to Baseline',
+      body: 'Opens delta options: toggle absolute \u0394 (scenario minus baseline) and percent \u0394 on numeric metrics.',
+      tip: 'Pick a baseline in the selector above before deltas appear in the table.',
+      position: 'bottom'
+    },
+    {
+      target: '.compare-delta-info',
+      title: 'Delta Legend',
+      body: 'Hover the info icon for the sign convention: positive \u0394 means higher values \u2014 more expensive for costs, better for benefits.',
+      position: 'right'
+    },
+    {
+      target: '#comparison-table-container',
+      title: 'Metrics Table',
+      body: 'When two or more scenarios are selected, metrics render in rows here. Use Add column\u2026 in the table header to open the metric picker.',
+      tip: 'Drag column headers to reorder; click remove under a column to drop it from the view.',
+      position: 'top'
+    },
+    {
+      target: '.compare-toolbar',
+      title: 'Compare Toolbar',
+      body: 'Copy the table to your clipboard, export a PNG snapshot, or enable Auto-sort Columns to keep metrics in catalog order.',
+      position: 'bottom'
+    },
+    {
+      target: '#copy-table-btn',
+      title: 'Copy Table',
+      body: 'Copies the visible comparison (including delta rows when enabled) as tab-separated values for pasting into Excel or Sheets.',
+      position: 'bottom'
+    },
+    {
+      target: '#export-png-btn',
+      title: 'Export to PNG',
+      body: 'Downloads the current comparison table as an image file for slides, reports, or email.',
+      position: 'bottom'
+    },
+    {
+      target: '#cmp-auto-sort-columns',
+      title: 'Auto-sort Columns',
+      body: 'When checked, newly added metric columns snap into the standard catalog order instead of appending at the end.',
+      position: 'left'
+    },
+    {
+      target: '.pill-tab[data-scenario-tab="what-if"]',
+      title: 'What-If Tab',
+      body: 'Design-comparison calculators run in the Workspace where inputs and results update live. This tab links you there when you need interactive what-if analysis.',
+      position: 'bottom'
+    },
+    {
+      target: '.app-top-nav-logo',
+      title: 'Tour Complete!',
+      body: 'You\u2019ve seen all the key features of CTCC. Start by creating a new scenario or exploring an existing one.',
+      position: 'bottom'
+    }
+  ]
 };
