@@ -210,29 +210,15 @@ var TOUR_STEPS = (function () {
       {
         target: '#split-save',
         title: 'Save Controls',
-        body: 'The split button saves your work. When everything is saved, it shows Saved \u2713 and the modified dot disappears.',
+        body: 'The split button saves your work. Click the \u25BE chevron to open a menu with Save as Copy, Rename, and export options (.ctcc and .csv formats).',
         tip: 'Press \u2318S (Mac) or Ctrl+S (Windows) to save from anywhere on the page.',
         position: 'bottom'
-      },
-      {
-        target: '#split-save-main',
-        title: 'Quick Save',
-        body: 'Click Save when you have unsaved changes. The button label and color update to reflect the current save state.',
-        position: 'bottom'
-      },
-      {
-        target: '#split-save-menu',
-        title: 'Save Menu',
-        body: 'This menu offers Save as Copy (duplicate), Rename, and two export formats: .ctcc (portable JSON for re-import) and .csv (human-readable spreadsheet).',
-        position: 'bottom',
-        action: { type: 'click', target: '#split-save-drop' }
       },
       {
         target: '.view-toggle',
         title: 'View Switcher',
         body: 'Switch between Inputs, Results, and Sensitivity views. Each view changes the sidebar and main content area.',
-        position: 'bottom',
-        action: { type: 'click', target: '#split-save-drop' }
+        position: 'bottom'
       },
       {
         target: '.view-toggle-btn[data-view="inputs"]',
