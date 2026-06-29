@@ -161,24 +161,20 @@ function _highlightStep(step) {
         _bubbleEl.style.right = (window.innerWidth - rect.left + pad + 12) + 'px';
       }
 
-      // Auto-clamp bubble to viewport
-      var bRect = _bubbleEl.getBoundingClientRect();
+      // Smart viewport clamping — keep bubble adjacent to target
+      var bubbleH = _bubbleEl.offsetHeight;
+      var bubbleW = _bubbleEl.offsetWidth;
       var vh = window.innerHeight;
       var vw = window.innerWidth;
-      if (bRect.bottom > vh - 16) {
-        _bubbleEl.style.top = Math.max(16, rect.top - pad - 12 - _bubbleEl.offsetHeight) + 'px';
+      var desiredTop = parseFloat(_bubbleEl.style.top);
+
+      if (desiredTop + bubbleH > vh - 16) {
+        desiredTop = rect.top - pad - 12 - bubbleH;
       }
-      bRect = _bubbleEl.getBoundingClientRect();
-      if (bRect.top < 16) {
-        _bubbleEl.style.top = '16px';
-      }
-      bRect = _bubbleEl.getBoundingClientRect();
-      if (bRect.right > vw - 16) {
-        _bubbleEl.style.left = (vw - _bubbleEl.offsetWidth - 16) + 'px';
-      }
-      if (bRect.left < 16) {
-        _bubbleEl.style.left = '16px';
-      }
+      _bubbleEl.style.top = Math.max(16, Math.min(desiredTop, vh - bubbleH - 16)) + 'px';
+
+      var desiredLeft = parseFloat(_bubbleEl.style.left);
+      _bubbleEl.style.left = Math.max(16, Math.min(desiredLeft, vw - bubbleW - 16)) + 'px';
     }
   }, 350);
 }
