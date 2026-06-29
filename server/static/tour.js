@@ -163,39 +163,50 @@ function _highlightStep(step) {
 
 function checkTourResume() {
   var raw = sessionStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+  console.log('[TOUR DEBUG] checkTourResume fired. raw =', raw);
+  if (!raw) { console.log('[TOUR DEBUG] No sessionStorage state — exiting'); return; }
   try {
     var state = JSON.parse(raw);
     var startedAt = new Date(state.startedAt);
     if (Date.now() - startedAt.getTime() > 24 * 60 * 60 * 1000) {
+      console.log('[TOUR DEBUG] Expired (>24h) — clearing');
       sessionStorage.removeItem(STORAGE_KEY);
       return;
     }
     var page = window._tourPage || 'home';
-    if (typeof TOUR_STEPS === 'undefined') return;
+    console.log('[TOUR DEBUG] state =', JSON.stringify(state), 'page =', page);
+    if (typeof TOUR_STEPS === 'undefined') { console.log('[TOUR DEBUG] TOUR_STEPS undefined — exiting'); return; }
 
     var steps = TOUR_STEPS[page] || [];
+    console.log('[TOUR DEBUG] TOUR_STEPS[page] length =', steps.length);
     if (state.currentPage !== page && page === 'scenarios') {
       var params = new URLSearchParams(window.location.search);
+      console.log('[TOUR DEBUG] Scenarios re-entry. tour param =', params.get('tour'));
       if (params.get('tour') === 'compare' && TOUR_STEPS.scenarios_compare) {
         steps = TOUR_STEPS.scenarios_compare;
       } else if (TOUR_STEPS.scenarios_manage) {
         steps = TOUR_STEPS.scenarios_manage;
       }
+      console.log('[TOUR DEBUG] Using steps array length =', steps.length);
       if (params.has('tour')) {
         params.delete('tour');
         var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         history.replaceState(null, '', clean);
       }
     }
-    if (!steps.length) return;
+    if (!steps.length) { console.log('[TOUR DEBUG] steps empty — exiting'); return; }
 
     if (state.currentPage !== page) {
+      console.log('[TOUR DEBUG] Cross-page resume from', state.currentPage, 'to', page, '— starting at 0');
       resumeTour(steps, 'full', 0);
     } else if (state.stepIndex < steps.length) {
+      console.log('[TOUR DEBUG] Same-page resume at step', state.stepIndex);
       resumeTour(steps, 'full', state.stepIndex);
+    } else {
+      console.log('[TOUR DEBUG] stepIndex >= steps.length — no resume');
     }
   } catch (e) {
+    console.log('[TOUR DEBUG] Error in checkTourResume:', e);
     sessionStorage.removeItem(STORAGE_KEY);
   }
 }
