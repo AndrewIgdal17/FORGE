@@ -93,23 +93,20 @@ function getContextualTip() {
 
 function startQuickTour() {
   hideAssistant();
-  var page = window._tourPage || 'home';
-  var steps = (typeof TOUR_CONTENT !== 'undefined' && TOUR_CONTENT[page]) ? TOUR_CONTENT[page] : [];
-  if (steps.length > 0 && typeof startTour === 'function') {
-    startTour(steps);
-  }
+  startPageTour();
 }
 
 function startFullTour() {
-  hideAssistant();
   var page = window._tourPage || 'home';
-  var steps = (typeof TOUR_CONTENT !== 'undefined' && TOUR_CONTENT[page]) ? TOUR_CONTENT[page] : [];
-  if (steps.length > 0 && typeof startTour === 'function') {
-    startTour(steps, function() {
-      markTutorialDone();
-      showAssistantMessage('Tour complete! I\'ll be here if you need me.');
-    });
-  }
+  var steps = (typeof TOUR_STEPS !== 'undefined' && TOUR_STEPS[page]) ? TOUR_STEPS[page] : [];
+  if (steps.length > 0) startTour(steps, 'full');
+}
+
+function startPageTour() {
+  var page = window._tourPage || 'home';
+  var steps = (typeof TOUR_STEPS !== 'undefined' && TOUR_STEPS[page]) ? TOUR_STEPS[page] : [];
+  var pageSteps = steps.filter(function(s) { return !s.action || s.action.type !== 'navigate'; });
+  if (pageSteps.length > 0) startTour(pageSteps, page);
 }
 
 function showWelcomeBubble() {
@@ -133,6 +130,7 @@ window.showAssistantBubble = showAssistantBubble;
 window.hideAssistant = hideAssistant;
 window.startQuickTour = startQuickTour;
 window.startFullTour = startFullTour;
+window.startPageTour = startPageTour;
 window.dismissTutorial = dismissTutorial;
 window.markTutorialDone = markTutorialDone;
 })();
