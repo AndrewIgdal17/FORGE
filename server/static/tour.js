@@ -173,7 +173,21 @@ function checkTourResume() {
     }
     var page = window._tourPage || 'home';
     if (typeof TOUR_STEPS === 'undefined') return;
+
     var steps = TOUR_STEPS[page] || [];
+    if (state.currentPage !== page && page === 'scenarios') {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('tour') === 'compare' && TOUR_STEPS.scenarios_compare) {
+        steps = TOUR_STEPS.scenarios_compare;
+      } else if (TOUR_STEPS.scenarios_manage) {
+        steps = TOUR_STEPS.scenarios_manage;
+      }
+      if (params.has('tour')) {
+        params.delete('tour');
+        var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        history.replaceState(null, '', clean);
+      }
+    }
     if (!steps.length) return;
 
     if (state.currentPage !== page) {
