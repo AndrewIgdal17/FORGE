@@ -83,7 +83,7 @@ var TOUR_STEPS = {
       target: '#landing-goto-scenarios-btn',
       title: 'Go to Scenarios',
       body: 'Open your saved scenarios list once you have at least one scenario in the database. This button enables automatically after your first save.',
-      position: 'bottom'
+      position: 'top'
     },
     {
       target: '.app-top-nav-link[data-nav="workspace"]',
