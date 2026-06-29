@@ -8,6 +8,7 @@ var _overlayEl = null;
 var _bubbleEl = null;
 var _scenarioId = null;
 var _validationInterval = null;
+var _gotoHandler = null;
 
 function startTutorial(steps, scenarioId) {
   _steps = steps;
@@ -28,6 +29,7 @@ function _resumeTutorial(steps, stepIndex, scenarioId) {
 function endTutorial() {
   _removeOverlay();
   _clearValidation();
+  _clearGotoListener();
   _steps = [];
   _currentStepIdx = -1;
   sessionStorage.removeItem(STORAGE_KEY);
@@ -35,6 +37,7 @@ function endTutorial() {
 
 function _nextStep() {
   _clearValidation();
+  _clearGotoListener();
   _currentStepIdx++;
   if (_currentStepIdx >= _steps.length) { endTutorial(); return; }
   _persistState();
@@ -58,6 +61,7 @@ function _nextStep() {
 function _prevStep() {
   if (_currentStepIdx > 0) {
     _clearValidation();
+    _clearGotoListener();
     _currentStepIdx--;
     _persistState();
     var step = _steps[_currentStepIdx];
@@ -70,7 +74,7 @@ function _renderStep(step) {
   document.querySelectorAll('.tour-highlighted').forEach(function(el) { el.classList.remove('tour-highlighted'); });
 
   var target = step.target ? document.querySelector(step.target) : null;
-  if (step.type === 'set' && !target) {
+  if ((step.type === 'set' || step.type === 'goto') && !target) {
     _nextStep();
     return;
   }
@@ -85,6 +89,9 @@ function _renderStep(step) {
     if (step.type === 'set') {
       _startValidation(step);
     }
+    if (step.type === 'goto') {
+      _startGotoListener(step);
+    }
   }, 350);
 }
 
@@ -94,6 +101,7 @@ function _buildBubble(step, target) {
   var totalSteps = _steps.length;
   var pct = ((stepNum / totalSteps) * 100).toFixed(0);
   var isSet = step.type === 'set';
+  var isInteractive = isSet || step.type === 'goto';
 
   var html = '<div class="tour-bubble-header">' +
     '<span class="tour-bubble-title">' + (step.title || '') + '</span>' +
@@ -103,7 +111,7 @@ function _buildBubble(step, target) {
   if (step.value != null && isSet) {
     html += '<div class="tutorial-value-hint">\u2192 ' + step.value + '</div>';
   }
-  if (isSet) {
+  if (isInteractive) {
     html += '<button type="button" class="tutorial-show-answer" onclick="window._tutorialShowAnswer()">Show answer</button>';
   }
   html += '<div class="tour-bubble-nav">' +
@@ -111,7 +119,7 @@ function _buildBubble(step, target) {
     '<div class="tour-bubble-buttons">' +
       (_currentStepIdx > 0 ? '<button type="button" class="tour-btn-back" onclick="window._tutorialPrev()">\u2190 Back</button>' : '') +
       '<button type="button" class="tour-btn-next" id="tutorial-next-btn"' +
-        (isSet ? ' disabled' : '') +
+        (isInteractive ? ' disabled' : '') +
         ' onclick="window._tutorialNext()">Next \u2192</button>' +
     '</div></div>';
   html += '<div class="tutorial-progress-bar"><div class="tutorial-progress-fill" style="width:' + pct + '%"></div></div>';
@@ -209,7 +217,13 @@ function _enableNext() {
 
 function _showAnswer() {
   var step = _steps[_currentStepIdx];
-  if (!step || step.type !== 'set') return;
+  if (!step) return;
+  if (step.type === 'goto') {
+    var gotoTarget = document.querySelector(step.target);
+    if (gotoTarget) gotoTarget.click();
+    return;
+  }
+  if (step.type !== 'set') return;
   var target = document.querySelector(step.target);
   if (!target) return;
   if (target.type === 'checkbox') {
@@ -227,6 +241,26 @@ function _showAnswer() {
 
 function _clearValidation() {
   if (_validationInterval) { clearInterval(_validationInterval); _validationInterval = null; }
+}
+
+function _startGotoListener(step) {
+  _clearGotoListener();
+  var target = document.querySelector(step.target);
+  if (!target) return;
+  var handler = function() {
+    target.removeEventListener('click', handler);
+    _gotoHandler = null;
+    setTimeout(_nextStep, step.delay || 400);
+  };
+  target.addEventListener('click', handler);
+  _gotoHandler = { target: target, handler: handler };
+}
+
+function _clearGotoListener() {
+  if (_gotoHandler) {
+    _gotoHandler.target.removeEventListener('click', _gotoHandler.handler);
+    _gotoHandler = null;
+  }
 }
 
 function _ensureOverlay() {

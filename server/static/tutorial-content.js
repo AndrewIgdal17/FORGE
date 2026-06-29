@@ -2,13 +2,25 @@
 var TUTORIAL_STEPS = {
   sunzia: [
     // ── Section A: Technology ──────────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="technology"]', delay: 400 },
-
     {
       type: 'info',
       title: 'SunZia Southwest',
       body: 'Let\'s build the SunZia Southwest Transmission Project \u2014 a 550-mile, \u00b1525 kV bipolar HVDC line from Corona, NM to Pinal Central, AZ.',
       position: 'bottom'
+    },
+    {
+      type: 'info',
+      target: '#sidebar',
+      title: 'The Sidebar',
+      body: 'The sidebar organizes every input into collapsible sections. Click a sub-item to load its form. The numbers show how many fields each section contains.',
+      position: 'right'
+    },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="technology"]',
+      title: 'Navigate to Technology',
+      body: 'Click <strong>Technology</strong> in the sidebar to load the first set of inputs.',
+      position: 'right'
     },
     {
       type: 'set',
@@ -78,7 +90,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section B: Timeline ────────────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="timeline"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="timeline"]',
+      title: 'Navigate to Timeline',
+      body: 'Click <strong>Timeline</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'set',
@@ -112,7 +130,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section C: Terrain Mix ─────────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="terrain-mix"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="terrain-mix"]',
+      title: 'Navigate to Terrain Mix',
+      body: 'Click <strong>Terrain Mix</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'info',
@@ -178,7 +202,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section D: Rights of Way ───────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="rights-of-way"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="rights-of-way"]',
+      title: 'Navigate to Rights of Way',
+      body: 'Click <strong>Rights of Way</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'info',
@@ -278,7 +308,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section E: Financing ───────────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="financing"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="financing"]',
+      title: 'Navigate to Financing',
+      body: 'Click <strong>Financing</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'set',
@@ -332,7 +368,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section F: Congestion & Curtailment ────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="congestion-curtailment"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="congestion-curtailment"]',
+      title: 'Navigate to Congestion & Curtailment',
+      body: 'Click <strong>Congestion & Curtailment</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'info',
@@ -412,7 +454,13 @@ var TUTORIAL_STEPS = {
     },
 
     // ── Section G: Energy Source Mix ────────────────────────────────────
-    { type: 'navigate', target: '.sidebar-subitem[data-sub-item-id="energy-emissions-energy"]', delay: 400 },
+    {
+      type: 'goto',
+      target: '.sidebar-subitem[data-sub-item-id="energy-emissions-energy"]',
+      title: 'Navigate to Energy Source Mix',
+      body: 'Click <strong>Energy Source Mix</strong> in the sidebar to continue.',
+      position: 'right'
+    },
 
     {
       type: 'info',
