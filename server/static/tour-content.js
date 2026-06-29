@@ -93,7 +93,7 @@ var TOUR_STEPS = (function () {
       target: '#compare-baseline-btn',
       title: 'Baseline & Deltas',
       body: 'Set one scenario as a baseline, then toggle Show \u0394 and Show % \u0394 to see how other scenarios differ in absolute and percentage terms. Positive \u0394 means higher values \u2014 more expensive for costs, better for benefits.',
-      position: 'top'
+      position: 'bottom'
     },
     {
       target: '#copy-table-btn',
@@ -167,7 +167,7 @@ var TOUR_STEPS = (function () {
         target: '#landing-goto-scenarios-btn',
         title: 'Go to Scenarios',
         body: 'Open your saved scenarios list. This button enables automatically after you save your first scenario.',
-        position: 'top'
+        position: 'bottom'
       },
       {
         target: '.app-top-nav-link[data-nav="scenarios"]',
