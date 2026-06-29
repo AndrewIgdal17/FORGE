@@ -93,7 +93,7 @@ var TOUR_STEPS = (function () {
       target: '#compare-baseline-btn',
       title: 'Baseline & Deltas',
       body: 'Set one scenario as a baseline, then toggle Show \u0394 and Show % \u0394 to see how other scenarios differ in absolute and percentage terms. Positive \u0394 means higher values \u2014 more expensive for costs, better for benefits.',
-      position: 'bottom'
+      position: 'top'
     },
     {
       target: '#copy-table-btn',
