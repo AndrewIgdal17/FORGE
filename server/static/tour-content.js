@@ -4,7 +4,7 @@ var TOUR_STEPS = (function () {
 
   var manageSteps = [
     {
-      target: '#scenarios-manager-main',
+      target: '#scenario-subtabs',
       title: 'Scenario Manager',
       body: 'This page is your hub for organizing saved scenarios and comparing alternatives side by side.',
       position: 'bottom'
