@@ -714,9 +714,20 @@
           if (typeof initWorkspaceHeader === 'function') initWorkspaceHeader();
           setTimeout(function() { updateFieldValidation(true); }, 500);
 
+          // Tutorial resume check
+          if (typeof checkTutorialResume === 'function' && checkTutorialResume()) return;
+
           var params = new URLSearchParams(window.location.search);
           if (params.get('new') === '1') {
             if (typeof showWizard === 'function') showWizard();
+          } else if (params.get('tutorial') === 'sunzia' && typeof TUTORIAL_STEPS !== 'undefined' && TUTORIAL_STEPS.sunzia) {
+            var tutorialScenario = await addScenarioToSession(null, null,
+              { timestamp: new Date().toISOString(), source: 'tutorial' },
+              'SunZia Southwest (Tutorial)');
+            setActiveScenario(tutorialScenario);
+            setTimeout(function() {
+              startTutorial(TUTORIAL_STEPS.sunzia, tutorialScenario.id);
+            }, 500);
           } else if (params.get('scenario')) {
             var scenarioId = params.get('scenario');
             var found = window.CTCC.sessionScenarios.find(function(s) { return s.id === scenarioId; });

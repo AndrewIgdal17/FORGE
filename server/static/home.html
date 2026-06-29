@@ -63,6 +63,7 @@
         <button type="button" class="landing-btn landing-btn-primary" id="landing-new-scenario-btn">+ New Scenario</button>
         <button type="button" class="landing-btn landing-btn-secondary" id="landing-load-file-btn">Load from File</button>
         <button type="button" class="landing-btn landing-btn-secondary" id="landing-tour-btn">Guided Tour</button>
+        <button type="button" class="landing-btn landing-btn-secondary" id="landing-tutorial-btn">Learn with a Case Study</button>
         <button type="button" class="landing-btn landing-btn-disabled" id="landing-goto-scenarios-btn" disabled>Go to Scenarios</button>
       </div>
     </div>
@@ -83,6 +84,9 @@
         });
         document.getElementById('landing-tour-btn').addEventListener('click', function() {
           if (typeof startFullTour === 'function') startFullTour();
+        });
+        document.getElementById('landing-tutorial-btn').addEventListener('click', function() {
+          window.location.href = '/app/workspace?tutorial=sunzia';
         });
         document.getElementById('landing-goto-scenarios-btn').addEventListener('click', function() {
           if (!this.disabled) window.location.href = '/app/scenarios-manager';
