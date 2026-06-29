@@ -387,6 +387,7 @@ C.BUCKET_LABELS = {
   hard: 'Hard Costs', soft: 'Soft Costs',
   risk: 'Risk Costs', emissions: 'Line Loss Compensation Emissions',
   remedial: 'Remedial Benefits', enabling: 'Enabling Benefits',
+  avoided_emissions: 'Avoided Emissions',
   transfer: 'Revenue (Transfer)', reporting: 'Transfers & Reporting',
 };
 
@@ -399,6 +400,15 @@ function buildResultById(results) {
 }
 
 var COMPOSITION_COLORS = ['#0066cc', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+
+function formatCompact(value) {
+  var abs = Math.abs(value);
+  var sign = value < 0 ? '-' : '';
+  if (abs >= 1e9) return sign + '$' + (abs / 1e9).toFixed(1) + 'B';
+  if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(0) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs / 1e3).toFixed(0) + 'K';
+  return sign + '$' + abs.toFixed(0);
+}
 
 function renderCompositionBar(segments) {
   var bar = document.createElement('div');
@@ -425,7 +435,7 @@ function renderCompositionLegend(segments) {
   var legend = document.createElement('div');
   legend.className = 'results-composition-legend';
   legend.textContent = segments.map(function(s) {
-    return s.label + ' ' + formatCurrency(s.value, 0);
+    return s.label + ' ' + formatCompact(s.value);
   }).join(' \u00B7 ');
   return legend;
 }
@@ -439,7 +449,7 @@ function renderSectionOverview(results, sectionType) {
   if (sectionType === 'costs') {
     buckets = C.COST_BUCKET_ORDER;
   } else {
-    buckets = ['remedial', 'enabling'];
+    buckets = ['remedial', 'enabling', 'avoided_emissions'];
   }
 
   parentTotal = buckets.reduce(function(s, b) {
@@ -516,7 +526,8 @@ function getSubItemIdForBucket(bucket) {
     risk: 'r-risk-costs',
     emissions: 'r-emissions-costs',
     remedial: 'r-remedial',
-    enabling: 'r-loss-comp'
+    enabling: 'r-loss-comp',
+    avoided_emissions: 'r-emissions-costs'
   };
   return map[bucket] || 'r-capital';
 }
@@ -1837,7 +1848,7 @@ function renderResultsOverview(results) {
     return { label: C.BUCKET_LABELS[b] || b, value: pv };
   }).filter(function(s) { return s.value > 0; });
 
-  var benefitBuckets = ['remedial', 'enabling'];
+  var benefitBuckets = ['remedial', 'enabling', 'avoided_emissions'];
   var benefitSegments = benefitBuckets.map(function(b) {
     var pv = (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
       return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
