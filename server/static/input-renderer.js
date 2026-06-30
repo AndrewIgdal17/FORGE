@@ -309,8 +309,8 @@ const TAB_GUIDE_CONTENT = {
   },
   'converter-maintenance': {
     oneliner: 'Review the annual maintenance cost for converter stations on DC transmission lines.',
-    body: 'DC projects require converter stations at each end of the line to transform between alternating current (AC) and direct current. These stations have ongoing maintenance costs that AC projects do not. The value is pre-filled based on your converter configuration.',
-    items: [],
+    body: 'DC projects require converter stations at each end of the line to transform between alternating current (AC) and direct current. Converter O&M is expressed as a percentage of station capital cost per year: 0.5% for LCC (thyristor-based, lower maintenance) and 0.7% for VSC (IGBT submodule replacement, water-cooled systems). This cost is independent of line length \u2014 a 50-mile and 500-mile line with the same converters pay the same O&M.',
+    items: ['Annual O&M rate applied to converter station CAPEX'],
   },
   // L4 sub-sub-tabs: Energy
   'energy-mix': {
@@ -2416,7 +2416,7 @@ function renderConverterDetailsTable() {
   const ctxLabel = document.createElement('span');
   ctxLabel.className = 'readonly-miles-label';
   ctxLabel.textContent = oldIsDC ? 'New:' : 'Configuration:';
-  ctxLabel.appendChild(makeHelpIcon('The full project configuration key used to look up converter O&M parameters.'));
+  ctxLabel.appendChild(makeHelpIcon('The project configuration key. Converter O&M rate is determined by converter type (LCC or VSC), not by configuration category.'));
   ctxDisplay.appendChild(ctxLabel);
   ctxDisplay.appendChild(document.createTextNode(' '));
   const ctxValue = document.createElement('span');
@@ -2457,7 +2457,7 @@ function renderConverterDetailsTable() {
     { label: 'Converter Type', value: convTypeEl ? convTypeEl.value : '—', oldValue: oldConvType || '—', tooltip: 'AC-to-DC converter technology (LCC or VSC).' },
     { label: 'Number of Converters', value: convCountEl ? convCountEl.value : '—', oldValue: convCountEl ? convCountEl.value : '—', tooltip: 'Number of converter stations on the line.' },
     { label: 'Converter Loss (%)', value: convLoss, oldValue: oldConvLoss, tooltip: 'Electrical energy lost in AC/DC conversion. Fixed physical constant: 0.75% for LCC, 1.0% for VSC.' },
-    { label: 'O&M Cost Rate ($/mi/yr)', value: entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString() : '—', oldValue: oldEntry ? '$' + Number(oldEntry.converter_om_cost_per_mile_year).toLocaleString() : '—', tooltip: 'Annual converter O&M cost per mile from the NREL/DOE database.' },
+    { label: 'O&M Rate (% of CAPEX/yr)', value: entry ? (entry.converter_type === 'VSC Converter' ? '0.7%' : '0.5%') : '—', oldValue: oldEntry ? (oldEntry.converter_type === 'VSC Converter' ? '0.7%' : '0.5%') : '—', tooltip: 'Annual converter O&M as percentage of station capital cost. LCC: 0.5%, VSC: 0.7% (Van Eeckhout et al. 2022, Kim et al. 2012).' },
   ];
 
   const cvParamsCard = document.createElement('div');
@@ -2778,7 +2778,7 @@ function renderConverterMaintenanceTable() {
   const tbody = document.createElement('tbody');
   const tr = document.createElement('tr');
   const tdLabel = document.createElement('td');
-  tdLabel.textContent = 'Converter O&M Cost per Mile/Year';
+  tdLabel.textContent = 'Annual Converter O&M (% of Station CAPEX)';
   tdLabel.style.fontWeight = '500';
   tr.appendChild(tdLabel);
   const tdVal = document.createElement('td');
@@ -2787,7 +2787,7 @@ function renderConverterMaintenanceTable() {
   input.className = 'currency-input locked-cell';
   input.dataset.maintenanceField = 'converter_om';
   input.readOnly = true;
-  input.value = entry ? '$' + Number(entry.converter_om_cost_per_mile_year).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '\u2014';
+  input.value = entry ? (entry.converter_type === 'VSC Converter' ? '0.7%' : '0.5%') : '\u2014';
   tdVal.appendChild(input);
   tr.appendChild(tdVal);
   tbody.appendChild(tr);
