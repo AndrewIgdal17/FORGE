@@ -526,19 +526,16 @@ def main() -> None:
     oandm_start_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
 
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
-        pv_conductor = calculate_present_value(
-            total_conductor_cost_per_year, financing.wacc_real,
-            project_details.project_lifetime, start_year=oandm_start_year,
-        )
-        pv_structure = calculate_present_value(
-            variable_structure_cost_per_year, financing.wacc_real,
-            project_details.project_lifetime, start_year=oandm_start_year,
-        )
+        pv_conductor = 0.0
+        pv_structure = 0.0
         pv_vegetation_management = calculate_present_value(
             total_vegetation_management_cost_per_year, financing.wacc_real,
             project_details.project_lifetime, start_year=oandm_start_year,
         )
-        pv_line_om = pv_conductor + pv_structure + pv_vegetation_management
+        pv_line_om = calculate_present_value(
+            total_line_om_per_year, financing.wacc_real,
+            project_details.project_lifetime, start_year=oandm_start_year,
+        )
     else:
         pv_line_om = calculate_present_value(
             total_line_om_per_year, financing.wacc_real,
