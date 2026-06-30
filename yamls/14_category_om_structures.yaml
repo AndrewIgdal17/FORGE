@@ -1,23 +1,15 @@
 # Project Category O&M — Structures (Overhead) & Line O&M Rates (Non-Overhead)
 #
-# Overhead: component-based model using structures-per-mile × cost-per-structure.
+# Overhead: flat base O&M rate per mile (excludes vegetation management, modeled separately in YAML 12).
 # Non-overhead: total line O&M as % of line CAPEX per year (replaces conductor + structure decomposition).
 # Line CAPEX = total build cost minus converter cost (conductor_cost + structure_cost from build costs module).
 
 project_categories_om_structures:
   # OVERHEAD CONFIGURATIONS
-  # Terrain-driven structure density × per-structure cost. Unchanged from existing model.
+  # Single base O&M rate per mile (excludes vegetation management, modeled separately in YAML 12).
 
   "Overhead":
-    structures_per_mile_forested: 10
-    structures_per_mile_scrubbed_flat: 6
-    structures_per_mile_wetland: 6
-    structures_per_mile_farmland: 6
-    structures_per_mile_desert_barren: 6
-    structures_per_mile_urban: 10
-    structures_per_mile_rolling_hills: 8
-    structures_per_mile_mountain: 12
-    cost_per_structure_per_year: 1000 # $/structure/year
+    base_om_per_mile_year: 15636  # $/mile/year. CT Siting Council (2023) $29,636/circuit-mile total (FERC Form 1, 2017–2021) minus separately modeled vegetation management ($14,000 forested default, DOE 2024). Covers conductor inspection, structure maintenance, patrol, and all non-VM line O&M.
 
   # NON-OVERHEAD CONFIGURATIONS
   # O&M as % of line CAPEX per year. Covers all non-converter maintenance:
