@@ -117,63 +117,63 @@ def load_conductor_om_costs(
 
 
 def load_converter_om_costs(
-    construction_type: str,
     ac_dc: str,
+    converter_type: str,
+    construction_type: str,
     capacity_mw: int,
     conductor_type: str,
-    converter_type: str,
 ) -> float:
     """
-    Load converter O&M costs from YAML file.
+    Calculate annual converter O&M cost as a percentage of converter station CAPEX.
 
-    Args:
-        construction_type: Type of construction (Overhead/Subsea)
-        ac_dc: AC or DC designation
-        capacity_mw: Capacity in megawatts
-        conductor_type: Type of conductor
-        converter_type: Type of converter
+    For AC projects, returns 0. For DC projects, reads the converter O&M rate
+    (LCC: 0.5%, VSC: 0.7%) and multiplies by fixed_converter_cost from the
+    build costs YAML.
 
     Returns:
-        float: Variable converter cost per mile per year (0 for AC projects)
+        float: Total annual converter O&M cost ($/year), NOT per-mile.
     """
+    if ac_dc == "AC":
+        return 0.0
+
+    # Load converter O&M rate by technology type
     try:
         with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
             data = yaml.safe_load(file)
-        if not data:
-            raise ValueError("Converter O&M YAML file is empty or invalid")
-        if "project_categories_om_converters" not in data:
+        if not data or "converter_om_rate" not in data:
+            raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
+        rates = data["converter_om_rate"]
+        if converter_type not in rates:
             raise KeyError(
-                "Missing 'project_categories_om_converters' key in YAML file"
+                f"Converter type '{converter_type}' not found in converter_om_rate. "
+                f"Available: {list(rates.keys())}"
             )
-        converter_om_costs = data["project_categories_om_converters"]
-
-        if ac_dc == "AC":
-            print("AC Project detected. No converter O&M costs needed.")
-            return 0
-        else:
-            from calculation_utils import build_category_string
-            category = build_category_string(construction_type, ac_dc, capacity_mw, conductor_type, converter_type)
-
-            if category not in converter_om_costs:
-                raise KeyError(f"Category '{category}' not found in converter O&M YAML")
-            if "converter_om_cost_per_mile_year" not in converter_om_costs[category]:
-                raise KeyError(
-                    f"Missing 'converter_om_cost_per_mile_year' key for category '{category}' in converter O&M YAML"
-                )
-
-            variable_converter_cost_per_mile_year = converter_om_costs[category][
-                "converter_om_cost_per_mile_year"
-            ]
-
-            return variable_converter_cost_per_mile_year
+        om_rate = rates[converter_type]
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Converter O&M YAML not found at {YAMLS_DIR / '15_category_om_converters.yaml'}"
         )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing converter O&M YAML: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in converter O&M YAML: {e}")
+
+    # Load fixed_converter_cost from build costs YAML
+    try:
+        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
+            build_data = yaml.safe_load(file)
+        if not build_data or "project_categories_build_costs" not in build_data:
+            raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
+        build_costs = build_data["project_categories_build_costs"]
+
+        category = build_category_string(
+            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+        )
+        if category not in build_costs:
+            raise KeyError(f"Category '{category}' not found in build costs YAML")
+        fixed_converter_cost = build_costs[category].get("fixed_converter_cost", 0)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Build costs YAML not found at {YAMLS_DIR / '10_project_category_build_costs.yaml'}"
+        )
+
+    return fixed_converter_cost * om_rate
 
 
 def load_structure_om_costs(
@@ -383,8 +383,12 @@ def main() -> None:
     variable_conductor_cost_per_mile_year = load_conductor_om_costs(
         project_details.construction_type, project_details.ac_dc, project_details.capacity_mw, project_details.conductor_type, project_details.converter_type
     )
-    variable_converter_cost_per_mile_year = load_converter_om_costs(
-        project_details.construction_type, project_details.ac_dc, project_details.capacity_mw, project_details.conductor_type, project_details.converter_type
+    total_converter_cost_per_year = load_converter_om_costs(
+        project_details.ac_dc,
+        project_details.converter_type,
+        project_details.construction_type,
+        project_details.capacity_mw,
+        project_details.conductor_type,
     )
 
     (
@@ -407,7 +411,6 @@ def main() -> None:
 
     # Calculate annual costs
     total_conductor_cost_per_year = variable_conductor_cost_per_mile_year * physical_details.total_miles
-    total_converter_cost_per_year = variable_converter_cost_per_mile_year * physical_details.total_miles
 
     # Calculate lifetime costs (undiscounted)
     total_structure_cost_lifetime = variable_structure_cost_per_year * project_details.project_lifetime
@@ -493,7 +496,7 @@ def main() -> None:
 
     print("\n--- Unit Costs (per mile per year) ---")
     print(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
-    print(f"Converter:  ${variable_converter_cost_per_mile_year:,.2f}")
+    print(f"Converter:  ${total_converter_cost_per_year:,.2f} (total $/year; % of station CAPEX)")
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         print(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
     else:
