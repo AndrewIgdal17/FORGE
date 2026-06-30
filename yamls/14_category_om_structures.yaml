@@ -1,40 +1,33 @@
-# Project Category O&M Structures
-# Operations and maintenance costs for transmission structures across all 128 transmission project configurations
+# Project Category O&M — Structures (Overhead) & Line O&M Rates (Non-Overhead)
 #
-# Note: Structure O&M costs are based solely on installation method, not on individual capacity/conductor/converter configurations.
-# All overhead configurations share the same structure-related fields.
-# All non-overhead configurations share the same variable_cost_per_mile_year.
+# Overhead: component-based model using structures-per-mile × cost-per-structure.
+# Non-overhead: total line O&M as % of line CAPEX per year (replaces conductor + structure decomposition).
+# Line CAPEX = total build cost minus converter cost (conductor_cost + structure_cost from build costs module).
 
 project_categories_om_structures:
   # OVERHEAD CONFIGURATIONS
-  # All overhead transmission lines (AC and DC, all capacities, all conductor types, all converter types)
-  # share the same structure maintenance costs based on terrain type.
+  # Terrain-driven structure density × per-structure cost. Unchanged from existing model.
 
   "Overhead":
-    structures_per_mile_forested: 10 # structures/mile [terrain type]
-    structures_per_mile_scrubbed_flat: 6 # structures/mile [terrain type]
-    structures_per_mile_wetland: 6 # structures/mile [terrain type]
-    structures_per_mile_farmland: 6 # structures/mile [terrain type]
-    structures_per_mile_desert_barren: 6 # structures/mile [terrain type]
-    structures_per_mile_urban: 10 # structures/mile [terrain type]
-    structures_per_mile_rolling_hills: 8 # structures/mile [terrain type]
-    structures_per_mile_mountain: 12 # structures/mile [terrain type]
+    structures_per_mile_forested: 10
+    structures_per_mile_scrubbed_flat: 6
+    structures_per_mile_wetland: 6
+    structures_per_mile_farmland: 6
+    structures_per_mile_desert_barren: 6
+    structures_per_mile_urban: 10
+    structures_per_mile_rolling_hills: 8
+    structures_per_mile_mountain: 12
     cost_per_structure_per_year: 1000 # $/structure/year
 
-  # UNDERGROUND DIRECT-BURIED CONFIGURATIONS
-  # All underground direct-buried transmission lines share the same variable maintenance cost per mile per year.
+  # NON-OVERHEAD CONFIGURATIONS
+  # O&M as % of line CAPEX per year. Covers all non-converter maintenance:
+  # cable monitoring, joint testing, civil infrastructure, surveys, repair provisioning.
 
   "Underground direct-buried":
-    variable_cost_per_mile_year: 0
-
-  # UNDERGROUND TUNNEL CONFIGURATIONS
-  # All underground tunnel transmission lines share the same variable maintenance cost per mile per year.
+    om_pct_of_line_capex: 0.0015  # 0.15% of line CAPEX/yr. Source: CIET/Powerlink (2023). Cross-check: CT Siting Council (2023) reports $22,937/circuit-mile from FERC Form 1 on $16–21M/mi CAPEX ≈ 0.11–0.14%.
 
   "Underground tunnel":
-    variable_cost_per_mile_year: 0
+    om_pct_of_line_capex: 0.004   # 0.4% of line CAPEX/yr. Source: IET and Mott MacDonald (2025), "Electricity Transmission Costing Study," standard onshore O&M (SSM factor).
 
-  # SUBSEA CONFIGURATIONS
-  # All subsea transmission lines share the same variable maintenance cost per mile per year.
-
-  Subsea:
-    variable_cost_per_mile_year: 0
+  "Subsea":
+    om_pct_of_line_capex: 0.025   # 2.5% of cable system CAPEX/yr. Source: NeoMarketData (2025). Cross-check: Ofgem PCR data — Viking Link (2025), NSL (2023), IFA2 (2022) show 5.3–5.6% total system opex; cable-only portion ≈ 2.5%.
