@@ -21,5 +21,5 @@ wildfire:
   # All multipliers (>= 0)
   ignition_rate_multiplier:
     overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)
-    underground: 0.02 # 98% reduction (2% of overhead risk) (>= 0)
+    underground: 0.01 # 99% reduction per PG&E VP Undergrounding Jamie Martin (CBS News, 2024). (>= 0)
     subsea: 0.0 # No wildfire risk (>= 0)
