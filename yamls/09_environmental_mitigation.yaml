@@ -46,7 +46,7 @@ environmental_mitigation:
       landfall_default: 1000 # for basic onshore site (flat/open)
 
   # Credit purchases (off-site mitigation via banks)
-  wetland_credit_cost_per_acre: 25000
+  wetland_credit_cost_per_acre: 51361 # MISO MTEP25 Workbook Table 2.2-9: $51,360.69/acre (MISO, 2025).
 
   habitat_credit_cost_per_acre:
     forested: 30000
