@@ -239,7 +239,7 @@ def load_nonoverhead_line_om(
         )
 
     # Compute weighted miles (same logic as build_costs.py)
-    from calculation_utils import calculate_weighted_miles
+    from weighted_miles import calculate_weighted_miles
     weighted_miles, _ = calculate_weighted_miles()
 
     # Line CAPEX = conductor + structure (excludes converters)
