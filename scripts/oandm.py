@@ -464,36 +464,39 @@ def main() -> None:
     )
 
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
-        # Overhead: component-based model (conductor + structure + vegetation)
-        variable_conductor_cost_per_mile_year = load_conductor_om_costs(
-            project_details.construction_type, project_details.ac_dc,
-            project_details.capacity_mw, project_details.conductor_type,
-            project_details.converter_type
+        # Overhead: base O&M rate (flat $/mile) + vegetation management (terrain-specific)
+        try:
+            with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+                struct_data = yaml.safe_load(file)
+            oh_entry = struct_data["project_categories_om_structures"]["Overhead"]
+            base_om_per_mile_year = oh_entry["base_om_per_mile_year"]
+        except (FileNotFoundError, KeyError, TypeError) as e:
+            raise ValueError(f"Cannot load overhead base O&M rate: {e}")
+
+        base_om_per_year = base_om_per_mile_year * physical_details.total_miles
+
+        # Vegetation management (terrain-specific, from YAML 12)
+        vegetation_costs = load_vegetation_management_om_costs(project_details.construction_type)
+        total_vegetation_management_cost_per_year = (
+            physical_details.forested_miles * vegetation_costs.get("forested", 0)
+            + physical_details.scrubbed_flat_miles * vegetation_costs.get("scrubbed_flat", 0)
+            + physical_details.wetland_miles * vegetation_costs.get("wetland", 0)
+            + physical_details.farmland_miles * vegetation_costs.get("farmland", 0)
+            + physical_details.desert_barren_miles * vegetation_costs.get("desert_barren", 0)
+            + physical_details.urban_miles * vegetation_costs.get("urban", 0)
+            + physical_details.rolling_hills_miles * vegetation_costs.get("rolling_hills", 0)
+            + physical_details.mountain_miles * vegetation_costs.get("mountain", 0)
+            + physical_details.subsea_miles * vegetation_costs.get("subsea", 0)
         )
 
-        (
-            variable_structure_cost_per_mile_year,
-            variable_structure_cost_per_year,
-            structure_dict,
-            total_vegetation_management_cost_per_year,
-        ) = load_structure_om_costs(
-            project_details.construction_type,
-            physical_details.forested_miles,
-            physical_details.scrubbed_flat_miles,
-            physical_details.wetland_miles,
-            physical_details.farmland_miles,
-            physical_details.desert_barren_miles,
-            physical_details.urban_miles,
-            physical_details.rolling_hills_miles,
-            physical_details.mountain_miles,
-            physical_details.subsea_miles,
-        )
+        total_line_om_per_year = base_om_per_year + total_vegetation_management_cost_per_year
 
-        total_conductor_cost_per_year = variable_conductor_cost_per_mile_year * physical_details.total_miles
-        total_line_om_per_year = (
-            total_conductor_cost_per_year + variable_structure_cost_per_year
-            + total_vegetation_management_cost_per_year
-        )
+        # Legacy fields (zeroed — no longer decomposed into conductor/structure)
+        total_conductor_cost_per_year = 0.0
+        variable_conductor_cost_per_mile_year = 0.0
+        variable_structure_cost_per_mile_year = 0.0
+        variable_structure_cost_per_year = 0.0
+        structure_dict = {}
     else:
         # Non-overhead: total line O&M as % of line CAPEX
         total_line_om_per_year = load_nonoverhead_line_om(
