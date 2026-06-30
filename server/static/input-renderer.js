@@ -232,9 +232,9 @@ const TAB_GUIDE_CONTENT = {
     items: ['Premium rate (percentage of insurable asset value)', 'Which components are insured (conductors, structures, converters)'],
   },
   'maintenance-costs': {
-    oneliner: 'Review and adjust the physical maintenance costs for each asset class on your transmission line.',
-    body: 'Every transmission asset \u2014 conductors, structures, and converter stations \u2014 requires ongoing maintenance. Costs are pre-filled based on your project configuration. They are split by asset class because each scales differently: conductor maintenance is per-mile, structure maintenance depends on terrain-driven structure density, and converter maintenance applies only to direct current (DC) projects.',
-    items: ['Conductor maintenance cost per mile per year', 'Structure density per terrain and unit maintenance cost (overhead lines only)', 'Converter maintenance cost (DC projects only)'],
+    oneliner: 'Review the maintenance costs for your transmission line.',
+    body: 'Maintenance costs depend on construction type. Overhead lines use a component model (conductor + structures + vegetation). Non-overhead lines (underground, tunnel, subsea) use a percentage of line capital cost \u2014 reflecting that published benchmarks report total O&M without component decomposition. Converter maintenance (DC only) is always separate.',
+    items: ['Overhead: conductor per-mile + structure density + vegetation by terrain', 'Non-overhead: total line O&M as % of line CAPEX', 'Converter maintenance (DC projects only)'],
   },
   'vegetation-management': {
     oneliner: 'Set the annual per-mile cost of managing vegetation along the transmission corridor, by terrain type.',
@@ -298,9 +298,9 @@ const TAB_GUIDE_CONTENT = {
   },
   // L4 sub-sub-tabs: Maintenance
   'conductor-maintenance': {
-    oneliner: 'Review the annual per-mile maintenance cost for your conductor type.',
-    body: 'This value is looked up based on your project\u2019s configuration \u2014 voltage, conductor type, and construction method. It applies to every mile of the route, every year.',
-    items: [],
+    oneliner: 'Review annual maintenance costs for your transmission line.',
+    body: 'For overhead lines, this is the per-mile conductor maintenance cost based on your configuration. For non-overhead lines (underground, tunnel, subsea), total line O&M is computed as a percentage of line capital cost: 0.15% for underground direct-buried, 0.4% for tunnel, 2.5% for subsea. This replaces the component breakdown because no published source supports a conductor/structure split for these construction types.',
+    items: ['Overhead: per-mile conductor cost from configuration database', 'Non-overhead: % of line CAPEX (covers all cable + civil infrastructure maintenance)'],
   },
   'structure-maintenance': {
     oneliner: 'Review structure density by terrain and the per-structure annual maintenance cost for overhead lines.',
