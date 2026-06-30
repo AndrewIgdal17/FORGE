@@ -3,12 +3,12 @@ financial:
   inflation_rate: 0.03
   base_year: 2025
   wacc_nominal: 0.075
-  social_discount_rate: 0.03 # for sensitivty do .02 to .07 U.S. Office of Management and Budget, Circular A-4: Regulatory Analysis (2003, reaffirmed 2023).
+  social_discount_rate: 0.02 # OMB Circular A-4 (Nov 2023 revision), Ramsey framework, 2% near-term rate. Supported by Rennert et al. (2022), Nature 610:687-692.
 
   contingencies:
-    conductor_contingency: .10 # % [0,1]
-    structure_contingency: .10 # % [0,1]
-    converter_contingency: .10 # % [0,1]
+    conductor_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
+    structure_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
+    converter_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
 
 
   # AFUDC configuration
@@ -24,4 +24,4 @@ financial:
     # Rate-based revenue requirement (return on rate base)
     rate_based:
       enabled: true # Toggle rate-based revenue calculation
-      allowed_return_rate: 0.10 # Annual return rate on capital costs (rate base)
+      allowed_return_rate: 0.075 # Simplified overall return on rate base (≈ WACC nominal). Consistent with FERC-authorized ROE ~10% (EL14-12, Oct 2024) weighted by typical 50/50 capital structure + ~5.5% cost of debt.
