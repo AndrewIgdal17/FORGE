@@ -39,34 +39,19 @@ def load_project_technical_details() -> float:
 
 
 def main() -> None:
-    """
-
-    Main function to calculate and display delay costs.
-    """
+    """Main function to calculate and display delay costs."""
     delay_cost_df = load_delay_costs()
     delay_year = load_project_technical_details()
 
-    legal = delay_cost_df["annual_delay_costs"]["legal"]
-    admin = delay_cost_df["annual_delay_costs"]["admin"]
-    labor = delay_cost_df["annual_delay_costs"]["labor"]
-    material_and_equipment = delay_cost_df["annual_delay_costs"][
-        "material_and_equipment"
-    ]
-    regulatory = delay_cost_df["annual_delay_costs"]["regulatory"]
-    public_relations = delay_cost_df["annual_delay_costs"]["public_relations"]
-    project_management = delay_cost_df["annual_delay_costs"]["project_management"]
-    miscellaneous = delay_cost_df["annual_delay_costs"]["miscellaneous"]
+    # Single annual cost field (replaces prior 8-category decomposition)
+    if "annual_base_delay_cost" in delay_cost_df:
+        total_yearly_delay_cost = delay_cost_df["annual_base_delay_cost"]
+    elif "annual_delay_costs" in delay_cost_df:
+        # Backward compat: sum old 8 categories if they exist
+        total_yearly_delay_cost = sum(delay_cost_df["annual_delay_costs"].values())
+    else:
+        total_yearly_delay_cost = 0.0
 
-    total_yearly_delay_cost = (
-        legal
-        + admin
-        + labor
-        + material_and_equipment
-        + regulatory
-        + public_relations
-        + project_management
-        + miscellaneous
-    )
     total_delay_cost = total_yearly_delay_cost * delay_year
 
     from run_context import add_derived
@@ -99,17 +84,14 @@ def main() -> None:
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
 
-    # Initialize CSV output manager
     csv_manager = CTCCOutputManager()
 
-    # Prepare results dictionary
     results = {
         "total_nominal": total_delay_cost,
-        "total_afudc": 0,  # Delay costs are not AFUDC-eligible
+        "total_afudc": 0,
         "total_pv": total_delay_cost_pv,
     }
 
-    # Write to CSV
     csv_manager.add_delay_costs(results)
     csv_manager.write_batch_summary()
 

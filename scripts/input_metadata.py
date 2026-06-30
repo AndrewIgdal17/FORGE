@@ -453,22 +453,17 @@ for _ct_key, _ct_label in _VEG_CT:
         _veg_order += 1
 
 # ===================================================================
-# Tab 6 — Delay Costs (8 fields, merged into operating tab)
+# Tab 6 — Delay Costs (single field, merged into operating tab)
 # ===================================================================
 
-_DELAY_CATS = [
-    ("legal", "Legal"), ("admin", "Admin"), ("labor", "Labor"),
-    ("material_and_equipment", "Material And Equipment"),
-    ("regulatory", "Regulatory"), ("public_relations", "Public Relations"),
-    ("project_management", "Project Management"), ("miscellaneous", "Miscellaneous"),
-]
 _TAB6: list[InputField] = [
-    _f(f"delay_{k}", taxonomy_id="base_delay", input_tab="operating",
+    _f("delay_annual_base", taxonomy_id="base_delay", input_tab="operating",
        sub_tab="delay-costs",
-       yaml_section="05_delays", field_path=f"annual_delay_costs.{k}",
-       label=lab, help_text=f"Annual {lab.lower()} costs during delay period", unit="$/year",
-       input_type="currency", tier="first-glance", display_order=i + 1)
-    for i, (k, lab) in enumerate(_DELAY_CATS)
+       yaml_section="05_delays", field_path="annual_base_delay_cost",
+       label="Annual Base Delay Cost",
+       help_text="Total direct out-of-pocket annual spend during the pre-construction/permitting period (legal, admin, PM, regulatory, etc.). Foregone congestion/curtailment benefits during delay are modeled separately.",
+       unit="$/year",
+       input_type="currency", tier="first-glance", display_order=1),
 ]
 
 # ===================================================================

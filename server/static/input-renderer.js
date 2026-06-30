@@ -143,9 +143,9 @@ const TAB_GUIDE_CONTENT = {
     items: ['Insurance premium rate and which assets to insure', 'Conductor, structure, and converter maintenance costs', 'Vegetation management costs by terrain type'],
   },
   'delay-costs': {
-    oneliner: 'Estimate the annual out-of-pocket costs your project will incur during the pre-construction delay period.',
-    body: 'Transmission projects often spend years in permitting and regulatory review before construction begins. During that time, real expenses continue \u2014 legal counsel, staffing, regulatory filings, and more. These costs accumulate each year of delay and can materially affect project economics, especially for projects facing long approval timelines. The calculator multiplies your annual figures by the number of delay years you set in Project Details.',
-    items: ['Annual costs across eight categories: legal, administrative, labor, materials and equipment, regulatory, public relations, project management, and miscellaneous', 'Total annual delay cost (derived automatically)'],
+    oneliner: 'Estimate annual out-of-pocket costs during the pre-construction delay period.',
+    body: 'Transmission projects often spend years in permitting and regulatory review before construction begins. During that time, direct expenses continue \u2014 legal counsel, staffing, regulatory filings, project management, and more. Enter your total annual pre-construction spend. The calculator multiplies this by the number of delay years you set in Project Details. Foregone congestion and curtailment benefits during delay are modeled separately in the Benefits tab.',
+    items: ['Annual base delay cost (total direct out-of-pocket spend per year of delay)'],
   },
   'risk': {
     oneliner: 'Define the wildfire and outage risk assumptions that drive the project\u2019s expected risk costs.',
