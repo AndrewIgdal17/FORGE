@@ -303,9 +303,9 @@ const TAB_GUIDE_CONTENT = {
     items: ['Overhead: per-mile conductor cost from configuration database', 'Non-overhead: % of line CAPEX (covers all cable + civil infrastructure maintenance)'],
   },
   'structure-maintenance': {
-    oneliner: 'Review structure density by terrain and the per-structure annual maintenance cost for overhead lines.',
-    body: 'Overhead transmission lines require periodic inspection and repair of towers and poles. The number of structures per mile varies by terrain \u2014 mountainous and forested routes need more structures than flat farmland. Total structure maintenance scales with both density and route length, so terrain mix has a meaningful effect on lifetime cost.',
-    items: [],
+    oneliner: 'Review base line O&M for overhead transmission lines.',
+    body: 'Base line O&M covers conductor inspection, structure maintenance, patrol, and all non-vegetation operating costs at $15,636/circuit-mile/year. This rate is derived from FERC Form 1 data (CT Siting Council, 2023: $29,636 total minus $14,000 vegetation management). Vegetation management is modeled separately by terrain type.',
+    items: ['Base O&M rate: $15,636/circuit-mile/year', 'Vegetation management: separate, by terrain (see Vegetation Management tab)'],
   },
   'converter-maintenance': {
     oneliner: 'Review the annual maintenance cost for converter stations on DC transmission lines.',
