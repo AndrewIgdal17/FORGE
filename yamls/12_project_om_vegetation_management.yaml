@@ -1,17 +1,20 @@
 # O&M Vegetation Management
-# Operations and maintenance costs for vegetation management
+# Annual vegetation management costs by terrain type (overhead only; non-overhead = $0).
+# Sources: DOE/LBNL Vegetation Management Resilience Guide (2024), Quanta Technology
+# for PUCT (2009), Backwell Contractors (2024), BPA (2021), LIFE Elia-RTE (~2015).
+# Terrain ordering: forested > mountain > wetland > scrubbed > urban > rolling > farmland > desert.
 
 vegetation_management_om_costs: # cost per mile [construction type][terrain type]
   Overhead:
-    forested: 8000 # $/mile year
-    scrubbed_flat: 10000 # $/mile year
-    wetland: 7000 # $/mile year
-    farmland: 500 # $/mile year
-    desert_barren: 300 # $/mile year
-    urban: 5000 # $/mile year
-    rolling_hills: 3000 # $/mile year
-    mountain: 9000 # $/mile year
-    subsea: 0 # $/mile year
+    forested: 14000      # $/mile/year. Duke Energy FL $42K/3yr cycle (DOE 2024); Backwell IVM $8K–$22K/yr.
+    mountain: 12000      # $/mile/year. BPA helicopter 8× ground (2021); LIFE Elia-RTE steep terrain 5.7× flat.
+    wetland: 8000        # $/mile/year. Xcel MN $8,700 (DOE 2024); environmental access restrictions add 20–40%.
+    scrubbed_flat: 5000  # $/mile/year. Backwell mechanical mulching $3.8–8.5K/acre; brush < forest always.
+    urban: 4000          # $/mile/year. Higher per-tree cost, lower ROW vegetation density.
+    rolling_hills: 3500  # $/mile/year. Accessible terrain, mixed grassland; Duke Indiana $4.3K mixed as upper bound.
+    farmland: 800        # $/mile/year. Minimal; maintained by landowners. Quanta/PUCT low end; FPL open terrain.
+    desert_barren: 300   # $/mile/year. AEP TX North 61-year cycle (Quanta/PUCT 2009). Negligible vegetation.
+    subsea: 0            # $/mile/year. Not applicable.
 
   Underground Direct Buried:
     forested: 0 # $/mile year
