@@ -702,10 +702,6 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_average_exceedance",
            label="Near Average Exceedance", condition="always_hidden", display_order=91,
            sub_tab="system-constraints"),
-        _f(f"{prefix}_near_relief_factor", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_binding_relief_factor",
-           label="Near Binding Relief Factor", condition="always_hidden", display_order=92,
-           sub_tab="system-constraints"),
         _f(f"{prefix}_cong_price", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.congestion.costs.average_congestion_price",
            label="Average Congestion Price", help_text="Marginal congestion cost during binding hours; monetizes relief",
@@ -729,13 +725,6 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
            tier="first-glance", display_order=8,
            sub_tab="system-constraints"),
     ]
-    if "reconductoring" in yaml_root:
-        fields.append(_f(
-            f"{prefix}_hot_hour_weights", taxonomy_id="congestion_benefit", input_tab="benefits",
-            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.hot_hour_weights",
-            label="Hot Hour Weights", help_text="Fraction of binding hours at or near maximum operating temperature",
-            condition="always_hidden", tier="first-glance", display_order=9,
-            sub_tab="system-constraints"))
     return fields
 
 _TAB9: list[InputField] = (
