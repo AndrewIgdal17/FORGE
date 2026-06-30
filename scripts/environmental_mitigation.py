@@ -66,6 +66,7 @@ def calculate_environmental_mitigation_costs(
     mitigation_config = em_yaml["environmental_mitigation"]
     base_costs = mitigation_config["base_mitigation_cost_per_acre"]
     uplift_factor = mitigation_config.get("mitigation_uplift_factor", 1.0)
+    mitigation_ratio = mitigation_config.get("mitigation_ratio", 2.0)
 
     # Determine construction type from category
     construction_type = category.split("/")[0]  # e.g., "overhead", "underground"
@@ -97,7 +98,7 @@ def calculate_environmental_mitigation_costs(
     total_effective_acres = total_base_acres * uplift_factor
 
     # Identify impacted acres for credits (use effective acres with uplift)
-    wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor
+    wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor * mitigation_ratio
 
     # Habitat credits: sum relevant natural terrains (conservative approach)
     habitat_terrains = [
@@ -108,7 +109,7 @@ def calculate_environmental_mitigation_costs(
         "mountain",
     ]
     habitat_impacted_acres = (
-        sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor
+        sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor * mitigation_ratio
     )
 
     # Calculate wetland credits
@@ -121,7 +122,7 @@ def calculate_environmental_mitigation_costs(
     for terrain in habitat_terrains:
         terrain_acres = acres_by_terrain.get(terrain, 0.0)
         if terrain_acres > 0:
-            effective_acres = terrain_acres * uplift_factor
+            effective_acres = terrain_acres * uplift_factor * mitigation_ratio
             cost_per_acre = habitat_costs.get(terrain, 30000)
             habitat_credits += cost_per_acre * effective_acres
 
@@ -142,6 +143,7 @@ def calculate_environmental_mitigation_costs(
         "total_effective_acres": total_effective_acres,
         "wetland_impacted_acres": wetland_impacted_acres,
         "habitat_impacted_acres": habitat_impacted_acres,
+        "mitigation_ratio": mitigation_ratio,
     }
 
 

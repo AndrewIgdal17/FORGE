@@ -3,6 +3,7 @@
 
 environmental_mitigation:
   mitigation_uplift_factor: 1.25 # to account for the fact that the width isnt just row width but also consturciton width via TCEs
+  mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2014).
 
   # All-in construction/restoration mitigation ($/acre) by terrain + construction type
   base_mitigation_cost_per_acre:
