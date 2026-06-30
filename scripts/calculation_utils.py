@@ -121,7 +121,7 @@ def full_load_adjusted(line_utilization: float) -> float:
     Returns:
         float: Full load adjustment factor
     """
-    return (line_utilization + line_utilization**2) / 2
+    return 0.3 * line_utilization + 0.7 * line_utilization**2  # Buller & Woodrow (1928); LBNL REFA Eq. 32 (Nait Belaid et al., 2024)
 
 
 def calculate_line_losses(
