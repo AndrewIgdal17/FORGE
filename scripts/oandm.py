@@ -24,8 +24,11 @@ from yaml_loaders import (
 )
 from financial_utils import calculate_present_value, calculate_cod_year
 from calculation_utils import build_category_string
-from path_config import YAMLS_DIR
+from path_config import YAMLS_DIR, PROJECT_ROOT
 from constants import CONSTRUCTION_TYPE_OVERHEAD
+
+# Converter O&M uses canonical repo YAMLs (rates + station CAPEX), not scenario temp inputs.
+STATIC_YAMLS_DIR = PROJECT_ROOT / "yamls"
 
 
 def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, float]:
@@ -138,7 +141,7 @@ def load_converter_om_costs(
 
     # Load converter O&M rate by technology type
     try:
-        with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
+        with open(STATIC_YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data or "converter_om_rate" not in data:
             raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
@@ -151,12 +154,12 @@ def load_converter_om_costs(
         om_rate = rates[converter_type]
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Converter O&M YAML not found at {YAMLS_DIR / '15_category_om_converters.yaml'}"
+            f"Converter O&M YAML not found at {STATIC_YAMLS_DIR / '15_category_om_converters.yaml'}"
         )
 
     # Load fixed_converter_cost from build costs YAML
     try:
-        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
+        with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
             build_data = yaml.safe_load(file)
         if not build_data or "project_categories_build_costs" not in build_data:
             raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
@@ -170,7 +173,7 @@ def load_converter_om_costs(
         fixed_converter_cost = build_costs[category].get("fixed_converter_cost", 0)
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Build costs YAML not found at {YAMLS_DIR / '10_project_category_build_costs.yaml'}"
+            f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
         )
 
     return fixed_converter_cost * om_rate
