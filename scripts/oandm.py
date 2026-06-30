@@ -27,7 +27,11 @@ from calculation_utils import build_category_string
 from path_config import YAMLS_DIR, PROJECT_ROOT
 from constants import CONSTRUCTION_TYPE_OVERHEAD
 
-# Converter O&M uses canonical repo YAMLs (rates + station CAPEX), not scenario temp inputs.
+# Methodology constants (O&M rates, build cost reference data) are read from the canonical
+# repo YAML directory, not the per-scenario temp directory. These are reference data that
+# do not vary between scenarios — rates (0.5%, 0.7%, 0.15%, 0.4%, 2.5%, $15,636/mi) and
+# build cost tables used to compute line CAPEX for the % of CAPEX O&M formula.
+# Per-scenario user inputs (terrain miles, project details, etc.) still come from YAMLS_DIR.
 STATIC_YAMLS_DIR = PROJECT_ROOT / "yamls"
 
 
