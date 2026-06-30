@@ -1,82 +1,85 @@
 # Project Right-of-Way Details
 # ROW acquisition and management costs
-# ALL FROM BLM: https://www.blm.gov/sites/default/files/policies/IM2021-005_att2.pdf
+# BLM Per-Acre Linear Rent Schedule for Calendar Years 2026-2035.
+# Acquisition values: per-acre zone values (unchanged from 2016-2025).
+# Rent values: CY 2026 column, 2.6% IPD-GDP annual adjustment.
+# Source: https://www.blm.gov/sites/default/files/docs/2026-05/Per_Acre_Linear_Rent_Schedule_for_Calendar_Years_2026-2035.pdf
+# NOTE: These defaults apply to federal (BLM) lands only. Private-land projects should override with site-specific values.
 # All values: miles (>= 0), costs (>= 0)
 
 right_of_way:
   zone_1:
     miles: 0
     acquisition_cost: 299 #$/acre
-    rent_cost: 9.70 #$/acre * year
-    hold_cost: .97 #$/acre (default .1 of rent cost per year during holding(permitting) period  )
+    rent_cost: 8.08 #$/acre * year (CY 2026, BLM 2026-2035 schedule)
+    hold_cost: 0.81 #$/acre (default .1 of rent cost)
   zone_2:
     miles: 0
     acquisition_cost: 579 #$/acre
-    rent_cost: 18.78 #$/acre * year
-    hold_cost: 1.878 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 15.65 #$/acre * year (CY 2026)
+    hold_cost: 1.57 #$/acre (default .1 of rent cost)
   zone_3:
     miles: 0
     acquisition_cost: 1132 #$/acre
-    rent_cost: 36.72 #$/acre * year
-    hold_cost: 3.67 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 30.60 #$/acre * year (CY 2026)
+    hold_cost: 3.06 #$/acre (default .1 of rent cost)
   zone_4:
     miles: 0
     acquisition_cost: 1706 #$/acre
-    rent_cost: 55.34 #$/acre * year
-    hold_cost: 5.53 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 46.12 #$/acre * year (CY 2026)
+    hold_cost: 4.61 #$/acre (default .1 of rent cost)
   zone_5:
     miles: 0
     acquisition_cost: 2350 #$/acre
-    rent_cost: 76.23 #$/acre * year
-    hold_cost: 7.62 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 63.53 #$/acre * year (CY 2026)
+    hold_cost: 6.35 #$/acre (default .1 of rent cost)
   zone_6:
     miles: 0
     acquisition_cost: 3394 #$/acre
-    rent_cost: 110.09 #$/acre * year
-    hold_cost: 11.00 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 91.76 #$/acre * year (CY 2026)
+    hold_cost: 9.18 #$/acre (default .1 of rent cost)
   zone_7:
     miles: 0
     acquisition_cost: 4746 #$/acre
-    rent_cost: 153.94 #$/acre * year
-    hold_cost: 15.39 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 128.31 #$/acre * year (CY 2026)
+    hold_cost: 12.83 #$/acre (default .1 of rent cost)
   zone_8:
     miles: 0
     acquisition_cost: 6583 #$/acre
-    rent_cost: 213.53 #$/acre * year
-    hold_cost: 21.35 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 177.97 #$/acre * year (CY 2026)
+    hold_cost: 17.80 #$/acre (default .1 of rent cost)
   zone_9:
     miles: 0
-    acquisition_cost: 16297 #$/acre
-    rent_cost: 528.04 #$/acre * year
-    hold_cost: 52.80 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    acquisition_cost: 16279 #$/acre (corrected from 16297 transcription error)
+    rent_cost: 440.10 #$/acre * year (CY 2026)
+    hold_cost: 44.01 #$/acre (default .1 of rent cost)
   zone_10:
     miles: 0
     acquisition_cost: 50000 #$/acre
-    rent_cost: 1621.84 #$/acre * year
-    hold_cost: 162.18 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 1351.76 #$/acre * year (CY 2026)
+    hold_cost: 135.18 #$/acre (default .1 of rent cost)
   zone_11:
     miles: 0
     acquisition_cost: 100000 #$/acre
-    rent_cost: 3243.68 #$/acre * year
-    hold_cost: 324.36 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 2703.51 #$/acre * year (CY 2026)
+    hold_cost: 270.35 #$/acre (default .1 of rent cost)
   zone_12:
     miles: 0
     acquisition_cost: 250000 #$/acre
-    rent_cost: 8109.20 #$/acre * year
-    hold_cost: 810.92 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 6758.78 #$/acre * year (CY 2026)
+    hold_cost: 675.88 #$/acre (default .1 of rent cost)
   zone_13:
     miles: 0
     acquisition_cost: 500000 #$/acre
-    rent_cost: 16218.40 #$/acre * year
-    hold_cost: 1621.84 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 13517.55 #$/acre * year (CY 2026)
+    hold_cost: 1351.76 #$/acre (default .1 of rent cost)
   zone_14:
     miles: 0
     acquisition_cost: 750000 #$/acre
-    rent_cost: 24327.60 #$/acre * year
-    hold_cost: 2432.76 #$/acre (default .1 of rent cost per year during holding(permitting) period)
+    rent_cost: 20276.33 #$/acre * year (CY 2026)
+    hold_cost: 2027.63 #$/acre (default .1 of rent cost)
   zone_15:
     miles: 0
     acquisition_cost: 1000000 #$/acre
-    rent_cost: 32436.80 #$/acre * year
-    hold_cost: 3243.68 #$/acre (default .1 of rent cost per year during holding(permitting) period)
-
+    rent_cost: 27035.10 #$/acre * year (CY 2026)
+    hold_cost: 2703.51 #$/acre (default .1 of rent cost)
