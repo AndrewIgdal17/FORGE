@@ -244,22 +244,25 @@
   }
 
   function hasRequiredFields() {
-    if (!document.getElementById('demo-form')) return false;
+    if (!document.getElementById('demo-form')) { console.log('[HRF] no demo-form'); return false; }
     const q = s => document.querySelector('[data-path="' + s + '"]');
     const constructionType = q('01_project_technical_details.project.construction_type');
     const acDc = q('01_project_technical_details.project.ac_dc');
     const capacityMw = q('01_project_technical_details.project.capacity_mw');
     const conductorType = q('01_project_technical_details.project.conductor_type');
-    if (!constructionType?.value || !acDc?.value || !capacityMw?.value || !conductorType?.value) return false;
+    if (!constructionType?.value || !acDc?.value || !capacityMw?.value || !conductorType?.value) {
+      console.log('[HRF] missing core field:', { ct: constructionType?.value, ac: acDc?.value, cap: capacityMw?.value, cond: conductorType?.value });
+      return false;
+    }
     if (acDc.value === 'DC') {
       const converterType = q('01_project_technical_details.project.converter_type');
-      if (!converterType?.value) return false;
+      if (!converterType?.value) { console.log('[HRF] missing converter'); return false; }
     }
     if (constructionType.value === 'Reconductoring') {
       const oldAcDc = q('01_project_technical_details.project.old_ac_dc');
       const oldCapacity = q('01_project_technical_details.project.old_capacity_mw');
       const oldConductor = q('01_project_technical_details.project.old_conductor_type');
-      if (!oldAcDc?.value || !oldCapacity?.value || !oldConductor?.value) return false;
+      if (!oldAcDc?.value || !oldCapacity?.value || !oldConductor?.value) { console.log('[HRF] missing old-line field'); return false; }
     }
     const terrainInputs = document.querySelectorAll('[data-path*="terrain_miles"]');
     let hasAnyMiles = false;
@@ -267,9 +270,10 @@
       const val = parseFloat(input.value.replace(/,/g, ''));
       if (!isNaN(val) && val > 0) hasAnyMiles = true;
     });
-    if (!hasAnyMiles) return false;
+    if (!hasAnyMiles) { console.log('[HRF] no terrain miles > 0, inputs found:', terrainInputs.length); return false; }
     if (typeof calculateTerrainMilesTotal === 'function' && typeof calculateROWMilesTotal === 'function') {
-      if (Math.abs(calculateTerrainMilesTotal() - calculateROWMilesTotal()) >= 0.01) return false;
+      var tT = calculateTerrainMilesTotal(), rT = calculateROWMilesTotal();
+      if (Math.abs(tT - rT) >= 0.01) { console.log('[HRF] terrain/ROW mismatch:', tT, 'vs', rT); return false; }
     }
     return true;
   }

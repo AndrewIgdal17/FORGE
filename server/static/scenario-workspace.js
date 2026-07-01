@@ -36,7 +36,9 @@ function setActiveScenario(scenario) {
   renderCompareSelector();
   if (!scenario.results) {
     setTimeout(function() {
-      if (hasRequiredFields()) autoCalculate();
+      var ok = hasRequiredFields();
+      console.log('[WIZARD-CALC] hasRequiredFields =', ok);
+      if (ok) { console.log('[WIZARD-CALC] calling autoCalculate'); autoCalculate(); }
     }, 50);
   }
 }
