@@ -104,6 +104,8 @@ function _highlightStep(step) {
   document.querySelectorAll('.tour-highlighted').forEach(function(el) { el.classList.remove('tour-highlighted'); });
   var target = document.querySelector(step.target);
   if (!target) { nextTourStep(); return; }
+  var parentSection = target.closest('.sidebar-section');
+  if (parentSection) parentSection.classList.add('open');
   target.classList.add('tour-highlighted');
   target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
