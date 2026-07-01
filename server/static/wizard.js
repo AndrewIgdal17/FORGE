@@ -60,7 +60,10 @@
       oldConverterType: '',
       terrainMiles,
       rowZoneMiles,
-      visibleZones: 5
+      visibleZones: 5,
+      constructionYears: 3,
+      delayYears: 0,
+      projectLifetime: 40
     };
   }
 
@@ -83,6 +86,9 @@
       case 1:
         if (!state.constructionType || !state.acDc || !state.capacityMw || !state.conductorType) return false;
         if (state.acDc === 'DC' && !state.converterType) return false;
+        if (!state.constructionYears || state.constructionYears < 1) return false;
+        if (state.delayYears == null || state.delayYears < 0) return false;
+        if (!state.projectLifetime || state.projectLifetime < 1) return false;
         return true;
       case 2:
         if (state.projectType === 'reconductoring') {
@@ -279,6 +285,50 @@
       convField.appendChild(convGroup);
       content.appendChild(convField);
     }
+
+    const cyField = el('div', 'wizard-field');
+    cyField.appendChild(el('label', null, 'Construction years'));
+    const cyInput = el('input', 'wizard-input');
+    cyInput.type = 'number';
+    cyInput.min = '1';
+    cyInput.step = '1';
+    cyInput.value = state.constructionYears;
+    cyInput.addEventListener('input', () => {
+      state.constructionYears = parseInt(cyInput.value, 10) || 0;
+      updateNavButtons();
+    });
+    cyField.appendChild(cyInput);
+    content.appendChild(cyField);
+
+    const dyField = el('div', 'wizard-field');
+    dyField.appendChild(el('label', null, 'Delay years'));
+    const dyInput = el('input', 'wizard-input');
+    dyInput.type = 'number';
+    dyInput.min = '0';
+    dyInput.step = '1';
+    dyInput.value = state.delayYears;
+    dyInput.addEventListener('input', () => {
+      state.delayYears = parseInt(dyInput.value, 10);
+      if (isNaN(state.delayYears) || state.delayYears < 0) state.delayYears = 0;
+      updateNavButtons();
+    });
+    dyField.appendChild(dyInput);
+    content.appendChild(dyField);
+
+    const plField = el('div', 'wizard-field');
+    plField.appendChild(el('label', null, 'Project lifetime'));
+    const plInput = el('input', 'wizard-input');
+    plInput.type = 'number';
+    plInput.min = '1';
+    plInput.step = '1';
+    plInput.value = state.projectLifetime;
+    plInput.addEventListener('input', () => {
+      state.projectLifetime = parseInt(plInput.value, 10) || 0;
+      updateNavButtons();
+    });
+    plField.appendChild(plInput);
+    plField.appendChild(el('p', 'wizard-hint', 'Operating years after commercial operation date.'));
+    content.appendChild(plField);
   }
 
   function renderOldLineScreen(content) {
@@ -545,6 +595,9 @@
       state.acDc === 'AC' ? 'NA' : state.converterType);
     set(full, '01_project_technical_details.project.reconductoring',
       state.projectType === 'reconductoring');
+    set(full, '01_project_technical_details.timeline.construction_years', state.constructionYears);
+    set(full, '01_project_technical_details.timeline.delay_years', state.delayYears);
+    set(full, '01_project_technical_details.timeline.project_lifetime', state.projectLifetime);
 
     if (state.projectType === 'reconductoring') {
       set(full, '01_project_technical_details.project.old_ac_dc', state.oldAcDc);
