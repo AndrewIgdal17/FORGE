@@ -3702,10 +3702,12 @@
 .wizard-overlay {
   position: fixed; inset: 0; z-index: 9000;
   background: #f8f9fa;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto;
 }
 .wizard-container {
   max-width: 700px; width: 100%; padding: 3rem 2rem; position: relative;
+  margin: auto 0;
 }
 .wizard-close {
   position: absolute; top: 1rem; right: 1rem;
