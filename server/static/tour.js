@@ -8,6 +8,7 @@ var _overlayEl = null;
 var _bubbleEl = null;
 var _onComplete = null;
 var _mode = null;
+var _userClickHandler = null;
 
 function startTour(steps, mode, onComplete) {
   _steps = steps;
@@ -29,6 +30,7 @@ function resumeTour(steps, mode, stepIndex) {
 
 function endTour() {
   _removeOverlay();
+  _clearUserClick();
   _steps = [];
   _currentStepIdx = -1;
   _mode = null;
@@ -37,6 +39,7 @@ function endTour() {
 }
 
 function nextTourStep() {
+  _clearUserClick();
   _currentStepIdx++;
   if (_currentStepIdx >= _steps.length) { endTour(); return; }
   _persistState();
@@ -47,6 +50,7 @@ function nextTourStep() {
 }
 
 function prevTourStep() {
+  _clearUserClick();
   if (_currentStepIdx > 0) {
     _currentStepIdx--;
     _persistState();
@@ -74,6 +78,8 @@ function _executeAction(step, callback) {
     var el = document.querySelector(action.target);
     if (el) el.click();
     setTimeout(callback, action.delay || 300);
+  } else if (action.type === 'userClick') {
+    callback();
   } else if (action.type === 'navigate') {
     _persistState();
     window.location.href = action.url;
@@ -81,6 +87,27 @@ function _executeAction(step, callback) {
     setTimeout(callback, action.ms || 500);
   } else {
     callback();
+  }
+}
+
+function _startUserClick(step) {
+  _clearUserClick();
+  var actionTarget = step.action && step.action.target ? step.action.target : step.target;
+  var el = document.querySelector(actionTarget);
+  if (!el) return;
+  var handler = function() {
+    el.removeEventListener('click', handler);
+    _userClickHandler = null;
+    setTimeout(nextTourStep, step.action.delay || 400);
+  };
+  el.addEventListener('click', handler);
+  _userClickHandler = { target: el, handler: handler };
+}
+
+function _clearUserClick() {
+  if (_userClickHandler) {
+    _userClickHandler.target.removeEventListener('click', _userClickHandler.handler);
+    _userClickHandler = null;
   }
 }
 
@@ -129,12 +156,18 @@ function _highlightStep(step) {
         '</div>';
       if (step.body) html += '<div class="tour-bubble-body">' + step.body + '</div>';
       if (step.tip) html += '<div class="tour-bubble-tip">\uD83D\uDCA1 ' + step.tip + '</div>';
+      var isUserClick = step.action && step.action.type === 'userClick';
       html += '<div class="tour-bubble-nav">' +
         '<button type="button" class="tour-btn-skip" onclick="endTour()">Skip tour</button>' +
         '<div class="tour-bubble-buttons">' +
           (_currentStepIdx > 0 ? '<button type="button" class="tour-btn-back" onclick="prevTourStep()">\u2190 Back</button>' : '') +
-          '<button type="button" class="tour-btn-next" onclick="nextTourStep()">Next \u2192</button>' +
+          '<button type="button" class="tour-btn-next" onclick="nextTourStep()"' +
+            (isUserClick ? ' disabled style="opacity:0.4;cursor:not-allowed;"' : '') +
+          '>Next \u2192</button>' +
         '</div></div>';
+      if (isUserClick) {
+        setTimeout(function() { _startUserClick(step); }, 0);
+      }
 
       _bubbleEl.innerHTML = html;
 

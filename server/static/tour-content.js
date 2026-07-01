@@ -73,9 +73,9 @@ var TOUR_STEPS = (function () {
     {
       target: '.pill-tab[data-scenario-tab="compare"]',
       title: 'Compare Tab',
-      body: 'Switch to the Compare tab to see how your scenarios stack up against each other.',
+      body: 'Click the <strong>Compare</strong> tab to see how your scenarios stack up against each other.',
       position: 'bottom',
-      action: { type: 'click', target: '.pill-tab[data-scenario-tab="compare"]' }
+      action: { type: 'userClick', target: '.pill-tab[data-scenario-tab="compare"]' }
     },
     {
       target: '#compare-scenario-selector',
@@ -265,9 +265,9 @@ var TOUR_STEPS = (function () {
       {
         target: '.view-toggle-btn[data-view="results"]',
         title: 'Switch to Results',
-        body: 'Now let\u2019s see what your inputs produce. Click Results to view your cost-benefit analysis.',
+        body: 'Now let\u2019s see what your inputs produce. Click <strong>Results</strong> above to continue.',
         position: 'bottom',
-        action: { type: 'click', target: '.view-toggle-btn[data-view="results"]' }
+        action: { type: 'userClick', target: '.view-toggle-btn[data-view="results"]' }
       },
 
       // ── Results (steps 15–22) ──
@@ -286,8 +286,9 @@ var TOUR_STEPS = (function () {
       {
         target: '.sidebar-subitem[data-sub-item-id="r-bcr"]',
         title: 'BCR Analysis',
-        body: 'Switch here for detailed benefit-cost ratio analysis with societal, ratepayer, and custom perspectives.',
-        position: 'right'
+        body: 'Click <strong>BCR Analysis</strong> in the sidebar to see detailed benefit-cost ratio analysis.',
+        position: 'right',
+        action: { type: 'userClick', target: '.sidebar-subitem[data-sub-item-id="r-bcr"]' }
       },
       {
         target: '.sidebar-section[data-section-id="r-costs"] .sidebar-section-header',
