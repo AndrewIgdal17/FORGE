@@ -73,6 +73,7 @@ var SIDEBAR_SECTIONS = {
     },
     { id: 'r-costs', label: 'Costs', color: '#ef4444',
       subItems: [
+        { id: 'r-costs-overview', label: 'Overview' },
         { id: 'r-capital', label: 'Capital' },
         { id: 'r-operational', label: 'Operational' },
         { id: 'r-risk-costs', label: 'Risk Costs' },
@@ -81,6 +82,7 @@ var SIDEBAR_SECTIONS = {
     },
     { id: 'r-benefits', label: 'Benefits', color: '#3b82f6',
       subItems: [
+        { id: 'r-benefits-overview', label: 'Overview' },
         { id: 'r-congestion', label: 'Congestion' },
         { id: 'r-curtailment', label: 'Curtailment' },
         { id: 'r-loss-comp', label: 'Loss Compensation' },
