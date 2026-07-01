@@ -3746,8 +3746,9 @@
 .wizard-btn-back { background: #fff; color: #374151; border: 1px solid #d1d5db; }
 .wizard-btn-next { background: #2563eb; color: #fff; }
 .wizard-btn-next:disabled { background: #93c5fd; cursor: not-allowed; }
-.wizard-route-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-.wizard-route-grid h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.75rem; }
+.wizard-route-stack { max-width: 420px; }
+.wizard-route-stack h3 { font-size: 1rem; font-weight: 600; margin: 0 0 0.75rem; }
+.wizard-row-heading { margin-top: 2rem !important; }
 .wizard-table { width: 100%; border-collapse: collapse; }
 .wizard-table th, .wizard-table td {
   padding: 0.4rem 0.5rem; text-align: left;
@@ -3757,9 +3758,14 @@
   width: 80px; padding: 0.35rem 0.5rem;
   border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; text-align: right;
 }
-@media (max-width: 768px) {
-  .wizard-route-grid { grid-template-columns: 1fr; }
+.wizard-total-row td { font-weight: 700; border-bottom: none; }
+.wizard-hint-warn { color: #f59e0b; }
+.wizard-add-zone-btn {
+  display: inline-block; margin-top: 0.5rem;
+  font-size: 0.85rem; color: #2563eb; cursor: pointer;
+  background: none; border: none; padding: 0; font-weight: 500;
 }
+.wizard-add-zone-btn:hover { text-decoration: underline; }
 
 /* Tour overlay */
 .tour-overlay {

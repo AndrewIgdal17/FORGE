@@ -36,7 +36,7 @@
     { key: 'subsea', label: 'Subsea' }
   ];
 
-  const ROW_ZONES = [1, 2, 3, 4, 5, 6];
+  const ROW_ZONES = Array.from({length: 15}, (_, i) => i + 1);
 
   let state = createInitialState();
 
@@ -59,7 +59,8 @@
       oldConductorType: '',
       oldConverterType: '',
       terrainMiles,
-      rowZoneMiles
+      rowZoneMiles,
+      visibleZones: 5
     };
   }
 
@@ -89,9 +90,9 @@
           if (state.oldAcDc === 'DC' && !state.oldConverterType) return false;
           return true;
         }
-        return hasTerrainMiles();
+        return hasTerrainMiles() && hasRowZoneMiles() && terrainTotal() === rowZoneTotal();
       default:
-        return hasTerrainMiles();
+        return hasTerrainMiles() && hasRowZoneMiles() && terrainTotal() === rowZoneTotal();
     }
   }
 
@@ -100,11 +101,22 @@
   }
 
   function terrainTotal() {
-    return TERRAINS.reduce((sum, t) => sum + (state.terrainMiles[t.key] || 0), 0);
+    return getVisibleTerrains().reduce((sum, t) => sum + (state.terrainMiles[t.key] || 0), 0);
   }
 
   function rowZoneTotal() {
     return ROW_ZONES.reduce((sum, z) => sum + (state.rowZoneMiles[z] || 0), 0);
+  }
+
+  function getVisibleTerrains() {
+    if (state.constructionType === 'Subsea') {
+      return TERRAINS.filter(t => t.key === 'subsea');
+    }
+    return TERRAINS.filter(t => t.key !== 'subsea');
+  }
+
+  function hasRowZoneMiles() {
+    return ROW_ZONES.some(z => (state.rowZoneMiles[z] || 0) > 0);
   }
 
   function el(tag, className, text) {
@@ -327,96 +339,137 @@
   function renderRouteScreen(content) {
     content.appendChild(el('h2', null, 'Define your route'));
 
-    const grid = el('div', 'wizard-route-grid');
+    // Zero hidden terrain values when construction type changes
+    TERRAINS.forEach(t => {
+      var visible = getVisibleTerrains().some(vt => vt.key === t.key);
+      if (!visible) state.terrainMiles[t.key] = 0;
+    });
 
-    const terrainCol = el('div');
-    terrainCol.appendChild(el('h3', null, 'Terrain miles'));
-    const terrainTable = el('table', 'wizard-table');
-    const terrainThead = document.createElement('thead');
-    const terrainHeadRow = document.createElement('tr');
+    var wrapper = el('div', 'wizard-route-stack');
+
+    // ── Terrain section ──
+    wrapper.appendChild(el('h3', null, 'Terrain miles'));
+    var terrainTable = el('table', 'wizard-table');
+    var terrainThead = document.createElement('thead');
+    var terrainHeadRow = document.createElement('tr');
     terrainHeadRow.appendChild(el('th', null, 'Terrain'));
     terrainHeadRow.appendChild(el('th', null, 'Miles'));
     terrainThead.appendChild(terrainHeadRow);
     terrainTable.appendChild(terrainThead);
-    const terrainTbody = document.createElement('tbody');
-    const totalRow = document.createElement('tr');
-    const totalLabelTd = el('td', null, 'Total');
-    const totalValueTd = el('td', null, '0 mi');
-    totalValueTd.id = 'wizard-terrain-total';
 
-    TERRAINS.forEach(t => {
-      const row = document.createElement('tr');
+    var terrainTbody = document.createElement('tbody');
+    var terrainTotalTd = el('td', null, '0 mi');
+    terrainTotalTd.id = 'wizard-terrain-total';
+    var rowTotalTd = el('td', null, '0 miles');
+    rowTotalTd.id = 'wizard-row-total';
+    var mismatchHint = el('p', 'wizard-hint wizard-hint-warn');
+    mismatchHint.id = 'wizard-mismatch-hint';
+    mismatchHint.style.display = 'none';
+
+    function updateTotalsAndHint() {
+      var tTotal = terrainTotal();
+      var rTotal = rowZoneTotal();
+      terrainTotalTd.textContent = tTotal.toFixed(2).replace(/\.?0+$/, '') + ' mi';
+      rowTotalTd.textContent = rTotal.toFixed(2).replace(/\.?0+$/, '') + ' miles';
+      if (tTotal > 0 && rTotal > 0 && tTotal !== rTotal) {
+        mismatchHint.textContent = 'Terrain miles (' + tTotal + ') and ROW miles (' + rTotal + ') must match.';
+        mismatchHint.style.display = '';
+      } else {
+        mismatchHint.style.display = 'none';
+      }
+      updateNavButtons();
+    }
+
+    getVisibleTerrains().forEach(function(t) {
+      var row = document.createElement('tr');
       row.appendChild(el('td', null, t.label));
-      const td = document.createElement('td');
-      const input = document.createElement('input');
+      var td = document.createElement('td');
+      var input = document.createElement('input');
       input.type = 'number';
       input.min = '0';
       input.step = 'any';
       input.value = state.terrainMiles[t.key] || 0;
-      input.addEventListener('input', () => {
-        const val = parseFloat(input.value);
+      input.addEventListener('input', function() {
+        var val = parseFloat(input.value);
         state.terrainMiles[t.key] = isNaN(val) ? 0 : Math.max(0, val);
-        totalValueTd.textContent = terrainTotal().toFixed(2).replace(/\.?0+$/, '') + ' mi';
-        updateNavButtons();
+        updateTotalsAndHint();
       });
       td.appendChild(input);
       row.appendChild(td);
       terrainTbody.appendChild(row);
     });
 
-    totalRow.appendChild(totalLabelTd);
-    totalRow.appendChild(totalValueTd);
-    terrainTbody.appendChild(totalRow);
+    var terrainTotalRow = document.createElement('tr');
+    terrainTotalRow.className = 'wizard-total-row';
+    terrainTotalRow.appendChild(el('td', null, 'Total'));
+    terrainTotalRow.appendChild(terrainTotalTd);
+    terrainTbody.appendChild(terrainTotalRow);
     terrainTable.appendChild(terrainTbody);
-    terrainCol.appendChild(terrainTable);
-    grid.appendChild(terrainCol);
+    wrapper.appendChild(terrainTable);
 
-    const rowCol = el('div');
-    rowCol.appendChild(el('h3', null, 'ROW zones'));
-    const rowTable = el('table', 'wizard-table');
-    const rowThead = document.createElement('thead');
-    const rowHeadRow = document.createElement('tr');
+    // ── ROW zones section ──
+    wrapper.appendChild(el('h3', 'wizard-row-heading', 'ROW zones'));
+    var rowTable = el('table', 'wizard-table');
+    var rowThead = document.createElement('thead');
+    var rowHeadRow = document.createElement('tr');
     rowHeadRow.appendChild(el('th', null, 'Zone'));
     rowHeadRow.appendChild(el('th', null, 'Miles'));
     rowThead.appendChild(rowHeadRow);
     rowTable.appendChild(rowThead);
-    const rowTbody = document.createElement('tbody');
-    const rowTotalRow = document.createElement('tr');
-    const rowTotalLabelTd = el('td', null, 'Total');
-    const rowTotalValueTd = el('td', null, '0 miles');
-    rowTotalValueTd.id = 'wizard-row-total';
 
-    ROW_ZONES.forEach(z => {
-      const row = document.createElement('tr');
+    var rowTbody = document.createElement('tbody');
+
+    for (var z = 1; z <= 15; z++) {
+      var row = document.createElement('tr');
+      if (z > state.visibleZones) row.style.display = 'none';
+      row.dataset.wizardZone = z;
       row.appendChild(el('td', null, 'Zone ' + z));
-      const td = document.createElement('td');
-      const input = document.createElement('input');
+      var td = document.createElement('td');
+      var input = document.createElement('input');
       input.type = 'number';
       input.min = '0';
       input.step = 'any';
       input.value = state.rowZoneMiles[z] || 0;
-      input.addEventListener('input', () => {
-        const val = parseFloat(input.value);
-        state.rowZoneMiles[z] = isNaN(val) ? 0 : Math.max(0, val);
-        rowTotalValueTd.textContent = rowZoneTotal().toFixed(2).replace(/\.?0+$/, '') + ' miles';
-      });
+      input.addEventListener('input', (function(zone) {
+        return function() {
+          var val = parseFloat(this.value);
+          state.rowZoneMiles[zone] = isNaN(val) ? 0 : Math.max(0, val);
+          updateTotalsAndHint();
+        };
+      })(z));
       td.appendChild(input);
       row.appendChild(td);
       rowTbody.appendChild(row);
-    });
+    }
 
-    rowTotalRow.appendChild(rowTotalLabelTd);
-    rowTotalRow.appendChild(rowTotalValueTd);
+    var rowTotalRow = document.createElement('tr');
+    rowTotalRow.className = 'wizard-total-row';
+    rowTotalRow.appendChild(el('td', null, 'Total'));
+    rowTotalRow.appendChild(rowTotalTd);
     rowTbody.appendChild(rowTotalRow);
     rowTable.appendChild(rowTbody);
-    rowCol.appendChild(rowTable);
-    grid.appendChild(rowCol);
+    wrapper.appendChild(rowTable);
 
-    content.appendChild(grid);
-    content.appendChild(el('p', 'wizard-hint', 'At least one terrain must have miles greater than 0.'));
+    // ── Add Zone button ──
+    if (state.visibleZones < 15) {
+      var addBtn = el('button', 'wizard-add-zone-btn', '+ Add Zone');
+      addBtn.type = 'button';
+      addBtn.addEventListener('click', function() {
+        state.visibleZones = Math.min(state.visibleZones + 1, 15);
+        var nextRow = rowTbody.querySelector('[data-wizard-zone="' + state.visibleZones + '"]');
+        if (nextRow) nextRow.style.display = '';
+        if (state.visibleZones >= 15) addBtn.style.display = 'none';
+      });
+      wrapper.appendChild(addBtn);
+    }
 
-    totalValueTd.textContent = terrainTotal().toFixed(2).replace(/\.?0+$/, '') + ' mi';
-    rowTotalValueTd.textContent = rowZoneTotal().toFixed(2).replace(/\.?0+$/, '') + ' miles';
+    // ── Mismatch hint ──
+    wrapper.appendChild(mismatchHint);
+
+    content.appendChild(wrapper);
+
+    // Initialize totals display
+    updateTotalsAndHint();
   }
 
   function renderWizard() {
