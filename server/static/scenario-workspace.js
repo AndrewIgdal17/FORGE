@@ -34,8 +34,10 @@ function setActiveScenario(scenario) {
   }
   renderScenarioList();
   renderCompareSelector();
-  if (!scenario.results && hasRequiredFields()) {
-    autoCalculate();
+  if (!scenario.results) {
+    setTimeout(function() {
+      if (hasRequiredFields()) autoCalculate();
+    }, 50);
   }
 }
 
