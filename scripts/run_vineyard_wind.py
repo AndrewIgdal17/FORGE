@@ -1,7 +1,7 @@
 """Run Vineyard Wind 1 CTCC scenarios: 6-year delay (actual) and 2-year delay (counterfactual).
 
-Loads S9 as template, patches with VW1-specific inputs from the subsea case study
-research document, runs both scenarios, and saves results.
+Builds inputs from canonical YAML defaults, patches with VW1-specific inputs from the subsea
+case study research document, runs both scenarios, and saves results.
 
 Vineyard Wind 1: 800 MW HVAC subsea export cable, Barnstable MA.
 Modeled at 657 MW (closest CTCC AC tier) with utilization adjusted to preserve throughput.
@@ -9,7 +9,6 @@ Construction type: Subsea. AC. Zero wildfire. Dual parallel cables (capacity_at_
 """
 
 import copy
-import json
 import sys
 from pathlib import Path
 
@@ -17,13 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
-
-
-def load_s9_template() -> dict:
-    s9_path = REPO_ROOT / "scenarios" / "S9 Wind HVDC Standard.ctcc"
-    with open(s9_path) as f:
-        return json.load(f)
+from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
 
 
 def patch_vineyard_wind_inputs(inputs: dict) -> dict:
@@ -162,43 +155,6 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     return inputs
 
 
-def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    return run_calculation(
-        combined_data=inputs,
-        scenario_id=scenario_id,
-        quiet=True,
-    )
-
-
-def save_ctcc_file(inputs: dict, results: dict, name: str, scenario_id: str):
-    from datetime import datetime
-
-    ctcc = {
-        "version": "1.0",
-        "customName": name,
-        "inputs": inputs,
-        "results": results,
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "scenario_id": scenario_id,
-            "source": "vineyard_wind_case_study",
-        },
-    }
-    out_path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
-    with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
-
-
-def fmt(val, prefix="$"):
-    if abs(val) >= 1e9:
-        return f"{prefix}{val/1e9:.2f}B"
-    elif abs(val) >= 1e6:
-        return f"{prefix}{val/1e6:.1f}M"
-    else:
-        return f"{prefix}{val:,.0f}"
-
-
 def print_results(results: dict, label: str):
     print(f"\n{'='*60}")
     print(f"  {label}")
@@ -277,12 +233,12 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    print("Loading S9 template...")
-    template = load_s9_template()
+    print("Loading YAML defaults...")
+    defaults = build_default_inputs()
 
     # --- Scenario 1: VW1 with 6-year delay (actual BOEM permitting) ---
     print("\nBuilding VW1 (6-year delay) scenario...")
-    inputs_delay6 = patch_vineyard_wind_inputs(copy.deepcopy(template["inputs"]))
+    inputs_delay6 = patch_vineyard_wind_inputs(copy.deepcopy(defaults))
 
     print("Running calculation (delay=6)...")
     results_delay6 = run_scenario(inputs_delay6, "VW1_Delay6")
@@ -299,8 +255,8 @@ def main():
 
     # --- Save .ctcc files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_delay6, results_delay6, "VW1_Delay6", "VW1_Delay6")
-    save_ctcc_file(inputs_delay2, results_delay2, "VW1_Delay2", "VW1_Delay2")
+    save_ctcc_file(inputs_delay6, results_delay6, "VW1_Delay6", "VW1_Delay6", source="vineyard_wind_case_study")
+    save_ctcc_file(inputs_delay2, results_delay2, "VW1_Delay2", "VW1_Delay2", source="vineyard_wind_case_study")
 
     # --- Comparison ---
     bcr6 = results_delay6["bcr"]
