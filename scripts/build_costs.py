@@ -160,6 +160,16 @@ def load_costs(
         + converter_cost_with_contingencies
     )
 
+    soft_cost_multiplier = data.get("soft_cost_multiplier", 0.0)
+    conductor_cost_with_contingencies *= (1 + soft_cost_multiplier)
+    structure_cost_with_contingencies *= (1 + soft_cost_multiplier)
+    converter_cost_with_contingencies *= (1 + soft_cost_multiplier)
+    total_cost_with_contingencies = (
+        conductor_cost_with_contingencies
+        + structure_cost_with_contingencies
+        + converter_cost_with_contingencies
+    )
+
     return BuildCosts(
         total_cost=total_cost,
         total_cost_with_contingencies=total_cost_with_contingencies,

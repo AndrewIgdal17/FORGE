@@ -2,6 +2,8 @@
 # Construction costs for all 128 transmission project configurations
 # Based on comprehensive cost database with variable and fixed cost components
 
+soft_cost_multiplier: 0.10 # 10% adder on contingency-applied direct costs (PM, engineering, A&G). MISO MTEP25 Cost Estimation Guide; AACE 96R-18 owner's/indirect cost categories.
+
 project_categories_build_costs:
   # OVERHEAD AC CONFIGURATIONS (16 total)
 
