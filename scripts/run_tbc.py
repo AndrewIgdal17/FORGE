@@ -1,14 +1,13 @@
 """Run Trans Bay Cable CTCC scenarios: 4-year delay (actual) and 0-year delay (counterfactual).
 
-Loads S9 as template, patches with TBC-specific inputs from the research document
-(underground-project-data-research.md), runs both scenarios, and saves results.
+Builds inputs from canonical YAML defaults, patches with TBC-specific inputs from the
+research document (underground-project-data-research.md), runs both scenarios, and saves results.
 
 Trans Bay Cable: 53-mile, 400 MW (modeled as 500 MW), ±200 kV HVDC submarine cable
 under San Francisco Bay. Subsea construction type — first subsea CTCC case study.
 """
 
 import copy
-import json
 import sys
 from pathlib import Path
 
@@ -16,13 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
-
-
-def load_s9_template() -> dict:
-    s9_path = REPO_ROOT / "scenarios" / "S9 Wind HVDC Standard.ctcc"
-    with open(s9_path) as f:
-        return json.load(f)
+from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
 
 
 def patch_tbc_inputs(inputs: dict) -> dict:
@@ -172,46 +165,6 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     return inputs
 
 
-def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    """Run a single scenario and return results."""
-    return run_calculation(
-        combined_data=inputs,
-        scenario_id=scenario_id,
-        quiet=True,
-    )
-
-
-def save_ctcc_file(inputs: dict, results: dict, name: str, scenario_id: str):
-    """Save a complete .ctcc file with inputs, results, and metadata."""
-    from datetime import datetime
-
-    ctcc = {
-        "version": "1.0",
-        "customName": name,
-        "inputs": inputs,
-        "results": results,
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "scenario_id": scenario_id,
-            "source": "tbc_case_study",
-        },
-    }
-    out_path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
-    with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
-
-
-def fmt(val, prefix="$"):
-    """Format large numbers with B/M suffixes."""
-    if abs(val) >= 1e9:
-        return f"{prefix}{val/1e9:.2f}B"
-    elif abs(val) >= 1e6:
-        return f"{prefix}{val/1e6:.1f}M"
-    else:
-        return f"{prefix}{val:,.0f}"
-
-
 def print_results(results: dict, label: str):
     """Print key results for a scenario."""
     print(f"\n{'='*60}")
@@ -291,12 +244,12 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    print("Loading S9 template...")
-    template = load_s9_template()
+    print("Loading YAML defaults...")
+    defaults = build_default_inputs()
 
     # --- Scenario 1: TBC with 4-year delay (actual) ---
     print("\nBuilding Trans Bay Cable (4-year delay) scenario...")
-    inputs_delay4 = patch_tbc_inputs(copy.deepcopy(template["inputs"]))
+    inputs_delay4 = patch_tbc_inputs(copy.deepcopy(defaults))
 
     print("Running calculation (delay=4)...")
     results_delay4 = run_scenario(inputs_delay4, "TBC_Delay4")
@@ -313,8 +266,8 @@ def main():
 
     # --- Save .ctcc files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_delay4, results_delay4, "TBC_Delay4", "TBC_Delay4")
-    save_ctcc_file(inputs_nodelay, results_nodelay, "TBC_NoDelay", "TBC_NoDelay")
+    save_ctcc_file(inputs_delay4, results_delay4, "TBC_Delay4", "TBC_Delay4", source="tbc_case_study")
+    save_ctcc_file(inputs_nodelay, results_nodelay, "TBC_NoDelay", "TBC_NoDelay", source="tbc_case_study")
 
     # --- Comparison ---
     bcr4 = results_delay4["bcr"]
