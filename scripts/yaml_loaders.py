@@ -78,6 +78,8 @@ class CircuitAndResistanceDetails:
     number_of_circuits_poles: int
     AC_75_resistance: float
     DC_20_resistance: float
+    material: str
+    alpha_20: float
 
 
 @dataclass
@@ -302,6 +304,8 @@ def load_circuit_and_resistance_details(
             "number_of_circuits_poles",
             "AC_75_resistance",
             "DC_20_resistance",
+            "material",
+            "alpha_20",
         ]
         for key in required_keys:
             if key not in circuit_resistance_details[category]:
@@ -319,6 +323,8 @@ def load_circuit_and_resistance_details(
             ],
             AC_75_resistance=circuit_resistance_details[category]["AC_75_resistance"],
             DC_20_resistance=circuit_resistance_details[category]["DC_20_resistance"],
+            material=circuit_resistance_details[category]["material"],
+            alpha_20=circuit_resistance_details[category]["alpha_20"],
         )
     except FileNotFoundError:
         raise FileNotFoundError(

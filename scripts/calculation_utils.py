@@ -16,6 +16,9 @@ from constants import (
     CONVERTER_TYPE_NA,
 )
 
+DC_OPERATING_TEMP_C = 75
+DC_REFERENCE_TEMP_C = 20
+
 
 def to_percent(decimal: float) -> float:
     """
@@ -129,6 +132,7 @@ def calculate_line_losses(
     full_load_adj: float,
     AC_75_resistance: float,
     DC_20_resistance: float,
+    alpha_20: float,
     ac_dc: str,
     number_of_circuits_poles: int,
     conductors_per_phase: int,
@@ -146,6 +150,7 @@ def calculate_line_losses(
         full_load_adj: Full load adjustment factor
         AC_75_resistance: AC resistance at 75°C (ohms/mile)
         DC_20_resistance: DC resistance at 20°C (ohms/mile)
+        alpha_20: Temperature coefficient of resistance at 20°C (K⁻¹)
         ac_dc: "AC" or "DC" string
         number_of_circuits_poles: Number of circuits/poles
         conductors_per_phase: Number of conductors per phase
@@ -163,9 +168,12 @@ def calculate_line_losses(
     number_of_conductors = (
         conductors_per_phase * number_of_phases * number_of_circuits_poles
     )
-    resistance_per_mile = (
-        AC_75_resistance if ac_dc == TRANSMISSION_TYPE_AC else DC_20_resistance
-    )
+    if ac_dc == TRANSMISSION_TYPE_AC:
+        resistance_per_mile = AC_75_resistance
+    else:
+        resistance_per_mile = DC_20_resistance * (
+            1 + alpha_20 * (DC_OPERATING_TEMP_C - DC_REFERENCE_TEMP_C)
+        )
 
     losses_mw_per_mile = (
         ((phase_current / conductors_per_phase) ** 2)

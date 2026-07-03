@@ -105,6 +105,7 @@ def get_total_energy_losses() -> dict:
         number_of_circuits_poles = new_circuit.number_of_circuits_poles
         AC_75_resistance = new_circuit.AC_75_resistance
         DC_20_resistance = new_circuit.DC_20_resistance
+        alpha_20 = new_circuit.alpha_20
     else:
         # Greenfield: use new config's voltage
         circuit = load_circuit_and_resistance_details(new_category)
@@ -114,6 +115,7 @@ def get_total_energy_losses() -> dict:
         number_of_circuits_poles = circuit.number_of_circuits_poles
         AC_75_resistance = circuit.AC_75_resistance
         DC_20_resistance = circuit.DC_20_resistance
+        alpha_20 = circuit.alpha_20
 
     # Convert capacity_mw to numeric (handle both int and string with MW suffix)
     if isinstance(project_details.capacity_mw, str):
@@ -141,6 +143,7 @@ def get_total_energy_losses() -> dict:
         full_load_adj,
         AC_75_resistance,
         DC_20_resistance,
+        alpha_20,
         project_details.ac_dc,
         number_of_circuits_poles,
         conductors_per_phase,

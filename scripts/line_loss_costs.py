@@ -253,6 +253,7 @@ def calculate_configuration_losses(
         full_load_adj,
         circuit.AC_75_resistance,
         circuit.DC_20_resistance,
+        circuit.alpha_20,
         ac_dc,
         circuit.number_of_circuits_poles,
         circuit.conductors_per_phase,
