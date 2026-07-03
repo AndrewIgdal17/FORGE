@@ -4,8 +4,8 @@ This is the third LRGV scenario — the alternative AEP identified but rejected
 ("could not be built until sometime after 2020"). Greenfield 200-mile 345kV AC
 line through South Texas, requiring full new-corridor ROW acquisition.
 
-Loads AEP_LRGV_ACCC as template (same region/financial context), deep-copies,
-patches to greenfield new-build parameters, runs calculation, and saves results.
+Builds inputs from canonical YAML defaults, deep-copies, patches to greenfield
+new-build parameters, runs calculation, and saves results.
 """
 
 import copy
@@ -17,14 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
-
-
-def load_template() -> dict:
-    """Load AEP_LRGV_ACCC as the base template (same region, same financial context)."""
-    path = REPO_ROOT / "scenarios" / "AEP_LRGV_ACCC.ctcc"
-    with open(path) as f:
-        return json.load(f)
+from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
 
 
 def patch_laredo_newbuild(inputs: dict) -> dict:
@@ -179,43 +172,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     return inputs
 
 
-def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    return run_calculation(
-        combined_data=inputs,
-        scenario_id=scenario_id,
-        quiet=True,
-    )
-
-
-def save_ctcc_file(inputs: dict, results: dict, name: str, scenario_id: str):
-    from datetime import datetime
-
-    ctcc = {
-        "version": "1.0",
-        "customName": name,
-        "inputs": inputs,
-        "results": results,
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "scenario_id": scenario_id,
-            "source": "aep_lrgv_laredo_newbuild_case_study",
-        },
-    }
-    out_path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
-    with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
-
-
-def fmt(val, prefix="$"):
-    if abs(val) >= 1e9:
-        return f"{prefix}{val/1e9:.2f}B"
-    elif abs(val) >= 1e6:
-        return f"{prefix}{val/1e6:.1f}M"
-    else:
-        return f"{prefix}{val:,.0f}"
-
-
 def print_results(results: dict, label: str):
     print(f"\n{'='*60}")
     print(f"  {label}")
@@ -283,18 +239,18 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    print("Loading AEP_LRGV_ACCC template...")
-    template = load_template()
+    print("Loading YAML defaults...")
+    defaults = build_default_inputs()
 
     print("\nBuilding Laredo New-Build (7-year delay) scenario...")
-    inputs = patch_laredo_newbuild(copy.deepcopy(template["inputs"]))
+    inputs = patch_laredo_newbuild(copy.deepcopy(defaults))
 
     print("Running calculation...")
     results = run_scenario(inputs, "AEP_LRGV_Laredo_NewBuild")
     print_results(results, "AEP LRGV — Laredo New-Build 345kV AC (7yr delay)")
 
     print("\n\nSaving scenario file...")
-    save_ctcc_file(inputs, results, "AEP_LRGV_Laredo_NewBuild", "AEP_LRGV_Laredo_NewBuild")
+    save_ctcc_file(inputs, results, "AEP_LRGV_Laredo_NewBuild", "AEP_LRGV_Laredo_NewBuild", source="aep_lrgv_laredo_newbuild_case_study")
 
     # --- Comparison with existing LRGV scenarios ---
     print(f"\n{'='*60}")
