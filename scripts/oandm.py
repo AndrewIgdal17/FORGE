@@ -22,7 +22,7 @@ from yaml_loaders import (
     load_physical_details_detailed,
     load_circuit_and_resistance_details,
 )
-from financial_utils import calculate_present_value, calculate_cod_year
+from financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from calculation_utils import build_category_string
 from path_config import YAMLS_DIR, PROJECT_ROOT
 from constants import CONSTRUCTION_TYPE_OVERHEAD
@@ -477,6 +477,8 @@ def main() -> None:
         except (FileNotFoundError, KeyError, TypeError) as e:
             raise ValueError(f"Cannot load overhead base O&M rate: {e}")
 
+        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.0)
+
         base_om_per_year = base_om_per_mile_year * physical_details.total_miles
 
         # Vegetation management (terrain-specific, from YAML 12)
@@ -517,12 +519,22 @@ def main() -> None:
         total_vegetation_management_cost_per_year = 0.0
         structure_dict = {}
 
-    # Calculate lifetime costs (undiscounted)
-    total_structure_cost_lifetime = variable_structure_cost_per_year * project_details.project_lifetime
-    total_conductor_cost_lifetime = total_conductor_cost_per_year * project_details.project_lifetime
-    total_converter_cost_lifetime = total_converter_cost_per_year * project_details.project_lifetime
-    total_vegetation_management_cost_lifetime = (
-        total_vegetation_management_cost_per_year * project_details.project_lifetime
+        with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+            struct_data = yaml.safe_load(file)
+        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.0)
+
+    # Calculate lifetime costs (nominal, with real escalation)
+    total_structure_cost_lifetime = calculate_nominal_growing_series(
+        variable_structure_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
+    )
+    total_conductor_cost_lifetime = calculate_nominal_growing_series(
+        total_conductor_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
+    )
+    total_converter_cost_lifetime = calculate_nominal_growing_series(
+        total_converter_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
+    )
+    total_vegetation_management_cost_lifetime = calculate_nominal_growing_series(
+        total_vegetation_management_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
     )
 
     # Calculate present values
@@ -532,31 +544,50 @@ def main() -> None:
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         pv_conductor = 0.0
         pv_structure = 0.0
-        pv_vegetation_management = calculate_present_value(
-            total_vegetation_management_cost_per_year, financing.wacc_real,
-            project_details.project_lifetime, start_year=oandm_start_year,
+        pv_vegetation_management = calculate_growing_annuity_pv(
+            annual_amount=total_vegetation_management_cost_per_year,
+            growth_rate=om_real_escalation_rate,
+            discount_rate=financing.wacc_real,
+            project_lifetime=project_details.project_lifetime,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
-        pv_line_om = calculate_present_value(
-            total_line_om_per_year, financing.wacc_real,
-            project_details.project_lifetime, start_year=oandm_start_year,
+        pv_line_om = calculate_growing_annuity_pv(
+            annual_amount=total_line_om_per_year,
+            growth_rate=om_real_escalation_rate,
+            discount_rate=financing.wacc_real,
+            project_lifetime=project_details.project_lifetime,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
     else:
-        pv_line_om = calculate_present_value(
-            total_line_om_per_year, financing.wacc_real,
-            project_details.project_lifetime, start_year=oandm_start_year,
+        pv_line_om = calculate_growing_annuity_pv(
+            annual_amount=total_line_om_per_year,
+            growth_rate=om_real_escalation_rate,
+            discount_rate=financing.wacc_real,
+            project_lifetime=project_details.project_lifetime,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
         pv_conductor = 0.0
         pv_structure = 0.0
         pv_vegetation_management = 0.0
 
-    pv_converter = calculate_present_value(
-        total_converter_cost_per_year, financing.wacc_real,
-        project_details.project_lifetime, start_year=oandm_start_year,
+    pv_converter = calculate_growing_annuity_pv(
+        annual_amount=total_converter_cost_per_year,
+        growth_rate=om_real_escalation_rate,
+        discount_rate=financing.wacc_real,
+        project_lifetime=project_details.project_lifetime,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
     pv_total = pv_line_om + pv_converter
 
     from run_context import add_derived
     _total_annual_oandm = total_line_om_per_year + total_converter_cost_per_year
+    _total_nominal_oandm = calculate_nominal_growing_series(
+        _total_annual_oandm, om_real_escalation_rate, project_details.project_lifetime,
+    )
     add_derived({
         "total_structures": structure_dict.get("total", 0) if structure_dict else 0,
         "veg_mgmt_cost_per_year": total_vegetation_management_cost_per_year,
@@ -620,7 +651,7 @@ def main() -> None:
     print(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
     print(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
     print(f"{'─' * 40}")
-    print(f"Total:      ${_total_annual_oandm * project_details.project_lifetime:,.2f}")
+    print(f"Total:      ${_total_nominal_oandm:,.2f}")
 
     print("\n--- Present Value Calculations ---")
     print(f"Real WACC: {financing.wacc_real:.4f}")
@@ -641,19 +672,19 @@ def main() -> None:
 
     results = {
         "total_annual": _total_annual_oandm,
-        "total_nominal": _total_annual_oandm * project_details.project_lifetime,
+        "total_nominal": _total_nominal_oandm,
         "total_pv": pv_total,
         "conductor_annual": total_conductor_cost_per_year,
-        "conductor_nominal": total_conductor_cost_per_year * project_details.project_lifetime,
+        "conductor_nominal": total_conductor_cost_lifetime,
         "conductor_pv": pv_conductor,
         "converter_annual": total_converter_cost_per_year,
-        "converter_nominal": total_converter_cost_per_year * project_details.project_lifetime,
+        "converter_nominal": total_converter_cost_lifetime,
         "converter_pv": pv_converter,
         "structure_annual": variable_structure_cost_per_year,
-        "structure_nominal": variable_structure_cost_per_year * project_details.project_lifetime,
+        "structure_nominal": total_structure_cost_lifetime,
         "structure_pv": pv_structure,
         "vegetation_annual": total_vegetation_management_cost_per_year,
-        "vegetation_nominal": total_vegetation_management_cost_per_year * project_details.project_lifetime,
+        "vegetation_nominal": total_vegetation_management_cost_lifetime,
         "vegetation_pv": pv_vegetation_management,
         "line_om_annual": total_line_om_per_year,
         "line_om_pv": pv_line_om,

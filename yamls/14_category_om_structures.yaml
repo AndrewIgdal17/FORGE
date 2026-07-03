@@ -23,3 +23,6 @@ project_categories_om_structures:
 
   "Subsea":
     om_pct_of_line_capex: 0.025   # 2.5% of cable system CAPEX/yr. Source: NeoMarketData (2025). Cross-check: Ofgem PCR data — Viking Link (2025), NSL (2023), IFA2 (2022) show 5.3–5.6% total system opex; cable-only portion ≈ 2.5%.
+
+# Real O&M cost escalation (applies to all construction types, line + converter O&M)
+om_real_escalation_rate: 0.02 # 2.0% real/yr. CT Siting Council (2022) official 40-yr lifecycle CAGR. Cross-check: LBNL FERC Form 1 data (2021) 0.5-2.0% real CAGR (117 IOUs); MCR Group/MISO (2024) 1.7% nominal.
