@@ -262,6 +262,8 @@ def calculate_configuration_losses(
         project_lifetime,
         capacity_mw,
         line_utilization_percent,
+        voltage_kv,
+        construction_type,
     )
 
     return losses_mwh_per_year, lifetime_losses_mwh

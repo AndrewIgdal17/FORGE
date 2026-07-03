@@ -1,0 +1,11 @@
+# Corona Loss Parameters (AC overhead only)
+# Annual average corona loss by voltage class, sea level, ~20/2/78% rain/snow/fair weather mix.
+# Additive to I^2R losses (voltage-dependent, load-independent). DC and non-overhead: 0.
+corona:
+  voltage_class_tiers:
+    - max_kv: 345
+      kw_per_mile: 0    # Negligible below corona onset threshold
+    - max_kv: 500
+      kw_per_mile: 6    # DOE/LBNL Albany, NY annual average (5.7 kW/mi); AEP data corroborates
+    - max_kv: .inf
+      kw_per_mile: 25   # AEP 6x Tern bundle, 765 kV: 2.3 MW/100mi = 23 kW/mi, rounded up

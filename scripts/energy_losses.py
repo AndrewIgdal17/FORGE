@@ -152,6 +152,8 @@ def get_total_energy_losses() -> dict:
         project_details.project_lifetime,
         capacity_mw_numeric,
         project_details.line_utilization,
+        voltage_kv,
+        project_details.construction_type,
     )
 
     # Calculate converter losses (includes percentage calculation)

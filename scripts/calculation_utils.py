@@ -14,6 +14,7 @@ from constants import (
     TRANSMISSION_TYPE_AC,
     TRANSMISSION_TYPE_DC,
     CONVERTER_TYPE_NA,
+    CONSTRUCTION_TYPE_OVERHEAD,
 )
 
 DC_OPERATING_TEMP_C = 75
@@ -141,6 +142,8 @@ def calculate_line_losses(
     project_lifetime: int,
     capacity_mw_numeric: int,
     line_utilization_percent: float,
+    voltage_kv: float = 0.0,
+    installation_method: str = "",
 ) -> Tuple[float, float, float, float, float, float, float]:
     """
     Calculate line losses for transmission lines.
@@ -159,6 +162,8 @@ def calculate_line_losses(
         project_lifetime: Project lifetime in years
         capacity_mw_numeric: Capacity in MW as numeric value
         line_utilization_percent: Line utilization as decimal (0-1)
+        voltage_kv: Nominal voltage in kV (for corona lookup)
+        installation_method: Construction type (e.g. "Overhead"); corona applies only to overhead AC
 
     Returns:
         tuple: (losses_mwh_per_year, lifetime_losses_mwh, losses_mw_per_mile,
@@ -183,6 +188,16 @@ def calculate_line_losses(
     )
 
     total_line_loss_mw = losses_mw_per_mile * line_length
+
+    # Corona loss (AC overhead only, voltage-dependent, load-independent)
+    from yaml_loaders import load_corona_kw_per_mile
+    if ac_dc == TRANSMISSION_TYPE_AC and installation_method == CONSTRUCTION_TYPE_OVERHEAD:
+        corona_kw_per_mile = load_corona_kw_per_mile(voltage_kv)
+        corona_mw = (corona_kw_per_mile * line_length * number_of_circuits_poles) / 1000
+    else:
+        corona_mw = 0.0
+
+    total_line_loss_mw += corona_mw
 
     if capacity_mw_numeric * line_utilization_percent > 0:
         line_loss_per_mile_percent = to_percent(

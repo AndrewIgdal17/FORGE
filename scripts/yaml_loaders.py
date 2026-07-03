@@ -338,6 +338,21 @@ def load_circuit_and_resistance_details(
         )
 
 
+def load_corona_kw_per_mile(voltage_kv: float) -> float:
+    """Look up annual-average AC overhead corona loss (kW/mile) for a voltage class."""
+    try:
+        with open(YAMLS_DIR / "22_corona_losses.yaml", "r") as file:
+            data = yaml.safe_load(file)
+        tiers = data["corona"]["voltage_class_tiers"]
+    except (FileNotFoundError, KeyError, TypeError) as e:
+        raise ValueError(f"Cannot load corona loss parameters: {e}")
+    for tier in tiers:
+        max_kv = float("inf") if tier["max_kv"] in (".inf", None) else tier["max_kv"]
+        if voltage_kv <= max_kv:
+            return tier["kw_per_mile"]
+    return tiers[-1]["kw_per_mile"]
+
+
 def load_row_widths(category: str) -> float:
     """Load ROW width for specified category."""
     ctx = get_run_context()

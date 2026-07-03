@@ -35,6 +35,7 @@ _YAML_STEMS = [
     "19_cost_timing_patterns",
     "20_project_category_row_widths",
     "21_project_category_circuit_and_resistance_detail",
+    "22_corona_losses",
 ]
 
 
