@@ -45,10 +45,11 @@ def calculate_environmental_mitigation_costs(
     terrain_miles_dict: Dict[str, float],
     row_width_feet: float,
     reconductoring: bool = False,
+    subsea_capex: float = 0.0,
 ) -> Dict[str, float]:
     """
-    Calculate environmental mitigation costs including base mitigation
-    and wetland/habitat credit purchases.
+    Calculate environmental mitigation costs including base mitigation,
+    wetland/habitat credit purchases, and marine environmental mitigation.
 
     Args:
         em_yaml: Loaded environmental mitigation YAML data
@@ -58,9 +59,11 @@ def calculate_environmental_mitigation_costs(
         reconductoring: If True, sets wetland and habitat credits to zero
                        (reconductoring projects use existing ROW and don't create
                        new permanent environmental impacts requiring credits)
+        subsea_capex: Subsea line construction CAPEX (conductor + structure),
+                     used for marine environmental mitigation (% of CAPEX)
 
     Returns:
-        dict: Contains base_cost, wetlands_credits, habitat_credits,
+        dict: Contains base_cost, wetlands_credits, habitat_credits, marine_cost,
               total, uplift_factor_applied, total_acres, effective_acres
     """
     mitigation_config = em_yaml["environmental_mitigation"]
@@ -132,12 +135,20 @@ def calculate_environmental_mitigation_costs(
         wetlands_credits = 0.0
         habitat_credits = 0.0
 
+    # Marine environmental mitigation (subsea only, % of CAPEX)
+    marine_env_mitigation_pct_capex = mitigation_config.get("marine_env_mitigation_pct_capex", 0.0)
+    if yaml_construction_type == "subsea":
+        marine_cost = marine_env_mitigation_pct_capex * subsea_capex
+    else:
+        marine_cost = 0.0
+
     return {
         "base_cost": base_cost,
         "wetlands_credits": wetlands_credits,
         "habitat_credits": habitat_credits,
         "total_credits": wetlands_credits + habitat_credits,
-        "total": base_cost + wetlands_credits + habitat_credits,
+        "marine_cost": marine_cost,
+        "total": base_cost + wetlands_credits + habitat_credits + marine_cost,
         "uplift_factor_applied": uplift_factor,
         "total_base_acres": total_base_acres,
         "total_effective_acres": total_effective_acres,
@@ -166,9 +177,27 @@ def main() -> None:
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
 
+    # Compute subsea CAPEX for marine mitigation (subsea only)
+    subsea_capex = 0.0
+    if project_details.construction_type == "Subsea":
+        from weighted_miles import calculate_weighted_miles
+        import yaml as _yaml
+        _static_yamls = YAMLS_DIR
+        with open(_static_yamls / "10_project_category_build_costs.yaml", "r") as _f:
+            _bc_data = _yaml.safe_load(_f)
+        _build_costs = _bc_data["project_categories_build_costs"]
+        _cat = category
+        if _cat in _build_costs:
+            _cat_data = _build_costs[_cat]
+            _wm, _ = calculate_weighted_miles()
+            _conductor_cost = (_cat_data.get("variable_conductor_cost_per_mile", 0) * _wm) + _cat_data.get("fixed_conductor_cost", 0)
+            _structure_cost = _cat_data.get("variable_structure_cost_per_mile", 0) * _wm
+            subsea_capex = _conductor_cost + _structure_cost
+
     # Calculate environmental mitigation costs (nominal)
     results = calculate_environmental_mitigation_costs(
-        em_yaml, category, terrain_miles, row_width_feet, project_details.reconductoring
+        em_yaml, category, terrain_miles, row_width_feet, project_details.reconductoring,
+        subsea_capex=subsea_capex,
     )
 
     from run_context import add_derived
@@ -193,9 +222,9 @@ def main() -> None:
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
     if afudc_setup.apply_afudc:
-        # Base mitigation costs
+        # Base mitigation costs (includes marine environmental mitigation)
         base_cap, base_afudc = calculate_afudc_capitalized_cost(
-            results["base_cost"],
+            results["base_cost"] + results["marine_cost"],
             afudc_setup.timing_patterns["environmental_mitigation_base"],
             project_details.delay_years,
             project_details.construction_years,
@@ -234,13 +263,12 @@ def main() -> None:
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years
     if project_details.construction_years > 0:
-        annual_base_cost = results["base_cost"] / project_details.construction_years
+        annual_base_cost = (results["base_cost"] + results["marine_cost"]) / project_details.construction_years
         base_cost_pv = calculate_present_value(
             annual_base_cost, financing.wacc_real, project_details.construction_years, credit_start_year
         )
     else:
-        # If construction_years is 0, treat as one-time cost at credit_start_year
-        base_cost_pv = results["base_cost"] / (1 + financing.wacc_real) ** credit_start_year
+        base_cost_pv = (results["base_cost"] + results["marine_cost"]) / (1 + financing.wacc_real) ** credit_start_year
 
     # Total PV
     total_pv = base_cost_pv + total_credits_pv
@@ -263,6 +291,7 @@ def main() -> None:
 
     print("[NOMINAL VALUES]")
     print(f"  Base Mitigation/Restoration: ${results['base_cost']:,.2f}")
+    print(f"  Marine Environmental Mitigation: ${results['marine_cost']:,.2f}")
     print(f"  Wetland Credits: ${results['wetlands_credits']:,.2f}")
     print(f"  Habitat Credits: ${results['habitat_credits']:,.2f}")
     print(f"  Total Credit Costs: ${results['total_credits']:,.2f}")
@@ -311,6 +340,7 @@ def main() -> None:
         "total_afudc": total_capitalized if afudc_setup.apply_afudc else 0,
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
+        "marine_cost_nominal": results["marine_cost"],
         "credits_nominal": results["total_credits"],
         "credits_pv": total_credits_pv,
     }
