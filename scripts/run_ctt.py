@@ -1,6 +1,6 @@
 """Run CTT Panhandle CREZ scenarios: 2-year delay (actual) and 7-year delay (counterfactual).
 
-Loads S1 as template (AC greenfield overhead), patches with CTT-specific inputs
+Builds inputs from canonical YAML defaults, patches with CTT-specific inputs
 from the CREZ research document, runs both scenarios, and saves results.
 
 Scenario A: CTT_Actual_Delay2 — what actually happened (CREZ mandate, 2yr permitting)
@@ -8,7 +8,6 @@ Scenario B: CTT_Counterfactual_Delay7 — what would have happened without CREZ 
 """
 
 import copy
-import json
 import sys
 from pathlib import Path
 
@@ -16,13 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
-
-
-def load_s1_template() -> dict:
-    s1_path = REPO_ROOT / "scenarios" / "S1 CA Rural Overhead AC.ctcc"
-    with open(s1_path) as f:
-        return json.load(f)
+from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
 
 
 def patch_ctt_inputs(inputs: dict) -> dict:
@@ -155,46 +148,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     return inputs
 
 
-def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    """Run a single scenario and return results."""
-    return run_calculation(
-        combined_data=inputs,
-        scenario_id=scenario_id,
-        quiet=True,
-    )
-
-
-def save_ctcc_file(inputs: dict, results: dict, name: str, scenario_id: str):
-    """Save a complete .ctcc file with inputs, results, and metadata."""
-    from datetime import datetime
-
-    ctcc = {
-        "version": "1.0",
-        "customName": name,
-        "inputs": inputs,
-        "results": results,
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "scenario_id": scenario_id,
-            "source": "ctt_panhandle_crez_case_study",
-        },
-    }
-    out_path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
-    with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
-
-
-def fmt(val, prefix="$"):
-    """Format large numbers with B/M suffixes."""
-    if abs(val) >= 1e9:
-        return f"{prefix}{val/1e9:.2f}B"
-    elif abs(val) >= 1e6:
-        return f"{prefix}{val/1e6:.1f}M"
-    else:
-        return f"{prefix}{val:,.0f}"
-
-
 def print_results(results: dict, label: str):
     """Print key results for a scenario."""
     print(f"\n{'='*60}")
@@ -258,12 +211,12 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    print("Loading S1 template...")
-    template = load_s1_template()
+    print("Loading YAML defaults...")
+    defaults = build_default_inputs()
 
     # --- Scenario A: CTT with 2-year delay (actual CREZ mandate) ---
     print("\nBuilding CTT Panhandle (2-year delay, actual) scenario...")
-    inputs_actual = patch_ctt_inputs(copy.deepcopy(template["inputs"]))
+    inputs_actual = patch_ctt_inputs(copy.deepcopy(defaults))
 
     print("Running calculation (delay=2, actual)...")
     results_actual = run_scenario(inputs_actual, "CTT_Actual_Delay2")
@@ -290,9 +243,9 @@ def main():
 
     # --- Save .ctcc files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_actual, results_actual, "CTT_Actual_Delay2", "CTT_Actual_Delay2")
+    save_ctcc_file(inputs_actual, results_actual, "CTT_Actual_Delay2", "CTT_Actual_Delay2", source="ctt_panhandle_crez_case_study")
     save_ctcc_file(
-        inputs_counterfactual, results_cf, "CTT_Counterfactual_Delay7", "CTT_Counterfactual_Delay7"
+        inputs_counterfactual, results_cf, "CTT_Counterfactual_Delay7", "CTT_Counterfactual_Delay7", source="ctt_panhandle_crez_case_study"
     )
 
     # --- Comparison ---
