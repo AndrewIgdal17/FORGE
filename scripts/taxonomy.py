@@ -315,8 +315,8 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     ),
     "bcr_ratepayer": BCRDefinition(
         "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
-        "all_benefits", "revenue_loss", frozenset(), 7,
-        "Whether ratepayers receive more value than they pay.",
+        "remedial_enabling", "revenue_loss", frozenset(), 7,
+        "Whether ratepayers receive more value than they pay (excludes avoided emissions).",
     ),
 }
 
