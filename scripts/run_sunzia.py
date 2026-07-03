@@ -1,11 +1,10 @@
-"""Run SunZia CTCC scenarios: 17-year delay (actual) and 0-year delay (counterfactual).
+"""Run SunZia CTCC scenarios: 17-year delay (actual) and 2-year delay (counterfactual).
 
-Loads S9 as template, patches with SunZia-specific inputs from the research document,
+Builds inputs from canonical YAML defaults, patches with SunZia-specific values,
 runs both scenarios through the calculation engine, and saves results.
 """
 
 import copy
-import json
 import sys
 from pathlib import Path
 
@@ -13,13 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
-
-
-def load_s9_template() -> dict:
-    s9_path = REPO_ROOT / "scenarios" / "S9 Wind HVDC Standard.ctcc"
-    with open(s9_path) as f:
-        return json.load(f)
+from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
 
 
 def patch_sunzia_inputs(inputs: dict) -> dict:
@@ -165,46 +158,6 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     return inputs
 
 
-def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    """Run a single scenario and return results."""
-    return run_calculation(
-        combined_data=inputs,
-        scenario_id=scenario_id,
-        quiet=True,
-    )
-
-
-def save_ctcc_file(inputs: dict, results: dict, name: str, scenario_id: str):
-    """Save a complete .ctcc file with inputs, results, and metadata."""
-    from datetime import datetime
-
-    ctcc = {
-        "version": "1.0",
-        "customName": name,
-        "inputs": inputs,
-        "results": results,
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "scenario_id": scenario_id,
-            "source": "sunzia_case_study",
-        },
-    }
-    out_path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
-    with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
-
-
-def fmt(val, prefix="$"):
-    """Format large numbers with B/M suffixes."""
-    if abs(val) >= 1e9:
-        return f"{prefix}{val/1e9:.2f}B"
-    elif abs(val) >= 1e6:
-        return f"{prefix}{val/1e6:.1f}M"
-    else:
-        return f"{prefix}{val:,.0f}"
-
-
 def print_results(results: dict, label: str):
     """Print key results for a scenario."""
     print(f"\n{'='*60}")
@@ -285,12 +238,12 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    print("Loading S9 template...")
-    template = load_s9_template()
+    print("Loading YAML defaults...")
+    defaults = build_default_inputs()
 
     # --- Scenario 1: SunZia with 17-year delay ---
     print("\nBuilding SunZia (17-year delay) scenario...")
-    inputs_delay17 = patch_sunzia_inputs(copy.deepcopy(template["inputs"]))
+    inputs_delay17 = patch_sunzia_inputs(copy.deepcopy(defaults))
 
     print("Running calculation (delay=17)...")
     results_delay17 = run_scenario(inputs_delay17, "SunZia_Delay17")
@@ -308,8 +261,8 @@ def main():
 
     # --- Save .ctcc files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_delay17, results_delay17, "SunZia_Delay17", "SunZia_Delay17")
-    save_ctcc_file(inputs_delay2, results_delay2, "SunZia_Delay2", "SunZia_Delay2")
+    save_ctcc_file(inputs_delay17, results_delay17, "SunZia_Delay17", "SunZia_Delay17", source="sunzia_case_study")
+    save_ctcc_file(inputs_delay2, results_delay2, "SunZia_Delay2", "SunZia_Delay2", source="sunzia_case_study")
 
     # --- Comparison ---
     bcr17 = results_delay17["bcr"]
