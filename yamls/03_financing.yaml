@@ -4,6 +4,8 @@ financial:
   base_year: 2025
   wacc_nominal: 0.075
   social_discount_rate: 0.02 # OMB Circular A-4 (Nov 2023 revision), Ramsey framework, 2% near-term rate. Supported by Rennert et al. (2022), Nature 610:687-692.
+  cost_base_year: 2025  # All cost parameters normalized to this year's constant dollars.
+  construction_cost_escalation_rate: 0.025  # 2.5%/yr nominal. MISO MTEP25 planning methodology.
 
   contingencies:
     conductor_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).

@@ -251,6 +251,38 @@ def main() -> None:
         "total_build_cost_with_contingencies": costs.total_cost_with_contingencies,
     })
 
+    # Escalate build cost during delay period (#27)
+    financing_yaml_raw = get_financing_data_raw()
+    construction_cost_escalation_rate = financing_yaml_raw["financial"].get(
+        "construction_cost_escalation_rate", 0.0
+    )
+    if project_details.delay_years > 0 and construction_cost_escalation_rate > 0:
+        escalation_factor = (1 + construction_cost_escalation_rate) ** project_details.delay_years
+        costs = BuildCosts(
+            total_cost=costs.total_cost,
+            total_cost_with_contingencies=costs.total_cost_with_contingencies * escalation_factor,
+            conductor_cost=costs.conductor_cost,
+            structure_cost=costs.structure_cost,
+            converter_cost=costs.converter_cost,
+            conductor_cost_with_contingencies=costs.conductor_cost_with_contingencies * escalation_factor,
+            structure_cost_with_contingencies=costs.structure_cost_with_contingencies * escalation_factor,
+            converter_cost_with_contingencies=costs.converter_cost_with_contingencies * escalation_factor,
+            weighted_miles=costs.weighted_miles,
+            average_terrain_multiplier=costs.average_terrain_multiplier,
+        )
+        # Update context with escalated values
+        set_build_costs(costs)
+        add_derived({
+            "conductor_cost": costs.conductor_cost,
+            "structure_cost": costs.structure_cost,
+            "converter_cost": costs.converter_cost,
+            "conductor_cost_with_contingencies": costs.conductor_cost_with_contingencies,
+            "structure_cost_with_contingencies": costs.structure_cost_with_contingencies,
+            "converter_cost_with_contingencies": costs.converter_cost_with_contingencies,
+            "total_build_cost_with_contingencies": costs.total_cost_with_contingencies,
+            "construction_cost_escalation_factor": escalation_factor,
+        })
+
     # Load AFUDC configuration and timing patterns
     from financial_utils import load_afudc_setup
     afudc_setup = load_afudc_setup()
@@ -312,6 +344,8 @@ def main() -> None:
     print(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
     print("  " + "-" * 52)
     print(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
+    if project_details.delay_years > 0 and construction_cost_escalation_rate > 0:
+        print(f"\n  Delay Escalation: {construction_cost_escalation_rate:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
     print()
 
     if afudc_setup.apply_afudc:
