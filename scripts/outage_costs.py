@@ -123,18 +123,27 @@ def calculate_outage_costs(
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
     outage_duration = outage_config.get("outage_duration", 6)
     duration_multiplier_dict = outage_config["outage_duration_multiplier"]
-    outage_rate_dict = outage_config.get(
+    outage_rate_config = outage_config.get(
         "outage_rate",
-        {"overhead": 0.025, "underground": 0.004, "subsea": 0.00475},
+        {"overhead": 0.015, "underground": 0.004, "subsea": 0.0007},
     )
 
     yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
 
     total_miles = sum(terrain_miles.values())
 
-    # Outage rate for this construction type
-    outage_rate = outage_rate_dict.get(yaml_construction_type, 0.025)
-    lambda_total = total_miles * outage_rate
+    # Outage rate: overhead uses decomposition model, others use flat per-mile
+    rate_entry = outage_rate_config.get(yaml_construction_type, 0.015)
+    if isinstance(rate_entry, dict):
+        lambda_terminal = rate_entry.get("lambda_terminal", 0.3)
+        lambda_per_mile = rate_entry.get("lambda_per_mile", 0.012)
+        lambda_total = lambda_terminal + lambda_per_mile * total_miles
+        outage_rate = lambda_total / total_miles if total_miles > 0 else lambda_per_mile
+    else:
+        outage_rate = float(rate_entry)
+        lambda_total = total_miles * outage_rate
+        lambda_terminal = 0.0
+        lambda_per_mile = outage_rate
 
     # Effective duration (multiplicative model)
     dur_mult = duration_multiplier_dict.get(yaml_construction_type, 1.0)
@@ -182,6 +191,8 @@ def calculate_outage_costs(
         "pv_cost": pv_cost,
         "total_miles": total_miles,
         "outage_rate": outage_rate,
+        "lambda_terminal": lambda_terminal,
+        "lambda_per_mile": lambda_per_mile,
         "outage_duration": outage_duration,
         "duration_multiplier": dur_mult,
         "duration_effective": duration_effective,
@@ -250,6 +261,8 @@ def main() -> None:
     print("OUTAGE EXPOSURE (LINE-LEVEL):")
     print(f"  Total Line Length: {results['total_miles']:.1f} miles")
     print(f"  Outage Rate: {results['outage_rate']:.4f} outages/mi/yr")
+    if results.get("lambda_terminal", 0) > 0:
+        print(f"  Model: decomposition (λ_terminal={results['lambda_terminal']:.2f} + λ_per_mile={results['lambda_per_mile']:.4f} × {results['total_miles']:.0f} mi)")
     print(f"  Total Outages/Year: {results['lambda_total']:.4f} events/year")
     print(f"  Base Duration: {results['outage_duration']:.1f}h")
     print(f"  Duration Multiplier: {results['duration_multiplier']:.1f}x")

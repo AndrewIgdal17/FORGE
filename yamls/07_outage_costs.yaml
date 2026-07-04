@@ -54,12 +54,15 @@ outage:
   # All multipliers (>= 0)
   outage_duration_multiplier:
     overhead: 1.0 # (>= 0)
-    underground: 2.0 # Assumes meshed/switching redundancy; radial UG systems may need 10-20x (>= 0)
+    underground: 80.0 # 6h × 80 = 480h (20 days) average XLPE land cable repair (CIGRE TB 815, 2020; Ofgem/GHD, 2020).
     subsea: 250.0 # 6h × 250 = 1500h (~62 days) effective subsea duration (CIGRE TB 815, IEA Wind TEM95, Leadvent; see docs/audits/2026-06-12__outage-parameter-sourcing.md)
 
   # Outage rates by construction type (line-level)
-  # Units: outages per mile per year (>= 0)
+  # Overhead uses decomposition model: lambda = lambda_terminal + lambda_per_mile * L
+  # Underground/subsea use pure per-mile rates (linear scaling confirmed by CIGRE/Ofgem data)
   outage_rate:
-    overhead: 0.025 # outages/mile/year
+    overhead:
+      lambda_terminal: 0.3    # outages/yr (length-independent terminal/substation component). Landgren (1986); ~25% of outages per Adler et al. (1994).
+      lambda_per_mile: 0.012  # outages/mile/year (exposure-dependent). CEA 240kV 0.014, Zhou BPA 0.013, Poland 220kV 0.012.
     underground: 0.004
-    subsea: 0.00475
+    subsea: 0.0007 # outages/mile/year. Ofgem/GHD (2020) total rate 0.000615/cct-km; ENTSO-E/Europacable (2019) 0.07 faults/100km/yr; CIGRE TB 815 (2020) confirms reduction from TB 379 levels.
