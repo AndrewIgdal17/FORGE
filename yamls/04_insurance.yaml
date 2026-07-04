@@ -1,11 +1,21 @@
-# Insurance Parameters
-# Operational insurance costs for transmission line assets
+# Insurance / Risk-Bearing Cost Parameters
+# Annual risk-bearing costs for transmission line assets.
+# Overhead/underground: self-insurance reserve rate (commercial T&D coverage unavailable).
+# Subsea/converter: commercial property insurance rates.
 
 insurance:
-  premium_rate: 0.002 # Annual premium rate [0,1] (0.2% = 0.002)
+  premium_rate_default: 0.002
 
-  # Insurable components (which assets are insured)
+  premium_rate_by_type:
+    overhead: 0.0020            # Self-insurance reserve. NARUC (2024); FPL (2026); Duke FL (2026); Powerlink (2025).
+    underground_direct_buried: 0.0020  # Same mechanism as overhead; higher value captured via V_insurable.
+    underground_tunnel: 0.0020         # Same as direct-buried.
+    subsea: 0.030               # Commercial property-damage-only, 2-4% range. MarketIntelo (2025); Ofgem Viking Link PCR (2024).
+    converter: 0.0070           # Commercial, 0.4-1.0% range midpoint. mGrid (2026); Ofgem Viking Link PCR (2024).
+
+  escalation_rate: 0.020  # 2.0% real/yr. Structural climate risk repricing. WTW (2025); Powerlink (2025).
+
   insurable_components:
-    conductors: true # Include conductor costs in insurable value
-    structures: true # Include structure costs in insurable value
-    converters: true # Include converter costs in insurable value
+    conductors: true
+    structures: true
+    converters: true
