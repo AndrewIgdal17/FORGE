@@ -69,7 +69,6 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
-    fin["revenue"]["rate_based"]["allowed_return_rate"] = 0.10
 
     # --- Tab 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
@@ -115,41 +114,36 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     row["zone_3"]["rent_cost"] = 0
     row["zone_3"]["hold_cost"] = 0
 
-    # --- Tab 17: Congestion/Curtailment ---
+    # --- Tab 17: Congestion/Curtailment (Approach B; offshore wind, mostly curtailment) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
-    gf["congestion"]["constraints"]["flow_factor"] = 1.0
-    gf["congestion"]["constraints"]["binding_hours"] = 500
-    gf["congestion"]["constraints"]["average_exceedance"] = 200
-    gf["congestion"]["constraints"]["near_binding_hours"] = 0
-    gf["congestion"]["constraints"]["near_average_exceedance"] = 0
-    gf["congestion"]["constraints"]["near_binding_relief_factor"] = 0.25
-    gf["congestion"]["costs"]["average_congestion_price"] = 10
-    gf["curtailment"]["curtailment_hours_total"] = 400
-    gf["curtailment"]["average_curtailment_mw"] = 300
-    gf["curtailment"]["average_curtailment_price"] = 77
+    gf["constraints"]["flow_factor"] = 1.0
+    gf["constraints"]["constrained_hours"] = 500
+    gf["constraints"]["average_exceedance"] = 200
+    gf["constraints"]["congestion_fraction"] = 0.20  # offshore wind: mostly curtailment
+    gf["prices"]["average_congestion_price"] = 10
+    gf["prices"]["average_curtailment_price"] = 77
 
-    # --- Tab 18: Energy Source Mixes ---
+    # --- Tab 18: Grid Mix (single-trajectory model) ---
+    # Sources: ISO-NE Air Emissions Report 2017; ISO-NE CELT 2017-2024; MA Clean
+    # Energy Standard. Post-COD rates diverge from pre-COD because Vineyard Wind 1
+    # (800 MW in a 30 GW system, 2.7%) roughly doubles ISO-NE's wind fleet
+    # (~3% -> ~5.7% of generation), so wind growth doubles (+2%/yr -> +4%/yr);
+    # gas marginally slows (+2%/yr -> +1%/yr) as it loses marginal-dispatch share.
     mix = inputs["18_energy_source_mix"]
-    mix["energy_source_mix"] = {
-        "coal": {"percentage": 0, "rate_of_change": 0.0},
-        "oil": {"percentage": 0, "rate_of_change": 0.0},
-        "natural_gas": {"percentage": 0, "rate_of_change": 0.0},
-        "solar": {"percentage": 0, "rate_of_change": 0.0},
-        "wind": {"percentage": 100, "rate_of_change": 0.0},
-        "hydro": {"percentage": 0, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 0, "rate_of_change": 0.0},
-        "other": {"percentage": 0, "rate_of_change": 0.0},
-    }
-    mix["counterfactual_energy_source_mix"] = {
-        "coal": {"percentage": 1, "rate_of_change": -0.005},
-        "oil": {"percentage": 2, "rate_of_change": -0.01},
-        "natural_gas": {"percentage": 58, "rate_of_change": -0.01},
-        "solar": {"percentage": 5, "rate_of_change": 0.02},
-        "wind": {"percentage": 4, "rate_of_change": 0.01},
-        "hydro": {"percentage": 7, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 22, "rate_of_change": -0.005},
-        "other": {"percentage": 1, "rate_of_change": 0.0},
+    mix["grid_mix"] = {
+        "initial": {
+            "coal": 2, "oil": 1, "natural_gas": 49, "solar": 1,
+            "wind": 3, "hydro": 8, "nuclear": 31, "other": 5,
+        },
+        "rate_pre_cod": {
+            "coal": -0.10, "oil": -0.05, "natural_gas": 0.02, "solar": 0.10,
+            "wind": 0.02, "hydro": 0.0, "nuclear": -0.02, "other": 0.0,
+        },
+        "rate_post_cod": {
+            "coal": -0.10, "oil": -0.05, "natural_gas": 0.01, "solar": 0.10,
+            "wind": 0.04, "hydro": 0.0, "nuclear": -0.02, "other": 0.0,
+        },
     }
 
     return inputs
@@ -184,7 +178,7 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    print(f"  Revenue (transfer):     {fmt(benefits['revenue']['revenue_pv'])}")
+    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['revenue_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")

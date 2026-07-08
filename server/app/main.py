@@ -251,7 +251,7 @@ async def get_input_metadata() -> JSONResponse:
 
 @app.get("/api/fuel_mix_presets", response_class=JSONResponse)
 async def get_fuel_mix_presets() -> JSONResponse:
-    """Reference energy_source_mix presets for the web UI (file-backed catalog)."""
+    """Reference grid_mix presets for the web UI (file-backed catalog)."""
     data = load_fuel_mix_presets()
     return JSONResponse(sanitize_for_json(data))
 

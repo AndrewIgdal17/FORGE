@@ -23,11 +23,23 @@ from energy_losses import (
 )
 from smart_loaders import (
     load_emissions_details,
+    load_grid_mix,
     load_financing_social_discount_rate,
     get_project_data_raw,
 )
 from financial_utils import calculate_present_value, calculate_cod_year
 from calculation_utils import from_percent
+
+GRID_SOURCES = [
+    "coal",
+    "oil",
+    "natural_gas",
+    "solar",
+    "wind",
+    "hydro",
+    "nuclear",
+    "other",
+]
 
 
 @dataclass
@@ -96,6 +108,40 @@ def calculate_energy_mix_by_year(
         energy_mix_by_year.append(normalized)
 
     return energy_mix_by_year
+
+
+def build_mix_input(
+    percentages: Dict[str, float], rates: Dict[str, float]
+) -> Dict[str, Any]:
+    """Build a calculate_energy_mix_by_year() input dict from percentage + rate dicts.
+
+    percentages values are in percentage form (0-100); rates are fractional
+    annual growth/decline rates.
+    """
+    return {
+        source: {
+            "percentage": percentages.get(source, 0.0),
+            "rate_of_change": rates.get(source, 0.0),
+        }
+        for source in GRID_SOURCES
+    }
+
+
+def compute_cod_state(
+    grid_mix: Dict[str, Any], delay_years: float, construction_years: int
+) -> Dict[str, float]:
+    """Evolve the initial grid mix at pre-COD rates through COD; return percentages (0-100).
+
+    This is the single-trajectory handoff point: the grid state at COD is exactly
+    the without-line trajectory evaluated at T_COD (see design doc
+    2026-07-07__single-trajectory-grid-mix-redesign.md). Both the with-line and
+    without-line operational trajectories start from this same state.
+    """
+    t_cod_years = max(1, int(round(calculate_cod_year(delay_years, construction_years))))
+    pre_cod_input = build_mix_input(grid_mix["initial"], grid_mix["rate_pre_cod"])
+    pre_cod_trajectory = calculate_energy_mix_by_year(pre_cod_input, t_cod_years)
+    cod_fractions = pre_cod_trajectory[-1]
+    return {source: fraction * 100.0 for source, fraction in cod_fractions.items()}
 
 
 def calculate_emissions_by_year(
@@ -375,7 +421,6 @@ def main() -> None:
     # Load emissions details
     (
         compensation_percent,
-        energy_source_mix_details,
         emission_intensities_details,
         societal_costs_details,
     ) = load_emissions_details()
@@ -385,6 +430,17 @@ def main() -> None:
 
     # Get delay and construction years from project details
     project_details = load_project_technical_details()
+
+    # Loss-compensation uses the grid WITH the line's influence during operations:
+    # COD state (initial mix evolved at pre-COD rates through COD) evolved forward
+    # at post-COD rates. See design doc 2026-07-07__single-trajectory-grid-mix-redesign.md.
+    grid_mix = load_grid_mix()
+    cod_state_pct = compute_cod_state(
+        grid_mix, project_details.delay_years, project_details.construction_years
+    )
+    energy_source_mix_details = build_mix_input(
+        cod_state_pct, grid_mix["rate_post_cod"]
+    )
 
     # Get number_of_converters if DC
     if project_details.ac_dc == "DC":

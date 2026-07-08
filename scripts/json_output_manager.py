@@ -171,6 +171,10 @@ class JSONOutputManager:
         """
         self.benefits["facilitated_emissions"] = results
 
+    def add_displacement_delay_cost(self, results: Dict[str, Any]):
+        """Add displacement delay emissions cost results (soft/delay cost)."""
+        self.costs["displacement_delay"] = results
+
     def add_line_loss_costs(self, results: Dict[str, Any]):
         """Add line loss cost results."""
         self.costs["line_loss"] = results
@@ -186,7 +190,7 @@ class JSONOutputManager:
 
     def add_revenue(self, results: Dict[str, Any]):
         """Add revenue results."""
-        self.benefits["revenue"] = results
+        self.benefits["capital_recovery"] = results
 
     def add_project_params(self, **kwargs):
         """Add project parameters (stored in technical_parameters)."""
@@ -223,6 +227,7 @@ class JSONOutputManager:
 
         # Delay costs
         delay = self.costs.get("delay", {})
+        displacement_delay = self.costs.get("displacement_delay", {})
 
         self.summary = {
             # Capital costs (ROW = acquisition + holding only; rent is operational)
@@ -276,7 +281,7 @@ class JSONOutputManager:
             "grand_total_cost_pv": 0,  # Calculated below
         }
 
-        # Get congestion/curtailment delay costs and residual exceedance from benefits section (they're costs, not benefits)
+        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
         congestion_curtailment = self.benefits.get("congestion_curtailment", {})
         congestion_delay_nominal = (
             congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
@@ -284,12 +289,6 @@ class JSONOutputManager:
         curtailment_delay_nominal = (
             congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
         )
-        residual_exceedance_nominal = (
-            congestion_curtailment.get("residual_exceedance_nominal", 0) or 0
-        )
-
-        # Add residual exceedance to energy/emissions (system cost only; not operational)
-        self.summary["total_energy_emissions_nominal"] += residual_exceedance_nominal
 
         # Calculate grand totals
         self.summary["grand_total_cost_nominal"] = (
@@ -299,6 +298,7 @@ class JSONOutputManager:
             + delay.get("total_nominal", 0)
             + congestion_delay_nominal
             + curtailment_delay_nominal
+            + displacement_delay.get("displacement_delay_cost_nominal", 0)
             + self.summary["total_energy_emissions_nominal"]
         )
 
@@ -306,7 +306,7 @@ class JSONOutputManager:
             "total_capital_afudc"
         ] + delay.get("total_afudc", 0)
 
-        # Get congestion/curtailment delay costs and residual exceedance from benefits section (they're costs, not benefits)
+        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
         congestion_curtailment = self.benefits.get("congestion_curtailment", {})
         congestion_delay_pv = (
             congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
@@ -314,12 +314,6 @@ class JSONOutputManager:
         curtailment_delay_pv = (
             congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
         )
-        residual_exceedance_pv = (
-            congestion_curtailment.get("residual_exceedance_pv", 0) or 0
-        )
-
-        # Add residual exceedance to energy/emissions (system cost only; not operational)
-        self.summary["total_energy_emissions_pv"] += residual_exceedance_pv
 
         self.summary["grand_total_cost_pv"] = (
             self.summary["total_capital_pv"]
@@ -328,6 +322,7 @@ class JSONOutputManager:
             + delay.get("total_pv", 0)
             + congestion_delay_pv
             + curtailment_delay_pv
+            + displacement_delay.get("displacement_delay_cost_pv", 0)
             + self.summary["total_energy_emissions_pv"]
         )
 
@@ -341,9 +336,9 @@ class JSONOutputManager:
         _cc2 = self.benefits.get("congestion_curtailment", {})
         _cdpv2 = _cc2.get("congestion_delay_cost_pv", 0) or 0
         _curdpv2 = _cc2.get("curtailment_delay_cost_pv", 0) or 0
-        _respv2 = _cc2.get("residual_exceedance_pv", 0) or 0
-        _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _curdpv2
-        _energy_line_pv = (_ll.get("total_pv", 0) or 0) + _respv2
+        _disp_delay_pv = displacement_delay.get("displacement_delay_cost_pv", 0) or 0
+        _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _curdpv2 + _disp_delay_pv
+        _energy_line_pv = _ll.get("total_pv", 0) or 0
         self.summary["reporting_bucket_hard_pv"] = self.summary["total_capital_pv"]
         self.summary["reporting_bucket_soft_pv"] = (
             _delay_total_pv + self.summary["total_operational_pv"] + _energy_line_pv

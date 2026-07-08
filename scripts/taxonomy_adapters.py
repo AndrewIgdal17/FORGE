@@ -309,11 +309,34 @@ def adapt_facilitated_emissions(fac_em: dict) -> list[TaxonomyResult]:
     ]
 
 
-def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.congestion_curtailment -> 6 taxonomy items.
+def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
+    """Adapt costs.displacement_delay -> emissions_displacement_delay."""
+    if not disp_delay:
+        return []
+    pollutants = ("co2", "sox", "nox")
+    detail_rows = tuple(
+        DetailRow(
+            "pollutant", p,
+            value_pv=_safe(disp_delay, f"{p}_pv"),
+        )
+        for p in pollutants
+        if _safe(disp_delay, f"{p}_pv")
+    )
+    return [
+        TaxonomyResult(
+            "emissions_displacement_delay",
+            value_pv=_safe(disp_delay, "displacement_delay_cost_pv"),
+            value_nominal=_safe(disp_delay, "displacement_delay_cost_nominal"),
+            detail=detail_rows if detail_rows else None,
+        ),
+    ]
 
-    Three benefits (congestion, curtailment, delivered energy) and three
-    cost-side items (congestion delay, curtailment delay, residual exceedance).
+
+def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
+    """Adapt benefits.congestion_curtailment -> 5 taxonomy items.
+
+    Three benefits (congestion, curtailment, delivered energy) and two
+    cost-side items (congestion delay, curtailment delay).
     """
     if not cc:
         return []
@@ -346,25 +369,19 @@ def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
             value_pv=_safe(cc, "curtailment_delay_cost_pv"),
             value_nominal=_safe(cc, "curtailment_delay_cost_nominal"),
         ),
-        TaxonomyResult(
-            "residual_exceedance",
-            value_pv=_safe(cc, "residual_exceedance_pv"),
-            value_nominal=_safe(cc, "residual_exceedance_nominal"),
-            value_annual=_safe(cc, "residual_exceedance_annual"),
-        ),
     ]
 
 
-def adapt_revenue(revenue: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.revenue -> revenue."""
-    if not revenue:
+def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
+    """Adapt benefits.capital_recovery -> capital_recovery."""
+    if not capital_recovery:
         return []
     return [
         TaxonomyResult(
-            "revenue",
-            value_pv=_safe(revenue, "revenue_pv"),
-            value_nominal=_safe(revenue, "revenue_nominal"),
-            value_annual=_safe(revenue, "annual_revenue"),
+            "capital_recovery",
+            value_pv=_safe(capital_recovery, "revenue_pv"),
+            value_nominal=_safe(capital_recovery, "revenue_nominal"),
+            value_annual=_safe(capital_recovery, "annual_revenue"),
         ),
     ]
 
@@ -395,8 +412,9 @@ def adapt_all_results(json_results: dict) -> list[TaxonomyResult]:
     results += adapt_outage(costs.get("outage", {}))
     results += adapt_emissions_comp(costs.get("emissions", {}))
     results += adapt_facilitated_emissions(benefits.get("facilitated_emissions", {}))
+    results += adapt_displacement_delay_cost(costs.get("displacement_delay", {}))
     results += adapt_congestion_curtailment(benefits.get("congestion_curtailment", {}))
-    results += adapt_revenue(benefits.get("revenue", {}))
+    results += adapt_capital_recovery(benefits.get("capital_recovery", {}))
 
     for r in results:
         assert r.taxonomy_id in TAXONOMY, (
@@ -468,16 +486,16 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "congestion_delay_cost_nominal": _nom("congestion_delay"),
         "curtailment_delay_cost_pv": _pv("curtailment_delay"),
         "curtailment_delay_cost_nominal": _nom("curtailment_delay"),
-        "residual_exceedance_pv": _pv("residual_exceedance"),
-        "residual_exceedance_nominal": _nom("residual_exceedance"),
         "congestion_benefit_pv": _pv("congestion_benefit"),
         "congestion_benefit_nominal": _nom("congestion_benefit"),
         "curtailment_benefit_pv": _pv("curtailment_benefit"),
         "curtailment_benefit_nominal": _nom("curtailment_benefit"),
         "delivered_benefit_pv": _pv("delivered_energy_benefit"),
         "delivered_benefit_nominal": _nom("delivered_energy_benefit"),
-        "revenue_pv": _pv("revenue"),
-        "revenue_nominal": _nom("revenue"),
+        "capital_recovery_pv": _pv("capital_recovery"),
+        "capital_recovery_nominal": _nom("capital_recovery"),
+        "emissions_displacement_delay_pv": _pv("emissions_displacement_delay"),
+        "emissions_displacement_delay_nominal": _nom("emissions_displacement_delay"),
     }
 
 

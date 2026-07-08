@@ -1258,10 +1258,9 @@ function updateEmissionsImpactPanel(results) {
   const fmt = v => '$' + Math.round(v).toLocaleString();
 
   const gwh = getEnergyDeliveredGWh();
-  const projShares = readFuelShares('energy_source_mix');
-  const projRates = readFuelRates('energy_source_mix');
-  const cfShares = readFuelShares('counterfactual_energy_source_mix');
-  const cfRates = readFuelRates('counterfactual_energy_source_mix');
+  const initialShares = readFuelShares('initial');
+  const preCodRates = readFuelRates('rate_pre_cod');
+  const postCodRates = readFuelRates('rate_post_cod');
   const lifetime = parseFloat((document.querySelector('[data-path="01_project_technical_details.project.project_lifetime"]')?.value || '50').replace(/,/g, '')) || 50;
 
   const setVal = (key, val) => { const el = panel.querySelector(`[data-emis-cost="${key}"]`); if (el) el.textContent = val; };
@@ -1273,35 +1272,35 @@ function updateEmissionsImpactPanel(results) {
       intensities[f] = inp ? (parseFloat(inp.value) || 0) : 0;
     });
 
-    let projLifetime = 0, cfLifetime = 0;
+    let postCodLifetime = 0, preCodLifetime = 0;
     const years = Array.from({ length: Math.min(lifetime, 60) + 1 }, (_, i) => i);
-    let projCum = 0, cfCum = 0;
-    const projCumData = [], cfCumData = [];
+    let postCum = 0, preCum = 0;
+    const postCumData = [], preCumData = [];
 
     years.forEach(y => {
       if (y > 0) {
-        const pMix = projectFuelMix(projShares, projRates, y);
-        const cMix = projectFuelMix(cfShares, cfRates, y);
-        let pAnn = 0, cAnn = 0;
+        const postMix = projectFuelMix(initialShares, postCodRates, y);
+        const preMix = projectFuelMix(initialShares, preCodRates, y);
+        let postAnn = 0, preAnn = 0;
         C.FUEL_SOURCES.forEach(f => {
-          pAnn += (pMix[f] || 0) * intensities[f] * gwh;
-          cAnn += (cMix[f] || 0) * intensities[f] * gwh;
+          postAnn += (postMix[f] || 0) * intensities[f] * gwh;
+          preAnn += (preMix[f] || 0) * intensities[f] * gwh;
         });
         const scale = p === 'co2' ? 1000 : 1;
-        projCum += pAnn / scale;
-        cfCum += cAnn / scale;
-        projLifetime += pAnn / scale;
-        cfLifetime += cAnn / scale;
+        postCum += postAnn / scale;
+        preCum += preAnn / scale;
+        postCodLifetime += postAnn / scale;
+        preCodLifetime += preAnn / scale;
       }
-      projCumData.push(projCum);
-      cfCumData.push(cfCum);
+      postCumData.push(postCum);
+      preCumData.push(preCum);
     });
 
     const unit = p === 'co2' ? ' kt' : ' t';
     const fmtU = v => v >= 10000 ? (v / 1000).toFixed(1) + ' M' + unit.trim().charAt(unit.trim().length - 1) : v.toFixed(1) + unit;
-    setVal(`${p}_project`, fmtU(projLifetime));
-    setVal(`${p}_counterfact`, fmtU(cfLifetime));
-    setVal(`${p}_avoided`, fmtU(cfLifetime - projLifetime));
+    setVal(`${p}_project`, fmtU(postCodLifetime));
+    setVal(`${p}_counterfact`, fmtU(preCodLifetime));
+    setVal(`${p}_avoided`, fmtU(preCodLifetime - postCodLifetime));
 
     const canvasId = `emissions-chart-${p}`;
     const canvas = document.getElementById(canvasId);
@@ -1309,8 +1308,8 @@ function updateEmissionsImpactPanel(results) {
       const yLabel = p === 'co2' ? 'Cumulative CO₂ (kt)' : p === 'sox' ? 'Cumulative SOₓ (t)' : 'Cumulative NOₓ (t)';
       if (C.emissionsChartInstances[p]) {
         C.emissionsChartInstances[p].data.labels = years;
-        C.emissionsChartInstances[p].data.datasets[0].data = cfCumData;
-        C.emissionsChartInstances[p].data.datasets[1].data = projCumData;
+        C.emissionsChartInstances[p].data.datasets[0].data = preCumData;
+        C.emissionsChartInstances[p].data.datasets[1].data = postCumData;
         C.emissionsChartInstances[p].update();
       } else {
         C.emissionsChartInstances[p] = new Chart(canvas, {
@@ -1318,8 +1317,8 @@ function updateEmissionsImpactPanel(results) {
           data: {
             labels: years,
             datasets: [
-              { label: 'Counterfactual', data: cfCumData, borderColor: '#9ca3af', backgroundColor: 'rgba(156,163,175,0.2)', fill: 'origin', tension: 0.1, pointRadius: 0 },
-              { label: 'Project', data: projCumData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.2)', fill: 'origin', tension: 0.1, pointRadius: 0 },
+              { label: 'Without line (pre-COD)', data: preCumData, borderColor: '#9ca3af', backgroundColor: 'rgba(156,163,175,0.2)', fill: 'origin', tension: 0.1, pointRadius: 0 },
+              { label: 'With line (post-COD)', data: postCumData, borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.2)', fill: 'origin', tension: 0.1, pointRadius: 0 },
             ],
           },
           options: {

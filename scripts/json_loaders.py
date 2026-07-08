@@ -73,28 +73,21 @@ _data_source = JSONDataSource()
 logger = logging.getLogger(__name__)
 
 
-def _load_energy_source_mix_from_combined_json(
-    emissions_reductions: Dict[str, Any],
-) -> Dict[str, Any]:
+def load_grid_mix() -> Dict[str, Any]:
+    """Load the single-trajectory grid mix from the '18_energy_source_mix' JSON block.
+
+    Returns a dict with keys 'initial', 'rate_pre_cod', 'rate_post_cod'. No backward
+    compatibility: old 'energy_source_mix' / 'counterfactual_energy_source_mix' keys
+    are not recognized.
     """
-    Canonical mix from key 18_energy_source_mix; legacy fallback from
-    emissions_reductions.energy_source_mix when 18 is absent.
-    """
-    jd = _data_source._json_data
-    if jd:
-        block18 = jd.get("18_energy_source_mix")
-        if isinstance(block18, dict) and "energy_source_mix" in block18:
-            return block18["energy_source_mix"]
-    if "energy_source_mix" in emissions_reductions:
-        logger.warning(
-            "Using legacy energy_source_mix under 16_emissions_reductions; "
-            "prefer top-level 18_energy_source_mix in combined JSON"
-        )
-        return emissions_reductions["energy_source_mix"]
-    raise KeyError(
-        "energy_source_mix missing: add 18_energy_source_mix to combined JSON "
-        "or legacy energy_source_mix under 16_emissions_reductions.emissions_reductions"
-    )
+    block18 = _data_source.get_data("18_energy_source_mix")
+    if not isinstance(block18, dict) or "grid_mix" not in block18:
+        raise KeyError("Missing 'grid_mix' key in 18_energy_source_mix JSON block")
+    grid_mix = block18["grid_mix"]
+    for key in ("initial", "rate_pre_cod", "rate_post_cod"):
+        if key not in grid_mix:
+            raise KeyError(f"Missing '{key}' key in grid_mix section of 18_energy_source_mix")
+    return grid_mix
 
 
 def set_json_data(combined_json: Dict[str, Any]):
@@ -210,13 +203,14 @@ def load_delay_costs():
 
 
 def load_emissions_details():
-    """Load emissions reductions details from JSON; mix merged from 18_energy_source_mix."""
+    """Load emissions reductions details from JSON (compensation, intensities, societal costs).
+
+    Grid mix is loaded separately via load_grid_mix().
+    """
     data = _data_source.get_data("16_emissions_reductions")
     erd = data["emissions_reductions"]
-    mix = _load_energy_source_mix_from_combined_json(erd)
     return (
         erd["compensation_percent"],
-        mix,
         erd["emission_intensities"],
         erd["societal_costs_per_kg"],
     )
@@ -224,7 +218,7 @@ def load_emissions_details():
 
 def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
-    Load congestion and curtailment reduction parameters from merged JSON.
+    Load congestion and curtailment reduction parameters from merged JSON (Approach B).
 
     Returns:
         CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
@@ -238,42 +232,22 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     # Load from appropriate section
     if reconductoring:
         reductions_data = data["reconductoring_congestion_curtailment_reductions"]
-        # flow_factor is not used for reconductoring (capacity relief = capacity - old_capacity)
+        constraints = reductions_data["constraints"]
+        prices = reductions_data["prices"]
         flow_factor = 0.0
     else:
         reductions_data = data["greenfield_congestion_curtailment_reductions"]
-        flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
-
-    congestion_data = reductions_data["congestion"]
-    curtailment_data = reductions_data["curtailment"]
-
-    # Get average_congestion_price - handle missing costs key
-    if "costs" in congestion_data:
-        average_congestion_price = congestion_data["costs"]["average_congestion_price"]
-    else:
-        average_congestion_price = (
-            data.get("greenfield_congestion_curtailment_reductions", {})
-            .get("congestion", {})
-            .get("costs", {})
-            .get("average_congestion_price", 30)
-        )
+        constraints = reductions_data["constraints"]
+        prices = reductions_data["prices"]
+        flow_factor = constraints["flow_factor"]
 
     return CongestionCurtailmentParams(
         flow_factor=float(flow_factor),
-        binding_hours=float(congestion_data["constraints"]["binding_hours"]),
-        average_exceedance=float(congestion_data["constraints"]["average_exceedance"]),
-        near_binding_hours=float(congestion_data["constraints"]["near_binding_hours"]),
-        near_average_exceedance=float(
-            congestion_data["constraints"]["near_average_exceedance"]
-        ),
-        average_congestion_price=float(average_congestion_price),
-        curtailment_hours_total=float(
-            curtailment_data.get("curtailment_hours_total", 0)
-        ),
-        average_curtailment_mw=float(curtailment_data.get("average_curtailment_mw", 0)),
-        average_curtailment_price=float(
-            curtailment_data.get("average_curtailment_price", 0)
-        ),
+        constrained_hours=float(constraints["constrained_hours"]),
+        average_exceedance=float(constraints["average_exceedance"]),
+        congestion_fraction=float(constraints["congestion_fraction"]),
+        average_congestion_price=float(prices["average_congestion_price"]),
+        average_curtailment_price=float(prices["average_curtailment_price"]),
     )
 
 

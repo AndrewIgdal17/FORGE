@@ -72,7 +72,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
-    fin["revenue"]["rate_based"]["allowed_return_rate"] = 0.0976
 
     # --- 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
@@ -133,40 +132,35 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     row["zone_2"]["rent_cost"] = 18.78
     row["zone_2"]["hold_cost"] = 3_000
 
-    # --- 17: Congestion/Curtailment (same import constraint as LRGV) ---
+    # --- 17: Congestion/Curtailment (Approach B; same import constraint as LRGV) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
-    gf["congestion"]["constraints"]["flow_factor"] = 0.80
-    gf["congestion"]["constraints"]["binding_hours"] = 1200
-    gf["congestion"]["constraints"]["average_exceedance"] = 400
-    gf["congestion"]["constraints"]["near_binding_hours"] = 300
-    gf["congestion"]["constraints"]["near_average_exceedance"] = 100
-    gf["congestion"]["costs"]["average_congestion_price"] = 15.0
-    gf["curtailment"]["curtailment_hours_total"] = 0
-    gf["curtailment"]["average_curtailment_mw"] = 0
-    gf["curtailment"]["average_curtailment_price"] = 0
+    gf["constraints"]["flow_factor"] = 0.80
+    gf["constraints"]["constrained_hours"] = 1200
+    gf["constraints"]["average_exceedance"] = 400
+    gf["constraints"]["congestion_fraction"] = 1.00  # load pocket (LRGV-type): pure congestion
+    gf["prices"]["average_congestion_price"] = 15.0
+    gf["prices"]["average_curtailment_price"] = 0
 
-    # --- 18: Energy Source Mix (same ERCOT region as LRGV) ---
+    # --- 18: Grid Mix (single-trajectory model; same ERCOT region as LRGV) ---
+    # Sources: ERCOT CDR 2010; EIA Texas electricity profile 2010; Potomac
+    # Economics IMM. rate_post_cod = rate_pre_cod: this is a congestion-relief
+    # line, not a renewable corridor — it relieves import constraints to LRGV
+    # but does not enable new generation or change system-level investment.
     mix = inputs["18_energy_source_mix"]
-    mix["energy_source_mix"] = {
-        "coal": {"percentage": 15, "rate_of_change": -0.06},
-        "oil": {"percentage": 0.1, "rate_of_change": -0.05},
-        "natural_gas": {"percentage": 47, "rate_of_change": -0.01},
-        "solar": {"percentage": 5, "rate_of_change": 0.10},
-        "wind": {"percentage": 23, "rate_of_change": 0.04},
-        "hydro": {"percentage": 0.1, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 9, "rate_of_change": 0.0},
-        "other": {"percentage": 0.8, "rate_of_change": 0.0},
-    }
-    mix["counterfactual_energy_source_mix"] = {
-        "coal": {"percentage": 15, "rate_of_change": -0.04},
-        "oil": {"percentage": 0.1, "rate_of_change": -0.03},
-        "natural_gas": {"percentage": 55, "rate_of_change": -0.005},
-        "solar": {"percentage": 3, "rate_of_change": 0.06},
-        "wind": {"percentage": 17, "rate_of_change": 0.02},
-        "hydro": {"percentage": 0.1, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 9, "rate_of_change": 0.0},
-        "other": {"percentage": 0.7, "rate_of_change": 0.0},
+    mix["grid_mix"] = {
+        "initial": {
+            "coal": 39.5, "oil": 0.3, "natural_gas": 38, "solar": 0.1,
+            "wind": 7.8, "hydro": 0.2, "nuclear": 13, "other": 1.1,
+        },
+        "rate_pre_cod": {
+            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
+            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
+        },
+        "rate_post_cod": {
+            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
+            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
+        },
     }
 
     return inputs
@@ -201,7 +195,7 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    print(f"  Revenue (transfer):     {fmt(benefits['revenue']['revenue_pv'])}")
+    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['revenue_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")

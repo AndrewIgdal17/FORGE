@@ -273,12 +273,6 @@ _TAB3: list[InputField] = [
        yaml_section="03_financing", field_path="financial.revenue.rate_based.enabled",
        label="Revenue Requirement", help_text="Enable rate-based revenue calculation",
        input_type="toggle", tier="working", display_order=1),
-    _f("allowed_return_rate", taxonomy_id="financial_revenue_config", input_tab="financial",
-       sub_tab="rates", condition="always_hidden",
-       yaml_section="03_financing", field_path="financial.revenue.rate_based.allowed_return_rate",
-       label="Allowed Return Rate", help_text="Annual return on rate base",
-       input_type="percent", tier="working", display_order=2,
-       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     # --- AFUDC (AFUDC sub-tab, custom-rendered) ---
     _f("apply_afudc", taxonomy_id="financial_afudc", input_tab="financial",
        sub_tab="afudc", condition="always_hidden",
@@ -637,35 +631,42 @@ for _pk, _pl in _POLLUTANTS:
             sub_tab="energy-emissions-emissions"))
         _int_order += 1
 
-# Energy source mix: 8 fuels × 2 fields × 2 instances = 32
-for _instance, _inst_label, _yaml_key in [
-    ("proj", "Energy Source Mix (Project Path)", "energy_source_mix"),
-    ("cf", "Counterfactual Energy Source Mix (No-Line)", "counterfactual_energy_source_mix"),
+# Grid mix (single-trajectory model): 8 fuels × 3 groups = 24 fields.
+# initial = starting regional grid mix (%); rate_pre_cod/rate_post_cod = annual
+# growth/decline rates without/with the line's influence.
+for _group_key, _group_label in [
+    ("initial", "Grid Mix — Initial (Year 0)"),
+    ("rate_pre_cod", "Grid Mix — Rate Without Line (Pre-COD)"),
+    ("rate_post_cod", "Grid Mix — Rate With Line (Post-COD)"),
 ]:
+    _is_pct = _group_key == "initial"
     for _fi, _fuel in enumerate(FUELS):
         _TAB8.append(_f(
-            f"mix_{_instance}_{_fuel}_pct", taxonomy_id="emissions_fac", input_tab="energy-mix",
+            f"grid_mix_{_group_key}_{_fuel}", taxonomy_id="emissions_fac", input_tab="energy-mix",
             yaml_section="18_energy_source_mix",
-            field_path=f"{_yaml_key}.{_fuel}.percentage",
-            label="Percentage", help_text=f"Share of {_fuel.replace('_', ' ')} in this generation mix (must sum to 100)",
-            section_label=f"{_inst_label} — {_fuel.replace('_', ' ').title()}",
-            input_type="fuel_mix_row", condition="always_hidden", tier="working",
-            display_order=_fi * 2 + 1, sub_tab="energy-emissions-energy"))
-        _TAB8.append(_f(
-            f"mix_{_instance}_{_fuel}_rate", taxonomy_id="emissions_fac", input_tab="energy-mix",
-            yaml_section="18_energy_source_mix",
-            field_path=f"{_yaml_key}.{_fuel}.rate_of_change",
-            label="Rate Of Change", help_text=f"Annual growth/decline rate for {_fuel.replace('_', ' ')} share (decimal; mix renormalized yearly)",
-            section_label=f"{_inst_label} — {_fuel.replace('_', ' ').title()}",
-            condition="always_hidden", tier="working", display_order=_fi * 2 + 2,
-            sub_tab="energy-emissions-energy"))
+            field_path=f"grid_mix.{_group_key}.{_fuel}",
+            label="Percentage" if _is_pct else "Rate Of Change",
+            help_text=(
+                f"Share of {_fuel.replace('_', ' ')} in the regional grid at year 0 (must sum to 100)"
+                if _is_pct else
+                f"Annual growth/decline rate for {_fuel.replace('_', ' ')} share under this regime (decimal; mix renormalized yearly)"
+            ),
+            section_label=f"{_group_label} — {_fuel.replace('_', ' ').title()}",
+            input_type="fuel_mix_row" if _is_pct else "number",
+            condition="always_hidden", tier="working",
+            display_order=_fi + 1, sub_tab="energy-emissions-energy"))
 
 # ===================================================================
 # Tab 9 — Benefits (24 fields)
 # ===================================================================
 
 def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputField]:
-    """Generate congestion/curtailment fields for greenfield or reconductoring."""
+    """Generate congestion/curtailment fields for greenfield or reconductoring.
+
+    Approach B: single-constraint, two-price decomposition. `congestion_fraction`
+    (f) splits constrained hours between redispatch (congestion) and renewable
+    curtailment; there is no separate curtailment-hours constraint.
+    """
     fields: list[InputField] = []
     _has_flow = "greenfield" in yaml_root
     _base = f"17_congestion_curtailment_reductions"
@@ -673,51 +674,39 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
     if _has_flow:
         fields.append(_f(
             f"{prefix}_flow_factor", taxonomy_id="congestion_benefit", input_tab="benefits",
-            yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.flow_factor",
+            yaml_section=_base, field_path=f"{yaml_root}.constraints.flow_factor",
             label="Flow Factor", help_text="Deliverability to targeted constraint [0,1]",
             input_type="percent", condition="always_hidden", tier="first-glance", display_order=1,
             validation={"min": 0, "max": 1, "step": 0.01},
             sub_tab="system-constraints"))
     fields += [
-        _f(f"{prefix}_binding_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.binding_hours",
-           label="Binding Hours", help_text="Hours/year the targeted constraint is binding",
+        _f(f"{prefix}_constrained_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
+           yaml_section=_base, field_path=f"{yaml_root}.constraints.constrained_hours",
+           label="Constrained Hours", help_text="Hours/year the targeted constraint binds (H)",
            unit="hrs/year", condition="always_hidden", tier="first-glance", display_order=2,
            sub_tab="system-constraints"),
         _f(f"{prefix}_avg_exceedance", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.average_exceedance",
-           label="Average Exceedance", help_text="Average MW exceedance during binding hours",
+           yaml_section=_base, field_path=f"{yaml_root}.constraints.average_exceedance",
+           label="Average Exceedance", help_text="Average MW exceedance during constrained hours (X)",
            unit="MW", condition="always_hidden", tier="first-glance", display_order=3,
            sub_tab="system-constraints"),
-        _f(f"{prefix}_near_binding_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_binding_hours",
-           label="Near Binding Hours", condition="always_hidden", display_order=90,
-           sub_tab="system-constraints"),
-        _f(f"{prefix}_near_avg_exceedance", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.constraints.near_average_exceedance",
-           label="Near Average Exceedance", condition="always_hidden", display_order=91,
+        _f(f"{prefix}_congestion_fraction", taxonomy_id="congestion_benefit", input_tab="benefits",
+           yaml_section=_base, field_path=f"{yaml_root}.constraints.congestion_fraction",
+           label="Congestion Fraction", help_text="Fraction of constrained hours resulting in redispatch (f); remainder is curtailment",
+           input_type="percent", condition="always_hidden", tier="first-glance", display_order=4,
+           validation={"min": 0, "max": 1, "step": 0.01},
            sub_tab="system-constraints"),
         _f(f"{prefix}_cong_price", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.congestion.costs.average_congestion_price",
-           label="Average Congestion Price", help_text="Marginal congestion cost during binding hours; monetizes relief",
+           yaml_section=_base, field_path=f"{yaml_root}.prices.average_congestion_price",
+           label="Average Congestion Price", help_text="Marginal redispatch cost during constrained hours; monetizes relief",
            unit="$/MWh", input_type="currency", condition="always_hidden",
-           tier="first-glance", display_order=4,
-           sub_tab="system-constraints"),
-        _f(f"{prefix}_curt_hours", taxonomy_id="curtailment_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.curtailment.curtailment_hours_total",
-           label="Curtailment Hours Total", help_text="Hours/year of renewable curtailment on this constraint",
-           unit="hrs/year", condition="always_hidden", tier="first-glance", display_order=6,
-           sub_tab="system-constraints"),
-        _f(f"{prefix}_curt_mw", taxonomy_id="curtailment_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.curtailment.average_curtailment_mw",
-           label="Average Curtailment MW", help_text="Average curtailed MW during curtailment hours",
-           unit="MW", condition="always_hidden", tier="first-glance", display_order=7,
+           tier="first-glance", display_order=5,
            sub_tab="system-constraints"),
         _f(f"{prefix}_curt_price", taxonomy_id="curtailment_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.curtailment.average_curtailment_price",
+           yaml_section=_base, field_path=f"{yaml_root}.prices.average_curtailment_price",
            label="Average Curtailment Price", help_text="Value per MWh of curtailed energy (PPA proxy / avoided cost)",
            unit="$/MWh", input_type="currency", condition="always_hidden",
-           tier="first-glance", display_order=8,
+           tier="first-glance", display_order=6,
            sub_tab="system-constraints"),
     ]
     return fields

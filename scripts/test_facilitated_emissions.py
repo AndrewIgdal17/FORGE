@@ -1,4 +1,4 @@
-"""Standalone accuracy tests for facilitated_emissions.py.
+"""Standalone accuracy tests for facilitated_emissions.py (single-trajectory model).
 
 Verifies the module against hand-calculated expected values.
 Run: cd repos/ctcc/scripts && python test_facilitated_emissions.py
@@ -12,17 +12,29 @@ from facilitated_emissions import calculate_facilitated_emissions
 
 SOURCES = ["coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other"]
 
-def _make_mix(solar_pct, gas_pct, solar_rate, gas_rate):
-    """Helper: build a full 8-source mix dict with only solar and gas nonzero."""
-    mix = {}
-    for s in SOURCES:
-        if s == "solar":
-            mix[s] = {"percentage": solar_pct, "rate_of_change": solar_rate}
-        elif s == "natural_gas":
-            mix[s] = {"percentage": gas_pct, "rate_of_change": gas_rate}
-        else:
-            mix[s] = {"percentage": 0, "rate_of_change": 0.0}
-    return mix
+
+def _make_grid_mix(solar_pct, gas_pct, rate_pre_cod, rate_post_cod):
+    """Helper: build a grid_mix dict with only solar and gas nonzero.
+
+    rate_pre_cod / rate_post_cod are (solar_rate, gas_rate) tuples applied
+    uniformly across all fuels other than solar/gas (which stay at 0).
+    """
+    initial = {s: 0 for s in SOURCES}
+    initial["solar"] = solar_pct
+    initial["natural_gas"] = gas_pct
+
+    def _rates(solar_rate, gas_rate):
+        r = {s: 0.0 for s in SOURCES}
+        r["solar"] = solar_rate
+        r["natural_gas"] = gas_rate
+        return r
+
+    return {
+        "initial": initial,
+        "rate_pre_cod": _rates(*rate_pre_cod),
+        "rate_post_cod": _rates(*rate_post_cod),
+    }
+
 
 INTENSITIES = {
     "co2_intensity_kg_per_mwh": {s: (400 if s == "natural_gas" else 0) for s in SOURCES},
@@ -47,24 +59,26 @@ def test_hand_calculated():
     """Test 1: 3-year case with hand-calculated expected values.
 
     Setup:
-      - solar=60%, gas=40%; project solar grows +10%/yr; counterfactual frozen
+      - solar=60%, gas=40%; rate_pre_cod frozen (no-line); rate_post_cod: solar
+        grows +10%/yr (with-line)
+      - delay=0, construction=0 -> T_COD=1yr, and rate_pre_cod=0 means the COD
+        state equals the initial mix exactly, so this reduces to the same
+        hand-calculated case as the pre-single-trajectory model.
       - E_delivered=1000 MWh, gas intensity=400 kg CO2/MWh, cost=$0.05/kg
-      - lifetime=3, r_social=0, delay=0, construction=0
+        lifetime=3, r_social=0
 
     Expected (from hand calculation using fixed evolution engine, tau-1 exponent):
-      - proj_nominal = proj_pv = 22651.965548 (no discounting)
-      - cf_nominal = cf_pv = 24000.000000
+      - withline_nominal = withline_pv = 22651.965548 (no discounting)
+      - noline_nominal = noline_pv = 24000.000000
       - displacement = 1348.034452
     """
     print("\n=== Test 1: Hand-calculated 3-year case ===")
 
-    proj_mix = _make_mix(60, 40, 0.10, 0.0)
-    cf_mix = _make_mix(60, 40, 0.0, 0.0)
+    grid_mix = _make_grid_mix(60, 40, rate_pre_cod=(0.0, 0.0), rate_post_cod=(0.10, 0.0))
 
     r = calculate_facilitated_emissions(
         energy_delivered_annual_mwh=1000.0,
-        energy_source_mix_details=proj_mix,
-        counterfactual_energy_source_mix_details=cf_mix,
+        grid_mix=grid_mix,
         emission_intensities=INTENSITIES,
         societal_costs=SOCIETAL,
         project_lifetime=3,
@@ -74,30 +88,34 @@ def test_hand_calculated():
     )
 
     ok = True
-    ok &= assert_close(r.fac_emissions_project_nominal, 22651.965548, "proj_nominal", tol=0.01)
-    ok &= assert_close(r.fac_emissions_project_pv, 22651.965548, "proj_pv", tol=0.01)
-    ok &= assert_close(r.fac_emissions_noline_nominal, 24000.0, "cf_nominal")
-    ok &= assert_close(r.fac_emissions_noline_pv, 24000.0, "cf_pv")
+    ok &= assert_close(r.fac_emissions_project_nominal, 22651.965548, "withline_nominal", tol=0.01)
+    ok &= assert_close(r.fac_emissions_project_pv, 22651.965548, "withline_pv", tol=0.01)
+    ok &= assert_close(r.fac_emissions_noline_nominal, 24000.0, "noline_nominal")
+    ok &= assert_close(r.fac_emissions_noline_pv, 24000.0, "noline_pv")
     ok &= assert_close(r.displacement_avoided_cost_pv, 1348.034452, "displacement_pv", tol=0.01)
     ok &= assert_close(r.displacement_avoided_cost_nominal, 1348.034452, "displacement_nom", tol=0.01)
 
     if r.displacement_avoided_cost_pv <= 0:
-        print("  FAIL displacement should be positive (cleaner project)")
+        print("  FAIL displacement should be positive (cleaner with-line trajectory)")
         ok = False
 
     return ok
 
 
 def test_zero_displacement():
-    """Test 2: identical project and counterfactual -> displacement exactly 0."""
-    print("\n=== Test 2: Zero displacement (identical mixes) ===")
+    """Test 2: identical rate_pre_cod/rate_post_cod -> displacement exactly 0.
 
-    mix = _make_mix(60, 40, 0.10, 0.0)
+    This is the identity-placeholder property required by Task 4a: when the
+    line has no researched influence on the grid, with-line and without-line
+    trajectories are identical regardless of the COD state they start from.
+    """
+    print("\n=== Test 2: Zero displacement (rate_pre_cod == rate_post_cod) ===")
+
+    grid_mix = _make_grid_mix(60, 40, rate_pre_cod=(0.10, 0.0), rate_post_cod=(0.10, 0.0))
 
     r = calculate_facilitated_emissions(
         energy_delivered_annual_mwh=1000.0,
-        energy_source_mix_details=mix,
-        counterfactual_energy_source_mix_details=mix,
+        grid_mix=grid_mix,
         emission_intensities=INTENSITIES,
         societal_costs=SOCIETAL,
         project_lifetime=5,
@@ -109,22 +127,20 @@ def test_zero_displacement():
     ok = True
     ok &= assert_close(r.displacement_avoided_cost_pv, 0.0, "displacement_pv")
     ok &= assert_close(r.displacement_avoided_cost_nominal, 0.0, "displacement_nom")
-    ok &= assert_close(r.fac_emissions_project_pv, r.fac_emissions_noline_pv, "proj_pv == cf_pv")
+    ok &= assert_close(r.fac_emissions_project_pv, r.fac_emissions_noline_pv, "withline_pv == noline_pv")
 
     return ok
 
 
 def test_discount_sanity():
-    """Test 3: with positive discount rate, PV < nominal."""
+    """Test 3: with positive discount rate, PV < nominal; displacement positive."""
     print("\n=== Test 3: Discount sanity (PV < nominal) ===")
 
-    proj_mix = _make_mix(60, 40, 0.10, 0.0)
-    cf_mix = _make_mix(60, 40, 0.0, 0.0)
+    grid_mix = _make_grid_mix(60, 40, rate_pre_cod=(0.0, 0.0), rate_post_cod=(0.10, 0.0))
 
     r = calculate_facilitated_emissions(
         energy_delivered_annual_mwh=1000.0,
-        energy_source_mix_details=proj_mix,
-        counterfactual_energy_source_mix_details=cf_mix,
+        grid_mix=grid_mix,
         emission_intensities=INTENSITIES,
         societal_costs=SOCIETAL,
         project_lifetime=10,
@@ -135,22 +151,60 @@ def test_discount_sanity():
 
     ok = True
     if r.fac_emissions_project_pv >= r.fac_emissions_project_nominal:
-        print(f"  FAIL proj PV ({r.fac_emissions_project_pv:.2f}) should be < nominal ({r.fac_emissions_project_nominal:.2f})")
+        print(f"  FAIL withline PV ({r.fac_emissions_project_pv:.2f}) should be < nominal ({r.fac_emissions_project_nominal:.2f})")
         ok = False
     else:
-        print(f"  OK   proj PV ({r.fac_emissions_project_pv:.2f}) < nominal ({r.fac_emissions_project_nominal:.2f})")
+        print(f"  OK   withline PV ({r.fac_emissions_project_pv:.2f}) < nominal ({r.fac_emissions_project_nominal:.2f})")
 
     if r.fac_emissions_noline_pv >= r.fac_emissions_noline_nominal:
-        print(f"  FAIL cf PV ({r.fac_emissions_noline_pv:.2f}) should be < nominal ({r.fac_emissions_noline_nominal:.2f})")
+        print(f"  FAIL noline PV ({r.fac_emissions_noline_pv:.2f}) should be < nominal ({r.fac_emissions_noline_nominal:.2f})")
         ok = False
     else:
-        print(f"  OK   cf PV ({r.fac_emissions_noline_pv:.2f}) < nominal ({r.fac_emissions_noline_nominal:.2f})")
+        print(f"  OK   noline PV ({r.fac_emissions_noline_pv:.2f}) < nominal ({r.fac_emissions_noline_nominal:.2f})")
 
     if r.displacement_avoided_cost_pv <= 0:
-        print(f"  FAIL displacement should be positive (cleaner project), got {r.displacement_avoided_cost_pv:.2f}")
+        print(f"  FAIL displacement should be positive (cleaner with-line trajectory), got {r.displacement_avoided_cost_pv:.2f}")
         ok = False
     else:
         print(f"  OK   displacement positive: ${r.displacement_avoided_cost_pv:.2f}")
+
+    return ok
+
+
+def test_cod_handoff():
+    """Test 4: with a nonzero rate_pre_cod, delay changes the COD starting point.
+
+    A longer delay means more pre-COD evolution has already happened by COD,
+    so the operational trajectories (which both start from the COD state)
+    differ from the zero-delay case even though rate_pre_cod/rate_post_cod are
+    unchanged. This is the behavior the single-trajectory redesign fixes.
+    """
+    print("\n=== Test 4: COD handoff changes results with delay ===")
+
+    grid_mix = _make_grid_mix(60, 40, rate_pre_cod=(0.05, 0.0), rate_post_cod=(0.10, 0.0))
+
+    common = dict(
+        energy_delivered_annual_mwh=1000.0,
+        grid_mix=grid_mix,
+        emission_intensities=INTENSITIES,
+        societal_costs=SOCIETAL,
+        project_lifetime=5,
+        social_discount_rate=0.0,
+    )
+
+    r_no_delay = calculate_facilitated_emissions(delay_years=0, construction_years=0, **common)
+    r_delay = calculate_facilitated_emissions(delay_years=10, construction_years=2, **common)
+
+    ok = True
+    if abs(r_no_delay.fac_emissions_noline_pv - r_delay.fac_emissions_noline_pv) < 1e-6:
+        print("  FAIL delay should change the COD starting point (noline PV unchanged)")
+        ok = False
+    else:
+        print(
+            f"  OK   noline PV differs with delay: "
+            f"{r_no_delay.fac_emissions_noline_pv:.2f} (no delay) vs "
+            f"{r_delay.fac_emissions_noline_pv:.2f} (12yr COD)"
+        )
 
     return ok
 
@@ -160,6 +214,7 @@ def main():
     results.append(("Hand-calculated", test_hand_calculated()))
     results.append(("Zero displacement", test_zero_displacement()))
     results.append(("Discount sanity", test_discount_sanity()))
+    results.append(("COD handoff", test_cod_handoff()))
 
     print("\n" + "=" * 50)
     all_pass = True

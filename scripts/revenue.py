@@ -1,9 +1,10 @@
 # Author: Andrew Igdal
 # Date: 2025-11-XX
 # Description: Calculate rate-based revenue requirement (utility perspective).
-#              Option A: Real stream + real WACC. Rate base (nominal at COD) is deflated
-#              to base year; annual revenue is constant real $/year; PV uses real WACC.
-#              Rate base = AFUDC capital (build + row capital + env) at COD (nominal).
+#              FERC-style declining-balance formula rate: straight-line depreciation
+#              plus return on the declining undepreciated rate base at the real WACC.
+#              Rate base (nominal at COD) is deflated to base year before applying the
+#              formula. Rate base = AFUDC capital (build + row capital + env) at COD.
 
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ from smart_loaders import (
     load_project_technical_details as load_project_technical_details_centralized,
     get_financing_data_raw,
 )
-from financial_utils import calculate_present_value, calculate_cod_year
+from financial_utils import calculate_cod_year
 from path_config import OUTPUTS_DIR
 
 try:
@@ -33,13 +34,13 @@ except ImportError:
         return None
 
 
-def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
+def load_rate_based_revenue_parameters() -> bool:
     """
     Load rate-based revenue parameters from financing data.
     Supports both YAML and JSON input modes.
 
     Returns:
-        tuple: (enabled, allowed_return_rate)
+        bool: enabled
     """
     try:
         financing_data = get_financing_data_raw()
@@ -49,9 +50,8 @@ def load_rate_based_revenue_parameters() -> Tuple[bool, float]:
         rate_based_config = revenue_config.get("rate_based", {})
 
         enabled = rate_based_config.get("enabled", False)
-        allowed_return_rate = rate_based_config.get("allowed_return_rate", 0.10)
 
-        return enabled, allowed_return_rate
+        return enabled
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Financing data not found"
@@ -145,11 +145,12 @@ def get_rate_base() -> float:
 def main() -> None:
     """
     Main function to calculate and display rate-based revenue requirement.
-    Uses Option A: real rate base (deflated to base year), constant real annual revenue,
+    Uses a FERC-style declining-balance formula rate: real rate base (deflated to
+    base year), straight-line depreciation plus return on the declining balance,
     discounted at real WACC.
     """
     # Check if rate-based revenue is enabled
-    enabled, allowed_return_rate = load_rate_based_revenue_parameters()
+    enabled = load_rate_based_revenue_parameters()
 
     if not enabled:
         print("=" * 60)
@@ -166,7 +167,8 @@ def main() -> None:
             "rate_base_real": 0,
             "rate_base_pv": 0,
             "annual_revenue_real": 0,
-            "allowed_return_rate": 0,
+            "revenue_year_1": 0,
+            "revenue_year_n": 0,
         }
         csv_manager.add_revenue(results)
         csv_manager.write_batch_summary()
@@ -188,29 +190,50 @@ def main() -> None:
         )
         print("   have run before revenue.py")
 
-    # Option A: Deflate rate base to base year; constant real annual revenue; discount at real WACC
+    # Deflate rate base to base year (real $)
     cod_year = calculate_cod_year(delay_years, construction_years)
     rate_base_real = rate_base / (1 + financing.inflation_rate) ** cod_year
-    annual_revenue_real = rate_base_real * allowed_return_rate
 
     from run_context import add_derived
     add_derived({"rate_base": rate_base, "rate_base_real": rate_base_real})
-    revenue_undiscounted_real = annual_revenue_real * project_lifetime
-    revenue_pv = calculate_present_value(
-        annual_revenue_real,
-        financing.wacc_real,
-        project_lifetime,
-        start_year=cod_year,
+
+    # Declining-balance revenue requirement (FERC formula rate)
+    # R_t = RB/n + RB * r * (1 - (t-1)/n) for t = 1..n
+    n = project_lifetime
+    r_wacc_real = financing.wacc_real
+
+    revenue_pv = 0.0
+    revenue_nominal_total = 0.0
+    annual_revenues = []
+
+    for t in range(1, n + 1):
+        depreciation_t = rate_base_real / n
+        return_t = rate_base_real * r_wacc_real * (1 - (t - 1) / n)
+        revenue_t = depreciation_t + return_t
+        annual_revenues.append(revenue_t)
+        revenue_nominal_total += revenue_t
+        discount_year = cod_year + t - 1
+        revenue_pv += revenue_t / (1 + r_wacc_real) ** discount_year
+
+    revenue_year_1 = annual_revenues[0] if annual_revenues else 0.0
+    revenue_year_n = annual_revenues[-1] if annual_revenues else 0.0
+
+    # NPV neutrality check: PV should equal RB discounted to base year
+    expected_pv = rate_base_real / (1 + r_wacc_real) ** (cod_year - 1)
+    assert abs(revenue_pv - expected_pv) / max(expected_pv, 1.0) < 1e-6, (
+        f"NPV neutrality violated: revenue_pv={revenue_pv:.2f}, expected={expected_pv:.2f}"
     )
 
     print("=" * 60)
-    print("RATE-BASED REVENUE REQUIREMENT CALCULATION (Option A: real stream, real WACC)")
+    print("RATE-BASED REVENUE REQUIREMENT CALCULATION (declining balance, real WACC)")
     print("=" * 60)
     print(f"Rate Base (nominal at COD):     ${rate_base:,.2f}")
     print(f"Rate Base (real, base-year $):  ${rate_base_real:,.2f}")
-    print(f"Allowed Return Rate (real):     {allowed_return_rate:.2%}")
-    print(f"Annual Revenue (real $/year):   ${annual_revenue_real:,.2f}")
-    print(f"Undiscounted Total (real):      ${revenue_undiscounted_real:,.2f}")
+    print(f"Real WACC:                      {r_wacc_real:.2%}")
+    print(f"Project Lifetime:                {n} years")
+    print(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")
+    print(f"Revenue Year {n} (real $/year):   ${revenue_year_n:,.2f}")
+    print(f"Undiscounted Total (real):      ${revenue_nominal_total:,.2f}")
     print()
     print(
         f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
@@ -221,14 +244,15 @@ def main() -> None:
     # CSV Output
     csv_manager = CTCCOutputManager()
     results = {
-        "revenue_nominal": revenue_undiscounted_real,
+        "revenue_nominal": revenue_nominal_total,
         "revenue_pv": revenue_pv,
-        "annual_revenue": annual_revenue_real,
+        "annual_revenue": revenue_year_1,
         "rate_base": rate_base,
         "rate_base_real": rate_base_real,
         "rate_base_pv": revenue_pv,
-        "annual_revenue_real": annual_revenue_real,
-        "allowed_return_rate": allowed_return_rate,
+        "annual_revenue_real": revenue_year_1,
+        "revenue_year_1": revenue_year_1,
+        "revenue_year_n": revenue_year_n,
     }
     csv_manager.add_revenue(results)
     csv_manager.write_batch_summary()

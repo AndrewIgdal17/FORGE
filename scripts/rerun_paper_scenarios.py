@@ -45,7 +45,6 @@ LINE_ITEM_EXTRACTION = {
     "insurance": lambda r: r["costs"]["insurance"]["pv_total"],
     "row_rent": lambda r: r["costs"]["row"].get("row_rent_pv", 0),
     "line_losses": lambda r: r["bcr"].get("energy_losses_pv", 0),
-    "residual_exceedance": lambda r: r["bcr"].get("residual_exceedance_pv", 0),
     "base_delay": lambda r: r["bcr"].get("delay_cost_pv", 0),
     "congestion_delay": lambda r: r["bcr"].get("congestion_delay_cost_pv", 0),
     "curtailment_delay": lambda r: r["bcr"].get("curtailment_delay_cost_pv", 0),

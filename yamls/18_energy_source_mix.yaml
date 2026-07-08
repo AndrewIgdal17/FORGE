@@ -1,57 +1,37 @@
-# Energy source mix (grid / compensating generation)
-# Consumed by emissions and other modules via merge at load time; canonical input for Fuel Mixes UI tab.
+# Grid mix — single-trajectory model.
+# One regional grid, starting from `initial`, evolving under two rate regimes:
+#   rate_pre_cod  — how the grid evolves WITHOUT the line (continuous from year 0)
+#   rate_post_cod — how the grid evolves WITH the line's influence (from COD onward;
+#                   also used hypothetically during the delay period)
+# See appendix sec:app-emissions-fac and sec:app-displacement for the COD handoff.
 
-energy_source_mix:
-  coal:
-    percentage: 0
-    rate_of_change: 0
-  oil:
-    percentage: 0
-    rate_of_change: 0
-  natural_gas:
-    percentage: 0
-    rate_of_change: 0
-  solar:
-    percentage: 0
-    rate_of_change: 0
-  wind:
-    percentage: 0
-    rate_of_change: 0
-  hydro:
-    percentage: 0
-    rate_of_change: 0
-  nuclear:
-    percentage: 0
-    rate_of_change: 0
-  other:
-    percentage: 0
-    rate_of_change: 0
+grid_mix:
+  initial:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0
 
-# Counterfactual (no-line / BAU) energy source mix for displacement module.
-# Same initial percentages as energy_source_mix; all rates frozen (0.0).
-# Used ONLY by the facilitated-emissions module (not by loss-compensation).
-counterfactual_energy_source_mix:
-  coal:
-    percentage: 0
-    rate_of_change: 0
-  oil:
-    percentage: 0
-    rate_of_change: 0
-  natural_gas:
-    percentage: 0
-    rate_of_change: 0
-  solar:
-    percentage: 0
-    rate_of_change: 0
-  wind:
-    percentage: 0
-    rate_of_change: 0
-  hydro:
-    percentage: 0
-    rate_of_change: 0
-  nuclear:
-    percentage: 0
-    rate_of_change: 0
-  other:
-    percentage: 0
-    rate_of_change: 0
+  rate_pre_cod:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0
+
+  rate_post_cod:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0

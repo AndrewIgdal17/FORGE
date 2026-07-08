@@ -26,4 +26,3 @@ financial:
     # Rate-based revenue requirement (return on rate base)
     rate_based:
       enabled: true # Toggle rate-based revenue calculation
-      allowed_return_rate: 0.075 # Simplified overall return on rate base (≈ WACC nominal). Consistent with FERC-authorized ROE ~10% (EL14-12, Oct 2024) weighted by typical 50/50 capital structure + ~5.5% cost of debt.

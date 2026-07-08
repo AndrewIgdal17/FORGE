@@ -3,31 +3,75 @@
     {
       "id": "default_template",
       "label": "Default (template)",
-      "description": "Matches bundled 16_emissions_reductions.yaml energy_source_mix.",
-      "energy_source_mix": {
-        "coal": { "percentage": 10, "rate_of_change": -0.05 },
-        "oil": { "percentage": 2, "rate_of_change": -0.04 },
-        "natural_gas": { "percentage": 38, "rate_of_change": 0.0 },
-        "solar": { "percentage": 10, "rate_of_change": 0.05 },
-        "wind": { "percentage": 26, "rate_of_change": 0.04 },
-        "hydro": { "percentage": 5, "rate_of_change": 0.0 },
-        "nuclear": { "percentage": 5, "rate_of_change": 0.0 },
-        "other": { "percentage": 4, "rate_of_change": 0.0 }
+      "description": "Illustrative regional grid mix with moderate renewables growth.",
+      "grid_mix": {
+        "initial": {
+          "coal": 10,
+          "oil": 2,
+          "natural_gas": 38,
+          "solar": 10,
+          "wind": 26,
+          "hydro": 5,
+          "nuclear": 5,
+          "other": 4
+        },
+        "rate_pre_cod": {
+          "coal": -0.05,
+          "oil": -0.04,
+          "natural_gas": 0.0,
+          "solar": 0.05,
+          "wind": 0.04,
+          "hydro": 0.0,
+          "nuclear": 0.0,
+          "other": 0.0
+        },
+        "rate_post_cod": {
+          "coal": -0.05,
+          "oil": -0.04,
+          "natural_gas": 0.0,
+          "solar": 0.05,
+          "wind": 0.04,
+          "hydro": 0.0,
+          "nuclear": 0.0,
+          "other": 0.0
+        }
       }
     },
     {
       "id": "illustrative_high_renewables",
       "label": "Illustrative — higher renewables",
       "description": "Example preset for testing; not an ISO/RTO official mix.",
-      "energy_source_mix": {
-        "coal": { "percentage": 5, "rate_of_change": -0.05 },
-        "oil": { "percentage": 1, "rate_of_change": -0.04 },
-        "natural_gas": { "percentage": 30, "rate_of_change": 0.0 },
-        "solar": { "percentage": 18, "rate_of_change": 0.05 },
-        "wind": { "percentage": 32, "rate_of_change": 0.04 },
-        "hydro": { "percentage": 5, "rate_of_change": 0.0 },
-        "nuclear": { "percentage": 5, "rate_of_change": 0.0 },
-        "other": { "percentage": 4, "rate_of_change": 0.0 }
+      "grid_mix": {
+        "initial": {
+          "coal": 5,
+          "oil": 1,
+          "natural_gas": 30,
+          "solar": 18,
+          "wind": 32,
+          "hydro": 5,
+          "nuclear": 5,
+          "other": 4
+        },
+        "rate_pre_cod": {
+          "coal": -0.05,
+          "oil": -0.04,
+          "natural_gas": 0.0,
+          "solar": 0.05,
+          "wind": 0.04,
+          "hydro": 0.0,
+          "nuclear": 0.0,
+          "other": 0.0
+        },
+        "rate_post_cod": {
+          "coal": -0.05,
+          "oil": -0.04,
+          "natural_gas": 0.0,
+          "solar": 0.05,
+          "wind": 0.04,
+          "hydro": 0.0,
+          "nuclear": 0.0,
+          "other": 0.0
+        }
       }
     }
   ]

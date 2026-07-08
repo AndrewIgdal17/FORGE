@@ -36,8 +36,8 @@ _PRELOAD_MODULES = [
     "weighted_miles", "build_costs", "row_costs", "environmental_mitigation",
     "revenue", "insurance_costs", "delay_costs", "wildfire_costs",
     "outage_costs", "congestion_curtailment_reduction", "energy_losses",
-    "oandm", "emissions", "facilitated_emissions", "line_loss_costs",
-    "taxonomy_adapters", "bcr_calculator",
+    "oandm", "emissions", "facilitated_emissions", "displacement_delay_cost",
+    "line_loss_costs", "taxonomy_adapters", "bcr_calculator",
 ]
 for _mod_name in _PRELOAD_MODULES:
     importlib.import_module(_mod_name)
@@ -280,6 +280,7 @@ def _build_scripts_list(
     if not no_emissions:
         scripts.append("emissions.py")
         scripts.append("facilitated_emissions.py")
+        scripts.append("displacement_delay_cost.py")
     if not no_linelosses:
         scripts.append("line_loss_costs.py")
     return scripts
@@ -765,6 +766,7 @@ def main() -> None:
         if not args.no_emissions:
             scripts.append("emissions.py")
             scripts.append("facilitated_emissions.py")
+            scripts.append("displacement_delay_cost.py")
         if not args.no_linelosses:
             scripts.append("line_loss_costs.py")
 

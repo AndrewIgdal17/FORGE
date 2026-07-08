@@ -1,4 +1,4 @@
-"""Load reference fuel / energy_source_mix presets for the web UI (file-backed; DB later)."""
+"""Load reference grid_mix presets for the web UI (file-backed; DB later)."""
 
 from __future__ import annotations
 
@@ -23,6 +23,25 @@ EXPECTED_SOURCES: Set[str] = {
     "other",
 }
 
+GRID_MIX_GROUPS = ("initial", "rate_pre_cod", "rate_post_cod")
+
+
+def _validate_grid_mix_group(block: Dict[str, Any], pid: str, group: str) -> bool:
+    for src in EXPECTED_SOURCES:
+        val = block.get(src)
+        if not isinstance(val, (int, float)):
+            logger.warning(
+                "fuel_mix_presets: preset %r grid_mix.%s.%s invalid", pid, group, src
+            )
+            return False
+    extras = set(block.keys()) - EXPECTED_SOURCES
+    if extras:
+        logger.warning(
+            "fuel_mix_presets: preset %r grid_mix.%s has unknown sources %s", pid, group, extras
+        )
+        return False
+    return True
+
 
 def _validate_preset(entry: Dict[str, Any], index: int) -> bool:
     if not isinstance(entry, dict):
@@ -30,32 +49,26 @@ def _validate_preset(entry: Dict[str, Any], index: int) -> bool:
         return False
     pid = entry.get("id")
     label = entry.get("label")
-    mix = entry.get("energy_source_mix")
+    grid_mix = entry.get("grid_mix")
     if not isinstance(pid, str) or not pid.strip():
         logger.warning("fuel_mix_presets: preset[%s] missing id", index)
         return False
     if not isinstance(label, str) or not label.strip():
         logger.warning("fuel_mix_presets: preset[%s] missing label", index)
         return False
-    if not isinstance(mix, dict):
-        logger.warning("fuel_mix_presets: preset %r missing energy_source_mix object", pid)
+    if not isinstance(grid_mix, dict):
+        logger.warning("fuel_mix_presets: preset %r missing grid_mix object", pid)
         return False
-    for src in EXPECTED_SOURCES:
-        block = mix.get(src)
+    for group in GRID_MIX_GROUPS:
+        block = grid_mix.get(group)
         if not isinstance(block, dict):
-            logger.warning("fuel_mix_presets: preset %r missing source %r", pid, src)
+            logger.warning("fuel_mix_presets: preset %r missing grid_mix.%s object", pid, group)
             return False
-        pct = block.get("percentage")
-        roc = block.get("rate_of_change")
-        if not isinstance(pct, (int, float)):
-            logger.warning("fuel_mix_presets: preset %r %s.percentage invalid", pid, src)
+        if not _validate_grid_mix_group(block, pid, group):
             return False
-        if not isinstance(roc, (int, float)):
-            logger.warning("fuel_mix_presets: preset %r %s.rate_of_change invalid", pid, src)
-            return False
-    extras = set(mix.keys()) - EXPECTED_SOURCES
+    extras = set(grid_mix.keys()) - set(GRID_MIX_GROUPS)
     if extras:
-        logger.warning("fuel_mix_presets: preset %r has unknown sources %s", pid, extras)
+        logger.warning("fuel_mix_presets: preset %r grid_mix has unknown keys %s", pid, extras)
         return False
     return True
 

@@ -478,53 +478,21 @@ var TUTORIAL_STEPS = {
     {
       type: 'goto',
       target: '.sidebar-subitem[data-sub-item-id="energy-emissions-energy"]',
-      title: 'Navigate to Energy Source Mix',
+      title: 'Navigate to Grid Mix',
       body: 'Click <strong>Energy Source Mix</strong> in the sidebar to continue.',
       position: 'right'
     },
 
     {
       type: 'info',
-      title: 'Energy Source Mix',
-      body: 'SunZia Transmission\'s entire capacity is under long-term contract with SunZia Wind PowerCo LLC \u2014 a 3,500+ MW onshore wind complex (CAISO PTO filing).',
+      title: 'Grid Mix',
+      body: 'Set the regional grid mix at year 0. For SunZia, use the Arizona grid generation profile that delivered energy displaces (EIA Arizona Electricity Profile 2024).',
       position: 'bottom'
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.energy_source_mix.wind.percentage"]',
-      title: 'Wind',
-      body: 'Enter 95%. SunZia Wind is the sole interconnected generator.',
-      value: '95',
-      expected: 95,
-      displayValue: '95',
-      position: 'bottom'
-    },
-    {
-      type: 'set',
-      target: '[data-path="18_energy_source_mix.energy_source_mix.natural_gas.percentage"]',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.natural_gas"]',
       title: 'Natural Gas',
-      body: 'Enter 5%. Balancing/firming only; represents curtailment-period replacement.',
-      value: '5',
-      expected: 5,
-      displayValue: '5',
-      position: 'bottom'
-    },
-    {
-      type: 'info',
-      title: 'Remaining Sources',
-      body: 'Leave all other energy sources at 0.',
-      position: 'bottom'
-    },
-    {
-      type: 'info',
-      title: 'Counterfactual Mix',
-      body: 'Now set the counterfactual \u2014 the Arizona grid generation SunZia deliveries displace. Based on EIA Arizona Electricity Profile 2024.',
-      position: 'bottom'
-    },
-    {
-      type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.natural_gas.percentage"]',
-      title: 'Natural Gas (Counterfactual)',
       body: 'Enter 48%. EIA 2024: Arizona is 47.5% natural gas.',
       value: '48',
       expected: 48,
@@ -533,8 +501,8 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.nuclear.percentage"]',
-      title: 'Nuclear (Counterfactual)',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.nuclear"]',
+      title: 'Nuclear',
       body: 'Enter 28%. EIA 2024: 27.9%. Palo Verde baseload.',
       value: '28',
       expected: 28,
@@ -543,8 +511,8 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.solar.percentage"]',
-      title: 'Solar (Counterfactual)',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.solar"]',
+      title: 'Solar',
       body: 'Enter 9%. EIA 2024: 9.3% utility-scale solar.',
       value: '9',
       expected: 9,
@@ -553,8 +521,8 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.coal.percentage"]',
-      title: 'Coal (Counterfactual)',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.coal"]',
+      title: 'Coal',
       body: 'Enter 8%. EIA 2024: 8.5%. Cholla retiring 2025; Coronado phasing down.',
       value: '8',
       expected: 8,
@@ -563,8 +531,8 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.hydro.percentage"]',
-      title: 'Hydro (Counterfactual)',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.hydro"]',
+      title: 'Hydro',
       body: 'Enter 5%. EIA 2024: 4.6%. Colorado River constrained.',
       value: '5',
       expected: 5,
@@ -573,12 +541,18 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="18_energy_source_mix.counterfactual_energy_source_mix.wind.percentage"]',
-      title: 'Wind (Counterfactual)',
+      target: '[data-path="18_energy_source_mix.grid_mix.initial.wind"]',
+      title: 'Wind',
       body: 'Enter 2%. EIA 2024: 2.2%. Limited AZ wind resource.',
       value: '2',
       expected: 2,
       displayValue: '2',
+      position: 'bottom'
+    },
+    {
+      type: 'info',
+      title: 'Growth Rates',
+      body: 'Leave pre-COD and post-COD growth rates at their defaults for this tutorial. In production scenarios, post-COD rates would reflect how SunZia accelerates regional decarbonization.',
       position: 'bottom'
     },
 

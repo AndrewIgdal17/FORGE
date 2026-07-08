@@ -53,7 +53,7 @@ BATCH_SUMMARY_FIELDS = [
     "delay_cost_pv",
     "congestion_delay_cost_pv",
     "curtailment_delay_cost_pv",
-    "residual_exceedance_pv",
+    "emissions_displacement_delay_pv",
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
@@ -74,7 +74,7 @@ BATCH_SUMMARY_FIELDS = [
     "delivered_benefit_annual",
     "delivered_benefit_nominal",
     "delivered_benefit_pv",
-    "revenue_pv",
+    "capital_recovery_pv",
     "rate_base",
     "rate_base_real",
     "annual_revenue_real",
@@ -754,17 +754,18 @@ class CTCCOutputManager:
         self.write_module_csv("delay_costs", summary_row=summary_row)
 
     def add_revenue(self, results: Dict[str, float]) -> None:
-        """Add revenue calculation results to batch summary (Option A: real stream, real WACC)."""
+        """Add revenue calculation results to batch summary (declining-balance, real WACC)."""
         self.append_to_batch_summary(
             {
                 "revenue_nominal": results.get("revenue_nominal", 0),
-                "revenue_pv": results.get("revenue_pv", 0),
+                "capital_recovery_pv": results.get("revenue_pv", 0),
                 "annual_revenue": results.get("annual_revenue", 0),
                 "rate_base": results.get("rate_base", 0),
                 "rate_base_real": results.get("rate_base_real", 0),
                 "rate_base_pv": results.get("rate_base_pv", 0),
                 "annual_revenue_real": results.get("annual_revenue_real", 0),
-                "allowed_return_rate": results.get("allowed_return_rate", 0),
+                "revenue_year_1": results.get("revenue_year_1", 0),
+                "revenue_year_n": results.get("revenue_year_n", 0),
             }
         )
 
@@ -778,7 +779,8 @@ class CTCCOutputManager:
             "rate_base": results.get("rate_base", 0),
             "rate_base_real": results.get("rate_base_real", 0),
             "annual_revenue_real": results.get("annual_revenue_real", 0),
-            "allowed_return_rate": results.get("allowed_return_rate", 0),
+            "revenue_year_1": results.get("revenue_year_1", 0),
+            "revenue_year_n": results.get("revenue_year_n", 0),
         }
         self.write_module_csv("revenue", summary_row=summary_row)
 
@@ -992,7 +994,6 @@ class CTCCOutputManager:
         Costs (increase system cost):
         - Congestion during delay/construction (opportunity cost)
         - Curtailment during delay/construction (opportunity cost)
-        - Residual congestion (unrelieved)
         """
         # Append to batch summary with clear benefit vs cost distinction
         self.append_to_batch_summary(
@@ -1042,16 +1043,13 @@ class CTCCOutputManager:
                 "curtailment_delay_cost_pv": results.get(
                     "curtailment_delay_cost_pv", 0
                 ),
-                "residual_exceedance_annual": results.get(
-                    "residual_exceedance_annual", 0
+                # Physical metrics (Approach B)
+                "effective_capacity_relief_mw": results.get(
+                    "effective_capacity_relief_mw", 0
                 ),
-                "residual_exceedance_nominal": results.get(
-                    "residual_exceedance_nominal", 0
-                ),
-                "residual_exceedance_pv": results.get("residual_exceedance_pv", 0),
-                "energy_residual_exceedance_mwh_yr": results.get(
-                    "energy_residual_exceedance_mwh_yr", 0
-                ),
+                "congestion_fraction": results.get("congestion_fraction", 0),
+                "constrained_hours": results.get("constrained_hours", 0),
+                "relief_mw": results.get("relief_mw", 0),
             }
         )
 
@@ -1106,16 +1104,6 @@ class CTCCOutputManager:
                 "pv": results.get("curtailment_delay_cost_pv", 0),
                 "nominal": results.get("curtailment_delay_cost_nominal", 0),
             },
-            # COSTS - Residual unrelieved exceedance
-            {
-                "row_type": "detail",
-                "benefit_or_cost": "cost",
-                "constraint_type": "residual_exceedance",
-                "value_type": "NA",
-                "pv": results.get("residual_exceedance_pv", 0),
-                "annual": results.get("residual_exceedance_annual", 0),
-                "nominal": results.get("residual_exceedance_nominal", 0),
-            },
         ]
 
         # Calculate summary totals (congestion + curtailment + delivered energy)
@@ -1138,12 +1126,10 @@ class CTCCOutputManager:
         total_costs_nominal = (
             results.get("congestion_delay_cost_nominal", 0)
             + results.get("curtailment_delay_cost_nominal", 0)
-            + results.get("residual_exceedance_nominal", 0)
         )
         total_costs_pv = (
             results.get("congestion_delay_cost_pv", 0)
             + results.get("curtailment_delay_cost_pv", 0)
-            + results.get("residual_exceedance_pv", 0)
         )
 
         # Summary row - columns ordered: row_type, PV values, annual values, nominal values, module-specific

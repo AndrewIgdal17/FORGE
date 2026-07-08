@@ -39,16 +39,13 @@ class ProjectTechnicalDetails:
 
 @dataclass
 class CongestionCurtailmentParams:
-    """Congestion and curtailment reduction parameters."""
+    """Congestion and curtailment reduction parameters (Approach B)."""
 
     flow_factor: float
-    binding_hours: float
+    constrained_hours: float
     average_exceedance: float
-    near_binding_hours: float
-    near_average_exceedance: float
+    congestion_fraction: float
     average_congestion_price: float
-    curtailment_hours_total: float
-    average_curtailment_mw: float
     average_curtailment_price: float
 
 
@@ -419,62 +416,38 @@ def load_delay_costs() -> Dict[str, Any]:
         raise ValueError(f"Error parsing delay costs YAML: {e}")
 
 
-def _load_energy_source_mix_from_yaml_files() -> Dict[str, Any]:
-    """
-    Canonical mix from 18_energy_source_mix.yaml; legacy fallback from 16_emissions_reductions.yaml
-    if 18 is missing (backward compatibility).
+def load_grid_mix() -> Dict[str, Any]:
+    """Load the single-trajectory grid mix from 18_energy_source_mix.yaml.
+
+    Returns a dict with keys 'initial', 'rate_pre_cod', 'rate_post_cod', each mapping
+    source name -> value ('initial' values are percentages 0-100; rate values are
+    fractional annual growth/decline rates). No backward compatibility: old
+    'energy_source_mix' / 'counterfactual_energy_source_mix' keys are not recognized.
     """
     path18 = YAMLS_DIR / "18_energy_source_mix.yaml"
-    if path18.is_file():
-        with open(path18, "r", encoding="utf-8") as file:
-            data = yaml.safe_load(file)
-        if not data or "energy_source_mix" not in data:
-            raise KeyError(
-                "Missing 'energy_source_mix' in 18_energy_source_mix.yaml"
-            )
-        return data["energy_source_mix"]
-
-    # Legacy: embedded under 16_emissions_reductions
-    path16 = YAMLS_DIR / "16_emissions_reductions.yaml"
-    with open(path16, "r", encoding="utf-8") as file:
+    if not path18.is_file():
+        raise FileNotFoundError(f"Energy source mix YAML not found at {path18}")
+    with open(path18, "r", encoding="utf-8") as file:
         data = yaml.safe_load(file)
-    er = data.get("emissions_reductions") or {}
-    mix = er.get("energy_source_mix")
-    if mix is None:
-        raise FileNotFoundError(
-            f"Energy source mix not found: add {path18} or legacy energy_source_mix under 16_emissions_reductions.yaml"
-        )
-    logger.warning(
-        "Using legacy energy_source_mix from 16_emissions_reductions.yaml; "
-        "prefer 18_energy_source_mix.yaml"
-    )
-    return mix
+    if not data or "grid_mix" not in data:
+        raise KeyError("Missing 'grid_mix' key in 18_energy_source_mix.yaml")
+    grid_mix = data["grid_mix"]
+    required_keys = ["initial", "rate_pre_cod", "rate_post_cod"]
+    for key in required_keys:
+        if key not in grid_mix:
+            raise KeyError(
+                f"Missing '{key}' key in grid_mix section of 18_energy_source_mix.yaml"
+            )
+    return grid_mix
 
 
-def load_counterfactual_energy_source_mix() -> Dict[str, Any]:
-    """Load counterfactual (no-line / BAU) energy source mix from 18_energy_source_mix.yaml.
+def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
+    """Load emissions reductions details from YAML (compensation, intensities, societal costs).
 
-    Fallback: if the counterfactual key is absent (pre-displacement YAML), construct
-    a frozen version from the project path (same percentages, all rates zero).
+    Grid mix is loaded separately via load_grid_mix() — callers that need the mix
+    (facilitated_emissions.py, displacement_delay_cost.py, emissions.py) load it and
+    derive the COD-state trajectory themselves.
     """
-    path18 = YAMLS_DIR / "18_energy_source_mix.yaml"
-    if path18.is_file():
-        with open(path18, "r", encoding="utf-8") as file:
-            data = yaml.safe_load(file)
-        cf = (data or {}).get("counterfactual_energy_source_mix")
-        if cf:
-            return cf
-    esm = _load_energy_source_mix_from_yaml_files()
-    return {
-        src: {"percentage": vals.get("percentage", 0), "rate_of_change": 0.0}
-        for src, vals in esm.items()
-    }
-
-
-def load_emissions_details() -> (
-    Tuple[float, Dict[str, Any], Dict[str, Any], Dict[str, Any]]
-):
-    """Load emissions reductions details from YAML; mix merged from 18_energy_source_mix.yaml."""
     path16 = YAMLS_DIR / "16_emissions_reductions.yaml"
     if not path16.is_file():
         raise FileNotFoundError(f"Emissions reductions YAML not found at {path16}")
@@ -496,10 +469,8 @@ def load_emissions_details() -> (
                 raise KeyError(
                     f"Missing '{key}' key in emissions_reductions section of YAML"
                 )
-        energy_mix = _load_energy_source_mix_from_yaml_files()
         return (
             emissions_reductions_data["compensation_percent"],
-            energy_mix,
             emissions_reductions_data["emission_intensities"],
             emissions_reductions_data["societal_costs_per_kg"],
         )
@@ -511,7 +482,7 @@ def load_emissions_details() -> (
 
 def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
-    Load congestion and curtailment reduction parameters from merged YAML file.
+    Load congestion and curtailment reduction parameters from merged YAML file (Approach B).
 
     Returns:
         CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
@@ -540,82 +511,36 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
                     "Missing 'reconductoring_congestion_curtailment_reductions' key in YAML file"
                 )
             reductions_data = data["reconductoring_congestion_curtailment_reductions"]
-            flow_factor = 0.0  # flow_factor not used for reconductoring
+            constraints = reductions_data["constraints"]
+            prices = reductions_data["prices"]
+            flow_factor = 0.0
+            constrained_hours = float(constraints["constrained_hours"])
+            average_exceedance = float(constraints["average_exceedance"])
+            congestion_fraction = float(constraints["congestion_fraction"])
+            average_congestion_price = float(prices["average_congestion_price"])
+            average_curtailment_price = float(prices["average_curtailment_price"])
         else:
             if "greenfield_congestion_curtailment_reductions" not in data:
                 raise KeyError(
                     "Missing 'greenfield_congestion_curtailment_reductions' key in YAML file"
                 )
             reductions_data = data["greenfield_congestion_curtailment_reductions"]
-            if (
-                "congestion" not in reductions_data
-                or "constraints" not in reductions_data["congestion"]
-            ):
-                raise KeyError("Missing 'congestion.constraints' section in YAML file")
-            flow_factor = reductions_data["congestion"]["constraints"]["flow_factor"]
-
-        # Validate structure
-        if "congestion" not in reductions_data:
-            raise KeyError(
-                f"Missing 'congestion' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_curtailment_reductions section"
-            )
-        if "curtailment" not in reductions_data:
-            raise KeyError(
-                f"Missing 'curtailment' key in {'reconductoring' if reconductoring else 'greenfield'}_congestion_curtailment_reductions section"
-            )
-
-        congestion_data = reductions_data["congestion"]
-        curtailment_data = reductions_data["curtailment"]
-
-        if "constraints" not in congestion_data:
-            raise KeyError(f"Missing 'constraints' key in congestion section")
-        if "costs" not in congestion_data:
-            raise KeyError(f"Missing 'costs' key in congestion section")
-
-        constraints = congestion_data["constraints"]
-        costs = congestion_data["costs"]
-
-        # Validate required constraint keys
-        required_constraint_keys = [
-            "binding_hours",
-            "average_exceedance",
-            "near_binding_hours",
-            "near_average_exceedance",
-        ]
-        for key in required_constraint_keys:
-            if key not in constraints:
-                raise KeyError(
-                    f"Missing '{key}' key in constraints section of congestion reductions YAML"
-                )
-        if "average_congestion_price" not in costs:
-            raise KeyError(
-                "Missing 'average_congestion_price' key in costs section of congestion reductions YAML"
-            )
-
-        # Validate required curtailment keys
-        required_curtailment_keys = [
-            "curtailment_hours_total",
-            "average_curtailment_mw",
-            "average_curtailment_price",
-        ]
-        for key in required_curtailment_keys:
-            if key not in curtailment_data:
-                raise KeyError(
-                    f"Missing '{key}' key in curtailment section of YAML file"
-                )
+            constraints = reductions_data["constraints"]
+            prices = reductions_data["prices"]
+            flow_factor = constraints["flow_factor"]
+            constrained_hours = float(constraints["constrained_hours"])
+            average_exceedance = float(constraints["average_exceedance"])
+            congestion_fraction = float(constraints["congestion_fraction"])
+            average_congestion_price = float(prices["average_congestion_price"])
+            average_curtailment_price = float(prices["average_curtailment_price"])
 
         return CongestionCurtailmentParams(
             flow_factor=float(flow_factor),
-            binding_hours=float(constraints["binding_hours"]),
-            average_exceedance=float(constraints["average_exceedance"]),
-            near_binding_hours=float(constraints["near_binding_hours"]),
-            near_average_exceedance=float(constraints["near_average_exceedance"]),
-            average_congestion_price=float(costs["average_congestion_price"]),
-            curtailment_hours_total=float(curtailment_data["curtailment_hours_total"]),
-            average_curtailment_mw=float(curtailment_data["average_curtailment_mw"]),
-            average_curtailment_price=float(
-                curtailment_data["average_curtailment_price"]
-            ),
+            constrained_hours=constrained_hours,
+            average_exceedance=average_exceedance,
+            congestion_fraction=congestion_fraction,
+            average_congestion_price=average_congestion_price,
+            average_curtailment_price=average_curtailment_price,
         )
     except FileNotFoundError:
         raise FileNotFoundError(

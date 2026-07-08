@@ -68,7 +68,6 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
-    fin["revenue"]["rate_based"]["allowed_return_rate"] = 0.10
 
     # --- Section 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
@@ -123,43 +122,36 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     emis = inputs["16_emissions_reductions"]["emissions_reductions"]
     emis["compensation_percent"] = 0.9
 
-    # --- Section 17: Congestion/Curtailment (reliability project, moderate values) ---
+    # --- Section 17: Congestion/Curtailment (Approach B; load pocket, congestion-dominated) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
-    gf["congestion"]["constraints"]["flow_factor"] = 1.0
-    gf["congestion"]["constraints"]["binding_hours"] = 2000
-    gf["congestion"]["constraints"]["average_exceedance"] = 200
-    gf["congestion"]["constraints"]["near_binding_hours"] = 0
-    gf["congestion"]["constraints"]["near_average_exceedance"] = 0
-    gf["congestion"]["constraints"]["near_binding_relief_factor"] = 0.25
-    gf["congestion"]["costs"]["average_congestion_price"] = 25
-    gf["curtailment"]["curtailment_hours_total"] = 500
-    gf["curtailment"]["average_curtailment_mw"] = 100
-    gf["curtailment"]["average_curtailment_price"] = 35
+    gf["constraints"]["flow_factor"] = 1.0
+    gf["constraints"]["constrained_hours"] = 2000
+    gf["constraints"]["average_exceedance"] = 200
+    gf["constraints"]["congestion_fraction"] = 0.80  # load pocket (LRGV/SF-type): congestion-dominated
+    gf["prices"]["average_congestion_price"] = 25
+    gf["prices"]["average_curtailment_price"] = 35
 
-    # --- Section 18: Energy Source Mix ---
-    # Project path: California grid mix at Pittsburg interconnection
-    # Counterfactual: 100% natural gas (retired Potrero Power Plant)
+    # --- Section 18: Grid Mix (single-trajectory model) ---
+    # Sources: CEC California Electrical Energy Generation (QFER CEC-1304) 2005;
+    # SB 1368; SB 1078/107 RPS; CAISO 2011 LCR Study. rate_post_cod = rate_pre_cod:
+    # a 400 MW reliability cable in a 55 GW system (~0.7% of capacity) does not
+    # change fleet evolution. TBC enables Potrero retirement (~200 MW gas peaker),
+    # but that is 0.5% of CA's gas fleet — negligible at system scale.
     mix = inputs["18_energy_source_mix"]
-    mix["energy_source_mix"] = {
-        "coal": {"percentage": 0, "rate_of_change": 0.0},
-        "oil": {"percentage": 4, "rate_of_change": 0.0},
-        "natural_gas": {"percentage": 40, "rate_of_change": -0.02},
-        "solar": {"percentage": 23, "rate_of_change": 0.03},
-        "wind": {"percentage": 7, "rate_of_change": 0.01},
-        "hydro": {"percentage": 12, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 9, "rate_of_change": 0.0},
-        "other": {"percentage": 5, "rate_of_change": 0.0},
-    }
-    mix["counterfactual_energy_source_mix"] = {
-        "coal": {"percentage": 0, "rate_of_change": 0.0},
-        "oil": {"percentage": 0, "rate_of_change": 0.0},
-        "natural_gas": {"percentage": 100, "rate_of_change": 0.0},
-        "solar": {"percentage": 0, "rate_of_change": 0.0},
-        "wind": {"percentage": 0, "rate_of_change": 0.0},
-        "hydro": {"percentage": 0, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 0, "rate_of_change": 0.0},
-        "other": {"percentage": 0, "rate_of_change": 0.0},
+    mix["grid_mix"] = {
+        "initial": {
+            "coal": 12.4, "oil": 0.0, "natural_gas": 42.6, "solar": 0.3,
+            "wind": 1.9, "hydro": 17.7, "nuclear": 16.0, "other": 9.1,
+        },
+        "rate_pre_cod": {
+            "coal": -0.30, "oil": 0.00, "natural_gas": -0.01, "solar": 0.25,
+            "wind": 0.07, "hydro": 0.00, "nuclear": -0.04, "other": -0.02,
+        },
+        "rate_post_cod": {
+            "coal": -0.30, "oil": 0.00, "natural_gas": -0.01, "solar": 0.25,
+            "wind": 0.07, "hydro": 0.00, "nuclear": -0.04, "other": -0.02,
+        },
     }
 
     return inputs
@@ -195,7 +187,7 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    print(f"  Revenue (transfer):     {fmt(benefits['revenue']['revenue_pv'])}")
+    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['revenue_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")
@@ -287,8 +279,8 @@ def main():
     build_pv = results_delay4["costs"]["build"]["total_pv"]
     print(f"  Build cost PV (CTCC):   {fmt(build_pv)}")
     print(f"  Actual total project:   $505M (includes civil works, site, community payments)")
-    rev_pv = results_delay4["benefits"]["revenue"]["revenue_pv"]
-    print(f"  Revenue PV (CTCC):      {fmt(rev_pv)}")
+    rev_pv = results_delay4["benefits"]["capital_recovery"]["revenue_pv"]
+    print(f"  Capital recovery PV (CTCC): {fmt(rev_pv)}")
     print(f"  Actual TRR:             ~$130M/yr (FERC-approved)")
 
     print("\nDone.")

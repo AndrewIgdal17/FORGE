@@ -70,7 +70,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
-    fin["revenue"]["rate_based"]["allowed_return_rate"] = 0.096
 
     # --- 05: Delay Costs (Scenario A: streamlined CREZ permitting) ---
     inputs["05_delays"]["annual_delay_costs"] = {
@@ -108,41 +107,36 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     row["zone_3"]["rent_cost"] = 36.72
     row["zone_3"]["hold_cost"] = 3.67
 
-    # --- 17: Congestion/Curtailment ---
+    # --- 17: Congestion/Curtailment (Approach B) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
-    gf["congestion"]["constraints"]["flow_factor"] = 0.50
-    gf["congestion"]["constraints"]["binding_hours"] = 1800
-    gf["congestion"]["constraints"]["average_exceedance"] = 600
-    gf["congestion"]["constraints"]["near_binding_hours"] = 400
-    gf["congestion"]["constraints"]["near_average_exceedance"] = 150
-    gf["congestion"]["constraints"]["near_binding_relief_factor"] = 0.25
-    gf["congestion"]["costs"]["average_congestion_price"] = 11.47
-    gf["curtailment"]["curtailment_hours_total"] = 2500
-    gf["curtailment"]["average_curtailment_mw"] = 500
-    gf["curtailment"]["average_curtailment_price"] = 30
+    gf["constraints"]["flow_factor"] = 0.50
+    gf["constraints"]["constrained_hours"] = 1800
+    gf["constraints"]["average_exceedance"] = 600
+    gf["constraints"]["congestion_fraction"] = 0.05  # wind corridor (CREZ-type): near-pure curtailment
+    gf["prices"]["average_congestion_price"] = 11.47
+    gf["prices"]["average_curtailment_price"] = 30
 
-    # --- 18: Energy Source Mix ---
+    # --- 18: Grid Mix (single-trajectory model) ---
+    # Sources: ERCOT 2008 Annual Report; ERCOT CDR 2008-2024; Potomac Economics
+    # IMM; Baker Institute CREZ report (2020). CREZ is the outlier case study: a
+    # system-transforming $6.9B program that unlocked 18,500 MW of West Texas
+    # wind. Wind went from 5% to 24% of ERCOT generation (2008-2023); post-COD
+    # coal decline accelerated 2.5x due to merit-order displacement by cheap wind.
     mix = inputs["18_energy_source_mix"]
-    mix["energy_source_mix"] = {
-        "coal": {"percentage": 37, "rate_of_change": -0.06},
-        "oil": {"percentage": 1, "rate_of_change": -0.05},
-        "natural_gas": {"percentage": 41, "rate_of_change": 0.01},
-        "solar": {"percentage": 1, "rate_of_change": 0.12},
-        "wind": {"percentage": 8, "rate_of_change": 0.08},
-        "hydro": {"percentage": 1, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 10, "rate_of_change": 0.0},
-        "other": {"percentage": 1, "rate_of_change": 0.0},
-    }
-    mix["counterfactual_energy_source_mix"] = {
-        "coal": {"percentage": 37, "rate_of_change": -0.02},
-        "oil": {"percentage": 1, "rate_of_change": -0.03},
-        "natural_gas": {"percentage": 41, "rate_of_change": 0.02},
-        "solar": {"percentage": 1, "rate_of_change": 0.05},
-        "wind": {"percentage": 8, "rate_of_change": 0.02},
-        "hydro": {"percentage": 1, "rate_of_change": 0.0},
-        "nuclear": {"percentage": 10, "rate_of_change": 0.0},
-        "other": {"percentage": 1, "rate_of_change": 0.0},
+    mix["grid_mix"] = {
+        "initial": {
+            "coal": 37, "oil": 0.3, "natural_gas": 43, "solar": 0.1,
+            "wind": 5, "hydro": 0.2, "nuclear": 13, "other": 1.4,
+        },
+        "rate_pre_cod": {
+            "coal": -0.025, "oil": -0.02, "natural_gas": 0.013, "solar": 0.25,
+            "wind": 0.035, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
+        },
+        "rate_post_cod": {
+            "coal": -0.063, "oil": -0.02, "natural_gas": 0.0, "solar": 0.33,
+            "wind": 0.11, "hydro": 0.0, "nuclear": -0.018, "other": -0.01,
+        },
     }
 
     return inputs
@@ -178,7 +172,7 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    print(f"  Revenue (transfer):     {fmt(benefits['revenue']['revenue_pv'])}")
+    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['revenue_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")

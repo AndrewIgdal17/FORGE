@@ -17,7 +17,7 @@ var SYN = {
   'outage': ['out_base_duration_hours','out_risk_growth_rate'],
   'carbon': ['co2_cost_per_kg'], 'co2': ['co2_cost_per_kg'],
   'emission': ['co2_cost_per_kg','sox_cost_per_kg','nox_cost_per_kg','compensation_percent'],
-  'fuel': ['energy_source_mix'], 'construction': ['construction_type','construction_years'],
+  'fuel': ['grid_mix', 'energy_source_mix'], 'construction': ['construction_type','construction_years'],
   'delay': ['delay_legal','delay_admin','delay_labor','delay_environmental','delay_years'],
   'insurance': ['op_premium_rate'], 'vegetation': ['veg_forested_oh'],
   'mitigation': ['mitigation_uplift_factor'],

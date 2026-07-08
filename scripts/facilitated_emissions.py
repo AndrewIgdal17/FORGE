@@ -1,9 +1,16 @@
 """Facilitated emissions and displacement module.
 
+Single-trajectory model (see design doc
+2026-07-07__single-trajectory-grid-mix-redesign.md): one regional grid,
+evolving at rate_pre_cod (without the line) or rate_post_cod (with the line's
+influence). The grid state at COD is the without-line trajectory evaluated at
+T_COD; both the with-line and without-line operational trajectories start from
+that same COD state.
+
 Computes:
-  - Layer 1: C_fac,emissions^(s) for s in {proj, noline} — absolute social cost
-    of emissions from each instance's generation mix over E_delivered_annual.
-  - Layer 2: C_displ,emissions^P = C_fac,emissions^no - C_fac,emissions^P —
+  - Layer 1: C_fac,emissions^(s) for s in {withline, noline} — absolute social
+    cost of emissions from each grid trajectory over E_delivered_annual.
+  - Layer 2: C_displ,emissions^P = C_fac,emissions^no - C_fac,emissions^with —
     displacement avoided cost; enters B_avoided_emissions (benefit bucket).
 
 Reuses the evolution engine and emissions-by-year functions from emissions.py.
@@ -20,10 +27,15 @@ from typing import Dict, Any, List
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
-from emissions import calculate_energy_mix_by_year, calculate_emissions_by_year
+from emissions import (
+    calculate_energy_mix_by_year,
+    calculate_emissions_by_year,
+    compute_cod_state,
+    build_mix_input,
+)
 from smart_loaders import (
     load_emissions_details,
-    load_counterfactual_energy_source_mix,
+    load_grid_mix,
     load_financing_social_discount_rate,
 )
 from energy_losses import load_project_technical_details
@@ -95,8 +107,7 @@ def _compute_instance_costs(
 
 def calculate_facilitated_emissions(
     energy_delivered_annual_mwh: float,
-    energy_source_mix_details: Dict[str, Any],
-    counterfactual_energy_source_mix_details: Dict[str, Any],
+    grid_mix: Dict[str, Any],
     emission_intensities: Dict[str, Any],
     societal_costs: Dict[str, float],
     project_lifetime: int,
@@ -106,19 +117,24 @@ def calculate_facilitated_emissions(
 ) -> FacilitatedEmissionsResults:
     """Compute facilitated emissions (Layer 1) and displacement (Layer 2).
 
-    Layer 1: absolute social cost of emissions for each instance (proj, noline)
-    over E_delivered_annual, using the rate-based evolution engine.
+    Single-trajectory model: the grid state at COD (initial mix evolved at
+    rate_pre_cod through T_COD) is the shared starting point for both
+    operational trajectories. Without-line continues at rate_pre_cod from COD;
+    with-line evolves at rate_post_cod from COD.
 
-    Layer 2: displacement = noline_cost - project_cost.
+    Layer 1: absolute social cost of emissions for each trajectory (withline,
+    noline) over E_delivered_annual, using the rate-based evolution engine.
+
+    Layer 2: displacement = noline_cost - withline_cost.
     """
     start_year = calculate_cod_year(delay_years, construction_years)
 
-    proj_mix = calculate_energy_mix_by_year(
-        energy_source_mix_details, project_lifetime
-    )
-    noline_mix = calculate_energy_mix_by_year(
-        counterfactual_energy_source_mix_details, project_lifetime
-    )
+    cod_state_pct = compute_cod_state(grid_mix, delay_years, construction_years)
+    withline_ops_input = build_mix_input(cod_state_pct, grid_mix["rate_post_cod"])
+    noline_ops_input = build_mix_input(cod_state_pct, grid_mix["rate_pre_cod"])
+
+    proj_mix = calculate_energy_mix_by_year(withline_ops_input, project_lifetime)
+    noline_mix = calculate_energy_mix_by_year(noline_ops_input, project_lifetime)
 
     proj_nom, proj_pv, proj_by_poll = _compute_instance_costs(
         energy_delivered_annual_mwh, proj_mix, emission_intensities,
@@ -186,12 +202,11 @@ def main() -> None:
     """Entry point for the facilitated emissions pipeline step."""
     (
         _compensation_percent,
-        energy_source_mix_details,
         emission_intensities,
         societal_costs,
     ) = load_emissions_details()
 
-    counterfactual_mix = load_counterfactual_energy_source_mix()
+    grid_mix = load_grid_mix()
 
     social_discount_rate = load_financing_social_discount_rate()
     project_details = load_project_technical_details()
@@ -227,8 +242,7 @@ def main() -> None:
 
     results = calculate_facilitated_emissions(
         energy_delivered_annual_mwh=energy_delivered_annual_mwh,
-        energy_source_mix_details=energy_source_mix_details,
-        counterfactual_energy_source_mix_details=counterfactual_mix,
+        grid_mix=grid_mix,
         emission_intensities=emission_intensities,
         societal_costs=societal_costs,
         project_lifetime=project_details.project_lifetime,

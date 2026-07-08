@@ -56,7 +56,11 @@ function isPercentageField(path) {
   ];
   // Exclude fields that have "rate" or "percent" but aren't decimal percentages
   const excludePatterns = ['ignition_rate', 'outage_rate'];
-  // energy_source_mix.*.percentage is stored as whole numbers (10 = 10%), not decimals
+  // grid_mix.initial.* is stored as whole numbers (10 = 10%), not decimals
+  if (lowerPath.includes('grid_mix.initial.')) {
+    return false;
+  }
+  // Legacy: energy_source_mix.*.percentage is stored as whole numbers (10 = 10%), not decimals
   if (lowerPath.includes('energy_source_mix') && lowerPath.endsWith('.percentage')) {
     return false;
   }
@@ -155,7 +159,7 @@ const TAB_GUIDE_CONTENT = {
   'emissions': {
     oneliner: 'Define how your line\u2019s power is generated, how much energy is lost in transit, and what those emissions cost society.',
     body: 'Transmission lines lose energy to electrical resistance, and that lost energy must be replaced by generators. The fuel mix of those generators \u2014 and how it shifts over the project lifetime \u2014 determines the line\u2019s emission profile. This tab links generation sources to emission costs, enabling comparison between build and no-build scenarios.',
-    items: ['Generation fuel mix for the project path and the no-build counterfactual', 'Loss compensation rate', 'Emission intensities by fuel source and pollutant', 'Societal externality costs per pollutant'],
+    items: ['Regional grid mix (initial shares and pre/post-COD growth rates)', 'Loss compensation rate', 'Emission intensities by fuel source and pollutant', 'Societal externality costs per pollutant'],
   },
   'benefits': {
     oneliner: 'Define the economic values and grid constraints that drive your project\u2019s benefit calculations.',
@@ -254,9 +258,9 @@ const TAB_GUIDE_CONTENT = {
   },
   // L3 sub-tabs: Energy and Emissions
   'energy-emissions-energy': {
-    oneliner: 'Set the generation fuel mix and review the physical parameters that drive transmission energy losses.',
-    body: 'The fuel sources powering your grid \u2014 and how their shares change annually \u2014 determine both the cost of replacing lost energy and the resulting emissions. Loss parameters from your conductor selection quantify how much energy is dissipated in transit.',
-    items: ['Fuel shares and growth rates for two scenarios', 'Loss compensation fraction', 'Conductor-derived loss parameters (read-only)'],
+    oneliner: 'Set the regional grid mix and review the physical parameters that drive transmission energy losses.',
+    body: 'The regional generation mix \u2014 and how its shares evolve before and after COD \u2014 determines both the cost of replacing lost energy and the resulting emissions. Loss parameters from your conductor selection quantify how much energy is dissipated in transit.',
+    items: ['Initial grid mix and pre/post-COD growth rates', 'Loss compensation fraction', 'Conductor-derived loss parameters (read-only)'],
   },
   'energy-emissions-emissions': {
     oneliner: 'Specify how much each fuel source pollutes and what those pollutants cost society.',
@@ -314,9 +318,9 @@ const TAB_GUIDE_CONTENT = {
   },
   // L4 sub-sub-tabs: Energy
   'energy-mix': {
-    oneliner: 'Set each fuel source\u2019s share in the generation mix for the project and no-build scenarios.',
-    body: 'The difference between these two mixes drives displacement analysis \u2014 how the line changes the region\u2019s emission profile over time. Growth rates let each source\u2019s share evolve annually over the project lifetime.',
-    items: ['Share and annual rate of change for eight fuel sources', 'Separate entries for the project path and the counterfactual (no-line) baseline'],
+    oneliner: 'Set the regional grid mix at year 0 and how each fuel source evolves before and after the line comes online.',
+    body: 'One regional grid starts from a single initial mix. Pre-COD growth rates describe evolution without the line; post-COD rates describe evolution with the line\u2019s influence. The difference drives displacement delay cost and operational displacement benefit.',
+    items: ['Initial grid mix (percentages for eight fuel sources)', 'Pre-COD growth rates (grid evolution before COD)', 'Post-COD growth rates (grid evolution after COD)'],
   },
   'energy-losses': {
     oneliner: 'Set the fraction of line losses compensated by new generation and review loss-relevant conductor parameters.',
@@ -961,20 +965,30 @@ function getEnergyDeliveredGWh() {
   return cap * (util > 1 ? util / 100 : util) * 8760 / 1000;
 }
 
-function readFuelShares(prefix) {
+function readGridMixInputValue(groupKey, fuel) {
+  const path = `18_energy_source_mix.grid_mix.${groupKey}.${fuel}`;
+  const inp = document.querySelector(`[data-path="${path}"]`);
+  if (!inp || inp.value === '') return 0;
+  if (inp.classList.contains('percentage-input')) {
+    return parsePercentageInput(inp.value) ?? 0;
+  }
+  return parseNumberInput(inp.value) ?? 0;
+}
+
+function readFuelShares(groupKey) {
+  const key = groupKey || 'initial';
   const shares = {};
   C.FUEL_SOURCES.forEach(f => {
-    const inp = document.querySelector(`[data-path*="${prefix}.${f}.percentage"]`);
-    shares[f] = inp ? (parseFloat(inp.value) || 0) / 100 : 0;
+    shares[f] = readGridMixInputValue(key, f) / 100;
   });
   return shares;
 }
 
-function readFuelRates(prefix) {
+function readFuelRates(groupKey) {
+  const key = groupKey || 'rate_post_cod';
   const rates = {};
   C.FUEL_SOURCES.forEach(f => {
-    const inp = document.querySelector(`[data-path*="${prefix}.${f}.rate_of_change"]`);
-    rates[f] = inp ? (parseFloat(inp.value) || 0) : 0;
+    rates[f] = readGridMixInputValue(key, f);
   });
   return rates;
 }
@@ -1651,8 +1665,8 @@ function updateFuelMixChart() {
   if (!canvas || typeof Chart === 'undefined') return;
 
   const gwh = getEnergyDeliveredGWh();
-  const projShares = readFuelShares('energy_source_mix');
-  const projRates = readFuelRates('energy_source_mix');
+  const projShares = readFuelShares('initial');
+  const projRates = readFuelRates('rate_post_cod');
   const lifetime = parseFloat((document.querySelector('[data-path="01_project_technical_details.project.project_lifetime"]')?.value || '50').replace(/,/g, '')) || 50;
   const step = Math.max(1, Math.round(lifetime / 10));
   const years = [];
@@ -1722,15 +1736,19 @@ function renderEmissionsImpactPanel() {
     const h5 = document.createElement('h5');
     h5.textContent = label;
     section.appendChild(h5);
-    ['Project:', 'Counterfact.:', 'Avoided:'].forEach(rowLabel => {
+    [
+      { rowLabel: 'Post-COD (with line):', emisKey: 'project' },
+      { rowLabel: 'Pre-COD (without line):', emisKey: 'counterfact' },
+      { rowLabel: 'Avoided:', emisKey: 'avoided' },
+    ].forEach(({ rowLabel, emisKey }) => {
       const line = document.createElement('div');
       line.className = 'cost-line';
       const spanLabel = document.createElement('span');
       spanLabel.textContent = rowLabel;
-      if (rowLabel === 'Avoided:') spanLabel.appendChild(makeEquationIcon(EQ_DISPLACEMENT));
+      if (emisKey === 'avoided') spanLabel.appendChild(makeEquationIcon(EQ_DISPLACEMENT));
       line.appendChild(spanLabel);
       const spanVal = document.createElement('span');
-      spanVal.dataset.emisCost = `${key}_${rowLabel.replace(/[:.]/g, '').trim().toLowerCase()}`;
+      spanVal.dataset.emisCost = `${key}_${emisKey}`;
       spanVal.textContent = '---';
       line.appendChild(spanVal);
       section.appendChild(line);
@@ -3126,20 +3144,19 @@ function renderEnergyMixTable(data) {
   const wrapper = document.createElement('div');
   wrapper.id = 'energy-mix-wrapper';
   const MIX_HEADER_TOOLTIPS = {
-    'Share (%)': 'Percentage of generation from this fuel source',
-    'Rate of Change': 'Annual change in fuel share (percentage points per year)',
-    'CF Share (%)': 'Counterfactual (no-line) baseline for displacement calculation.',
-    'CF Rate of Change': 'Counterfactual (no-line) baseline for displacement calculation.',
+    'Initial Grid Mix (%)': 'Year-0 share of each fuel source in the regional grid (must sum to 100%).',
+    'Pre-COD Growth Rates': 'Annual growth/decline in each source\u2019s share without the line (decimal rate; e.g. -3% = -0.03).',
+    'Post-COD Growth Rates': 'Annual growth/decline in each source\u2019s share with the line\u2019s influence (decimal rate; e.g. -3% = -0.03).',
   };
   const table = document.createElement('table');
   table.className = 'ctcc-table ctcc-table--compact ctcc-table--editable conductor-details-table energy-mix-table';
   const emCaption = document.createElement('caption');
-  emCaption.textContent = 'Energy Source Mix';
-  emCaption.appendChild(makeHelpIcon('Fuel mix percentages for the project line and counterfactual (no-line) baseline. Used for displacement emissions calculation.'));
+  emCaption.textContent = 'Grid Mix';
+  emCaption.appendChild(makeHelpIcon('Single-trajectory regional grid: one initial mix, two rate regimes (pre-COD without the line, post-COD with the line). Used for displacement and emissions calculations.'));
   table.appendChild(emCaption);
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  ['Fuel Source', 'Share (%)', 'Rate of Change', 'CF Share (%)', 'CF Rate of Change'].forEach(txt => {
+  ['Fuel Source', 'Initial Grid Mix (%)', 'Pre-COD Growth Rates', 'Post-COD Growth Rates'].forEach(txt => {
     const th = document.createElement('th');
     th.textContent = txt;
     if (MIX_HEADER_TOOLTIPS[txt]) th.appendChild(makeHelpIcon(MIX_HEADER_TOOLTIPS[txt]));
@@ -3157,26 +3174,36 @@ function renderEnergyMixTable(data) {
     tr.appendChild(tdFuel);
 
     const fields = [
-      {path: `18_energy_source_mix.energy_source_mix.${fuel}.percentage`, type: 'pct'},
-      {path: `18_energy_source_mix.energy_source_mix.${fuel}.rate_of_change`, type: 'rate'},
-      {path: `18_energy_source_mix.counterfactual_energy_source_mix.${fuel}.percentage`, type: 'pct'},
-      {path: `18_energy_source_mix.counterfactual_energy_source_mix.${fuel}.rate_of_change`, type: 'rate'},
+      {group: 'initial', type: 'pct'},
+      {group: 'rate_pre_cod', type: 'rate'},
+      {group: 'rate_post_cod', type: 'rate'},
     ];
     fields.forEach(f => {
       const td = document.createElement('td');
+      const path = `18_energy_source_mix.grid_mix.${f.group}.${fuel}`;
+      const fieldPath = `grid_mix.${f.group}.${fuel}`;
+      const val = getValueAtFieldPath(data, '18_energy_source_mix', fieldPath);
       const input = document.createElement('input');
       input.type = 'text';
-      input.className = 'number-input';
-      input.dataset.path = f.path;
-      const parts = f.path.split('.');
-      const yamlSection = parts[0];
-      const fieldPath = parts.slice(1).join('.');
-      const val = getValueAtFieldPath(data, yamlSection, fieldPath);
-      input.value = val != null ? String(val) : '';
+      input.dataset.path = path;
+      if (f.type === 'pct') {
+        input.className = 'number-input';
+        const n = Number(val);
+        input.value = (val != null && !isNaN(n))
+          ? n.toLocaleString('en-US', {maximumFractionDigits: 10}) : '';
+      } else {
+        input.className = 'percentage-input number-input';
+        input.value = (val != null) ? formatPercentageInput(val) : '';
+      }
       input.addEventListener('focus', () => { input.value = input.value.replace(/,/g, ''); });
       input.addEventListener('blur', () => {
-        const raw = parseFloat(input.value.replace(/,/g, ''));
-        if (!isNaN(raw)) input.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+        if (f.type === 'pct') {
+          const raw = parseFloat(input.value.replace(/,/g, ''));
+          if (!isNaN(raw)) input.value = raw.toLocaleString('en-US', {maximumFractionDigits: 10});
+        } else {
+          const raw = parsePercentageInput(input.value);
+          if (raw != null) input.value = formatPercentageInput(raw);
+        }
       });
       td.appendChild(input);
       tr.appendChild(td);
@@ -3188,7 +3215,7 @@ function renderEnergyMixTable(data) {
 
   const footnote = document.createElement('div');
   footnote.className = 'conductor-details-footnote';
-  footnote.textContent = 'CF = Counterfactual / no-line baseline for displacement calculation. Shares should sum to 100%.';
+  footnote.textContent = 'Initial shares should sum to 100%. Growth rates are decimal annual changes (displayed as %); mix is renormalized each year.';
   wrapper.appendChild(footnote);
   return wrapper;
 }
@@ -3841,7 +3868,8 @@ function renderFinancialRatesPanel(data) {
     updateWaccReal();
   }, 0);
 
-  // Revenue Requirement toggle + Allowed Return Rate
+  // Revenue Requirement toggle (declining-balance model; no allowed-return-rate input needed —
+  // revenue is derived from rate base + real WACC, computed server-side)
   const revDiv = document.createElement('div');
   revDiv.className = 'env-uplift-row';
   revDiv.style.marginTop = '1.5rem';
@@ -3849,7 +3877,7 @@ function renderFinancialRatesPanel(data) {
   revLabel.className = 'env-uplift-label';
   revLabel.textContent = 'Revenue Requirement';
   revDiv.appendChild(revLabel);
-  revDiv.appendChild(makeHelpIcon('Enable rate-based revenue calculation'));
+  revDiv.appendChild(makeHelpIcon('Enable rate-based revenue calculation (straight-line depreciation + return on declining rate base at real WACC)'));
   const revToggle = document.createElement('input');
   revToggle.type = 'checkbox';
   revToggle.className = 'toggle-input';
@@ -3858,34 +3886,6 @@ function renderFinancialRatesPanel(data) {
   revToggle.checked = revVal === true || revVal === 'true';
   revDiv.appendChild(revToggle);
   wrapper.appendChild(revDiv);
-
-  const arrDiv = document.createElement('div');
-  arrDiv.className = 'env-uplift-row';
-  arrDiv.id = 'allowed-return-rate-row';
-  const arrLabel = document.createElement('span');
-  arrLabel.className = 'env-uplift-label';
-  arrLabel.textContent = 'Allowed Return Rate';
-  arrDiv.appendChild(arrLabel);
-  arrDiv.appendChild(makeHelpIcon('Annual return rate on capital costs (rate base)'));
-  const arrInput = document.createElement('input');
-  arrInput.type = 'text';
-  arrInput.className = 'percentage-input env-uplift-input';
-  arrInput.dataset.path = '03_financing.financial.revenue.rate_based.allowed_return_rate';
-  const arrVal = getValueAtFieldPath(data, '03_financing', 'financial.revenue.rate_based.allowed_return_rate');
-  arrInput.value = arrVal != null ? (arrVal * 100).toFixed(1) + '%' : '';
-  arrInput.addEventListener('focus', () => { arrInput.value = arrInput.value.replace(/%/g, ''); });
-  arrInput.addEventListener('blur', () => {
-    const raw = parseFloat(arrInput.value.replace(/%/g, ''));
-    if (!isNaN(raw)) arrInput.value = raw.toFixed(1) + '%';
-  });
-  arrDiv.appendChild(arrInput);
-  wrapper.appendChild(arrDiv);
-
-  function updateRevenueVisibility() {
-    arrDiv.style.display = revToggle.checked ? '' : 'none';
-  }
-  revToggle.addEventListener('change', updateRevenueVisibility);
-  updateRevenueVisibility();
 
   return wrapper;
 }
@@ -5303,8 +5303,7 @@ function updateLockedDiscountRate() {
 }
 
 const FUEL_MIX_SOURCE_KEYS = ['coal', 'oil', 'natural_gas', 'solar', 'wind', 'hydro', 'nuclear', 'other'];
-
-const FUEL_MIX_PATH_BASE = '18_energy_source_mix.energy_source_mix';
+const GRID_MIX_GROUPS = ['initial', 'rate_pre_cod', 'rate_post_cod'];
 
 function syncFuelMixPresetBarVisibility() {
   const bar = document.getElementById('fuel-mix-preset-bar');
@@ -5313,32 +5312,52 @@ function syncFuelMixPresetBarVisibility() {
   bar.style.display = inputMode === 'json' ? '' : 'none';
 }
 
-function applyEnergySourceMixPreset(mix) {
+function applyGridMixPreset(gridMix) {
   const energyMixTab = (C._renderedSubItems && C._renderedSubItems['energy-emissions-energy']) ||
     document.querySelector('[data-sub-tab="energy-emissions-energy"]');
-  if (!energyMixTab || !mix) return;
+  if (!energyMixTab || !gridMix) return;
+  GRID_MIX_GROUPS.forEach(group => {
+    const block = gridMix[group];
+    if (!block || typeof block !== 'object') return;
+    FUEL_MIX_SOURCE_KEYS.forEach(src => {
+      const val = block[src];
+      if (typeof val !== 'number' || Number.isNaN(val)) return;
+      const path = `18_energy_source_mix.grid_mix.${group}.${src}`;
+      const inp = energyMixTab.querySelector(`input[data-path="${path}"]`);
+      if (!inp) return;
+      if (group === 'initial') {
+        inp.value = formatNumberInput(val);
+        inp.dataset.rawValue = String(val);
+      } else {
+        inp.value = formatPercentageInput(val);
+        inp.dataset.rawValue = String(val);
+      }
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+}
+
+/** @deprecated Use applyGridMixPreset — accepts legacy energy_source_mix shape for compatibility. */
+function applyEnergySourceMixPreset(mix) {
+  if (!mix) return;
+  if (mix.initial || mix.rate_pre_cod || mix.rate_post_cod) {
+    applyGridMixPreset(mix);
+    return;
+  }
+  const gridMix = {
+    initial: {},
+    rate_pre_cod: {},
+    rate_post_cod: {},
+  };
   FUEL_MIX_SOURCE_KEYS.forEach(src => {
     const block = mix[src];
     if (!block || typeof block !== 'object') return;
-    const pctPath = `${FUEL_MIX_PATH_BASE}.${src}.percentage`;
-    const rocPath = `${FUEL_MIX_PATH_BASE}.${src}.rate_of_change`;
-    const pctIn = energyMixTab.querySelector(`input[data-path="${pctPath}"]`);
-    const rocIn = energyMixTab.querySelector(`input[data-path="${rocPath}"]`);
-    if (pctIn) {
-      const p = Number(block.percentage);
-      if (!Number.isNaN(p)) {
-        pctIn.value = formatNumberInput(p);
-        pctIn.dataset.rawValue = String(p);
-        pctIn.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
-    if (rocIn && typeof block.rate_of_change === 'number' && !Number.isNaN(block.rate_of_change)) {
-      const dec = block.rate_of_change;
-      rocIn.value = formatPercentageInput(dec);
-      rocIn.dataset.rawValue = String(dec);
-      rocIn.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+    gridMix.initial[src] = Number(block.percentage) || 0;
+    const rate = typeof block.rate_of_change === 'number' ? block.rate_of_change : 0;
+    gridMix.rate_pre_cod[src] = rate;
+    gridMix.rate_post_cod[src] = rate;
   });
+  applyGridMixPreset(gridMix);
 }
 
 function makeEmissionIntensitiesCollapsible() {
@@ -5376,16 +5395,49 @@ function makeEmissionIntensitiesCollapsible() {
 // =============================================
 // Modified renderJsonInputs (monkey-patched)
 // =============================================
-/** Lift legacy energy_source_mix from 16_emissions_reductions into 18_energy_source_mix when 18 is absent. */
+/** Lift legacy energy_source_mix from 16_emissions_reductions into 18_energy_source_mix when 18 is absent;
+ *  migrate old two-mix structure to grid_mix when needed. */
+function _allZeroLegacyMix(mix) {
+  if (!mix || typeof mix !== 'object') return true;
+  return FUEL_MIX_SOURCE_KEYS.every(s => (mix[s]?.percentage || 0) === 0);
+}
+
+function migrateOldMixToGridMix(old) {
+  const cf = old.counterfactual_energy_source_mix;
+  const esm = old.energy_source_mix;
+  let initial;
+  let rate_pre_cod;
+  if (!_allZeroLegacyMix(cf)) {
+    initial = Object.fromEntries(FUEL_MIX_SOURCE_KEYS.map(s => [s, cf[s]?.percentage || 0]));
+    rate_pre_cod = Object.fromEntries(FUEL_MIX_SOURCE_KEYS.map(s => [s, cf[s]?.rate_of_change || 0]));
+  } else {
+    initial = Object.fromEntries(FUEL_MIX_SOURCE_KEYS.map(s => [s, esm?.[s]?.percentage || 0]));
+    rate_pre_cod = Object.fromEntries(FUEL_MIX_SOURCE_KEYS.map(s => [s, 0]));
+  }
+  const rate_post_cod = { ...rate_pre_cod };
+  if (esm) {
+    FUEL_MIX_SOURCE_KEYS.forEach(s => {
+      if (typeof esm[s]?.rate_of_change === 'number') {
+        rate_post_cod[s] = esm[s].rate_of_change;
+      }
+    });
+  }
+  return { grid_mix: { initial, rate_pre_cod, rate_post_cod } };
+}
+
 function normalizeEnergySourceMixInCombinedData(data) {
   if (!data || typeof data !== 'object') return data;
   const out = JSON.parse(JSON.stringify(data));
-  const has18 = out['18_energy_source_mix'] && typeof out['18_energy_source_mix'] === 'object';
+  let block18 = out['18_energy_source_mix'];
   const er = out['16_emissions_reductions'] && out['16_emissions_reductions'].emissions_reductions;
   const legacyMix = er && er.energy_source_mix;
-  if (!has18 && legacyMix && typeof legacyMix === 'object') {
-    out['18_energy_source_mix'] = { energy_source_mix: JSON.parse(JSON.stringify(legacyMix)) };
+  if (!block18 && legacyMix && typeof legacyMix === 'object') {
+    block18 = { energy_source_mix: JSON.parse(JSON.stringify(legacyMix)) };
+    out['18_energy_source_mix'] = block18;
     delete er.energy_source_mix;
+  }
+  if (block18 && typeof block18 === 'object' && !block18.grid_mix) {
+    out['18_energy_source_mix'] = migrateOldMixToGridMix(block18);
   }
   return out;
 }
@@ -5470,6 +5522,8 @@ window.setSnapshotOriginalData = function(data) {
   snapshotOriginalData = data ? JSON.parse(JSON.stringify(data)) : null;
 };
 window.syncFuelMixPresetBarVisibility = syncFuelMixPresetBarVisibility;
+window.applyGridMixPreset = applyGridMixPreset;
+window.applyEnergySourceMixPreset = applyEnergySourceMixPreset;
 window.updateFuelMixChart = updateFuelMixChart;
 window.validateCostTimingPatterns = validateCostTimingPatterns;
 })();

@@ -29,10 +29,13 @@ Bucket = Literal[
 ]
 DiscountRate = Literal["wacc_real", "social", "wacc_nominal"]
 Condition = Literal["dc_only", "greenfield_only", "reconductoring_only"]
-NumeratorRule = Literal["all_benefits", "remedial", "remedial_enabling", "revenue"]
+NumeratorRule = Literal[
+    "all_benefits", "remedial", "remedial_enabling",
+    "capital_recovery", "revenue_requirement",
+]
 DenominatorRule = Literal[
     "all_costs", "hard", "hard_delay", "hard_operational_loss",
-    "hard_base_delay_operational", "revenue_loss",
+    "hard_base_delay_operational", "revenue_requirement_loss",
 ]
 Perspective = Literal["societal", "system", "system_delivered", "stakeholder"]
 Family = Literal["societal", "system", "firm", "screening"]
@@ -122,18 +125,18 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("line_loss_converter", "cost", "soft", "energy",
                  "Converter Losses", "wacc_real", "dc_only", 5,
                  "Energy losses from AC/DC converter stations. Zero for AC projects."),
-    TaxonomyItem("residual_exceedance", "cost", "soft", "energy",
-                 "Residual Exceedance", "wacc_real", None, 6,
-                 "Cost of transmission constraint exceedance not relieved by the project."),
     TaxonomyItem("base_delay", "cost", "soft", "delay",
-                 "Base Delay Cost", "wacc_real", None, 7,
+                 "Base Delay Cost", "wacc_real", None, 6,
                  "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
     TaxonomyItem("congestion_delay", "cost", "soft", "delay",
-                 "Congestion Delay Cost", "wacc_real", None, 8,
+                 "Congestion Delay Cost", "wacc_real", None, 7,
                  "Opportunity cost of congestion during delay + construction period."),
     TaxonomyItem("curtailment_delay", "cost", "soft", "delay",
-                 "Curtailment Delay Cost", "wacc_real", None, 9,
+                 "Curtailment Delay Cost", "wacc_real", None, 8,
                  "Opportunity cost of curtailment during delay + construction period."),
+    TaxonomyItem("emissions_displacement_delay", "cost", "soft", "delay",
+                 "Displacement Delay Emissions Cost", "social", None, 9,
+                 "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."),
     # --- Risk costs (bucket: risk) ---
     TaxonomyItem("wildfire_eac", "cost", "risk", "wildfire",
                  "Expected Wildfire Cost", "social", None, 1,
@@ -159,8 +162,8 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Delivered Energy Benefit", "wacc_real", None, 1,
                  "Value of deliverable energy. Enabling: new throughput."),
     # --- Transfer ---
-    TaxonomyItem("revenue", "transfer", "transfer", "revenue",
-                 "Revenue (Rate-Based)", "wacc_real", None, 1,
+    TaxonomyItem("capital_recovery", "transfer", "transfer", "capital_recovery",
+                 "Capital Recovery (Rate-Based)", "wacc_real", None, 1,
                  "Utility-ratepayer transfer: allowed return x rate base. Not in societal NB."),
     # --- Avoided emissions benefit ---
     TaxonomyItem("displacement_avoided", "benefit", "avoided_emissions", "displacement",
@@ -310,13 +313,13 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     ),
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "firm", "stakeholder",
-        "revenue", "hard_base_delay_operational", frozenset(), 6,
-        "Whether utility recovers out-of-pocket costs.",
+        "revenue_requirement", "hard_base_delay_operational", frozenset(), 6,
+        "Whether regulated revenue requirement covers all utility costs (FERC CoS).",
     ),
     "bcr_ratepayer": BCRDefinition(
         "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
-        "remedial_enabling", "revenue_loss", frozenset(), 7,
-        "Whether ratepayers receive more value than they pay (excludes avoided emissions).",
+        "remedial_enabling", "revenue_requirement_loss", frozenset(), 7,
+        "Whether ratepayers receive more value than they pay through rates (full ATRR + losses).",
     ),
 }
 
@@ -377,7 +380,6 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     # Soft costs — energy
     "line_loss_conductor": "conductor_loss_pv",
     "line_loss_converter": "converter_loss_pv",
-    "residual_exceedance": "residual_exceedance_pv",
     # Soft costs — delay
     "base_delay": "delay_cost_pv",
     "congestion_delay": "congestion_delay_cost_pv",
@@ -393,9 +395,11 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "curtailment_benefit": "curtailment_benefit_pv",
     "delivered_energy_benefit": "delivered_benefit_pv",
     # Transfer
-    "revenue": "revenue_pv",
+    "capital_recovery": "capital_recovery_pv",
     # Reporting-only
     "displacement_avoided": "displacement_avoided_cost_pv",
+    # Soft costs — delay (displacement)
+    "emissions_displacement_delay": "emissions_displacement_delay_pv",
 }
 
 # ---------------------------------------------------------------------------
@@ -509,7 +513,8 @@ if __name__ == "__main__":
 
     # 8c. Discount rate
     _expected_social = {"wildfire_eac", "outage_eac", "emissions_comp",
-                        "emissions_fac", "displacement_avoided"}
+                        "emissions_fac", "displacement_avoided",
+                        "emissions_displacement_delay"}
     _actual_social = {item.id for item in TAXONOMY_ITEMS if item.discount_rate == "social"}
     assert _actual_social == _expected_social, (
         f"Social discount rate mismatch: expected {_expected_social}, got {_actual_social}"

@@ -1,0 +1,84 @@
+<h2>Compare Tab Redesign — Mockup</h2>
+<p class="subtitle">How the toolbar + delta popover + selector could look</p>
+
+<div class="mockup">
+  <div class="mockup-header">Compare Tab — Redesigned</div>
+  <div class="mockup-body" style="padding:0;font-family:system-ui;background:#f8f9fa;">
+
+    <!-- Scenario Selector -->
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(0,0,0,0.06);">
+      <div style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:8px;">Select scenarios to compare</div>
+
+      <!-- Row: checked -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:1px solid rgba(0,100,200,0.15);border-radius:8px;margin-bottom:6px;">
+        <input type="checkbox" checked style="width:16px;height:16px;accent-color:#0066cc;">
+        <span style="font-size:10px;color:#0066cc;background:rgba(0,100,200,0.08);padding:2px 8px;border-radius:10px;font-weight:600;">Baseline</span>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;">CTT_Actual_Delay2</div>
+          <div style="font-size:11px;color:#999;margin-top:1px;">1792 MW | AC | Overhead | 240 mi</div>
+        </div>
+      </div>
+
+      <!-- Row: checked -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:1px solid rgba(0,0,0,0.08);border-radius:8px;margin-bottom:6px;">
+        <input type="checkbox" checked style="width:16px;height:16px;accent-color:#0066cc;">
+        <div style="width:58px;"></div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;">CTT_Counterfactual_Delay7</div>
+          <div style="font-size:11px;color:#999;margin-top:1px;">1792 MW | AC | Overhead | 240 mi</div>
+        </div>
+      </div>
+
+      <!-- Row: unchecked -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:6px;opacity:0.6;">
+        <input type="checkbox" style="width:16px;height:16px;">
+        <div style="width:58px;"></div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:13px;">AEP LRGV 345kV ACSR Rebuild</div>
+          <div style="font-size:11px;color:#999;margin-top:1px;">1792 MW | AC | Overhead | 240 mi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div style="padding:12px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(0,0,0,0.06);flex-wrap:wrap;">
+      <span style="font-size:14px;font-weight:700;">Compare Selected Scenarios</span>
+      <span style="flex:1;"></span>
+      <span style="background:#0066cc;color:white;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;position:relative;">
+        Compare to Baseline ▾
+      </span>
+      <span style="background:white;color:#555;padding:5px 12px;border-radius:6px;font-size:11px;border:1px solid #ddd;">Copy Table</span>
+      <span style="background:white;color:#555;padding:5px 12px;border-radius:6px;font-size:11px;border:1px solid #ddd;">Export PNG</span>
+      <span style="background:white;color:#555;padding:5px 12px;border-radius:6px;font-size:11px;border:1px solid #ddd;">Exclusions</span>
+    </div>
+
+    <!-- Delta Popover (shown open for demo) -->
+    <div style="position:relative;padding:0 20px;">
+      <div style="position:absolute;right:20px;top:4px;background:white;border:1px solid rgba(0,0,0,0.12);border-radius:8px;padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,0.1);width:220px;z-index:10;">
+        <div style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:10px;">Delta Options</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#333;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" checked style="width:14px;height:14px;accent-color:#0066cc;">
+          Show Δ vs baseline
+        </label>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:10px;color:#999;margin-bottom:4px;">Display mode</div>
+          <select style="width:100%;padding:4px 8px;border:1px solid rgba(0,0,0,0.12);border-radius:4px;font-size:12px;background:white;">
+            <option>Values + Δ</option>
+            <option>Δ only (except baseline)</option>
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#333;cursor:pointer;">
+          <input type="checkbox" style="width:14px;height:14px;accent-color:#0066cc;">
+          Show % Δ
+        </label>
+      </div>
+    </div>
+
+    <!-- Placeholder for comparison table -->
+    <div style="padding:60px 20px 20px;text-align:center;color:#bbb;font-size:13px;font-style:italic;">
+      [Comparison table renders here]
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1rem;">Key changes: Card-style selector rows with "Baseline" badge • Toolbar with primary "Compare to Baseline" button • Delta options in a popover panel</p>

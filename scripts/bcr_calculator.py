@@ -140,13 +140,17 @@ _DENOM_SETS: dict[str, frozenset[str]] = {
     "hard_delay": _HARD_IDS | _DELAY_IDS,
     "hard_base_delay_operational": _HARD_IDS | _BASE_DELAY_IDS | _OPERATIONAL_IDS,
     "hard_operational_loss": _HARD_IDS | _OPERATIONAL_IDS | frozenset({"line_loss_conductor", "line_loss_converter"}),
-    "revenue_loss": frozenset({"revenue", "line_loss_conductor", "line_loss_converter"}),
+    "revenue_requirement_loss": frozenset({
+        "capital_recovery", "oandm", "insurance",
+        "line_loss_conductor", "line_loss_converter",
+    }),
 }
 _NUMER_SETS: dict[str, frozenset[str]] = {
     "all_benefits": _ALL_BENEFIT_IDS,
     "remedial": _REMEDIAL_IDS,
     "remedial_enabling": _REMEDIAL_IDS | _ENABLING_IDS,
-    "revenue": frozenset({"revenue"}),
+    "capital_recovery": frozenset({"capital_recovery"}),
+    "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance"}),
 }
 
 # Backward-compat key naming for exclusion variants
@@ -171,10 +175,10 @@ _LEGACY_ITEM_KEYS = frozenset({
     "displacement_avoided_cost_pv",
     "wildfire_pv", "outage_pv",
     "delay_cost_pv", "congestion_delay_cost_pv", "curtailment_delay_cost_pv",
-    "residual_exceedance_pv",
+    "emissions_displacement_delay_pv",
     "congestion_benefit_pv", "curtailment_benefit_pv",
     "delivered_benefit_pv", "delivered_benefit_nominal",
-    "revenue_pv",
+    "capital_recovery_pv",
 })
 
 
@@ -248,11 +252,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             if bcr_def.exclude_groups
             else set()
         )
-        # Legacy behavior: excluding both emissions AND line_losses also
-        # removes residual_exceedance (the old code subtracted the lumped
-        # energy_emissions_costs_pv aggregate which included it).
-        if {"emissions", "line_losses"} <= bcr_def.exclude_groups:
-            excluded_ids.add("residual_exceedance")
 
         numerator = _sum_pv(_NUMER_SETS[bcr_def.numerator_rule] - excluded_ids)
         denominator = _sum_pv(_DENOM_SETS[bcr_def.denominator_rule] - excluded_ids)
@@ -315,8 +314,8 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     print(f"  Congestion Reduction:        ${_g('congestion_benefit_pv'):>15,.0f}")
     print(f"  Curtailment Reduction:       ${_g('curtailment_benefit_pv'):>15,.0f}")
 
-    if _g("revenue_pv") > 0:
-        print(f"  Revenue (Rate-Based):        ${_g('revenue_pv'):>15,.0f}")
+    if _g("capital_recovery_pv") > 0:
+        print(f"  Capital Recovery (Rate-Based): ${_g('capital_recovery_pv'):>15,.0f}")
 
     print("  " + "-" * 78)
     print(f"  Total Benefits:              ${_g('total_benefits_pv'):>15,.0f}")
@@ -343,7 +342,6 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
         print(f"    Conductor Losses:          ${_g('conductor_loss_pv'):>15,.0f}")
     else:
         print(f"    Energy Losses:             ${_g('energy_losses_pv'):>15,.0f}")
-    print(f"    Residual Exceedance:       ${_g('residual_exceedance_pv'):>15,.0f}")
     print(f"    Loss-Comp. Emissions:      ${_g('emissions_comp_cost_pv'):>15,.0f}")
     print(f"    Subtotal:                  ${_g('energy_emissions_costs_pv'):>15,.0f}")
     print()
