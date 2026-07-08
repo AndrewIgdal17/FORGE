@@ -153,7 +153,7 @@ _NUMER_SETS: dict[str, frozenset[str]] = {
     "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance"}),
 }
 
-# Backward-compat key naming for exclusion variants
+# Output key generation for exclusion BCR variants
 _EXCL_KEY_ORDER = ["avoided_emissions", "emissions", "line_losses", "wildfire", "outage"]
 _GROUP_TO_SUFFIX: dict[str, str] = {
     "avoided_emissions": "avoided_emissions",
@@ -163,8 +163,8 @@ _GROUP_TO_SUFFIX: dict[str, str] = {
     "outage": "outage_risk",
 }
 
-# Keys from taxonomy_results_to_flat_keys that appear in the legacy 102-key output
-_LEGACY_ITEM_KEYS = frozenset({
+# Canonical output keys included in the BCR results dict
+_BCR_OUTPUT_KEYS = frozenset({
     "build_cost_pv",
     "row_cost_pv", "row_capital_pv", "row_capital_nominal",
     "row_rent_pv", "row_rent_nominal",
@@ -211,7 +211,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
 
     # Individual item keys (filtered to legacy BCR output set)
     flat = taxonomy_results_to_flat_keys(results)
-    out = {k: v for k, v in flat.items() if k in _LEGACY_ITEM_KEYS}
+    out = {k: v for k, v in flat.items() if k in _BCR_OUTPUT_KEYS}
     # energy_losses_nominal is not in legacy BCR output but is needed by csv_equivalent
     out["energy_losses_nominal"] = flat.get("energy_losses_nominal", 0)
 

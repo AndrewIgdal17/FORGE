@@ -379,8 +379,8 @@ def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
     return [
         TaxonomyResult(
             "capital_recovery",
-            value_pv=_safe(capital_recovery, "revenue_pv"),
-            value_nominal=_safe(capital_recovery, "revenue_nominal"),
+            value_pv=_safe(capital_recovery, "capital_recovery_pv"),
+            value_nominal=_safe(capital_recovery, "capital_recovery_nominal"),
             value_annual=_safe(capital_recovery, "annual_revenue"),
         ),
     ]
@@ -425,15 +425,14 @@ def adapt_all_results(json_results: dict) -> list[TaxonomyResult]:
 
 
 # ---------------------------------------------------------------------------
-# Backward-compatibility shim
+# Flat-key bridge for BCR calculator
 # ---------------------------------------------------------------------------
 
 
 def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
-    """Convert taxonomy results to the flat key dict that BCRInputData expects.
+    """Convert taxonomy results to the flat-key dict consumed by compute_all_bcrs().
 
-    Aggregate keys (build_cost_pv, row_capital_pv, energy_losses_pv) are
-    reconstructed by summing their contributing taxonomy items.
+    This is the canonical bridge between the taxonomy system and the BCR calculator.
     """
     by_id: dict[str, TaxonomyResult] = {r.taxonomy_id: r for r in results}
 

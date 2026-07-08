@@ -360,16 +360,11 @@ const TAB_GUIDE_CONTENT = {
     body: 'Outage rates set event frequency per mile by construction type; base duration determines how much energy goes unserved per event, scaled by a construction-type multiplier. You can model increasing risk over time with an optional growth rate.',
     items: ['Base outage duration (hrs/event)', 'Construction-type duration multiplier', 'Outage rate by construction type (outages/mi/yr)', 'Optional outage risk growth rate'],
   },
-  // L4 sub-sub-tabs: System Details — Constraints
+  // L4 sub-sub-tabs: System Details — Constraints (Approach B: single-constraint, two-price decomposition)
   'congestion': {
-    oneliner: 'Quantify the transmission congestion your project will relieve.',
-    body: 'Congestion occurs when power flow exceeds available transmission capacity, forcing costlier dispatch or unserved load. You\u2019ll specify how often the targeted constraint binds, the average megawatt exceedance during those hours, and the marginal congestion price \u2014 together, these determine the annual value of congestion relief.',
-    items: ['Binding hours per year', 'Average megawatt exceedance', 'Congestion price ($/MWh)', 'Flow factor or hot hour weights (varies by project type)'],
-  },
-  'curtailment': {
-    oneliner: 'Quantify the renewable curtailment your project will reduce.',
-    body: 'Curtailment happens when generators \u2014 typically wind or solar \u2014 must reduce output because the transmission system cannot carry it. You\u2019ll specify how many hours curtailment occurs, the average megawatts curtailed, and the value of that lost generation.',
-    items: ['Curtailment hours per year', 'Average curtailed megawatts', 'Curtailment price ($/MWh)'],
+    oneliner: 'Quantify the transmission constraint your project will relieve.',
+    body: 'Approach B models a single targeted constraint that resolves either through costlier redispatch (congestion) or through generator curtailment, split by the congestion fraction. You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, what share of that time is redispatch versus curtailment, and the two marginal prices \u2014 together, these determine the annual value of relief.',
+    items: ['Constrained hours per year', 'Average megawatt exceedance', 'Congestion fraction (share of constrained hours resolved via redispatch)', 'Congestion price ($/MWh)', 'Curtailment price ($/MWh)', 'Flow factor (greenfield only)'],
   },
 };
 
@@ -4172,7 +4167,7 @@ function renderConstraintsPanel(data) {
 
   const l4Bar = document.createElement('div');
   l4Bar.className = 'l4-tabs';
-  const l4Ids = ['congestion', 'curtailment'];
+  const l4Ids = ['congestion'];
   const l4Panels = [];
 
   l4Ids.forEach((l4Id, l4Idx) => {
@@ -4189,53 +4184,20 @@ function renderConstraintsPanel(data) {
     if (l4Idx > 0) panel.style.display = 'none';
 
     if (l4Id === 'congestion') {
-      // Congestion fields
+      // Approach B: single-constraint, two-price decomposition (constraints + prices, flat paths)
       const congFields = [];
       if (!recon) {
-        congFields.push({label: 'Flow Factor', path: `${yamlSection}.${yamlRoot}.congestion.constraints.flow_factor`, type: 'percent', help: 'Deliverability to targeted constraint [0,1]'});
+        congFields.push({label: 'Flow Factor', path: `${yamlSection}.${yamlRoot}.constraints.flow_factor`, type: 'percent', help: 'Deliverability to targeted constraint [0,1]'});
       }
       congFields.push(
-        {label: 'Binding Hours', path: `${yamlSection}.${yamlRoot}.congestion.constraints.binding_hours`, type: 'number', unit: 'hrs/year', help: 'Hours/year the targeted constraint is binding'},
-        {label: 'Average Exceedance', path: `${yamlSection}.${yamlRoot}.congestion.constraints.average_exceedance`, type: 'number', unit: 'MW', help: 'Average MW exceedance during binding hours'},
-        {label: 'Average Congestion Price', path: `${yamlSection}.${yamlRoot}.congestion.costs.average_congestion_price`, type: 'currency', unit: '$/MWh', help: 'Marginal congestion cost during binding hours'}
+        {label: 'Constrained Hours', path: `${yamlSection}.${yamlRoot}.constraints.constrained_hours`, type: 'number', unit: 'hrs/year', help: 'Total hours/year the constraint binds (congestion + curtailment combined)'},
+        {label: 'Average Exceedance', path: `${yamlSection}.${yamlRoot}.constraints.average_exceedance`, type: 'number', unit: 'MW', help: 'Average MW exceedance during constrained hours'},
+        {label: 'Congestion Fraction (f)', path: `${yamlSection}.${yamlRoot}.constraints.congestion_fraction`, type: 'number', help: 'Fraction of constrained hours where consequence is redispatch (0-1; rest is curtailment). Wind corridor ~0.05-0.30, load pocket ~0.80-1.00.'},
+        {label: 'Congestion Price', path: `${yamlSection}.${yamlRoot}.prices.average_congestion_price`, type: 'currency', unit: '$/MWh', help: 'Marginal redispatch cost during congestion hours'},
+        {label: 'Curtailment Price', path: `${yamlSection}.${yamlRoot}.prices.average_curtailment_price`, type: 'currency', unit: '$/MWh', help: 'Value per MWh of curtailed energy (PPA proxy / avoided cost)'}
       );
-      if (recon) {
-        congFields.push({label: 'Hot Hour Weights', path: `${yamlSection}.${yamlRoot}.congestion.constraints.hot_hour_weights`, type: 'number', help: 'Fraction of binding hours at or near maximum operating temperature'});
-      }
 
       congFields.forEach(f => {
-        const row = document.createElement('div');
-        row.className = 'env-uplift-row';
-        row.innerHTML = `<span class="env-uplift-label">${f.label}</span> `;
-        row.appendChild(makeHelpIcon(f.help));
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = f.type === 'currency' ? 'currency-input env-uplift-input' : 'number-input env-uplift-input';
-        input.dataset.path = f.path;
-        const parts = f.path.split('.');
-        const val = getValueAtFieldPath(data, parts[0], parts.slice(1).join('.'));
-        if (f.type === 'currency') {
-          input.value = val != null ? '$' + Number(val).toLocaleString() : '';
-          input.addEventListener('focus', () => { input.value = input.value.replace(/[$,]/g, ''); });
-          input.addEventListener('blur', () => { const r = parseFloat(input.value.replace(/[$,]/g, '')); if (!isNaN(r)) input.value = '$' + r.toLocaleString(); });
-        } else {
-          input.value = val != null ? String(val) : '';
-          input.addEventListener('focus', () => { input.value = input.value.replace(/,/g, ''); });
-          input.addEventListener('blur', () => { const r = parseFloat(input.value.replace(/,/g, '')); if (!isNaN(r)) input.value = r.toLocaleString('en-US', {maximumFractionDigits: 10}); });
-        }
-        row.appendChild(input);
-        panel.appendChild(row);
-      });
-
-
-    } else if (l4Id === 'curtailment') {
-      const curtFields = [
-        {label: 'Curtailment Hours Total', path: `${yamlSection}.${yamlRoot}.curtailment.curtailment_hours_total`, type: 'number', unit: 'hrs/year', help: 'Hours/year of renewable curtailment on this constraint'},
-        {label: 'Average Curtailment MW', path: `${yamlSection}.${yamlRoot}.curtailment.average_curtailment_mw`, type: 'number', unit: 'MW', help: 'Average MW curtailed per curtailment event'},
-        {label: 'Average Curtailment Price', path: `${yamlSection}.${yamlRoot}.curtailment.average_curtailment_price`, type: 'currency', unit: '$/MWh', help: 'Value per MWh of curtailed energy (PPA proxy / avoided cost)'},
-      ];
-
-      curtFields.forEach(f => {
         const row = document.createElement('div');
         row.className = 'env-uplift-row';
         row.innerHTML = `<span class="env-uplift-label">${f.label}</span> `;

@@ -160,8 +160,8 @@ def main() -> None:
         # Still write zeros to CSV for consistency
         csv_manager = CTCCOutputManager()
         results = {
-            "revenue_nominal": 0,
-            "revenue_pv": 0,
+            "capital_recovery_nominal": 0,
+            "capital_recovery_pv": 0,
             "annual_revenue": 0,
             "rate_base": 0,
             "rate_base_real": 0,
@@ -202,8 +202,8 @@ def main() -> None:
     n = project_lifetime
     r_wacc_real = financing.wacc_real
 
-    revenue_pv = 0.0
-    revenue_nominal_total = 0.0
+    capital_recovery_pv = 0.0
+    capital_recovery_nominal = 0.0
     annual_revenues = []
 
     for t in range(1, n + 1):
@@ -211,17 +211,17 @@ def main() -> None:
         return_t = rate_base_real * r_wacc_real * (1 - (t - 1) / n)
         revenue_t = depreciation_t + return_t
         annual_revenues.append(revenue_t)
-        revenue_nominal_total += revenue_t
+        capital_recovery_nominal += revenue_t
         discount_year = cod_year + t - 1
-        revenue_pv += revenue_t / (1 + r_wacc_real) ** discount_year
+        capital_recovery_pv += revenue_t / (1 + r_wacc_real) ** discount_year
 
     revenue_year_1 = annual_revenues[0] if annual_revenues else 0.0
     revenue_year_n = annual_revenues[-1] if annual_revenues else 0.0
 
     # NPV neutrality check: PV should equal RB discounted to base year
     expected_pv = rate_base_real / (1 + r_wacc_real) ** (cod_year - 1)
-    assert abs(revenue_pv - expected_pv) / max(expected_pv, 1.0) < 1e-6, (
-        f"NPV neutrality violated: revenue_pv={revenue_pv:.2f}, expected={expected_pv:.2f}"
+    assert abs(capital_recovery_pv - expected_pv) / max(expected_pv, 1.0) < 1e-6, (
+        f"NPV neutrality violated: capital_recovery_pv={capital_recovery_pv:.2f}, expected={expected_pv:.2f}"
     )
 
     print("=" * 60)
@@ -233,23 +233,23 @@ def main() -> None:
     print(f"Project Lifetime:                {n} years")
     print(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")
     print(f"Revenue Year {n} (real $/year):   ${revenue_year_n:,.2f}")
-    print(f"Undiscounted Total (real):      ${revenue_nominal_total:,.2f}")
+    print(f"Undiscounted Total (real):      ${capital_recovery_nominal:,.2f}")
     print()
     print(
-        f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
+        f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%}):"
     )
-    print(f"TOTAL PRESENT VALUE REVENUE:    ${revenue_pv:,.2f}")
+    print(f"Capital Recovery PV:            ${capital_recovery_pv:,.2f}")
     print("=" * 60)
 
     # CSV Output
     csv_manager = CTCCOutputManager()
     results = {
-        "revenue_nominal": revenue_nominal_total,
-        "revenue_pv": revenue_pv,
+        "capital_recovery_nominal": capital_recovery_nominal,
+        "capital_recovery_pv": capital_recovery_pv,
         "annual_revenue": revenue_year_1,
         "rate_base": rate_base,
         "rate_base_real": rate_base_real,
-        "rate_base_pv": revenue_pv,
+        "rate_base_pv": capital_recovery_pv,
         "annual_revenue_real": revenue_year_1,
         "revenue_year_1": revenue_year_1,
         "revenue_year_n": revenue_year_n,

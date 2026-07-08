@@ -752,7 +752,6 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'row_rent', value_pv: row.row_rent_pv||0, value_nominal: row.row_rent_nominal||0, detail: [] },
     { taxonomy_id: 'line_loss_conductor', value_pv: ll.line_cost_pv||0, value_nominal: ll.line_nominal_total||0, value_annual: ll.line_annual_cost||null, detail: [] },
     { taxonomy_id: 'line_loss_converter', value_pv: ll.converter_cost_pv||0, value_nominal: ll.converter_nominal_total||0, value_annual: ll.converter_annual_cost||null, detail: [] },
-    { taxonomy_id: 'residual_exceedance', value_pv: cc.residual_exceedance_pv||0, value_nominal: cc.residual_exceedance_nominal||0, value_annual: cc.residual_exceedance_annual||null, detail: [] },
     { taxonomy_id: 'base_delay', value_pv: delay.total_pv||0, value_nominal: delay.total_nominal||0, detail: [] },
     { taxonomy_id: 'congestion_delay', value_pv: cc.congestion_delay_cost_pv||0, value_nominal: cc.congestion_delay_cost_nominal||0, detail: [] },
     { taxonomy_id: 'curtailment_delay', value_pv: cc.curtailment_delay_cost_pv||0, value_nominal: cc.curtailment_delay_cost_nominal||0, detail: [] },
@@ -986,11 +985,9 @@ function renderTransfersAndReporting(results) {
     ['Effective Capacity Relief', cc.effective_capacity_relief_mw, 'MW'],
     ['Congestion Reduction', cc.energy_congestion_reduction_mwh_yr, 'MWh/yr'],
     ['Curtailment Reduction', cc.energy_curtailment_reduction_mwh_yr, 'MWh/yr'],
-    ['Residual Exceedance', cc.energy_residual_exceedance_mwh_yr, 'MWh/yr'],
     ['Remaining Capacity', cc.remaining_capacity_mw, 'MW'],
-    ['Theta Overlap', cc.theta_overlap, ''],
-    ['Binding Hours (Overlap)', cc.binding_hours_overlap, ''],
-    ['Binding Hours (Non-Overlap)', cc.binding_hours_non_overlap, ''],
+    ['Constrained Hours', cc.constrained_hours, 'hrs/yr'],
+    ['Congestion Fraction', cc.congestion_fraction, ''],
   ];
   physEntries.forEach(([label, val, unit]) => {
     if (val !== undefined) { appendPhysMetric(physGrid, label, val, unit); hasPhys = true; }

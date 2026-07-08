@@ -482,7 +482,6 @@
         'economic-details': 'Economic Details',
         'system-constraints': 'Constraints',
         'congestion': 'Congestion',
-        'curtailment': 'Curtailment',
         'rates': 'Rates',
         'afudc': 'AFUDC',
       };

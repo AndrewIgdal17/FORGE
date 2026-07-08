@@ -4479,7 +4479,7 @@
   },
   "results": {
     "scenario_id": "TBC_NoDelay",
-    "timestamp": "2026-07-07T23:36:32.206277",
+    "timestamp": "2026-07-08T00:16:54.391184",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
@@ -4640,8 +4640,8 @@
     },
     "benefits": {
       "capital_recovery": {
-        "revenue_nominal": 689749074.5418491,
-        "revenue_pv": 281708535.7795491,
+        "capital_recovery_nominal": 689749074.5418491,
+        "capital_recovery_pv": 281708535.7795491,
         "annual_revenue": 25815637.436502583,
         "rate_base": 370617946.6460182,
         "rate_base_real": 329289245.32009494,
@@ -4895,7 +4895,7 @@
     "csv_equivalent": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
       "scenario_id": "TBC_NoDelay",
-      "timestamp": "2026-07-07T23:36:32.206277",
+      "timestamp": "2026-07-08T00:16:54.391184",
       "capacity_mw": 500,
       "line_length_miles": 53,
       "construction_type": "Subsea",
@@ -5318,7 +5318,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-07-07T23:36:32.637116",
+    "timestamp": "2026-07-08T00:17:00.209259",
     "scenario_id": "TBC_NoDelay",
     "source": "tbc_case_study"
   }

@@ -757,8 +757,8 @@ class CTCCOutputManager:
         """Add revenue calculation results to batch summary (declining-balance, real WACC)."""
         self.append_to_batch_summary(
             {
-                "revenue_nominal": results.get("revenue_nominal", 0),
-                "capital_recovery_pv": results.get("revenue_pv", 0),
+                "capital_recovery_nominal": results.get("capital_recovery_nominal", 0),
+                "capital_recovery_pv": results.get("capital_recovery_pv", 0),
                 "annual_revenue": results.get("annual_revenue", 0),
                 "rate_base": results.get("rate_base", 0),
                 "rate_base_real": results.get("rate_base_real", 0),
@@ -772,10 +772,10 @@ class CTCCOutputManager:
         # Write module CSV - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {
             "row_type": "rate_based",
-            "pv_total": results.get("revenue_pv", 0),
+            "pv_total": results.get("capital_recovery_pv", 0),
             "rate_base_pv": results.get("rate_base_pv", 0),
             "annual_revenue": results.get("annual_revenue", 0),
-            "nominal_total": results.get("revenue_nominal", 0),
+            "nominal_total": results.get("capital_recovery_nominal", 0),
             "rate_base": results.get("rate_base", 0),
             "rate_base_real": results.get("rate_base_real", 0),
             "annual_revenue_real": results.get("annual_revenue_real", 0),

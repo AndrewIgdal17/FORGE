@@ -125,7 +125,7 @@ def build_csv_equivalent(
 def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
     """Create a minimal summary aligned with CSV/BCR totals and appendix buckets."""
     return {
-        # Pipeline groupings (backward compat)
+        # Pipeline groupings (cost/benefit bucket subtotals for the summary dict)
         "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
         "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
         "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),

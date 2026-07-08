@@ -187,7 +187,7 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['revenue_pv'])}")
+    print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")
@@ -279,7 +279,7 @@ def main():
     build_pv = results_delay4["costs"]["build"]["total_pv"]
     print(f"  Build cost PV (CTCC):   {fmt(build_pv)}")
     print(f"  Actual total project:   $505M (includes civil works, site, community payments)")
-    rev_pv = results_delay4["benefits"]["capital_recovery"]["revenue_pv"]
+    rev_pv = results_delay4["benefits"]["capital_recovery"]["capital_recovery_pv"]
     print(f"  Capital recovery PV (CTCC): {fmt(rev_pv)}")
     print(f"  Actual TRR:             ~$130M/yr (FERC-approved)")
 
