@@ -47,6 +47,7 @@ class CongestionCurtailmentParams:
     congestion_fraction: float
     average_congestion_price: float
     average_curtailment_price: float
+    benefit_price_escalation_real: float = 0.0
 
 
 @dataclass
@@ -541,6 +542,9 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             congestion_fraction=congestion_fraction,
             average_congestion_price=average_congestion_price,
             average_curtailment_price=average_curtailment_price,
+            benefit_price_escalation_real=float(
+                data.get("benefit_price_escalation_real", 0.0)
+            ),
         )
     except FileNotFoundError:
         raise FileNotFoundError(

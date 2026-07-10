@@ -44,7 +44,7 @@
         "terrain_multipliers": {
           "forested": 2.25,
           "scrubbed_flat": 1,
-          "wetland": 1.2,
+          "wetland": 2.0,
           "farmland": 1,
           "desert_barren": 1.05,
           "urban": 1.59,
@@ -60,12 +60,11 @@
         "base_year": 2026,
         "wacc_nominal": 0.067,
         "social_discount_rate": 0.02,
-        "cost_base_year": 2025,
         "construction_cost_escalation_rate": 0.025,
         "contingencies": {
-          "conductor_contingency": 0.1,
-          "structure_contingency": 0.1,
-          "converter_contingency": 0.1
+          "conductor_contingency": 0.2,
+          "structure_contingency": 0.2,
+          "converter_contingency": 0.2
         },
         "afudc": {
           "apply_afudc": true,
@@ -93,29 +92,16 @@
           "conductors": true,
           "structures": true,
           "converters": true
-        },
-        "premium_rate": 0.002
+        }
       }
     },
     "05_delays": {
-      "annual_base_delay_cost": 0,
-      "annual_delay_costs": {
-        "legal": 1000000,
-        "admin": 500000,
-        "labor": 2000000,
-        "material_and_equipment": 1500000,
-        "regulatory": 1500000,
-        "public_relations": 500000,
-        "project_management": 2500000,
-        "miscellaneous": 500000
-      }
+      "annual_base_delay_cost": 10000000
     },
     "06_wildfire_costs": {
       "wildfire": {
         "severity_per_event": 0,
         "risk_growth_rate": 0.0,
-        "discount_rate_source": "social",
-        "discount_rate_custom": 0.03,
         "base_ignition_rate": 0.0,
         "ignition_rate_multiplier": {
           "overhead": 1.0,
@@ -127,51 +113,50 @@
     "07_outage_costs": {
       "outage": {
         "risk_growth_rate": 0.0,
-        "discount_rate_type": "social",
         "capacity_at_risk_factor": 0.0,
         "load_shed_fraction": "auto",
-        "redispatch_cost_per_mwh": 20,
+        "redispatch_cost_per_mwh": 24,
         "value_of_lost_load": {
           "tiers": [
             {
               "max_hours": 1,
-              "value_per_mwh": 35685
+              "value_per_mwh": 36620
             },
             {
               "max_hours": 2,
-              "value_per_mwh": 21326
+              "value_per_mwh": 21885
             },
             {
               "max_hours": 4,
-              "value_per_mwh": 13340
+              "value_per_mwh": 13689
             },
             {
               "max_hours": 8,
-              "value_per_mwh": 10435
+              "value_per_mwh": 10708
             },
             {
               "max_hours": 16,
-              "value_per_mwh": 13581
+              "value_per_mwh": 13937
             },
             {
               "max_hours": 32,
-              "value_per_mwh": 20102
+              "value_per_mwh": 20628
             },
             {
               "max_hours": 64,
-              "value_per_mwh": 35356
+              "value_per_mwh": 36282
             },
             {
               "max_hours": 168,
-              "value_per_mwh": 86253
+              "value_per_mwh": 88512
             },
             {
               "max_hours": 720,
-              "value_per_mwh": 357907
+              "value_per_mwh": 367280
             },
             {
               "max_hours": Infinity,
-              "value_per_mwh": 357907
+              "value_per_mwh": 367280
             }
           ]
         },
@@ -206,14 +191,14 @@
         "marine_env_mitigation_pct_capex": 0.02,
         "base_mitigation_cost_per_acre": {
           "overhead": {
-            "forested": 5000,
+            "forested": 5486,
             "scrubbed_flat": 1000,
             "wetland": 5000,
             "farmland": 800,
             "desert_barren": 1000,
             "urban": 1500,
             "rolling_hills": 1500,
-            "mountain": 7000,
+            "mountain": 7132,
             "subsea": 1000
           },
           "underground_direct_buried": {
@@ -245,7 +230,7 @@
             "landfall_default": 1000
           }
         },
-        "wetland_credit_cost_per_acre": 25000,
+        "wetland_credit_cost_per_acre": 51361,
         "habitat_credit_cost_per_acre": {
           "forested": 30000,
           "scrubbed_flat": 5000,
@@ -265,9 +250,9 @@
           "capacity_mw": 140,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 90483.36,
+          "variable_conductor_cost_per_mile": 95587,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 568735.5,
+          "variable_structure_cost_per_mile": 595637,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/140MW/Advanced Aluminum Conductor/NA": {
@@ -276,9 +261,9 @@
           "capacity_mw": 140,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 157362.3911,
+          "variable_conductor_cost_per_mile": 166238,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 568735.5,
+          "variable_structure_cost_per_mile": 595637,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/329MW/Standard Aluminum Conductor/NA": {
@@ -287,9 +272,9 @@
           "capacity_mw": 329,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 111914.88,
+          "variable_conductor_cost_per_mile": 118227,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 642826.5,
+          "variable_structure_cost_per_mile": 674473,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/329MW/Advanced Aluminum Conductor/NA": {
@@ -298,9 +283,9 @@
           "capacity_mw": 329,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 132501.9684,
+          "variable_conductor_cost_per_mile": 139975,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 642826.5,
+          "variable_structure_cost_per_mile": 674473,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/394MW/Standard Aluminum Conductor/NA": {
@@ -309,9 +294,9 @@
           "capacity_mw": 394,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 111914.88,
+          "variable_conductor_cost_per_mile": 118227,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 664308.25,
+          "variable_structure_cost_per_mile": 697671,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/394MW/Advanced Aluminum Conductor/NA": {
@@ -320,9 +305,9 @@
           "capacity_mw": 394,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 182751.36,
+          "variable_conductor_cost_per_mile": 193059,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 664308.25,
+          "variable_structure_cost_per_mile": 697671,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/460MW/Standard Aluminum Conductor/NA": {
@@ -331,9 +316,9 @@
           "capacity_mw": 460,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 111914.88,
+          "variable_conductor_cost_per_mile": 118227,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 663528.25,
+          "variable_structure_cost_per_mile": 696707,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/460MW/Advanced Aluminum Conductor/NA": {
@@ -342,9 +327,9 @@
           "capacity_mw": 460,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 182751.36,
+          "variable_conductor_cost_per_mile": 193059,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 663528.25,
+          "variable_structure_cost_per_mile": 696707,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/657MW/Standard Aluminum Conductor/NA": {
@@ -353,9 +338,9 @@
           "capacity_mw": 657,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 111914.88,
+          "variable_conductor_cost_per_mile": 118227,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 625635.5,
+          "variable_structure_cost_per_mile": 655784,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/657MW/Advanced Aluminum Conductor/NA": {
@@ -364,9 +349,9 @@
           "capacity_mw": 657,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 147754.5787,
+          "variable_conductor_cost_per_mile": 156088,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 625635.5,
+          "variable_structure_cost_per_mile": 655784,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/1792MW/Standard Aluminum Conductor/NA": {
@@ -375,9 +360,9 @@
           "capacity_mw": 1792,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 180549.6,
+          "variable_conductor_cost_per_mile": 190733,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1018734.25,
+          "variable_structure_cost_per_mile": 1088360,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/1792MW/Advanced Aluminum Conductor/NA": {
@@ -386,9 +371,9 @@
           "capacity_mw": 1792,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 322222.56,
+          "variable_conductor_cost_per_mile": 340396,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1018734.25,
+          "variable_structure_cost_per_mile": 1088360,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/2598MW/Standard Aluminum Conductor/NA": {
@@ -397,9 +382,9 @@
           "capacity_mw": 2598,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 280737.6,
+          "variable_conductor_cost_per_mile": 296571,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1039008,
+          "variable_structure_cost_per_mile": 1245017,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/2598MW/Advanced Aluminum Conductor/NA": {
@@ -408,9 +393,9 @@
           "capacity_mw": 2598,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 461693.76,
+          "variable_conductor_cost_per_mile": 487733,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1039008,
+          "variable_structure_cost_per_mile": 1245017,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/6625MW/Standard Aluminum Conductor/NA": {
@@ -419,9 +404,9 @@
           "capacity_mw": 6625,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 455088.48,
+          "variable_conductor_cost_per_mile": 480755,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1378084.5,
+          "variable_structure_cost_per_mile": 1485793,
           "fixed_converter_cost": 0
         },
         "Overhead/AC/6625MW/Advanced Aluminum Conductor/NA": {
@@ -430,9 +415,9 @@
           "capacity_mw": 6625,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 727773.5466,
+          "variable_conductor_cost_per_mile": 768820,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1378084.5,
+          "variable_structure_cost_per_mile": 1485793,
           "fixed_converter_cost": 0
         },
         "Overhead/DC/500MW/Standard Aluminum Conductor/LCC Converter": {
@@ -441,10 +426,10 @@
           "capacity_mw": 500,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 119248.8,
+          "variable_conductor_cost_per_mile": 125974,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 516618.25,
-          "fixed_converter_cost": 73800000
+          "variable_structure_cost_per_mile": 540446,
+          "fixed_converter_cost": 77962320
         },
         "Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -452,10 +437,10 @@
           "capacity_mw": 500,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 119248.8,
+          "variable_conductor_cost_per_mile": 125974,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 516618.25,
-          "fixed_converter_cost": 98600000
+          "variable_structure_cost_per_mile": 540446,
+          "fixed_converter_cost": 104161040
         },
         "Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -463,10 +448,10 @@
           "capacity_mw": 500,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 155437.92,
+          "variable_conductor_cost_per_mile": 164205,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 516618.25,
-          "fixed_converter_cost": 73800000
+          "variable_structure_cost_per_mile": 540446,
+          "fixed_converter_cost": 77962320
         },
         "Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -474,10 +459,10 @@
           "capacity_mw": 500,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 155437.92,
+          "variable_conductor_cost_per_mile": 164205,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 516618.25,
-          "fixed_converter_cost": 98600000
+          "variable_structure_cost_per_mile": 540446,
+          "fixed_converter_cost": 104161040
         },
         "Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -485,10 +470,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 692217.5,
-          "fixed_converter_cost": 220100000
+          "variable_structure_cost_per_mile": 724189,
+          "fixed_converter_cost": 232513640
         },
         "Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -496,10 +481,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 692217.5,
-          "fixed_converter_cost": 286000000
+          "variable_structure_cost_per_mile": 724189,
+          "fixed_converter_cost": 302130400
         },
         "Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -507,10 +492,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 692217.5,
-          "fixed_converter_cost": 220100000
+          "variable_structure_cost_per_mile": 724189,
+          "fixed_converter_cost": 232513640
         },
         "Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -518,10 +503,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 692217.5,
-          "fixed_converter_cost": 286000000
+          "variable_structure_cost_per_mile": 724189,
+          "fixed_converter_cost": 302130400
         },
         "Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -529,10 +514,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 698601.25,
-          "fixed_converter_cost": 297100000
+          "variable_structure_cost_per_mile": 731040,
+          "fixed_converter_cost": 313856440
         },
         "Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -540,10 +525,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 698601.25,
-          "fixed_converter_cost": 384500000
+          "variable_structure_cost_per_mile": 731040,
+          "fixed_converter_cost": 406185800
         },
         "Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -551,10 +536,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 698601.25,
-          "fixed_converter_cost": 297100000
+          "variable_structure_cost_per_mile": 731040,
+          "fixed_converter_cost": 313856440
         },
         "Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -562,10 +547,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 698601.25,
-          "fixed_converter_cost": 384500000
+          "variable_structure_cost_per_mile": 731040,
+          "fixed_converter_cost": 406185800
         },
         "Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -573,10 +558,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 757820.75,
-          "fixed_converter_cost": 357500000
+          "variable_structure_cost_per_mile": 793004,
+          "fixed_converter_cost": 377663000
         },
         "Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -584,10 +569,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 195217.44,
+          "variable_conductor_cost_per_mile": 206228,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 757820.75,
-          "fixed_converter_cost": 465200000
+          "variable_structure_cost_per_mile": 793004,
+          "fixed_converter_cost": 491437280
         },
         "Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -595,10 +580,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 757820.75,
-          "fixed_converter_cost": 357500000
+          "variable_structure_cost_per_mile": 793004,
+          "fixed_converter_cost": 377663000
         },
         "Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -606,10 +591,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 267595.68,
+          "variable_conductor_cost_per_mile": 282688,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 757820.75,
-          "fixed_converter_cost": 465200000
+          "variable_structure_cost_per_mile": 793004,
+          "fixed_converter_cost": 491437280
         },
         "Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -617,10 +602,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 317819.04,
+          "variable_conductor_cost_per_mile": 335744,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1901393,
-          "fixed_converter_cost": 445300000
+          "variable_structure_cost_per_mile": 1975966,
+          "fixed_converter_cost": 470414920
         },
         "Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -628,10 +613,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Standard Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 317819.04,
+          "variable_conductor_cost_per_mile": 335744,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1901393,
-          "fixed_converter_cost": 566200000
+          "variable_structure_cost_per_mile": 1975966,
+          "fixed_converter_cost": 598133680
         },
         "Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter": {
           "installation_method": "Overhead",
@@ -639,10 +624,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 531979.7192,
+          "variable_conductor_cost_per_mile": 561983,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1901393,
-          "fixed_converter_cost": 445300000
+          "variable_structure_cost_per_mile": 1975966,
+          "fixed_converter_cost": 470414920
         },
         "Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter": {
           "installation_method": "Overhead",
@@ -650,10 +635,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Advanced Aluminum Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 531979.7192,
+          "variable_conductor_cost_per_mile": 561983,
           "fixed_conductor_cost": 0,
-          "variable_structure_cost_per_mile": 1901393,
-          "fixed_converter_cost": 566200000
+          "variable_structure_cost_per_mile": 1975966,
+          "fixed_converter_cost": 598133680
         },
         "Underground direct-buried/AC/140MW/Underground Copper Conductor/NA": {
           "installation_method": "Underground direct-buried",
@@ -661,8 +646,8 @@
           "capacity_mw": 140,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 11590886.1,
-          "fixed_conductor_cost": 6831263.416,
+          "variable_conductor_cost_per_mile": 12244612,
+          "fixed_conductor_cost": 7216547,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -672,8 +657,8 @@
           "capacity_mw": 329,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 11590886.1,
-          "fixed_conductor_cost": 6831263.416,
+          "variable_conductor_cost_per_mile": 12244612,
+          "fixed_conductor_cost": 7216547,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -683,8 +668,8 @@
           "capacity_mw": 394,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 11590886.1,
-          "fixed_conductor_cost": 6831263.416,
+          "variable_conductor_cost_per_mile": 12244612,
+          "fixed_conductor_cost": 7216547,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -694,8 +679,8 @@
           "capacity_mw": 460,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 20698010.9,
-          "fixed_conductor_cost": 12198684.67,
+          "variable_conductor_cost_per_mile": 21865379,
+          "fixed_conductor_cost": 12886690,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -705,8 +690,8 @@
           "capacity_mw": 657,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 40903985.66,
-          "fixed_conductor_cost": 17891404.19,
+          "variable_conductor_cost_per_mile": 43210970,
+          "fixed_conductor_cost": 18900479,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -716,8 +701,8 @@
           "capacity_mw": 1792,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 40903985.66,
-          "fixed_conductor_cost": 17891404.19,
+          "variable_conductor_cost_per_mile": 43210970,
+          "fixed_conductor_cost": 18900479,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -727,8 +712,8 @@
           "capacity_mw": 2598,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 40903985.66,
-          "fixed_conductor_cost": 17891404.19,
+          "variable_conductor_cost_per_mile": 43210970,
+          "fixed_conductor_cost": 18900479,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -738,8 +723,8 @@
           "capacity_mw": 6625,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 40903985.66,
-          "fixed_conductor_cost": 17891404.19,
+          "variable_conductor_cost_per_mile": 43210970,
+          "fixed_conductor_cost": 18900479,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -749,10 +734,10 @@
           "capacity_mw": 500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 4967522.616,
-          "fixed_conductor_cost": 2927684.321,
+          "variable_conductor_cost_per_mile": 5247691,
+          "fixed_conductor_cost": 3092806,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 73800000
+          "fixed_converter_cost": 77962320
         },
         "Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground direct-buried",
@@ -760,10 +745,10 @@
           "capacity_mw": 500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 4967522.616,
-          "fixed_conductor_cost": 2927684.321,
+          "variable_conductor_cost_per_mile": 5247691,
+          "fixed_conductor_cost": 3092806,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 98600000
+          "fixed_converter_cost": 104161040
         },
         "Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground direct-buried",
@@ -771,10 +756,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 16558408.72,
-          "fixed_conductor_cost": 9758947.738,
+          "variable_conductor_cost_per_mile": 17492303,
+          "fixed_conductor_cost": 10309352,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 220100000
+          "fixed_converter_cost": 232513640
         },
         "Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground direct-buried",
@@ -782,10 +767,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 16558408.72,
-          "fixed_conductor_cost": 9758947.738,
+          "variable_conductor_cost_per_mile": 17492303,
+          "fixed_conductor_cost": 10309352,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 286000000
+          "fixed_converter_cost": 302130400
         },
         "Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground direct-buried",
@@ -793,10 +778,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 16558408.72,
-          "fixed_conductor_cost": 9758947.738,
+          "variable_conductor_cost_per_mile": 17492303,
+          "fixed_conductor_cost": 10309352,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 297100000
+          "fixed_converter_cost": 313856440
         },
         "Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground direct-buried",
@@ -804,10 +789,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 16558408.72,
-          "fixed_conductor_cost": 9758947.738,
+          "variable_conductor_cost_per_mile": 17492303,
+          "fixed_conductor_cost": 10309352,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 384500000
+          "fixed_converter_cost": 406185800
         },
         "Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground direct-buried",
@@ -815,10 +800,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 30068050.1,
-          "fixed_conductor_cost": 14313123.35,
+          "variable_conductor_cost_per_mile": 31763888,
+          "fixed_conductor_cost": 15120384,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 357500000
+          "fixed_converter_cost": 377663000
         },
         "Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground direct-buried",
@@ -826,10 +811,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 30068050.1,
-          "fixed_conductor_cost": 14313123.35,
+          "variable_conductor_cost_per_mile": 31763888,
+          "fixed_conductor_cost": 15120384,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 465200000
+          "fixed_converter_cost": 491437280
         },
         "Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground direct-buried",
@@ -837,10 +822,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 30068050.1,
-          "fixed_conductor_cost": 14313123.35,
+          "variable_conductor_cost_per_mile": 31763888,
+          "fixed_conductor_cost": 15120384,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 445300000
+          "fixed_converter_cost": 470414920
         },
         "Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground direct-buried",
@@ -848,10 +833,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 30068050.1,
-          "fixed_conductor_cost": 14313123.35,
+          "variable_conductor_cost_per_mile": 31763888,
+          "fixed_conductor_cost": 15120384,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 566200000
+          "fixed_converter_cost": 598133680
         },
         "Underground tunnel/AC/140MW/Underground Copper Conductor/NA": {
           "installation_method": "Underground tunnel",
@@ -859,8 +844,8 @@
           "capacity_mw": 140,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 37746112.15,
-          "fixed_conductor_cost": 358966627.6,
+          "variable_conductor_cost_per_mile": 39874993,
+          "fixed_conductor_cost": 379212345,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -870,8 +855,8 @@
           "capacity_mw": 329,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 37746112.15,
-          "fixed_conductor_cost": 358966627.6,
+          "variable_conductor_cost_per_mile": 39874993,
+          "fixed_conductor_cost": 379212345,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -881,8 +866,8 @@
           "capacity_mw": 394,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 37746112.15,
-          "fixed_conductor_cost": 358966627.6,
+          "variable_conductor_cost_per_mile": 39874993,
+          "fixed_conductor_cost": 379212345,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -892,8 +877,8 @@
           "capacity_mw": 460,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 44917231.78,
-          "fixed_conductor_cost": 364334048.9,
+          "variable_conductor_cost_per_mile": 47450564,
+          "fixed_conductor_cost": 384882489,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -903,8 +888,8 @@
           "capacity_mw": 657,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 62918275.26,
-          "fixed_conductor_cost": 370026768.4,
+          "variable_conductor_cost_per_mile": 66466866,
+          "fixed_conductor_cost": 390896278,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -914,8 +899,8 @@
           "capacity_mw": 1792,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 62918275.26,
-          "fixed_conductor_cost": 370026768.4,
+          "variable_conductor_cost_per_mile": 66466866,
+          "fixed_conductor_cost": 390896278,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -925,8 +910,8 @@
           "capacity_mw": 2598,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 62918275.26,
-          "fixed_conductor_cost": 370026768.4,
+          "variable_conductor_cost_per_mile": 66466866,
+          "fixed_conductor_cost": 390896278,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -936,8 +921,8 @@
           "capacity_mw": 6625,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 62918275.26,
-          "fixed_conductor_cost": 370026768.4,
+          "variable_conductor_cost_per_mile": 66466866,
+          "fixed_conductor_cost": 390896278,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -947,10 +932,10 @@
           "capacity_mw": 500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 32530752.42,
-          "fixed_conductor_cost": 355063048.5,
+          "variable_conductor_cost_per_mile": 34365487,
+          "fixed_conductor_cost": 375088604,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 73800000
+          "fixed_converter_cost": 77962320
         },
         "Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground tunnel",
@@ -958,10 +943,10 @@
           "capacity_mw": 500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 32530752.42,
-          "fixed_conductor_cost": 355063048.5,
+          "variable_conductor_cost_per_mile": 34365487,
+          "fixed_conductor_cost": 375088604,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 98600000
+          "fixed_converter_cost": 104161040
         },
         "Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground tunnel",
@@ -969,10 +954,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 41657631.95,
-          "fixed_conductor_cost": 361894311.9,
+          "variable_conductor_cost_per_mile": 44007122,
+          "fixed_conductor_cost": 382305151,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 220100000
+          "fixed_converter_cost": 232513640
         },
         "Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground tunnel",
@@ -980,10 +965,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 41657631.95,
-          "fixed_conductor_cost": 361894311.9,
+          "variable_conductor_cost_per_mile": 44007122,
+          "fixed_conductor_cost": 382305151,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 286000000
+          "fixed_converter_cost": 302130400
         },
         "Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground tunnel",
@@ -991,10 +976,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 41657631.95,
-          "fixed_conductor_cost": 361894311.9,
+          "variable_conductor_cost_per_mile": 44007122,
+          "fixed_conductor_cost": 382305151,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 297100000
+          "fixed_converter_cost": 313856440
         },
         "Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground tunnel",
@@ -1002,10 +987,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 41657631.95,
-          "fixed_conductor_cost": 361894311.9,
+          "variable_conductor_cost_per_mile": 44007122,
+          "fixed_conductor_cost": 382305151,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 384500000
+          "fixed_converter_cost": 406185800
         },
         "Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground tunnel",
@@ -1013,10 +998,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 51485261.04,
-          "fixed_conductor_cost": 366448487.5,
+          "variable_conductor_cost_per_mile": 54389030,
+          "fixed_conductor_cost": 387116182,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 357500000
+          "fixed_converter_cost": 377663000
         },
         "Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground tunnel",
@@ -1024,10 +1009,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 51485261.04,
-          "fixed_conductor_cost": 366448487.5,
+          "variable_conductor_cost_per_mile": 54389030,
+          "fixed_conductor_cost": 387116182,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 465200000
+          "fixed_converter_cost": 491437280
         },
         "Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter": {
           "installation_method": "Underground tunnel",
@@ -1035,10 +1020,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 51485261.04,
-          "fixed_conductor_cost": 366448487.5,
+          "variable_conductor_cost_per_mile": 54389030,
+          "fixed_conductor_cost": 387116182,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 445300000
+          "fixed_converter_cost": 470414920
         },
         "Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter": {
           "installation_method": "Underground tunnel",
@@ -1046,10 +1031,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Underground Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 51485261.04,
-          "fixed_conductor_cost": 366448487.5,
+          "variable_conductor_cost_per_mile": 54389030,
+          "fixed_conductor_cost": 387116182,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 566200000
+          "fixed_converter_cost": 598133680
         },
         "Subsea/AC/140MW/Subsea Copper Conductor/NA": {
           "installation_method": "Subsea",
@@ -1057,8 +1042,8 @@
           "capacity_mw": 140,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 2579891.587,
-          "fixed_conductor_cost": 22945725.87,
+          "variable_conductor_cost_per_mile": 2725397,
+          "fixed_conductor_cost": 24239865,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1068,8 +1053,8 @@
           "capacity_mw": 329,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 2579891.587,
-          "fixed_conductor_cost": 22945725.87,
+          "variable_conductor_cost_per_mile": 2725397,
+          "fixed_conductor_cost": 24239865,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1079,8 +1064,8 @@
           "capacity_mw": 394,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 2579891.587,
-          "fixed_conductor_cost": 22945725.87,
+          "variable_conductor_cost_per_mile": 2725397,
+          "fixed_conductor_cost": 24239865,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1090,8 +1075,8 @@
           "capacity_mw": 460,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 4606949.262,
-          "fixed_conductor_cost": 35223701.99,
+          "variable_conductor_cost_per_mile": 4866781,
+          "fixed_conductor_cost": 37210319,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1101,8 +1086,8 @@
           "capacity_mw": 657,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 10958518.8,
-          "fixed_conductor_cost": 74107009.38,
+          "variable_conductor_cost_per_mile": 11576579,
+          "fixed_conductor_cost": 78286645,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1112,8 +1097,8 @@
           "capacity_mw": 1792,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 10958518.8,
-          "fixed_conductor_cost": 74107009.38,
+          "variable_conductor_cost_per_mile": 11576579,
+          "fixed_conductor_cost": 78286645,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1123,8 +1108,8 @@
           "capacity_mw": 2598,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 10958518.8,
-          "fixed_conductor_cost": 74107009.38,
+          "variable_conductor_cost_per_mile": 11576579,
+          "fixed_conductor_cost": 78286645,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1134,8 +1119,8 @@
           "capacity_mw": 6625,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "NA",
-          "variable_conductor_cost_per_mile": 10958518.8,
-          "fixed_conductor_cost": 74107009.38,
+          "variable_conductor_cost_per_mile": 11576579,
+          "fixed_conductor_cost": 78286645,
           "variable_structure_cost_per_mile": 0,
           "fixed_converter_cost": 0
         },
@@ -1145,10 +1130,10 @@
           "capacity_mw": 500,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 1105667.823,
-          "fixed_conductor_cost": 14016288.69,
+          "variable_conductor_cost_per_mile": 1168027,
+          "fixed_conductor_cost": 14806807,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 73800000
+          "fixed_converter_cost": 77962320
         },
         "Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter": {
           "installation_method": "Subsea",
@@ -1156,10 +1141,10 @@
           "capacity_mw": 500,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 1105667.823,
-          "fixed_conductor_cost": 14016288.69,
+          "variable_conductor_cost_per_mile": 1168027,
+          "fixed_conductor_cost": 14806807,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 98600000
+          "fixed_converter_cost": 104161040
         },
         "Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter": {
           "installation_method": "Subsea",
@@ -1167,10 +1152,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 3685559.409,
-          "fixed_conductor_cost": 29642803.75,
+          "variable_conductor_cost_per_mile": 3893425,
+          "fixed_conductor_cost": 31314658,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 220100000
+          "fixed_converter_cost": 232513640
         },
         "Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter": {
           "installation_method": "Subsea",
@@ -1178,10 +1163,10 @@
           "capacity_mw": 1500,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 3685559.409,
-          "fixed_conductor_cost": 29642803.75,
+          "variable_conductor_cost_per_mile": 3893425,
+          "fixed_conductor_cost": 31314658,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 286000000
+          "fixed_converter_cost": 302130400
         },
         "Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter": {
           "installation_method": "Subsea",
@@ -1189,10 +1174,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 3685559.409,
-          "fixed_conductor_cost": 29642803.75,
+          "variable_conductor_cost_per_mile": 3893425,
+          "fixed_conductor_cost": 31314658,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 297100000
+          "fixed_converter_cost": 313856440
         },
         "Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter": {
           "installation_method": "Subsea",
@@ -1200,10 +1185,10 @@
           "capacity_mw": 2000,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 3685559.409,
-          "fixed_conductor_cost": 29642803.75,
+          "variable_conductor_cost_per_mile": 3893425,
+          "fixed_conductor_cost": 31314658,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 384500000
+          "fixed_converter_cost": 406185800
         },
         "Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter": {
           "installation_method": "Subsea",
@@ -1211,10 +1196,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 7305679.199,
-          "fixed_conductor_cost": 51844409.86,
+          "variable_conductor_cost_per_mile": 7717720,
+          "fixed_conductor_cost": 54768435,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 357500000
+          "fixed_converter_cost": 377663000
         },
         "Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter": {
           "installation_method": "Subsea",
@@ -1222,10 +1207,10 @@
           "capacity_mw": 2400,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 7305679.199,
-          "fixed_conductor_cost": 51844409.86,
+          "variable_conductor_cost_per_mile": 7717720,
+          "fixed_conductor_cost": 54768435,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 465200000
+          "fixed_converter_cost": 491437280
         },
         "Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter": {
           "installation_method": "Subsea",
@@ -1233,10 +1218,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "LCC Converter",
-          "variable_conductor_cost_per_mile": 7305679.199,
-          "fixed_conductor_cost": 51844409.86,
+          "variable_conductor_cost_per_mile": 7717720,
+          "fixed_conductor_cost": 54768435,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 445300000
+          "fixed_converter_cost": 470414920
         },
         "Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter": {
           "installation_method": "Subsea",
@@ -1244,10 +1229,10 @@
           "capacity_mw": 6000,
           "conductor_type": "Subsea Copper Conductor",
           "converter_type": "VSC Converter",
-          "variable_conductor_cost_per_mile": 7305679.199,
-          "fixed_conductor_cost": 51844409.86,
+          "variable_conductor_cost_per_mile": 7717720,
+          "fixed_conductor_cost": 54768435,
           "variable_structure_cost_per_mile": 0,
-          "fixed_converter_cost": 566200000
+          "fixed_converter_cost": 598133680
         }
       }
     },
@@ -1348,14 +1333,14 @@
     "12_project_om_vegetation_management": {
       "vegetation_management_om_costs": {
         "Overhead": {
-          "forested": 14000,
-          "mountain": 12000,
-          "wetland": 8000,
-          "scrubbed_flat": 5000,
-          "urban": 4000,
-          "rolling_hills": 3500,
-          "farmland": 800,
-          "desert_barren": 300,
+          "forested": 14367,
+          "mountain": 12314,
+          "wetland": 8210,
+          "scrubbed_flat": 5131,
+          "urban": 1000,
+          "rolling_hills": 3850,
+          "farmland": 1196,
+          "desert_barren": 449,
           "subsea": 0
         },
         "Underground Direct Buried": {
@@ -2120,7 +2105,7 @@
     "14_category_om_structures": {
       "project_categories_om_structures": {
         "Overhead": {
-          "base_om_per_mile_year": 15636
+          "base_om_per_mile_year": 19090
         },
         "Underground direct-buried": {
           "om_pct_of_line_capex": 0.0015
@@ -2176,14 +2161,15 @@
           }
         },
         "societal_costs_per_kg": {
-          "co2_cost_per_kg": 0.19,
+          "co2_cost_per_kg": 0.236,
           "co2_cost_annual_growth": 0.02,
-          "sox_cost_per_kg": 61.47,
-          "nox_cost_per_kg": 114.95
+          "sox_cost_per_kg": 76,
+          "nox_cost_per_kg": 143
         }
       }
     },
     "17_congestion_curtailment_reductions": {
+      "benefit_price_escalation_real": 0.01,
       "greenfield_congestion_curtailment_reductions": {
         "constraints": {
           "flow_factor": 0.8,
@@ -2250,8 +2236,8 @@
           "afudc_eligible": true
         },
         "row_acquisition": {
-          "during_delay": 0.8,
-          "during_construction": 0.2,
+          "during_delay": 0.0,
+          "during_construction": 1.0,
           "afudc_eligible": true
         },
         "row_holding": {
@@ -2270,8 +2256,8 @@
           "afudc_eligible": true
         },
         "environmental_mitigation_credits": {
-          "during_delay": 0.2,
-          "during_construction": 0.8,
+          "during_delay": 0.0,
+          "during_construction": 1.0,
           "afudc_eligible": true
         },
         "delay_costs": {
@@ -2289,6 +2275,42 @@
           "during_construction": 1.0,
           "afudc_eligible": true
         }
+      },
+      "construction_spending_profiles": {
+        "5": [
+          0.01,
+          0.04,
+          0.35,
+          0.35,
+          0.25
+        ],
+        "6": [
+          0.01,
+          0.04,
+          0.1,
+          0.3,
+          0.35,
+          0.2
+        ],
+        "7": [
+          0.01,
+          0.01,
+          0.03,
+          0.15,
+          0.3,
+          0.3,
+          0.2
+        ],
+        "8": [
+          0.01,
+          0.01,
+          0.03,
+          0.05,
+          0.15,
+          0.25,
+          0.3,
+          0.2
+        ]
       }
     },
     "20_project_category_row_widths": {
@@ -4480,7 +4502,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-    "timestamp": "2026-07-08T00:15:09.337521",
+    "timestamp": "2026-07-10T11:45:24.762009",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
@@ -4506,11 +4528,11 @@
     },
     "costs": {
       "build": {
-        "total_nominal": 370477092.8302848,
-        "total_afudc": 435684799.9041955,
-        "total_pv": 303569915.2325178,
-        "conductor_nominal": 55774528.20670501,
-        "structure_nominal": 314702564.62357974,
+        "total_nominal": 445243415.580975,
+        "total_afudc": 477203776.46824384,
+        "total_pv": 364833638.9523309,
+        "conductor_nominal": 66392836.473975,
+        "structure_nominal": 378850579.107,
         "converter_nominal": 0.0,
         "conductor_afudc": 0,
         "structure_afudc": 0,
@@ -4530,25 +4552,25 @@
         "rent_nominal": 3253905.454545454
       },
       "environmental": {
-        "total_nominal": 44386363.63636363,
-        "total_afudc": 54455271.58888392,
-        "total_pv": 38896590.04442519,
+        "total_nominal": 58365681.81818181,
+        "total_afudc": 62555273.82350445,
+        "total_pv": 47824994.918512255,
         "base_cost_nominal": 6734848.484848485,
         "marine_cost_nominal": 0.0,
-        "credits_nominal": 37651515.15151515,
-        "credits_pv": 33378037.283091877
+        "credits_nominal": 51630833.33333333,
+        "credits_pv": 42306442.157178946
       },
       "insurance": {
-        "annual_premium": 740954.1856605696,
-        "nominal_lifetime_cost": 62669461.527770154,
-        "pv_total": 17030441.495892026,
-        "insurable_value": 370477092.8302848,
+        "annual_premium": 890486.83116195,
+        "nominal_lifetime_cost": 75316843.18206227,
+        "pv_total": 20467370.553343654,
+        "insurable_value": 445243415.580975,
         "premium_rate": 0.002
       },
       "delay": {
-        "total_nominal": 0,
+        "total_nominal": 20000000,
         "total_afudc": 0,
-        "total_pv": 0.0
+        "total_pv": 18834613.24615345
       },
       "wildfire": {
         "lambda_total": 0.0,
@@ -4579,13 +4601,13 @@
         "cost_loadshed": 0.0,
         "cost_redispatch": 0.0,
         "rho": 0.05,
-        "redispatch_cost_per_mwh": 20,
+        "redispatch_cost_per_mwh": 24,
         "unserved_mwh_per_event": 0.0
       },
       "oandm": {
-        "total_annual": 4342640.0,
-        "total_nominal": 367297891.9288106,
-        "total_pv": 99813291.95378917,
+        "total_annual": 5238640.0,
+        "total_nominal": 443081035.63130826,
+        "total_pv": 120407379.78759421,
         "conductor_annual": 0.0,
         "conductor_nominal": 0.0,
         "conductor_pv": 0.0,
@@ -4595,25 +4617,25 @@
         "structure_annual": 0.0,
         "structure_nominal": 0.0,
         "structure_pv": 0.0,
-        "vegetation_annual": 590000,
-        "vegetation_nominal": 49901846.85767143,
-        "vegetation_pv": 13560839.086992156,
-        "line_om_annual": 4342640,
-        "line_om_pv": 99813291.95378917
+        "vegetation_annual": 657040,
+        "vegetation_nominal": 55572049.93112617,
+        "vegetation_pv": 15101718.158842925,
+        "line_om_annual": 5238640,
+        "line_om_pv": 120407379.78759421
       },
       "emissions": {
-        "total_nominal": 11752153586.264263,
-        "total_pv": 8087927851.241677,
-        "annual_cost": 235043071.72528526,
+        "total_nominal": 14579040160.77336,
+        "total_pv": 10032348922.451912,
+        "annual_cost": 291580803.2154672,
         "co2_emissions_kg": 17786139568.94301,
-        "co2_cost_nominal": 4687942038.6716795,
-        "co2_cost_pv": 2884256783.919897,
+        "co2_cost_nominal": 5822917479.613242,
+        "co2_cost_pv": 3582550531.6057663,
         "sox_emissions_kg": 67875376.9002803,
-        "sox_cost_nominal": 4172299418.060231,
-        "sox_cost_pv": 3096419056.2094254,
+        "sox_cost_nominal": 5158528644.421306,
+        "sox_cost_pv": 3828336558.8403463,
         "nox_emissions_kg": 25158000.256914783,
-        "nox_cost_nominal": 2891912129.5323544,
-        "nox_cost_pv": 2107252011.112357
+        "nox_cost_nominal": 3597594036.7388144,
+        "nox_cost_pv": 2621461832.005803
       },
       "displacement_delay": {
         "displacement_delay_cost_pv": 0.0,
@@ -4641,29 +4663,29 @@
     },
     "benefits": {
       "capital_recovery": {
-        "revenue_nominal": 822615142.3903188,
-        "revenue_pv": 303700431.1221974,
-        "annual_revenue": 24529316.03024567,
-        "rate_base": 490140071.4930794,
-        "rate_base_real": 402280782.89602876,
-        "rate_base_pv": 303700431.1221974,
-        "annual_revenue_real": 24529316.03024567,
-        "revenue_year_1": 24529316.03024567,
-        "revenue_year_n": 8375289.665367077
+        "capital_recovery_nominal": 1103741433.5721998,
+        "capital_recovery_pv": 407489154.9519501,
+        "annual_revenue": 32912137.2129115,
+        "rate_base": 539759050.2917483,
+        "rate_base_real": 539759050.2917483,
+        "rate_base_pv": 407489154.9519501,
+        "annual_revenue_real": 32912137.2129115,
+        "revenue_year_1": 32912137.2129115,
+        "revenue_year_n": 11237520.129976496
       },
       "congestion_curtailment": {
         "congestion_benefit_annual": 7200000.0,
-        "congestion_benefit_nominal": 360000000.0,
-        "congestion_benefit_pv": 114843573.63841954,
+        "congestion_benefit_nominal": 464134911.7275955,
+        "congestion_benefit_pv": 136730631.232724,
         "curtailment_benefit_annual": 0.0,
         "curtailment_benefit_nominal": 0.0,
         "curtailment_benefit_pv": 0.0,
         "delivered_benefit_annual": 342842572.8000001,
-        "delivered_benefit_nominal": 17142128640.000004,
-        "delivered_benefit_pv": 5468509202.186391,
+        "delivered_benefit_nominal": 22100723230.970802,
+        "delivered_benefit_pv": 6510705748.943771,
         "energy_delivered_annual_mwh_yr": 8162918.400000001,
-        "congestion_delay_cost_nominal": 50400000.0,
-        "congestion_delay_cost_pv": 43059417.28734961,
+        "congestion_delay_cost_nominal": 51937453.51704724,
+        "congestion_delay_cost_pv": 44302144.53782258,
         "curtailment_delay_cost_nominal": 0.0,
         "curtailment_delay_cost_pv": 0.0,
         "effective_capacity_relief_mw": 1433.6000000000001,
@@ -4672,339 +4694,203 @@
         "relief_mw": 400.0
       },
       "facilitated_emissions": {
-        "fac_emissions_project_pv": 31184528544.45382,
-        "fac_emissions_project_nominal": 45312640729.52873,
-        "fac_emissions_noline_pv": 31184528544.45382,
-        "fac_emissions_noline_nominal": 45312640729.52873,
+        "fac_emissions_project_pv": 38681610060.61552,
+        "fac_emissions_project_nominal": 56212234135.41929,
+        "fac_emissions_noline_pv": 38681610060.61552,
+        "fac_emissions_noline_nominal": 56212234135.41929,
         "displacement_avoided_cost_pv": 0.0,
         "displacement_avoided_cost_nominal": 0.0,
-        "project_co2_pv": 11120795049.361893,
-        "project_sox_pv": 11938826633.960312,
-        "project_nox_pv": 8124906861.13162,
-        "noline_co2_pv": 11120795049.361893,
-        "noline_sox_pv": 11938826633.960312,
-        "noline_nox_pv": 8124906861.13162,
+        "project_co2_pv": 13813198061.31266,
+        "project_sox_pv": 14760872363.44532,
+        "project_nox_pv": 10107539635.857504,
+        "noline_co2_pv": 13813198061.31266,
+        "noline_sox_pv": 14760872363.44532,
+        "noline_nox_pv": 10107539635.857504,
         "energy_delivered_annual_mwh": 8162918.400000001
       }
     },
     "summary": {
-      "total_capital_pv": 342466505.27694297,
-      "total_operational_pv": 118095686.18716268,
-      "total_energy_emissions_pv": 9506224357.410946,
+      "total_capital_pv": 412658633.8708431,
+      "total_operational_pv": 142126703.07841936,
+      "total_energy_emissions_pv": 11450645428.621181,
       "total_risk_pv": 0.0,
-      "total_delay_pv": 43059417.28734961,
-      "total_costs_pv": 10009845966.162401,
-      "total_benefits_pv": 5583352775.82481,
-      "reporting_bucket_hard_pv": 342466505.27694297,
-      "reporting_bucket_soft_pv": 1579451609.643782,
+      "total_delay_pv": 63136757.78397603,
+      "total_costs_pv": 12068567523.35442,
+      "total_benefits_pv": 6647436380.176496,
+      "reporting_bucket_hard_pv": 412658633.8708431,
+      "reporting_bucket_soft_pv": 1623559967.0316648,
       "reporting_bucket_risk_pv": 0.0,
-      "reporting_bucket_emissions_pv": 8087927851.241677,
-      "fac_emissions_project_pv": 31184528544.45382,
+      "reporting_bucket_emissions_pv": 10032348922.451912,
+      "fac_emissions_project_pv": 38681610060.61552,
       "displacement_avoided_cost_pv": 0.0,
-      "benefits_remedial_pv": 114843573.63841954,
-      "benefits_enabling_pv": 5468509202.186391
+      "benefits_remedial_pv": 136730631.232724,
+      "benefits_enabling_pv": 6510705748.943771
     },
     "bcr": {
-      "build_cost_pv": 303569915.2325178,
+      "build_cost_pv": 364833638.9523309,
       "row_cost_pv": 0.0,
       "row_capital_pv": 0.0,
       "row_capital_nominal": 0.0,
       "row_rent_pv": 1251952.7374814854,
       "row_rent_nominal": 3253905.454545454,
-      "env_mitigation_pv": 38896590.04442519,
-      "oandm_pv": 99813291.95378917,
-      "insurance_pv": 17030441.495892026,
+      "env_mitigation_pv": 47824994.918512255,
+      "oandm_pv": 120407379.78759421,
+      "insurance_pv": 20467370.553343654,
       "energy_losses_pv": 1418296506.1692696,
       "conductor_loss_pv": 1418296506.1692696,
       "converter_loss_pv": 0.0,
-      "emissions_comp_cost_pv": 8087927851.241677,
-      "fac_emissions_project_pv": 31184528544.45382,
+      "emissions_comp_cost_pv": 10032348922.451912,
+      "fac_emissions_project_pv": 38681610060.61552,
       "displacement_avoided_cost_pv": 0.0,
       "wildfire_pv": 0.0,
       "outage_pv": 0.0,
-      "delay_cost_pv": 0.0,
-      "congestion_delay_cost_pv": 43059417.28734961,
+      "delay_cost_pv": 18834613.24615345,
+      "congestion_delay_cost_pv": 44302144.53782258,
       "curtailment_delay_cost_pv": 0.0,
-      "congestion_benefit_pv": 114843573.63841954,
+      "congestion_benefit_pv": 136730631.232724,
       "curtailment_benefit_pv": 0.0,
-      "delivered_benefit_pv": 5468509202.186391,
-      "delivered_benefit_nominal": 17142128640.000004,
-      "capital_recovery_pv": 303700431.1221974,
+      "delivered_benefit_pv": 6510705748.943771,
+      "delivered_benefit_nominal": 22100723230.970802,
+      "capital_recovery_pv": 407489154.9519501,
       "emissions_displacement_delay_pv": 0.0,
       "energy_losses_nominal": 4445932201.905344,
-      "total_costs_pv": 10009845966.162401,
-      "total_costs_nominal": 17096570503.547382,
-      "total_benefits_pv": 5583352775.82481,
-      "total_benefits_nominal": 17502128640.000004,
-      "hard_costs_pv": 342466505.27694297,
-      "soft_costs_pv": 1579451609.643782,
+      "total_costs_pv": 12068567523.35442,
+      "total_costs_nominal": 20122170697.862823,
+      "total_benefits_pv": 6647436380.176496,
+      "total_benefits_nominal": 22564858142.6984,
+      "hard_costs_pv": 412658633.8708431,
+      "soft_costs_pv": 1623559967.0316648,
       "risk_costs_pv": 0.0,
       "risk_costs_nominal": 0.0,
-      "emissions_costs_pv": 8087927851.241677,
-      "capital_costs_pv": 342466505.27694297,
-      "capital_costs_nominal": 414863456.4666484,
-      "operational_costs_pv": 118095686.18716268,
-      "operational_costs_nominal": 433221258.9111262,
-      "delay_costs_pv": 43059417.28734961,
-      "delay_costs_nominal": 50400000.0,
-      "energy_emissions_costs_pv": 9506224357.410946,
-      "energy_emissions_costs_nominal": 16198085788.169607,
-      "benefits_remedial_pv": 114843573.63841954,
-      "benefits_enabling_pv": 5468509202.186391,
+      "emissions_costs_pv": 10032348922.451912,
+      "capital_costs_pv": 412658633.8708431,
+      "capital_costs_nominal": 503609097.3991568,
+      "operational_costs_pv": 142126703.07841936,
+      "operational_costs_nominal": 521651784.26791596,
+      "delay_costs_pv": 63136757.78397603,
+      "delay_costs_nominal": 71937453.51704724,
+      "energy_emissions_costs_pv": 11450645428.621181,
+      "energy_emissions_costs_nominal": 19024972362.678703,
+      "benefits_remedial_pv": 136730631.232724,
+      "benefits_enabling_pv": 6510705748.943771,
       "benefits_avoided_emissions_pv": 0.0,
       "line_loss_benefit_pv": 0,
-      "bcr_societal": 0.5577860832922856,
-      "net_benefit_pv": -4426493190.337591,
-      "net_benefit_nominal": 405558136.45262146,
-      "bcr_system": 0.06112411422055176,
-      "net_benefit_system_pv": -1764015123.9949555,
-      "bcr_system_delivered": 2.971672528039306,
-      "net_benefit_system_delivered_pv": 3704494078.191435,
-      "bcr_capital": 16.30335431288298,
-      "net_benefit_capital_only_pv": 5240886270.547867,
-      "bcr_capital_and_delay": 14.48243152804776,
-      "net_benefit_capital_and_delay_pv": 5197826853.260517,
-      "bcr_utility": 0.9131104818547705,
-      "net_benefit_utility_pv": -40018026.89222705,
-      "bcr_ratepayer": 3.036343966426645,
-      "net_benefit_ratepayer_pv": 3744512105.083662,
-      "bcr_excluding_avoided_emissions": 0.5577860832922856,
-      "net_benefit_excluding_avoided_emissions_pv": -4426493190.337591,
-      "total_costs_excluding_avoided_emissions_pv": 10009845966.162401,
-      "total_benefits_excluding_avoided_emissions_pv": 5583352775.82481,
-      "bcr_excluding_emissions": 2.9050939956695876,
-      "net_benefit_excluding_emissions_pv": 3661434660.904085,
-      "total_costs_excluding_emissions_pv": 1921918114.9207249,
-      "total_benefits_excluding_emissions_pv": 5583352775.82481,
-      "bcr_excluding_linelosses": 0.6498656385351559,
-      "net_benefit_excluding_linelosses_pv": -3008196684.1683216,
-      "total_costs_excluding_linelosses_pv": 8591549459.993132,
-      "total_benefits_excluding_linelosses_pv": 5583352775.82481,
-      "bcr_excluding_outage_risk": 0.5577860832922856,
-      "net_benefit_excluding_outage_risk_pv": -4426493190.337591,
-      "total_costs_excluding_outage_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_wildfire_risk": 0.5577860832922856,
-      "net_benefit_excluding_wildfire_risk_pv": -4426493190.337591,
-      "total_costs_excluding_wildfire_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions": 2.9050939956695876,
-      "net_benefit_excluding_avoided_emissions_and_emissions_pv": 3661434660.904085,
-      "total_costs_excluding_avoided_emissions_and_emissions_pv": 1921918114.9207249,
-      "total_benefits_excluding_avoided_emissions_and_emissions_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_linelosses": 0.6498656385351559,
-      "net_benefit_excluding_avoided_emissions_and_linelosses_pv": -3008196684.1683216,
-      "total_costs_excluding_avoided_emissions_and_linelosses_pv": 8591549459.993132,
-      "total_benefits_excluding_avoided_emissions_and_linelosses_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_outage_risk": 0.5577860832922856,
-      "net_benefit_excluding_avoided_emissions_and_outage_risk_pv": -4426493190.337591,
-      "total_costs_excluding_avoided_emissions_and_outage_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_avoided_emissions_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_wildfire_risk": 0.5577860832922856,
-      "net_benefit_excluding_avoided_emissions_and_wildfire_risk_pv": -4426493190.337591,
-      "total_costs_excluding_avoided_emissions_and_wildfire_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_avoided_emissions_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_linelosses": 11.086404313878989,
-      "net_benefit_excluding_emissions_and_linelosses_pv": 5079731167.073355,
-      "total_costs_excluding_emissions_and_linelosses_pv": 503621608.75145525,
-      "total_benefits_excluding_emissions_and_linelosses_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_outage_risk": 2.9050939956695876,
-      "net_benefit_excluding_emissions_and_outage_risk_pv": 3661434660.904085,
-      "total_costs_excluding_emissions_and_outage_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_emissions_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_wildfire_risk": 2.9050939956695876,
-      "net_benefit_excluding_emissions_and_wildfire_risk_pv": 3661434660.904085,
-      "total_costs_excluding_emissions_and_wildfire_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_emissions_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_linelosses_and_outage_risk": 0.6498656385351559,
-      "net_benefit_excluding_linelosses_and_outage_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_linelosses_and_outage_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_linelosses_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_linelosses_and_wildfire_risk": 0.6498656385351559,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_linelosses_and_wildfire_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_linelosses_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_wildfire_risk_and_outage_risk": 0.5577860832922856,
-      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -4426493190.337591,
-      "total_costs_excluding_wildfire_risk_and_outage_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_linelosses": 11.086404313878989,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_linelosses_pv": 5079731167.073355,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_linelosses_pv": 503621608.75145525,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_linelosses_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_outage_risk": 2.9050939956695876,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_outage_risk_pv": 3661434660.904085,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_outage_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_wildfire_risk": 2.9050939956695876,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_wildfire_risk_pv": 3661434660.904085,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_wildfire_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_linelosses_and_outage_risk": 0.6498656385351559,
-      "net_benefit_excluding_avoided_emissions_and_linelosses_and_outage_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_avoided_emissions_and_linelosses_and_outage_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_avoided_emissions_and_linelosses_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_linelosses_and_wildfire_risk": 0.6498656385351559,
-      "net_benefit_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk": 0.5577860832922856,
-      "net_benefit_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk_pv": -4426493190.337591,
-      "total_costs_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk_pv": 10009845966.162401,
-      "total_benefits_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 11.086404313878989,
-      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": 5079731167.073355,
-      "total_costs_excluding_emissions_and_linelosses_and_outage_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_emissions_and_linelosses_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 11.086404313878989,
-      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 5079731167.073355,
-      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 2.9050939956695876,
-      "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 3661434660.904085,
-      "total_costs_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 0.6498656385351559,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_linelosses_and_outage_risk": 11.086404313878989,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_linelosses_and_outage_risk_pv": 5079731167.073355,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_linelosses_and_outage_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_linelosses_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk": 11.086404313878989,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_pv": 5079731167.073355,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_wildfire_risk_and_outage_risk": 2.9050939956695876,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_wildfire_risk_and_outage_risk_pv": 3661434660.904085,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_wildfire_risk_and_outage_risk_pv": 1921918114.9207249,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 0.6498656385351559,
-      "net_benefit_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": -3008196684.1683216,
-      "total_costs_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 8591549459.993132,
-      "total_benefits_excluding_avoided_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 11.086404313878989,
-      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5079731167.073355,
-      "total_costs_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481,
-      "bcr_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 11.086404313878989,
-      "net_benefit_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5079731167.073355,
-      "total_costs_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 503621608.75145525,
-      "total_benefits_excluding_avoided_emissions_and_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5583352775.82481
+      "bcr_societal": 0.5508057495069524,
+      "net_benefit_pv": -5421131143.177924,
+      "net_benefit_nominal": 2442687444.835575,
+      "bcr_system": 0.06929800287281342,
+      "net_benefit_system_pv": -1836351211.885808,
+      "bcr_system_delivered": 3.36906266881964,
+      "net_benefit_system_delivered_pv": 4674354537.057963,
+      "bcr_capital": 16.10880237212499,
+      "net_benefit_capital_only_pv": 6234777746.305653,
+      "bcr_capital_and_delay": 13.971207995640045,
+      "net_benefit_capital_and_delay_pv": 6171640988.521676,
+      "bcr_utility": 0.9668667470644221,
+      "net_benefit_utility_pv": -18834613.246153474,
+      "bcr_ratepayer": 3.3779128080635057,
+      "net_benefit_ratepayer_pv": 4679524015.976856,
+      "bcr_excluding_avoided_emissions": 0.5508057495069524,
+      "net_benefit_excluding_avoided_emissions_pv": -5421131143.177924,
+      "total_costs_excluding_avoided_emissions_pv": 12068567523.35442,
+      "total_benefits_excluding_avoided_emissions_pv": 6647436380.176496,
+      "bcr_excluding_wildfire_risk": 0.5508057495069524,
+      "net_benefit_excluding_wildfire_risk_pv": -5421131143.177924,
+      "total_costs_excluding_wildfire_risk_pv": 12068567523.35442,
+      "total_benefits_excluding_wildfire_risk_pv": 6647436380.176496,
+      "bcr_excluding_wildfire_risk_and_outage_risk": 0.5508057495069524,
+      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -5421131143.177924,
+      "total_costs_excluding_wildfire_risk_and_outage_risk_pv": 12068567523.35442,
+      "total_benefits_excluding_wildfire_risk_and_outage_risk_pv": 6647436380.176496
     },
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
       "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-      "timestamp": "2026-07-08T00:15:09.337521",
+      "timestamp": "2026-07-10T11:45:24.762009",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
       "ac_dc": "AC",
       "social_discount_rate": 0.02,
-      "build_cost_pv": 303569915.2325178,
+      "build_cost_pv": 364833638.9523309,
       "row_cost_pv": 0.0,
       "row_capital_pv": 0.0,
       "row_rent_pv": 1251952.7374814854,
       "row_capital_afudc": 0,
       "row_capital_nominal": 0.0,
       "row_rent_nominal": 3253905.454545454,
-      "env_mitigation_pv": 38896590.04442519,
-      "capital_costs_pv": 342466505.27694297,
+      "env_mitigation_pv": 47824994.918512255,
+      "capital_costs_pv": 412658633.8708431,
       "build_cost_afudc": 0,
       "row_cost_afudc": 0,
       "env_mitigation_afudc": 0,
-      "insurance_pv": 17030441.495892026,
-      "oandm_pv": 99813291.95378917,
-      "operational_costs_pv": 118095686.18716268,
+      "insurance_pv": 20467370.553343654,
+      "oandm_pv": 120407379.78759421,
+      "operational_costs_pv": 142126703.07841936,
       "wildfire_pv": 0.0,
       "outage_pv": 0.0,
       "risk_costs_pv": 0.0,
-      "delay_cost_pv": 0.0,
-      "congestion_delay_cost_pv": 43059417.28734961,
+      "delay_cost_pv": 18834613.24615345,
+      "congestion_delay_cost_pv": 44302144.53782258,
       "curtailment_delay_cost_pv": 0.0,
       "emissions_displacement_delay_pv": 0.0,
-      "delay_costs_pv": 43059417.28734961,
-      "emissions_comp_cost_pv": 8087927851.241677,
+      "delay_costs_pv": 63136757.78397603,
+      "emissions_comp_cost_pv": 10032348922.451912,
       "energy_losses_pv": 1418296506.1692696,
       "conductor_loss_pv": 1418296506.1692696,
       "converter_loss_pv": 0.0,
       "energy_losses_nominal": 4445932201.905344,
-      "energy_emissions_costs_pv": 9506224357.410946,
-      "total_costs_pv": 10009845966.162401,
-      "hard_costs_pv": 342466505.27694297,
-      "soft_costs_pv": 1579451609.643782,
-      "emissions_costs_pv": 8087927851.241677,
-      "congestion_benefit_pv": 114843573.63841954,
+      "energy_emissions_costs_pv": 11450645428.621181,
+      "total_costs_pv": 12068567523.35442,
+      "hard_costs_pv": 412658633.8708431,
+      "soft_costs_pv": 1623559967.0316648,
+      "emissions_costs_pv": 10032348922.451912,
+      "congestion_benefit_pv": 136730631.232724,
       "curtailment_benefit_pv": 0.0,
       "delivered_benefit_annual": 0,
-      "delivered_benefit_nominal": 17142128640.000004,
-      "delivered_benefit_pv": 5468509202.186391,
-      "capital_recovery_pv": 303700431.1221974,
+      "delivered_benefit_nominal": 22100723230.970802,
+      "delivered_benefit_pv": 6510705748.943771,
+      "capital_recovery_pv": 407489154.9519501,
       "rate_base": 0,
       "rate_base_real": 0,
       "annual_revenue_real": 0,
       "displacement_avoided_cost_pv": 0.0,
-      "total_benefits_pv": 5583352775.82481,
-      "benefits_remedial_pv": 114843573.63841954,
-      "benefits_enabling_pv": 5468509202.186391,
-      "fac_emissions_project_pv": 31184528544.45382,
+      "total_benefits_pv": 6647436380.176496,
+      "benefits_remedial_pv": 136730631.232724,
+      "benefits_enabling_pv": 6510705748.943771,
+      "fac_emissions_project_pv": 38681610060.61552,
       "fac_emissions_noline_pv": 0,
-      "bcr_societal": 0.5577860832922856,
-      "bcr_system": 0.06112411422055176,
-      "bcr_system_delivered": 2.971672528039306,
-      "bcr_capital": 16.30335431288298,
-      "bcr_capital_and_delay": 14.48243152804776,
-      "bcr_excluding_wildfire_risk_and_outage_risk": 0.5577860832922856,
-      "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk": 2.9050939956695876,
-      "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk": 0.6498656385351559,
-      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk": 11.086404313878989,
-      "bcr_excluding_emissions": 2.9050939956695876,
-      "bcr_excluding_linelosses": 0.6498656385351559,
-      "bcr_excluding_emissions_and_linelosses": 11.086404313878989,
-      "bcr_excluding_wildfire_risk": 0.5577860832922856,
-      "bcr_excluding_emissions_and_wildfire_risk": 2.9050939956695876,
-      "bcr_excluding_linelosses_and_wildfire_risk": 0.6498656385351559,
-      "bcr_excluding_emissions_and_linelosses_and_wildfire_risk": 11.086404313878989,
-      "bcr_excluding_outage_risk": 0.5577860832922856,
-      "bcr_excluding_emissions_and_outage_risk": 2.9050939956695876,
-      "bcr_excluding_linelosses_and_outage_risk": 0.6498656385351559,
-      "bcr_excluding_emissions_and_linelosses_and_outage_risk": 11.086404313878989,
-      "bcr_utility": 0.9131104818547705,
-      "bcr_ratepayer": 3.036343966426645,
-      "net_benefit_pv": -4426493190.337591,
-      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -4426493190.337591,
-      "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv": 3661434660.904085,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv": -3008196684.1683216,
-      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv": 5079731167.073355,
-      "net_benefit_excluding_emissions_pv": 3661434660.904085,
-      "net_benefit_excluding_linelosses_pv": -3008196684.1683216,
-      "net_benefit_excluding_emissions_and_linelosses_pv": 5079731167.073355,
-      "net_benefit_excluding_wildfire_risk_pv": -4426493190.337591,
-      "net_benefit_excluding_emissions_and_wildfire_risk_pv": 3661434660.904085,
-      "net_benefit_excluding_linelosses_and_wildfire_risk_pv": -3008196684.1683216,
-      "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv": 5079731167.073355,
-      "net_benefit_excluding_outage_risk_pv": -4426493190.337591,
-      "net_benefit_excluding_emissions_and_outage_risk_pv": 3661434660.904085,
-      "net_benefit_excluding_linelosses_and_outage_risk_pv": -3008196684.1683216,
-      "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv": 5079731167.073355,
-      "net_benefit_capital_only_pv": 5240886270.547867,
-      "net_benefit_capital_and_delay_pv": 5197826853.260517,
-      "net_benefit_utility_pv": -40018026.89222705,
-      "net_benefit_ratepayer_pv": 3744512105.083662
+      "bcr_societal": 0.5508057495069524,
+      "bcr_system": 0.06929800287281342,
+      "bcr_system_delivered": 3.36906266881964,
+      "bcr_capital": 16.10880237212499,
+      "bcr_capital_and_delay": 13.971207995640045,
+      "bcr_excluding_avoided_emissions": 0.5508057495069524,
+      "bcr_excluding_wildfire_risk": 0.5508057495069524,
+      "bcr_excluding_wildfire_risk_and_outage_risk": 0.5508057495069524,
+      "bcr_utility": 0.9668667470644221,
+      "bcr_ratepayer": 3.3779128080635057,
+      "net_benefit_pv": -5421131143.177924,
+      "net_benefit_excluding_avoided_emissions_pv": -5421131143.177924,
+      "net_benefit_excluding_wildfire_risk_pv": -5421131143.177924,
+      "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -5421131143.177924,
+      "net_benefit_capital_only_pv": 6234777746.305653,
+      "net_benefit_capital_and_delay_pv": 6171640988.521676,
+      "net_benefit_utility_pv": -18834613.246153474,
+      "net_benefit_ratepayer_pv": 4679524015.976856
     },
     "taxonomy_results": [
       {
         "taxonomy_id": "build_conductor",
-        "value_pv": 45701796.75751074,
-        "value_nominal": 55774528.20670501,
+        "value_pv": 54402466.79349737,
+        "value_nominal": 66392836.473975,
         "value_annual": null,
         "detail": []
       },
       {
         "taxonomy_id": "build_structure",
-        "value_pv": 257868118.47500703,
-        "value_nominal": 314702564.62357974,
+        "value_pv": 310431172.1588335,
+        "value_nominal": 378850579.107,
         "value_annual": null,
         "detail": []
       },
@@ -5038,46 +4924,46 @@
       },
       {
         "taxonomy_id": "env_mitigation",
-        "value_pv": 38896590.04442519,
-        "value_nominal": 44386363.63636363,
+        "value_pv": 47824994.918512255,
+        "value_nominal": 58365681.81818181,
         "value_annual": null,
         "detail": [
           {
             "dimension": "credit_type",
             "dimension_key": "base",
-            "value_pv": 5518552.761333313,
+            "value_pv": 5518552.761333309,
             "value_nominal": 6734848.484848485,
             "value_annual": null
           },
           {
             "dimension": "credit_type",
             "dimension_key": "credits",
-            "value_pv": 33378037.283091877,
-            "value_nominal": 37651515.15151515,
+            "value_pv": 42306442.157178946,
+            "value_nominal": 51630833.33333333,
             "value_annual": null
           }
         ]
       },
       {
         "taxonomy_id": "oandm",
-        "value_pv": 99813291.95378917,
-        "value_nominal": 367297891.9288106,
-        "value_annual": 4342640.0,
+        "value_pv": 120407379.78759421,
+        "value_nominal": 443081035.63130826,
+        "value_annual": 5238640.0,
         "detail": [
           {
             "dimension": "component",
             "dimension_key": "vegetation",
-            "value_pv": 13560839.086992156,
-            "value_nominal": 49901846.85767143,
-            "value_annual": 590000.0
+            "value_pv": 15101718.158842925,
+            "value_nominal": 55572049.93112617,
+            "value_annual": 657040.0
           }
         ]
       },
       {
         "taxonomy_id": "insurance",
-        "value_pv": 17030441.495892026,
-        "value_nominal": 62669461.527770154,
-        "value_annual": 740954.1856605696,
+        "value_pv": 20467370.553343654,
+        "value_nominal": 75316843.18206227,
+        "value_annual": 890486.83116195,
         "detail": []
       },
       {
@@ -5096,8 +4982,8 @@
       },
       {
         "taxonomy_id": "base_delay",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
+        "value_pv": 18834613.24615345,
+        "value_nominal": 20000000.0,
         "value_annual": null,
         "detail": []
       },
@@ -5117,57 +5003,57 @@
       },
       {
         "taxonomy_id": "emissions_comp",
-        "value_pv": 8087927851.241677,
-        "value_nominal": 11752153586.264263,
-        "value_annual": 235043071.72528526,
+        "value_pv": 10032348922.451912,
+        "value_nominal": 14579040160.77336,
+        "value_annual": 291580803.2154672,
         "detail": [
           {
             "dimension": "pollutant",
             "dimension_key": "co2",
-            "value_pv": 2884256783.919897,
-            "value_nominal": 4687942038.6716795,
+            "value_pv": 3582550531.6057663,
+            "value_nominal": 5822917479.613242,
             "value_annual": null
           },
           {
             "dimension": "pollutant",
             "dimension_key": "sox",
-            "value_pv": 3096419056.2094254,
-            "value_nominal": 4172299418.060231,
+            "value_pv": 3828336558.8403463,
+            "value_nominal": 5158528644.421306,
             "value_annual": null
           },
           {
             "dimension": "pollutant",
             "dimension_key": "nox",
-            "value_pv": 2107252011.112357,
-            "value_nominal": 2891912129.5323544,
+            "value_pv": 2621461832.005803,
+            "value_nominal": 3597594036.7388144,
             "value_annual": null
           }
         ]
       },
       {
         "taxonomy_id": "emissions_fac",
-        "value_pv": 31184528544.45382,
-        "value_nominal": 45312640729.52873,
+        "value_pv": 38681610060.61552,
+        "value_nominal": 56212234135.41929,
         "value_annual": null,
         "detail": [
           {
             "dimension": "pollutant",
             "dimension_key": "co2",
-            "value_pv": 11120795049.361893,
+            "value_pv": 13813198061.31266,
             "value_nominal": null,
             "value_annual": null
           },
           {
             "dimension": "pollutant",
             "dimension_key": "sox",
-            "value_pv": 11938826633.960312,
+            "value_pv": 14760872363.44532,
             "value_nominal": null,
             "value_annual": null
           },
           {
             "dimension": "pollutant",
             "dimension_key": "nox",
-            "value_pv": 8124906861.13162,
+            "value_pv": 10107539635.857504,
             "value_nominal": null,
             "value_annual": null
           }
@@ -5189,8 +5075,8 @@
       },
       {
         "taxonomy_id": "congestion_benefit",
-        "value_pv": 114843573.63841954,
-        "value_nominal": 360000000.0,
+        "value_pv": 136730631.232724,
+        "value_nominal": 464134911.7275955,
         "value_annual": 7200000.0,
         "detail": []
       },
@@ -5203,15 +5089,15 @@
       },
       {
         "taxonomy_id": "delivered_energy_benefit",
-        "value_pv": 5468509202.186391,
-        "value_nominal": 17142128640.000004,
+        "value_pv": 6510705748.943771,
+        "value_nominal": 22100723230.970802,
         "value_annual": 342842572.8000001,
         "detail": []
       },
       {
         "taxonomy_id": "congestion_delay",
-        "value_pv": 43059417.28734961,
-        "value_nominal": 50400000.0,
+        "value_pv": 44302144.53782258,
+        "value_nominal": 51937453.51704724,
         "value_annual": null,
         "detail": []
       },
@@ -5224,17 +5110,17 @@
       },
       {
         "taxonomy_id": "capital_recovery",
-        "value_pv": 303700431.1221974,
-        "value_nominal": 822615142.3903188,
-        "value_annual": 24529316.03024567,
+        "value_pv": 407489154.9519501,
+        "value_nominal": 1103741433.5721998,
+        "value_annual": 32912137.2129115,
         "detail": []
       }
     ],
     "derived_parameters": {
       "category_string": "Overhead/AC/1792MW/Standard Aluminum Conductor/NA",
       "row_width_feet": 175,
-      "weighted_miles": 243.0,
-      "average_terrain_multiplier": 1.0125,
+      "weighted_miles": 251.0,
+      "average_terrain_multiplier": 1.0458333333333334,
       "total_miles": 240,
       "terrain_miles": {
         "forested": 0,
@@ -5250,7 +5136,7 @@
       "terrain_multipliers": {
         "forested": 2.25,
         "scrubbed_flat": 1,
-        "wetland": 1.2,
+        "wetland": 2.0,
         "farmland": 1,
         "desert_barren": 1.05,
         "urban": 1.59,
@@ -5262,22 +5148,22 @@
       "wacc_nominal": 0.067,
       "inflation_rate": 0.025,
       "social_discount_rate": 0.02,
-      "afudc_rate": 0.067,
-      "afudc_source": "WACC nominal",
+      "afudc_rate": 0.0409756097560976,
+      "afudc_source": "WACC real",
       "cod_year": 8.0,
       "construction_start_year": 3.0,
       "contingencies": {
-        "conductor_contingency": 0.1,
-        "structure_contingency": 0.1,
-        "converter_contingency": 0.1
+        "conductor_contingency": 0.2,
+        "structure_contingency": 0.2,
+        "converter_contingency": 0.2
       },
-      "conductor_cost": 43873552.800000004,
-      "structure_cost": 247552422.75,
+      "conductor_cost": 47873983.0,
+      "structure_cost": 273178360.0,
       "converter_cost": 0,
-      "conductor_cost_with_contingencies": 55774528.20670501,
-      "structure_cost_with_contingencies": 314702564.62357974,
+      "conductor_cost_with_contingencies": 66392836.473975,
+      "structure_cost_with_contingencies": 378850579.107,
       "converter_cost_with_contingencies": 0.0,
-      "total_build_cost_with_contingencies": 370477092.8302848,
+      "total_build_cost_with_contingencies": 445243415.580975,
       "construction_cost_escalation_factor": 1.050625,
       "zone_acres": {
         "zone_1": 4242.424242424242,
@@ -5300,10 +5186,10 @@
       "total_effective_acres": 6363.636363636362,
       "wetland_impacted_acres": 530.3030303030303,
       "habitat_impacted_acres": 5303.030303030302,
-      "rate_base": 490140071.4930794,
-      "rate_base_real": 402280782.89602876,
-      "insurable_value": 370477092.8302848,
-      "total_annual_delay_cost": 0,
+      "rate_base": 539759050.2917483,
+      "rate_base_real": 539759050.2917483,
+      "insurable_value": 445243415.580975,
+      "total_annual_delay_cost": 10000000,
       "lambda_total_wildfire": 0.0,
       "EAL_wildfire": 0.0,
       "construction_type_multiplier_wildfire": 1.0,
@@ -5320,14 +5206,14 @@
       "total_converter_losses_mwh": 0,
       "total_losses_mwh_per_year": 2117110.5723358784,
       "total_structures": 0,
-      "veg_mgmt_cost_per_year": 590000,
-      "total_annual_oandm": 4342640.0,
-      "line_om_annual": 4342640,
+      "veg_mgmt_cost_per_year": 657040,
+      "total_annual_oandm": 5238640.0,
+      "line_om_annual": 5238640,
       "total_energy_compensated_mwh": 2117110.5723358784
     }
   },
   "metadata": {
-    "timestamp": "2026-07-08T00:15:09.680525",
+    "timestamp": "2026-07-10T11:45:25.101318",
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
     "source": "case_study"
   }

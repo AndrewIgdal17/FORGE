@@ -20,7 +20,7 @@ from typing import Dict, Any, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from smart_output import CTCCOutputManager
 from constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
-from financial_utils import calculate_present_value, calculate_cod_year
+from financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from smart_loaders import (
     load_congestion_curtailment_reductions,
     load_project_technical_details as load_project_technical_details_centralized,
@@ -124,6 +124,7 @@ def calculate_congestion_reduction_costs(
     delay_years: float,
     construction_years: int,
     wacc_real: float,
+    benefit_price_escalation_real: float = 0.0,
 ) -> CongestionReductionResults:
     """
     Approach B: single-constraint, two-price decomposition.
@@ -152,10 +153,13 @@ def calculate_congestion_reduction_costs(
         delay_years: Number of years of project delay before construction
         construction_years: Number of years of construction
         wacc_real: Real weighted average cost of capital (discount rate)
+        benefit_price_escalation_real: Real annual growth rate for benefit prices (decimal, default 0.0)
 
     Returns:
         CongestionReductionResults: Dataclass containing all congestion and curtailment reduction results
     """
+    g = benefit_price_escalation_real
+
     # Effective capacity relief
     if not reconductoring:
         delta_C_eff = max(0.0, flow_factor * capacity_mw)
@@ -172,34 +176,42 @@ def calculate_congestion_reduction_costs(
     annual_curtailment_benefit = H * (1 - f) * relief_mw * average_curtailment_price
     annual_remedial_benefit = annual_congestion_benefit + annual_curtailment_benefit
 
-    # Lifetime and PV
+    # Lifetime (nominal growing series) and PV (growing annuity)
     cod_year = calculate_cod_year(delay_years, construction_years)
 
-    lifetime_congestion_benefit = annual_congestion_benefit * project_lifetime
-    lifetime_congestion_benefit_pv = calculate_present_value(
-        annual_congestion_benefit, wacc_real, project_lifetime, start_year=cod_year
+    lifetime_congestion_benefit = calculate_nominal_growing_series(
+        annual_congestion_benefit, g, project_lifetime
+    )
+    lifetime_congestion_benefit_pv = calculate_growing_annuity_pv(
+        annual_congestion_benefit, g, wacc_real, project_lifetime,
+        delay_years=delay_years, construction_years=construction_years,
     )
 
-    lifetime_curtailment_benefit = annual_curtailment_benefit * project_lifetime
-    lifetime_curtailment_benefit_pv = calculate_present_value(
-        annual_curtailment_benefit, wacc_real, project_lifetime, start_year=cod_year
+    lifetime_curtailment_benefit = calculate_nominal_growing_series(
+        annual_curtailment_benefit, g, project_lifetime
+    )
+    lifetime_curtailment_benefit_pv = calculate_growing_annuity_pv(
+        annual_curtailment_benefit, g, wacc_real, project_lifetime,
+        delay_years=delay_years, construction_years=construction_years,
     )
 
     lifetime_remedial_benefit_pv = (
         lifetime_congestion_benefit_pv + lifetime_curtailment_benefit_pv
     )
 
-    # Delay opportunity costs
+    # Delay opportunity costs — delay period starts at year 1 (no additional delay shift)
     delay_construction_years = delay_years + construction_years
-    congestion_delay_cost_nominal = annual_congestion_benefit * delay_construction_years
-    congestion_delay_cost_pv = calculate_present_value(
-        annual_congestion_benefit, wacc_real, delay_construction_years, start_year=1
+    congestion_delay_cost_nominal = calculate_nominal_growing_series(
+        annual_congestion_benefit, g, delay_construction_years
     )
-    curtailment_delay_cost_nominal = (
-        annual_curtailment_benefit * delay_construction_years
+    congestion_delay_cost_pv = calculate_growing_annuity_pv(
+        annual_congestion_benefit, g, wacc_real, delay_construction_years,
     )
-    curtailment_delay_cost_pv = calculate_present_value(
-        annual_curtailment_benefit, wacc_real, delay_construction_years, start_year=1
+    curtailment_delay_cost_nominal = calculate_nominal_growing_series(
+        annual_curtailment_benefit, g, delay_construction_years
+    )
+    curtailment_delay_cost_pv = calculate_growing_annuity_pv(
+        annual_curtailment_benefit, g, wacc_real, delay_construction_years,
     )
 
     return CongestionReductionResults(
@@ -251,6 +263,7 @@ def main() -> None:
         project_details_cc.delay_years,
         project_details_cc.construction_years,
         financing.wacc_real,
+        params.benefit_price_escalation_real,
     )
 
     print("=" * 60)
@@ -341,17 +354,21 @@ def main() -> None:
     delivered_benefit_annual = (
         energy_delivered_annual_mwh_yr * value_of_load_per_mwh
     )
-    delivered_benefit_nominal = (
-        delivered_benefit_annual * project_details_cc.project_lifetime
+    delivered_benefit_nominal = calculate_nominal_growing_series(
+        delivered_benefit_annual,
+        params.benefit_price_escalation_real,
+        project_details_cc.project_lifetime,
     )
     cod_year = calculate_cod_year(
         project_details_cc.delay_years, project_details_cc.construction_years
     )
-    delivered_benefit_pv = calculate_present_value(
+    delivered_benefit_pv = calculate_growing_annuity_pv(
         delivered_benefit_annual,
+        params.benefit_price_escalation_real,
         financing.wacc_real,
         project_details_cc.project_lifetime,
-        start_year=cod_year,
+        delay_years=project_details_cc.delay_years,
+        construction_years=project_details_cc.construction_years,
     )
 
     print()

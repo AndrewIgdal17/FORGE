@@ -3,6 +3,10 @@
 # B_cong = H * f * min(delta_C_eff, X) * gamma_cong
 # B_curt = H * (1-f) * min(delta_C_eff, X) * gamma_curt
 
+# Real annual benefit price escalation rate applied to all benefit streams.
+# At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).
+benefit_price_escalation_real: 0.01
+
 greenfield_congestion_curtailment_reductions:
   constraints:
     flow_factor: 0          # deliverability to the targeted constraint [0,1]
