@@ -3,83 +3,90 @@
 # BLM Per-Acre Linear Rent Schedule for Calendar Years 2026-2035.
 # Acquisition values: per-acre zone values (unchanged from 2016-2025).
 # Rent values: CY 2026 column, 2.6% IPD-GDP annual adjustment.
+# Rents and holds deflated to 2025$ (CPI-U from CY2026, ×0.9728).
 # Source: https://www.blm.gov/sites/default/files/docs/2026-05/Per_Acre_Linear_Rent_Schedule_for_Calendar_Years_2026-2035.pdf
 # NOTE: These defaults apply to federal (BLM) lands only. Private-land projects should override with site-specific values.
 # All values: miles (>= 0), costs (>= 0)
+
+# Real annual escalation rate applied to annual ROW rent (and holding/option-fee cost), decimal.
+# Default 0% real: BLM rents already adjust at the IPD-GDP rate (~2.6%/yr nominal, CY2026-2035),
+# approximately tracking inflation (BLM PIM 2026-002, 43 CFR Sec 2806.22); no evidence supports
+# systematic above-inflation rent growth for transmission ROW as a default.
+row_rent_escalation_real: 0.00
 
 right_of_way:
   zone_1:
     miles: 0
     acquisition_cost: 299 #$/acre
-    rent_cost: 8.08 #$/acre * year (CY 2026, BLM 2026-2035 schedule)
-    hold_cost: 0.81 #$/acre (default .1 of rent cost)
+    rent_cost: 8 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 0.800 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_2:
     miles: 0
     acquisition_cost: 579 #$/acre
-    rent_cost: 15.65 #$/acre * year (CY 2026)
-    hold_cost: 1.57 #$/acre (default .1 of rent cost)
+    rent_cost: 15 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 2 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_3:
     miles: 0
     acquisition_cost: 1132 #$/acre
-    rent_cost: 30.60 #$/acre * year (CY 2026)
-    hold_cost: 3.06 #$/acre (default .1 of rent cost)
+    rent_cost: 30 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 3 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_4:
     miles: 0
     acquisition_cost: 1706 #$/acre
-    rent_cost: 46.12 #$/acre * year (CY 2026)
-    hold_cost: 4.61 #$/acre (default .1 of rent cost)
+    rent_cost: 45 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 4 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_5:
     miles: 0
     acquisition_cost: 2350 #$/acre
-    rent_cost: 63.53 #$/acre * year (CY 2026)
-    hold_cost: 6.35 #$/acre (default .1 of rent cost)
+    rent_cost: 62 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 6 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_6:
     miles: 0
     acquisition_cost: 3394 #$/acre
-    rent_cost: 91.76 #$/acre * year (CY 2026)
-    hold_cost: 9.18 #$/acre (default .1 of rent cost)
+    rent_cost: 89 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 9 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_7:
     miles: 0
     acquisition_cost: 4746 #$/acre
-    rent_cost: 128.31 #$/acre * year (CY 2026)
-    hold_cost: 12.83 #$/acre (default .1 of rent cost)
+    rent_cost: 125 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 12 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_8:
     miles: 0
     acquisition_cost: 6583 #$/acre
-    rent_cost: 177.97 #$/acre * year (CY 2026)
-    hold_cost: 17.80 #$/acre (default .1 of rent cost)
+    rent_cost: 173 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 17 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_9:
     miles: 0
     acquisition_cost: 16279 #$/acre (corrected from 16297 transcription error)
-    rent_cost: 440.10 #$/acre * year (CY 2026)
-    hold_cost: 44.01 #$/acre (default .1 of rent cost)
+    rent_cost: 428 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 43 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_10:
     miles: 0
     acquisition_cost: 50000 #$/acre
-    rent_cost: 1351.76 #$/acre * year (CY 2026)
-    hold_cost: 135.18 #$/acre (default .1 of rent cost)
+    rent_cost: 1315 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 132 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_11:
     miles: 0
     acquisition_cost: 100000 #$/acre
-    rent_cost: 2703.51 #$/acre * year (CY 2026)
-    hold_cost: 270.35 #$/acre (default .1 of rent cost)
+    rent_cost: 2630 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 263 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_12:
     miles: 0
     acquisition_cost: 250000 #$/acre
-    rent_cost: 6758.78 #$/acre * year (CY 2026)
-    hold_cost: 675.88 #$/acre (default .1 of rent cost)
+    rent_cost: 6575 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 658 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_13:
     miles: 0
     acquisition_cost: 500000 #$/acre
-    rent_cost: 13517.55 #$/acre * year (CY 2026)
-    hold_cost: 1351.76 #$/acre (default .1 of rent cost)
+    rent_cost: 13150 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 1315 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_14:
     miles: 0
     acquisition_cost: 750000 #$/acre
-    rent_cost: 20276.33 #$/acre * year (CY 2026)
-    hold_cost: 2027.63 #$/acre (default .1 of rent cost)
+    rent_cost: 19725 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 1972 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)
   zone_15:
     miles: 0
     acquisition_cost: 1000000 #$/acre
-    rent_cost: 27035.10 #$/acre * year (CY 2026)
-    hold_cost: 2703.51 #$/acre (default .1 of rent cost)
+    rent_cost: 26300 #$/acre * year (2025$, deflated from CY 2026 via CPI-U ×0.9728)
+    hold_cost: 2630 #$/acre (default .1 of rent cost) (2025$, deflated from CY 2026 via CPI-U ×0.9728)

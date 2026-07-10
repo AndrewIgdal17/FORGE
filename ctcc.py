@@ -189,6 +189,32 @@ def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dic
     return aggregator
 
 
+_TRAJECTORY_ARRAY_KEYS = {
+    ("costs", "emissions"): ["emissions_comp_annual_values"],
+    ("benefits", "facilitated_emissions"): [
+        "fac_emissions_withline_annual_values",
+        "fac_emissions_noline_annual_values",
+        "displacement_annual_values",
+    ],
+}
+
+
+def _hoist_trajectory_arrays(results: dict) -> None:
+    """Copy year-by-year annual-value arrays up to the top level of `results`.
+
+    emissions.py and facilitated_emissions.py nest their results under
+    costs["emissions"] / benefits["facilitated_emissions"]. The (future) BCR
+    trajectory module consumes these arrays directly off the top-level results
+    dict (docs/design/2026-07-10__bcr-trajectory-spec.md), so hoist them here
+    rather than duplicating the year-by-year loops elsewhere.
+    """
+    for (bucket, module_key), array_keys in _TRAJECTORY_ARRAY_KEYS.items():
+        module_results = results.get(bucket, {}).get(module_key, {})
+        for array_key in array_keys:
+            if array_key in module_results:
+                results[array_key] = module_results[array_key]
+
+
 def write_final_json_output(
     aggregator,
     bcr_results: dict | None,
@@ -218,6 +244,7 @@ def write_final_json_output(
 
     # Get the final results
     results = aggregator.get_json_results()
+    _hoist_trajectory_arrays(results)
     if csv_equivalent is not None:
         results["csv_equivalent"] = csv_equivalent
     if summary_override is not None:
@@ -462,12 +489,17 @@ def run_calculation(
                 aggregator.add_bcr_metrics(bcr_results)
             aggregator.calculate_summary()
             results = aggregator.get_json_results()
+            _hoist_trajectory_arrays(results)
             if csv_equivalent is not None:
                 results["csv_equivalent"] = csv_equivalent
             if summary_override is not None:
                 results["summary"] = summary_override
             if taxonomy_results_json is not None:
                 results["taxonomy_results"] = taxonomy_results_json
+
+            if results.get("bcr"):
+                from bcr_trajectory import compute_trajectory
+                results["trajectory"] = compute_trajectory(results, combined_data)
 
             _ctx = get_run_context()
             if _ctx is not None and _ctx.derived_parameters:

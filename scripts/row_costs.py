@@ -30,11 +30,11 @@ from smart_loaders import (
     get_financing_data_raw,
 )
 from financial_utils import (
-    calculate_present_value,
+    calculate_growing_annuity_pv,
+    calculate_nominal_growing_series,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
-    calculate_construction_start_year,
 )
 from path_config import YAMLS_DIR
 
@@ -129,6 +129,10 @@ def main() -> None:
         "agreement_type": agreement_type,
     })
 
+    # Real annual escalation applied to ROW rent and holding cost (default 0% real,
+    # backward-compatible with pre-escalation YAMLs).
+    g_rent = float(_row_details.get("row_rent_escalation_real", 0.0))
+
     # Load financing parameters
     financing = load_financing_details()
 
@@ -137,16 +141,17 @@ def main() -> None:
 
     afudc_setup = load_afudc_setup()
 
-    # Define timing for annual ROW payment (rent)
+    # Define timing for annual ROW payment (rent). Lease/license rent runs from
+    # year 1 (rent_start_year == 1); other agreement types start rent at
+    # calculate_construction_start_year(delay_years) == delay_years + 1, i.e.
+    # once the delay period ends.
     if agreement_type == "lease_license_existing":
-        rent_start_year = 1
         rent_total_years = (
             project_details.delay_years
             + project_details.construction_years
             + project_details.project_lifetime
         )
     else:
-        rent_start_year = calculate_construction_start_year(project_details.delay_years)
         rent_total_years = (
             project_details.project_lifetime + project_details.construction_years
         )
@@ -154,10 +159,10 @@ def main() -> None:
     if agreement_type == "lease_license_existing":
         total_holding_cost = 0.0
         acquisition_cost_used = 0.0  # no acquisition for lease/license
-        total_rent_cost = yearly_rent_cost * (
-            project_details.delay_years
-            + project_details.construction_years
-            + project_details.project_lifetime
+        total_rent_cost = calculate_nominal_growing_series(
+            yearly_rent_cost,
+            g_rent,
+            rent_total_years,
         )
         total_nominal_cost = (
             total_holding_cost + acquisition_cost_used + total_rent_cost
@@ -169,11 +174,15 @@ def main() -> None:
         holding_afudc = 0.0
         total_holding_cost_pv = 0.0
         total_acquisition_cost_pv = 0.0
-        total_rent_cost_pv = calculate_present_value(
+        # rent_start_year == 1 here, so no delay/construction shift is applied;
+        # the growing annuity already covers year 1 through rent_total_years.
+        total_rent_cost_pv = calculate_growing_annuity_pv(
             yearly_rent_cost,
+            g_rent,
             financing.wacc_real,
             int(rent_total_years),
-            rent_start_year,
+            delay_years=0.0,
+            construction_years=0.0,
         )
         # Lease/license: only rent; capital is zero
         row_capital_afudc = 0.0
@@ -184,9 +193,15 @@ def main() -> None:
         total_afudc = 0.0
         total_pv_cost = total_rent_cost_pv
     else:
-        total_holding_cost = yearly_holding_cost * project_details.delay_years
-        total_rent_cost = yearly_rent_cost * (
-            project_details.project_lifetime + project_details.construction_years
+        total_holding_cost = calculate_nominal_growing_series(
+            yearly_holding_cost,
+            g_rent,
+            project_details.delay_years,
+        )
+        total_rent_cost = calculate_nominal_growing_series(
+            yearly_rent_cost,
+            g_rent,
+            rent_total_years,
         )
         acquisition_cost_used = acquisition_cost
         total_nominal_cost = (
@@ -202,6 +217,7 @@ def main() -> None:
                     project_details.construction_years,
                     afudc_setup.afudc_rate,
                     afudc_setup.delay_active,
+                    spending_profiles=afudc_setup.spending_profiles,
                 )
             )
         else:
@@ -220,24 +236,35 @@ def main() -> None:
                 project_details.construction_years,
                 afudc_setup.afudc_rate,
                 afudc_setup.delay_active,
+                spending_profiles=afudc_setup.spending_profiles,
             )
         else:
             holding_capitalized = total_holding_cost
             holding_afudc = 0.0
 
         validate_discount_rate(financing.wacc_real, "wacc_real")
-        total_holding_cost_pv = calculate_present_value(
-            yearly_holding_cost, financing.wacc_real, int(project_details.delay_years)
+        # Holding (option fee) is paid during the delay period only (years 1..delay_years).
+        total_holding_cost_pv = calculate_growing_annuity_pv(
+            yearly_holding_cost,
+            g_rent,
+            financing.wacc_real,
+            int(project_details.delay_years),
+            delay_years=0.0,
+            construction_years=0.0,
         )
         total_acquisition_cost_pv = (
             acquisition_cost_used
             / (1 + financing.wacc_real) ** project_details.delay_years
         )
-        total_rent_cost_pv = calculate_present_value(
+        # rent_start_year == delay_years + 1 here, so shift the growing annuity
+        # by delay_years to reproduce the same payment timing.
+        total_rent_cost_pv = calculate_growing_annuity_pv(
             yearly_rent_cost,
+            g_rent,
             financing.wacc_real,
             int(rent_total_years),
-            rent_start_year,
+            delay_years=project_details.delay_years,
+            construction_years=0.0,
         )
 
         # Capital = acquisition + holding only (no rent)
@@ -261,6 +288,7 @@ def main() -> None:
     print()
 
     print("[NOMINAL VALUES]")
+    print(f"  Rent Escalation Rate (g_rent): {g_rent:.2%}/year (real)")
     print(f"  Holding Cost (option fee): ${total_holding_cost:,.2f}")
     print(
         f"    (Annual: ${yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))"
@@ -328,6 +356,7 @@ def main() -> None:
         "acquisition_nominal": acquisition_cost_used,
         "holding_nominal": total_holding_cost,
         "rent_nominal": total_rent_cost,
+        "row_rent_escalation_real": g_rent,
     }
 
     # Write to CSV

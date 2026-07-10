@@ -386,7 +386,13 @@ def load_row_widths(category: str) -> float:
 
 
 def load_row_details() -> Dict[str, Any]:
-    """Load ROW details from YAML."""
+    """Load ROW details from YAML.
+
+    Returned dict includes the top-level ``row_rent_escalation_real`` key
+    (real annual escalation applied to ROW rent/holding cost, decimal,
+    default 0.0 for backward compatibility) alongside ``right_of_way``.
+    Callers should read it via ``data.get("row_rent_escalation_real", 0.0)``.
+    """
     try:
         with open(YAMLS_DIR / "11_project_row_details.yaml", "r") as file:
             row_details = yaml.safe_load(file)

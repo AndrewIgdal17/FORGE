@@ -54,6 +54,7 @@ class LifetimeEmissionsResults:
     lifetime_cost: float
     lifetime_cost_pv: float
     total_costs_by_pollutant_pv: Dict[str, float]
+    annual_values: List[float]
 
 
 def calculate_energy_mix_by_year(
@@ -227,6 +228,7 @@ def calculate_lifetime_emissions(
     # Calculate emissions for each year
     yearly_emissions = []
     yearly_costs = []
+    annual_values = []
 
     total_emissions = {"co2": 0.0, "sox": 0.0, "nox": 0.0}
     total_costs_by_pollutant = {"co2": 0.0, "sox": 0.0, "nox": 0.0}
@@ -252,6 +254,7 @@ def calculate_lifetime_emissions(
             total_costs_by_pollutant[pollutant] += pollutant_cost
 
         yearly_costs.append(year_cost)
+        annual_values.append(year_cost)
         lifetime_cost += year_cost
 
         # Calculate present value for this year
@@ -296,6 +299,7 @@ def calculate_lifetime_emissions(
         lifetime_cost=lifetime_cost,
         lifetime_cost_pv=lifetime_cost_pv,
         total_costs_by_pollutant_pv=total_costs_by_pollutant_pv,
+        annual_values=annual_values,
     )
 
 
@@ -526,6 +530,9 @@ def main() -> None:
         "nox_emissions_kg": emissions_results.total_emissions["nox"],
         "nox_cost_nominal": emissions_results.total_costs_by_pollutant["nox"],
         "nox_cost_pv": emissions_results.total_costs_by_pollutant_pv["nox"],
+        # Year-by-year nominal costs (length = project_lifetime), for the BCR
+        # trajectory module (docs/design/2026-07-10__bcr-trajectory-spec.md).
+        "emissions_comp_annual_values": emissions_results.annual_values,
     }
 
     # Write to output manager (loss-compensation emissions)

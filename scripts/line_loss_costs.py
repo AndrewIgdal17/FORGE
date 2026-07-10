@@ -28,7 +28,11 @@ from energy_losses import (
     full_load_adjusted,
     calculate_line_losses,
 )
-from financial_utils import calculate_present_value, calculate_cod_year
+from financial_utils import (
+    calculate_growing_annuity_pv,
+    calculate_nominal_growing_series,
+    calculate_cod_year,
+)
 from calculation_utils import (
     to_percent,
     from_percent,
@@ -40,6 +44,7 @@ from smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
     get_project_data_raw,
+    load_congestion_curtailment_reductions,
 )
 
 
@@ -56,6 +61,7 @@ class LineLossProjectDetails:
     line_utilization_percent: float
     value_of_load: float
     wacc_real: float
+    benefit_price_escalation_real: float
     reconductoring: bool
     delay_years: float
     construction_years: int
@@ -86,6 +92,8 @@ def load_project_details() -> LineLossProjectDetails:
             - line_utilization_percent: Line utilization as decimal (0-1)
             - value_of_load: Value of load in $/MWh
             - wacc_real: Real WACC for present value of thermal line loss cost (market-tracked)
+            - benefit_price_escalation_real: Real annual escalation rate applied to v_load
+              for welfare consistency with the benefit-of-delivered-energy valuation (g_benefit)
             - reconductoring: True if reconductoring project, False for greenfield
             - delay_years: Number of years of project delay
             - construction_years: Number of years of construction
@@ -138,6 +146,8 @@ def load_project_details() -> LineLossProjectDetails:
         )
         financing = load_financing_details()
         wacc_real = financing.wacc_real
+        congestion_params = load_congestion_curtailment_reductions()
+        benefit_price_escalation_real = congestion_params.benefit_price_escalation_real
 
         # Get number_of_converters if DC
         if ac_dc == "DC":
@@ -175,6 +185,7 @@ def load_project_details() -> LineLossProjectDetails:
         line_utilization_percent=line_utilization_percent,
         value_of_load=value_of_load,
         wacc_real=wacc_real,
+        benefit_price_escalation_real=benefit_price_escalation_real,
         reconductoring=reconductoring,
         delay_years=delay_years,
         construction_years=construction_years,
@@ -325,19 +336,23 @@ def compute_design_comparison(
 
     price = project_details.value_of_load
     lifetime = project_details.project_lifetime
-
-    start_year = calculate_cod_year(
-        project_details.delay_years, project_details.construction_years
-    )
+    g_benefit = project_details.benefit_price_escalation_real
 
     def _method(delta_mwh: float) -> Dict[str, float]:
         annual = delta_mwh * price
         return {
             "delta_mwh_yr": delta_mwh,
             "annual_cost": annual,
-            "lifetime_nominal": annual * lifetime,
-            "npv": calculate_present_value(
-                annual, project_details.wacc_real, lifetime, start_year
+            "lifetime_nominal": calculate_nominal_growing_series(
+                annual, g_benefit, lifetime
+            ),
+            "npv": calculate_growing_annuity_pv(
+                annual,
+                g_benefit,
+                project_details.wacc_real,
+                lifetime,
+                delay_years=project_details.delay_years,
+                construction_years=project_details.construction_years,
             ),
         }
 
@@ -421,9 +436,7 @@ def main() -> None:
                 )
             print()
 
-        start_year = calculate_cod_year(
-            project_details.delay_years, project_details.construction_years
-        )
+        g_benefit = project_details.benefit_price_escalation_real
 
         loss_data = get_total_energy_losses()
         primary_line_mwh = loss_data["losses_mwh_per_year"]
@@ -432,29 +445,35 @@ def main() -> None:
         price = project_details.value_of_load
 
         primary_annual_loss_cost = primary_total_mwh * price
-        primary_lifetime_nominal_cost = (
-            primary_annual_loss_cost * project_details.project_lifetime
+        primary_lifetime_nominal_cost = calculate_nominal_growing_series(
+            primary_annual_loss_cost, g_benefit, project_details.project_lifetime
         )
-        primary_pv_loss_cost = calculate_present_value(
+        primary_pv_loss_cost = calculate_growing_annuity_pv(
             primary_annual_loss_cost,
+            g_benefit,
             project_details.wacc_real,
             project_details.project_lifetime,
-            start_year,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
 
         primary_line_annual = primary_line_mwh * price
         primary_converter_annual = primary_converter_mwh * price
-        primary_line_pv = calculate_present_value(
+        primary_line_pv = calculate_growing_annuity_pv(
             primary_line_annual,
+            g_benefit,
             project_details.wacc_real,
             project_details.project_lifetime,
-            start_year,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
-        primary_converter_pv = calculate_present_value(
+        primary_converter_pv = calculate_growing_annuity_pv(
             primary_converter_annual,
+            g_benefit,
             project_details.wacc_real,
             project_details.project_lifetime,
-            start_year,
+            delay_years=project_details.delay_years,
+            construction_years=project_details.construction_years,
         )
 
         csv_manager = CTCCOutputManager()
@@ -470,10 +489,12 @@ def main() -> None:
             "converter_annual_cost": primary_converter_annual,
             "line_cost_pv": primary_line_pv,
             "converter_cost_pv": primary_converter_pv,
-            "line_nominal_total": primary_line_annual
-            * project_details.project_lifetime,
-            "converter_nominal_total": primary_converter_annual
-            * project_details.project_lifetime,
+            "line_nominal_total": calculate_nominal_growing_series(
+                primary_line_annual, g_benefit, project_details.project_lifetime
+            ),
+            "converter_nominal_total": calculate_nominal_growing_series(
+                primary_converter_annual, g_benefit, project_details.project_lifetime
+            ),
         }
         csv_manager.add_line_loss_costs(results)
         if has_comparison:
@@ -631,7 +652,11 @@ def main() -> None:
     direct_annual_benefit = (
         direct_loss_reduction_mwh * project_details.value_of_load
     )
-    direct_lifetime_benefit = direct_annual_benefit * project_details.project_lifetime
+    direct_lifetime_benefit = calculate_nominal_growing_series(
+        direct_annual_benefit,
+        project_details.benefit_price_escalation_real,
+        project_details.project_lifetime,
+    )
 
     # METHOD 2: Counterfactual Comparison - Compare old vs new conductor at new capacity
     counterfactual_loss_reduction_mwh = (
@@ -640,8 +665,10 @@ def main() -> None:
     counterfactual_annual_benefit = (
         counterfactual_loss_reduction_mwh * project_details.value_of_load
     )
-    counterfactual_lifetime_benefit = (
-        counterfactual_annual_benefit * project_details.project_lifetime
+    counterfactual_lifetime_benefit = calculate_nominal_growing_series(
+        counterfactual_annual_benefit,
+        project_details.benefit_price_escalation_real,
+        project_details.project_lifetime,
     )
 
     # METHOD 3: Normalized (Per MWh) Comparison
@@ -652,33 +679,42 @@ def main() -> None:
     normalized_annual_benefit = (
         normalized_loss_reduction_mwh * project_details.value_of_load
     )
-    normalized_lifetime_benefit = (
-        normalized_annual_benefit * project_details.project_lifetime
+    normalized_lifetime_benefit = calculate_nominal_growing_series(
+        normalized_annual_benefit,
+        project_details.benefit_price_escalation_real,
+        project_details.project_lifetime,
     )
 
-    # Line losses start at first year of operation (COD)
+    # Line losses start at first year of operation (COD); kept for display only —
+    # calculate_growing_annuity_pv derives the delay discount from delay/construction years
     start_year = calculate_cod_year(
         project_details.delay_years, project_details.construction_years
     )
 
     # Calculate NPVs for all three methods
-    direct_npv = calculate_present_value(
+    direct_npv = calculate_growing_annuity_pv(
         direct_annual_benefit,
+        project_details.benefit_price_escalation_real,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
-    counterfactual_npv = calculate_present_value(
+    counterfactual_npv = calculate_growing_annuity_pv(
         counterfactual_annual_benefit,
+        project_details.benefit_price_escalation_real,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
-    normalized_npv = calculate_present_value(
+    normalized_npv = calculate_growing_annuity_pv(
         normalized_annual_benefit,
+        project_details.benefit_price_escalation_real,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
 
     # Print results
@@ -760,27 +796,37 @@ def main() -> None:
     csv_manager = CTCCOutputManager()
     price = project_details.value_of_load
 
+    g_benefit = project_details.benefit_price_escalation_real
+
     new_line_annual_cost = new_line_mwh * price
     new_converter_annual_cost = new_converter_mwh * price
     new_total_annual_cost = new_total_mwh * price
-    new_lifetime_nominal_cost = new_total_annual_cost * project_details.project_lifetime
-    new_line_pv = calculate_present_value(
+    new_lifetime_nominal_cost = calculate_nominal_growing_series(
+        new_total_annual_cost, g_benefit, project_details.project_lifetime
+    )
+    new_line_pv = calculate_growing_annuity_pv(
         new_line_annual_cost,
+        g_benefit,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
-    new_converter_pv = calculate_present_value(
+    new_converter_pv = calculate_growing_annuity_pv(
         new_converter_annual_cost,
+        g_benefit,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
-    new_pv_loss_cost = calculate_present_value(
+    new_pv_loss_cost = calculate_growing_annuity_pv(
         new_total_annual_cost,
+        g_benefit,
         project_details.wacc_real,
         project_details.project_lifetime,
-        start_year,
+        delay_years=project_details.delay_years,
+        construction_years=project_details.construction_years,
     )
 
     results = {
@@ -795,9 +841,12 @@ def main() -> None:
         "converter_annual_cost": new_converter_annual_cost,
         "line_cost_pv": new_line_pv,
         "converter_cost_pv": new_converter_pv,
-        "line_nominal_total": new_line_annual_cost * project_details.project_lifetime,
-        "converter_nominal_total": new_converter_annual_cost
-        * project_details.project_lifetime,
+        "line_nominal_total": calculate_nominal_growing_series(
+            new_line_annual_cost, g_benefit, project_details.project_lifetime
+        ),
+        "converter_nominal_total": calculate_nominal_growing_series(
+            new_converter_annual_cost, g_benefit, project_details.project_lifetime
+        ),
     }
 
     csv_manager.add_line_loss_costs(results)

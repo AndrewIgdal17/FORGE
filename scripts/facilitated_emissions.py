@@ -54,6 +54,11 @@ class FacilitatedEmissionsResults:
     project_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
     noline_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
     displacement_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
+    # Year-by-year nominal costs (length = project_lifetime), for the BCR
+    # trajectory module (docs/design/2026-07-10__bcr-trajectory-spec.md).
+    fac_emissions_withline_annual_values: List[float] = field(default_factory=list)
+    fac_emissions_noline_annual_values: List[float] = field(default_factory=list)
+    displacement_annual_values: List[float] = field(default_factory=list)
 
 
 def _compute_instance_costs(
@@ -66,12 +71,15 @@ def _compute_instance_costs(
 ) -> tuple:
     """Compute nominal + PV emissions cost for one instance over all years.
 
-    Returns (total_nominal, total_pv, pv_by_pollutant).
+    Returns (total_nominal, total_pv, pv_by_pollutant, annual_values).
+    annual_values is the nominal (undiscounted) cost for each year, in order,
+    length = len(mix_by_year) = project_lifetime.
     """
     pollutants = ["co2", "sox", "nox"]
     total_nominal = 0.0
     total_pv = 0.0
     pv_by_pollutant = {p: 0.0 for p in pollutants}
+    annual_values = []
 
     for year_idx, energy_mix in enumerate(mix_by_year):
         emissions = calculate_emissions_by_year(
@@ -86,6 +94,7 @@ def _compute_instance_costs(
             year_cost += pollutant_cost
 
         total_nominal += year_cost
+        annual_values.append(year_cost)
 
         year_number = year_idx + 1
         discount_year = start_year + year_number - 1
@@ -102,7 +111,7 @@ def _compute_instance_costs(
             )
             pv_by_pollutant[pollutant] += pollutant_pv
 
-    return total_nominal, total_pv, pv_by_pollutant
+    return total_nominal, total_pv, pv_by_pollutant, annual_values
 
 
 def calculate_facilitated_emissions(
@@ -136,11 +145,11 @@ def calculate_facilitated_emissions(
     proj_mix = calculate_energy_mix_by_year(withline_ops_input, project_lifetime)
     noline_mix = calculate_energy_mix_by_year(noline_ops_input, project_lifetime)
 
-    proj_nom, proj_pv, proj_by_poll = _compute_instance_costs(
+    proj_nom, proj_pv, proj_by_poll, proj_annual_values = _compute_instance_costs(
         energy_delivered_annual_mwh, proj_mix, emission_intensities,
         societal_costs, social_discount_rate, start_year,
     )
-    noline_nom, noline_pv, noline_by_poll = _compute_instance_costs(
+    noline_nom, noline_pv, noline_by_poll, noline_annual_values = _compute_instance_costs(
         energy_delivered_annual_mwh, noline_mix, emission_intensities,
         societal_costs, social_discount_rate, start_year,
     )
@@ -150,6 +159,10 @@ def calculate_facilitated_emissions(
     disp_by_poll = {
         p: noline_by_poll[p] - proj_by_poll[p] for p in proj_by_poll
     }
+    displacement_annual_values = [
+        noline_annual_values[i] - proj_annual_values[i]
+        for i in range(len(noline_annual_values))
+    ]
 
     return FacilitatedEmissionsResults(
         fac_emissions_project_pv=proj_pv,
@@ -161,6 +174,9 @@ def calculate_facilitated_emissions(
         project_pv_by_pollutant=proj_by_poll,
         noline_pv_by_pollutant=noline_by_poll,
         displacement_pv_by_pollutant=disp_by_poll,
+        fac_emissions_withline_annual_values=proj_annual_values,
+        fac_emissions_noline_annual_values=noline_annual_values,
+        displacement_annual_values=displacement_annual_values,
     )
 
 
@@ -267,6 +283,11 @@ def main() -> None:
         "noline_sox_pv": results.noline_pv_by_pollutant.get("sox", 0.0),
         "noline_nox_pv": results.noline_pv_by_pollutant.get("nox", 0.0),
         "energy_delivered_annual_mwh": energy_delivered_annual_mwh,
+        # Year-by-year nominal costs (length = project_lifetime), for the BCR
+        # trajectory module (docs/design/2026-07-10__bcr-trajectory-spec.md).
+        "fac_emissions_withline_annual_values": results.fac_emissions_withline_annual_values,
+        "fac_emissions_noline_annual_values": results.fac_emissions_noline_annual_values,
+        "displacement_annual_values": results.displacement_annual_values,
     }
     output_manager.add_facilitated_emissions_costs(output_results)
     output_manager.write_batch_summary()
