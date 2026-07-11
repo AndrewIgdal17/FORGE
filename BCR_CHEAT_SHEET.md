@@ -1,447 +1,153 @@
 # BCR (Benefit-Cost Ratio) Cheat Sheet
 
-Quick reference guide for all BCR perspectives calculated by CTCC.
+Quick reference for all BCR perspectives calculated by CTCC.
 
-**Important Note on Revenue:** Revenue (rate-based revenue requirement) is a **transfer** from ratepayers to the utility/TSP, not a net social benefit. Societal BCRs exclude revenue from total benefits. Revenue appears only in stakeholder BCRs where it's a benefit to utilities and a cost to ratepayers.
+## Revenue as Transfer
 
-**Cost categories:** **Capital** = build + ROW capital (acquisition + holding) + environmental mitigation. **Operational** = O&M + insurance + ROW rent. **Energy/Emissions** = line losses + emissions + residual exceedance. Residual exceedance is a societal cost only (included in total costs and in Energy/Emissions; not included in utility costs or ratepayer costs). Rate base = AFUDC capital (build + row capital + env) at COD.
+Revenue (the utility's annual transmission revenue requirement, ATRR) is a **transfer** from ratepayers to the utility — zero-sum from society's perspective. Societal BCRs exclude revenue. Revenue appears only in the Utility BCR (numerator) and Ratepayer BCR (denominator).
 
----
+## Cost and Benefit Buckets
 
-## Societal Perspectives
+**Benefits:**
+- **Remedial** ($B_{\text{remedial}}$): congestion relief + curtailment relief
+- **Enabling** ($B_{\text{enabling}}$): delivered energy benefit
+- **Avoided emissions** ($B_{\text{avoided,emissions}}$): displacement of dirtier generation
 
-### `bcr_societal`
-
-**Equation:** `Total Benefits / Total Costs`
-
-**Perspective:** Full societal/all-in analysis
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational (O&M + insurance only) + Energy/Emissions (line losses + emissions + residual exceedance) + Risk + Delay (everything)
-
-**Use Case:** Complete societal cost-benefit analysis including all externalities and risks
+**Costs:**
+- **Hard** ($C_{\text{hard}}$): build + ROW capital + environmental mitigation (AFUDC-eligible, in rate base)
+- **Operational** ($C_{\text{operational}}$): O&M + insurance + ROW rent
+- **Energy/Emissions** ($C_{\text{loss}} + C_{\text{emissions}}$): line losses (conductor + converter) + loss-compensation emissions
+- **Risk** ($C_{\text{risk}}$): expected wildfire cost + expected outage cost
+- **Delay** ($C_{\text{delay}}$): base delay + congestion delay + curtailment delay + displacement delay
 
 ---
 
-### `bcr_excluding_wildfire_risk_and_outage_risk`
+## Core BCRs (7)
 
-**Equation:** `Total Benefits / (Total Costs - Wildfire Risk - Outage Risk)`
+### `bcr_societal` — Societal
 
-**Perspective:** Societal perspective excluding both wildfire and outage risk costs
+**Formula:** $B^P / C^P$ (all benefits / all costs)
 
-**Includes:**
+**Question:** Is this project a net positive for society?
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Energy/Emissions + Delay (excludes wildfire + wildfire liability + outage)
+**Audience:** Regulators, planners, policy analysts.
 
-**Use Case:** Analysis when both wildfire and outage risk costs may be insured, managed separately, or contextually inappropriate.
-
----
-
-### `bcr_excluding_emissions`
-
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs)`
-
-**Perspective:** Societal perspective excluding emissions externalities only
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Risk + Delay + Line Losses (excludes emissions only)
-
-**Use Case:** Analysis focusing on transmission project economics without emissions externalities, but including line losses
+**BCR = 1.0:** Break-even for society. **BCR < 1.0:** Project destroys net societal value (absent unquantified benefits).
 
 ---
 
-### `bcr_excluding_linelosses`
+### `bcr_system` — Congestion Relief
 
-**Equation:** `Total Benefits / (Total Costs - Line Loss Costs)`
+**Formula:** $B_{\text{remedial}} / (C_{\text{hard}} + C_{\text{operational}} + C_{\text{loss}})$
 
-**Perspective:** Societal perspective excluding line loss costs only
+**Question:** Does congestion/curtailment relief alone cover deterministic project costs?
 
-**Includes:**
+**Audience:** ISO/RTO economic planners (market efficiency screening).
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Risk + Delay + Emissions (excludes line losses only)
-
-**Use Case:** Analysis focusing on transmission project economics without line loss costs, but including emissions
+**BCR < 1.0:** Expected for reliability, public policy, and emissions-justified projects. Not a failure — means the economic case relies on benefits beyond congestion relief.
 
 ---
 
-### `bcr_excluding_emissions_and_linelosses`
+### `bcr_capital` — Capital Only
 
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs)`
+**Formula:** $B^P / C_{\text{hard}}$
 
-**Perspective:** Societal perspective excluding both emissions and line losses
+**Question:** How do total benefits compare to capital investment alone?
 
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Risk + Delay (excludes emissions + line losses)
-
-**Use Case:** Analysis focusing on transmission project economics without energy/emissions externalities
+**Audience:** Developers, capital screening. Demonstrates what narrow capital-only views miss by ignoring lifecycle costs.
 
 ---
 
-### `bcr_excluding_wildfire_risk`
+### `bcr_capital_and_delay` — Capital + Delay
 
-**Equation:** `Total Benefits / (Total Costs - Wildfire Risk Costs)`
+**Formula:** $B^P / (C_{\text{hard}} + C_{\text{delay}})$
 
-**Perspective:** Societal perspective excluding wildfire risk costs only (includes outage risk)
+**Question:** What is the total pre-COD and capital exposure?
 
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Energy/Emissions + Delay + Outage Risk (excludes wildfire + wildfire liability)
-
-**Use Case:** Analysis for regions where wildfire risk is contextually inappropriate (e.g., Virginia scenarios with California-calibrated wildfire parameters), but outage risk should be included
+**Audience:** Developers assessing delay risk, policymakers studying permitting reform costs.
 
 ---
 
-### `bcr_excluding_outage_risk`
+### `bcr_utility` — Utility / TSP
 
-**Equation:** `Total Benefits / (Total Costs - Outage Risk Costs)`
+**Formula:** $\text{ATRR}_{\text{PV}} / (\text{ATRR}_{\text{PV}} + C_{\text{base\ delay}})$
 
-**Perspective:** Societal perspective excluding outage risk costs only (includes wildfire risk)
+**Question:** Does the revenue the utility collects cover everything the utility pays?
 
-**Includes:**
+**Audience:** Utility financial planners, transmission service providers.
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Energy/Emissions + Delay + Wildfire Risk (excludes outage)
+**Pure utility perspective:** Both numerator and denominator use the utility's own cost basis. ATRR (capital recovery + O&M + insurance + ROW rent) appears on both sides and cancels. What remains is the delay penalty.
 
-**Use Case:** Analysis when outage risk may be insured or managed separately, but wildfire risk should be included
-
----
-
-### `bcr_excluding_emissions_and_wildfire_risk`
-
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Wildfire Risk Costs)`
-
-**Perspective:** Societal perspective excluding emissions and wildfire risk costs
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Line Losses + Outage Risk (excludes emissions + wildfire)
-
-**Use Case:** Core project economics excluding emissions externalities and wildfire risk, but including line losses and outage risk
+**BCR = 1.0:** Structural identity for zero-delay regulated projects — revenue covers all recoverable costs by design. **BCR < 1.0:** The utility bears unrecoverable pre-construction delay costs (legal, admin, permitting) not in rate base.
 
 ---
 
-### `bcr_excluding_emissions_and_outage_risk`
+### `bcr_ratepayer` — Ratepayer
 
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Outage Risk Costs)`
+**Formula:** $(B_{\text{remedial}} + B_{\text{enabling}}) / (\text{ATRR}_{\text{PV}} + C_{\text{loss}})$
 
-**Perspective:** Societal perspective excluding emissions and outage risk costs
+**Question:** Do bill-relevant benefits exceed what ratepayers pay?
 
-**Includes:**
+**Audience:** Consumer advocates (NASUCA), state PUCs.
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Line Losses + Wildfire Risk (excludes emissions + outage)
+**Numerator excludes** avoided emissions — they are a societal externality that does not reduce energy bills absent an embedded carbon price.
 
-**Use Case:** Core project economics excluding emissions externalities and outage risk, but including line losses and wildfire risk
-
----
-
-### `bcr_excluding_linelosses_and_wildfire_risk`
-
-**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Wildfire Risk Costs)`
-
-**Perspective:** Societal perspective excluding line losses and wildfire risk costs
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Emissions + Outage Risk (excludes line losses + wildfire)
-
-**Use Case:** Core project economics excluding line losses and wildfire risk, but including emissions and outage risk
+**BCR < 1.0:** Ratepayers pay more than they receive in bill-relevant benefits. Expected for emissions-driven or reliability-driven projects.
 
 ---
 
-### `bcr_excluding_linelosses_and_outage_risk`
+## Exclusion Variants (3)
 
-**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Outage Risk Costs)`
+Three variants of the societal BCR, each answering a specific sensitivity question. Additional exclusion combinations are available interactively via the Custom BCR builder.
 
-**Perspective:** Societal perspective excluding line losses and outage risk costs
+### `bcr_excluding_avoided_emissions` — Excl. Avoided Emissions
 
-**Includes:**
+**Formula:** $(B^P - B_{\text{avoided,emissions}}) / C^P$
 
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Emissions + Wildfire Risk (excludes line losses + outage)
+**Question:** What is the BCR under the FERC-minimum benefit set (no emissions benefits)?
 
-**Use Case:** Core project economics excluding line losses and outage risk, but including emissions and wildfire risk
-
----
-
-### `bcr_excluding_emissions_and_linelosses_and_wildfire_risk`
-
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs)`
-
-**Perspective:** Societal perspective excluding emissions, line losses, and wildfire risk costs
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Outage Risk only
-
-**Use Case:** Core project economics excluding emissions, line losses, and wildfire risk, but including outage risk
+**Use case:** Jurisdictions that do not recognize a social cost of carbon; alignment with FERC Order 1920's seven required benefits (which exclude emissions).
 
 ---
 
-### `bcr_excluding_emissions_and_linelosses_and_outage_risk`
+### `bcr_excluding_wildfire_risk` — Excl. Wildfire
 
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Outage Risk Costs)`
+**Formula:** $B^P / (C^P - C_{\text{wf}})$
 
-**Perspective:** Societal perspective excluding emissions, line losses, and outage risk costs
+**Question:** What is the BCR for low-wildfire regions?
 
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Wildfire Risk only
-
-**Use Case:** Core project economics excluding emissions, line losses, and outage risk, but including wildfire risk
+**Use case:** Projects in the Great Plains, Midwest, or other regions where wildfire risk is geographically inappropriate.
 
 ---
 
-### `bcr_excluding_emissions_and_wildfire_risk_and_outage_risk`
+### `bcr_excluding_wildfire_risk_and_outage_risk` — Excl. Wildfire + Outage
 
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Wildfire Risk Costs - Outage Risk Costs)`
+**Formula:** $B^P / (C^P - C_{\text{wf}} - C_{\text{outage}})$
 
-**Perspective:** Societal perspective excluding emissions and both risk costs
+**Question:** What is the deterministic BCR (no probabilistic risk costs)?
 
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Line Losses (excludes emissions + wildfire + outage)
-
-**Use Case:** Core project economics from societal perspective, excluding emissions externalities and both probabilistic risks, but including line losses.
-
----
-
-### `bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk`
-
-**Equation:** `Total Benefits / (Total Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
-
-**Perspective:** Societal perspective excluding line losses and both risk costs
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay + Emissions (excludes line losses + wildfire + outage)
-
-**Use Case:** Core project economics from societal perspective, excluding line losses and both probabilistic risks, but including emissions.
-
----
-
-### `bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk`
-
-**Equation:** `Total Benefits / (Total Costs - Emissions Costs - Line Loss Costs - Wildfire Risk Costs - Outage Risk Costs)`
-
-**Perspective:** Societal perspective excluding emissions, line losses, and both risk costs
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Operational + Delay only
-
-**Use Case:** Core project economics from societal perspective, excluding all externalities and both probabilistic risks.
-
----
-
-## Capital Investment Perspectives
-
-### `bcr_capital`
-
-**Equation:** `Total Benefits / Capital Costs`
-
-**Perspective:** Capital investment return analysis
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital costs only (build + ROW + environmental)
-
-**Use Case:** Quick assessment of capital investment attractiveness from societal perspective
-
----
-
-### `bcr_capital_and_delay`
-
-**Equation:** `Total Benefits / (Capital Costs + Delay Costs)`
-
-**Perspective:** Capital investment including time value of money
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (excludes revenue transfer)
-- **Costs:** Capital + Delay costs (construction delay + congestion delay + curtailment delay)
-
-**Use Case:** Capital investment analysis accounting for project delays and time value of money from societal perspective
-
----
-
-## Stakeholder-Specific Perspectives
-
-### `bcr_utility`
-
-**Equation:** `Revenue / (Capital Costs + Delay Costs + Operational Costs)`
-
-**Perspective:** Utility or Transmission Service Provider (TSP) decision-making
-
-**Includes:**
-
-- **Benefits:** Revenue only (rate base recovery - what utilities actually receive)
-- **Costs:** Capital + Delay + Operational (O&M + insurance + ROW rent; what utilities actually pay)
-- **Excludes:** Line losses (socialized), Emissions (externalities), Residual exceedance (system cost only; not paid by utility), Risk (may be insured/not applicable)
-
-**Use Case:**
-
-- Utility/TSP investment decisions
-- Regulatory rate case analysis
-- Understanding why utilities might not build (revenue doesn't cover their costs)
-
-**Key Insight:** Utilities don't receive congestion/curtailment benefits directly - those go to ratepayers. They only get rate base recovery.
-
----
-
-### `bcr_ratepayer`
-
-**Equation:** `(Congestion + Curtailment + Delivered energy Benefits) / (Revenue + Line Loss Costs)`
-
-**Perspective:** Ratepayer/consumer perspective
-
-**Includes:**
-
-- **Benefits:** Congestion reduction + Curtailment reduction + Delivered energy (what ratepayers receive)
-- **Costs:** Revenue (rate base) + Line losses (what ratepayers pay through rates)
-- **Excludes:** Capital/O&M as separate line items (recovered via Revenue)
-
-**Use Case:**
-
-- Consumer advocate analysis
-- Public utility commission ratepayer impact assessment
-- Understanding ratepayer opposition (benefits may not exceed revenue + line loss costs they pay)
-
-**Key Insight:** Ratepayers receive congestion, curtailment, and delivered-energy benefits but pay for the project (revenue/rate base) and line losses through rates. Full ratepayer BCR compares those benefits to total ratepayer cost.
-
----
-
-### `bcr_primary`
-
-**Equation:** `Primary Benefits / Primary Costs` (customizable via flags)
-
-**Perspective:** Flexible primary analysis with optional exclusions
-
-**Includes:**
-
-- **Benefits:** Congestion (optional) + Curtailment (optional) + Delivered energy (always) [excludes revenue transfer]
-- **Costs:** Capital + Delay (always) + O&M (optional) + Insurance (optional) + Wildfire (optional) + Outage (optional) + Line Losses (optional) + Emissions (optional)
-
-**Use Case:** Custom analysis with specific module inclusions/exclusions via command-line flags from societal perspective
-
-**Note:** If no flags are set, equals `bcr_societal`
-
----
-
-## Net Benefits
-
-All BCRs have corresponding net benefit calculations (Present Value unless noted):
-
-### System/Societal Net Benefits
-
-- `net_benefit_pv = Total Benefits - Total Costs`
-- `net_benefit_nominal = Total Benefits (nominal) - Total Costs (nominal)` _(undiscounted)_
-- `net_benefit_primary_pv = Primary Benefits - Primary Costs` _(customizable via flags)_
-- `net_benefit_excluding_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Wildfire Risk - Outage Risk)`
-- `net_benefit_excluding_wildfire_risk_pv = Total Benefits - (Total Costs - Wildfire Risk)` _(new: excludes wildfire only)_
-- `net_benefit_excluding_outage_risk_pv = Total Benefits - (Total Costs - Outage Risk)` _(new: excludes outage only)_
-- `net_benefit_excluding_emissions_and_linelosses_pv = Total Benefits - (Total Costs - Energy/Emissions Costs)` _(excludes both emissions and line losses)_
-- `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv = Total Benefits - (Total Costs - Energy/Emissions - Wildfire Risk - Outage Risk)`
-- `net_benefit_capital_only_pv = Total Benefits - Capital Costs`
-- `net_benefit_capital_and_delay_pv = Total Benefits - (Capital Costs + Delay Costs)`
-
-### Stakeholder-Specific Net Benefits
-
-- `net_benefit_utility_pv = Revenue - (Capital Costs + Delay Costs + Operational Costs)`
-- `net_benefit_ratepayer_pv = (Congestion + Curtailment + Delivered energy Benefits) - (Revenue + Line Loss Costs)`
-
-### Partial Exclusion Net Benefits (All 16 Combinations)
-
-Systematic exploration of all combinations excluding emissions, line losses, wildfire risk, and outage risk:
-
-| Exclude Wildfire | Exclude Outage | Exclude Emissions | Exclude Line Losses | Net Benefit Variable                                                                  | Equation                                                                                                       |
-| ---------------- | -------------- | ----------------- | ------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| No               | No             | No                | No                  | `net_benefit_pv`                                                                      | `Total Benefits - Total Costs`                                                                                 |
-| Yes              | No             | No                | No                  | `net_benefit_excluding_wildfire_risk_pv`                                              | `Total Benefits - (Total Costs - Wildfire Risk)`                                                               |
-| No               | Yes            | No                | No                  | `net_benefit_excluding_outage_risk_pv`                                                | `Total Benefits - (Total Costs - Outage Risk)`                                                                 |
-| Yes              | Yes            | No                | No                  | `net_benefit_excluding_wildfire_risk_and_outage_risk_pv`                              | `Total Benefits - (Total Costs - Wildfire Risk - Outage Risk)`                                                 |
-| No               | No             | Yes               | No                  | `net_benefit_excluding_emissions_pv`                                                  | `Total Benefits - (Total Costs - Emissions)` _(keeps line losses)_                                             |
-| Yes              | No             | Yes               | No                  | `net_benefit_excluding_emissions_and_wildfire_risk_pv`                                | `Total Benefits - (Total Costs - Emissions - Wildfire Risk)`                                                   |
-| No               | Yes            | Yes               | No                  | `net_benefit_excluding_emissions_and_outage_risk_pv`                                  | `Total Benefits - (Total Costs - Emissions - Outage Risk)`                                                     |
-| Yes              | Yes            | Yes               | No                  | `net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv`                | `Total Benefits - (Total Costs - Emissions - Wildfire Risk - Outage Risk)`                                     |
-| No               | No             | No                | Yes                 | `net_benefit_excluding_linelosses_pv`                                                 | `Total Benefits - (Total Costs - Line Losses)` _(keeps emissions)_                                             |
-| Yes              | No             | No                | Yes                 | `net_benefit_excluding_linelosses_and_wildfire_risk_pv`                               | `Total Benefits - (Total Costs - Line Losses - Wildfire Risk)`                                                 |
-| No               | Yes            | No                | Yes                 | `net_benefit_excluding_linelosses_and_outage_risk_pv`                                 | `Total Benefits - (Total Costs - Line Losses - Outage Risk)`                                                   |
-| Yes              | Yes            | No                | Yes                 | `net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv`               | `Total Benefits - (Total Costs - Line Losses - Wildfire Risk - Outage Risk)`                                   |
-| No               | No             | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_pv`                                   | `Total Benefits - (Total Costs - Emissions - Line Losses)` _(excludes both)_                                   |
-| Yes              | No             | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv`                 | `Total Benefits - (Total Costs - Emissions - Line Losses - Wildfire Risk)`                                     |
-| No               | Yes            | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv`                   | `Total Benefits - (Total Costs - Emissions - Line Losses - Outage Risk)`                                       |
-| Yes              | Yes            | Yes               | Yes                 | `net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv` | `Total Benefits - (Total Costs - Emissions - Line Losses - Wildfire Risk - Outage Risk)` _(excludes all four)_ |
-
-**Note:** All use societal perspective (benefits: congestion + curtailment + delivered energy; excludes revenue transfer)
-
-**Interpretation:** Positive = benefits exceed costs, Negative = costs exceed benefits
+**Use case:** Stakeholders who question probabilistic risk valuation methodology.
 
 ---
 
 ## Quick Decision Guide
 
-| Question                                                     | Use This BCR                                                               |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| Should a utility/TSP build this?                             | `bcr_utility`                                                              |
-| Do ratepayers benefit?                                       | `bcr_ratepayer`                                                            |
-| Is it good for society overall?                              | `bcr_societal` or `bcr_excluding_wildfire_risk_and_outage_risk`            |
-| Is the capital investment attractive?                        | `bcr_capital` or `bcr_capital_and_delay`                                   |
-| What if we ignore wildfire risk (but keep outage)?           | `bcr_excluding_wildfire_risk`                                              |
-| What if we ignore outage risk (but keep wildfire)?           | `bcr_excluding_outage_risk`                                                |
-| What if we ignore both wildfire and outage risk?             | `bcr_excluding_wildfire_risk_and_outage_risk`                              |
-| What if we ignore emissions only?                            | `bcr_excluding_emissions`                                                  |
-| What if we ignore line losses only?                          | `bcr_excluding_linelosses`                                                 |
-| What if we ignore both emissions and line losses?            | `bcr_excluding_emissions_and_linelosses`                                   |
-| What if we ignore emissions and both risks?                  | `bcr_excluding_emissions_and_wildfire_risk_and_outage_risk`                |
-| What if we ignore line losses and both risks?                | `bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk`               |
-| What if we ignore emissions and wildfire risk (keep outage)? | `bcr_excluding_emissions_and_wildfire_risk`                                |
-| What if we ignore emissions and outage risk (keep wildfire)? | `bcr_excluding_emissions_and_outage_risk`                                  |
-| Core project economics only (no externalities, no risks)?    | `bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk` |
+| Question | BCR |
+|---|---|
+| Is it good for society overall? | `bcr_societal` |
+| Does congestion relief alone justify it? | `bcr_system` (congestion relief) |
+| Is the capital investment attractive? | `bcr_capital` or `bcr_capital_and_delay` |
+| Should a utility build this? | `bcr_utility` |
+| Do ratepayers benefit? | `bcr_ratepayer` |
+| What if we exclude emissions benefits? | `bcr_excluding_avoided_emissions` |
+| Low-wildfire region? | `bcr_excluding_wildfire_risk` |
+| No risk costs at all? | `bcr_excluding_wildfire_risk_and_outage_risk` |
 
 ---
 
-## Important Notes
+## Notes
 
-1. **Present Value:** All values are in present value (PV) terms, discounted to base year
-2. **Context Matters:**
-   - Wildfire costs assume California-style catastrophic events ($5B/event)
-   - For regions with lower wildfire risk (e.g., Virginia, Great Plains), `bcr_excluding_wildfire_risk` may be more appropriate than `bcr_excluding_wildfire_risk_and_outage_risk`
-   - Outage risk is more universal (weather, equipment failure) and generally applicable across regions
-   - Line losses are socialized through rates (not direct utility costs)
-   - Emissions are externalities (utilities don't pay unless carbon pricing exists)
-3. **Separating Wildfire and Outage Risk:**
-   - Wildfire risk is highly region-specific (California vs. Virginia vs. Great Plains)
-   - Outage risk is more universal and applicable across regions
-   - Use `bcr_excluding_wildfire_risk` for Virginia scenarios where California-calibrated wildfire parameters would overstate risk
-   - Use `bcr_excluding_wildfire_risk_and_outage_risk` when both risks should be excluded
-   - Use `bcr_excluding_outage_risk` when only outage risk should be excluded (rare, but possible if outage risk is insured/managed separately)
-
----
-
-## Example: Scenario 1 (Rural Overhead AC 657MW)
-
-- `bcr_utility = 0.36` → Utility loses money (revenue doesn't cover costs)
-- `bcr_ratepayer = 0.22` → Ratepayers lose money (benefits don't cover revenue + line losses)
-- `bcr_societal = 0.02` → Very poor societal return (wildfire risk dominates)
-- `bcr_excluding_wildfire_risk_and_outage_risk = 0.24` → Better but still negative (excluding both risks)
-- `bcr_excluding_wildfire_risk = 0.XX` → Better if only wildfire risk excluded (keeps outage risk)
-
-**Interpretation:** This project doesn't make economic sense from utility or ratepayer perspectives, and only marginally from societal perspective if wildfire risk (or both risks) is excluded. The separation of wildfire and outage risk allows for more nuanced regional analysis.
+1. **Present value:** All values are in PV terms, discounted to base year.
+2. **AFUDC:** Capital costs use year-by-year S-curve compounding (MISO MTEP25 profiles) from construction spending to COD.
+3. **Revenue model:** Declining-balance FERC formula rate (straight-line depreciation + return on declining rate base).
+4. **Custom BCR:** The web app's Custom BCR builder lets users toggle any combination of 5 excludable groups (avoided emissions, loss-compensation emissions, line losses, wildfire, outage) for ad-hoc sensitivity.

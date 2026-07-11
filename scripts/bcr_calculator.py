@@ -138,10 +138,12 @@ _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
     "hard": _HARD_IDS,
     "hard_delay": _HARD_IDS | _DELAY_IDS,
-    "hard_base_delay_operational": _HARD_IDS | _BASE_DELAY_IDS | _OPERATIONAL_IDS,
     "hard_operational_loss": _HARD_IDS | _OPERATIONAL_IDS | frozenset({"line_loss_conductor", "line_loss_converter"}),
+    "atrr_delay": frozenset({
+        "capital_recovery", "oandm", "insurance", "row_rent", "base_delay",
+    }),
     "revenue_requirement_loss": frozenset({
-        "capital_recovery", "oandm", "insurance",
+        "capital_recovery", "oandm", "insurance", "row_rent",
         "line_loss_conductor", "line_loss_converter",
     }),
 }
@@ -150,7 +152,7 @@ _NUMER_SETS: dict[str, frozenset[str]] = {
     "remedial": _REMEDIAL_IDS,
     "remedial_enabling": _REMEDIAL_IDS | _ENABLING_IDS,
     "capital_recovery": frozenset({"capital_recovery"}),
-    "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance"}),
+    "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance", "row_rent"}),
 }
 
 # Output key generation for exclusion BCR variants
@@ -271,9 +273,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         elif bcr_def.id == "bcr_system":
             out["bcr_system"] = bcr_value
             out["net_benefit_system_pv"] = net_benefit
-        elif bcr_def.id == "bcr_system_delivered":
-            out["bcr_system_delivered"] = bcr_value
-            out["net_benefit_system_delivered_pv"] = net_benefit
         elif bcr_def.id == "bcr_capital":
             out["bcr_capital"] = bcr_value
             out["net_benefit_capital_only_pv"] = net_benefit

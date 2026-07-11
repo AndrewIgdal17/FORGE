@@ -61,38 +61,24 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     fin["base_year"] = 2025
     fin["inflation_rate"] = 0.03
     fin["wacc_nominal"] = 0.085
-    fin["social_discount_rate"] = 0.03
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.0  # no overhead structures
-    fin["contingencies"]["converter_contingency"] = 0.10
+    fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- Section 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
-    ins["premium_rate"] = 0.003
     ins["insurable_components"]["conductors"] = True
     ins["insurable_components"]["structures"] = False
     ins["insurable_components"]["converters"] = True
 
-    # --- Section 05: Delay Costs (annual, total $4.2M/yr) ---
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 500000,
-        "admin": 400000,
-        "labor": 300000,
-        "material_and_equipment": 200000,
-        "regulatory": 1500000,
-        "public_relations": 300000,
-        "project_management": 800000,
-        "miscellaneous": 200000,
-    }
+    # --- Section 05: Delay Costs (annual, total $6.0M/yr) ---
+    inputs["05_delays"]["annual_base_delay_cost"] = 6_000_000
 
     # --- Section 06: Wildfire (zero risk for subsea) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
     wf["severity_per_event"] = 0
     wf["risk_growth_rate"] = 0.015
-    wf["discount_rate_source"] = "social"
 
     # --- Section 07: Outage ---
     # TBC provides ~40-50% of SF peak power but SF has backup AC paths.
@@ -117,10 +103,6 @@ def patch_tbc_inputs(inputs: dict) -> dict:
         row[zone_key]["rent_cost"] = 0
         row[zone_key]["hold_cost"] = 0
     row["zone_1"]["miles"] = 53
-
-    # --- Section 16: Emissions ---
-    emis = inputs["16_emissions_reductions"]["emissions_reductions"]
-    emis["compensation_percent"] = 0.9
 
     # --- Section 17: Congestion/Curtailment (Approach B; load pocket, congestion-dominated) ---
     cc = inputs["17_congestion_curtailment_reductions"]
@@ -200,7 +182,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR System + Delivered:         {bcr.get('bcr_system_delivered', 0):.3f}")
     print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
     print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")

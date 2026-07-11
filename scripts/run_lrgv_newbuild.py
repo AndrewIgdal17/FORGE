@@ -66,37 +66,23 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     fin["inflation_rate"] = 0.025
     fin["wacc_nominal"] = 0.067
     fin["social_discount_rate"] = 0.02
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.10
-    fin["contingencies"]["converter_contingency"] = 0.10
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
-    ins["premium_rate"] = 0.002
     ins["insurable_components"]["conductors"] = True
     ins["insurable_components"]["structures"] = True
     ins["insurable_components"]["converters"] = True
 
     # --- 05: Delay Costs (annual, 7yr permitting for new corridor) ---
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 1_500_000,
-        "admin": 500_000,
-        "labor": 1_000_000,
-        "material_and_equipment": 800_000,
-        "regulatory": 2_000_000,
-        "public_relations": 800_000,
-        "project_management": 2_000_000,
-        "miscellaneous": 400_000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 9_000_000
 
     # --- 06: Wildfire (zeroed — low-fire South Texas coastal plain) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
     wf["severity_per_event"] = 0
     wf["risk_growth_rate"] = 0.0
-    wf["discount_rate_source"] = "social"
     wf["base_ignition_rate"] = 0.0
 
     # --- 07: Outage (zeroed — case study focuses on reconductoring economics) ---
@@ -106,7 +92,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
 
     # --- 09: Environmental Mitigation (greenfield — NOT zeroed) ---
     env = inputs["09_environmental_mitigation"]["environmental_mitigation"]
-    env["wetland_credit_cost_per_acre"] = 25_000
     env["habitat_credit_cost_per_acre"] = {
         "forested": 30_000,
         "scrubbed_flat": 5_000,
@@ -208,7 +193,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR System + Delivered:         {bcr.get('bcr_system_delivered', 0):.3f}")
     print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
     print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")

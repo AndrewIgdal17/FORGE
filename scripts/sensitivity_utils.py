@@ -24,11 +24,14 @@ from typing import Dict, Any, List, Tuple, Optional, Callable
 
 BCR_COLUMNS = [
     "bcr_societal",
+    "bcr_system",
     "bcr_capital",
     "bcr_capital_and_delay",
-    "bcr_excluding_risk",
-    "bcr_excluding_emissions",
-    "bcr_excluding_emissions_and_risk",
+    "bcr_excluding_avoided_emissions",
+    "bcr_excluding_wildfire_risk",
+    "bcr_excluding_wildfire_risk_and_outage_risk",
+    "bcr_utility",
+    "bcr_ratepayer",
 ]
 
 

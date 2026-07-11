@@ -38,7 +38,7 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     proj["project"]["old_ac_dc"] = None
     proj["timeline"]["construction_years"] = 3
     proj["timeline"]["delay_years"] = 17
-    proj["timeline"]["project_lifetime"] = 40
+    proj["timeline"]["project_lifetime"] = 50
 
     # --- Tab 2: Terrain Miles ---
     terrain = inputs["02_project_physical_details"]["terrain"]
@@ -76,42 +76,15 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     fin["base_year"] = 2025
     fin["inflation_rate"] = 0.03
     fin["wacc_nominal"] = 0.075
-    fin["social_discount_rate"] = 0.03
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.10
-    fin["contingencies"]["converter_contingency"] = 0.10
+    fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- Tab 5: Delay Costs ---
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 2500000,
-        "admin": 800000,
-        "labor": 1000000,
-        "material_and_equipment": 500000,
-        "regulatory": 3000000,
-        "public_relations": 500000,
-        "project_management": 2000000,
-        "miscellaneous": 500000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 15_000_000
 
-    # --- Tab 6: Wildfire ---
-    wf = inputs["06_wildfire_costs"]["wildfire"]
-    wf["severity_per_event"] = 8000000
-    wf["risk_growth_rate"] = 0.015
-    wf["discount_rate_source"] = "social"
-    wf["ignition_rates_by_terrain"] = {
-        "forested": 0.002,
-        "scrubbed_flat": 0.002,
-        "wetland": 0.002,
-        "farmland": 0.002,
-        "desert_barren": 0.002,
-        "urban": 0.002,
-        "rolling_hills": 0.002,
-        "mountain": 0.002,
-        "subsea": 0.0,
-    }
+    # Wildfire: uses YAML defaults (overhead, base_ignition_rate=0.002)
 
     # --- Tab 7: Outage ---
     out = inputs["07_outage_costs"]["outage"]
@@ -195,7 +168,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR System + Delivered:         {bcr.get('bcr_system_delivered', 0):.3f}")
     print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
     print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")

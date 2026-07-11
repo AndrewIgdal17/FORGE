@@ -40,17 +40,12 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     fin["inflation_rate"] = 0.025
     fin["wacc_nominal"] = 0.067
     fin["social_discount_rate"] = 0.02
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.10
-    fin["contingencies"]["converter_contingency"] = 0.10
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
-    fin["revenue"]["rate_based"].pop("allowed_return_rate", None)
 
     # --- 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
-    ins["premium_rate"] = 0.002
     ins["insurable_components"]["conductors"] = True
     ins["insurable_components"]["structures"] = True
     ins["insurable_components"]["converters"] = True
@@ -59,7 +54,6 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     wf = inputs["06_wildfire_costs"]["wildfire"]
     wf["severity_per_event"] = 0
     wf["risk_growth_rate"] = 0.0
-    wf["discount_rate_source"] = "social"
     wf["base_ignition_rate"] = 0.0
 
     # --- 07: Outage (zeroed — case study focuses on reconductoring economics) ---
@@ -69,7 +63,6 @@ def _patch_lrgv_common(inputs: dict) -> dict:
 
     # --- 09: Environmental Mitigation ---
     env = inputs["09_environmental_mitigation"]["environmental_mitigation"]
-    env["wetland_credit_cost_per_acre"] = 25_000
     env["habitat_credit_cost_per_acre"] = {
         "forested": 30_000,
         "scrubbed_flat": 5_000,
@@ -159,16 +152,7 @@ def patch_lrgv_accc(inputs: dict) -> dict:
     proj["timeline"]["delay_years"] = 1
     proj["timeline"]["project_lifetime"] = 50
 
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 200_000,
-        "admin": 200_000,
-        "labor": 2_000_000,
-        "material_and_equipment": 1_500_000,
-        "regulatory": 100_000,
-        "public_relations": 50_000,
-        "project_management": 1_500_000,
-        "miscellaneous": 450_000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 6_000_000
 
     return inputs
 
@@ -200,16 +184,7 @@ def patch_lrgv_acsr_rebuild(inputs: dict) -> dict:
     proj["timeline"]["delay_years"] = 2
     proj["timeline"]["project_lifetime"] = 50
 
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 1_000_000,
-        "admin": 500_000,
-        "labor": 2_000_000,
-        "material_and_equipment": 1_500_000,
-        "regulatory": 1_500_000,
-        "public_relations": 500_000,
-        "project_management": 2_500_000,
-        "miscellaneous": 500_000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 10_000_000
 
     return inputs
 

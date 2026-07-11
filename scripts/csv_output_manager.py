@@ -89,52 +89,21 @@ BATCH_SUMMARY_FIELDS = [
     # 10. BCR Metrics
     "bcr_societal",
     "bcr_system",
-    "bcr_system_delivered",
     "bcr_capital",
     "bcr_capital_and_delay",
-    # Combined risk BCRs (renamed)
-    "bcr_excluding_wildfire_risk_and_outage_risk",
-    "bcr_excluding_emissions_and_wildfire_risk_and_outage_risk",
-    "bcr_excluding_linelosses_and_wildfire_risk_and_outage_risk",
-    "bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk",
-    # Emissions/linelosses BCRs (unchanged)
-    "bcr_excluding_emissions",
-    "bcr_excluding_linelosses",
-    "bcr_excluding_emissions_and_linelosses",
-    # Wildfire-only BCRs (new)
+    # Tier 1 exclusion BCRs (3 analytically motivated variants)
+    "bcr_excluding_avoided_emissions",
     "bcr_excluding_wildfire_risk",
-    "bcr_excluding_emissions_and_wildfire_risk",
-    "bcr_excluding_linelosses_and_wildfire_risk",
-    "bcr_excluding_emissions_and_linelosses_and_wildfire_risk",
-    # Outage-only BCRs (new)
-    "bcr_excluding_outage_risk",
-    "bcr_excluding_emissions_and_outage_risk",
-    "bcr_excluding_linelosses_and_outage_risk",
-    "bcr_excluding_emissions_and_linelosses_and_outage_risk",
+    "bcr_excluding_wildfire_risk_and_outage_risk",
     # Stakeholder perspectives
     "bcr_utility",
     "bcr_ratepayer",
     # 11. Net Benefits PV
     "net_benefit_pv",
-    # Combined risk net benefits (renamed)
-    "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
-    "net_benefit_excluding_emissions_and_wildfire_risk_and_outage_risk_pv",
-    "net_benefit_excluding_linelosses_and_wildfire_risk_and_outage_risk_pv",
-    "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk_pv",
-    # Emissions/linelosses net benefits (unchanged)
-    "net_benefit_excluding_emissions_pv",
-    "net_benefit_excluding_linelosses_pv",
-    "net_benefit_excluding_emissions_and_linelosses_pv",
-    # Wildfire-only net benefits (new)
+    # Tier 1 exclusion net benefits (3 analytically motivated variants)
+    "net_benefit_excluding_avoided_emissions_pv",
     "net_benefit_excluding_wildfire_risk_pv",
-    "net_benefit_excluding_emissions_and_wildfire_risk_pv",
-    "net_benefit_excluding_linelosses_and_wildfire_risk_pv",
-    "net_benefit_excluding_emissions_and_linelosses_and_wildfire_risk_pv",
-    # Outage-only net benefits (new)
-    "net_benefit_excluding_outage_risk_pv",
-    "net_benefit_excluding_emissions_and_outage_risk_pv",
-    "net_benefit_excluding_linelosses_and_outage_risk_pv",
-    "net_benefit_excluding_emissions_and_linelosses_and_outage_risk_pv",
+    "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
     # Capital and stakeholder net benefits
     "net_benefit_capital_only_pv",
     "net_benefit_capital_and_delay_pv",

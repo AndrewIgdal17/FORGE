@@ -62,31 +62,18 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     fin["base_year"] = 2024
     fin["inflation_rate"] = 0.03
     fin["wacc_nominal"] = 0.075
-    fin["social_discount_rate"] = 0.03
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.0
-    fin["contingencies"]["converter_contingency"] = 0.0
+    fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- Tab 04: Insurance ---
     ins = inputs["04_insurance"]["insurance"]
-    ins["premium_rate"] = 0.025
     ins["insurable_components"]["structures"] = False
     ins["insurable_components"]["converters"] = False
 
     # --- Tab 05: Delay Costs ---
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 1500000,
-        "admin": 600000,
-        "labor": 500000,
-        "material_and_equipment": 200000,
-        "regulatory": 2500000,
-        "public_relations": 400000,
-        "project_management": 1500000,
-        "miscellaneous": 300000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 10_000_000
 
     # --- Tab 06: Wildfire ---
     # Subsea ignition_rate_multiplier is 0.0 in the template — wildfire EAC = $0.
@@ -191,7 +178,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR System + Delivered:         {bcr.get('bcr_system_delivered', 0):.3f}")
     print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
     print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")

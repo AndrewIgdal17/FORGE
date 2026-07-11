@@ -1349,7 +1349,6 @@ function renderBCRHeadline(results) {
   const coreDefs = [
     { id: 'bcr_societal', label: 'Societal BCR', family: 'societal' },
     { id: 'bcr_system', label: 'System BCR', family: 'system' },
-    { id: 'bcr_system_delivered', label: 'System + Delivered BCR', family: 'system' },
     { id: 'bcr_utility', label: 'Utility BCR', family: 'firm' },
     { id: 'bcr_ratepayer', label: 'Ratepayer BCR', family: 'firm' },
     { id: 'bcr_capital', label: 'Capital BCR', family: 'screening' },
@@ -1423,7 +1422,6 @@ function renderPerspectivesTable(results) {
   const allBenefits = bcr.total_benefits_pv || 0;
   const allCosts = bcr.total_costs_pv || 0;
   const remedialBenefits = bcr.benefits_remedial_pv || 0;
-  const enablingBenefits = bcr.benefits_enabling_pv || 0;
   const hardCosts = bcr.hard_costs_pv || 0;
   const operationalCosts = bcr.operational_costs_pv || 0;
   const energyLosses = bcr.energy_losses_pv || 0;
@@ -1431,7 +1429,6 @@ function renderPerspectivesTable(results) {
   const baseDelayCost = bcr.delay_cost_pv || 0;
   const systemCosts = hardCosts + operationalCosts + energyLosses;
   const systemBenefits = remedialBenefits;
-  const systemDeliveredBenefits = remedialBenefits + enablingBenefits;
   const utilityCosts = hardCosts + baseDelayCost + operationalCosts;
   const ratepayerBenefits = allBenefits;
   const ratepayerCosts = (bcr.revenue_pv || 0) + energyLosses;
@@ -1451,7 +1448,6 @@ function renderPerspectivesTable(results) {
     ],
     system: [
       { name: 'System', benefits: systemBenefits, costs: systemCosts, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_system_pv || (systemBenefits - systemCosts) },
-      { name: 'System + Delivered', benefits: systemDeliveredBenefits, costs: systemCosts, bcrVal: bcr.bcr_system_delivered || 0, netBenefit: bcr.net_benefit_system_delivered_pv || (systemDeliveredBenefits - systemCosts) },
     ],
     firm: [
       { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0, tooltip: 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.' },

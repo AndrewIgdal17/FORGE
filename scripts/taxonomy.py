@@ -9,7 +9,6 @@ Canonical source: .cursor/plans/2026-05-10__ctcc-cost-benefit-taxonomy.md
 
 from __future__ import annotations
 
-import itertools
 import json
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -35,9 +34,9 @@ NumeratorRule = Literal[
 ]
 DenominatorRule = Literal[
     "all_costs", "hard", "hard_delay", "hard_operational_loss",
-    "hard_base_delay_operational", "revenue_requirement_loss",
+    "atrr_delay", "revenue_requirement_loss",
 ]
-Perspective = Literal["societal", "system", "system_delivered", "stakeholder"]
+Perspective = Literal["societal", "system", "stakeholder"]
 Family = Literal["societal", "system", "firm", "screening"]
 
 # ---------------------------------------------------------------------------
@@ -196,7 +195,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Contingency factors for conductor, structure, converter costs."),
     TaxonomyItem("financial_revenue_config", "utility", "financial", "revenue",
                  "Revenue & Return Configuration", None, None, 4,
-                 "Rate-based revenue: enabled flag, allowed return rate."),
+                 "Rate-based revenue: enabled flag, FERC declining-balance formula."),
     TaxonomyItem("financial_afudc", "utility", "financial", "afudc",
                  "AFUDC Configuration", None, None, 5,
                  "AFUDC application toggle and delay period active work flag."),
@@ -280,7 +279,7 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
 }
 
 # ---------------------------------------------------------------------------
-# Section 3b — Core BCR perspectives (5)
+# Section 3b — Core BCR perspectives (6)
 # ---------------------------------------------------------------------------
 
 BCR_DEFINITIONS: dict[str, BCRDefinition] = {
@@ -290,16 +289,10 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
         "Full societal benchmark. Revenue excluded.",
     ),
     "bcr_system": BCRDefinition(
-        "bcr_system", "System", "system", "system",
+        "bcr_system", "Congestion Relief", "system", "system",
         "remedial", "hard_operational_loss",
         frozenset(), 2,
         "Congestion and curtailment relief only; pure grid-operational.",
-    ),
-    "bcr_system_delivered": BCRDefinition(
-        "bcr_system_delivered", "System + Delivered", "system", "system_delivered",
-        "remedial_enabling", "hard_operational_loss",
-        frozenset(), 3,
-        "Adds energy throughput value to System.",
     ),
     "bcr_capital": BCRDefinition(
         "bcr_capital", "Capital Only", "screening", "societal",
@@ -313,8 +306,8 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     ),
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "firm", "stakeholder",
-        "revenue_requirement", "hard_base_delay_operational", frozenset(), 6,
-        "Whether regulated revenue requirement covers all utility costs (FERC CoS).",
+        "revenue_requirement", "atrr_delay", frozenset(), 6,
+        "Pure utility: ATRR / (ATRR + base delay). BCR = 1.0 by identity for zero-delay regulated projects.",
     ),
     "bcr_ratepayer": BCRDefinition(
         "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
@@ -331,29 +324,34 @@ BCR_FAMILY_META: dict[Family, dict[str, str | int]] = {
 }
 
 # ---------------------------------------------------------------------------
-# Section 3c — Exclusion variants (15, auto-generated)
+# Section 3c — Exclusion variants (3 Tier 1, analytically motivated)
+#
+# Only variants with a clear regulatory or analytical question are retained.
+# See: Projects/CTCC/docs/research/2026-07-08__bcr-framework-justification.md
+# The interactive "Custom BCR" builder (powered by EXCLUDABLE_GROUPS above)
+# lets users compose arbitrary exclusions on demand.
 # ---------------------------------------------------------------------------
 
-_excl_variants: dict[str, BCRDefinition] = {}
-_display_base = 10
-for _r in range(1, len(EXCLUDABLE_GROUPS) + 1):
-    for _combo in itertools.combinations(sorted(EXCLUDABLE_GROUPS), _r):
-        if len(_combo) == len(EXCLUDABLE_GROUPS):
-            _variant_id = "bcr_excl_all"
-            _label = "Excl. All"
-        else:
-            _variant_id = "bcr_excl_" + "_".join(_combo)
-            _label = "Excl. " + " + ".join(
-                g.replace("_", " ").title() for g in _combo
-            )
-        _excl_variants[_variant_id] = BCRDefinition(
-            _variant_id, _label, "societal", "societal",
-            "all_benefits", "all_costs", frozenset(_combo),
-            _display_base, None,
-        )
-        _display_base += 1
-
-BCR_EXCLUSION_VARIANTS: dict[str, BCRDefinition] = _excl_variants
+BCR_EXCLUSION_VARIANTS: dict[str, BCRDefinition] = {
+    "bcr_excl_avoided_emissions": BCRDefinition(
+        "bcr_excl_avoided_emissions", "Excl. Avoided Emissions",
+        "societal", "societal",
+        "all_benefits", "all_costs", frozenset({"avoided_emissions"}),
+        10, "FERC-minimum benefit set (no emissions benefits).",
+    ),
+    "bcr_excl_wildfire": BCRDefinition(
+        "bcr_excl_wildfire", "Excl. Wildfire",
+        "societal", "societal",
+        "all_benefits", "all_costs", frozenset({"wildfire"}),
+        11, "For low-wildfire regions.",
+    ),
+    "bcr_excl_outage_wildfire": BCRDefinition(
+        "bcr_excl_outage_wildfire", "Excl. Wildfire + Outage",
+        "societal", "societal",
+        "all_benefits", "all_costs", frozenset({"wildfire", "outage"}),
+        12, "Deterministic BCR (no risk costs).",
+    ),
+}
 ALL_BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     **BCR_DEFINITIONS,
     **BCR_EXCLUSION_VARIANTS,
@@ -530,14 +528,14 @@ if __name__ == "__main__":
     )
 
     # 8d. BCR coverage
-    assert len(BCR_DEFINITIONS) == 7, (
-        f"Expected 7 core BCR definitions, got {len(BCR_DEFINITIONS)}"
+    assert len(BCR_DEFINITIONS) == 6, (
+        f"Expected 6 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
-    assert len(BCR_EXCLUSION_VARIANTS) == 31, (
-        f"Expected 31 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
+    assert len(BCR_EXCLUSION_VARIANTS) == 3, (
+        f"Expected 3 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 38, (
-        f"Expected 38 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 9, (
+        f"Expected 9 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups
@@ -564,7 +562,7 @@ if __name__ == "__main__":
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 35 items, 36 BCR definitions, 5 excludable groups")
+    print("Taxonomy verification passed: 35 items, 9 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"

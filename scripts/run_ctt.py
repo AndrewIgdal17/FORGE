@@ -64,30 +64,17 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     fin["base_year"] = 2026
     fin["wacc_nominal"] = 0.0693
     fin["social_discount_rate"] = 0.02
-    fin["contingencies"]["conductor_contingency"] = 0.10
-    fin["contingencies"]["structure_contingency"] = 0.10
-    fin["contingencies"]["converter_contingency"] = 0.10
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 05: Delay Costs (Scenario A: streamlined CREZ permitting) ---
-    inputs["05_delays"]["annual_delay_costs"] = {
-        "legal": 500000,
-        "admin": 300000,
-        "labor": 1000000,
-        "material_and_equipment": 500000,
-        "regulatory": 800000,
-        "public_relations": 200000,
-        "project_management": 1500000,
-        "miscellaneous": 200000,
-    }
+    inputs["05_delays"]["annual_base_delay_cost"] = 5_000_000
 
     # --- 06: Wildfire (ZEROED) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
     wf["severity_per_event"] = 0
     wf["risk_growth_rate"] = 0.0
-    wf["discount_rate_source"] = "social"
     wf["base_ignition_rate"] = 0.0
 
     # --- 11: ROW Details ---
@@ -185,7 +172,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
     print(f"  BCR System:             {bcr.get('bcr_system', 'N/A'):.3f}")
-    print(f"  BCR System + Delivered: {bcr.get('bcr_system_delivered', 'N/A'):.3f}")
     print(f"  BCR Capital Only:       {bcr.get('bcr_capital', 'N/A'):.3f}")
     if "bcr_capital_and_delay" in bcr:
         print(f"  BCR Capital + Delay:    {bcr['bcr_capital_and_delay']:.3f}")
@@ -220,16 +206,7 @@ def main():
     print("\n\nBuilding CTT Panhandle (7-year delay, counterfactual) scenario...")
     inputs_counterfactual = copy.deepcopy(inputs_actual)
     inputs_counterfactual["01_project_technical_details"]["timeline"]["delay_years"] = 7
-    inputs_counterfactual["05_delays"]["annual_delay_costs"] = {
-        "legal": 2000000,
-        "admin": 600000,
-        "labor": 1500000,
-        "material_and_equipment": 1000000,
-        "regulatory": 2500000,
-        "public_relations": 1000000,
-        "project_management": 2500000,
-        "miscellaneous": 900000,
-    }
+    inputs_counterfactual["05_delays"]["annual_base_delay_cost"] = 8_000_000
 
     print("Running calculation (delay=7, counterfactual)...")
     results_cf = run_scenario(inputs_counterfactual, "CTT_Counterfactual_Delay7")

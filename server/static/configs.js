@@ -23,8 +23,7 @@
           { key: 'bcr_societal', label: 'BCR Societal', path: 'bcr.bcr_societal', format: 'number3' },
         ]},
         { group: 'BCR — System', metrics: [
-          { key: 'bcr_system', label: 'BCR System', path: 'bcr.bcr_system', format: 'number3' },
-          { key: 'bcr_system_delivered', label: 'BCR System + Delivered', path: 'bcr.bcr_system_delivered', format: 'number3' },
+          { key: 'bcr_system', label: 'BCR Congestion Relief', path: 'bcr.bcr_system', format: 'number3' },
         ]},
         { group: 'BCR — Firm', metrics: [
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
@@ -81,12 +80,7 @@
           { key: 'total_energy_emissions_pv', label: 'Line Loss + Line Loss Compensation Emissions', path: 'summary.total_energy_emissions_pv', format: 'currency', description: 'Sum of line loss costs and line loss compensation emissions. Does not include facilitated emissions or avoided emissions.' },
         ]},
         { group: 'BCR — Societal Exclusions', metrics: [
-          { key: 'bcr_excl_em', label: 'BCR excl. Emissions', path: 'bcr.bcr_excluding_emissions', format: 'number3' },
-          { key: 'bcr_excl_em_ll', label: 'BCR excl. Emissions + Losses', path: 'bcr.bcr_excluding_emissions_and_linelosses', format: 'number3' },
-          { key: 'bcr_excl_em_ll_wf', label: 'BCR excl. Emissions + Losses + Wildfire', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk', format: 'number3' },
-          { key: 'bcr_excl_em_ll_wf_out', label: 'BCR excl. Emissions + Losses + Wildfire + Outage', path: 'bcr.bcr_excluding_emissions_and_linelosses_and_wildfire_risk_and_outage_risk', format: 'number3' },
-          { key: 'bcr_excl_ll', label: 'BCR excl. Line Losses', path: 'bcr.bcr_excluding_linelosses', format: 'number3' },
-          { key: 'bcr_excl_out', label: 'BCR excl. Outage', path: 'bcr.bcr_excluding_outage_risk', format: 'number3' },
+          { key: 'bcr_excl_av_em', label: 'BCR excl. Avoided Emissions', path: 'bcr.bcr_excluding_avoided_emissions', format: 'number3' },
           { key: 'bcr_excl_wf', label: 'BCR excl. Wildfire', path: 'bcr.bcr_excluding_wildfire_risk', format: 'number3' },
           { key: 'bcr_excl_wf_out', label: 'BCR excl. Wildfire + Outage', path: 'bcr.bcr_excluding_wildfire_risk_and_outage_risk', format: 'number3' },
         ]},
