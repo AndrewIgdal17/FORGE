@@ -178,8 +178,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
-    print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")
     print(f"  BCR Ratepayer:                  {bcr.get('bcr_ratepayer', 0):.3f}")
 
@@ -246,7 +244,6 @@ def main():
     print(f"{'='*60}")
     print(f"  BCR Societal: {bcr6.get('bcr_societal',0):.3f} (6yr) → {bcr2.get('bcr_societal',0):.3f} (2yr)")
     print(f"  BCR Utility: {bcr6.get('bcr_utility',0):.3f} (6yr) → {bcr2.get('bcr_utility',0):.3f} (2yr)")
-    print(f"  BCR Cap+Del: {bcr6.get('bcr_capital_and_delay',0):.3f} (6yr) → {bcr2.get('bcr_capital_and_delay',0):.3f} (2yr)")
     print(f"  Net Benefit: {fmt(bcr6.get('net_benefit_pv',0))} (6yr) → {fmt(bcr2.get('net_benefit_pv',0))} (2yr)")
     delta = bcr2.get("net_benefit_pv", 0) - bcr6.get("net_benefit_pv", 0)
     print(f"  Social cost of 4 extra years: {fmt(delta)}")

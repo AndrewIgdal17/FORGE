@@ -58,7 +58,6 @@
     { key: 'emissions_costs_pv', path: 'bcr.emissions_costs_pv' },
     { key: 'revenue_pv', path: 'bcr.revenue_pv' },
     { key: 'bcr_societal', path: 'bcr.bcr_societal' },
-    { key: 'bcr_capital', path: 'bcr.bcr_capital' },
     { key: 'bcr_utility', path: 'bcr.bcr_utility' },
     { key: 'bcr_ratepayer', path: 'bcr.bcr_ratepayer' },
     { key: 'net_benefit_pv', path: 'bcr.net_benefit_pv' },

@@ -37,7 +37,7 @@ DenominatorRule = Literal[
     "atrr_delay", "revenue_requirement_loss",
 ]
 Perspective = Literal["societal", "system", "stakeholder"]
-Family = Literal["societal", "system", "firm", "screening"]
+Family = Literal["societal", "system", "firm"]
 
 # ---------------------------------------------------------------------------
 # Core data structures
@@ -279,7 +279,7 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
 }
 
 # ---------------------------------------------------------------------------
-# Section 3b — Core BCR perspectives (6)
+# Section 3b — Core BCR perspectives (4)
 # ---------------------------------------------------------------------------
 
 BCR_DEFINITIONS: dict[str, BCRDefinition] = {
@@ -293,16 +293,6 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
         "remedial", "hard_operational_loss",
         frozenset(), 2,
         "Congestion and curtailment relief only; pure grid-operational.",
-    ),
-    "bcr_capital": BCRDefinition(
-        "bcr_capital", "Capital Only", "screening", "societal",
-        "all_benefits", "hard", frozenset(), 4,
-        "Capital screening; shows what narrow views miss.",
-    ),
-    "bcr_capital_and_delay": BCRDefinition(
-        "bcr_capital_and_delay", "Capital + Delay", "screening", "societal",
-        "all_benefits", "hard_delay", frozenset(), 5,
-        "Capital and delay exposure.",
     ),
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "firm", "stakeholder",
@@ -320,7 +310,6 @@ BCR_FAMILY_META: dict[Family, dict[str, str | int]] = {
     "societal": {"label": "Societal", "order": 1},
     "system": {"label": "System (Grid-Operational)", "order": 2},
     "firm": {"label": "Firm", "order": 3},
-    "screening": {"label": "Capital Screening", "order": 4},
 }
 
 # ---------------------------------------------------------------------------
@@ -546,14 +535,14 @@ if __name__ == "__main__":
     )
 
     # 8d. BCR coverage
-    assert len(BCR_DEFINITIONS) == 6, (
-        f"Expected 6 core BCR definitions, got {len(BCR_DEFINITIONS)}"
+    assert len(BCR_DEFINITIONS) == 4, (
+        f"Expected 4 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
     assert len(BCR_EXCLUSION_VARIANTS) == 6, (
         f"Expected 6 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 12, (
-        f"Expected 12 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 10, (
+        f"Expected 10 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups
@@ -580,7 +569,7 @@ if __name__ == "__main__":
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 35 items, 12 BCR definitions, 5 excludable groups")
+    print("Taxonomy verification passed: 35 items, 10 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"

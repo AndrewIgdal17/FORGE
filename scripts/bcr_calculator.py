@@ -273,12 +273,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         elif bcr_def.id == "bcr_system":
             out["bcr_system"] = bcr_value
             out["net_benefit_system_pv"] = net_benefit
-        elif bcr_def.id == "bcr_capital":
-            out["bcr_capital"] = bcr_value
-            out["net_benefit_capital_only_pv"] = net_benefit
-        elif bcr_def.id == "bcr_capital_and_delay":
-            out["bcr_capital_and_delay"] = bcr_value
-            out["net_benefit_capital_and_delay_pv"] = net_benefit
         elif bcr_def.id == "bcr_utility":
             out["bcr_utility"] = bcr_value
             out["net_benefit_utility_pv"] = net_benefit
@@ -363,8 +357,6 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     bcr_societal = _g("bcr_societal")
     viable_symbol, viable_text = format_bcr_viability(bcr_societal)
     print(f"  Societal BCR:                {bcr_societal:>6.3f}  {viable_symbol} ({viable_text})")
-    print(f"  Capital BCR:                 {_g('bcr_capital'):>6.3f}")
-    print(f"  Capital + Delay BCR:         {_g('bcr_capital_and_delay'):>6.3f}")
     print()
 
     bcr_utility = _g("bcr_utility")

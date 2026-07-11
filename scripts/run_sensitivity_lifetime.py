@@ -50,8 +50,6 @@ def print_sensitivity_table(name: str, lifetimes: list, results_list: list):
 
     metrics = [
         ("BCR Societal", "bcr_societal"),
-        ("BCR Capital Only", "bcr_capital"),
-        ("BCR Capital + Delay", "bcr_capital_and_delay"),
         ("BCR Utility", "bcr_utility"),
         ("BCR Ratepayer", "bcr_ratepayer"),
         ("BCR Excl. WF+Outage", "bcr_excluding_wildfire_risk_and_outage_risk"),

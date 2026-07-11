@@ -167,8 +167,6 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR System:                     {bcr.get('bcr_system', 0):.3f}")
-    print(f"  BCR Capital Only:               {bcr.get('bcr_capital', 0):.3f}")
-    print(f"  BCR Capital + Delay:            {bcr.get('bcr_capital_and_delay', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")
     print(f"  BCR Ratepayer:                  {bcr.get('bcr_ratepayer', 0):.3f}")
 
@@ -244,10 +242,6 @@ def main():
     print(
         f"  {'BCR Utility':<20} {bcr17.get('bcr_utility', 0):>10.3f}"
         f" {bcr2.get('bcr_utility', 0):>10.3f}"
-    )
-    print(
-        f"  {'BCR Cap+Del':<20} {bcr17.get('bcr_capital_and_delay', 0):>10.3f}"
-        f" {bcr2.get('bcr_capital_and_delay', 0):>10.3f}"
     )
     print(
         f"  {'Net Benefit':<20} {fmt(bcr17.get('net_benefit_pv', 0)):>10}"

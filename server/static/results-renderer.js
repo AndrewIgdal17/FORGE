@@ -1351,15 +1351,12 @@ function renderBCRHeadline(results) {
     { id: 'bcr_system', label: 'System BCR', family: 'system' },
     { id: 'bcr_utility', label: 'Utility BCR', family: 'firm' },
     { id: 'bcr_ratepayer', label: 'Ratepayer BCR', family: 'firm' },
-    { id: 'bcr_capital', label: 'Capital BCR', family: 'screening' },
-    { id: 'bcr_capital_and_delay', label: 'Capital + Delay BCR', family: 'screening' },
   ];
 
   const families = C.taxonomy?.bcr_families || {
     societal: { label: 'Societal', order: 1 },
     system: { label: 'System', order: 2 },
     firm: { label: 'Firm', order: 3 },
-    screening: { label: 'Capital Screening', order: 4 },
   };
   const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
 
@@ -1438,7 +1435,6 @@ function renderPerspectivesTable(results) {
     societal: { label: 'Societal', order: 1 },
     system: { label: 'System (Grid-Operational)', order: 2 },
     firm: { label: 'Firm', order: 3 },
-    screening: { label: 'Capital Screening', order: 4 },
   };
   const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
 
@@ -1452,10 +1448,6 @@ function renderPerspectivesTable(results) {
     firm: [
       { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0, tooltip: 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.' },
       { name: 'Ratepayer', benefits: ratepayerBenefits, costs: ratepayerCosts, bcrVal: bcr.bcr_ratepayer || 0, netBenefit: bcr.net_benefit_ratepayer_pv || 0, tooltip: 'Costs include revenue (what ratepayers pay the utility) plus energy losses passed through.' },
-    ],
-    screening: [
-      { name: 'Capital', benefits: allBenefits, costs: hardCosts, bcrVal: bcr.bcr_capital || 0, netBenefit: allBenefits - hardCosts },
-      { name: 'Capital + Delay', benefits: allBenefits, costs: capitalDelayCosts, bcrVal: bcr.bcr_capital_and_delay || 0, netBenefit: allBenefits - capitalDelayCosts },
     ],
   };
 

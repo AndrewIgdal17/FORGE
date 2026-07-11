@@ -29,9 +29,7 @@
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
           { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },
         ]},
-        { group: 'BCR — Capital Screening', metrics: [
-          { key: 'bcr_capital', label: 'BCR Capital', path: 'bcr.bcr_capital', format: 'number3' },
-          { key: 'bcr_capital_and_delay', label: 'BCR Capital + Delay', path: 'bcr.bcr_capital_and_delay', format: 'number3' },
+        { group: 'BCR — Custom', metrics: [
           { key: 'custom_bcr', label: 'Custom BCR', path: '__custom__', format: 'number3' },
         ]},
         { group: 'Costs (PV)', metrics: [

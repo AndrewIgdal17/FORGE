@@ -89,8 +89,6 @@ BATCH_SUMMARY_FIELDS = [
     # 10. BCR Metrics
     "bcr_societal",
     "bcr_system",
-    "bcr_capital",
-    "bcr_capital_and_delay",
     # Tier 1 exclusion BCRs (3 analytically motivated variants)
     "bcr_excluding_avoided_emissions",
     "bcr_excluding_wildfire_risk",
@@ -105,8 +103,6 @@ BATCH_SUMMARY_FIELDS = [
     "net_benefit_excluding_wildfire_risk_pv",
     "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
     # Capital and stakeholder net benefits
-    "net_benefit_capital_only_pv",
-    "net_benefit_capital_and_delay_pv",
     "net_benefit_utility_pv",
     "net_benefit_ratepayer_pv",
 ]

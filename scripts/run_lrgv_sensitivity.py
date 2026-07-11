@@ -76,7 +76,6 @@ def extract_lifetime_metrics(results: dict) -> dict:
     bcr = results["bcr"]
     return {
         "bcr_societal": bcr.get("bcr_societal", 0),
-        "bcr_capital_and_delay": bcr.get("bcr_capital_and_delay", 0),
         "bcr_utility": bcr.get("bcr_utility", 0),
         "bcr_excl_wf_outage": bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0),
         "bcr_excl_avemis_outage_wf": bcr.get("bcr_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk", 0),
@@ -121,7 +120,6 @@ def run_lifetime_sweep():
         print(f"  {'-'*30} {'-'*10} {'-'*10} {'-'*10}")
         metrics = [
             ("BCR Societal", "bcr_societal"),
-            ("BCR Capital + Delay", "bcr_capital_and_delay"),
             ("BCR Utility", "bcr_utility"),
             ("BCR Excl. WF+Outage", "bcr_excl_wf_outage"),
             ("BCR Excl. AvEmis+Out+WF", "bcr_excl_avemis_outage_wf"),

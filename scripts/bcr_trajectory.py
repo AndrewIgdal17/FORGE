@@ -408,8 +408,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         npv_excl_emissions_costs = cum_B_total - denom_excl_emissions if bcr_excl_emissions_costs is not None else None
         npv_excl_all_emissions = num_excl_all_emissions - denom_excl_emissions if bcr_excl_all_emissions is not None else None
 
-        bcr_capital = cum_B_total / cum_C_hard if cum_C_hard > 0 else None
-        bcr_capital_and_delay = cum_B_total / (cum_C_hard + cum_C_delay) if (cum_C_hard + cum_C_delay) > 0 else None
         denom_utility = cum_revenue + cum_base_delay
         bcr_utility = cum_revenue / denom_utility if denom_utility > 0 else None
         num_excl_av_em = cum_B_total - cum_B_displacement
@@ -417,8 +415,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         denom_excl_wf = cum_C_total - cum_C_risk_wf
         bcr_excl_wildfire = cum_B_total / denom_excl_wf if denom_excl_wf > 0 else None
 
-        npv_capital = cum_B_total - cum_C_hard if bcr_capital is not None else None
-        npv_capital_and_delay = cum_B_total - (cum_C_hard + cum_C_delay) if bcr_capital_and_delay is not None else None
         npv_utility = cum_revenue - denom_utility if bcr_utility is not None else None
         npv_excl_avoided_emissions = num_excl_av_em - cum_C_total if bcr_excl_avoided_emissions is not None else None
         npv_excl_wildfire = cum_B_total - denom_excl_wf if bcr_excl_wildfire is not None else None
@@ -450,8 +446,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "bcr_excl_emissions_costs": bcr_excl_emissions_costs,
             "bcr_excl_all_emissions": bcr_excl_all_emissions,
             "bcr_ratepayer": bcr_ratepayer,
-            "bcr_capital": bcr_capital,
-            "bcr_capital_and_delay": bcr_capital_and_delay,
             "bcr_utility": bcr_utility,
             "bcr_excl_avoided_emissions": bcr_excl_avoided_emissions,
             "bcr_excl_wildfire": bcr_excl_wildfire,
@@ -462,8 +456,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "npv_excl_emissions_costs": npv_excl_emissions_costs,
             "npv_excl_all_emissions": npv_excl_all_emissions,
             "npv_ratepayer": npv_ratepayer,
-            "npv_capital": npv_capital,
-            "npv_capital_and_delay": npv_capital_and_delay,
             "npv_utility": npv_utility,
             "npv_excl_avoided_emissions": npv_excl_avoided_emissions,
             "npv_excl_wildfire": npv_excl_wildfire,
