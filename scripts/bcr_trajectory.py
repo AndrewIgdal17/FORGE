@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 from financial_utils import calculate_real_wacc
 
-FIDELITY_TOLERANCE = 10_000_000.0  # $10M — relaxed; discount-rate sweeps amplify rounding beyond the original $1 tolerance
+FIDELITY_TOLERANCE = 0.01  # $0.01 — IEEE 754 floating-point accumulation only; no formula disagreement
 
 # Buckets used internally to route each stream's PV contribution.
 _OUTPUT_COST_BUCKETS = ("C_hard", "C_soft", "C_risk", "C_emissions")

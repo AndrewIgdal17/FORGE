@@ -110,7 +110,7 @@ def calculate_growing_annuity_pv(
     equals growth rate, and optionally discounts for delay/construction periods.
     
     Formula:
-    - If |d - g| < tolerance: PV = annual_amount * N
+    - If |d - g| < tolerance: PV = annual_amount * N / (1 + d)
     - Otherwise: PV = annual_amount * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
     - If delay_period > 0: PV = PV / ((1 + d) ** delay_period)
     
@@ -141,7 +141,7 @@ def calculate_growing_annuity_pv(
     N = project_lifetime
     
     if abs(d - g) < DISCOUNT_GROWTH_EQUALITY_TOLERANCE:  # Edge case: d = g
-        pv = annual_amount * N
+        pv = annual_amount * N / (1 + d)
     else:
         pv = annual_amount * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
     
