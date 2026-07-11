@@ -394,6 +394,13 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             (cum_B_remedial + cum_B_enabling) - denom_ratepayer if bcr_ratepayer is not None else None
         )
 
+        denom_excl_emissions = cum_C_total - cum_C_emissions
+        num_excl_all_emissions = cum_B_total - cum_B_displacement
+        bcr_excl_emissions_costs = cum_B_total / denom_excl_emissions if denom_excl_emissions > 0 else None
+        bcr_excl_all_emissions = num_excl_all_emissions / denom_excl_emissions if denom_excl_emissions > 0 else None
+        npv_excl_emissions_costs = cum_B_total - denom_excl_emissions if bcr_excl_emissions_costs is not None else None
+        npv_excl_all_emissions = num_excl_all_emissions - denom_excl_emissions if bcr_excl_all_emissions is not None else None
+
         trajectory.append({
             "year": t,
             "phase": phase,
@@ -418,11 +425,15 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "bcr_system": bcr_system,
             "bcr_excl_wf_out": bcr_excl_wf_out,
             "bcr_excl_outage": bcr_excl_outage,
+            "bcr_excl_emissions_costs": bcr_excl_emissions_costs,
+            "bcr_excl_all_emissions": bcr_excl_all_emissions,
             "bcr_ratepayer": bcr_ratepayer,
             "npv_societal": npv_societal,
             "npv_system": npv_system,
             "npv_excl_wf_out": npv_excl_wf_out,
             "npv_excl_outage": npv_excl_outage,
+            "npv_excl_emissions_costs": npv_excl_emissions_costs,
+            "npv_excl_all_emissions": npv_excl_all_emissions,
             "npv_ratepayer": npv_ratepayer,
         })
 
