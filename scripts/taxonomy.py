@@ -339,17 +339,23 @@ BCR_EXCLUSION_VARIANTS: dict[str, BCRDefinition] = {
         "all_benefits", "all_costs", frozenset({"avoided_emissions"}),
         10, "FERC-minimum benefit set (no emissions benefits).",
     ),
+    "bcr_excl_outage": BCRDefinition(
+        "bcr_excl_outage", "Excl. Outage",
+        "societal", "societal",
+        "all_benefits", "all_costs", frozenset({"outage"}),
+        11, "Societal BCR excluding outage risk only.",
+    ),
     "bcr_excl_wildfire": BCRDefinition(
         "bcr_excl_wildfire", "Excl. Wildfire",
         "societal", "societal",
         "all_benefits", "all_costs", frozenset({"wildfire"}),
-        11, "For low-wildfire regions.",
+        12, "For low-wildfire regions.",
     ),
     "bcr_excl_outage_wildfire": BCRDefinition(
         "bcr_excl_outage_wildfire", "Excl. Wildfire + Outage",
         "societal", "societal",
         "all_benefits", "all_costs", frozenset({"wildfire", "outage"}),
-        12, "Deterministic BCR (no risk costs).",
+        13, "Deterministic BCR (no risk costs).",
     ),
 }
 ALL_BCR_DEFINITIONS: dict[str, BCRDefinition] = {
@@ -531,11 +537,11 @@ if __name__ == "__main__":
     assert len(BCR_DEFINITIONS) == 6, (
         f"Expected 6 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
-    assert len(BCR_EXCLUSION_VARIANTS) == 3, (
-        f"Expected 3 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
+    assert len(BCR_EXCLUSION_VARIANTS) == 4, (
+        f"Expected 4 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 9, (
-        f"Expected 9 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 10, (
+        f"Expected 10 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups
@@ -562,7 +568,7 @@ if __name__ == "__main__":
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 35 items, 9 BCR definitions, 5 excludable groups")
+    print("Taxonomy verification passed: 35 items, 10 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"

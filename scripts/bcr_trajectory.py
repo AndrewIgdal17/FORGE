@@ -34,7 +34,7 @@ class StreamSpec:
     annual: float
     growth_rate: float
     discount_rate: float
-    bucket: str  # "C_soft_op" | "C_risk" | "B_remedial" | "B_enabling"
+    bucket: str  # "C_soft_op" | "C_risk_wf" | "C_risk_out" | "B_remedial" | "B_enabling"
 
 
 @dataclass
@@ -176,8 +176,8 @@ def _build_risk_streams(results: dict, inputs: dict, social_discount_rate: float
     eal_wf = _dig(results, "costs", "wildfire", "EAL")
     eac_out = _dig(results, "costs", "outage", "EAC")
     return [
-        StreamSpec("EAL_wf", eal_wf, g_wf, social_discount_rate, "C_risk"),
-        StreamSpec("EAC_out", eac_out, g_out, social_discount_rate, "C_risk"),
+        StreamSpec("EAL_wf", eal_wf, g_wf, social_discount_rate, "C_risk_wf"),
+        StreamSpec("EAC_out", eac_out, g_out, social_discount_rate, "C_risk_out"),
     ]
 
 
@@ -265,6 +265,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     cum_C_hard = 0.0
     cum_C_soft = 0.0
     cum_C_risk = 0.0
+    cum_C_risk_wf = 0.0
+    cum_C_risk_out = 0.0
     cum_C_emissions = 0.0
     cum_B_remedial = 0.0
     cum_B_enabling = 0.0
@@ -279,6 +281,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
     for t in range(1, total_years + 1):
         pv_C_hard = pv_C_soft = pv_C_risk = pv_C_emissions = 0.0
+        pv_C_risk_wf = pv_C_risk_out = 0.0
         pv_B_remedial = pv_B_enabling = pv_B_displacement = 0.0
         pv_soft_op_year = 0.0
         pv_revenue_year = 0.0
@@ -323,6 +326,10 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             for s in risk_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
                 pv_C_risk += val
+                if s.bucket == "C_risk_wf":
+                    pv_C_risk_wf += val
+                else:
+                    pv_C_risk_out += val
 
             for a in array_streams:
                 if 1 <= k <= len(a.values):
@@ -351,6 +358,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_C_hard += pv_C_hard
         cum_C_soft += pv_C_soft
         cum_C_risk += pv_C_risk
+        cum_C_risk_wf += pv_C_risk_wf if phase == "operation" else 0.0
+        cum_C_risk_out += pv_C_risk_out if phase == "operation" else 0.0
         cum_C_emissions += pv_C_emissions
         cum_B_remedial += pv_B_remedial
         cum_B_enabling += pv_B_enabling
@@ -366,11 +375,13 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         # bcr_ratepayer).
         denom_system = cum_C_hard + cum_C_soft_op
         denom_excl_risk = cum_C_total - cum_C_risk
+        denom_excl_outage = cum_C_total - cum_C_risk_out
         denom_ratepayer = cum_revenue + cum_C_soft_op
 
         bcr_societal = cum_B_total / cum_C_total if cum_C_total > 0 else None
         bcr_system = cum_B_remedial / denom_system if denom_system > 0 else None
         bcr_excl_wf_out = cum_B_total / denom_excl_risk if denom_excl_risk > 0 else None
+        bcr_excl_outage = cum_B_total / denom_excl_outage if denom_excl_outage > 0 else None
         bcr_ratepayer = (
             (cum_B_remedial + cum_B_enabling) / denom_ratepayer if denom_ratepayer > 0 else None
         )
@@ -378,6 +389,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         npv_societal = cum_B_total - cum_C_total
         npv_system = cum_B_remedial - denom_system if bcr_system is not None else None
         npv_excl_wf_out = cum_B_total - denom_excl_risk if bcr_excl_wf_out is not None else None
+        npv_excl_outage = cum_B_total - denom_excl_outage if bcr_excl_outage is not None else None
         npv_ratepayer = (
             (cum_B_remedial + cum_B_enabling) - denom_ratepayer if bcr_ratepayer is not None else None
         )
@@ -405,10 +417,12 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "bcr_societal": bcr_societal,
             "bcr_system": bcr_system,
             "bcr_excl_wf_out": bcr_excl_wf_out,
+            "bcr_excl_outage": bcr_excl_outage,
             "bcr_ratepayer": bcr_ratepayer,
             "npv_societal": npv_societal,
             "npv_system": npv_system,
             "npv_excl_wf_out": npv_excl_wf_out,
+            "npv_excl_outage": npv_excl_outage,
             "npv_ratepayer": npv_ratepayer,
         })
 

@@ -4502,7 +4502,7 @@
   },
   "results": {
     "scenario_id": "SunZia_NoDelay",
-    "timestamp": "2026-07-10T19:30:08.525831",
+    "timestamp": "2026-07-10T20:41:20.155846",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
@@ -5221,7 +5221,7 @@
     "csv_equivalent": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
       "scenario_id": "SunZia_NoDelay",
-      "timestamp": "2026-07-10T19:30:08.525831",
+      "timestamp": "2026-07-10T20:41:20.155846",
       "capacity_mw": 2400,
       "line_length_miles": 550,
       "construction_type": "Overhead",
@@ -7190,7 +7190,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-07-10T19:30:19.283397",
+    "timestamp": "2026-07-10T20:41:20.567855",
     "scenario_id": "SunZia_NoDelay",
     "source": "sunzia_case_study"
   }

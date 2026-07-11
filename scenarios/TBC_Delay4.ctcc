@@ -4502,7 +4502,7 @@
   },
   "results": {
     "scenario_id": "TBC_Delay4",
-    "timestamp": "2026-07-10T19:29:10.123375",
+    "timestamp": "2026-07-11T13:17:22.094049",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
@@ -4961,6 +4961,10 @@
       "net_benefit_excluding_avoided_emissions_pv": 1219181577.2554169,
       "total_costs_excluding_avoided_emissions_pv": 679971056.7646629,
       "total_benefits_excluding_avoided_emissions_pv": 1899152634.0200799,
+      "bcr_excluding_outage_risk": 2.9680890530401425,
+      "net_benefit_excluding_outage_risk_pv": 1259295608.141822,
+      "total_costs_excluding_outage_risk_pv": 639857025.8782578,
+      "total_benefits_excluding_outage_risk_pv": 1899152634.0200799,
       "bcr_excluding_wildfire_risk": 2.7929904002919557,
       "net_benefit_excluding_wildfire_risk_pv": 1219181577.2554169,
       "total_costs_excluding_wildfire_risk_pv": 679971056.7646629,
@@ -5141,7 +5145,7 @@
     "csv_equivalent": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
       "scenario_id": "TBC_Delay4",
-      "timestamp": "2026-07-10T19:29:10.123375",
+      "timestamp": "2026-07-11T13:17:22.094049",
       "capacity_mw": 500,
       "line_length_miles": 53,
       "construction_type": "Subsea",
@@ -5474,10 +5478,12 @@
         "bcr_societal": 0.0,
         "bcr_system": null,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -21147762.979057975,
         "npv_system": null,
         "npv_excl_wf_out": -21147762.979057975,
+        "npv_excl_outage": -21147762.979057975,
         "npv_ratepayer": null
       },
       {
@@ -5503,10 +5509,12 @@
         "bcr_societal": 0.0,
         "bcr_system": null,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -42295525.95811595,
         "npv_system": null,
         "npv_excl_wf_out": -42295525.95811595,
+        "npv_excl_outage": -42295525.95811595,
         "npv_ratepayer": null
       },
       {
@@ -5532,10 +5540,12 @@
         "bcr_societal": 0.0,
         "bcr_system": null,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -63443288.937173925,
         "npv_system": null,
         "npv_excl_wf_out": -63443288.937173925,
+        "npv_excl_outage": -63443288.937173925,
         "npv_ratepayer": null
       },
       {
@@ -5561,10 +5571,12 @@
         "bcr_societal": 0.0,
         "bcr_system": null,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -84591051.9162319,
         "npv_system": null,
         "npv_excl_wf_out": -84591051.9162319,
+        "npv_excl_outage": -84591051.9162319,
         "npv_ratepayer": null
       },
       {
@@ -5590,10 +5602,12 @@
         "bcr_societal": 0.0,
         "bcr_system": 0.0,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -186375945.48133463,
         "npv_system": -101784893.56510271,
         "npv_excl_wf_out": -186375945.48133463,
+        "npv_excl_outage": -186375945.48133463,
         "npv_ratepayer": null
       },
       {
@@ -5619,10 +5633,12 @@
         "bcr_societal": 0.0,
         "bcr_system": 0.0,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -288160839.0464373,
         "npv_system": -203569787.13020542,
         "npv_excl_wf_out": -288160839.0464373,
+        "npv_excl_outage": -288160839.0464373,
         "npv_ratepayer": null
       },
       {
@@ -5648,10 +5664,12 @@
         "bcr_societal": 0.0,
         "bcr_system": 0.0,
         "bcr_excl_wf_out": 0.0,
+        "bcr_excl_outage": 0.0,
         "bcr_ratepayer": null,
         "npv_societal": -389945732.6115401,
         "npv_system": -305354680.69530815,
         "npv_excl_wf_out": -389945732.6115401,
+        "npv_excl_outage": -389945732.6115401,
         "npv_ratepayer": null
       },
       {
@@ -5677,10 +5695,12 @@
         "bcr_societal": 0.23789561473352308,
         "bcr_system": 0.022758294215141507,
         "bcr_excl_wf_out": 0.2387452678352394,
+        "bcr_excl_outage": 0.2387452678352394,
         "bcr_ratepayer": 3.165293967891001,
         "npv_societal": -307864342.47165346,
         "npv_system": -305876373.9499296,
         "npv_excl_wf_out": -306426696.9851648,
+        "npv_excl_outage": -306426696.9851648,
         "npv_ratepayer": 65740678.59102057
       },
       {
@@ -5706,10 +5726,12 @@
         "bcr_societal": 0.451078019427223,
         "bcr_system": 0.04355197593045619,
         "bcr_excl_wf_out": 0.4541765623442081,
+        "bcr_excl_outage": 0.4541765623442081,
         "bcr_ratepayer": 3.1938630802514707,
         "npv_societal": -229076652.19336814,
         "npv_system": -306427446.7139281,
         "npv_excl_wf_out": -226229550.34757686,
+        "npv_excl_outage": -226229550.34757686,
         "npv_ratepayer": 129304933.79202983
       },
       {
@@ -5735,10 +5757,12 @@
         "bcr_societal": 0.6430568862883503,
         "bcr_system": 0.0625993261197194,
         "bcr_excl_wf_out": 0.6494421946972562,
+        "bcr_excl_outage": 0.6494421946972562,
         "bcr_ratepayer": 3.222175760806688,
         "npv_societal": -153527891.65821564,
         "npv_system": -307005075.6955736,
         "npv_excl_wf_out": -149298969.85232377,
+        "npv_excl_outage": -149298969.85232377,
         "npv_ratepayer": 190751012.22805405
       },
       {
@@ -5764,10 +5788,12 @@
         "bcr_societal": 0.8166101938658983,
         "bcr_system": 0.08008807035977557,
         "bcr_excl_wf_out": 0.8270477397006752,
+        "bcr_excl_outage": 0.8270477397006752,
         "bcr_ratepayer": 3.2502199608448183,
         "npv_societal": -81138196.29173821,
         "npv_system": -307606605.05497754,
         "npv_excl_wf_out": -75554549.03476733,
+        "npv_excl_outage": -75554549.03476733,
         "npv_ratepayer": 250136560.81319118
       },
       {
@@ -5793,10 +5819,12 @@
         "bcr_societal": 0.9740028209915439,
         "bcr_system": 0.09618053640935037,
         "bcr_excl_wf_out": 0.989049565585307,
+        "bcr_excl_outage": 0.989049565585307,
         "bcr_ratepayer": 3.2779839848104535,
         "npv_societal": -11811185.475350201,
         "npv_system": -308229537.8840695,
         "npv_excl_wf_out": -4899376.011439145,
+        "npv_excl_outage": -4899376.011439145,
         "npv_ratepayer": 307518550.28812426
       },
       {
@@ -5822,10 +5850,12 @@
         "bcr_societal": 1.1171253686286609,
         "bcr_system": 0.11101780104276744,
         "bcr_excl_wf_out": 1.1371772856012474,
+        "bcr_excl_outage": 1.1371772856012474,
         "bcr_ratepayer": 3.305456512500661,
         "npv_societal": 54559980.7577492,
         "npv_system": -308871528.08898807,
         "npv_excl_wf_out": 62773910.032385945,
+        "npv_excl_outage": 62773910.032385945,
         "npv_ratepayer": 362953207.5209908
       },
       {
@@ -5851,10 +5881,12 @@
         "bcr_societal": 1.2475855431626521,
         "bcr_system": 0.12472304993216332,
         "bcr_excl_wf_out": 1.2729139007349548,
+        "bcr_excl_outage": 1.2729139007349548,
         "bcr_ratepayer": 3.3326266200536305,
         "npv_societal": 118088381.11354876,
         "npv_system": -309530372.65667534,
         "npv_excl_wf_out": 127578898.43791658,
+        "npv_excl_outage": 127578898.43791658,
         "npv_ratepayer": 416495955.90203905
       },
       {
@@ -5880,10 +5912,12 @@
         "bcr_societal": 1.3667705513594113,
         "bcr_system": 0.1374043194782147,
         "bcr_excl_wf_out": 1.397550148967214,
+        "bcr_excl_outage": 1.397550148967214,
         "bcr_ratepayer": 3.359483799644769,
         "npv_societal": 178890414.55311972,
         "npv_system": -310204004.28827065,
         "npv_excl_wf_out": 189632488.7889886,
+        "npv_excl_outage": 189632488.7889886,
         "npv_ratepayer": 468201363.20692515
       },
       {
@@ -5909,10 +5943,12 @@
         "bcr_societal": 1.4758912072067327,
         "bcr_system": 0.14915674929291348,
         "bcr_excl_wf_out": 1.512222658662097,
+        "bcr_excl_outage": 1.512222658662097,
         "bcr_ratepayer": 3.386017977812881,
         "npv_societal": 237083775.97178864,
         "npv_system": -310890484.38266194,
         "npv_excl_wf_out": 249052866.78756052,
+        "npv_excl_outage": 249052866.78756052,
         "npv_ratepayer": 518123096.34518385
       },
       {
@@ -5938,10 +5974,12 @@
         "bcr_societal": 1.5760140399062776,
         "bcr_system": 0.16006444429266395,
         "bcr_excl_wf_out": 1.617941530974854,
+        "bcr_excl_outage": 1.617941530974854,
         "bcr_ratepayer": 3.4122195323473328,
         "npv_societal": 292786015.82004875,
         "npv_system": -311587996.3542908,
         "npv_excl_wf_out": 305958064.0670981,
+        "npv_excl_outage": 305958064.0670981,
         "npv_ratepayer": 566313882.4495031
       },
       {
@@ -5967,10 +6005,12 @@
         "bcr_societal": 1.6680851453318188,
         "bcr_system": 0.1702020231314292,
         "bcr_excl_wf_out": 1.7156106680551233,
+        "bcr_excl_outage": 1.7156106680551233,
         "bcr_ratepayer": 3.4380793076757974,
         "npv_societal": 346113447.81398195,
         "npv_system": -312294839.27000695,
         "npv_excl_wf_out": 360464866.0916954,
+        "npv_excl_outage": 360464866.0916954,
         "npv_ratepayer": 612825475.7981017
       },
       {
@@ -5996,10 +6036,12 @@
         "bcr_societal": 1.7529480457841446,
         "bcr_system": 0.17963591293891432,
         "bcr_excl_wf_out": 1.8060428225770384,
+        "bcr_excl_outage": 1.8060428225770384,
         "bcr_ratepayer": 3.463588628701279,
         "npv_societal": 397180227.8907358,
         "npv_system": -313009421.79044175,
         "npv_excl_wf_out": 412687891.2965514,
+        "npv_excl_outage": 412687891.2965514,
         "npv_ratepayer": 657708630.0968952
       },
       {
@@ -6025,10 +6067,12 @@
         "bcr_societal": 1.8313569826957372,
         "bcr_system": 0.18842543757527652,
         "bcr_excl_wf_out": 1.8899705875025632,
+        "bcr_excl_outage": 1.8899705875025632,
         "bcr_ratepayer": 3.4887393130464166,
         "npv_societal": 446097479.9772184,
         "npv_system": -313730256.4020101,
         "npv_excl_wf_out": 462738717.03803605,
+        "npv_excl_outage": 462738717.03803605,
         "npv_ratepayer": 701013075.6803709
       },
       {
@@ -6054,10 +6098,12 @@
         "bcr_societal": 1.9039866259738132,
         "bcr_system": 0.19662373683282017,
         "bcr_excl_wf_out": 1.9680541616790581,
+        "bcr_excl_outage": 1.9680541616790581,
         "bcr_ratepayer": 3.5135236816726163,
         "npv_societal": 492972397.4545467,
         "npv_system": -314455953.9262683,
         "npv_excl_wf_out": 510724981.23595464,
+        "npv_excl_outage": 510724981.23595464,
         "npv_ratepayer": 742787501.2203082
       },
       {
@@ -6083,10 +6129,12 @@
         "bcr_societal": 1.9714390018073267,
         "bcr_system": 0.20427854645622595,
         "bcr_excl_wf_out": 2.04088659135855,
+        "bcr_excl_outage": 2.04088659135855,
         "bcr_ratepayer": 3.5379345678511718,
         "npv_societal": 537907307.1465625,
         "npv_system": -315185218.2939408,
         "npv_excl_wf_out": 556749446.5363922,
+        "npv_excl_outage": 556749446.5363922,
         "npv_ratepayer": 783079539.5598018
       },
       {
@@ -6112,10 +6160,12 @@
         "bcr_societal": 2.0342484173265247,
         "bcr_system": 0.2114328629689614,
         "bcr_excl_wf_out": 2.1089972062367197,
+        "bcr_excl_outage": 2.1089972062367197,
         "bcr_ratepayer": 3.561965324473143,
         "npv_societal": 580998742.5387366,
         "npv_system": -315916841.5714935,
         "npv_excl_wf_out": 600909073.7015289,
+        "npv_excl_outage": 600909073.7015289,
         "npv_ratepayer": 821935757.3165728
       },
       {
@@ -6141,10 +6191,12 @@
         "bcr_societal": 2.0928852013933277,
         "bcr_system": 0.21812551268212113,
         "bcr_excl_wf_out": 2.1728540479632534,
+        "bcr_excl_outage": 2.1728540479632534,
         "bcr_ratepayer": 3.5856098296943073,
         "npv_societal": 622336624.396913,
         "npv_system": -316649699.2286665,
         "npv_excl_wf_out": 643294202.3959433,
+        "npv_excl_outage": 643294202.3959433,
         "npv_ratepayer": 859401647.9244044
       },
       {
@@ -6170,10 +6222,12 @@
         "bcr_societal": 2.1477590910239512,
         "bcr_system": 0.22439164062444567,
         "bcr_excl_wf_out": 2.232866130463634,
+        "bcr_excl_outage": 2.232866130463634,
         "bcr_ratepayer": 3.608862490920869,
         "npv_societal": 662003674.4792299,
         "npv_system": -317382745.6358983,
         "npv_excl_wf_out": 683987965.062807,
+        "npv_excl_outage": 683987965.062807,
         "npv_ratepayer": 895521627.8048172
       },
       {
@@ -6199,10 +6253,12 @@
         "bcr_societal": 2.199222994195928,
         "bcr_system": 0.230263132245374,
         "bcr_excl_wf_out": 2.2893862904363176,
+        "bcr_excl_outage": 2.2893862904363176,
         "bcr_ratepayer": 3.631718247150751,
         "npv_societal": 700075178.0064484,
         "npv_system": -318115009.7810603,
         "npv_excl_wf_out": 723066049.5552675,
+        "npv_excl_outage": 723066049.5552675,
         "npv_ratepayer": 930339035.3828886
       },
       {
@@ -6228,10 +6284,12 @@
         "bcr_societal": 2.2475776216036287,
         "bcr_system": 0.2357689784384521,
         "bcr_excl_wf_out": 2.3427151480840482,
+        "bcr_excl_outage": 2.3427151480840482,
         "bcr_ratepayer": 3.6541725696940603,
         "npv_societal": 736619160.3790327,
         "npv_system": -318845591.195397,
         "npv_excl_wf_out": 760596876.0114225,
+        "npv_excl_outage": 760596876.0114225,
         "npv_ratepayer": 963896132.6815152
       },
       {
@@ -6257,10 +6315,12 @@
         "bcr_societal": 2.2930771401754626,
         "bcr_system": 0.24093559258258573,
         "bcr_excl_wf_out": 2.3931063411611406,
+        "bcr_excl_outage": 2.3931063411611406,
         "bcr_ratepayer": 3.6762214613047832,
         "npv_societal": 771696966.9028913,
         "npv_system": -319573656.0790131,
         "npv_excl_wf_out": 796642176.7348601,
+        "npv_excl_outage": 796642176.7348601,
         "npv_ratepayer": 996234109.2475144
       },
       {
@@ -6286,10 +6346,12 @@
         "bcr_societal": 2.335935653490555,
         "bcr_system": 0.24578708680593914,
         "bcr_excl_wf_out": 2.4407728205022337,
+        "bcr_excl_outage": 2.4407728205022337,
         "bcr_ratepayer": 3.697861453763692,
         "npv_societal": 805364156.945578,
         "npv_system": -320298433.6166822,
         "npv_excl_wf_out": 831257890.5026243,
+        "npv_excl_outage": 831257890.5026243,
         "npv_ratepayer": 1027393088.1808115
       },
       {
@@ -6315,10 +6377,12 @@
         "bcr_societal": 2.3763340625017078,
         "bcr_system": 0.2503455134667411,
         "bcr_excl_wf_out": 2.485893716867049,
+        "bcr_excl_outage": 2.485893716867049,
         "bcr_ratepayer": 3.719089603959896,
         "npv_societal": 837671572.3096063,
         "npv_system": -321019212.47516274,
         "npv_excl_wf_out": 864495231.0873169,
+        "npv_excl_outage": 864495231.0873169,
         "npv_ratepayer": 1057412134.0546665
       },
       {
@@ -6344,10 +6408,12 @@
         "bcr_societal": 2.4144267668527846,
         "bcr_system": 0.2546310768588263,
         "bcr_excl_wf_out": 2.528621179140823,
+        "bcr_excl_outage": 2.528621179140823,
         "bcr_ratepayer": 3.7399034885253903,
         "npv_societal": 868666427.8480928,
         "npv_system": -321735337.4736007,
         "npv_excl_wf_out": 896401778.0186114,
+        "npv_excl_outage": 896401778.0186114,
         "npv_ratepayer": 1086329262.5305147
       },
       {
@@ -6373,10 +6439,12 @@
         "bcr_societal": 2.450347729408527,
         "bcr_system": 0.2586623193422422,
         "bcr_excl_wf_out": 2.5690866435375845,
+        "bcr_excl_outage": 2.5690866435375845,
         "bcr_ratepayer": 3.7603011970832023,
         "npv_societal": 898393297.5111837,
         "npv_system": -322446206.41897625,
         "npv_excl_wf_out": 927022462.7726907,
+        "npv_excl_outage": 927022462.7726907,
         "npv_ratepayer": 1114181451.4855914
       },
       {
@@ -6402,10 +6470,12 @@
         "bcr_societal": 2.484215588849218,
         "bcr_system": 0.2624562854353432,
         "bcr_excl_wf_out": 2.60740616508756,
+        "bcr_excl_outage": 2.60740616508756,
         "bcr_ratepayer": 3.78028132417544,
         "npv_societal": 926894915.6970875,
         "npv_system": -323151267.0989107,
         "npv_excl_wf_out": 956400370.2634848,
+        "npv_excl_outage": 956400370.2634848,
         "npv_ratepayer": 1141004653.4851608
       },
       {
@@ -6431,10 +6501,12 @@
         "bcr_societal": 2.516137694990346,
         "bcr_system": 0.26602866685664767,
         "bcr_excl_wf_out": 2.643684648637462,
+        "bcr_excl_outage": 2.643684648637462,
         "bcr_ratepayer": 3.7998429599425037,
         "npv_societal": 954212763.6781672,
         "npv_system": -323850014.42449504,
         "npv_excl_wf_out": 984577325.4062219,
+        "npv_excl_outage": 984577325.4062219,
         "npv_ratepayer": 1166833809.4439049
       },
       {
@@ -6460,10 +6532,12 @@
         "bcr_societal": 2.546213102036267,
         "bcr_system": 0.2693939310503527,
         "bcr_excl_wf_out": 2.678018994256492,
+        "bcr_excl_outage": 2.678018994256492,
         "bcr_ratepayer": 3.8189856796290824,
         "npv_societal": 980387450.6462139,
         "npv_system": -324541987.71613175,
         "npv_excl_wf_out": 1011594274.297462,
+        "npv_excl_outage": 1011594274.297462,
         "npv_ratepayer": 1191702863.3329465
       },
       {
@@ -6489,10 +6563,12 @@
         "bcr_societal": 2.5745346589822513,
         "bcr_system": 0.2725654353512997,
         "bcr_excl_wf_out": 2.710500290050461,
+        "bcr_excl_outage": 2.710500290050461,
         "bcr_ratepayer": 3.837709531996172,
         "npv_societal": 1005458923.0838339,
         "npv_system": -325226768.1256949,
         "npv_excl_wf_out": 1037491493.718605,
+        "npv_excl_outage": 1037491493.718605,
         "npv_ratepayer": 1215644777.800078
       },
       {
@@ -6518,10 +6594,12 @@
         "bcr_societal": 2.6011903828147505,
         "bcr_system": 0.2755555286293845,
         "bcr_excl_wf_out": 2.741215241278677,
+        "bcr_excl_outage": 2.741215241278677,
         "bcr_ratepayer": 3.856015026721314,
         "npv_societal": 1029466545.6530696,
         "npv_system": -325903976.188616,
         "npv_excl_wf_out": 1062308672.1540397,
+        "npv_excl_outage": 1062308672.1540397,
         "npv_ratepayer": 1238691550.5811486
       },
       {
@@ -6547,10 +6625,12 @@
         "bcr_societal": 2.6262643028835417,
         "bcr_system": 0.2783756419887194,
         "bcr_excl_wf_out": 2.770247032375466,
+        "bcr_excl_outage": 2.770247032375466,
         "bcr_ratepayer": 3.8739031208715313,
         "npv_societal": 1052449095.803968,
         "npv_system": -326573269.4997915,
         "npv_excl_wf_out": 1086084904.526702,
+        "npv_excl_outage": 1086084904.526702,
         "npv_ratepayer": 1260874231.5902374
       },
       {
@@ -6576,10 +6656,12 @@
         "bcr_societal": 2.6498369416327563,
         "bcr_system": 0.28103636987424263,
         "bcr_excl_wf_out": 2.7976757968935058,
+        "bcr_excl_outage": 2.7976757968935058,
         "bcr_ratepayer": 3.8913752045350423,
         "npv_societal": 1074444707.578261,
         "npv_system": -327234340.50748086,
         "npv_excl_wf_out": 1108858636.1262531,
+        "npv_excl_outage": 1108858636.1262531,
         "npv_ratepayer": 1282222940.5852573
       },
       {
@@ -6605,10 +6687,12 @@
         "bcr_societal": 2.671985562884549,
         "bcr_system": 0.28354754275063543,
         "bcr_excl_wf_out": 2.8235788358940535,
+        "bcr_excl_outage": 2.8235788358940535,
         "bcr_ratepayer": 3.908433085698765,
         "npv_societal": 1095490791.3598223,
         "npv_system": -327886914.41963035,
         "npv_excl_wf_out": 1130667582.4815977,
+        "npv_excl_outage": 1130667582.4815977,
         "npv_ratepayer": 1302766885.3140478
       },
       {
@@ -6634,10 +6718,12 @@
         "bcr_societal": 2.6927842841234124,
         "bcr_system": 0.2859182923594136,
         "bcr_excl_wf_out": 2.848030689030416,
+        "bcr_excl_outage": 2.848030689030416,
         "bcr_ratepayer": 3.9250789744589976,
         "npv_societal": 1115623947.9344497,
         "npv_system": -328530747.2173072,
         "npv_excl_wf_out": 1151548643.540326,
+        "npv_excl_outage": 1151548643.540326,
         "npv_ratepayer": 1322534380.0538592
       },
       {
@@ -6663,10 +6749,12 @@
         "bcr_societal": 2.7123041190410113,
         "bcr_system": 0.28815711042507364,
         "bcr_excl_wf_out": 2.871103130541265,
+        "bcr_excl_outage": 2.871103130541265,
         "bcr_ratepayer": 3.9413154666523527,
         "npv_societal": 1134879888.2819061,
         "npv_system": -329165623.7701709,
         "npv_excl_wf_out": 1171537823.5780773,
+        "npv_excl_outage": 1171537823.5780773,
         "npv_ratepayer": 1341552864.4644156
       },
       {
@@ -6692,10 +6780,12 @@
         "bcr_societal": 2.730612992890224,
         "bcr_system": 0.2902719015662265,
         "bcr_excl_wf_out": 2.8928651369212433,
+        "bcr_excl_outage": 2.8928651369212433,
         "bcr_ratepayer": 3.957145526993217,
         "npv_societal": 1153293365.3350444,
         "npv_system": -329791356.0491362,
         "npv_excl_wf_out": 1190670163.0726814,
+        "npv_excl_outage": 1190670163.0726814,
         "npv_ratepayer": 1359848922.68156
       },
       {
@@ -6721,10 +6811,12 @@
         "bcr_societal": 2.747775755900829,
         "bcr_system": 0.29227003106950095,
         "bcr_excl_wf_out": 2.91338285429154,
+        "bcr_excl_outage": 2.91338285429154,
         "bcr_ratepayer": 3.9725724718026405,
         "npv_societal": 1170898120.3659139,
         "npv_system": -330407781.4316062,
         "npv_excl_wf_out": 1208979685.203027,
+        "npv_excl_outage": 1208979685.203027,
         "npv_ratepayer": 1377448302.584787
       },
       {
@@ -6750,10 +6842,12 @@
         "bcr_societal": 2.763854208146546,
         "bcr_system": 0.29415836809995327,
         "bcr_excl_wf_out": 2.932719580518005,
+        "bcr_excl_outage": 2.932719580518005,
         "bcr_ratepayer": 3.9875999514117213,
         "npv_societal": 1187726844.3804126,
         "npv_system": -331014761.0948584,
         "npv_excl_wf_out": 1226499357.3542671,
+        "npv_excl_outage": 1226499357.3542671,
         "npv_ratepayer": 1394375935.1778684
       },
       {
@@ -6779,10 +6873,12 @@
         "bcr_societal": 2.778907141579224,
         "bcr_system": 0.29594332484956737,
         "bcr_excl_wf_out": 2.9509357686484194,
+        "bcr_excl_outage": 2.9509357686484194,
         "bcr_ratepayer": 4.002231932320274,
         "npv_societal": 1203811153.5774019,
         "npv_system": -331612178.49337363,
         "npv_excl_wf_out": 1243261066.6853166,
+        "npv_excl_outage": 1243261066.6853166,
         "npv_ratepayer": 1410655954.0272343
       },
       {
@@ -6808,10 +6904,12 @@
         "bcr_societal": 2.792990400291955,
         "bcr_system": 0.29763089206332805,
         "bcr_excl_wf_out": 2.968089053040141,
+        "bcr_excl_outage": 2.968089053040141,
         "bcr_ratepayer": 4.016472679188883,
         "npv_societal": 1219181577.2554164,
         "npv_system": -332199937.9160849,
         "npv_excl_wf_out": 1259295608.1418214,
+        "npv_excl_outage": 1259295608.1418214,
         "npv_ratepayer": 1426311714.707861
       }
     ],
@@ -6905,7 +7003,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-07-10T19:29:34.130327",
+    "timestamp": "2026-07-11T13:17:23.060634",
     "scenario_id": "TBC_Delay4",
     "source": "tbc_case_study"
   }

@@ -1,8 +1,7 @@
-"""Run SunZia CTCC scenarios: 17-year delay (actual), 2-year delay (counterfactual),
-and 0-year delay (no permitting delay).
+"""Run SunZia CTCC scenarios: 17-year delay (actual) and 2-year delay (counterfactual).
 
 Builds inputs from canonical YAML defaults, patches with SunZia-specific values,
-runs all three scenarios through the calculation engine, and saves results.
+runs both scenarios through the calculation engine, and saves results.
 """
 
 import copy
@@ -225,50 +224,37 @@ def main():
     results_delay2 = run_scenario(inputs_delay2, "SunZia_Delay2")
     print_results(results_delay2, "SunZia — 2-Year Delay (CREZ-Style Counterfactual)")
 
-    # --- Scenario 3: SunZia with no delay ---
-    print("\n\nBuilding SunZia (0-year delay) counterfactual...")
-    inputs_nodelay = copy.deepcopy(inputs_delay2)
-    inputs_nodelay["01_project_technical_details"]["timeline"]["delay_years"] = 0
-
-    print("Running calculation (delay=0)...")
-    results_nodelay = run_scenario(inputs_nodelay, "SunZia_NoDelay")
-    print_results(results_nodelay, "SunZia — No Delay (Immediate COD)")
-
     # --- Save .ctcc files ---
     print("\n\nSaving scenario files...")
     save_ctcc_file(inputs_delay17, results_delay17, "SunZia_Delay17", "SunZia_Delay17", source="sunzia_case_study")
     save_ctcc_file(inputs_delay2, results_delay2, "SunZia_Delay2", "SunZia_Delay2", source="sunzia_case_study")
-    save_ctcc_file(inputs_nodelay, results_nodelay, "SunZia_NoDelay", "SunZia_NoDelay", source="sunzia_case_study")
 
     # --- Comparison ---
     bcr17 = results_delay17["bcr"]
     bcr2 = results_delay2["bcr"]
-    bcr0 = results_nodelay["bcr"]
     print(f"\n{'='*60}")
-    print(f"  DELAY IMPACT COMPARISON (17-year vs 2-year vs 0-year)")
+    print(f"  DELAY IMPACT COMPARISON (17-year vs 2-year)")
     print(f"{'='*60}")
-    print(f"  {'Metric':<20} {'17yr':>10} {'2yr':>10} {'0yr':>10}")
-    print(f"  {'-'*20} {'-'*10} {'-'*10} {'-'*10}")
+    print(f"  {'Metric':<20} {'17yr':>10} {'2yr':>10}")
+    print(f"  {'-'*20} {'-'*10} {'-'*10}")
     print(
         f"  {'BCR Societal':<20} {bcr17.get('bcr_societal', 0):>10.3f}"
-        f" {bcr2.get('bcr_societal', 0):>10.3f} {bcr0.get('bcr_societal', 0):>10.3f}"
+        f" {bcr2.get('bcr_societal', 0):>10.3f}"
     )
     print(
         f"  {'BCR Utility':<20} {bcr17.get('bcr_utility', 0):>10.3f}"
-        f" {bcr2.get('bcr_utility', 0):>10.3f} {bcr0.get('bcr_utility', 0):>10.3f}"
+        f" {bcr2.get('bcr_utility', 0):>10.3f}"
     )
     print(
         f"  {'BCR Cap+Del':<20} {bcr17.get('bcr_capital_and_delay', 0):>10.3f}"
-        f" {bcr2.get('bcr_capital_and_delay', 0):>10.3f} {bcr0.get('bcr_capital_and_delay', 0):>10.3f}"
+        f" {bcr2.get('bcr_capital_and_delay', 0):>10.3f}"
     )
     print(
         f"  {'Net Benefit':<20} {fmt(bcr17.get('net_benefit_pv', 0)):>10}"
-        f" {fmt(bcr2.get('net_benefit_pv', 0)):>10} {fmt(bcr0.get('net_benefit_pv', 0)):>10}"
+        f" {fmt(bcr2.get('net_benefit_pv', 0)):>10}"
     )
     delta_17_to_2 = bcr2.get("net_benefit_pv", 0) - bcr17.get("net_benefit_pv", 0)
-    delta_17_to_0 = bcr0.get("net_benefit_pv", 0) - bcr17.get("net_benefit_pv", 0)
     print(f"  Social cost of 15 extra years (17→2): {fmt(delta_17_to_2)}")
-    print(f"  Social cost of 17 extra years (17→0): {fmt(delta_17_to_0)}")
     print(f"\n  Build cost PV (validation): {fmt(results_delay17['costs']['build']['total_pv'])}")
     print(f"  Target: $1.6-1.8B (reported $1.8-2.0B at 3,000 MW)")
 
