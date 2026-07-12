@@ -2,7 +2,7 @@
 # Date: 2025-10-24
 # Description: This script calculates the congestion reduction costs for a transmission line project.
 #              It computes the congestion reduction costs for a transmission line over the project lifetime.
-#              Approach B: single-constraint, two-price decomposition.
+#              Single-constraint, two-price decomposition.
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ class CongestionProjectDetails:
 
 @dataclass
 class CongestionReductionResults:
-    """Results from Approach B congestion/curtailment calculation."""
+    """Results from congestion/curtailment calculation."""
 
     effective_capacity_relief: float
     constrained_hours: float
@@ -127,7 +127,7 @@ def calculate_congestion_reduction_costs(
     benefit_price_escalation_real: float = 0.0,
 ) -> CongestionReductionResults:
     """
-    Approach B: single-constraint, two-price decomposition.
+    Single-constraint, two-price decomposition.
 
     A single transmission constraint binds for H hours/yr with an average exceedance
     of X MW. A fraction f of those constrained hours resolve as redispatch
@@ -170,7 +170,7 @@ def calculate_congestion_reduction_costs(
     X = max(0.0, float(average_exceedance))
     f = max(0.0, min(1.0, float(congestion_fraction)))
 
-    # Approach B core equations
+    # Core equations
     relief_mw = min(delta_C_eff, X)
     annual_congestion_benefit = H * f * relief_mw * average_congestion_price
     annual_curtailment_benefit = H * (1 - f) * relief_mw * average_curtailment_price
@@ -248,7 +248,7 @@ def main() -> None:
     # Load congestion and curtailment reduction parameters (merged)
     params = load_congestion_curtailment_reductions()
 
-    # Calculate congestion reduction costs (Approach B)
+    # Calculate congestion reduction costs
     congestion_results = calculate_congestion_reduction_costs(
         project_details_cc.reconductoring,
         project_details_cc.capacity_mw,
@@ -267,7 +267,7 @@ def main() -> None:
     )
 
     print("=" * 60)
-    print("CONGESTION/CURTAILMENT PHYSICAL RESULTS AND QUANTITIES (APPROACH B)")
+    print("CONGESTION/CURTAILMENT PHYSICAL RESULTS AND QUANTITIES")
     print("=" * 60)
     print(
         f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW"

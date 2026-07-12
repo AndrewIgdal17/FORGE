@@ -360,10 +360,10 @@ const TAB_GUIDE_CONTENT = {
     body: 'Outage rates set event frequency per mile by construction type; base duration determines how much energy goes unserved per event, scaled by a construction-type multiplier. You can model increasing risk over time with an optional growth rate.',
     items: ['Base outage duration (hrs/event)', 'Construction-type duration multiplier', 'Outage rate by construction type (outages/mi/yr)', 'Optional outage risk growth rate'],
   },
-  // L4 sub-sub-tabs: System Details — Constraints (Approach B: single-constraint, two-price decomposition)
+  // L4 sub-sub-tabs: System Details — Constraints (single-constraint, two-price decomposition)
   'congestion': {
     oneliner: 'Quantify the transmission constraint your project will relieve.',
-    body: 'Approach B models a single targeted constraint that resolves either through costlier redispatch (congestion) or through generator curtailment, split by the congestion fraction. You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, what share of that time is redispatch versus curtailment, and the two marginal prices \u2014 together, these determine the annual value of relief.',
+    body: 'The single-constraint model captures a targeted constraint that resolves either through costlier redispatch (congestion) or through generator curtailment, split by the congestion fraction. You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, what share of that time is redispatch versus curtailment, and the two marginal prices \u2014 together, these determine the annual value of relief.',
     items: ['Constrained hours per year', 'Average megawatt exceedance', 'Congestion fraction (share of constrained hours resolved via redispatch)', 'Congestion price ($/MWh)', 'Curtailment price ($/MWh)', 'Flow factor (greenfield only)'],
   },
 };
@@ -4184,7 +4184,7 @@ function renderConstraintsPanel(data) {
     if (l4Idx > 0) panel.style.display = 'none';
 
     if (l4Id === 'congestion') {
-      // Approach B: single-constraint, two-price decomposition (constraints + prices, flat paths)
+      // Single-constraint, two-price decomposition (constraints + prices, flat paths)
       const congFields = [];
       if (!recon) {
         congFields.push({label: 'Flow Factor', path: `${yamlSection}.${yamlRoot}.constraints.flow_factor`, type: 'percent', help: 'Deliverability to targeted constraint [0,1]'});

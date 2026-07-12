@@ -1008,7 +1008,7 @@ class CTCCOutputManager:
                 "curtailment_delay_cost_pv": results.get(
                     "curtailment_delay_cost_pv", 0
                 ),
-                # Physical metrics (Approach B)
+                # Physical metrics
                 "effective_capacity_relief_mw": results.get(
                     "effective_capacity_relief_mw", 0
                 ),

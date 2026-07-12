@@ -94,7 +94,7 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     row["zone_3"]["rent_cost"] = 36.72
     row["zone_3"]["hold_cost"] = 3.67
 
-    # --- 17: Congestion/Curtailment (Approach B) ---
+    # --- 17: Congestion/Curtailment ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.50

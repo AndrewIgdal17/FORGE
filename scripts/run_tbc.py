@@ -104,7 +104,7 @@ def patch_tbc_inputs(inputs: dict) -> dict:
         row[zone_key]["hold_cost"] = 0
     row["zone_1"]["miles"] = 53
 
-    # --- Section 17: Congestion/Curtailment (Approach B; load pocket, congestion-dominated) ---
+    # --- Section 17: Congestion/Curtailment (load pocket, congestion-dominated) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 1.0

@@ -90,7 +90,7 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     out["capacity_at_risk_factor"] = 0.5
     out["risk_growth_rate"] = 0.0
 
-    # --- Tab 17: Congestion/Curtailment (Approach B) ---
+    # --- Tab 17: Congestion/Curtailment ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 1.0

@@ -476,15 +476,6 @@ _TAB7: list[InputField] = [
        input_type="percent", condition="always_hidden", tier="working", display_order=2,
        validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True},
        sub_tab="wildfire-risk"),
-    _f("wf_dr_source", taxonomy_id="wildfire_eac", input_tab="risk",
-       yaml_section="06_wildfire_costs", field_path="wildfire.discount_rate_source",
-       label="Discount Rate Source", input_type="dropdown", condition="always_hidden",
-       display_order=3, validation={"options": ["social", "wacc_real", "custom"]},
-       sub_tab="wildfire-risk"),
-    _f("wf_dr_custom", taxonomy_id="wildfire_eac", input_tab="risk",
-       yaml_section="06_wildfire_costs", field_path="wildfire.discount_rate_custom",
-       label="Discount Rate Custom", condition="always_hidden", display_order=4,
-       sub_tab="wildfire-risk"),
 ]
 _TAB7.append(_f(
     "wf_base_ignition_rate", taxonomy_id="wildfire_eac", input_tab="risk",
@@ -502,18 +493,13 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         condition="always_hidden", tier="working", display_order=20 + _ci,
         validation={"min": 0}, sub_tab="wildfire-risk"))
 
-# Outage (16 fields) — all always_hidden, custom rendered
+# Outage (15 fields) — all always_hidden, custom rendered
 _TAB7 += [
     _f("out_growth_rate", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
        label="Risk Growth Rate", help_text="Annual increase in outage rates over project lifetime",
        input_type="percent", condition="always_hidden", tier="working", display_order=1,
        validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True},
-       sub_tab="outage-risk"),
-    _f("out_dr_type", taxonomy_id="outage_eac", input_tab="risk",
-       yaml_section="07_outage_costs", field_path="outage.discount_rate_type",
-       label="Discount Rate Type", input_type="dropdown", condition="always_hidden",
-       display_order=2, validation={"options": ["social", "wacc_real"]},
        sub_tab="outage-risk"),
     _f("out_capacity_at_risk", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.capacity_at_risk_factor",
@@ -663,7 +649,7 @@ for _group_key, _group_label in [
 def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputField]:
     """Generate congestion/curtailment fields for greenfield or reconductoring.
 
-    Approach B: single-constraint, two-price decomposition. `congestion_fraction`
+    Single-constraint, two-price decomposition. `congestion_fraction`
     (f) splits constrained hours between redispatch (congestion) and renewable
     curtailment; there is no separate curtailment-hours constraint.
     """

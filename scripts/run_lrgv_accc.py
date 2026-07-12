@@ -3,7 +3,7 @@
 Builds inputs from canonical YAML defaults, patches with LRGV corridor parameters
 extracted from the legacy case-study scenarios, runs both variants through the
 calculation engine, and saves updated .ctcc files in the current format
-(grid_mix, Approach B congestion, no allowed_return_rate).
+(grid_mix, single-constraint congestion, no allowed_return_rate).
 """
 
 import copy
@@ -88,7 +88,7 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     row["zone_2"]["rent_cost"] = 18.78
     row["zone_2"]["hold_cost"] = 1.878
 
-    # --- 17: Congestion/Curtailment greenfield block (Approach B; used when not reconductoring) ---
+    # --- 17: Congestion/Curtailment greenfield block (used when not reconductoring) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.80

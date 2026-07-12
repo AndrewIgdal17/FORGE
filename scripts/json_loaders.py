@@ -218,7 +218,7 @@ def load_emissions_details():
 
 def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
-    Load congestion and curtailment reduction parameters from merged JSON (Approach B).
+    Load congestion and curtailment reduction parameters from merged JSON.
 
     Returns:
         CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters

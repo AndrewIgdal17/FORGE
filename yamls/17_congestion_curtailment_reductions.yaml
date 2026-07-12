@@ -1,4 +1,4 @@
-# Congestion and Curtailment Reductions — Approach B
+# Congestion and Curtailment Reductions — Single-constraint, two-price decomposition
 # Single-constraint, two-price decomposition.
 # B_cong = H * f * min(delta_C_eff, X) * gamma_cong
 # B_curt = H * (1-f) * min(delta_C_eff, X) * gamma_curt

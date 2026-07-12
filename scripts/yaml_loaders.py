@@ -39,7 +39,7 @@ class ProjectTechnicalDetails:
 
 @dataclass
 class CongestionCurtailmentParams:
-    """Congestion and curtailment reduction parameters (Approach B)."""
+    """Congestion and curtailment reduction parameters."""
 
     flow_factor: float
     constrained_hours: float
@@ -489,7 +489,7 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
 
 def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
-    Load congestion and curtailment reduction parameters from merged YAML file (Approach B).
+    Load congestion and curtailment reduction parameters from merged YAML file.
 
     Returns:
         CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters

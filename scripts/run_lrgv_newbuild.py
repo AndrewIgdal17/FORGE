@@ -117,7 +117,7 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     row["zone_2"]["rent_cost"] = 18.78
     row["zone_2"]["hold_cost"] = 3_000
 
-    # --- 17: Congestion/Curtailment (Approach B; same import constraint as LRGV) ---
+    # --- 17: Congestion/Curtailment (same import constraint as LRGV) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.80

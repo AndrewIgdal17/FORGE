@@ -101,7 +101,7 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     row["zone_3"]["rent_cost"] = 0
     row["zone_3"]["hold_cost"] = 0
 
-    # --- Tab 17: Congestion/Curtailment (Approach B; offshore wind, mostly curtailment) ---
+    # --- Tab 17: Congestion/Curtailment (offshore wind, mostly curtailment) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 1.0
