@@ -1,0 +1,85 @@
+BCR Summary — Post Capacity Value Integration
+================================================
+
+Generated: 2026-07-12
+
+CTT Panhandle — 2-Year Delay (Actual CREZ)
+  BCR Societal:    1.352
+  BCR Utility:     0.990
+  BCR Ratepayer:   1.753
+  Total costs PV:  $11.07B
+  Total benefits PV: $14.96B
+  Net benefit PV:  $3.90B
+  Capacity value PV: $0
+
+CTT Panhandle — 7-Year Delay (Counterfactual)
+  BCR Societal:    1.122
+  BCR Utility:     0.945
+  BCR Ratepayer:   1.703
+  Total costs PV:  $9.48B
+  Total benefits PV: $10.64B
+  Net benefit PV:  $1.16B
+  Capacity value PV: $0
+
+SunZia — 17-Year Delay (Actual)
+  BCR Societal:    0.774
+  BCR Utility:     0.936
+  BCR Ratepayer:   1.982
+  Total costs PV:  $25.23B
+  Total benefits PV: $19.53B
+  Net benefit PV:  -$5.70B
+  Capacity value PV: $752.8M
+
+SunZia — 2-Year Delay (CREZ-Style Counterfactual)
+  BCR Societal:    1.439
+  BCR Utility:     0.993
+  BCR Ratepayer:   2.399
+  Total costs PV:  $28.75B
+  Total benefits PV: $41.37B
+  Net benefit PV:  $12.62B
+  Capacity value PV: $1.43B
+
+Trans Bay Cable — 4-Year Delay (Actual)
+  BCR Societal:    3.637
+  BCR Utility:     0.953
+  BCR Ratepayer:   5.231
+  Total costs PV:  $680.0M
+  Total benefits PV: $2.47B
+  Net benefit PV:  $1.79B
+  Capacity value PV: $574.1M
+
+Trans Bay Cable — 0-Year Delay (Counterfactual)
+  BCR Societal:    4.207
+  BCR Utility:     1.000
+  BCR Ratepayer:   5.666
+  Total costs PV:  $723.8M
+  Total benefits PV: $3.05B
+  Net benefit PV:  $2.32B
+  Capacity value PV: $706.9M
+
+AEP LRGV — ACCC Reconductoring (1yr delay)
+  BCR Societal:    0.253
+  BCR Utility:     0.981
+  BCR Ratepayer:   1.807
+  Total costs PV:  $16.93B
+  Total benefits PV: $4.28B
+  Net benefit PV:  -$12.65B
+  Capacity value PV: $0
+
+AEP LRGV — ACSR Structure Rebuild (2yr delay)
+  BCR Societal:    0.539
+  BCR Utility:     0.967
+  BCR Ratepayer:   2.970
+  Total costs PV:  $12.34B
+  Total benefits PV: $6.65B
+  Net benefit PV:  -$5.69B
+  Capacity value PV: $0
+
+AEP LRGV — Laredo New-Build 345kV AC (7yr delay)
+  BCR Societal:    0.730
+  BCR Utility:     0.899
+  BCR Ratepayer:   3.416
+  Total costs PV:  $8.07B
+  Total benefits PV: $5.89B
+  Net benefit PV:  -$2.17B
+  Capacity value PV: $0

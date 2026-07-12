@@ -4507,7 +4507,7 @@
   },
   "results": {
     "scenario_id": "CTT_Counterfactual_Delay7",
-    "timestamp": "2026-07-12T10:17:13.044999",
+    "timestamp": "2026-07-12T10:58:31.862097",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
@@ -5236,7 +5236,7 @@
     "csv_equivalent": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
       "scenario_id": "CTT_Counterfactual_Delay7",
-      "timestamp": "2026-07-12T10:17:13.044999",
+      "timestamp": "2026-07-12T10:58:31.862097",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -7985,7 +7985,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-07-12T10:17:13.396337",
+    "timestamp": "2026-07-12T10:58:33.976862",
     "scenario_id": "CTT_Counterfactual_Delay7",
     "source": "ctt_panhandle_crez_case_study"
   }

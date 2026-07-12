@@ -4508,7 +4508,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_Laredo_NewBuild",
-    "timestamp": "2026-07-12T10:17:19.282513",
+    "timestamp": "2026-07-12T10:58:36.395998",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
@@ -5237,7 +5237,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
       "scenario_id": "AEP_LRGV_Laredo_NewBuild",
-      "timestamp": "2026-07-12T10:17:19.282513",
+      "timestamp": "2026-07-12T10:58:36.395998",
       "capacity_mw": 1792,
       "line_length_miles": 200,
       "construction_type": "Overhead",
@@ -7987,7 +7987,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-07-12T10:17:19.615972",
+    "timestamp": "2026-07-12T10:58:36.723960",
     "scenario_id": "AEP_LRGV_Laredo_NewBuild",
     "source": "aep_lrgv_laredo_newbuild_case_study"
   }
