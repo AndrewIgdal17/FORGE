@@ -136,6 +136,16 @@ def patch_tbc_inputs(inputs: dict) -> dict:
         },
     }
 
+    # --- 20: Capacity Value (TBC into SF — reliability import) ---
+    # κ = 1.0: CAISO 2011 LCR used full 400 MW runback; SF LCR → 0 MW after TBC
+    #          TBC 2025 Availability Report: 99.97% net availability
+    # p_cap = $88,090/MW-yr: CAISO CPM soft offer cap (CEC GFFC × 1.2, FERC ER24-1225)
+    # Gate: SF peninsula capacity-constrained, import-dependent
+    cap = inputs["20_capacity_value"]
+    cap["capacity_credit"] = 1.0
+    cap["capacity_price"] = 88090
+    cap["applicability_gate"] = True
+
     return inputs
 
 
@@ -169,8 +179,8 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    cap = benefits.get("capacity_value", {})
-    print(f"  Capacity value:         {fmt(cap.get('capacity_value_pv', 0))}")
+    cap_pv = cc.get("capacity_value_pv", 0)
+    print(f"  Capacity value:         {fmt(cap_pv)}")
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")
