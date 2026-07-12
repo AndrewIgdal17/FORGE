@@ -121,6 +121,15 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
         },
     }
 
+    # --- 20: Capacity Value (SunZia into CAISO/AZ — capacity-constrained) ---
+    # κ = 0.35: CPUC MTR Wind NM 2026 ELCC (E3/Astrapé Jan 2023 Update, Table 1 p.10)
+    # p_cap = $88,090/MW-yr: CAISO CPM soft offer cap (CEC GFFC × 1.2, FERC ER24-1225)
+    # Gate: AZ/CA capacity-short, import-dependent
+    cap = inputs["20_capacity_value"]
+    cap["capacity_credit"] = 0.35
+    cap["capacity_price"] = 88090
+    cap["applicability_gate"] = True
+
     return inputs
 
 
@@ -154,8 +163,8 @@ def print_results(results: dict, label: str):
     print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
-    cap = benefits.get("capacity_value", {})
-    print(f"  Capacity value:         {fmt(cap.get('capacity_value_pv', 0))}")
+    cap_pv = cc.get("capacity_value_pv", 0)
+    print(f"  Capacity value:         {fmt(cap_pv)}")
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")

@@ -109,6 +109,7 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
     annual_congestion = cc.get("congestion_benefit_annual", 0.0)
     annual_curtailment = cc.get("curtailment_benefit_annual", 0.0)
     annual_delivered = cc.get("delivered_benefit_annual", 0.0)
+    annual_capacity_value = cc.get("capacity_value_annual", 0.0)
 
     annual_om = _dig(results, "costs", "oandm", "total_annual")
     annual_insurance = _dig(results, "costs", "insurance", "annual_premium")
@@ -118,6 +119,7 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
         StreamSpec("annual_congestion_benefit", annual_congestion, g_benefit, wacc_real, "B_remedial"),
         StreamSpec("annual_curtailment_benefit", annual_curtailment, g_benefit, wacc_real, "B_remedial"),
         StreamSpec("delivered_benefit_annual", annual_delivered, g_benefit, wacc_real, "B_enabling"),
+        StreamSpec("capacity_value_annual", annual_capacity_value, g_benefit, wacc_real, "B_enabling"),
         StreamSpec("annual_om", annual_om, g_om, wacc_real, "C_soft_op"),
         StreamSpec("annual_insurance", annual_insurance, g_insurance, wacc_real, "C_soft_op"),
         StreamSpec("energy_losses_annual_cost", annual_energy_losses, g_benefit, wacc_real, "C_soft_op"),
