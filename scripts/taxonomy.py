@@ -1,6 +1,6 @@
 """CTCC taxonomy — single source of truth for Python.
 
-Defines the 36-item taxonomy (24 cost/benefit + 12 utility), dimensions
+Defines the 36-item taxonomy (25 cost/benefit + 12 utility), dimensions
 registry, BCR definitions, excludable groups, and calculator key mappings.
 Read-only reference data; importable by any module without circular imports.
 
@@ -33,11 +33,11 @@ NumeratorRule = Literal[
     "capital_recovery", "revenue_requirement",
 ]
 DenominatorRule = Literal[
-    "all_costs", "hard", "hard_delay", "hard_operational_loss",
+    "all_costs", "hard", "hard_delay",
     "atrr_delay", "revenue_requirement_loss",
 ]
-Perspective = Literal["societal", "system", "stakeholder"]
-Family = Literal["societal", "system", "firm"]
+Perspective = Literal["societal", "stakeholder"]
+Family = Literal["societal", "firm"]
 
 # ---------------------------------------------------------------------------
 # Core data structures
@@ -160,6 +160,11 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("delivered_energy_benefit", "benefit", "enabling", "delivered_energy",
                  "Delivered Energy Benefit", "wacc_real", None, 1,
                  "Value of deliverable energy. Enabling: new throughput."),
+    TaxonomyItem("capacity_value_benefit", "benefit", "enabling", "capacity_value",
+                 "Capacity Value Benefit", "wacc_real", None, 2,
+                 "Resource adequacy value of incremental transfer capability. "
+                 "Net CONE × capacity credit × effective capacity × applicability gate. "
+                 "Parametric screening proxy (Brattle 2013); not LOLE/RPM simulation."),
     # --- Transfer ---
     TaxonomyItem("capital_recovery", "transfer", "transfer", "capital_recovery",
                  "Capital Recovery (Rate-Based)", "wacc_real", None, 1,
@@ -205,7 +210,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 35, f"Expected 35 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 36, f"Expected 36 taxonomy items, got {len(TAXONOMY)}"
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -279,7 +284,7 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
 }
 
 # ---------------------------------------------------------------------------
-# Section 3b — Core BCR perspectives (4)
+# Section 3b — Core BCR perspectives (3)
 # ---------------------------------------------------------------------------
 
 BCR_DEFINITIONS: dict[str, BCRDefinition] = {
@@ -287,12 +292,6 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
         "bcr_societal", "Societal", "societal", "societal",
         "all_benefits", "all_costs", frozenset(), 1,
         "Full societal benchmark. Revenue excluded.",
-    ),
-    "bcr_system": BCRDefinition(
-        "bcr_system", "Congestion Relief", "system", "system",
-        "remedial", "hard_operational_loss",
-        frozenset(), 2,
-        "Congestion and curtailment relief only; pure grid-operational.",
     ),
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "firm", "stakeholder",
@@ -308,7 +307,6 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
 
 BCR_FAMILY_META: dict[Family, dict[str, str | int]] = {
     "societal": {"label": "Societal", "order": 1},
-    "system": {"label": "System (Grid-Operational)", "order": 2},
     "firm": {"label": "Firm", "order": 3},
 }
 
@@ -399,6 +397,7 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "congestion_benefit": "congestion_benefit_pv",
     "curtailment_benefit": "curtailment_benefit_pv",
     "delivered_energy_benefit": "delivered_benefit_pv",
+    "capacity_value_benefit": "capacity_value_benefit_pv",
     # Transfer
     "capital_recovery": "capital_recovery_pv",
     # Reporting-only
@@ -499,7 +498,7 @@ def taxonomy_to_dict() -> dict:
 
 if __name__ == "__main__":
     # 8a. Item count
-    assert len(TAXONOMY) == 35, f"Expected 35 items, got {len(TAXONOMY)}"
+    assert len(TAXONOMY) == 36, f"Expected 36 items, got {len(TAXONOMY)}"
 
     # 8b. Bucket membership
     _side_bucket_rules: dict[str, set[str]] = {
@@ -535,14 +534,14 @@ if __name__ == "__main__":
     )
 
     # 8d. BCR coverage
-    assert len(BCR_DEFINITIONS) == 4, (
-        f"Expected 4 core BCR definitions, got {len(BCR_DEFINITIONS)}"
+    assert len(BCR_DEFINITIONS) == 3, (
+        f"Expected 3 core BCR definitions, got {len(BCR_DEFINITIONS)}"
     )
     assert len(BCR_EXCLUSION_VARIANTS) == 6, (
         f"Expected 6 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
     )
-    assert len(ALL_BCR_DEFINITIONS) == 10, (
-        f"Expected 10 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
+    assert len(ALL_BCR_DEFINITIONS) == 9, (
+        f"Expected 9 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
     )
 
     # 8e. Excludable groups
@@ -561,15 +560,15 @@ if __name__ == "__main__":
     )
 
     # 8f. Calculator key mapping
-    assert len(TAXONOMY_TO_CALCULATOR_KEY) == 24, (
-        f"Expected 24 calculator key mappings, got {len(TAXONOMY_TO_CALCULATOR_KEY)}"
+    assert len(TAXONOMY_TO_CALCULATOR_KEY) == 25, (
+        f"Expected 25 calculator key mappings, got {len(TAXONOMY_TO_CALCULATOR_KEY)}"
     )
     for _tid in TAXONOMY_TO_CALCULATOR_KEY:
         assert _tid in TAXONOMY, (
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 35 items, 10 BCR definitions, 5 excludable groups")
+    print("Taxonomy verification passed: 36 items, 9 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"
