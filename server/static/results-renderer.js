@@ -946,7 +946,7 @@ function renderTransfersAndReporting(results) {
     const revFoot = document.createElement('div');
     revFoot.className = 'results-note';
     revFoot.style.marginTop = '0.35rem';
-    revFoot.textContent = 'Revenue is a transfer in the accounting: it is not an additional societal benefit line in BCR_system.';
+    revFoot.textContent = 'Revenue is a transfer in the accounting: it is not an additional societal benefit.';
     revSection.appendChild(revFoot);
     container.appendChild(createCategory('Revenue', revSection, true));
   }
@@ -1348,15 +1348,13 @@ function renderBCRHeadline(results) {
 
   const coreDefs = [
     { id: 'bcr_societal', label: 'Societal BCR', family: 'societal' },
-    { id: 'bcr_system', label: 'System BCR', family: 'system' },
     { id: 'bcr_utility', label: 'Utility BCR', family: 'firm' },
     { id: 'bcr_ratepayer', label: 'Ratepayer BCR', family: 'firm' },
   ];
 
   const families = C.taxonomy?.bcr_families || {
     societal: { label: 'Societal', order: 1 },
-    system: { label: 'System', order: 2 },
-    firm: { label: 'Firm', order: 3 },
+    firm: { label: 'Firm', order: 2 },
   };
   const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
 
@@ -1424,8 +1422,6 @@ function renderPerspectivesTable(results) {
   const energyLosses = bcr.energy_losses_pv || 0;
   const allDelayCosts = bcr.delay_costs_pv || 0;
   const baseDelayCost = bcr.delay_cost_pv || 0;
-  const systemCosts = hardCosts + operationalCosts + energyLosses;
-  const systemBenefits = remedialBenefits;
   const utilityCosts = hardCosts + baseDelayCost + operationalCosts;
   const ratepayerBenefits = allBenefits;
   const ratepayerCosts = (bcr.revenue_pv || 0) + energyLosses;
@@ -1433,17 +1429,13 @@ function renderPerspectivesTable(results) {
 
   const families = C.taxonomy?.bcr_families || {
     societal: { label: 'Societal', order: 1 },
-    system: { label: 'System (Grid-Operational)', order: 2 },
-    firm: { label: 'Firm', order: 3 },
+    firm: { label: 'Firm', order: 2 },
   };
   const familyOrder = Object.keys(families).sort((a, b) => families[a].order - families[b].order);
 
   const rowsByFamily = {
     societal: [
       { name: 'Societal', benefits: allBenefits, costs: allCosts, bcrVal: bcr.bcr_societal || 0, netBenefit: bcr.net_benefit_pv || 0 },
-    ],
-    system: [
-      { name: 'System', benefits: systemBenefits, costs: systemCosts, bcrVal: bcr.bcr_system || 0, netBenefit: bcr.net_benefit_system_pv || (systemBenefits - systemCosts) },
     ],
     firm: [
       { name: 'Utility / Transm. Service Provider', benefits: bcr.revenue_pv || 0, costs: utilityCosts, bcrVal: bcr.bcr_utility || 0, netBenefit: bcr.net_benefit_utility_pv || 0, tooltip: 'Benefits = revenue (the regulated return). Revenue is a transfer from ratepayers; not a net social benefit.' },

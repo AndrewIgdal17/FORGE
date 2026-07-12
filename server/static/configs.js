@@ -22,9 +22,6 @@
         { group: 'BCR — Societal', metrics: [
           { key: 'bcr_societal', label: 'BCR Societal', path: 'bcr.bcr_societal', format: 'number3' },
         ]},
-        { group: 'BCR — System', metrics: [
-          { key: 'bcr_system', label: 'BCR Congestion Relief', path: 'bcr.bcr_system', format: 'number3' },
-        ]},
         { group: 'BCR — Firm', metrics: [
           { key: 'bcr_utility', label: 'BCR Utility', path: 'bcr.bcr_utility', format: 'number3' },
           { key: 'bcr_ratepayer', label: 'BCR Ratepayer', path: 'bcr.bcr_ratepayer', format: 'number3' },

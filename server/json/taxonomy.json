@@ -1,0 +1,630 @@
+{
+  "items": [
+    {
+      "id": "build_conductor",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "build",
+      "label": "Conductor Cost",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 1,
+      "description": "Terrain-adjusted, contingency-applied conductor cost (variable + fixed)."
+    },
+    {
+      "id": "build_structure",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "build",
+      "label": "Structure Cost",
+      "discount_rate": "wacc_real",
+      "condition": "greenfield_only",
+      "display_order": 2,
+      "description": "Terrain-adjusted structure cost. Zero for reconductoring."
+    },
+    {
+      "id": "build_converter",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "build",
+      "label": "Converter Cost",
+      "discount_rate": "wacc_real",
+      "condition": "dc_only",
+      "display_order": 3,
+      "description": "Fixed converter station cost. Zero for AC and reconductoring."
+    },
+    {
+      "id": "row_acquisition",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "row_capital",
+      "label": "ROW Acquisition",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 4,
+      "description": "One-time land acquisition cost (fee simple or easement)."
+    },
+    {
+      "id": "row_holding",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "row_capital",
+      "label": "ROW Holding Cost",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 5,
+      "description": "Annual option/holding fee during delay period."
+    },
+    {
+      "id": "env_mitigation",
+      "side": "cost",
+      "bucket": "hard",
+      "subgroup": "environmental",
+      "label": "Environmental Mitigation",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 6,
+      "description": "Base per-acre mitigation + wetland/habitat credit costs."
+    },
+    {
+      "id": "oandm",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "operational",
+      "label": "O&M",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 1,
+      "description": "Annual conductor + structure + converter + vegetation management O&M."
+    },
+    {
+      "id": "insurance",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "operational",
+      "label": "Operational Insurance",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 2,
+      "description": "Annual premium on insurable asset value (build components)."
+    },
+    {
+      "id": "row_rent",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "operational",
+      "label": "ROW Rent",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 3,
+      "description": "Annual per-acre rent for existing/leased ROW corridor."
+    },
+    {
+      "id": "line_loss_conductor",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "energy",
+      "label": "Conductor Losses",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 4,
+      "description": "Thermal energy losses from conductor resistance, valued at electricity price."
+    },
+    {
+      "id": "line_loss_converter",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "energy",
+      "label": "Converter Losses",
+      "discount_rate": "wacc_real",
+      "condition": "dc_only",
+      "display_order": 5,
+      "description": "Energy losses from AC/DC converter stations. Zero for AC projects."
+    },
+    {
+      "id": "base_delay",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "delay",
+      "label": "Base Delay Cost",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 6,
+      "description": "Annual pre-construction delay costs (legal, admin, labor, regulatory)."
+    },
+    {
+      "id": "congestion_delay",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "delay",
+      "label": "Congestion Delay Cost",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 7,
+      "description": "Opportunity cost of congestion during delay + construction period."
+    },
+    {
+      "id": "curtailment_delay",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "delay",
+      "label": "Curtailment Delay Cost",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 8,
+      "description": "Opportunity cost of curtailment during delay + construction period."
+    },
+    {
+      "id": "emissions_displacement_delay",
+      "side": "cost",
+      "bucket": "soft",
+      "subgroup": "delay",
+      "label": "Displacement Delay Emissions Cost",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 9,
+      "description": "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."
+    },
+    {
+      "id": "wildfire_eac",
+      "side": "cost",
+      "bucket": "risk",
+      "subgroup": "wildfire",
+      "label": "Expected Wildfire Cost",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 1,
+      "description": "Expected annual loss from wildfire (ignition rate x severity x risk growth)."
+    },
+    {
+      "id": "outage_eac",
+      "side": "cost",
+      "bucket": "risk",
+      "subgroup": "outage",
+      "label": "Expected Outage Cost",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 2,
+      "description": "Expected annual cost from transmission outages (rate x duration x VoLL x risk growth)."
+    },
+    {
+      "id": "emissions_comp",
+      "side": "cost",
+      "bucket": "emissions",
+      "subgroup": "loss_compensation",
+      "label": "Loss-Compensation Emissions",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 1,
+      "description": "Social cost of emissions from generation compensating for line losses."
+    },
+    {
+      "id": "emissions_fac",
+      "side": "reporting_only",
+      "bucket": "reporting",
+      "subgroup": "facilitated",
+      "label": "Facilitated Emissions",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 2,
+      "description": "Intermediate quantity (not a BCR cost or benefit). Social cost of pollutant emissions from the energy delivered via this project path. The Avoided Emissions Benefit equals the no-line equivalent minus this value."
+    },
+    {
+      "id": "congestion_benefit",
+      "side": "benefit",
+      "bucket": "remedial",
+      "subgroup": "congestion",
+      "label": "Congestion Reduction Benefit",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 1,
+      "description": "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."
+    },
+    {
+      "id": "curtailment_benefit",
+      "side": "benefit",
+      "bucket": "remedial",
+      "subgroup": "curtailment",
+      "label": "Curtailment Reduction Benefit",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 2,
+      "description": "Value of curtailment relief MWh. Remedial: fixes curtailed renewables."
+    },
+    {
+      "id": "delivered_energy_benefit",
+      "side": "benefit",
+      "bucket": "enabling",
+      "subgroup": "delivered_energy",
+      "label": "Delivered Energy Benefit",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 1,
+      "description": "Value of deliverable energy. Enabling: new throughput."
+    },
+    {
+      "id": "capacity_value_benefit",
+      "side": "benefit",
+      "bucket": "enabling",
+      "subgroup": "capacity_value",
+      "label": "Capacity Value Benefit",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 2,
+      "description": "Resource adequacy value of incremental transfer capability. Net CONE \u00d7 capacity credit \u00d7 effective capacity \u00d7 applicability gate. Parametric screening proxy (Brattle 2013); not LOLE/RPM simulation."
+    },
+    {
+      "id": "capital_recovery",
+      "side": "transfer",
+      "bucket": "transfer",
+      "subgroup": "capital_recovery",
+      "label": "Capital Recovery (Rate-Based)",
+      "discount_rate": "wacc_real",
+      "condition": null,
+      "display_order": 1,
+      "description": "Utility-ratepayer transfer: allowed return x rate base. Not in societal NB."
+    },
+    {
+      "id": "displacement_avoided",
+      "side": "benefit",
+      "bucket": "avoided_emissions",
+      "subgroup": "displacement",
+      "label": "Avoided Emissions Benefit",
+      "discount_rate": "social",
+      "condition": null,
+      "display_order": 1,
+      "description": "Benefit from cleaner generation enabled by this project. Equals the difference between the no-line and project-path societal emission costs, discounted at the social rate."
+    },
+    {
+      "id": "project_identity",
+      "side": "utility",
+      "bucket": "project",
+      "subgroup": "configuration",
+      "label": "Project Identity",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 1,
+      "description": "Project name and scenario identifier."
+    },
+    {
+      "id": "project_technology",
+      "side": "utility",
+      "bucket": "project",
+      "subgroup": "configuration",
+      "label": "Technology Configuration",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 2,
+      "description": "Construction type, AC/DC, capacity, conductor/converter selection."
+    },
+    {
+      "id": "project_timing",
+      "side": "utility",
+      "bucket": "project",
+      "subgroup": "timing",
+      "label": "Project Timing",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 3,
+      "description": "Construction years, delay years, project lifetime."
+    },
+    {
+      "id": "project_utilization",
+      "side": "utility",
+      "bucket": "project",
+      "subgroup": "utilization",
+      "label": "Line Utilization",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 4,
+      "description": "Line utilization factor."
+    },
+    {
+      "id": "route_terrain_miles",
+      "side": "utility",
+      "bucket": "route",
+      "subgroup": "terrain",
+      "label": "Terrain Miles",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 1,
+      "description": "Route miles by terrain type. Zero-mile terrains hidden from cost calculations."
+    },
+    {
+      "id": "route_terrain_multipliers",
+      "side": "utility",
+      "bucket": "route",
+      "subgroup": "terrain",
+      "label": "Terrain Multipliers",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 2,
+      "description": "Cost multiplier by terrain type for weighted miles."
+    },
+    {
+      "id": "financial_rates",
+      "side": "utility",
+      "bucket": "financial",
+      "subgroup": "rates",
+      "label": "Financial Parameters",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 1,
+      "description": "Base year, inflation, WACC nominal, social discount rate."
+    },
+    {
+      "id": "financial_contingencies",
+      "side": "utility",
+      "bucket": "financial",
+      "subgroup": "contingencies",
+      "label": "Build Contingencies",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 2,
+      "description": "Contingency factors for conductor, structure, converter costs."
+    },
+    {
+      "id": "financial_revenue_config",
+      "side": "utility",
+      "bucket": "financial",
+      "subgroup": "revenue",
+      "label": "Revenue & Return Configuration",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 4,
+      "description": "Rate-based revenue: enabled flag, FERC declining-balance formula."
+    },
+    {
+      "id": "financial_afudc",
+      "side": "utility",
+      "bucket": "financial",
+      "subgroup": "afudc",
+      "label": "AFUDC Configuration",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 5,
+      "description": "AFUDC application toggle and delay period active work flag."
+    },
+    {
+      "id": "financial_timing_patterns",
+      "side": "utility",
+      "bucket": "financial",
+      "subgroup": "timing_patterns",
+      "label": "Cost Timing Patterns",
+      "discount_rate": null,
+      "condition": null,
+      "display_order": 6,
+      "description": "Spending split by cost component for AFUDC capitalization."
+    }
+  ],
+  "dimensions": {
+    "build_conductor": [
+      "terrain"
+    ],
+    "build_structure": [
+      "terrain"
+    ],
+    "row_acquisition": [
+      "zone",
+      "row_regime",
+      "terrain"
+    ],
+    "row_holding": [
+      "zone",
+      "row_regime"
+    ],
+    "env_mitigation": [
+      "terrain",
+      "credit_type"
+    ],
+    "oandm": [
+      "terrain",
+      "component"
+    ],
+    "row_rent": [
+      "zone"
+    ],
+    "line_loss_conductor": [
+      "terrain"
+    ],
+    "wildfire_eac": [
+      "year"
+    ],
+    "outage_eac": [
+      "year",
+      "voll_tier"
+    ],
+    "emissions_comp": [
+      "pollutant",
+      "source",
+      "year"
+    ],
+    "emissions_fac": [
+      "pollutant",
+      "source",
+      "year",
+      "instance"
+    ],
+    "displacement_avoided": [
+      "pollutant",
+      "year"
+    ],
+    "congestion_benefit": [
+      "allocation"
+    ],
+    "curtailment_benefit": [
+      "allocation"
+    ],
+    "base_delay": [
+      "category"
+    ],
+    "insurance": [
+      "component"
+    ]
+  },
+  "excludable_groups": {
+    "emissions": {
+      "id": "emissions",
+      "label": "Line Loss Compensation Emissions",
+      "taxonomy_ids": [
+        "emissions_comp"
+      ]
+    },
+    "avoided_emissions": {
+      "id": "avoided_emissions",
+      "label": "Avoided Emissions",
+      "taxonomy_ids": [
+        "displacement_avoided"
+      ]
+    },
+    "line_losses": {
+      "id": "line_losses",
+      "label": "Line Losses (conductor + converter)",
+      "taxonomy_ids": [
+        "line_loss_conductor",
+        "line_loss_converter"
+      ]
+    },
+    "wildfire": {
+      "id": "wildfire",
+      "label": "Wildfire Risk",
+      "taxonomy_ids": [
+        "wildfire_eac"
+      ]
+    },
+    "outage": {
+      "id": "outage",
+      "label": "Outage Risk",
+      "taxonomy_ids": [
+        "outage_eac"
+      ]
+    }
+  },
+  "bcr_families": {
+    "societal": {
+      "id": "societal",
+      "label": "Societal",
+      "order": 1
+    },
+    "firm": {
+      "id": "firm",
+      "label": "Firm",
+      "order": 3
+    }
+  },
+  "bcr_definitions": {
+    "bcr_societal": {
+      "id": "bcr_societal",
+      "label": "Societal",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [],
+      "display_order": 1,
+      "notes": "Full societal benchmark. Revenue excluded."
+    },
+    "bcr_utility": {
+      "id": "bcr_utility",
+      "label": "Utility / TSP",
+      "family": "firm",
+      "perspective": "stakeholder",
+      "numerator_rule": "revenue_requirement",
+      "denominator_rule": "atrr_delay",
+      "exclude_groups": [],
+      "display_order": 6,
+      "notes": "Pure utility: ATRR / (ATRR + base delay). BCR = 1.0 by identity for zero-delay regulated projects."
+    },
+    "bcr_ratepayer": {
+      "id": "bcr_ratepayer",
+      "label": "Ratepayer",
+      "family": "firm",
+      "perspective": "stakeholder",
+      "numerator_rule": "remedial_enabling",
+      "denominator_rule": "revenue_requirement_loss",
+      "exclude_groups": [],
+      "display_order": 7,
+      "notes": "Whether ratepayers receive more value than they pay through rates (full ATRR + losses)."
+    },
+    "bcr_excl_avoided_emissions": {
+      "id": "bcr_excl_avoided_emissions",
+      "label": "Excl. Avoided Emissions",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "avoided_emissions"
+      ],
+      "display_order": 10,
+      "notes": "FERC-minimum benefit set (no emissions benefits)."
+    },
+    "bcr_excl_emissions_costs": {
+      "id": "bcr_excl_emissions_costs",
+      "label": "Excl. Emissions Costs",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "emissions"
+      ],
+      "display_order": 11,
+      "notes": "Societal BCR without loss-compensation emissions costs."
+    },
+    "bcr_excl_all_emissions": {
+      "id": "bcr_excl_all_emissions",
+      "label": "Excl. All Emissions",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "avoided_emissions",
+        "emissions"
+      ],
+      "display_order": 12,
+      "notes": "No emissions anywhere: pure market-flow BCR."
+    },
+    "bcr_excl_outage": {
+      "id": "bcr_excl_outage",
+      "label": "Excl. Outage",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "outage"
+      ],
+      "display_order": 13,
+      "notes": "Societal BCR excluding outage risk only."
+    },
+    "bcr_excl_wildfire": {
+      "id": "bcr_excl_wildfire",
+      "label": "Excl. Wildfire",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "wildfire"
+      ],
+      "display_order": 14,
+      "notes": "For low-wildfire regions."
+    },
+    "bcr_excl_outage_wildfire": {
+      "id": "bcr_excl_outage_wildfire",
+      "label": "Excl. Wildfire + Outage",
+      "family": "societal",
+      "perspective": "societal",
+      "numerator_rule": "all_benefits",
+      "denominator_rule": "all_costs",
+      "exclude_groups": [
+        "outage",
+        "wildfire"
+      ],
+      "display_order": 15,
+      "notes": "Deterministic BCR (no risk costs)."
+    }
+  }
+}
