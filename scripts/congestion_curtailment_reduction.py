@@ -428,6 +428,52 @@ def main() -> None:
     csv_manager.write_batch_summary()
 
 
+def calculate_capacity_value_benefit(
+    delta_c_effective: float,
+    capacity_credit: float,
+    capacity_price: float,
+    applicability_gate: bool,
+    project_lifetime: int,
+    delay_years: float,
+    construction_years: int,
+    wacc_real: float,
+    benefit_price_escalation_real: float = 0.0,
+) -> dict:
+    """Capacity value: Net CONE × capacity credit × ΔC_eff × gate.
+
+    Parametric screening proxy for resource adequacy contribution
+    (Brattle 2013). Uses Net CONE to avoid double-counting with
+    delivered energy benefit.
+
+    Returns dict with capacity_value_annual, capacity_value_nominal,
+    and capacity_value_pv.
+    """
+    g = benefit_price_escalation_real
+
+    if not applicability_gate or capacity_credit <= 0 or capacity_price <= 0:
+        return {
+            "capacity_value_annual": 0.0,
+            "capacity_value_nominal": 0.0,
+            "capacity_value_pv": 0.0,
+        }
+
+    annual = delta_c_effective * capacity_credit * capacity_price
+
+    nominal = calculate_nominal_growing_series(annual, g, project_lifetime)
+
+    pv = calculate_growing_annuity_pv(
+        annual, g, wacc_real, project_lifetime,
+        delay_years=delay_years,
+        construction_years=construction_years,
+    )
+
+    return {
+        "capacity_value_annual": annual,
+        "capacity_value_nominal": nominal,
+        "capacity_value_pv": pv,
+    }
+
+
 if __name__ == "__main__":
     try:
         main()
