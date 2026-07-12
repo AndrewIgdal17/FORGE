@@ -37,7 +37,7 @@ emissions_reductions:
 
   # User Inputs - Societal Costs (Yellow)
   societal_costs_per_kg:
-    co2_cost_per_kg: 0.190 # $/kg CO2 = $190/tCO2. EPA SC-GHG 2023, 2% Ramsey rate, 2020$
+    co2_cost_per_kg: 0.236 # $/kg CO2 = $236/tCO2. EPA SC-GHG 2023, 2025$ (CPI-U from 2020$, ×1.2438). 2% Ramsey rate.
     co2_cost_annual_growth: 0.02 # real annual escalation (Rennert et al. 2022)
-    sox_cost_per_kg: 61.47  # $/kg SOx, 2020$. EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related). Inflated from 2016$ ($57.0) via CPI-U (BLS: 240.007→258.811, ×1.0784).
-    nox_cost_per_kg: 114.95 # $/kg NOx, 2020$. EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone). Inflated from 2016$ ($106.6) via CPI-U (BLS: 240.007→258.811, ×1.0784).
+    sox_cost_per_kg: 76  # $/kg SOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related).
+    nox_cost_per_kg: 143 # $/kg NOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone).

@@ -252,16 +252,97 @@ def calculate_amortized_cost(
 
 
 def calculate_afudc_rate(financing_yaml: Dict[str, Any]) -> Tuple[float, str]:
-    """Return AFUDC rate from WACC nominal."""
+    """Return AFUDC rate (real WACC) for compounding real-dollar construction costs."""
     financial = financing_yaml.get("financial", {})
-    rate = financial.get("wacc_nominal", 0.075)
-    return rate, "WACC nominal"
+    wacc_nominal = financial.get("wacc_nominal", 0.075)
+    inflation_rate = financial.get("inflation_rate", 0.03)
+    rate = calculate_real_wacc(wacc_nominal, inflation_rate)
+    return rate, "WACC real"
 
 
 def get_wacc_nominal(financing_yaml: Dict[str, Any]) -> float:
     """Return nominal WACC from financing config."""
     financial = financing_yaml.get("financial", {})
     return financial.get("wacc_nominal", 0.075)
+
+
+def get_construction_spending_weights(
+    construction_years: int,
+    profiles: dict[str, list[float]],
+) -> list[float]:
+    """Derive annual spending weights for a given construction duration.
+
+    Uses MISO MTEP25 Table 5-1 reference profiles (5-8 year) as anchor data.
+    All profiles are pooled into a single normalized cumulative S-curve, then
+    resampled to the target duration via piecewise linear interpolation.
+
+    Args:
+        construction_years: Target construction duration (integer >= 1).
+        profiles: Dict mapping duration string to weight list, e.g.
+                  {"5": [0.01, 0.04, 0.35, 0.35, 0.25], ...}.
+
+    Returns:
+        List of length construction_years, summing to 1.0.
+    """
+    if construction_years < 1:
+        raise ValueError(f"construction_years must be >= 1, got {construction_years}")
+
+    if construction_years == 1:
+        return [1.0]
+
+    # Build pooled cumulative data points on normalized time axis [0, 1].
+    # Each profile contributes N+1 points: (0, 0) and (k/N, cumulative_k) for k=1..N.
+    points: list[tuple[float, float]] = [(0.0, 0.0)]
+    for dur_str, weights in profiles.items():
+        n = len(weights)
+        cumulative = 0.0
+        for k, w in enumerate(weights, 1):
+            cumulative += w
+            t = k / n
+            points.append((t, cumulative))
+
+    # Sort by time, then deduplicate by averaging y-values at the same t
+    points.sort()
+    merged: list[tuple[float, float]] = []
+    i = 0
+    while i < len(points):
+        t_i = points[i][0]
+        ys = []
+        while i < len(points) and abs(points[i][0] - t_i) < 1e-12:
+            ys.append(points[i][1])
+            i += 1
+        merged.append((t_i, sum(ys) / len(ys)))
+
+    ts = [p[0] for p in merged]
+    cs = [p[1] for p in merged]
+
+    # Piecewise linear interpolation: sample cumulative curve at year endpoints
+    def interp(t_query: float) -> float:
+        if t_query <= ts[0]:
+            return cs[0]
+        if t_query >= ts[-1]:
+            return cs[-1]
+        for j in range(len(ts) - 1):
+            if ts[j] <= t_query <= ts[j + 1]:
+                frac = (t_query - ts[j]) / (ts[j + 1] - ts[j])
+                return cs[j] + frac * (cs[j + 1] - cs[j])
+        return cs[-1]
+
+    # Sample cumulative at the END of each year (k/N for k=0..N)
+    N = construction_years
+    cum_samples = [interp(k / N) for k in range(N + 1)]
+    cum_samples[0] = 0.0
+    cum_samples[-1] = 1.0
+
+    # Annual weights = differences of cumulative
+    weights_out = [cum_samples[k + 1] - cum_samples[k] for k in range(N)]
+
+    # Renormalize to handle floating-point drift
+    total = sum(weights_out)
+    if total > 0:
+        weights_out = [w / total for w in weights_out]
+
+    return weights_out
 
 
 def calculate_afudc_capitalized_cost(
@@ -271,6 +352,7 @@ def calculate_afudc_capitalized_cost(
     construction_years: float,
     afudc_rate: float,
     delay_has_active_work: bool = False,
+    spending_profiles: dict[str, list[float]] | None = None,
 ) -> Tuple[float, float]:
     """
     Capitalize a cost using AFUDC (compound forward to COD).
@@ -280,10 +362,13 @@ def calculate_afudc_capitalized_cost(
     (ii) activities necessary to ready the project for service are in progress
 
     Logic:
-    - Cost incurred during delay: AFUDC applies only if delay_has_active_work=True
-    - Cost incurred during construction: AFUDC always applies
-    - Assumes uniform spending within each period
-    - Compounds to Commercial Operation Date (end of construction)
+    - Cost incurred during delay: uniform annual spending, each year's spend
+      compounded from its midpoint to COD.
+    - Cost incurred during construction: year-by-year compounding using S-curve
+      spending weights from MISO MTEP25 Table 5-1 (when spending_profiles is
+      provided). Each year's spend is compounded from its midpoint to COD.
+      Falls back to uniform annual weights when profiles are not available.
+    - Compounds to Commercial Operation Date (end of construction).
 
     Args:
         nominal_cost (float): Total nominal cost amount
@@ -292,6 +377,9 @@ def calculate_afudc_capitalized_cost(
         construction_years (float): Number of construction years
         afudc_rate (float): AFUDC rate (annual)
         delay_has_active_work (bool): Whether active CWIP work continues during delay
+        spending_profiles: Optional dict mapping duration string to annual weight
+            list (e.g. {"5": [0.01, 0.04, 0.35, 0.35, 0.25], ...}). When provided,
+            weights are interpolated via get_construction_spending_weights().
 
     Returns:
         tuple: (capitalized_cost, afudc_amount)
@@ -327,87 +415,40 @@ def calculate_afudc_capitalized_cost(
 
     capitalized_cost = 0.0
 
-    # 1) Process delay period costs
+    # 1) Process delay period costs (uniform annual spending)
     if delay_cost > 0:
         if delay_has_active_work and delay_years > 0:
-            # Active work during delay: AFUDC applies
-            # Assume uniform spending: midpoint is delay_years / 2
-            # Compound from midpoint to COD
-            avg_years_to_cod = total_years_to_cod - (delay_years / 2)
-            capitalized_cost += delay_cost * (1 + afudc_rate) ** avg_years_to_cod
+            n_delay = int(delay_years)
+            if n_delay >= 1:
+                annual_delay_spend = delay_cost / n_delay
+                for yr in range(n_delay):
+                    years_to_cod = total_years_to_cod - (yr + 0.5)
+                    capitalized_cost += annual_delay_spend * (1 + afudc_rate) ** years_to_cod
+            else:
+                capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
         else:
-            # No active work or no delay: costs incurred at start, compound full period
             if delay_years > 0:
-                # Costs at start of delay, but no AFUDC during delay (suspended)
-                # Compound only during construction period
                 capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
             else:
-                # No delay period
                 capitalized_cost += delay_cost
 
-    # 2) Process construction period costs
+    # 2) Process construction period costs (year-by-year S-curve compounding)
     if construction_cost > 0 and construction_years > 0:
-        # Uniform spending during construction: midpoint is construction_years / 2 before COD
-        avg_years_to_cod = construction_years / 2
-        capitalized_cost += construction_cost * (1 + afudc_rate) ** avg_years_to_cod
+        n_years = int(construction_years)
+        if spending_profiles and n_years >= 1:
+            weights = get_construction_spending_weights(n_years, spending_profiles)
+        else:
+            weights = [1.0 / n_years] * n_years if n_years >= 1 else [1.0]
+        for yr, w in enumerate(weights):
+            years_to_cod = construction_years - (yr + 0.5)
+            capitalized_cost += construction_cost * w * (1 + afudc_rate) ** years_to_cod
     else:
-        # No construction period or zero construction cost
         capitalized_cost += construction_cost
 
     # Calculate AFUDC amount
     afudc_amount = capitalized_cost - nominal_cost
 
     return capitalized_cost, afudc_amount
-
-
-def get_discount_rate_from_config(
-    config_yaml: Dict[str, Any], financing_yaml: Dict[str, Any], rate_key: str = "discount_rate_type"
-) -> Tuple[float, str]:
-    """
-    Get discount rate based on configuration source.
-
-    Supports both "discount_rate_type" (outage_costs) and "discount_rate_source" (wildfire_costs)
-    for backward compatibility. Defaults to "social" if not specified (wildfire behavior).
-
-    Args:
-        config_yaml: Loaded configuration YAML data (wildfire or outage)
-        financing_yaml: Loaded financing YAML data
-        rate_key: Key to look for in config ("discount_rate_type" or "discount_rate_source")
-
-    Returns:
-        tuple: (discount_rate, source_description)
-
-    Raises:
-        ValueError: If rate_type is unknown or inflation_rate <= -1
-    """
-    # Get the config section (wildfire or outage)
-    config_section = config_yaml.get("wildfire") or config_yaml.get("outage")
-    if not config_section:
-        raise ValueError("Config YAML must contain 'wildfire' or 'outage' section")
-
-    # Try both keys for backward compatibility, default to "social" for wildfire compatibility
-    rate_type = config_section.get(rate_key) or config_section.get("discount_rate_source", "social")
-
-    if rate_type == "social":
-        rate = financing_yaml["financial"]["social_discount_rate"]
-        # Use "social discount rate" for wildfire compatibility, "social" for outage compatibility
-        # Check which key was used to determine description
-        if "discount_rate_source" in config_section or rate_key == "discount_rate_source":
-            desc = "social discount rate"
-        else:
-            desc = "social"
-    elif rate_type == "wacc_real":
-        wacc_nominal = financing_yaml["financial"]["wacc_nominal"]
-        inflation = financing_yaml["financial"]["inflation_rate"]
-        rate = calculate_real_wacc(wacc_nominal, inflation)
-        desc = "real WACC"
-    else:
-        raise ValueError(
-            f"Unknown {rate_key}: {rate_type}. "
-            f"Must be 'social' (uses social_discount_rate from financing.yaml) or 'wacc_real'"
-        )
-
-    return rate, desc
 
 
 @dataclass
@@ -418,6 +459,7 @@ class AFUDCSetup:
     delay_active: bool
     afudc_rate: float
     afudc_source: str
+    spending_profiles: dict[str, list[float]] | None = None
 
 
 def load_afudc_setup() -> AFUDCSetup:
@@ -438,7 +480,9 @@ def load_afudc_setup() -> AFUDCSetup:
         get_financing_data_raw,
     )
     
-    timing_patterns = load_cost_timing_patterns()["cost_timing_patterns"]
+    cost_timing_data = load_cost_timing_patterns()
+    timing_patterns = cost_timing_data["cost_timing_patterns"]
+    spending_profiles = cost_timing_data.get("construction_spending_profiles")
     apply_afudc, delay_active = load_afudc_config()
     financing_yaml = get_financing_data_raw()
     afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
@@ -449,4 +493,5 @@ def load_afudc_setup() -> AFUDCSetup:
         delay_active=delay_active,
         afudc_rate=afudc_rate,
         afudc_source=afudc_source,
+        spending_profiles=spending_profiles,
     )

@@ -6,14 +6,14 @@
 
 vegetation_management_om_costs: # cost per mile [construction type][terrain type]
   Overhead:
-    forested: 14000      # $/mile/year. Duke Energy FL $42K/3yr cycle (DOE 2024); Backwell IVM $8K–$22K/yr.
-    mountain: 12000      # $/mile/year. BPA helicopter 8× ground (2021); LIFE Elia-RTE steep terrain 5.7× flat.
-    wetland: 8000        # $/mile/year. Xcel MN $8,700 (DOE 2024); environmental access restrictions add 20–40%.
-    scrubbed_flat: 5000  # $/mile/year. Backwell mechanical mulching $3.8–8.5K/acre; brush < forest always.
-    urban: 4000          # $/mile/year. Higher per-tree cost, lower ROW vegetation density.
-    rolling_hills: 3500  # $/mile/year. Accessible terrain, mixed grassland; Duke Indiana $4.3K mixed as upper bound.
-    farmland: 800        # $/mile/year. Minimal; maintained by landowners. Quanta/PUCT low end; FPL open terrain.
-    desert_barren: 300   # $/mile/year. AEP TX North 61-year cycle (Quanta/PUCT 2009). Negligible vegetation.
+    forested: 14367      # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). Duke Energy FL $42K/3yr cycle (DOE 2024).
+    mountain: 12314      # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). BPA helicopter 8× ground (2021); LIFE Elia-RTE steep terrain.
+    wetland: 8210        # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). Xcel MN (DOE 2024); environmental access restrictions.
+    scrubbed_flat: 5131  # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). Backwell mechanical mulching $3.8–8.5K/acre.
+    urban: 1000          # $/mile/year, 2025$. Author judgment: urban overhead is structurally rare (dense cores use UG); minimal vegetation where OH does exist. No utility source isolates urban-specific transmission VM.
+    rolling_hills: 3850  # $/mile/year, 2025$ (CPI-U from 2022$, ×1.0999). Duke Indiana IURC filing (Cause No. 43663).
+    farmland: 1196       # $/mile/year, 2025$ (CPI-U from 2008$, ×1.4951). Quanta/PUCT 2009, FY2008 utility data.
+    desert_barren: 449   # $/mile/year, 2025$ (CPI-U from 2008$, ×1.4951). AEP TX North 61-year cycle (Quanta/PUCT 2009).
     subsea: 0            # $/mile/year. Not applicable.
 
   Underground Direct Buried:

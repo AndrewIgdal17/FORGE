@@ -3,8 +3,7 @@
 # Description: Calculate rate-based revenue requirement (utility perspective).
 #              FERC-style declining-balance formula rate: straight-line depreciation
 #              plus return on the declining undepreciated rate base at the real WACC.
-#              Rate base (nominal at COD) is deflated to base year before applying the
-#              formula. Rate base = AFUDC capital (build + row capital + env) at COD.
+#              Rate base = AFUDC capital (real dollars at COD).
 
 from __future__ import annotations
 
@@ -76,12 +75,11 @@ def get_rate_base() -> float:
     """
     Get rate base (AFUDC capital at COD) from shared aggregator or JSON output files.
 
-    Rate base = build_cost_afudc + row_cost_afudc + env_mitigation_afudc (nominal at COD).
-    For Option A, this nominal rate base is deflated to base year in main(); annual revenue
-    is then real (constant base-year $/year) and discounted at real WACC.
+    Rate base = build_cost_afudc + row_cost_afudc + env_mitigation_afudc.
+    Rate base in real (base-year) dollars after AFUDC compounding at real WACC.
 
     Returns:
-        float: Rate base (nominal at COD), or 0 if not found
+        float: Rate base (real, AFUDC-capitalized), or 0 if not found
     """
     scenario_id = os.environ.get("CTCC_SCENARIO_ID")
     try:
@@ -145,8 +143,8 @@ def get_rate_base() -> float:
 def main() -> None:
     """
     Main function to calculate and display rate-based revenue requirement.
-    Uses a FERC-style declining-balance formula rate: real rate base (deflated to
-    base year), straight-line depreciation plus return on the declining balance,
+    Uses a FERC-style declining-balance formula rate: real rate base,
+    straight-line depreciation plus return on the declining balance,
     discounted at real WACC.
     """
     # Check if rate-based revenue is enabled
@@ -180,7 +178,7 @@ def main() -> None:
     # Load financing details
     financing = load_financing_details()
 
-    # Get rate base (AFUDC capital at COD, nominal) from batch summary or JSON outputs
+    # Get rate base (AFUDC capital at COD, real $) from batch summary or JSON outputs
     rate_base = get_rate_base()
 
     if rate_base == 0:
@@ -190,9 +188,8 @@ def main() -> None:
         )
         print("   have run before revenue.py")
 
-    # Deflate rate base to base year (real $)
     cod_year = calculate_cod_year(delay_years, construction_years)
-    rate_base_real = rate_base / (1 + financing.inflation_rate) ** cod_year
+    rate_base_real = rate_base
 
     from run_context import add_derived
     add_derived({"rate_base": rate_base, "rate_base_real": rate_base_real})
@@ -227,8 +224,7 @@ def main() -> None:
     print("=" * 60)
     print("RATE-BASED REVENUE REQUIREMENT CALCULATION (declining balance, real WACC)")
     print("=" * 60)
-    print(f"Rate Base (nominal at COD):     ${rate_base:,.2f}")
-    print(f"Rate Base (real, base-year $):  ${rate_base_real:,.2f}")
+    print(f"Rate Base (real, AFUDC-capitalized): ${rate_base:,.2f}")
     print(f"Real WACC:                      {r_wacc_real:.2%}")
     print(f"Project Lifetime:                {n} years")
     print(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")

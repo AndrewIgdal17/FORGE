@@ -26,7 +26,7 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
-from financial_utils import get_discount_rate_from_config, calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
 from calculation_utils import normalize_construction_type_for_yaml
 
 
@@ -219,9 +219,9 @@ def main() -> None:
     outage_yaml = load_outage_costs()
     financing_yaml = get_financing_data_raw()
 
-    discount_rate, discount_source = get_discount_rate_from_config(
-        outage_yaml, financing_yaml, rate_key="discount_rate_type"
-    )
+    # Social discount rate only — risk externalities use r_social (appendix hard-codes this)
+    discount_rate = financing_yaml["financial"]["social_discount_rate"]
+    discount_source = "social"
 
     results = calculate_outage_costs(
         outage_yaml,

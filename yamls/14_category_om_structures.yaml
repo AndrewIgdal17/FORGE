@@ -9,7 +9,7 @@ project_categories_om_structures:
   # Single base O&M rate per mile (excludes vegetation management, modeled separately in YAML 12).
 
   "Overhead":
-    base_om_per_mile_year: 15636  # $/mile/year. CT Siting Council (2023) $29,636/circuit-mile total (FERC Form 1, 2017–2021) minus separately modeled vegetation management ($14,000 forested default, DOE 2024). Covers conductor inspection, structure maintenance, patrol, and all non-VM line O&M.
+    base_om_per_mile_year: 19090  # $/mile/year, 2025$. CT Siting Council (2022) $29,636/circuit-mile total (FERC Form 1, 2017–2021 mean, ~2019$) escalated to 2025$ at 2%/yr CAGR (×1.126 → $33,370) minus separately modeled vegetation management ($14,000 forested → $14,280 at 2025$). Covers conductor inspection, structure maintenance, patrol, and all non-VM line O&M.
 
   # NON-OVERHEAD CONFIGURATIONS
   # O&M as % of line CAPEX per year. Covers all non-converter maintenance:

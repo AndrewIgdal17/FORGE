@@ -1,6 +1,10 @@
 # Project Build Costs
 # Construction costs for all 128 transmission project configurations
 # Based on comprehensive cost database with variable and fixed cost components
+# Conductor costs: 2025$ (CPI-U from 2023$, ×1.0564). Sources: MISO MTEP24 (OH ACSR/ACCC), IET (2012 GBP→2023$, non-OH).
+# Converter costs: 2025$ (CPI-U from 2023$, ×1.0564). Source: MISO MTEP24 Tables 2.4-1/2.4-2.
+# Structure costs (OH only): 2025$ (MISO MTEP25 steel-tower derivation, Tables 2.2-2/2.2-8 × 3.1-2/3.1-4).
+# Note: 500kV AC ($1,245,017) is +19.8% vs prior — outlier under investigation (pole-vs-tower table choice).
 
 soft_cost_multiplier: 0.10 # 10% adder on contingency-applied direct costs (PM, engineering, A&G). MISO MTEP25 Cost Estimation Guide; AACE 96R-18 owner's/indirect cost categories.
 
@@ -13,9 +17,9 @@ project_categories_build_costs:
     capacity_mw: 140
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 90483.36
+    variable_conductor_cost_per_mile: 95587
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 568735.5
+    variable_structure_cost_per_mile: 595637
     fixed_converter_cost: 0
 
   "Overhead/AC/140MW/Advanced Aluminum Conductor/NA":
@@ -24,9 +28,9 @@ project_categories_build_costs:
     capacity_mw: 140
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 157362.3911
+    variable_conductor_cost_per_mile: 166238
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 568735.5
+    variable_structure_cost_per_mile: 595637
     fixed_converter_cost: 0
 
   "Overhead/AC/329MW/Standard Aluminum Conductor/NA":
@@ -35,9 +39,9 @@ project_categories_build_costs:
     capacity_mw: 329
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 111914.88
+    variable_conductor_cost_per_mile: 118227
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 642826.5
+    variable_structure_cost_per_mile: 674473
     fixed_converter_cost: 0
 
   "Overhead/AC/329MW/Advanced Aluminum Conductor/NA":
@@ -46,9 +50,9 @@ project_categories_build_costs:
     capacity_mw: 329
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 132501.9684
+    variable_conductor_cost_per_mile: 139975
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 642826.5
+    variable_structure_cost_per_mile: 674473
     fixed_converter_cost: 0
 
   "Overhead/AC/394MW/Standard Aluminum Conductor/NA":
@@ -57,9 +61,9 @@ project_categories_build_costs:
     capacity_mw: 394
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 111914.88
+    variable_conductor_cost_per_mile: 118227
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 664308.25
+    variable_structure_cost_per_mile: 697671
     fixed_converter_cost: 0
 
   "Overhead/AC/394MW/Advanced Aluminum Conductor/NA":
@@ -68,9 +72,9 @@ project_categories_build_costs:
     capacity_mw: 394
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 182751.36
+    variable_conductor_cost_per_mile: 193059
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 664308.25
+    variable_structure_cost_per_mile: 697671
     fixed_converter_cost: 0
 
   "Overhead/AC/460MW/Standard Aluminum Conductor/NA":
@@ -79,9 +83,9 @@ project_categories_build_costs:
     capacity_mw: 460
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 111914.88
+    variable_conductor_cost_per_mile: 118227
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 663528.25
+    variable_structure_cost_per_mile: 696707
     fixed_converter_cost: 0
 
   "Overhead/AC/460MW/Advanced Aluminum Conductor/NA":
@@ -90,9 +94,9 @@ project_categories_build_costs:
     capacity_mw: 460
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 182751.36
+    variable_conductor_cost_per_mile: 193059
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 663528.25
+    variable_structure_cost_per_mile: 696707
     fixed_converter_cost: 0
 
   "Overhead/AC/657MW/Standard Aluminum Conductor/NA":
@@ -101,9 +105,9 @@ project_categories_build_costs:
     capacity_mw: 657
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 111914.88
+    variable_conductor_cost_per_mile: 118227
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 625635.5
+    variable_structure_cost_per_mile: 655784
     fixed_converter_cost: 0
 
   "Overhead/AC/657MW/Advanced Aluminum Conductor/NA":
@@ -112,9 +116,9 @@ project_categories_build_costs:
     capacity_mw: 657
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 147754.5787
+    variable_conductor_cost_per_mile: 156088
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 625635.5
+    variable_structure_cost_per_mile: 655784
     fixed_converter_cost: 0
 
   "Overhead/AC/1792MW/Standard Aluminum Conductor/NA":
@@ -123,9 +127,9 @@ project_categories_build_costs:
     capacity_mw: 1792
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 180549.6
+    variable_conductor_cost_per_mile: 190733
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1018734.25
+    variable_structure_cost_per_mile: 1088360
     fixed_converter_cost: 0
 
   "Overhead/AC/1792MW/Advanced Aluminum Conductor/NA":
@@ -134,9 +138,9 @@ project_categories_build_costs:
     capacity_mw: 1792
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 322222.56
+    variable_conductor_cost_per_mile: 340396
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1018734.25
+    variable_structure_cost_per_mile: 1088360
     fixed_converter_cost: 0
 
   "Overhead/AC/2598MW/Standard Aluminum Conductor/NA":
@@ -145,9 +149,9 @@ project_categories_build_costs:
     capacity_mw: 2598
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 280737.6
+    variable_conductor_cost_per_mile: 296571
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1039008
+    variable_structure_cost_per_mile: 1245017
     fixed_converter_cost: 0
 
   "Overhead/AC/2598MW/Advanced Aluminum Conductor/NA":
@@ -156,9 +160,9 @@ project_categories_build_costs:
     capacity_mw: 2598
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 461693.76
+    variable_conductor_cost_per_mile: 487733
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1039008
+    variable_structure_cost_per_mile: 1245017
     fixed_converter_cost: 0
 
   "Overhead/AC/6625MW/Standard Aluminum Conductor/NA":
@@ -167,9 +171,9 @@ project_categories_build_costs:
     capacity_mw: 6625
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 455088.48
+    variable_conductor_cost_per_mile: 480755
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1378084.5
+    variable_structure_cost_per_mile: 1485793
     fixed_converter_cost: 0
 
   "Overhead/AC/6625MW/Advanced Aluminum Conductor/NA":
@@ -178,9 +182,9 @@ project_categories_build_costs:
     capacity_mw: 6625
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 727773.5466
+    variable_conductor_cost_per_mile: 768820
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1378084.5
+    variable_structure_cost_per_mile: 1485793
     fixed_converter_cost: 0
 
   # OVERHEAD DC CONFIGURATIONS (20 total)
@@ -191,10 +195,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 119248.8
+    variable_conductor_cost_per_mile: 125974
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 516618.25
-    fixed_converter_cost: 73800000
+    variable_structure_cost_per_mile: 540446
+    fixed_converter_cost: 77962320
 
   "Overhead/DC/500MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -202,10 +206,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 119248.8
+    variable_conductor_cost_per_mile: 125974
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 516618.25
-    fixed_converter_cost: 98600000
+    variable_structure_cost_per_mile: 540446
+    fixed_converter_cost: 104161040
 
   "Overhead/DC/500MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -213,10 +217,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 155437.92
+    variable_conductor_cost_per_mile: 164205
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 516618.25
-    fixed_converter_cost: 73800000
+    variable_structure_cost_per_mile: 540446
+    fixed_converter_cost: 77962320
 
   "Overhead/DC/500MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -224,10 +228,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 155437.92
+    variable_conductor_cost_per_mile: 164205
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 516618.25
-    fixed_converter_cost: 98600000
+    variable_structure_cost_per_mile: 540446
+    fixed_converter_cost: 104161040
 
   "Overhead/DC/1500MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -235,10 +239,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 692217.5
-    fixed_converter_cost: 220100000
+    variable_structure_cost_per_mile: 724189
+    fixed_converter_cost: 232513640
 
   "Overhead/DC/1500MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -246,10 +250,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 692217.5
-    fixed_converter_cost: 286000000
+    variable_structure_cost_per_mile: 724189
+    fixed_converter_cost: 302130400
 
   "Overhead/DC/1500MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -257,10 +261,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 692217.5
-    fixed_converter_cost: 220100000
+    variable_structure_cost_per_mile: 724189
+    fixed_converter_cost: 232513640
 
   "Overhead/DC/1500MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -268,10 +272,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 692217.5
-    fixed_converter_cost: 286000000
+    variable_structure_cost_per_mile: 724189
+    fixed_converter_cost: 302130400
 
   "Overhead/DC/2000MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -279,10 +283,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 698601.25
-    fixed_converter_cost: 297100000
+    variable_structure_cost_per_mile: 731040
+    fixed_converter_cost: 313856440
 
   "Overhead/DC/2000MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -290,10 +294,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 698601.25
-    fixed_converter_cost: 384500000
+    variable_structure_cost_per_mile: 731040
+    fixed_converter_cost: 406185800
 
   "Overhead/DC/2000MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -301,10 +305,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 698601.25
-    fixed_converter_cost: 297100000
+    variable_structure_cost_per_mile: 731040
+    fixed_converter_cost: 313856440
 
   "Overhead/DC/2000MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -312,10 +316,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 698601.25
-    fixed_converter_cost: 384500000
+    variable_structure_cost_per_mile: 731040
+    fixed_converter_cost: 406185800
 
   "Overhead/DC/2400MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -323,10 +327,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 757820.75
-    fixed_converter_cost: 357500000
+    variable_structure_cost_per_mile: 793004
+    fixed_converter_cost: 377663000
 
   "Overhead/DC/2400MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -334,10 +338,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 195217.44
+    variable_conductor_cost_per_mile: 206228
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 757820.75
-    fixed_converter_cost: 465200000
+    variable_structure_cost_per_mile: 793004
+    fixed_converter_cost: 491437280
 
   "Overhead/DC/2400MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -345,10 +349,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 757820.75
-    fixed_converter_cost: 357500000
+    variable_structure_cost_per_mile: 793004
+    fixed_converter_cost: 377663000
 
   "Overhead/DC/2400MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -356,10 +360,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 267595.68
+    variable_conductor_cost_per_mile: 282688
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 757820.75
-    fixed_converter_cost: 465200000
+    variable_structure_cost_per_mile: 793004
+    fixed_converter_cost: 491437280
 
   "Overhead/DC/6000MW/Standard Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -367,10 +371,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 317819.04
+    variable_conductor_cost_per_mile: 335744
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1901393
-    fixed_converter_cost: 445300000
+    variable_structure_cost_per_mile: 1975966
+    fixed_converter_cost: 470414920
 
   "Overhead/DC/6000MW/Standard Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -378,10 +382,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Standard Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 317819.04
+    variable_conductor_cost_per_mile: 335744
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1901393
-    fixed_converter_cost: 566200000
+    variable_structure_cost_per_mile: 1975966
+    fixed_converter_cost: 598133680
 
   "Overhead/DC/6000MW/Advanced Aluminum Conductor/LCC Converter":
     installation_method: "Overhead"
@@ -389,10 +393,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 531979.7192
+    variable_conductor_cost_per_mile: 561983
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1901393
-    fixed_converter_cost: 445300000
+    variable_structure_cost_per_mile: 1975966
+    fixed_converter_cost: 470414920
 
   "Overhead/DC/6000MW/Advanced Aluminum Conductor/VSC Converter":
     installation_method: "Overhead"
@@ -400,10 +404,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Advanced Aluminum Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 531979.7192
+    variable_conductor_cost_per_mile: 561983
     fixed_conductor_cost: 0
-    variable_structure_cost_per_mile: 1901393
-    fixed_converter_cost: 566200000
+    variable_structure_cost_per_mile: 1975966
+    fixed_converter_cost: 598133680
 
   # UNDERGROUND DIRECT-BURIED AC CONFIGURATIONS (8 total)
 
@@ -413,8 +417,8 @@ project_categories_build_costs:
     capacity_mw: 140
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 11590886.1
-    fixed_conductor_cost: 6831263.416
+    variable_conductor_cost_per_mile: 12244612
+    fixed_conductor_cost: 7216547
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -424,8 +428,8 @@ project_categories_build_costs:
     capacity_mw: 329
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 11590886.1
-    fixed_conductor_cost: 6831263.416
+    variable_conductor_cost_per_mile: 12244612
+    fixed_conductor_cost: 7216547
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -435,8 +439,8 @@ project_categories_build_costs:
     capacity_mw: 394
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 11590886.1
-    fixed_conductor_cost: 6831263.416
+    variable_conductor_cost_per_mile: 12244612
+    fixed_conductor_cost: 7216547
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -446,8 +450,8 @@ project_categories_build_costs:
     capacity_mw: 460
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 20698010.9
-    fixed_conductor_cost: 12198684.67
+    variable_conductor_cost_per_mile: 21865379
+    fixed_conductor_cost: 12886690
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -457,8 +461,8 @@ project_categories_build_costs:
     capacity_mw: 657
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 40903985.66
-    fixed_conductor_cost: 17891404.19
+    variable_conductor_cost_per_mile: 43210970
+    fixed_conductor_cost: 18900479
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -468,8 +472,8 @@ project_categories_build_costs:
     capacity_mw: 1792
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 40903985.66
-    fixed_conductor_cost: 17891404.19
+    variable_conductor_cost_per_mile: 43210970
+    fixed_conductor_cost: 18900479
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -479,8 +483,8 @@ project_categories_build_costs:
     capacity_mw: 2598
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 40903985.66
-    fixed_conductor_cost: 17891404.19
+    variable_conductor_cost_per_mile: 43210970
+    fixed_conductor_cost: 18900479
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -490,8 +494,8 @@ project_categories_build_costs:
     capacity_mw: 6625
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 40903985.66
-    fixed_conductor_cost: 17891404.19
+    variable_conductor_cost_per_mile: 43210970
+    fixed_conductor_cost: 18900479
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -503,10 +507,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 4967522.616
-    fixed_conductor_cost: 2927684.321
+    variable_conductor_cost_per_mile: 5247691
+    fixed_conductor_cost: 3092806
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 73800000
+    fixed_converter_cost: 77962320
 
   "Underground direct-buried/DC/500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -514,10 +518,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 4967522.616
-    fixed_conductor_cost: 2927684.321
+    variable_conductor_cost_per_mile: 5247691
+    fixed_conductor_cost: 3092806
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 98600000
+    fixed_converter_cost: 104161040
 
   "Underground direct-buried/DC/1500MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -525,10 +529,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 16558408.72
-    fixed_conductor_cost: 9758947.738
+    variable_conductor_cost_per_mile: 17492303
+    fixed_conductor_cost: 10309352
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 220100000
+    fixed_converter_cost: 232513640
 
   "Underground direct-buried/DC/1500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -536,10 +540,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 16558408.72
-    fixed_conductor_cost: 9758947.738
+    variable_conductor_cost_per_mile: 17492303
+    fixed_conductor_cost: 10309352
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 286000000
+    fixed_converter_cost: 302130400
 
   "Underground direct-buried/DC/2000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -547,10 +551,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 16558408.72
-    fixed_conductor_cost: 9758947.738
+    variable_conductor_cost_per_mile: 17492303
+    fixed_conductor_cost: 10309352
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 297100000
+    fixed_converter_cost: 313856440
 
   "Underground direct-buried/DC/2000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -558,10 +562,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 16558408.72
-    fixed_conductor_cost: 9758947.738
+    variable_conductor_cost_per_mile: 17492303
+    fixed_conductor_cost: 10309352
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 384500000
+    fixed_converter_cost: 406185800
 
   "Underground direct-buried/DC/2400MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -569,10 +573,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 30068050.1
-    fixed_conductor_cost: 14313123.35
+    variable_conductor_cost_per_mile: 31763888
+    fixed_conductor_cost: 15120384
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 357500000
+    fixed_converter_cost: 377663000
 
   "Underground direct-buried/DC/2400MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -580,10 +584,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 30068050.1
-    fixed_conductor_cost: 14313123.35
+    variable_conductor_cost_per_mile: 31763888
+    fixed_conductor_cost: 15120384
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 465200000
+    fixed_converter_cost: 491437280
 
   "Underground direct-buried/DC/6000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground direct-buried"
@@ -591,10 +595,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 30068050.1
-    fixed_conductor_cost: 14313123.35
+    variable_conductor_cost_per_mile: 31763888
+    fixed_conductor_cost: 15120384
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 445300000
+    fixed_converter_cost: 470414920
 
   "Underground direct-buried/DC/6000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground direct-buried"
@@ -602,10 +606,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 30068050.1
-    fixed_conductor_cost: 14313123.35
+    variable_conductor_cost_per_mile: 31763888
+    fixed_conductor_cost: 15120384
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 566200000
+    fixed_converter_cost: 598133680
 
   # UNDERGROUND TUNNEL AC CONFIGURATIONS (8 total)
 
@@ -615,8 +619,8 @@ project_categories_build_costs:
     capacity_mw: 140
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 37746112.15
-    fixed_conductor_cost: 358966627.6
+    variable_conductor_cost_per_mile: 39874993
+    fixed_conductor_cost: 379212345
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -626,8 +630,8 @@ project_categories_build_costs:
     capacity_mw: 329
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 37746112.15
-    fixed_conductor_cost: 358966627.6
+    variable_conductor_cost_per_mile: 39874993
+    fixed_conductor_cost: 379212345
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -637,8 +641,8 @@ project_categories_build_costs:
     capacity_mw: 394
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 37746112.15
-    fixed_conductor_cost: 358966627.6
+    variable_conductor_cost_per_mile: 39874993
+    fixed_conductor_cost: 379212345
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -648,8 +652,8 @@ project_categories_build_costs:
     capacity_mw: 460
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 44917231.78
-    fixed_conductor_cost: 364334048.9
+    variable_conductor_cost_per_mile: 47450564
+    fixed_conductor_cost: 384882489
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -659,8 +663,8 @@ project_categories_build_costs:
     capacity_mw: 657
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 62918275.26
-    fixed_conductor_cost: 370026768.4
+    variable_conductor_cost_per_mile: 66466866
+    fixed_conductor_cost: 390896278
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -670,8 +674,8 @@ project_categories_build_costs:
     capacity_mw: 1792
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 62918275.26
-    fixed_conductor_cost: 370026768.4
+    variable_conductor_cost_per_mile: 66466866
+    fixed_conductor_cost: 390896278
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -681,8 +685,8 @@ project_categories_build_costs:
     capacity_mw: 2598
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 62918275.26
-    fixed_conductor_cost: 370026768.4
+    variable_conductor_cost_per_mile: 66466866
+    fixed_conductor_cost: 390896278
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -692,8 +696,8 @@ project_categories_build_costs:
     capacity_mw: 6625
     conductor_type: "Underground Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 62918275.26
-    fixed_conductor_cost: 370026768.4
+    variable_conductor_cost_per_mile: 66466866
+    fixed_conductor_cost: 390896278
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -705,10 +709,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 32530752.42
-    fixed_conductor_cost: 355063048.5
+    variable_conductor_cost_per_mile: 34365487
+    fixed_conductor_cost: 375088604
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 73800000
+    fixed_converter_cost: 77962320
 
   "Underground tunnel/DC/500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -716,10 +720,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 32530752.42
-    fixed_conductor_cost: 355063048.5
+    variable_conductor_cost_per_mile: 34365487
+    fixed_conductor_cost: 375088604
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 98600000
+    fixed_converter_cost: 104161040
 
   "Underground tunnel/DC/1500MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -727,10 +731,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 41657631.95
-    fixed_conductor_cost: 361894311.9
+    variable_conductor_cost_per_mile: 44007122
+    fixed_conductor_cost: 382305151
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 220100000
+    fixed_converter_cost: 232513640
 
   "Underground tunnel/DC/1500MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -738,10 +742,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 41657631.95
-    fixed_conductor_cost: 361894311.9
+    variable_conductor_cost_per_mile: 44007122
+    fixed_conductor_cost: 382305151
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 286000000
+    fixed_converter_cost: 302130400
 
   "Underground tunnel/DC/2000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -749,10 +753,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 41657631.95
-    fixed_conductor_cost: 361894311.9
+    variable_conductor_cost_per_mile: 44007122
+    fixed_conductor_cost: 382305151
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 297100000
+    fixed_converter_cost: 313856440
 
   "Underground tunnel/DC/2000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -760,10 +764,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 41657631.95
-    fixed_conductor_cost: 361894311.9
+    variable_conductor_cost_per_mile: 44007122
+    fixed_conductor_cost: 382305151
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 384500000
+    fixed_converter_cost: 406185800
 
   "Underground tunnel/DC/2400MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -771,10 +775,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 51485261.04
-    fixed_conductor_cost: 366448487.5
+    variable_conductor_cost_per_mile: 54389030
+    fixed_conductor_cost: 387116182
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 357500000
+    fixed_converter_cost: 377663000
 
   "Underground tunnel/DC/2400MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -782,10 +786,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 51485261.04
-    fixed_conductor_cost: 366448487.5
+    variable_conductor_cost_per_mile: 54389030
+    fixed_conductor_cost: 387116182
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 465200000
+    fixed_converter_cost: 491437280
 
   "Underground tunnel/DC/6000MW/Underground Copper Conductor/LCC Converter":
     installation_method: "Underground tunnel"
@@ -793,10 +797,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 51485261.04
-    fixed_conductor_cost: 366448487.5
+    variable_conductor_cost_per_mile: 54389030
+    fixed_conductor_cost: 387116182
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 445300000
+    fixed_converter_cost: 470414920
 
   "Underground tunnel/DC/6000MW/Underground Copper Conductor/VSC Converter":
     installation_method: "Underground tunnel"
@@ -804,10 +808,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Underground Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 51485261.04
-    fixed_conductor_cost: 366448487.5
+    variable_conductor_cost_per_mile: 54389030
+    fixed_conductor_cost: 387116182
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 566200000
+    fixed_converter_cost: 598133680
 
   # SUBSEA AC CONFIGURATIONS (8 total)
 
@@ -817,8 +821,8 @@ project_categories_build_costs:
     capacity_mw: 140
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 2579891.587
-    fixed_conductor_cost: 22945725.87
+    variable_conductor_cost_per_mile: 2725397
+    fixed_conductor_cost: 24239865
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -828,8 +832,8 @@ project_categories_build_costs:
     capacity_mw: 329
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 2579891.587
-    fixed_conductor_cost: 22945725.87
+    variable_conductor_cost_per_mile: 2725397
+    fixed_conductor_cost: 24239865
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -839,8 +843,8 @@ project_categories_build_costs:
     capacity_mw: 394
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 2579891.587
-    fixed_conductor_cost: 22945725.87
+    variable_conductor_cost_per_mile: 2725397
+    fixed_conductor_cost: 24239865
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -850,8 +854,8 @@ project_categories_build_costs:
     capacity_mw: 460
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 4606949.262
-    fixed_conductor_cost: 35223701.99
+    variable_conductor_cost_per_mile: 4866781
+    fixed_conductor_cost: 37210319
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -861,8 +865,8 @@ project_categories_build_costs:
     capacity_mw: 657
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 10958518.8
-    fixed_conductor_cost: 74107009.38
+    variable_conductor_cost_per_mile: 11576579
+    fixed_conductor_cost: 78286645
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -872,8 +876,8 @@ project_categories_build_costs:
     capacity_mw: 1792
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 10958518.8
-    fixed_conductor_cost: 74107009.38
+    variable_conductor_cost_per_mile: 11576579
+    fixed_conductor_cost: 78286645
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -883,8 +887,8 @@ project_categories_build_costs:
     capacity_mw: 2598
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 10958518.8
-    fixed_conductor_cost: 74107009.38
+    variable_conductor_cost_per_mile: 11576579
+    fixed_conductor_cost: 78286645
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -894,8 +898,8 @@ project_categories_build_costs:
     capacity_mw: 6625
     conductor_type: "Subsea Copper Conductor"
     converter_type: "NA"
-    variable_conductor_cost_per_mile: 10958518.8
-    fixed_conductor_cost: 74107009.38
+    variable_conductor_cost_per_mile: 11576579
+    fixed_conductor_cost: 78286645
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 0
 
@@ -907,10 +911,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 1105667.823
-    fixed_conductor_cost: 14016288.69
+    variable_conductor_cost_per_mile: 1168027
+    fixed_conductor_cost: 14806807
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 73800000
+    fixed_converter_cost: 77962320
 
   "Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -918,10 +922,10 @@ project_categories_build_costs:
     capacity_mw: 500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 1105667.823
-    fixed_conductor_cost: 14016288.69
+    variable_conductor_cost_per_mile: 1168027
+    fixed_conductor_cost: 14806807
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 98600000
+    fixed_converter_cost: 104161040
 
   "Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -929,10 +933,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 3685559.409
-    fixed_conductor_cost: 29642803.75
+    variable_conductor_cost_per_mile: 3893425
+    fixed_conductor_cost: 31314658
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 220100000
+    fixed_converter_cost: 232513640
 
   "Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -940,10 +944,10 @@ project_categories_build_costs:
     capacity_mw: 1500
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 3685559.409
-    fixed_conductor_cost: 29642803.75
+    variable_conductor_cost_per_mile: 3893425
+    fixed_conductor_cost: 31314658
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 286000000
+    fixed_converter_cost: 302130400
 
   "Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -951,10 +955,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 3685559.409
-    fixed_conductor_cost: 29642803.75
+    variable_conductor_cost_per_mile: 3893425
+    fixed_conductor_cost: 31314658
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 297100000
+    fixed_converter_cost: 313856440
 
   "Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -962,10 +966,10 @@ project_categories_build_costs:
     capacity_mw: 2000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 3685559.409
-    fixed_conductor_cost: 29642803.75
+    variable_conductor_cost_per_mile: 3893425
+    fixed_conductor_cost: 31314658
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 384500000
+    fixed_converter_cost: 406185800
 
   "Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -973,10 +977,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 7305679.199
-    fixed_conductor_cost: 51844409.86
+    variable_conductor_cost_per_mile: 7717720
+    fixed_conductor_cost: 54768435
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 357500000
+    fixed_converter_cost: 377663000
 
   "Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -984,10 +988,10 @@ project_categories_build_costs:
     capacity_mw: 2400
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 7305679.199
-    fixed_conductor_cost: 51844409.86
+    variable_conductor_cost_per_mile: 7717720
+    fixed_conductor_cost: 54768435
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 465200000
+    fixed_converter_cost: 491437280
 
   "Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter":
     installation_method: "Subsea"
@@ -995,10 +999,10 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "LCC Converter"
-    variable_conductor_cost_per_mile: 7305679.199
-    fixed_conductor_cost: 51844409.86
+    variable_conductor_cost_per_mile: 7717720
+    fixed_conductor_cost: 54768435
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 445300000
+    fixed_converter_cost: 470414920
 
   "Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter":
     installation_method: "Subsea"
@@ -1006,7 +1010,7 @@ project_categories_build_costs:
     capacity_mw: 6000
     conductor_type: "Subsea Copper Conductor"
     converter_type: "VSC Converter"
-    variable_conductor_cost_per_mile: 7305679.199
-    fixed_conductor_cost: 51844409.86
+    variable_conductor_cost_per_mile: 7717720
+    fixed_conductor_cost: 54768435
     variable_structure_cost_per_mile: 0
-    fixed_converter_cost: 566200000
+    fixed_converter_cost: 598133680

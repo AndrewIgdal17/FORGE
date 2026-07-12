@@ -1,0 +1,9 @@
+# Capacity Value — Resource adequacy benefit
+# B_capacity = delta_C_eff × kappa × p_cap × gate
+# Net CONE pricing avoids double-counting with delivered energy.
+# No greenfield/reconductoring split — formula uses delta_C_eff
+# which is already computed upstream for both construction types.
+
+capacity_credit: 0           # kappa: ELCC fraction [0,1]; default 0 (off)
+capacity_price: 0            # p_cap: Net CONE or capacity clearing price ($/MW-yr)
+applicability_gate: false    # true only if receiving region is capacity-short

@@ -160,7 +160,7 @@ def load_costs(
         + converter_cost_with_contingencies
     )
 
-    soft_cost_multiplier = data.get("soft_cost_multiplier", 0.0)
+    soft_cost_multiplier = data.get("soft_cost_multiplier", 0.10)
     conductor_cost_with_contingencies *= (1 + soft_cost_multiplier)
     structure_cost_with_contingencies *= (1 + soft_cost_multiplier)
     converter_cost_with_contingencies *= (1 + soft_cost_multiplier)
@@ -300,6 +300,7 @@ def main() -> None:
             project_details.construction_years,
             afudc_setup.afudc_rate,
             afudc_setup.delay_active,
+            spending_profiles=afudc_setup.spending_profiles,
         )
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====

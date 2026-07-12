@@ -2,57 +2,57 @@
 # Costs per mile by terrain type for environmental mitigation
 
 environmental_mitigation:
-  mitigation_uplift_factor: 1.25 # to account for the fact that the width isnt just row width but also consturciton width via TCEs
-  mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2014).
+  mitigation_uplift_factor: 1.25  # Construction workspace extends beyond ROW via temporary construction easements (TCEs); effective impacted width ≈ 1.25× ROW width.
+  mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2008 (33 CFR §332.3(f))).
   marine_env_mitigation_pct_capex: 0.02 # 2% of subsea construction CAPEX. CHPE Environmental Trust Fund 1.95% (NY PSC, 2022); Ofgem interconnector devex 1.4-2.7% (2023-2024); MISO 3% terrestrial benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
 
   # All-in construction/restoration mitigation ($/acre) by terrain + construction type
   base_mitigation_cost_per_acre:
     overhead:
-      forested: 5000
-      scrubbed_flat: 1000
-      wetland: 5000
-      farmland: 800
-      desert_barren: 1000
-      urban: 1500
-      rolling_hills: 1500
-      mountain: 7000
-      subsea: 1000 # onshore landfall/construction yard
+      forested: 5486    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 clearing cost.
+      scrubbed_flat: 1000  # $/acre, 2025$. Order-of-magnitude estimate; light brush clearing.
+      wetland: 5000  # $/acre, 2025$. Kept at current value (different concept from MISO $64K construction-difficulty adder).
+      farmland: 800  # $/acre, 2025$. Minimal clearing; crop/pasture restoration.
+      desert_barren: 1000  # $/acre, 2025$. Stabilization and revegetation of arid soils.
+      urban: 1500  # $/acre, 2025$. Hardscape restoration, limited clearing.
+      rolling_hills: 1500  # $/acre, 2025$. Moderate grading and revegetation.
+      mountain: 7132    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 mountainous terrain clearing.
+      subsea: 1000  # $/acre, 2025$. Onshore landfall/construction yard restoration.
 
     underground_direct_buried:
-      forested: 5000
-      scrubbed_flat: 1000
-      wetland: 10000
-      farmland: 800
-      desert_barren: 1000
-      urban: 2000
-      rolling_hills: 1500
-      mountain: 9000
-      subsea: 1000
+      forested: 5000  # $/acre, 2025$. Same clearing scope as overhead (full canopy removal for trench).
+      scrubbed_flat: 1000  # $/acre, 2025$. Light clearing for trench access.
+      wetland: 10000  # $/acre, 2025$. 2× overhead: trench dewatering + wetland restoration.
+      farmland: 800  # $/acre, 2025$. Minimal; topsoil strip and replace.
+      desert_barren: 1000  # $/acre, 2025$. Trench stabilization.
+      urban: 2000  # $/acre, 2025$. Pavement/utility relocation + surface restoration.
+      rolling_hills: 1500  # $/acre, 2025$. Moderate grading for trench alignment.
+      mountain: 9000  # $/acre, 2025$. Rock excavation + steep-slope stabilization.
+      subsea: 1000  # $/acre, 2025$. Onshore landfall restoration.
 
     underground_tunnel:
-      forested: 5000
-      scrubbed_flat: 1000
-      wetland: 10000
-      farmland: 800
-      desert_barren: 1000
-      urban: 2000
-      rolling_hills: 1500
-      mountain: 9000
-      subsea: 1000
-      linear_corridor_default: 1500 # if terrain not known
-      shaft_site_default: 1000 # pad/disturbed site avg cost
+      forested: 5000  # $/acre, 2025$. Portal/shaft site clearing only (tunnel itself is subsurface).
+      scrubbed_flat: 1000  # $/acre, 2025$. Portal site preparation.
+      wetland: 10000  # $/acre, 2025$. Portal + access road through regulated wetland.
+      farmland: 800  # $/acre, 2025$. Portal site on agricultural land.
+      desert_barren: 1000  # $/acre, 2025$. Portal site stabilization.
+      urban: 2000  # $/acre, 2025$. Portal site in developed area.
+      rolling_hills: 1500  # $/acre, 2025$. Portal site grading.
+      mountain: 9000  # $/acre, 2025$. Portal excavation in rock.
+      subsea: 1000  # $/acre, 2025$. Shore portal restoration.
+      linear_corridor_default: 1500  # $/acre, 2025$. Generic corridor if terrain unknown.
+      shaft_site_default: 1000  # $/acre, 2025$. Average shaft pad/disturbed site.
 
     subsea:
-      seabed_corridor_default: 0 # passive recovery (no cost)
-      landfall_default: 1000 # for basic onshore site (flat/open)
+      seabed_corridor_default: 0  # $/acre. Passive seabed recovery (no active restoration).
+      landfall_default: 1000  # $/acre, 2025$. Basic onshore landfall site restoration.
 
   # Credit purchases (off-site mitigation via banks)
   wetland_credit_cost_per_acre: 51361 # MISO MTEP25 Workbook Table 2.2-9: $51,360.69/acre (MISO, 2025).
 
   habitat_credit_cost_per_acre:
-    forested: 30000
-    scrubbed_flat: 30000
-    desert_barren: 30000
-    rolling_hills: 30000
-    mountain: 30000
+    forested: 49188    # $/acre, 2025$ (CPI-U from ~2007$, ×1.5525). Ecosystem Marketplace/Forest Trends (2011) national average ($31,683, 51 transactions 2005–09). Uniform: geography > ecosystem type (GAO 2024).
+    scrubbed_flat: 49188  # $/acre, 2025$. Same source; per-terrain data insufficient for differentiation.
+    desert_barren: 49188  # $/acre, 2025$. Same source.
+    rolling_hills: 49188  # $/acre, 2025$. Same source.
+    mountain: 49188    # $/acre, 2025$. Same source.

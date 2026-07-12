@@ -116,7 +116,7 @@ def calculate_environmental_mitigation_costs(
     )
 
     # Calculate wetland credits
-    wetland_cost_per_acre = mitigation_config.get("wetland_credit_cost_per_acre", 25000)
+    wetland_cost_per_acre = mitigation_config.get("wetland_credit_cost_per_acre", 51361)
     wetlands_credits = wetland_cost_per_acre * wetland_impacted_acres
 
     # Calculate habitat credits: per-terrain cost
@@ -230,6 +230,7 @@ def main() -> None:
             project_details.construction_years,
             afudc_setup.afudc_rate,
             afudc_setup.delay_active,
+            spending_profiles=afudc_setup.spending_profiles,
         )
 
         # Credit costs (wetlands + habitat combined)
@@ -240,6 +241,7 @@ def main() -> None:
             project_details.construction_years,
             afudc_setup.afudc_rate,
             afudc_setup.delay_active,
+            spending_profiles=afudc_setup.spending_profiles,
         )
 
         total_capitalized = base_cap + credits_cap
@@ -249,16 +251,24 @@ def main() -> None:
     # Validate wacc_real before direct use to prevent division by zero
     validate_discount_rate(financing.wacc_real, "wacc_real")
 
-    # Credit purchases: occur upfront at start of construction (end of delay period)
-    # Discount as one-time payment at delay_year + 1
     credit_start_year = calculate_construction_start_year(project_details.delay_years)
-    total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** credit_start_year
-    wetlands_credits_pv = (
-        results["wetlands_credits"] / (1 + financing.wacc_real) ** credit_start_year
-    )
-    habitat_credits_pv = (
-        results["habitat_credits"] / (1 + financing.wacc_real) ** credit_start_year
-    )
+    if project_details.construction_years > 0:
+        annual_total_credits = results["total_credits"] / project_details.construction_years
+        annual_wetlands = results["wetlands_credits"] / project_details.construction_years
+        annual_habitat = results["habitat_credits"] / project_details.construction_years
+        total_credits_pv = calculate_present_value(
+            annual_total_credits, financing.wacc_real, project_details.construction_years, credit_start_year
+        )
+        wetlands_credits_pv = calculate_present_value(
+            annual_wetlands, financing.wacc_real, project_details.construction_years, credit_start_year
+        )
+        habitat_credits_pv = calculate_present_value(
+            annual_habitat, financing.wacc_real, project_details.construction_years, credit_start_year
+        )
+    else:
+        total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** credit_start_year
+        wetlands_credits_pv = results["wetlands_credits"] / (1 + financing.wacc_real) ** credit_start_year
+        habitat_credits_pv = results["habitat_credits"] / (1 + financing.wacc_real) ** credit_start_year
 
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years

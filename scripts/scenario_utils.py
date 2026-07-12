@@ -36,6 +36,7 @@ _YAML_STEMS = [
     "20_project_category_row_widths",
     "21_project_category_circuit_and_resistance_detail",
     "22_corona_losses",
+    "20_capacity_value",
 ]
 
 

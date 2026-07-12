@@ -1,38 +1,24 @@
 {
   "greenfield_congestion_curtailment_reductions": {
-    "congestion": {
-      "constraints": {
-        "flow_factor": 0,
-        "binding_hours": 0,
-        "average_exceedance": 0,
-        "near_binding_hours": 0,
-        "near_average_exceedance": 0
-      },
-      "costs": {
-        "average_congestion_price": 0
-      }
+    "constraints": {
+      "flow_factor": 0,
+      "constrained_hours": 0,
+      "average_exceedance": 0,
+      "congestion_fraction": 0.5
     },
-    "curtailment": {
-      "curtailment_hours_total": 0,
-      "average_curtailment_mw": 0,
+    "prices": {
+      "average_congestion_price": 0,
       "average_curtailment_price": 0
     }
   },
   "reconductoring_congestion_curtailment_reductions": {
-    "congestion": {
-      "constraints": {
-        "binding_hours": 0,
-        "average_exceedance": 0,
-        "near_binding_hours": 0,
-        "near_average_exceedance": 0
-      },
-      "costs": {
-        "average_congestion_price": 0
-      }
+    "constraints": {
+      "constrained_hours": 0,
+      "average_exceedance": 0,
+      "congestion_fraction": 0.5
     },
-    "curtailment": {
-      "curtailment_hours_total": 0,
-      "average_curtailment_mw": 0,
+    "prices": {
+      "average_congestion_price": 0,
       "average_curtailment_price": 0
     }
   }

@@ -43,15 +43,7 @@ def main() -> None:
     delay_cost_df = load_delay_costs()
     delay_year = load_project_technical_details()
 
-    # Single annual cost field (replaces prior 8-category decomposition)
-    if "annual_base_delay_cost" in delay_cost_df:
-        total_yearly_delay_cost = delay_cost_df["annual_base_delay_cost"]
-    elif "annual_delay_costs" in delay_cost_df:
-        # Runner scripts provide an 8-category annual_delay_costs dict;
-        # YAML default provides a single annual_base_delay_cost scalar. Both paths are active.
-        total_yearly_delay_cost = sum(delay_cost_df["annual_delay_costs"].values())
-    else:
-        total_yearly_delay_cost = 0.0
+    total_yearly_delay_cost = delay_cost_df.get("annual_base_delay_cost", 0.0)
 
     total_delay_cost = total_yearly_delay_cost * delay_year
 

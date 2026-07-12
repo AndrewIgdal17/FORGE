@@ -26,7 +26,7 @@ from smart_loaders import (
     get_physical_data_raw,
     get_financing_data_raw,
 )
-from financial_utils import get_discount_rate_from_config, calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
 from calculation_utils import normalize_construction_type_for_yaml
 
 
@@ -64,7 +64,7 @@ def calculate_wildfire_costs(
     wildfire_config = wildfire_yaml["wildfire"]
     severity = wildfire_config["severity_per_event"]
     growth_rate = wildfire_config["risk_growth_rate"] or 0.0
-    base_ignition_rate = wildfire_config.get("base_ignition_rate", 0.003)
+    base_ignition_rate = wildfire_config.get("base_ignition_rate", 0.002)
     ignition_rate_multiplier = wildfire_config["ignition_rate_multiplier"]
 
     yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
@@ -120,9 +120,9 @@ def main() -> None:
     wildfire_yaml = load_wildfire_costs()
     financing_yaml = get_financing_data_raw()
 
-    discount_rate, discount_source = get_discount_rate_from_config(
-        wildfire_yaml, financing_yaml, rate_key="discount_rate_source"
-    )
+    # Social discount rate only — risk externalities use r_social (appendix hard-codes this)
+    discount_rate = financing_yaml["financial"]["social_discount_rate"]
+    discount_source = "social discount rate"
 
     results = calculate_wildfire_costs(
         wildfire_yaml,
