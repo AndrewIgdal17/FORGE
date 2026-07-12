@@ -273,8 +273,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     cum_B_enabling = 0.0
     cum_B_displacement = 0.0
     # Internal-only accumulators (not part of the output schema) needed for
-    # the system / system+delivered / ratepayer BCR denominators, which
-    # exclude delay costs, risk costs, and emissions costs.
+    # the ratepayer BCR denominator, which excludes delay costs, risk costs,
+    # and emissions costs.
     cum_C_soft_op = 0.0
     cum_revenue = 0.0
     cum_C_delay = 0.0
@@ -378,15 +378,12 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_B_total = cum_B_remedial + cum_B_enabling + cum_B_displacement
 
         # BCR perspectives (mirrors bcr_calculator.py's numerator/denominator
-        # rules — see taxonomy.py BCR_DEFINITIONS for bcr_system and
-        # bcr_ratepayer).
-        denom_system = cum_C_hard + cum_C_soft_op
+        # rules — see taxonomy.py BCR_DEFINITIONS for bcr_ratepayer).
         denom_excl_risk = cum_C_total - cum_C_risk
         denom_excl_outage = cum_C_total - cum_C_risk_out
         denom_ratepayer = cum_revenue + cum_C_soft_op
 
         bcr_societal = cum_B_total / cum_C_total if cum_C_total > 0 else None
-        bcr_system = cum_B_remedial / denom_system if denom_system > 0 else None
         bcr_excl_wf_out = cum_B_total / denom_excl_risk if denom_excl_risk > 0 else None
         bcr_excl_outage = cum_B_total / denom_excl_outage if denom_excl_outage > 0 else None
         bcr_ratepayer = (
@@ -394,7 +391,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         )
 
         npv_societal = cum_B_total - cum_C_total
-        npv_system = cum_B_remedial - denom_system if bcr_system is not None else None
         npv_excl_wf_out = cum_B_total - denom_excl_risk if bcr_excl_wf_out is not None else None
         npv_excl_outage = cum_B_total - denom_excl_outage if bcr_excl_outage is not None else None
         npv_ratepayer = (
@@ -440,7 +436,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "cum_B_displacement": cum_B_displacement,
             "cum_B_total": cum_B_total,
             "bcr_societal": bcr_societal,
-            "bcr_system": bcr_system,
             "bcr_excl_wf_out": bcr_excl_wf_out,
             "bcr_excl_outage": bcr_excl_outage,
             "bcr_excl_emissions_costs": bcr_excl_emissions_costs,
@@ -450,7 +445,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "bcr_excl_avoided_emissions": bcr_excl_avoided_emissions,
             "bcr_excl_wildfire": bcr_excl_wildfire,
             "npv_societal": npv_societal,
-            "npv_system": npv_system,
             "npv_excl_wf_out": npv_excl_wf_out,
             "npv_excl_outage": npv_excl_outage,
             "npv_excl_emissions_costs": npv_excl_emissions_costs,
