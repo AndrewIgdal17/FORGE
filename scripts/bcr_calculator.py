@@ -138,7 +138,6 @@ _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
     "hard": _HARD_IDS,
     "hard_delay": _HARD_IDS | _DELAY_IDS,
-    "hard_operational_loss": _HARD_IDS | _OPERATIONAL_IDS | frozenset({"line_loss_conductor", "line_loss_converter"}),
     "atrr_delay": frozenset({
         "capital_recovery", "oandm", "insurance", "row_rent", "base_delay",
     }),
@@ -271,9 +270,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             out["bcr_societal"] = bcr_value
             out["net_benefit_pv"] = net_benefit
             out["net_benefit_nominal"] = total_benefits_nominal - total_costs_nominal
-        elif bcr_def.id == "bcr_system":
-            out["bcr_system"] = bcr_value
-            out["net_benefit_system_pv"] = net_benefit
         elif bcr_def.id == "bcr_utility":
             out["bcr_utility"] = bcr_value
             out["net_benefit_utility_pv"] = net_benefit

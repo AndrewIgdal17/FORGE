@@ -173,7 +173,6 @@ def print_results(results: dict, label: str):
 
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
-    print(f"  BCR System:             {bcr.get('bcr_system', 'N/A'):.3f}")
     print(f"  BCR Utility:            {bcr.get('bcr_utility', 'N/A'):.3f}")
     print(f"  BCR Ratepayer:          {bcr.get('bcr_ratepayer', 'N/A'):.3f}")
     excl_wf = bcr.get("bcr_excluding_wildfire_risk")
