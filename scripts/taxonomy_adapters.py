@@ -333,10 +333,10 @@ def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
 
 
 def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.congestion_curtailment -> 5 taxonomy items.
+    """Adapt benefits.congestion_curtailment -> 6 taxonomy items.
 
-    Three benefits (congestion, curtailment, delivered energy) and two
-    cost-side items (congestion delay, curtailment delay).
+    Three benefits (congestion, curtailment, delivered energy), capacity
+    value benefit, and two cost-side items (congestion delay, curtailment delay).
     """
     if not cc:
         return []
@@ -358,6 +358,12 @@ def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
             value_pv=_safe(cc, "delivered_benefit_pv"),
             value_nominal=_safe(cc, "delivered_benefit_nominal"),
             value_annual=_safe(cc, "delivered_benefit_annual"),
+        ),
+        TaxonomyResult(
+            "capacity_value_benefit",
+            value_pv=_safe(cc, "capacity_value_pv"),
+            value_nominal=_safe(cc, "capacity_value_nominal"),
+            value_annual=_safe(cc, "capacity_value_annual"),
         ),
         TaxonomyResult(
             "congestion_delay",
@@ -491,6 +497,8 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "curtailment_benefit_nominal": _nom("curtailment_benefit"),
         "delivered_benefit_pv": _pv("delivered_energy_benefit"),
         "delivered_benefit_nominal": _nom("delivered_energy_benefit"),
+        "capacity_value_benefit_pv": _pv("capacity_value_benefit"),
+        "capacity_value_benefit_nominal": _nom("capacity_value_benefit"),
         "capital_recovery_pv": _pv("capital_recovery"),
         "capital_recovery_nominal": _nom("capital_recovery"),
         "emissions_displacement_delay_pv": _pv("emissions_displacement_delay"),

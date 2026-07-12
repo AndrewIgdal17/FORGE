@@ -417,6 +417,41 @@ def main() -> None:
         "relief_mw": congestion_results.relief_mw,
     }
 
+    # ========================================================================
+    # Capacity value benefit
+    # ========================================================================
+    from path_config import YAMLS_DIR
+    cap_yaml_path = YAMLS_DIR / "20_capacity_value.yaml"
+    cap_params: dict = {}
+    if cap_yaml_path.exists():
+        with open(cap_yaml_path) as _f:
+            cap_params = yaml.safe_load(_f) or {}
+
+    cap_results = calculate_capacity_value_benefit(
+        delta_c_effective=delta_c_effective,
+        capacity_credit=float(cap_params.get("capacity_credit", 0)),
+        capacity_price=float(cap_params.get("capacity_price", 0)),
+        applicability_gate=bool(cap_params.get("applicability_gate", False)),
+        project_lifetime=project_details_cc.project_lifetime,
+        delay_years=project_details_cc.delay_years,
+        construction_years=project_details_cc.construction_years,
+        wacc_real=financing.wacc_real,
+        benefit_price_escalation_real=params.benefit_price_escalation_real,
+    )
+
+    results["capacity_value_annual"] = cap_results["capacity_value_annual"]
+    results["capacity_value_nominal"] = cap_results["capacity_value_nominal"]
+    results["capacity_value_pv"] = cap_results["capacity_value_pv"]
+
+    print()
+    print("=" * 60)
+    print("CAPACITY VALUE BENEFIT")
+    print("=" * 60)
+    print(f"Annual capacity value: ${cap_results['capacity_value_annual']:,.2f}")
+    print(f"Lifetime capacity value (nominal): ${cap_results['capacity_value_nominal']:,.2f}")
+    print(f"Lifetime capacity value (PV): ${cap_results['capacity_value_pv']:,.2f}")
+    print("=" * 60)
+
     from run_context import add_derived
     add_derived({
         "effective_capacity_relief": congestion_results.effective_capacity_relief,
