@@ -22,7 +22,7 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 
 ---
 
-## Core BCRs (7)
+## Core BCRs (6)
 
 ### `bcr_societal` — Societal
 
@@ -33,18 +33,6 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 **Audience:** Regulators, planners, policy analysts.
 
 **BCR = 1.0:** Break-even for society. **BCR < 1.0:** Project destroys net societal value (absent unquantified benefits).
-
----
-
-### `bcr_system` — Congestion Relief
-
-**Formula:** $B_{\text{remedial}} / (C_{\text{hard}} + C_{\text{operational}} + C_{\text{loss}})$
-
-**Question:** Does congestion/curtailment relief alone cover deterministic project costs?
-
-**Audience:** ISO/RTO economic planners (market efficiency screening).
-
-**BCR < 1.0:** Expected for reliability, public policy, and emissions-justified projects. Not a failure — means the economic case relies on benefits beyond congestion relief.
 
 ---
 
@@ -135,7 +123,6 @@ Three variants of the societal BCR, each answering a specific sensitivity questi
 | Question | BCR |
 |---|---|
 | Is it good for society overall? | `bcr_societal` |
-| Does congestion relief alone justify it? | `bcr_system` (congestion relief) |
 | Is the capital investment attractive? | `bcr_capital` or `bcr_capital_and_delay` |
 | Should a utility build this? | `bcr_utility` |
 | Do ratepayers benefit? | `bcr_ratepayer` |

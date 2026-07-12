@@ -43,7 +43,6 @@ def extract_metrics(results: dict) -> dict:
     costs = results["costs"]
     return {
         "bcr_societal": bcr.get("bcr_societal", 0),
-        "bcr_system": bcr.get("bcr_system", 0),
         "bcr_utility": bcr.get("bcr_utility", 0),
         "bcr_excl_wf_outage": bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0),
         "bcr_excl_avoided_emissions_and_outage": bcr.get("bcr_excluding_avoided_emissions_and_outage_risk", 0),
@@ -73,7 +72,7 @@ def print_sensitivity_table(project_name: str, results_by_lifetime: dict):
 
     metrics_to_show = [
         ("BCR Societal", "bcr_societal", "{:.3f}"),
-        ("BCR System", "bcr_system", "{:.3f}"),
+
         ("BCR Utility", "bcr_utility", "{:.3f}"),
         ("BCR Excl. WF+Outage", "bcr_excl_wf_outage", "{:.2f}"),
         ("BCR Excl. AvEmis+Outage", "bcr_excl_avoided_emissions_and_outage", "{:.3f}"),
@@ -192,7 +191,7 @@ def main():
     print(f"  {'-'*35} {'-'*10} {'-'*10} {'-'*10}")
     for label, key, format_str in [
         ("BCR Societal", "bcr_societal", "{:.3f}"),
-        ("BCR System", "bcr_system", "{:.3f}"),
+
         ("BCR Utility", "bcr_utility", "{:.3f}"),
         ("BCR Excl. WF+Outage", "bcr_excl_wf_outage", "{:.2f}"),
         ("BCR Excl. AvEmis+Outage", "bcr_excl_avoided_emissions_and_outage", "{:.3f}"),
@@ -225,7 +224,7 @@ def main():
     print(f"  {'-'*35} {'-'*10} {'-'*10} {'-'*10}")
     for label, key, format_str in [
         ("BCR Societal", "bcr_societal", "{:.3f}"),
-        ("BCR System", "bcr_system", "{:.3f}"),
+
         ("BCR Utility", "bcr_utility", "{:.3f}"),
         ("BCR Excl. WF+Outage", "bcr_excl_wf_outage", "{:.2f}"),
         ("BCR Excl. AvEmis+Outage", "bcr_excl_avoided_emissions_and_outage", "{:.3f}"),

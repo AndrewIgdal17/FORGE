@@ -88,7 +88,6 @@ BATCH_SUMMARY_FIELDS = [
     "fac_emissions_noline_pv",
     # 10. BCR Metrics
     "bcr_societal",
-    "bcr_system",
     # Tier 1 exclusion BCRs (3 analytically motivated variants)
     "bcr_excluding_avoided_emissions",
     "bcr_excluding_wildfire_risk",

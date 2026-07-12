@@ -28,7 +28,6 @@ SCENARIOS = [
 DISCOUNT_RATES = [0.02, 0.03, 0.05]
 
 METRICS = [
-    ("BCR System",                       "bcr_system",       "ratio"),
     ("BCR Utility",                      "bcr_utility",      "ratio"),
     ("BCR Ratepayer",                    "bcr_ratepayer",    "ratio"),
     ("BCR Excl. WF+Outage",             "bcr_excluding_wildfire_risk_and_outage_risk", "ratio"),
@@ -107,24 +106,6 @@ def main():
             all_results[scenario][rate] = result
 
         print_scenario_table(scenario, all_results[scenario])
-
-    # Summary: BCR System across all scenarios and rates
-    print(f"\n{'=' * 78}")
-    print(f"  SUMMARY: BCR System across discount-rate assumptions")
-    print(f"{'=' * 78}")
-    col_w = 12
-    header = f"  {'Scenario':<40}"
-    for rate in DISCOUNT_RATES:
-        header += f"{int(rate * 100)}%".rjust(col_w)
-    print(header)
-    print("  " + "-" * (40 + col_w * len(DISCOUNT_RATES)))
-
-    for scenario in SCENARIOS:
-        row = f"  {scenario:<40}"
-        for rate in DISCOUNT_RATES:
-            val = all_results[scenario][rate]["bcr"].get("bcr_system")
-            row += fmt_ratio(val).rjust(col_w)
-        print(row)
 
     print("\nDone.")
 
