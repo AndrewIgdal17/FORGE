@@ -60,7 +60,7 @@ outage:
   # Underground/subsea use pure per-mile rates (linear scaling confirmed by CIGRE/Ofgem data)
   outage_rate:
     overhead:
-      lambda_terminal: 0.3    # outages/yr (length-independent terminal/substation component). Landgren (1986); ~25% of outages per Adler et al. (1994).
+      lambda_terminal: 0.2136  # outages/yr (length-independent terminal/substation component). BC Hydro VITR EENS study (Appendix B, 230 kV overhead).
       lambda_per_mile: 0.012  # outages/mile/year (exposure-dependent). CEA 240kV 0.014, Zhou BPA 0.013, Poland 220kV 0.012.
     underground: 0.004  # outages/mile/year. CIGRE TB 379 (2009) / TB 815 (2020): land XLPE cable failure rate 0.002–0.005/cct-km (0.003–0.008/cct-mi); midpoint consistent with Ofgem/GHD (2020) UK cable data.
     subsea: 0.0007 # outages/mile/year. Ofgem/GHD (2020) total rate 0.000615/cct-km; ENTSO-E/Europacable (2019) 0.07 faults/100km/yr; CIGRE TB 815 (2020) confirms reduction from TB 379 levels.
