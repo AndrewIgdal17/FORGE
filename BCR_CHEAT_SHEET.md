@@ -22,7 +22,7 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 
 ---
 
-## Core BCRs (6)
+## Core BCRs (3)
 
 ### `bcr_societal` — Societal
 
@@ -33,26 +33,6 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 **Audience:** Regulators, planners, policy analysts.
 
 **BCR = 1.0:** Break-even for society. **BCR < 1.0:** Project destroys net societal value (absent unquantified benefits).
-
----
-
-### `bcr_capital` — Capital Only
-
-**Formula:** $B^P / C_{\text{hard}}$
-
-**Question:** How do total benefits compare to capital investment alone?
-
-**Audience:** Developers, capital screening. Demonstrates what narrow capital-only views miss by ignoring lifecycle costs.
-
----
-
-### `bcr_capital_and_delay` — Capital + Delay
-
-**Formula:** $B^P / (C_{\text{hard}} + C_{\text{delay}})$
-
-**Question:** What is the total pre-COD and capital exposure?
-
-**Audience:** Developers assessing delay risk, policymakers studying permitting reform costs.
 
 ---
 
@@ -123,7 +103,6 @@ Three variants of the societal BCR, each answering a specific sensitivity questi
 | Question | BCR |
 |---|---|
 | Is it good for society overall? | `bcr_societal` |
-| Is the capital investment attractive? | `bcr_capital` or `bcr_capital_and_delay` |
 | Should a utility build this? | `bcr_utility` |
 | Do ratepayers benefit? | `bcr_ratepayer` |
 | What if we exclude emissions benefits? | `bcr_excluding_avoided_emissions` |
