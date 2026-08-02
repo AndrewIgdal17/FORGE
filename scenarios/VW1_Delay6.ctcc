@@ -13,7 +13,7 @@
         "converter_loss_percentage": null,
         "line_utilization": 0.552,
         "value_of_load_per_mwh": 55.0,
-        "project_type": "greenfield",
+        "reconductoring": false,
         "uses_existing_row": false,
         "old_capacity_mw": null,
         "old_conductor_type": null,
@@ -2182,7 +2182,7 @@
           "average_curtailment_price": 77
         }
       },
-      "incremental_congestion_curtailment_reductions": {
+      "reconductoring_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 0,
           "average_exceedance": 0,
