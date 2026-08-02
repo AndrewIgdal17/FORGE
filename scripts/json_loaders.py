@@ -141,12 +141,16 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
         None if ac_dc == "AC" else pd.get("converter_loss_percentage", None)
     )
     uses_existing_row = pd.get("uses_existing_row", False)
-    reconductoring = pd["reconductoring"]
+    project_type = pd["project_type"]
+    if project_type not in ("greenfield", "reconductoring", "rebuild"):
+        raise ValueError(
+            f"Invalid project_type '{project_type}'. Must be one of: greenfield, reconductoring, rebuild"
+        )
     row_agreement_type = pd.get("row_agreement_type")
     if row_agreement_type is None:
         row_agreement_type = (
             "lease_license_existing"
-            if (reconductoring or uses_existing_row)
+            if (project_type in ("reconductoring", "rebuild") or uses_existing_row)
             else "permanent_easement_new"
         )
     return ProjectTechnicalDetails(
@@ -156,7 +160,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
         conductor_type=conductor_type,
         converter_type=converter_type,
         line_utilization=pd["line_utilization"],
-        reconductoring=reconductoring,
+        project_type=project_type,
         uses_existing_row=uses_existing_row,
         delay_years=tl["delay_years"],
         construction_years=tl["construction_years"],
@@ -225,13 +229,13 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     """
     data = _data_source.get_data("17_congestion_curtailment_reductions")
 
-    # Check if this is a reconductoring project
     project_data = _data_source.get_data("01_project_technical_details")
-    reconductoring = project_data["project"].get("reconductoring", False)
+    project_type = project_data["project"]["project_type"]
+    use_incremental = project_type in ("reconductoring", "rebuild")
 
     # Load from appropriate section
-    if reconductoring:
-        reductions_data = data["reconductoring_congestion_curtailment_reductions"]
+    if use_incremental:
+        reductions_data = data["incremental_congestion_curtailment_reductions"]
         constraints = reductions_data["constraints"]
         prices = reductions_data["prices"]
         flow_factor = 0.0

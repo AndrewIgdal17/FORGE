@@ -26,14 +26,14 @@ class ProjectTechnicalDetails:
     conductor_type: str
     converter_type: str
     line_utilization: float
-    reconductoring: bool
+    project_type: str  # "greenfield" | "reconductoring" | "rebuild"
     uses_existing_row: bool
     delay_years: float
     construction_years: int
     project_lifetime: int
     converter_loss_percentage: Optional[float]
     row_agreement_type: Optional[str] = (
-        None  # permanent_easement_new | lease_license_existing | fee_simple | federal_hybrid; if None, inferred from reconductoring/uses_existing_row
+        None  # permanent_easement_new | lease_license_existing | fee_simple | federal_hybrid; if None, inferred from project_type/uses_existing_row
     )
 
 
@@ -176,7 +176,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             "capacity_mw",
             "conductor_type",
             "line_utilization",
-            "reconductoring",
+            "project_type",
         ]
         for key in required_project_keys:
             if key not in project_data:
@@ -209,12 +209,16 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             else project_data.get("converter_loss_percentage", None)
         )
         uses_existing_row = project_data.get("uses_existing_row", False)
-        reconductoring = project_data["reconductoring"]
+        project_type = project_data["project_type"]
+        if project_type not in ("greenfield", "reconductoring", "rebuild"):
+            raise ValueError(
+                f"Invalid project_type '{project_type}'. Must be one of: greenfield, reconductoring, rebuild"
+            )
         row_agreement_type = project_data.get("row_agreement_type")
         if row_agreement_type is None:
             row_agreement_type = (
                 "lease_license_existing"
-                if (reconductoring or uses_existing_row)
+                if (project_type in ("reconductoring", "rebuild") or uses_existing_row)
                 else "permanent_easement_new"
             )
         return ProjectTechnicalDetails(
@@ -224,7 +228,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             conductor_type=conductor_type,
             converter_type=converter_type,
             line_utilization=project_data["line_utilization"],
-            reconductoring=reconductoring,
+            project_type=project_type,
             uses_existing_row=uses_existing_row,
             delay_years=timeline_data["delay_years"],
             construction_years=timeline_data["construction_years"],
@@ -495,15 +499,27 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
     """
     try:
-        # Check if this is a reconductoring project
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
             project_data = yaml.safe_load(project_file)
-        reconductoring = (
-            project_data.get("project", {}).get("reconductoring", False)
-            if project_data
-            else False
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
         )
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing project technical details YAML: {e}")
 
+    if not project_data or "project" not in project_data:
+        raise KeyError(
+            "Missing 'project' key in project technical details YAML file"
+        )
+    if "project_type" not in project_data["project"]:
+        raise KeyError(
+            "Missing 'project_type' key in project section of technical details YAML"
+        )
+    project_type = project_data["project"]["project_type"]
+    use_incremental = project_type in ("reconductoring", "rebuild")
+
+    try:
         with open(YAMLS_DIR / "17_congestion_curtailment_reductions.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data:
@@ -512,12 +528,12 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             )
 
         # Load from appropriate section
-        if reconductoring:
-            if "reconductoring_congestion_curtailment_reductions" not in data:
+        if use_incremental:
+            if "incremental_congestion_curtailment_reductions" not in data:
                 raise KeyError(
-                    "Missing 'reconductoring_congestion_curtailment_reductions' key in YAML file"
+                    "Missing 'incremental_congestion_curtailment_reductions' key in YAML file"
                 )
-            reductions_data = data["reconductoring_congestion_curtailment_reductions"]
+            reductions_data = data["incremental_congestion_curtailment_reductions"]
             constraints = reductions_data["constraints"]
             prices = reductions_data["prices"]
             flow_factor = 0.0
