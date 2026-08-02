@@ -11,7 +11,7 @@ vegetation_management_om_costs: # cost per mile [construction type][terrain type
     wetland: 8210        # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). Xcel MN (DOE 2024); environmental access restrictions.
     scrubbed_flat: 5131  # $/mile/year, 2025$ (CPI-U from ~2024$, ×1.0262). Backwell mechanical mulching $3.8–8.5K/acre.
     urban: 1000          # $/mile/year, 2025$. Author judgment: urban overhead is structurally rare (dense cores use UG); minimal vegetation where OH does exist. No utility source isolates urban-specific transmission VM.
-    rolling_hills: 3850  # $/mile/year, 2025$ (CPI-U from 2022$, ×1.0999). Duke Indiana IURC filing (Cause No. 43663).
+    rolling_hills: 4747  # $/mile/year, 2025$ (CPI-U from $4,316/mi/yr, 2022$, ×1.0999). Duke Energy Indiana 2022 system-wide transmission VM avg (Cause No. 43663).
     farmland: 1196       # $/mile/year, 2025$ (CPI-U from 2008$, ×1.4951). Quanta/PUCT 2009, FY2008 utility data.
     desert_barren: 449   # $/mile/year, 2025$ (CPI-U from 2008$, ×1.4951). AEP TX North 61-year cycle (Quanta/PUCT 2009).
     subsea: 0            # $/mile/year. Not applicable.

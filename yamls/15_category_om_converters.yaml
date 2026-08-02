@@ -1,9 +1,8 @@
 # Converter Station O&M
 # Annual O&M expressed as a fraction of total converter station CAPEX.
 # Applied to fixed_converter_cost from 10_project_category_build_costs.yaml.
-# Sources: Van Eeckhout et al. (2022), Kim et al. (2012), UCLM (2023),
-#          Jiajie et al. (2019), MDPI Processes (2024).
+# Source: UCLM (2023) — 0.5% for all HVDC converter types.
 
 converter_om_rate:
-  LCC Converter: 0.005   # 0.5% of station CAPEX/yr — thyristor-based, air-cooled, mature technology
-  VSC Converter: 0.007   # 0.7% of station CAPEX/yr — IGBT submodule replacement, water-cooled, faster control system renewal
+  LCC Converter: 0.005   # 0.5% of station CAPEX/yr (UCLM 2023)
+  VSC Converter: 0.005   # 0.5% of station CAPEX/yr (UCLM 2023)

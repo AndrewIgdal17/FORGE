@@ -134,7 +134,7 @@ def load_converter_om_costs(
     Calculate annual converter O&M cost as a percentage of converter station CAPEX.
 
     For AC projects, returns 0. For DC projects, reads the converter O&M rate
-    (LCC: 0.5%, VSC: 0.7%) and multiplies by fixed_converter_cost from the
+    (0.5% for all HVDC converter types) and multiplies by fixed_converter_cost from the
     build costs YAML.
 
     Returns:
