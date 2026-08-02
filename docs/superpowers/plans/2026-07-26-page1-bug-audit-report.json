@@ -1,0 +1,654 @@
+{
+  "baseline": "b9f62ed",
+  "generated_at": "2026-07-27T01:07:17.793Z",
+  "papers": [
+    {
+      "paper_id": "2024.11_refa_documentation",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "2025 Mid-Year SOM Report - September 2025",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "2026 PRA Results Posting 20260522 - Corrections754715",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "CAISOTransmissionEconomicAssessmentMethodology",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Costs rise nearly $90M over initial estimates for controversial transmission line - WPR",
+      "removed_quote_count": 15,
+      "candidates": [
+        {
+          "quote": "Project co-owners say increases are driven by rising material costs, land-related expenses, ongoing legal challenges.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "the price of steel for ATC and ITC Midwest increased on average roughly 112 percent for steel poles.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "the cost of aluminum and steel for conductor wires rose an average of about 59 percent.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Labor costs for ATC also went up around 12 percent while ITC Midwest saw an increase of roughly 32 percent from 2018.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Land acquisition costs also increased 95 percent in Dane and Iowa counties due largely to increasing land values.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Braatz said construction of the transmission line is 90 percent complete, but Content noted the project doesn't yet have a permit to cross the Upper Mississippi River National Wildlife Refuge.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Last month, the 7th Circuit Court of Appeal overturned the lower court's ruling and sent it back for dismissal, saying it was too soon to challenge approvals that were not yet final.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Braatz contended that litigation has required the line's co-owners to repeatedly modify construction plans, decreasing efficiency and increasing costs.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Learner said it's unlikely that legal costs played a significant role in tens of millions of dollars in rising costs for the transmission line.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "The project's co-owners said a total project cost estimate is not yet available, saying it's unknown how legal expenses and the timing of federal decisions may affect the final price tag.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "The Citizens Utility Board has urged the Public Service Commission to provide more oversight of the line's construction, saying it should order utilities to provide an estimate of total costs.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Utilities have argued 115 renewable generation projects rely on the line's construction to tie into the regional power grid, which would cut carbon emissions by up to 1.2 million tons each year.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "Conservation groups contend the line will facilitate more power from fossil fuel sources.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "8",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Wisconsin's Citizens Utility Board first raised concerns about the project's rising costs last year when its owners noted the price tag had grown by more than $49 million.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "The remaining cost would be spread out over the region managed by the Midcontinent Independent System Operator, which oversees the power grid in 15 states.",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        }
+      ]
+    },
+    {
+      "paper_id": "Data_Center_White_Paper_BEG",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Ellram and Tate - 2021 - Cost Avoidance Not Everything that Counts is Counted",
+      "removed_quote_count": 3,
+      "candidates": [
+        {
+          "quote": "in the United States during 2018, purchased materials amounted to about 56% of the value of sales across manufacturing sectors",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "They amount to more than 80% of cost of sales for items like basic food manufacturing, and under 30% for items like musical instruments, sporting goods and jewelry",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "the fact that purchasing serves as an agent to multiple stakeholders means it could be simultaneously confronted with multiple, divergent cost saving parameters.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "GenX",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Gramlich et al. - Fostering Collaboration Would Help Build Needed Transmission",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "HOWWetlandCategoriesRatios",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Joskow 05 Patterns of Transmission Investment",
+      "removed_quote_count": 3,
+      "candidates": [
+        {
+          "quote": "These models fail to capture key aspects of transmission operating and investment behavior that are heavily influenced by uncertainty, contingency criteria and associated engineering reliability rules.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "0",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Ignoring these interdependencies will have adverse effects on the efficiency of investment in transmission infrastructure and undermine the success of electricity market liberalization.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "0",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "PJM CONGESTION CHARGES ($ millions): 1999: 53, 2000: 132, 2001: 271, 2002: 430, 2003: 499, Aug 03-Sept 04: 1,612",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        }
+      ]
+    },
+    {
+      "paper_id": "Kishore and Singal - 2014 - Optimal economic planning of power transmission lines A review",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Larsen - 2016 - A method to estimate the costs and benefits of undergrounding electricity transmission and distribut",
+      "removed_quote_count": 7,
+      "candidates": [
+        {
+          "quote": "There has been a general shortfall of peer-reviewed literature identifying methods to estimate the costs and benefits of strategies employed by electric utilities to improve grid resilience.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "This paper introduces\u2014for the first time\u2014a comprehensive analysis framework to estimate the societal costs and benefits of implementing one strategy to improve power system reliability: undergrounding power transmission and distribution lines.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "It is shown that undergrounding transmission and distribution lines can be a cost-effective strategy to improve reliability, but only if certain criteria are met before the decision to underground is made.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "there has been little or no research to quantify both the benefits and costs of improving electric utility reliability\u2014especially within the context of decisions to underground transmission and distribution (T&D) lines",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "It is possible that grid resiliency initiatives could pass a societal benefit\u2013cost test, yet fail a private benefit\u2013cost test and, ultimately, not be mandated by a public utility commission.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Despite the importance of considering indirect (external) costs and benefits, policymakers have not always recognized their use within the economic evaluation of proposed policies",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "the base case net social loss from undergrounding all Texas IOU T&D lines is ~$21 billion, which is equivalent to a 0.3 benefit\u2013cost ratio",
+          "claimedPage": "9",
+          "now_verified": true,
+          "matched_page": "61",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "Lopez et al. - 2025 - Renewable Energy Technical Potential and Supply Curves for the Contiguous United States 2024 Editio",
+      "removed_quote_count": 6,
+      "candidates": [
+        {
+          "quote": "Estimating renewable energy potential is challenging and requires frequent updates because of rapid advances in technology, cost reductions, and uncertainties about developable land resulting from social, regulatory, and environmental factors.",
+          "claimedPage": "0/1",
+          "now_verified": true,
+          "matched_page": "2",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "We also provide cost estimates for the available resources, presenting representative supply curves that can be used in downstream modeling and analysis.",
+          "claimedPage": "0/1",
+          "now_verified": true,
+          "matched_page": "2",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "However, the SROM methodology calculates site-dependent capacity densities, which consider the cost of building and operating the wind farm and the amount of land available. Therefore, capacity density is an output of the model and not an input assumption.",
+          "claimedPage": "4",
+          "now_verified": true,
+          "matched_page": "3",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "The median site had a wake loss of 6.7% and the interquartile range across all sites was 5% to 7.8%.",
+          "claimedPage": "7",
+          "now_verified": true,
+          "matched_page": "6",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Note that reV estimates only internal wakes, that is, wakes from other turbines within the same plant (reV grid cell). Future work is needed to estimate external wakes.",
+          "claimedPage": "7",
+          "now_verified": true,
+          "matched_page": "6",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Some regions, such as Southwest Power Pool (SPP), the Electric Reliability Council of Texas (ERCOT), California Independent System Operator (CAISO), Independent System Operator for New England (ISONE), PJM Interconnection, and NYISO (The New York Independent System Operator), do not have publicly available transmission costs. For those regions, we used the costs from another region.",
+          "claimedPage": "34",
+          "now_verified": true,
+          "matched_page": "33",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "NaitBelaid et al. - Reconductoring Economic and Financial Analysis (REFA) Tool",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "National Transmission Planning Study. Chapter 1 Introduction",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "National Transmission Planning Study. Chapter 2 Long-Term U.S. Transmission Planning Scenarios",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "National Transmission Planning Study. Chapter 3 Transmission Portfolios and Operations for 2035 Sce",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "National Transmission Planning Study. Executive Summary",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Newhavencorridorcostinflation",
+      "removed_quote_count": 6,
+      "candidates": [
+        {
+          "quote": "This memo serves as a supplement to the Railroad Corridor Transmission Line Asset Condition Assessment Update being presented to the Planning Advisory Committee on August 21, 2024.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": false
+        },
+        {
+          "quote": "The purpose of this memo is to provide additional details on the drivers that lead to the increase in cost estimates from the June 13, 2018 PAC presentation to the update being presented on August 21, 2024.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": false
+        },
+        {
+          "quote": "This assessment identified significant deterioration in the condition of the existing structural support system for the UI transmission lines, the railroad catenary structures.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": false
+        },
+        {
+          "quote": "this legacy electrical equipment does not meet current National Electrical Safety Code (NESC) standards and does not allow for the independent operation of critical electric and mass transit infrastructure.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": false
+        },
+        {
+          "quote": "During the period a 6-8% annual inflation was realized due to the COVID-19 pandemic resulting in an estimated $50M cost increase to the project.",
+          "claimedPage": "100",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "AFUDC June, 2018: $19.8M August, 2024: $41.5M Variance: $21.7M The increase in estimated cost for AFUDC is due to current AFUDC rates versus those that were used in the 2018 cost estimates. An increase of approximately 8% in AFUDC rates occurred during this time.",
+          "claimedPage": "100",
+          "now_verified": true,
+          "matched_page": "100",
+          "match_method": "fuzzy",
+          "manually_verified_present": false
+        }
+      ]
+    },
+    {
+      "paper_id": "OPINIONETCC-Competitive-Transmission-Myths-Dispelled-11_6_25-FINAL",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Oikonomou et al. - 2024 - Western Interconnection Baseline Study",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Power Delayed- Economic Effects of Electricity Transmission and Generation Development Delays",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Rawlins et al. - Ryan Pletka, Project Manager",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Regional Energy Deployment System (ReEDS) 2011",
+      "removed_quote_count": 1,
+      "candidates": [
+        {
+          "quote": "F \u2248 B_branch \u00b7 B_bus^{-1} \u00b7 P_non-ref = H_0 \u00b7 P_non-ref.",
+          "claimedPage": "80",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        }
+      ]
+    },
+    {
+      "paper_id": "Sliwa and Interconnection - The Competitive Planning Process & Supplemental Project Planning",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "TaylorRoaldA Framework for Risk Assessment and Optimal Line Upgrade Selection to Mitigate Wildfire Risk",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Teegala and Singal - 2016 - Optimal costing of overhead power transmission lines using genetic algorithms",
+      "removed_quote_count": 10,
+      "candidates": [
+        {
+          "quote": "Global electricity demand is expected to double by 2030, growing at an annual rate of 2.4%.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "This growth is more in developing countries, where electricity demand will rise by over 4% per year and is expected to triple by 2030.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "capital investments required for the development of power sector infrastructure are expected to be US $16.4 trillion over 2014-2035 globally, at an annual average of US $740 billion per year.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Nearly 58% of this investment is made for development of power plants and 42% is allocated for T&D systems.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "Of the total 3.2 million kilometers of planned addition of transmission lines at a cost of US $1.7 trillion over the period 2014-2035.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "The proposed methodology can be used by transmission line designers and developers to determine techno-economic viability for investment decision before undertaking detailed investigations.",
+          "claimedPage": "307",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "The developed model is capable of optimizing the cost while simultaneously selecting the optimum design variables influencing the cost of the line.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "W_T = 111,190 * T^0.061 * V^0.175 * L^0.001 * H^0.32 * B^1.995",
+          "claimedPage": "0",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "R_C = 6.32 \u00d7 10^\u22128 d^\u22121.9774",
+          "claimedPage": "300",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        },
+        {
+          "quote": "TC_TL = C_T + C_C + PV_L",
+          "claimedPage": "301",
+          "now_verified": false,
+          "matched_page": null,
+          "match_method": null
+        }
+      ]
+    },
+    {
+      "paper_id": "The effect of transmission congestion, generation profiles, and curtailment",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Theeconomic value oftransmission lines",
+      "removed_quote_count": 2,
+      "candidates": [
+        {
+          "quote": "Furthermore, these benefits can change dramatically when inherently intermittent sources of renewable generation are added to a network, and the changes in benefits are not captured effectively by changes in the expected congestion rents.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "7",
+          "match_method": "exact",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "The event, triggered by a tripping line in Arizona, lasted for around 12 h, curtailing 7890 MW of demand and affecting around 2.7 million people in the U.S. alone",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "7",
+          "match_method": "exact",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "Transmission Infrastructure access pricing and lumpy investments",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "Transmission constraints, intermittent renewables and welfare",
+      "removed_quote_count": 1,
+      "candidates": [
+        {
+          "quote": "The PTC is a large volumetric based subsidy whereby each Megawatt Hour (MWh) of electricity produced entitles the renewable asset owner to a deductible federal tax credit, regardless of the location and wholesale price of the electricity generated.",
+          "claimedPage": "1",
+          "now_verified": true,
+          "matched_page": "2021",
+          "match_method": "exact",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "Transmission investment under uncertainty- Reconciling private and public incentives",
+      "removed_quote_count": 2,
+      "candidates": [
+        {
+          "quote": "By anticipating the PC's incentives, a welfare-maximizing transmission system operator (TSO) shapes the network to align public and private objectives.",
+          "claimedPage": "0",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        },
+        {
+          "quote": "we exploit the dependence of the PC's capacity on the TSO's infrastructure design to devise a proactive transmission-investment strategy. Hence, we mitigate welfare losses arising from misaligned incentives even in relatively uncertain markets.",
+          "claimedPage": "1168",
+          "now_verified": true,
+          "matched_page": "1",
+          "match_method": "fuzzy",
+          "manually_verified_present": true
+        }
+      ]
+    },
+    {
+      "paper_id": "Transmission-in-IRP-Part-2",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "UTAustin_FCe_TransmissionCosts_2017",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "a03.1_2024-12-06_ipsac_pjm_rtep_process",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "best solution to coordinate the location of power plants with lumpy transmission investments?",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "ice_2.0_phase_i_final_report_29may2025",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "ipcc_wg3_ar5_chapter7",
+      "removed_quote_count": 0,
+      "candidates": []
+    },
+    {
+      "paper_id": "peaker power plant displacement",
+      "removed_quote_count": 0,
+      "candidates": []
+    }
+  ],
+  "summary": {
+    "total_removed_quotes_found_in_diff": 56,
+    "total_restorable": 37,
+    "manually_verified_genuine_gaps": 5,
+    "manually_verified_false_positives": 32,
+    "note": "Of 37 candidates flagged 'now_verified: true', manual verification against current note text found only 5 are genuinely absent (true restoration candidates, all in Newhavencorridorcostinflation); the remaining 32 are already present in the current note (page/tag corrections made during the original 2026-07-25/26 batch cleanup, misclassified as 'removed' by this script's diff-only extraction logic)."
+  },
+  "known_script_limitation": "The 'now_verified: true' flag alone does NOT mean the quote is missing from the current synthesis note. This audit script (Task 1) has a design gap: it extracts '-' lines from `git diff <baseline> -- <note>` and flags any that re-verify against the fixed pdf-to-text.js output as 'restorable', but does NOT check whether that same quote also reappears (page/tag corrected) as a '+' line in the same diff. Most flagged candidates are page-number or [unverified]-tag CORRECTIONS made during the original batch cleanup (2026-07-25/26), not deletions -- the quote is already present and correct in the current note. Manually verified against current note text on 2026-07-27; see 'manually_verified_present' field on each candidate below."
+}
