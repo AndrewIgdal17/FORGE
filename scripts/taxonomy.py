@@ -27,7 +27,7 @@ Bucket = Literal[
     "project", "route", "financial",
 ]
 DiscountRate = Literal["wacc_real", "social", "wacc_nominal"]
-Condition = Literal["dc_only", "greenfield_only", "reconductoring_only"]
+Condition = Literal["dc_only", "not_reconductoring", "reconductoring_only", "rebuild_only"]
 NumeratorRule = Literal[
     "all_benefits", "remedial", "remedial_enabling",
     "capital_recovery", "revenue_requirement",
@@ -94,8 +94,8 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Conductor Cost", "wacc_real", None, 1,
                  "Terrain-adjusted, contingency-applied conductor cost (variable + fixed)."),
     TaxonomyItem("build_structure", "cost", "hard", "build",
-                 "Structure Cost", "wacc_real", "greenfield_only", 2,
-                 "Terrain-adjusted structure cost. Zero for reconductoring."),
+                 "Structure Cost", "wacc_real", "not_reconductoring", 2,
+                 "Terrain-adjusted structure cost. Zero for reconductoring; full for greenfield and rebuild."),
     TaxonomyItem("build_converter", "cost", "hard", "build",
                  "Converter Cost", "wacc_real", "dc_only", 3,
                  "Fixed converter station cost. Zero for AC and reconductoring."),

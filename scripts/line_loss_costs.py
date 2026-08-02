@@ -62,7 +62,7 @@ class LineLossProjectDetails:
     value_of_load: float
     wacc_real: float
     benefit_price_escalation_real: float
-    reconductoring: bool
+    project_type: str  # "greenfield" | "reconductoring" | "rebuild"
     delay_years: float
     construction_years: int
     project_lifetime: int
@@ -94,7 +94,7 @@ def load_project_details() -> LineLossProjectDetails:
             - wacc_real: Real WACC for present value of thermal line loss cost (market-tracked)
             - benefit_price_escalation_real: Real annual escalation rate applied to v_load
               for welfare consistency with the benefit-of-delivered-energy valuation (g_benefit)
-            - reconductoring: True if reconductoring project, False for greenfield
+            - project_type: "greenfield" | "reconductoring" | "rebuild"
             - delay_years: Number of years of project delay
             - construction_years: Number of years of construction
             - project_lifetime: Project operational lifetime in years
@@ -126,7 +126,7 @@ def load_project_details() -> LineLossProjectDetails:
         conductor_type = project_details_obj.conductor_type
         converter_type = project_details_obj.converter_type
         line_utilization_percent = project_details_obj.line_utilization
-        reconductoring = project_details_obj.reconductoring
+        project_type = project_details_obj.project_type
         uses_existing_row = project_details_obj.uses_existing_row
         delay_years = project_details_obj.delay_years
         construction_years = project_details_obj.construction_years
@@ -186,7 +186,7 @@ def load_project_details() -> LineLossProjectDetails:
         value_of_load=value_of_load,
         wacc_real=wacc_real,
         benefit_price_escalation_real=benefit_price_escalation_real,
-        reconductoring=reconductoring,
+        project_type=project_type,
         delay_years=delay_years,
         construction_years=construction_years,
         project_lifetime=project_lifetime,
@@ -415,7 +415,7 @@ def main() -> None:
     print("=" * 70)
     print()
 
-    if not project_details.reconductoring:
+    if project_details.project_type == "greenfield":
         print("Greenfield project detected - calculating line loss costs.")
         print()
 
@@ -587,7 +587,9 @@ def main() -> None:
     print(f"Conductor Type: {project_details.conductor_type}")
     print()
 
-    # Look up old voltage for reconductoring (physical towers unchanged)
+    # Look up old voltage (only relevant for reconductoring, where the physical
+    # towers are unchanged; rebuild replaces structures, so the new configuration
+    # uses its own standard voltage class instead of this override).
     old_category = build_category_string(
         project_details.construction_type,
         old_ac_dc,
@@ -597,8 +599,13 @@ def main() -> None:
     )
     old_circuit = load_circuit_and_resistance_details(old_category)
     old_voltage_kv = old_circuit.voltage_kv
+    voltage_override = (
+        old_voltage_kv if project_details.project_type == "reconductoring" else None
+    )
 
-    # Calculate new configuration losses (line only) using OLD voltage (towers unchanged)
+    # Calculate new configuration losses (line only). Reconductoring keeps the old
+    # voltage class (towers unchanged); rebuild and greenfield use the new
+    # configuration's own voltage class (new structures).
     new_losses_mwh_per_year, new_lifetime_losses_mwh = calculate_configuration_losses(
         project_details.construction_type,
         project_details.ac_dc,
@@ -607,7 +614,7 @@ def main() -> None:
         project_details.converter_type,
         project_details.line_utilization_percent,
         project_details.project_lifetime,
-        voltage_kv_override=old_voltage_kv,  # Use old voltage since towers unchanged
+        voltage_kv_override=voltage_override,
     )
     # New config total (line + converter) for cost written to batch and breakdown
     new_loss_data = get_total_energy_losses()
@@ -615,8 +622,10 @@ def main() -> None:
     new_converter_mwh = new_loss_data.get("total_converter_losses_mwh", 0)
     new_total_mwh = new_loss_data["total_losses_mwh_per_year"]
 
-    # Calculate counterfactual baseline losses (old conductor at new capacity @ old voltage)
-    # This ensures both use the same voltage for fair comparison (informational only)
+    # Calculate counterfactual baseline losses (old conductor at new capacity).
+    # For reconductoring, hold voltage at the old value for a fair apples-to-apples
+    # comparison (towers unchanged). For rebuild, both configurations already use
+    # the new voltage class, so no override is needed.
     (
         counterfactual_baseline_losses_mwh_per_year,
         counterfactual_baseline_lifetime_losses_mwh,
@@ -628,7 +637,7 @@ def main() -> None:
         old_converter_type,
         project_details.line_utilization_percent,
         project_details.project_lifetime,
-        voltage_kv_override=old_voltage_kv,  # Use old voltage for fair comparison
+        voltage_kv_override=voltage_override,
     )
 
     # Calculate delivered energy for each configuration

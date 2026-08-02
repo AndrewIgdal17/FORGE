@@ -105,7 +105,7 @@ def main() -> None:
     # ROW agreement type: drives which terms apply (mutual exclusivity)
     agreement_type = getattr(project_details, "row_agreement_type", None) or (
         "lease_license_existing"
-        if (project_details.reconductoring or project_details.uses_existing_row)
+        if (project_details.project_type in ("reconductoring", "rebuild") or project_details.uses_existing_row)
         else "permanent_easement_new"
     )
     if agreement_type == "lease_license_existing":

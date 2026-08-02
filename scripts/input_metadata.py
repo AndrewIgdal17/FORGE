@@ -18,7 +18,10 @@ InputType = Literal[
     "dynamic_dropdown", "year", "text", "fuel_mix_row",
 ]
 Tier = Literal["first-glance", "working", "advanced"]
-InputCondition = Literal["dc_only", "reconductoring_only", "always_hidden"]
+InputCondition = Literal[
+    "dc_only", "reconductoring_only", "reconductoring_or_rebuild",
+    "rebuild_only", "always_hidden",
+]
 
 TERRAINS = (
     "forested", "scrubbed_flat", "wetland", "farmland",
@@ -113,11 +116,12 @@ _TAB1: list[InputField] = [
        label="Converter Loss Percentage", help_text="Loss per converter station (0.75% LCC, 1.0% VSC)", unit="%",
        input_type="percent", condition="always_hidden", tier="first-glance", display_order=7,
        sub_tab="technology"),
-    _f("reconductoring", taxonomy_id="project_technology", input_tab="project-identity",
-       yaml_section="01_project_technical_details", field_path="project.reconductoring",
-       label="Reconductoring Project", help_text="Upgrade existing conductors; zeroes structure cost, relief = C_new minus C_old",
-       input_type="toggle", tier="first-glance", display_order=8,
-       sub_tab="technology"),
+    _f("project_type", taxonomy_id="project_technology", input_tab="project-identity",
+       yaml_section="01_project_technical_details", field_path="project.project_type",
+       label="Project Type", help_text="Greenfield: new line, full costs. Reconductoring: conductor swap on existing structures, zeroes structure cost. Rebuild: full structure replacement, incremental capacity formula.",
+       input_type="dropdown", tier="first-glance", display_order=8,
+       sub_tab="technology",
+       validation={"required": True, "options": ["greenfield", "reconductoring", "rebuild"]}),
     _f("uses_existing_row", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.uses_existing_row",
        label="Project Uses Existing ROW", help_text="Zeroes acquisition/holding, includes delay in rent",
@@ -126,7 +130,7 @@ _TAB1: list[InputField] = [
     _f("old_capacity_mw", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.old_capacity_mw",
        label="Old Capacity MW", help_text="Existing line capacity (C_old)", unit="MW",
-       input_type="dynamic_dropdown", condition="reconductoring_only", tier="first-glance", display_order=11,
+       input_type="dynamic_dropdown", condition="reconductoring_or_rebuild", tier="first-glance", display_order=11,
        validation={"dependsOn": "01_project_technical_details.project.old_ac_dc",
                    "optionSets": {"AC": [140, 329, 394, 460, 657, 1792, 2598, 6625],
                                   "DC": [500, 1500, 2000, 2400, 6000]}, "suffix": " MW"},
@@ -134,7 +138,7 @@ _TAB1: list[InputField] = [
     _f("old_conductor_type", taxonomy_id="project_technology", input_tab="equipment",
        yaml_section="01_project_technical_details", field_path="project.old_conductor_type",
        label="Old Conductor Type", help_text="Original conductor for reconductoring cost comparison",
-       input_type="dynamic_dropdown", condition="reconductoring_only",
+       input_type="dynamic_dropdown", condition="reconductoring_or_rebuild",
        tier="first-glance", display_order=12,
        validation={"dependsOn": "01_project_technical_details.project.construction_type",
                    "optionSets": {
@@ -148,7 +152,7 @@ _TAB1: list[InputField] = [
     _f("old_ac_dc", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.old_ac_dc",
        label="Old AC/DC", help_text="Original AC/DC type for reconductoring comparison",
-       input_type="dropdown", condition="reconductoring_only",
+       input_type="dropdown", condition="reconductoring_or_rebuild",
        tier="first-glance", display_order=10, validation={"options": ["", "AC", "DC"]},
        sub_tab="technology"),
     _f("old_converter_type", taxonomy_id="project_technology", input_tab="equipment",
@@ -398,6 +402,16 @@ for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", 
         unit="$/acre", input_type="currency", tier="working", display_order=_env_order,
         sub_tab="credits"))
     _env_order += 1
+
+_TAB4.append(_f(
+    "rebuild_env_mitigation_fraction", taxonomy_id="env_mitigation",
+    input_tab="capital-costs", yaml_section="09_environmental_mitigation",
+    field_path="environmental_mitigation.rebuild_env_mitigation_fraction",
+    label="Rebuild Env. Mitigation Fraction",
+    help_text="Multiplier (0-1) on wetland/habitat credits for rebuild projects. Default 0.5. Only used when project_type = rebuild.",
+    input_type="number", tier="working", display_order=_env_order,
+    sub_tab="credits", condition="rebuild_only",
+    validation={"min": 0, "max": 1, "step": 0.01}))
 
 # ===================================================================
 # Tab 5 — Operating Costs (40 fields: 4 insurance + 36 veg mgmt)

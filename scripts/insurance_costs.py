@@ -139,7 +139,7 @@ def main() -> None:
             total_miles,
             number_of_converters,
             contingencies,
-            project_details.reconductoring,
+            project_details.project_type,
         )
 
     # Load insurance parameters

@@ -135,7 +135,8 @@ def _row_agreement_type(inputs: dict) -> str:
         return explicit
     return (
         "lease_license_existing"
-        if (project.get("reconductoring") or project.get("uses_existing_row"))
+        if (project.get("project_type", "greenfield") in ("reconductoring", "rebuild")
+            or project.get("uses_existing_row"))
         else "permanent_easement_new"
     )
 

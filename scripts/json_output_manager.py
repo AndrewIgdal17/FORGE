@@ -11,6 +11,29 @@ import os
 import sys
 
 
+def _require_when_reconductoring(
+    project: Dict[str, Any], key: str, is_reconductoring_or_rebuild: bool, irrelevant_default: Any
+) -> Any:
+    """
+    Read an old-configuration project field (old_capacity_mw/old_conductor_type/
+    old_ac_dc) that is required when the project is reconductoring or rebuild,
+    but unused (and legitimately absent) for greenfield projects.
+
+    Raises KeyError if the project is reconductoring/rebuild and the field is
+    missing or null, instead of silently substituting a default that would mask
+    malformed scenario input.
+    """
+    if not is_reconductoring_or_rebuild:
+        return irrelevant_default
+    value = project.get(key)
+    if value is None:
+        raise KeyError(
+            f"Missing '{key}' in project technical details: required for "
+            "reconductoring/rebuild projects"
+        )
+    return value
+
+
 class JSONOutputManager:
     """
     Manages JSON outputs for CTCC API calculations.
@@ -59,7 +82,8 @@ class JSONOutputManager:
             conductor_type = project_details.conductor_type
             converter_type = project_details.converter_type
             line_utilization = project_details.line_utilization
-            reconductoring = project_details.reconductoring
+            project_type = project_details.project_type
+            is_reconductoring_or_rebuild = project_type in ("reconductoring", "rebuild")
             uses_existing_row = project_details.uses_existing_row
             delay_years = project_details.delay_years
             construction_years = project_details.construction_years
@@ -68,7 +92,7 @@ class JSONOutputManager:
 
             total_line_length = load_physical_details()
 
-            # Get additional details for reconductoring
+            # Get additional details for reconductoring/rebuild
             tech_data = get_project_data_raw()
             project = tech_data.get("project", {})
 
@@ -92,15 +116,23 @@ class JSONOutputManager:
                     project.get("number_of_converters", 0) if ac_dc == "DC" else 0
                 ),
                 "converter_loss_percentage": converter_loss_percentage,
-                # Reconductoring details
-                "reconductoring": reconductoring,
+                # Project type / legacy reconductoring-or-rebuild details
+                "project_type": project_type,
                 "old_capacity_mw": (
-                    project.get("old_capacity_mw", 0) if reconductoring else 0
+                    _require_when_reconductoring(
+                        project, "old_capacity_mw", is_reconductoring_or_rebuild, 0
+                    )
                 ),
                 "old_conductor_type": (
-                    project.get("old_conductor_type", "") if reconductoring else ""
+                    _require_when_reconductoring(
+                        project, "old_conductor_type", is_reconductoring_or_rebuild, ""
+                    )
                 ),
-                "old_ac_dc": project.get("old_ac_dc", "") if reconductoring else "",
+                "old_ac_dc": (
+                    _require_when_reconductoring(
+                        project, "old_ac_dc", is_reconductoring_or_rebuild, ""
+                    )
+                ),
                 # Financial parameters
                 "value_of_load_per_mwh": project.get(
                     "value_of_load_per_mwh", 0
