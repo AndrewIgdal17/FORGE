@@ -13,14 +13,14 @@
         "converter_loss_percentage": null,
         "line_utilization": 0.65,
         "value_of_load_per_mwh": 42.0,
-        "reconductoring": false,
         "uses_existing_row": false,
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
         "greenfield_comparison_capacity_mw": null,
         "greenfield_comparison_conductor_type": "Standard Aluminum Conductor",
-        "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC"
+        "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
+        "project_type": "greenfield"
       },
       "timeline": {
         "construction_years": 3,
@@ -2183,7 +2183,7 @@
           "average_curtailment_price": 0
         }
       },
-      "reconductoring_congestion_curtailment_reductions": {
+      "incremental_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 0,
           "average_exceedance": 0,

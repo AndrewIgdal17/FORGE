@@ -13,14 +13,14 @@
         "converter_loss_percentage": null,
         "line_utilization": 0.65,
         "value_of_load_per_mwh": 42.0,
-        "reconductoring": true,
         "uses_existing_row": true,
         "old_capacity_mw": 1792,
         "old_conductor_type": "Standard Aluminum Conductor",
         "old_ac_dc": "AC",
         "greenfield_comparison_capacity_mw": null,
         "greenfield_comparison_conductor_type": "Standard Aluminum Conductor",
-        "name": "AEP_LRGV_345kV_ACCC_Reconductoring"
+        "name": "AEP_LRGV_345kV_ACCC_Reconductoring",
+        "project_type": "reconductoring"
       },
       "timeline": {
         "construction_years": 3,
@@ -2183,7 +2183,7 @@
           "average_curtailment_price": 0
         }
       },
-      "reconductoring_congestion_curtailment_reductions": {
+      "incremental_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 1200,
           "average_exceedance": 400,
