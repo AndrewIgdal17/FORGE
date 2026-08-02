@@ -44,8 +44,9 @@ def calculate_environmental_mitigation_costs(
     category: str,
     terrain_miles_dict: Dict[str, float],
     row_width_feet: float,
-    reconductoring: bool = False,
+    project_type: str = "greenfield",
     subsea_capex: float = 0.0,
+    rebuild_env_mitigation_fraction: float = 0.5,
 ) -> Dict[str, float]:
     """
     Calculate environmental mitigation costs including base mitigation,
@@ -56,11 +57,13 @@ def calculate_environmental_mitigation_costs(
         category: Project category identifier
         terrain_miles_dict: Dictionary of terrain type to miles
         row_width_feet: ROW width in feet
-        reconductoring: If True, sets wetland and habitat credits to zero
-                       (reconductoring projects use existing ROW and don't create
-                       new permanent environmental impacts requiring credits)
+        project_type: "greenfield" | "reconductoring" | "rebuild"
+                     reconductoring zeroes wetland/habitat credits (existing ROW);
+                     rebuild scales credits by rebuild_env_mitigation_fraction
         subsea_capex: Subsea line construction CAPEX (conductor + structure),
                      used for marine environmental mitigation (% of CAPEX)
+        rebuild_env_mitigation_fraction: Fraction of wetland/habitat credits
+                     applied for rebuild projects (default 0.5)
 
     Returns:
         dict: Contains base_cost, wetlands_credits, habitat_credits, marine_cost,
@@ -130,13 +133,17 @@ def calculate_environmental_mitigation_costs(
             habitat_credits += cost_per_acre * effective_acres
 
     # For reconductoring projects, set credits to zero since they use existing ROW
-    # and don't create new permanent environmental impacts requiring mitigation credits
-    if reconductoring:
+    # and don't create new permanent environmental impacts requiring mitigation credits.
+    # Rebuild projects apply a partial fraction of credits.
+    if project_type == "reconductoring":
         wetlands_credits = 0.0
         habitat_credits = 0.0
+    elif project_type == "rebuild":
+        wetlands_credits *= rebuild_env_mitigation_fraction
+        habitat_credits *= rebuild_env_mitigation_fraction
 
     # Marine environmental mitigation (subsea only, % of CAPEX)
-    marine_env_mitigation_pct_capex = mitigation_config.get("marine_env_mitigation_pct_capex", 0.0)
+    marine_env_mitigation_pct_capex = mitigation_config.get("marine_env_mitigation_pct_capex", 0.03)
     if yaml_construction_type == "subsea":
         marine_cost = marine_env_mitigation_pct_capex * subsea_capex
     else:
@@ -195,9 +202,14 @@ def main() -> None:
             subsea_capex = _conductor_cost + _structure_cost
 
     # Calculate environmental mitigation costs (nominal)
+    rebuild_env_mitigation_fraction = em_yaml.get(
+        "environmental_mitigation", {}
+    ).get("rebuild_env_mitigation_fraction", 0.5)
     results = calculate_environmental_mitigation_costs(
-        em_yaml, category, terrain_miles, row_width_feet, project_details.reconductoring,
+        em_yaml, category, terrain_miles, row_width_feet,
+        project_type=project_details.project_type,
         subsea_capex=subsea_capex,
+        rebuild_env_mitigation_fraction=rebuild_env_mitigation_fraction,
     )
 
     from run_context import add_derived

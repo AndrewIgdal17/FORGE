@@ -36,7 +36,7 @@ class CongestionProjectDetails:
     delay_years: float
     construction_years: int
     project_lifetime: int
-    reconductoring: bool
+    project_type: str
     capacity_mw: int
     old_capacity_mw: int
 
@@ -72,9 +72,23 @@ def _get_old_capacity_mw() -> int:
     """
     Helper function to get old_capacity_mw from project technical details.
     This is needed because the centralized loader doesn't return this field.
+
+    Required (must be present and non-null) when project_type is 'reconductoring'
+    or 'rebuild', since old_capacity_mw is used directly in the capacity-relief
+    calculation for those project types. Left at 0 for greenfield projects,
+    matching the YAML schema's own null default for that case (old_capacity_mw
+    is unused for greenfield).
     """
     project_data = get_project_data_raw()
-    return project_data["project"].get("old_capacity_mw", 0)
+    project = project_data["project"]
+    project_type = project["project_type"]
+    old_capacity_mw = project.get("old_capacity_mw")
+    if project_type in ("reconductoring", "rebuild") and old_capacity_mw is None:
+        raise KeyError(
+            "Missing 'old_capacity_mw' in project technical details YAML: "
+            "required when project_type is 'reconductoring' or 'rebuild'"
+        )
+    return old_capacity_mw if old_capacity_mw is not None else 0
 
 
 def load_project_technical_details() -> CongestionProjectDetails:
@@ -100,7 +114,7 @@ def load_project_technical_details() -> CongestionProjectDetails:
         delay_years=project_details.delay_years,
         construction_years=project_details.construction_years,
         project_lifetime=project_details.project_lifetime,
-        reconductoring=project_details.reconductoring,
+        project_type=project_details.project_type,
         capacity_mw=project_details.capacity_mw,
         old_capacity_mw=old_capacity_mw,
     )
@@ -111,7 +125,7 @@ def load_project_technical_details() -> CongestionProjectDetails:
 
 
 def calculate_congestion_reduction_costs(
-    reconductoring: bool,
+    project_type: str,
     capacity_mw: int,
     old_capacity_mw: int,
     flow_factor: float,
@@ -140,9 +154,9 @@ def calculate_congestion_reduction_costs(
         B_curt = H * (1-f) * min(delta_C_eff, X) * gamma_curt
 
     Args:
-        reconductoring: True if this is a reconductoring project, False for greenfield
+        project_type: "greenfield" | "reconductoring" | "rebuild"
         capacity_mw: New line capacity in MW (for greenfield) or upgraded capacity (for reconductoring)
-        old_capacity_mw: Original capacity in MW (only used for reconductoring projects)
+        old_capacity_mw: Original capacity in MW (used for reconductoring and rebuild projects)
         flow_factor: Fraction of capacity that effectively relieves constraints (greenfield only)
         constrained_hours: H, hours per year the constraint binds
         average_exceedance: X, average MW exceedance during constrained hours
@@ -161,7 +175,7 @@ def calculate_congestion_reduction_costs(
     g = benefit_price_escalation_real
 
     # Effective capacity relief
-    if not reconductoring:
+    if project_type == "greenfield":
         delta_C_eff = max(0.0, flow_factor * capacity_mw)
     else:
         delta_C_eff = max(0.0, capacity_mw - old_capacity_mw)
@@ -250,7 +264,7 @@ def main() -> None:
 
     # Calculate congestion reduction costs
     congestion_results = calculate_congestion_reduction_costs(
-        project_details_cc.reconductoring,
+        project_details_cc.project_type,
         project_details_cc.capacity_mw,
         project_details_cc.old_capacity_mw,
         params.flow_factor,
@@ -342,8 +356,8 @@ def main() -> None:
     # E_delivered_annual = Delta_C_effective * u * H; B_delivered_annual = E * gamma_electricity;
     # Nominal lifetime = B_annual * T_lifetime; PV from COD at real WACC.
     project_data = get_project_data_raw()
-    project = project_data.get("project", {})
-    line_utilization = float(project.get("line_utilization", 0.0))
+    project = project_data["project"]
+    line_utilization = float(project["line_utilization"])
     value_of_load_per_mwh = float(
         project.get("value_of_load_per_mwh", 0.0)
     )

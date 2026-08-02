@@ -81,7 +81,7 @@ def get_total_energy_losses() -> dict:
     line_length = load_physical_details()
 
     # For reconductoring: use old voltage (towers unchanged), but new resistance (new conductors)
-    if project_details.reconductoring:
+    if project_details.project_type == "reconductoring":
         # Build old category to get old voltage (towers unchanged)
         project_data = get_project_data_raw()
         if "project" not in project_data:

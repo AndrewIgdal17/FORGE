@@ -60,7 +60,7 @@ def load_costs(
     total_miles: float,
     number_of_converters: int,
     contingencies: Dict[str, float],
-    reconductoring: bool,
+    project_type: str,
     overrides: Dict[str, float] | None = None,
 ) -> BuildCosts:
     """
@@ -71,7 +71,7 @@ def load_costs(
         total_miles: Total miles of transmission line
         number_of_converters: Number of converters needed
         contingencies: Dictionary of contingency percentages
-        reconductoring: Boolean indicating if this is a reconductoring project
+        project_type: "greenfield" | "reconductoring" | "rebuild"
 
     Returns:
         tuple: (total_cost, total_cost_with_contingencies, conductor_cost, structure_cost,
@@ -135,7 +135,7 @@ def load_costs(
     ) + fixed_conductor_cost
 
     # If reconductoring, structure and converter costs = 0
-    if reconductoring:
+    if project_type == "reconductoring":
         structure_cost = 0
         converter_cost = 0
     else:
@@ -236,7 +236,7 @@ def main() -> None:
 
     costs = load_costs(
         category, total_miles, number_of_converters, contingencies,
-        project_details.reconductoring, overrides=build_cost_overrides,
+        project_details.project_type, overrides=build_cost_overrides,
     )
 
     from run_context import set_build_costs, add_derived
