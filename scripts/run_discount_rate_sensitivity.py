@@ -20,7 +20,6 @@ SCENARIOS = [
     "CTT_Actual_Delay2",
     "CTT_Counterfactual_Delay7",
     "TBC_Delay4",
-    "TBC_NoDelay",
     "VW1_Delay6",
     "VW1_Delay2",
 ]

@@ -159,19 +159,6 @@ def main():
 
     print_sensitivity_table("Trans Bay Cable (4-year delay, actual)", tbc_results)
 
-    # --- TBC (0-year delay, counterfactual) ---
-    print("\nLoading TBC_NoDelay...")
-    tbc0 = load_scenario("TBC_NoDelay")
-    tbc0_inputs = tbc0["inputs"]
-
-    tbc0_results = {}
-    for lt in LIFETIMES:
-        print(f"  Running TBC (0yr) with lifetime={lt}...")
-        r = run_with_lifetime(tbc0_inputs, lt, "TBC_NoDelay")
-        tbc0_results[lt] = extract_metrics(r)
-
-    print_sensitivity_table("Trans Bay Cable (0-year delay, counterfactual)", tbc0_results)
-
     # --- VW1 (6-year delay, actual) ---
     vw1_lifetimes = [25, 30, 40]
     print("\nLoading VW1_Delay6...")
