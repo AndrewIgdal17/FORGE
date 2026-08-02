@@ -4,7 +4,8 @@
 environmental_mitigation:
   mitigation_uplift_factor: 1.25  # Construction workspace extends beyond ROW via temporary construction easements (TCEs); effective impacted width ≈ 1.25× ROW width.
   mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2008 (33 CFR §332.3(f))).
-  marine_env_mitigation_pct_capex: 0.02 # 2% of subsea construction CAPEX. CHPE Environmental Trust Fund 1.95% (NY PSC, 2022); Ofgem interconnector devex 1.4-2.7% (2023-2024); MISO 3% terrestrial benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+  marine_env_mitigation_pct_capex: 0.03 # 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+  rebuild_env_mitigation_fraction: 0.5  # 0.0-1.0; multiplier on wetland/habitat credits for rebuild projects only
 
   # All-in construction/restoration mitigation ($/acre) by terrain + construction type
   base_mitigation_cost_per_acre:

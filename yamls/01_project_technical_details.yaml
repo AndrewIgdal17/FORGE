@@ -14,7 +14,7 @@ project:
 
   value_of_load_per_mwh: 0 # $/MWh (>= 0)
 
-  reconductoring: False # True or False
+  project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
   uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor

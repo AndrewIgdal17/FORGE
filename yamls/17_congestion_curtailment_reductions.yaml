@@ -17,7 +17,7 @@ greenfield_congestion_curtailment_reductions:
     average_congestion_price: 0    # gamma_cong: $/MWh redispatch cost
     average_curtailment_price: 0   # gamma_curt: $/MWh foregone energy value
 
-reconductoring_congestion_curtailment_reductions:
+incremental_congestion_curtailment_reductions:
   constraints:
     constrained_hours: 0
     average_exceedance: 0
