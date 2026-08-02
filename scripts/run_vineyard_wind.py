@@ -34,7 +34,7 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.552  # 806 MW × 0.45 CF ÷ 657 MW — preserves 3.15 TWh/yr
     proj["project"]["value_of_load_per_mwh"] = 55.0
-    proj["project"]["reconductoring"] = False
+    proj["project"]["project_type"] = "greenfield"
     proj["project"]["uses_existing_row"] = False
     proj["project"]["old_capacity_mw"] = None
     proj["project"]["old_conductor_type"] = None

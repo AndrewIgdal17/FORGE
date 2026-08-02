@@ -38,7 +38,7 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     fin = inputs["03_financing"]["financial"]
     fin["base_year"] = 2026
     fin["inflation_rate"] = 0.025
-    fin["wacc_nominal"] = 0.067
+    fin["wacc_nominal"] = 0.0666
     fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = True
@@ -98,7 +98,7 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     gf["prices"]["average_congestion_price"] = 15.0
     gf["prices"]["average_curtailment_price"] = 0
 
-    rc = cc["reconductoring_congestion_curtailment_reductions"]
+    rc = cc["incremental_congestion_curtailment_reductions"]
     rc["constraints"]["constrained_hours"] = 1200
     rc["constraints"]["average_exceedance"] = 400
     rc["constraints"]["congestion_fraction"] = 1.00
@@ -141,7 +141,7 @@ def patch_lrgv_accc(inputs: dict) -> dict:
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
     proj["project"]["value_of_load_per_mwh"] = 42.0
-    proj["project"]["reconductoring"] = True
+    proj["project"]["project_type"] = "reconductoring"
     proj["project"]["uses_existing_row"] = True
     proj["project"]["old_capacity_mw"] = 1792
     proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
@@ -173,11 +173,11 @@ def patch_lrgv_acsr_rebuild(inputs: dict) -> dict:
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
     proj["project"]["value_of_load_per_mwh"] = 42.0
-    proj["project"]["reconductoring"] = False
+    proj["project"]["project_type"] = "rebuild"
     proj["project"]["uses_existing_row"] = True
-    proj["project"]["old_capacity_mw"] = None
-    proj["project"]["old_conductor_type"] = None
-    proj["project"]["old_ac_dc"] = None
+    proj["project"]["old_capacity_mw"] = 1792
+    proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
+    proj["project"]["old_ac_dc"] = "AC"
     proj["project"]["greenfield_comparison_capacity_mw"] = None
     proj["project"]["greenfield_comparison_conductor_type"] = "Standard Aluminum Conductor"
     proj["timeline"]["construction_years"] = 5

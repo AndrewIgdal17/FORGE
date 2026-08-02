@@ -35,7 +35,7 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
     proj["project"]["value_of_load_per_mwh"] = 42.0
-    proj["project"]["reconductoring"] = False
+    proj["project"]["project_type"] = "greenfield"
     proj["project"]["uses_existing_row"] = False
     proj["project"]["old_capacity_mw"] = None
     proj["project"]["old_conductor_type"] = None
@@ -64,7 +64,7 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     fin = inputs["03_financing"]["financial"]
     fin["base_year"] = 2026
     fin["inflation_rate"] = 0.025
-    fin["wacc_nominal"] = 0.067
+    fin["wacc_nominal"] = 0.0666
     fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
     fin["afudc"]["delay_period_active_work"] = False

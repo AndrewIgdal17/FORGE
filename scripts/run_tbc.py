@@ -1,7 +1,7 @@
-"""Run Trans Bay Cable CTCC scenarios: 4-year delay (actual) and 0-year delay (counterfactual).
+"""Run Trans Bay Cable CTCC scenario: 4-year delay (actual).
 
 Builds inputs from canonical YAML defaults, patches with TBC-specific inputs from the
-research document (underground-project-data-research.md), runs both scenarios, and saves results.
+research document (underground-project-data-research.md), runs the scenario, and saves results.
 
 Trans Bay Cable: 53-mile, 400 MW (modeled as 500 MW), ±200 kV HVDC submarine cable
 under San Francisco Bay. Subsea construction type — first subsea CTCC case study.
@@ -33,7 +33,7 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     proj["project"]["converter_loss_percentage"] = None  # default 1.0% for VSC
     proj["project"]["line_utilization"] = 0.56
     proj["project"]["value_of_load_per_mwh"] = 55.0
-    proj["project"]["reconductoring"] = False
+    proj["project"]["project_type"] = "greenfield"
     proj["project"]["uses_existing_row"] = False
     proj["project"]["old_capacity_mw"] = None
     proj["project"]["old_conductor_type"] = None
@@ -115,7 +115,8 @@ def patch_tbc_inputs(inputs: dict) -> dict:
     gf["prices"]["average_curtailment_price"] = 35
 
     # --- Section 18: Grid Mix (single-trajectory model) ---
-    # Sources: CEC California Electrical Energy Generation (QFER CEC-1304) 2005;
+    # Sources: McCarthy, Yang & Ogden (2009) Table 1 — 2005 CA generation
+    # by fuel type (in-state + firm imports + NW imports, system power basis);
     # SB 1368; SB 1078/107 RPS; CAISO 2011 LCR Study. rate_post_cod = rate_pre_cod:
     # a 400 MW reliability cable in a 55 GW system (~0.7% of capacity) does not
     # change fleet evolution. TBC enables Potrero retirement (~200 MW gas peaker),
@@ -229,7 +230,7 @@ def main():
     print("Loading YAML defaults...")
     defaults = build_default_inputs()
 
-    # --- Scenario 1: TBC with 4-year delay (actual) ---
+    # --- TBC with 4-year delay (actual) ---
     print("\nBuilding Trans Bay Cable (4-year delay) scenario...")
     inputs_delay4 = patch_tbc_inputs(copy.deepcopy(defaults))
 
@@ -237,31 +238,9 @@ def main():
     results_delay4 = run_scenario(inputs_delay4, "TBC_Delay4")
     print_results(results_delay4, "Trans Bay Cable — 4-Year Delay (Actual)")
 
-    # --- Scenario 2: TBC with 0-year delay (counterfactual) ---
-    print("\n\nBuilding Trans Bay Cable (0-year delay) counterfactual...")
-    inputs_nodelay = copy.deepcopy(inputs_delay4)
-    inputs_nodelay["01_project_technical_details"]["timeline"]["delay_years"] = 0
-
-    print("Running calculation (delay=0)...")
-    results_nodelay = run_scenario(inputs_nodelay, "TBC_NoDelay")
-    print_results(results_nodelay, "Trans Bay Cable — 0-Year Delay (Counterfactual)")
-
-    # --- Save .ctcc files ---
-    print("\n\nSaving scenario files...")
+    # --- Save .ctcc file ---
+    print("\n\nSaving scenario file...")
     save_ctcc_file(inputs_delay4, results_delay4, "TBC_Delay4", "TBC_Delay4", source="tbc_case_study")
-    save_ctcc_file(inputs_nodelay, results_nodelay, "TBC_NoDelay", "TBC_NoDelay", source="tbc_case_study")
-
-    # --- Comparison ---
-    bcr4 = results_delay4["bcr"]
-    bcr0 = results_nodelay["bcr"]
-    print(f"\n{'='*60}")
-    print(f"  DELAY IMPACT COMPARISON (4-year vs 0-year)")
-    print(f"{'='*60}")
-    print(f"  BCR Societal: {bcr4.get('bcr_societal',0):.3f} (4yr) → {bcr0.get('bcr_societal',0):.3f} (0yr)")
-    print(f"  BCR Utility: {bcr4.get('bcr_utility',0):.3f} (4yr) → {bcr0.get('bcr_utility',0):.3f} (0yr)")
-    print(f"  Net Benefit: {fmt(bcr4.get('net_benefit_pv',0))} (4yr) → {fmt(bcr0.get('net_benefit_pv',0))} (0yr)")
-    delta = bcr0.get("net_benefit_pv", 0) - bcr4.get("net_benefit_pv", 0)
-    print(f"  Social cost of 4-year delay: {fmt(abs(delta))}")
 
     # --- TBC-specific validation ---
     print(f"\n  --- COST VALIDATION ---")
