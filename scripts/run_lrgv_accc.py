@@ -50,16 +50,13 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     ins["insurable_components"]["structures"] = True
     ins["insurable_components"]["converters"] = True
 
-    # --- 06: Wildfire (zeroed — low-fire South Texas coastal plain) ---
+    # --- 06: Wildfire (South Texas coastal plain — low but nonzero) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
-    wf["severity_per_event"] = 0
-    wf["risk_growth_rate"] = 0.0
-    wf["base_ignition_rate"] = 0.0
+    wf["base_ignition_rate"] = 0.0005  # ~1/4 of CA default; STX irrigated ag/scrub
 
-    # --- 07: Outage (zeroed — case study focuses on reconductoring economics) ---
+    # --- 07: Outage (two parallel single-circuit 345kV lines) ---
     out = inputs["07_outage_costs"]["outage"]
-    out["risk_growth_rate"] = 0.0
-    out["capacity_at_risk_factor"] = 0.0
+    out["capacity_at_risk_factor"] = 0.5  # lose 1 of 2 circuits → ~half corridor capacity
 
     # --- 09: Environmental Mitigation ---
     env = inputs["09_environmental_mitigation"]["environmental_mitigation"]

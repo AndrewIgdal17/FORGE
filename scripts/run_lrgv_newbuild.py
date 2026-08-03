@@ -79,16 +79,13 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     # --- 05: Delay Costs (annual, 7yr permitting for new corridor) ---
     inputs["05_delays"]["annual_base_delay_cost"] = 9_000_000
 
-    # --- 06: Wildfire (zeroed — low-fire South Texas coastal plain) ---
+    # --- 06: Wildfire (South Texas coastal plain — low but nonzero) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
-    wf["severity_per_event"] = 0
-    wf["risk_growth_rate"] = 0.0
-    wf["base_ignition_rate"] = 0.0
+    wf["base_ignition_rate"] = 0.0005  # ~1/4 of CA default; STX irrigated ag/scrub
 
-    # --- 07: Outage (zeroed — case study focuses on reconductoring economics) ---
+    # --- 07: Outage (single-circuit greenfield) ---
     out = inputs["07_outage_costs"]["outage"]
-    out["risk_growth_rate"] = 0.0
-    out["capacity_at_risk_factor"] = 0.0
+    out["capacity_at_risk_factor"] = "auto"  # → 1.0 for single-circuit AC
 
     # --- 09: Environmental Mitigation (greenfield — NOT zeroed) ---
     env = inputs["09_environmental_mitigation"]["environmental_mitigation"]
