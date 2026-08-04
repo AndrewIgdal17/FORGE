@@ -333,10 +333,10 @@ def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
 
 
 def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.congestion_curtailment -> 6 taxonomy items.
+    """Adapt benefits.congestion_curtailment -> 4 taxonomy items.
 
-    Three benefits (congestion, curtailment, delivered energy), capacity
-    value benefit, and two cost-side items (congestion delay, curtailment delay).
+    Two benefits (congestion, delivered energy), capacity value benefit,
+    and congestion delay cost.
     """
     if not cc:
         return []
@@ -346,12 +346,6 @@ def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
             value_pv=_safe(cc, "congestion_benefit_pv"),
             value_nominal=_safe(cc, "congestion_benefit_nominal"),
             value_annual=_safe(cc, "congestion_benefit_annual"),
-        ),
-        TaxonomyResult(
-            "curtailment_benefit",
-            value_pv=_safe(cc, "curtailment_benefit_pv"),
-            value_nominal=_safe(cc, "curtailment_benefit_nominal"),
-            value_annual=_safe(cc, "curtailment_benefit_annual"),
         ),
         TaxonomyResult(
             "delivered_energy_benefit",
@@ -369,11 +363,6 @@ def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
             "congestion_delay",
             value_pv=_safe(cc, "congestion_delay_cost_pv"),
             value_nominal=_safe(cc, "congestion_delay_cost_nominal"),
-        ),
-        TaxonomyResult(
-            "curtailment_delay",
-            value_pv=_safe(cc, "curtailment_delay_cost_pv"),
-            value_nominal=_safe(cc, "curtailment_delay_cost_nominal"),
         ),
     ]
 
@@ -489,12 +478,8 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "delay_cost_nominal": _nom("base_delay"),
         "congestion_delay_cost_pv": _pv("congestion_delay"),
         "congestion_delay_cost_nominal": _nom("congestion_delay"),
-        "curtailment_delay_cost_pv": _pv("curtailment_delay"),
-        "curtailment_delay_cost_nominal": _nom("curtailment_delay"),
         "congestion_benefit_pv": _pv("congestion_benefit"),
         "congestion_benefit_nominal": _nom("congestion_benefit"),
-        "curtailment_benefit_pv": _pv("curtailment_benefit"),
-        "curtailment_benefit_nominal": _nom("curtailment_benefit"),
         "delivered_benefit_pv": _pv("delivered_energy_benefit"),
         "delivered_benefit_nominal": _nom("delivered_energy_benefit"),
         "capacity_value_benefit_pv": _pv("capacity_value_benefit"),

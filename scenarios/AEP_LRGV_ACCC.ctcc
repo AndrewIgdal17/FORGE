@@ -2176,23 +2176,19 @@
         "constraints": {
           "flow_factor": 0.8,
           "constrained_hours": 1200,
-          "average_exceedance": 400,
-          "congestion_fraction": 1.0
+          "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 15.0
         }
       },
       "incremental_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 1200,
-          "average_exceedance": 400,
-          "congestion_fraction": 1.0
+          "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 15.0
         }
       }
     },
@@ -4509,7 +4505,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACCC",
-    "timestamp": "2026-08-03T13:51:57.256865",
+    "timestamp": "2026-08-04T10:25:43.337330",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACCC_Reconductoring",
@@ -4746,10 +4742,7 @@
         "energy_delivered_annual_mwh_yr": 4589364.0,
         "congestion_delay_cost_nominal": 29234887.200000014,
         "congestion_delay_cost_pv": 26480233.647391737,
-        "curtailment_delay_cost_nominal": 0.0,
-        "curtailment_delay_cost_pv": 0.0,
         "effective_capacity_relief_mw": 806,
-        "congestion_fraction": 1.0,
         "constrained_hours": 1200.0,
         "relief_mw": 400.0,
         "capacity_value_annual": 0.0,
@@ -4965,9 +4958,7 @@
       "outage_pv": 417198608.4587854,
       "delay_cost_pv": 5765985.37408588,
       "congestion_delay_cost_pv": 26480233.647391737,
-      "curtailment_delay_cost_pv": 0.0,
       "congestion_benefit_pv": 155599976.0984741,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_pv": 4165612084.125319,
       "delivered_benefit_nominal": 12425490320.983862,
       "capacity_value_benefit_pv": 0.0,
@@ -5238,7 +5229,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACCC_Reconductoring",
       "scenario_id": "AEP_LRGV_ACCC",
-      "timestamp": "2026-08-03T13:51:57.256865",
+      "timestamp": "2026-08-04T10:25:43.337330",
       "capacity_mw": 2598,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -5264,7 +5255,6 @@
       "risk_costs_pv": 457427331.9232557,
       "delay_cost_pv": 5765985.37408588,
       "congestion_delay_cost_pv": 26480233.647391737,
-      "curtailment_delay_cost_pv": 0.0,
       "emissions_displacement_delay_pv": 0.0,
       "delay_costs_pv": 32246219.021477617,
       "emissions_comp_cost_pv": 14530674428.563572,
@@ -5278,7 +5268,6 @@
       "soft_costs_pv": 2270544802.3229547,
       "emissions_costs_pv": 14530674428.563572,
       "congestion_benefit_pv": 155599976.0984741,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_annual": 0,
       "delivered_benefit_nominal": 12425490320.983862,
       "delivered_benefit_pv": 4165612084.125319,
@@ -5522,13 +5511,6 @@
         "detail": []
       },
       {
-        "taxonomy_id": "curtailment_benefit",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
-        "value_annual": 0.0,
-        "detail": []
-      },
-      {
         "taxonomy_id": "delivered_energy_benefit",
         "value_pv": 4165612084.125319,
         "value_nominal": 12425490320.983862,
@@ -5546,13 +5528,6 @@
         "taxonomy_id": "congestion_delay",
         "value_pv": 26480233.647391737,
         "value_nominal": 29234887.200000014,
-        "value_annual": null,
-        "detail": []
-      },
-      {
-        "taxonomy_id": "curtailment_delay",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
         "value_annual": null,
         "detail": []
       },
@@ -7769,7 +7744,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-03T13:51:58.552487",
+    "timestamp": "2026-08-04T10:25:44.646716",
     "scenario_id": "AEP_LRGV_ACCC",
     "source": "case_study"
   }

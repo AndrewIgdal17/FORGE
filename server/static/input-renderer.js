@@ -148,7 +148,7 @@ const TAB_GUIDE_CONTENT = {
   },
   'delay-costs': {
     oneliner: 'Estimate annual out-of-pocket costs during the pre-construction delay period.',
-    body: 'Transmission projects often spend years in permitting and regulatory review before construction begins. During that time, direct expenses continue \u2014 legal counsel, staffing, regulatory filings, project management, and more. Enter your total annual pre-construction spend. The calculator multiplies this by the number of delay years you set in Project Details. Foregone congestion and curtailment benefits during delay are modeled separately in the Benefits tab.',
+    body: 'Transmission projects often spend years in permitting and regulatory review before construction begins. During that time, direct expenses continue \u2014 legal counsel, staffing, regulatory filings, project management, and more. Enter your total annual pre-construction spend. The calculator multiplies this by the number of delay years you set in Project Details. Foregone congestion benefits during delay are modeled separately in the Benefits tab.',
     items: ['Annual base delay cost (total direct out-of-pocket spend per year of delay)'],
   },
   'risk': {
@@ -163,8 +163,8 @@ const TAB_GUIDE_CONTENT = {
   },
   'benefits': {
     oneliner: 'Define the economic values and grid constraints that drive your project\u2019s benefit calculations.',
-    body: 'A transmission project\u2019s benefits depend on two things: what electricity is worth and how constrained the grid is today. The economic values you set here \u2014 what served energy is worth, and what unserved energy costs \u2014 propagate across multiple cost and benefit modules throughout the model. The constraint parameters describe the congestion and curtailment your project is designed to relieve, and determine the annual value of that relief.',
-    items: ['Value of delivered energy (Value of Load)', 'Cost of unserved energy by outage duration (Value of Lost Load)', 'Congestion severity on the targeted transmission constraint', 'Renewable curtailment levels on the targeted constraint', 'Congestion and curtailment pricing'],
+    body: 'A transmission project\u2019s benefits depend on two things: what electricity is worth and how constrained the grid is today. The economic values you set here \u2014 what served energy is worth, and what unserved energy costs \u2014 propagate across multiple cost and benefit modules throughout the model. The constraint parameters describe the congestion your project is designed to relieve, and determine the annual value of that relief.',
+    items: ['Value of delivered energy (Value of Load)', 'Cost of unserved energy by outage duration (Value of Lost Load)', 'Congestion severity on the targeted transmission constraint', 'Congestion pricing'],
   },
   // L3 sub-tabs: Project Details
   'technology': {
@@ -274,9 +274,9 @@ const TAB_GUIDE_CONTENT = {
     items: ['Value of Load ($/MWh)', 'Value of Lost Load by outage duration tier'],
   },
   'system-constraints': {
-    oneliner: 'Describe the grid congestion and renewable curtailment your project is designed to relieve.',
-    body: 'The model calculates benefits by comparing your project\u2019s effective capacity relief against existing system constraints. These parameters define how severe those constraints are today \u2014 how often the grid is bottlenecked, by how much, and what that congestion or curtailment costs per megawatt-hour.',
-    items: ['Congestion parameters (binding hours, exceedance, pricing)', 'Curtailment parameters (hours, curtailed generation, pricing)'],
+    oneliner: 'Describe the grid congestion your project is designed to relieve.',
+    body: 'The model calculates benefits by comparing your project\u2019s effective capacity relief against existing system constraints. These parameters define how severe those constraints are today \u2014 how often the grid is bottlenecked, by how much, and what that congestion costs per megawatt-hour.',
+    items: ['Congestion parameters (binding hours, exceedance, pricing)'],
   },
   // L4 sub-sub-tabs: Routing
   'terrain-mix': {
@@ -363,8 +363,8 @@ const TAB_GUIDE_CONTENT = {
   // L4 sub-sub-tabs: System Details — Constraints (single-constraint, two-price decomposition)
   'congestion': {
     oneliner: 'Quantify the transmission constraint your project will relieve.',
-    body: 'The single-constraint model captures a targeted constraint that resolves either through costlier redispatch (congestion) or through generator curtailment, split by the congestion fraction. You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, what share of that time is redispatch versus curtailment, and the two marginal prices \u2014 together, these determine the annual value of relief.',
-    items: ['Constrained hours per year', 'Average megawatt exceedance', 'Congestion fraction (share of constrained hours resolved via redispatch)', 'Congestion price ($/MWh)', 'Curtailment price ($/MWh)', 'Flow factor (greenfield only)'],
+    body: 'The single-constraint model captures a targeted constraint that resolves through costlier redispatch (congestion). You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, and the marginal congestion price \u2014 together, these determine the annual value of relief.',
+    items: ['Constrained hours per year', 'Average megawatt exceedance', 'Congestion price ($/MWh)', 'Flow factor (greenfield only)'],
   },
 };
 
@@ -916,14 +916,8 @@ const EQ_CONG_DELAY = {
   appendixPage: 23, appendixLabel: 'Congestion Delay'
 };
 
-const EQ_CURT_DELAY = {
-  latex: 'C_{\\text{curt,delay}} = B_{\\text{curt,annual}} \\times \\frac{1 - (1+r)^{-(T_d+T_c)}}{r}',
-  context: 'Opportunity cost of curtailment not relieved during delay + construction.',
-  appendixPage: 25, appendixLabel: 'Curtailment Delay'
-};
-
 const EQ_ALL_DELAY = {
-  latex: 'C_{\\text{delay}} = C_{\\text{base,delay}} + C_{\\text{cong,delay}} + C_{\\text{curt,delay}}',
+  latex: 'C_{\\text{delay}} = C_{\\text{base,delay}} + C_{\\text{cong,delay}}',
   context: 'Total delay cost (PV). Part of the Soft cost bucket.',
   appendixPage: 22, appendixLabel: 'Base Delay'
 };
@@ -1568,11 +1562,6 @@ function renderDelayCostPanel() {
   panel.appendChild(makeSection('dcp-congestion', 'CONGESTION DELAY', [
     ['Nominal:', 'cong_nominal', EQ_CONG_DELAY],
     ['PV:', 'cong_pv', EQ_CONG_DELAY],
-  ], ''));
-
-  panel.appendChild(makeSection('dcp-curtailment', 'CURTAILMENT DELAY', [
-    ['Nominal:', 'curt_nominal', EQ_CURT_DELAY],
-    ['PV:', 'curt_pv', EQ_CURT_DELAY],
   ], ''));
 
   panel.appendChild(makeSection('dcp-total', 'ALL DELAY (Soft)', [
@@ -4190,11 +4179,9 @@ function renderConstraintsPanel(data) {
         congFields.push({label: 'Flow Factor', path: `${yamlSection}.${yamlRoot}.constraints.flow_factor`, type: 'percent', help: 'Deliverability to targeted constraint [0,1]'});
       }
       congFields.push(
-        {label: 'Constrained Hours', path: `${yamlSection}.${yamlRoot}.constraints.constrained_hours`, type: 'number', unit: 'hrs/year', help: 'Total hours/year the constraint binds (congestion + curtailment combined)'},
+        {label: 'Constrained Hours', path: `${yamlSection}.${yamlRoot}.constraints.constrained_hours`, type: 'number', unit: 'hrs/year', help: 'Total hours/year the constraint binds'},
         {label: 'Average Exceedance', path: `${yamlSection}.${yamlRoot}.constraints.average_exceedance`, type: 'number', unit: 'MW', help: 'Average MW exceedance during constrained hours'},
-        {label: 'Congestion Fraction (f)', path: `${yamlSection}.${yamlRoot}.constraints.congestion_fraction`, type: 'number', help: 'Fraction of constrained hours where consequence is redispatch (0-1; rest is curtailment). Wind corridor ~0.05-0.30, load pocket ~0.80-1.00.'},
-        {label: 'Congestion Price', path: `${yamlSection}.${yamlRoot}.prices.average_congestion_price`, type: 'currency', unit: '$/MWh', help: 'Marginal redispatch cost during congestion hours'},
-        {label: 'Curtailment Price', path: `${yamlSection}.${yamlRoot}.prices.average_curtailment_price`, type: 'currency', unit: '$/MWh', help: 'Value per MWh of curtailed energy (PPA proxy / avoided cost)'}
+        {label: 'Congestion Price', path: `${yamlSection}.${yamlRoot}.prices.average_congestion_price`, type: 'currency', unit: '$/MWh', help: 'Marginal redispatch cost during congestion hours'}
       );
 
       congFields.forEach(f => {

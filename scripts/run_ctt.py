@@ -94,15 +94,13 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     row["zone_3"]["rent_cost"] = 36.72
     row["zone_3"]["hold_cost"] = 3.67
 
-    # --- 17: Congestion/Curtailment ---
+    # --- 17: Congestion ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.50
     gf["constraints"]["constrained_hours"] = 1800
     gf["constraints"]["average_exceedance"] = 600
-    gf["constraints"]["congestion_fraction"] = 0.05  # wind corridor (CREZ-type): near-pure curtailment
     gf["prices"]["average_congestion_price"] = 11.47
-    gf["prices"]["average_curtailment_price"] = 30
 
     # --- 18: Grid Mix (single-trajectory model) ---
     # Sources: ERCOT 2008 Annual Report; ERCOT CDR 2008-2024; Potomac Economics
@@ -156,7 +154,6 @@ def print_results(results: dict, label: str):
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
-    print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
     cap = benefits.get("capacity_value", {})
@@ -169,7 +166,6 @@ def print_results(results: dict, label: str):
 
     print(f"\n  --- DELAY COSTS (embedded in benefits) ---")
     print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")
-    print(f"  Curtailment delay cost: {fmt(cc['curtailment_delay_cost_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
@@ -232,13 +228,11 @@ def main():
     cc_a = results_actual["benefits"]["congestion_curtailment"]
     cc_b = results_cf["benefits"]["congestion_curtailment"]
     forgone_cong = cc_b["congestion_delay_cost_pv"] - cc_a["congestion_delay_cost_pv"]
-    forgone_curt = cc_b["curtailment_delay_cost_pv"] - cc_a["curtailment_delay_cost_pv"]
     delay_cost_a = results_actual["costs"]["delay"]["total_pv"]
     delay_cost_b = results_cf["costs"]["delay"]["total_pv"]
     print(f"\n  --- DELAY DECOMPOSITION ---")
     print(f"  Direct delay costs:     {fmt(delay_cost_a)} (2yr) vs {fmt(delay_cost_b)} (7yr)")
     print(f"  Additional forgone congestion relief: {fmt(forgone_cong)}")
-    print(f"  Additional forgone curtailment relief: {fmt(forgone_curt)}")
     print(f"  Total social cost of 5 extra years: {fmt(delta_nb)}")
 
     # Validation against actuals
@@ -246,7 +240,7 @@ def main():
     print(f"\n  --- VALIDATION ---")
     print(f"  CTCC build cost PV:     {fmt(build_pv)}")
     print(f"  CTT actual all-in cost: ~$450M (2013$), ~$560M (2026$, 2.5% inflation)")
-    print(f"  CTCC annual benefits:   {fmt((cc_a['congestion_benefit_pv'] + cc_a['curtailment_benefit_pv']) / 50)}/yr (approx)")
+    print(f"  CTCC annual benefits:   {fmt(cc_a['congestion_benefit_pv'] / 50)}/yr (approx)")
     print(f"  Observed CTT benefits:  $110M-$220M/year (estimated attribution)")
 
     print("\nDone.")

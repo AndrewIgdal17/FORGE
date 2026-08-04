@@ -85,22 +85,18 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     row["zone_2"]["rent_cost"] = 18.78
     row["zone_2"]["hold_cost"] = 1.878
 
-    # --- 17: Congestion/Curtailment greenfield block (used when not reconductoring) ---
+    # --- 17: Congestion greenfield/incremental blocks ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
     gf["constraints"]["constrained_hours"] = 1200
     gf["constraints"]["average_exceedance"] = 400
-    gf["constraints"]["congestion_fraction"] = 1.00
     gf["prices"]["average_congestion_price"] = 15.0
-    gf["prices"]["average_curtailment_price"] = 0
 
     rc = cc["incremental_congestion_curtailment_reductions"]
     rc["constraints"]["constrained_hours"] = 1200
     rc["constraints"]["average_exceedance"] = 400
-    rc["constraints"]["congestion_fraction"] = 1.00
     rc["prices"]["average_congestion_price"] = 15.0
-    rc["prices"]["average_curtailment_price"] = 0
 
     # --- 18: Grid Mix (same ERCOT region as Laredo newbuild) ---
     mix = inputs["18_energy_source_mix"]
@@ -212,7 +208,6 @@ def print_results(results: dict, label: str):
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
-    print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
     cap = benefits.get("capacity_value", {})

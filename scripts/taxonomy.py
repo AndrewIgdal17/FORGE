@@ -130,9 +130,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("congestion_delay", "cost", "soft", "delay",
                  "Congestion Delay Cost", "wacc_real", None, 7,
                  "Opportunity cost of congestion during delay + construction period."),
-    TaxonomyItem("curtailment_delay", "cost", "soft", "delay",
-                 "Curtailment Delay Cost", "wacc_real", None, 8,
-                 "Opportunity cost of curtailment during delay + construction period."),
     TaxonomyItem("emissions_displacement_delay", "cost", "soft", "delay",
                  "Displacement Delay Emissions Cost", "social", None, 9,
                  "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."),
@@ -154,9 +151,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
                  "Congestion Reduction Benefit", "wacc_real", None, 1,
                  "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."),
-    TaxonomyItem("curtailment_benefit", "benefit", "remedial", "curtailment",
-                 "Curtailment Reduction Benefit", "wacc_real", None, 2,
-                 "Value of curtailment relief MWh. Remedial: fixes curtailed renewables."),
     TaxonomyItem("delivered_energy_benefit", "benefit", "enabling", "delivered_energy",
                  "Delivered Energy Benefit", "wacc_real", None, 1,
                  "Value of deliverable energy. Enabling: new throughput."),
@@ -210,7 +204,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 36, f"Expected 36 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 34, f"Expected 34 taxonomy items, got {len(TAXONOMY)}"
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -243,7 +237,6 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("displacement_avoided", "pollutant", "CO2, SOx, NOx avoided mass + cost"),
     DimensionEntry("displacement_avoided", "year", "Evolving differential over project lifetime"),
     DimensionEntry("congestion_benefit", "allocation", "Overlap vs. non-overlap binding hours"),
-    DimensionEntry("curtailment_benefit", "allocation", "Curtailment-first capacity allocation"),
     DimensionEntry("base_delay", "category", "Legal, admin, labor, regulatory, etc. (8 categories from YAML)"),
     DimensionEntry("insurance", "component", "Conductors, structures, converters insurable base"),
 )
@@ -386,7 +379,6 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     # Soft costs — delay
     "base_delay": "delay_cost_pv",
     "congestion_delay": "congestion_delay_cost_pv",
-    "curtailment_delay": "curtailment_delay_cost_pv",
     # Risk costs
     "wildfire_eac": "wildfire_pv",
     "outage_eac": "outage_pv",
@@ -395,7 +387,6 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "emissions_fac": "fac_emissions_project_pv",
     # Benefits
     "congestion_benefit": "congestion_benefit_pv",
-    "curtailment_benefit": "curtailment_benefit_pv",
     "delivered_energy_benefit": "delivered_benefit_pv",
     "capacity_value_benefit": "capacity_value_benefit_pv",
     # Transfer
@@ -498,7 +489,7 @@ def taxonomy_to_dict() -> dict:
 
 if __name__ == "__main__":
     # 8a. Item count
-    assert len(TAXONOMY) == 36, f"Expected 36 items, got {len(TAXONOMY)}"
+    assert len(TAXONOMY) == 34, f"Expected 34 items, got {len(TAXONOMY)}"
 
     # 8b. Bucket membership
     _side_bucket_rules: dict[str, set[str]] = {
@@ -560,15 +551,15 @@ if __name__ == "__main__":
     )
 
     # 8f. Calculator key mapping
-    assert len(TAXONOMY_TO_CALCULATOR_KEY) == 25, (
-        f"Expected 25 calculator key mappings, got {len(TAXONOMY_TO_CALCULATOR_KEY)}"
+    assert len(TAXONOMY_TO_CALCULATOR_KEY) == 23, (
+        f"Expected 23 calculator key mappings, got {len(TAXONOMY_TO_CALCULATOR_KEY)}"
     )
     for _tid in TAXONOMY_TO_CALCULATOR_KEY:
         assert _tid in TAXONOMY, (
             f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
         )
 
-    print("Taxonomy verification passed: 36 items, 9 BCR definitions, 5 excludable groups")
+    print("Taxonomy verification passed: 34 items, 9 BCR definitions, 5 excludable groups")
 
     # Write JSON export
     _json_path = Path(__file__).resolve().parent.parent / "server" / "json" / "taxonomy.json"

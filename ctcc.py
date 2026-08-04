@@ -588,11 +588,6 @@ def main() -> None:
         help="Skip congestion benefit calculations",
     )
     parser.add_argument(
-        "--no_curtailment",
-        action="store_true",
-        help="Skip curtailment benefit calculations",
-    )
-    parser.add_argument(
         "--subprocess",
         action="store_true",
         help="Run each calculation script as a subprocess (legacy). Default is in-process.",
@@ -602,8 +597,6 @@ def main() -> None:
     # Set environment variables for congestion/curtailment script
     if args.no_congestion:
         os.environ["CTCC_NO_CONGESTION"] = "1"
-    if args.no_curtailment:
-        os.environ["CTCC_NO_CURTAILMENT"] = "1"
 
     # Handle --norisk deprecation: if used, set individual flags
     if args.norisk:
@@ -643,12 +636,6 @@ def main() -> None:
             print("⚠️  Congestion benefits disabled (--no_congestion flag set)")
             print(
                 "   Congestion portion of congestion_curtailment_reduction.py will be skipped"
-            )
-            print("=" * 80)
-        if args.no_curtailment:
-            print("⚠️  Curtailment benefits disabled (--no_curtailment flag set)")
-            print(
-                "   Curtailment portion of congestion_curtailment_reduction.py will be skipped"
             )
             print("=" * 80)
         if args.no_emissions:

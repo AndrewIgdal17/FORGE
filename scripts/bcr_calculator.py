@@ -175,9 +175,9 @@ _BCR_OUTPUT_KEYS = frozenset({
     "emissions_comp_cost_pv", "fac_emissions_project_pv",
     "displacement_avoided_cost_pv",
     "wildfire_pv", "outage_pv",
-    "delay_cost_pv", "congestion_delay_cost_pv", "curtailment_delay_cost_pv",
+    "delay_cost_pv", "congestion_delay_cost_pv",
     "emissions_displacement_delay_pv",
-    "congestion_benefit_pv", "curtailment_benefit_pv",
+    "congestion_benefit_pv",
     "delivered_benefit_pv", "delivered_benefit_nominal",
     "capacity_value_benefit_pv",
     "capital_recovery_pv",
@@ -302,7 +302,6 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
 
     print("BENEFITS (Present Value):")
     print(f"  Congestion Reduction:        ${_g('congestion_benefit_pv'):>15,.0f}")
-    print(f"  Curtailment Reduction:       ${_g('curtailment_benefit_pv'):>15,.0f}")
 
     if _g("capital_recovery_pv") > 0:
         print(f"  Capital Recovery (Rate-Based): ${_g('capital_recovery_pv'):>15,.0f}")
@@ -343,7 +342,6 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     print("  Delay Costs:")
     print(f"    Construction Delay:        ${_g('delay_cost_pv'):>15,.0f}")
     print(f"    Congestion Delay:          ${_g('congestion_delay_cost_pv'):>15,.0f}")
-    print(f"    Curtailment Delay:         ${_g('curtailment_delay_cost_pv'):>15,.0f}")
     print(f"    Subtotal:                  ${_g('delay_costs_pv'):>15,.0f}")
     print()
     print("  " + "-" * 78)

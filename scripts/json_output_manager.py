@@ -318,9 +318,6 @@ class JSONOutputManager:
         congestion_delay_nominal = (
             congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
         )
-        curtailment_delay_nominal = (
-            congestion_curtailment.get("curtailment_delay_cost_nominal", 0) or 0
-        )
 
         # Calculate grand totals
         self.summary["grand_total_cost_nominal"] = (
@@ -329,7 +326,6 @@ class JSONOutputManager:
             + self.summary["total_risk_nominal"]
             + delay.get("total_nominal", 0)
             + congestion_delay_nominal
-            + curtailment_delay_nominal
             + displacement_delay.get("displacement_delay_cost_nominal", 0)
             + self.summary["total_energy_emissions_nominal"]
         )
@@ -343,9 +339,6 @@ class JSONOutputManager:
         congestion_delay_pv = (
             congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
         )
-        curtailment_delay_pv = (
-            congestion_curtailment.get("curtailment_delay_cost_pv", 0) or 0
-        )
 
         self.summary["grand_total_cost_pv"] = (
             self.summary["total_capital_pv"]
@@ -353,7 +346,6 @@ class JSONOutputManager:
             + self.summary["total_risk_pv"]
             + delay.get("total_pv", 0)
             + congestion_delay_pv
-            + curtailment_delay_pv
             + displacement_delay.get("displacement_delay_cost_pv", 0)
             + self.summary["total_energy_emissions_pv"]
         )
@@ -367,9 +359,8 @@ class JSONOutputManager:
         _dl = self.costs.get("delay", {})
         _cc2 = self.benefits.get("congestion_curtailment", {})
         _cdpv2 = _cc2.get("congestion_delay_cost_pv", 0) or 0
-        _curdpv2 = _cc2.get("curtailment_delay_cost_pv", 0) or 0
         _disp_delay_pv = displacement_delay.get("displacement_delay_cost_pv", 0) or 0
-        _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _curdpv2 + _disp_delay_pv
+        _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _disp_delay_pv
         _energy_line_pv = _ll.get("total_pv", 0) or 0
         self.summary["reporting_bucket_hard_pv"] = self.summary["total_capital_pv"]
         self.summary["reporting_bucket_soft_pv"] = (

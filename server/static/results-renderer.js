@@ -754,7 +754,6 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'line_loss_converter', value_pv: ll.converter_cost_pv||0, value_nominal: ll.converter_nominal_total||0, value_annual: ll.converter_annual_cost||null, detail: [] },
     { taxonomy_id: 'base_delay', value_pv: delay.total_pv||0, value_nominal: delay.total_nominal||0, detail: [] },
     { taxonomy_id: 'congestion_delay', value_pv: cc.congestion_delay_cost_pv||0, value_nominal: cc.congestion_delay_cost_nominal||0, detail: [] },
-    { taxonomy_id: 'curtailment_delay', value_pv: cc.curtailment_delay_cost_pv||0, value_nominal: cc.curtailment_delay_cost_nominal||0, detail: [] },
     { taxonomy_id: 'wildfire_eac', value_pv: wf.pv_cost||0, value_nominal: wf.nominal_total||0, value_annual: wf.EAL||null, detail: [] },
     { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.EAC||null, detail: [
       { dimension: 'component', dimension_key: 'load_shed_per_event', value_pv: 0, value_annual: out.cost_loadshed || 0 },
@@ -763,7 +762,6 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'emissions_comp', value_pv: em.total_pv||0, value_nominal: em.total_nominal||0, value_annual: em.annual_cost||null, detail: [] },
     { taxonomy_id: 'emissions_fac', value_pv: fac.fac_emissions_project_pv||0, value_nominal: fac.fac_emissions_project_nominal||0, detail: [] },
     { taxonomy_id: 'congestion_benefit', value_pv: cc.congestion_benefit_pv||0, value_nominal: cc.congestion_benefit_nominal||0, value_annual: cc.congestion_benefit_annual||null, detail: [] },
-    { taxonomy_id: 'curtailment_benefit', value_pv: cc.curtailment_benefit_pv||0, value_nominal: cc.curtailment_benefit_nominal||0, value_annual: cc.curtailment_benefit_annual||null, detail: [] },
     { taxonomy_id: 'delivered_energy_benefit', value_pv: cc.delivered_benefit_pv||0, value_nominal: cc.delivered_benefit_nominal||0, value_annual: cc.delivered_benefit_annual||null, detail: [] },
     { taxonomy_id: 'revenue', value_pv: rev.revenue_pv||0, value_nominal: rev.revenue_nominal||0, value_annual: rev.annual_revenue||null, detail: [] },
     { taxonomy_id: 'displacement_avoided', value_pv: fac.displacement_avoided_cost_pv||0, value_nominal: fac.displacement_avoided_cost_nominal||0, detail: [] },
@@ -984,10 +982,8 @@ function renderTransfersAndReporting(results) {
   const physEntries = [
     ['Effective Capacity Relief', cc.effective_capacity_relief_mw, 'MW'],
     ['Congestion Reduction', cc.energy_congestion_reduction_mwh_yr, 'MWh/yr'],
-    ['Curtailment Reduction', cc.energy_curtailment_reduction_mwh_yr, 'MWh/yr'],
     ['Remaining Capacity', cc.remaining_capacity_mw, 'MW'],
     ['Constrained Hours', cc.constrained_hours, 'hrs/yr'],
-    ['Congestion Fraction', cc.congestion_fraction, ''],
   ];
   physEntries.forEach(([label, val, unit]) => {
     if (val !== undefined) { appendPhysMetric(physGrid, label, val, unit); hasPhys = true; }
@@ -1207,14 +1203,8 @@ function updateDelayCostPanel(results) {
     panel.querySelector('[data-delay-cost="cong_pv"]').textContent = fmt(cong.value_pv);
   }
 
-  const curt = byId['curtailment_delay'];
-  if (curt) {
-    panel.querySelector('[data-delay-cost="curt_nominal"]').textContent = fmt(curt.value_nominal);
-    panel.querySelector('[data-delay-cost="curt_pv"]').textContent = fmt(curt.value_pv);
-  }
-
-  const allNom = (base?.value_nominal || 0) + (cong?.value_nominal || 0) + (curt?.value_nominal || 0);
-  const allPv = (base?.value_pv || 0) + (cong?.value_pv || 0) + (curt?.value_pv || 0);
+  const allNom = (base?.value_nominal || 0) + (cong?.value_nominal || 0);
+  const allPv = (base?.value_pv || 0) + (cong?.value_pv || 0);
   panel.querySelector('[data-delay-cost="all_nominal"]').textContent = fmt(allNom);
   panel.querySelector('[data-delay-cost="all_pv"]').textContent = fmt(allPv);
 
@@ -1475,7 +1465,7 @@ function renderPerspectivesTable(results) {
   });
 
   container.appendChild(grid);
-  container.appendChild(createNote('Societal: full welfare (all real resource costs & benefits). System: congestion + curtailment relief vs grid costs. Firm: utility revenue vs costs; ratepayer benefits vs charges. Capital Screening: benefits vs hard-cost-only denominators.'));
+  container.appendChild(createNote('Societal: full welfare (all real resource costs & benefits). System: congestion relief vs grid costs. Firm: utility revenue vs costs; ratepayer benefits vs charges. Capital Screening: benefits vs hard-cost-only denominators.'));
   return container;
 }
 
@@ -1939,8 +1929,6 @@ function renderResultsSubItem(subItemId) {
     el = renderBenefitDrillIn(results, 'remedial');
   } else if (subItemId === 'r-congestion') {
     el = renderBenefitDrillIn(results, 'remedial', 'congestion');
-  } else if (subItemId === 'r-curtailment') {
-    el = renderBenefitDrillIn(results, 'remedial', 'curtailment');
   } else if (subItemId === 'r-loss-comp') {
     el = renderBenefitDrillIn(results, 'enabling');
   } else if (subItemId === 'r-costs-overview') {

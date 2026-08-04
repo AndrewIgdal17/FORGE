@@ -90,15 +90,13 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     out["capacity_at_risk_factor"] = 0.5
     out["risk_growth_rate"] = 0.0
 
-    # --- Tab 17: Congestion/Curtailment ---
+    # --- Tab 17: Congestion ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 1.0
     gf["constraints"]["constrained_hours"] = 4000
     gf["constraints"]["average_exceedance"] = 500
-    gf["constraints"]["congestion_fraction"] = 0.30  # wind HVDC corridor: mostly curtailment
     gf["prices"]["average_congestion_price"] = 15
-    gf["prices"]["average_curtailment_price"] = 41
 
     # --- Tab 18: Grid Mix (single-trajectory model) ---
     # Sources: EIA State Electricity Profiles 2008 (Table 5) for AZ+NM;
@@ -160,7 +158,6 @@ def print_results(results: dict, label: str):
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
-    print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
     cap_pv = cc.get("capacity_value_pv", 0)
@@ -173,7 +170,6 @@ def print_results(results: dict, label: str):
 
     print(f"\n  --- DELAY COSTS (embedded) ---")
     print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")
-    print(f"  Curtailment delay cost: {fmt(cc['curtailment_delay_cost_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")

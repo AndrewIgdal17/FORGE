@@ -44,9 +44,7 @@ class CongestionCurtailmentParams:
     flow_factor: float
     constrained_hours: float
     average_exceedance: float
-    congestion_fraction: float
     average_congestion_price: float
-    average_curtailment_price: float
     benefit_price_escalation_real: float = 0.0
 
 
@@ -536,12 +534,12 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             reductions_data = data["incremental_congestion_curtailment_reductions"]
             constraints = reductions_data["constraints"]
             prices = reductions_data["prices"]
+            constraints.pop("congestion_fraction", None)
+            prices.pop("average_curtailment_price", None)
             flow_factor = 0.0
             constrained_hours = float(constraints["constrained_hours"])
             average_exceedance = float(constraints["average_exceedance"])
-            congestion_fraction = float(constraints["congestion_fraction"])
             average_congestion_price = float(prices["average_congestion_price"])
-            average_curtailment_price = float(prices["average_curtailment_price"])
         else:
             if "greenfield_congestion_curtailment_reductions" not in data:
                 raise KeyError(
@@ -550,20 +548,18 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
             reductions_data = data["greenfield_congestion_curtailment_reductions"]
             constraints = reductions_data["constraints"]
             prices = reductions_data["prices"]
+            constraints.pop("congestion_fraction", None)
+            prices.pop("average_curtailment_price", None)
             flow_factor = constraints["flow_factor"]
             constrained_hours = float(constraints["constrained_hours"])
             average_exceedance = float(constraints["average_exceedance"])
-            congestion_fraction = float(constraints["congestion_fraction"])
             average_congestion_price = float(prices["average_congestion_price"])
-            average_curtailment_price = float(prices["average_curtailment_price"])
 
         return CongestionCurtailmentParams(
             flow_factor=float(flow_factor),
             constrained_hours=constrained_hours,
             average_exceedance=average_exceedance,
-            congestion_fraction=congestion_fraction,
             average_congestion_price=average_congestion_price,
-            average_curtailment_price=average_curtailment_price,
             benefit_price_escalation_real=float(
                 data.get("benefit_price_escalation_real", 0.0)
             ),

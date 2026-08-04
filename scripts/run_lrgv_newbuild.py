@@ -114,15 +114,13 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     row["zone_2"]["rent_cost"] = 18.78
     row["zone_2"]["hold_cost"] = 3_000
 
-    # --- 17: Congestion/Curtailment (same import constraint as LRGV) ---
+    # --- 17: Congestion (same import constraint as LRGV) ---
     cc = inputs["17_congestion_curtailment_reductions"]
     gf = cc["greenfield_congestion_curtailment_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
     gf["constraints"]["constrained_hours"] = 1200
     gf["constraints"]["average_exceedance"] = 400
-    gf["constraints"]["congestion_fraction"] = 1.00  # load pocket (LRGV-type): pure congestion
     gf["prices"]["average_congestion_price"] = 15.0
-    gf["prices"]["average_curtailment_price"] = 0
 
     # --- 18: Grid Mix (single-trajectory model; same ERCOT region as LRGV) ---
     # Sources: ERCOT CDR 2010; EIA Texas electricity profile 2010; Potomac
@@ -174,7 +172,6 @@ def print_results(results: dict, label: str):
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
-    print(f"  Curtailment relief:     {fmt(cc['curtailment_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
     print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
     cap = benefits.get("capacity_value", {})
@@ -187,7 +184,6 @@ def print_results(results: dict, label: str):
 
     print(f"\n  --- DELAY COSTS (embedded) ---")
     print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")
-    print(f"  Curtailment delay cost: {fmt(cc['curtailment_delay_cost_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")

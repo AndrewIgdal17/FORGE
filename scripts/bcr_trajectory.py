@@ -107,7 +107,6 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
 
     cc = _dig(results, "benefits", "congestion_curtailment", default={}) or {}
     annual_congestion = cc.get("congestion_benefit_annual", 0.0)
-    annual_curtailment = cc.get("curtailment_benefit_annual", 0.0)
     annual_delivered = cc.get("delivered_benefit_annual", 0.0)
     annual_capacity_value = cc.get("capacity_value_annual", 0.0)
 
@@ -117,7 +116,6 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
 
     return [
         StreamSpec("annual_congestion_benefit", annual_congestion, g_benefit, wacc_real, "B_remedial"),
-        StreamSpec("annual_curtailment_benefit", annual_curtailment, g_benefit, wacc_real, "B_remedial"),
         StreamSpec("delivered_benefit_annual", annual_delivered, g_benefit, wacc_real, "B_enabling"),
         StreamSpec("capacity_value_annual", annual_capacity_value, g_benefit, wacc_real, "B_enabling"),
         StreamSpec("annual_om", annual_om, g_om, wacc_real, "C_soft_op"),
@@ -241,13 +239,12 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     total_hard_pv = build_pv + row_capital_pv + env_mit_pv
 
     # --- Delay costs: distributed uniformly across delay years -------------
-    # (congestion + curtailment delay opportunity cost, construction cost
-    # escalation during delay, and displacement-delay emissions cost — all
-    # pre-COD costs that land in the soft-cost bucket).
+    # (congestion delay opportunity cost, construction cost escalation during
+    # delay, and displacement-delay emissions cost — all pre-COD costs that
+    # land in the soft-cost bucket).
     total_delay_soft_pv = (
         bcr.get("delay_cost_pv", 0.0)
         + bcr.get("congestion_delay_cost_pv", 0.0)
-        + bcr.get("curtailment_delay_cost_pv", 0.0)
         + bcr.get("emissions_displacement_delay_pv", 0.0)
     )
     base_delay_pv = bcr.get("delay_cost_pv", 0.0)

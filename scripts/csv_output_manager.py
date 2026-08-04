@@ -75,7 +75,6 @@ BATCH_SUMMARY_FIELDS = [
     # 6. Delay Costs PV
     "delay_cost_pv",
     "congestion_delay_cost_pv",
-    "curtailment_delay_cost_pv",
     "emissions_displacement_delay_pv",
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
@@ -93,7 +92,6 @@ BATCH_SUMMARY_FIELDS = [
     "emissions_costs_pv",
     # 9. Benefits PV (with breakdown)
     "congestion_benefit_pv",
-    "curtailment_benefit_pv",
     "delivered_benefit_annual",
     "delivered_benefit_nominal",
     "delivered_benefit_pv",
@@ -980,16 +978,14 @@ class CTCCOutputManager:
 
     def add_congestion_curtailment(self, results: Dict[str, float]) -> None:
         """
-        Add congestion and curtailment benefits and costs to batch summary.
+        Add congestion benefits and delay costs to batch summary.
 
         Benefits (reduce system cost):
-        - Congestion reduction benefit (operational)
-        - Curtailment reduction benefit (operational)
+        - Congestion reduction benefit (operational / remedial)
         - Delivered energy benefit (throughput value at value of load)
 
         Costs (increase system cost):
         - Congestion during delay/construction (opportunity cost)
-        - Curtailment during delay/construction (opportunity cost)
         """
         # Append to batch summary with clear benefit vs cost distinction
         self.append_to_batch_summary(
@@ -1002,13 +998,6 @@ class CTCCOutputManager:
                     "congestion_benefit_nominal", 0
                 ),
                 "congestion_benefit_pv": results.get("congestion_benefit_pv", 0),
-                "curtailment_benefit_annual": results.get(
-                    "curtailment_benefit_annual", 0
-                ),
-                "curtailment_benefit_nominal": results.get(
-                    "curtailment_benefit_nominal", 0
-                ),
-                "curtailment_benefit_pv": results.get("curtailment_benefit_pv", 0),
                 "delivered_benefit_annual": results.get(
                     "delivered_benefit_annual", 0
                 ),
@@ -1019,31 +1008,20 @@ class CTCCOutputManager:
                 # Total benefits (so batch summary has correct total before BCR run)
                 "total_benefits_pv": (
                     results.get("congestion_benefit_pv", 0)
-                    + results.get("curtailment_benefit_pv", 0)
                     + results.get("delivered_benefit_pv", 0)
                 ),
                 # Benefit buckets (appendix-aligned)
-                "benefits_remedial_pv": (
-                    results.get("congestion_benefit_pv", 0)
-                    + results.get("curtailment_benefit_pv", 0)
-                ),
+                "benefits_remedial_pv": results.get("congestion_benefit_pv", 0),
                 "benefits_enabling_pv": results.get("delivered_benefit_pv", 0),
                 # COSTS (increase system cost)
                 "congestion_delay_cost_nominal": results.get(
                     "congestion_delay_cost_nominal", 0
                 ),
                 "congestion_delay_cost_pv": results.get("congestion_delay_cost_pv", 0),
-                "curtailment_delay_cost_nominal": results.get(
-                    "curtailment_delay_cost_nominal", 0
-                ),
-                "curtailment_delay_cost_pv": results.get(
-                    "curtailment_delay_cost_pv", 0
-                ),
                 # Physical metrics
                 "effective_capacity_relief_mw": results.get(
                     "effective_capacity_relief_mw", 0
                 ),
-                "congestion_fraction": results.get("congestion_fraction", 0),
                 "constrained_hours": results.get("constrained_hours", 0),
                 "relief_mw": results.get("relief_mw", 0),
             }
@@ -1061,16 +1039,6 @@ class CTCCOutputManager:
                 "pv": results.get("congestion_benefit_pv", 0),
                 "annual": results.get("congestion_benefit_annual", 0),
                 "nominal": results.get("congestion_benefit_nominal", 0),
-            },
-            # BENEFITS - Curtailment reduction
-            {
-                "row_type": "detail",
-                "benefit_or_cost": "benefit",
-                "constraint_type": "curtailment",
-                "value_type": "full",
-                "pv": results.get("curtailment_benefit_pv", 0),
-                "annual": results.get("curtailment_benefit_annual", 0),
-                "nominal": results.get("curtailment_benefit_nominal", 0),
             },
             # BENEFITS - Delivered energy (throughput value)
             {
@@ -1091,42 +1059,24 @@ class CTCCOutputManager:
                 "pv": results.get("congestion_delay_cost_pv", 0),
                 "nominal": results.get("congestion_delay_cost_nominal", 0),
             },
-            # COSTS - Curtailment during delay/construction (opportunity cost)
-            {
-                "row_type": "detail",
-                "benefit_or_cost": "cost",
-                "constraint_type": "curtailment_delay",
-                "value_type": "NA",
-                "pv": results.get("curtailment_delay_cost_pv", 0),
-                "nominal": results.get("curtailment_delay_cost_nominal", 0),
-            },
         ]
 
-        # Calculate summary totals (congestion + curtailment + delivered energy)
+        # Calculate summary totals (congestion + delivered energy)
         total_benefits_annual = (
             results.get("congestion_benefit_annual", 0)
-            + results.get("curtailment_benefit_annual", 0)
             + results.get("delivered_benefit_annual", 0)
         )
         total_benefits_nominal = (
             results.get("congestion_benefit_nominal", 0)
-            + results.get("curtailment_benefit_nominal", 0)
             + results.get("delivered_benefit_nominal", 0)
         )
         total_benefits_pv = (
             results.get("congestion_benefit_pv", 0)
-            + results.get("curtailment_benefit_pv", 0)
             + results.get("delivered_benefit_pv", 0)
         )
 
-        total_costs_nominal = (
-            results.get("congestion_delay_cost_nominal", 0)
-            + results.get("curtailment_delay_cost_nominal", 0)
-        )
-        total_costs_pv = (
-            results.get("congestion_delay_cost_pv", 0)
-            + results.get("curtailment_delay_cost_pv", 0)
-        )
+        total_costs_nominal = results.get("congestion_delay_cost_nominal", 0)
+        total_costs_pv = results.get("congestion_delay_cost_pv", 0)
 
         # Summary row - columns ordered: row_type, PV values, annual values, nominal values, module-specific
         summary_row = {

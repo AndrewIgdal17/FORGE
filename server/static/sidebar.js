@@ -84,7 +84,6 @@ var SIDEBAR_SECTIONS = {
       subItems: [
         { id: 'r-benefits-overview', label: 'Overview' },
         { id: 'r-congestion', label: 'Congestion' },
-        { id: 'r-curtailment', label: 'Curtailment' },
         { id: 'r-loss-comp', label: 'Loss Compensation' },
         { id: 'r-remedial', label: 'Remedial Actions' }
       ]

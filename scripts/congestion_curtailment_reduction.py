@@ -43,29 +43,22 @@ class CongestionProjectDetails:
 
 @dataclass
 class CongestionReductionResults:
-    """Results from congestion/curtailment calculation."""
+    """Results from congestion reduction calculation."""
 
     effective_capacity_relief: float
     constrained_hours: float
     average_exceedance: float
-    congestion_fraction: float
     relief_mw: float
-    # Congestion benefit
+    # Congestion benefit (remedial)
     annual_congestion_benefit: float
     lifetime_congestion_benefit: float
     lifetime_congestion_benefit_pv: float
-    # Curtailment benefit
-    annual_curtailment_benefit: float
-    lifetime_curtailment_benefit: float
-    lifetime_curtailment_benefit_pv: float
-    # Total remedial
+    # Total remedial (= congestion only)
     annual_remedial_benefit: float
     lifetime_remedial_benefit_pv: float
     # Delay opportunity costs
     congestion_delay_cost_nominal: float
     congestion_delay_cost_pv: float
-    curtailment_delay_cost_nominal: float
-    curtailment_delay_cost_pv: float
 
 
 def _get_old_capacity_mw() -> int:
@@ -131,9 +124,7 @@ def calculate_congestion_reduction_costs(
     flow_factor: float,
     constrained_hours: float,
     average_exceedance: float,
-    congestion_fraction: float,
     average_congestion_price: float,
-    average_curtailment_price: float,
     project_lifetime: int,
     delay_years: float,
     construction_years: int,
@@ -141,17 +132,15 @@ def calculate_congestion_reduction_costs(
     benefit_price_escalation_real: float = 0.0,
 ) -> CongestionReductionResults:
     """
-    Single-constraint, two-price decomposition.
+    Single-constraint congestion relief benefit.
 
-    A single transmission constraint binds for H hours/yr with an average exceedance
-    of X MW. A fraction f of those constrained hours resolve as redispatch
-    (congestion); the remainder (1-f) resolve as renewable curtailment. Both
-    consequences draw on the same effective capacity relief, so there is no
-    separate allocation step and no double-counting between the two benefit
-    streams.
+    A transmission constraint binds for H hours/yr with average exceedance X MW.
+    Congestion benefit uses the full constrained hours (no f / (1-f) split):
 
-        B_cong = H * f * min(delta_C_eff, X) * gamma_cong
-        B_curt = H * (1-f) * min(delta_C_eff, X) * gamma_curt
+        B_cong = H * min(delta_C_eff, X) * gamma_cong
+
+    Curtailment benefit is not modeled separately (would double-count MWh
+    already valued under delivered energy).
 
     Args:
         project_type: "greenfield" | "reconductoring" | "rebuild"
@@ -160,9 +149,7 @@ def calculate_congestion_reduction_costs(
         flow_factor: Fraction of capacity that effectively relieves constraints (greenfield only)
         constrained_hours: H, hours per year the constraint binds
         average_exceedance: X, average MW exceedance during constrained hours
-        congestion_fraction: f, fraction of constrained hours resolved via redispatch (0-1)
         average_congestion_price: gamma_cong, $/MWh redispatch cost
-        average_curtailment_price: gamma_curt, $/MWh foregone energy value
         project_lifetime: Project operational lifetime in years
         delay_years: Number of years of project delay before construction
         construction_years: Number of years of construction
@@ -170,7 +157,7 @@ def calculate_congestion_reduction_costs(
         benefit_price_escalation_real: Real annual growth rate for benefit prices (decimal, default 0.0)
 
     Returns:
-        CongestionReductionResults: Dataclass containing all congestion and curtailment reduction results
+        CongestionReductionResults: Dataclass containing congestion reduction results
     """
     g = benefit_price_escalation_real
 
@@ -182,17 +169,13 @@ def calculate_congestion_reduction_costs(
 
     H = max(0.0, float(constrained_hours))
     X = max(0.0, float(average_exceedance))
-    f = max(0.0, min(1.0, float(congestion_fraction)))
 
-    # Core equations
+    # Core equation — full constrained hours (no congestion-fraction split)
     relief_mw = min(delta_C_eff, X)
-    annual_congestion_benefit = H * f * relief_mw * average_congestion_price
-    annual_curtailment_benefit = H * (1 - f) * relief_mw * average_curtailment_price
-    annual_remedial_benefit = annual_congestion_benefit + annual_curtailment_benefit
+    annual_congestion_benefit = H * relief_mw * average_congestion_price
+    annual_remedial_benefit = annual_congestion_benefit
 
     # Lifetime (nominal growing series) and PV (growing annuity)
-    cod_year = calculate_cod_year(delay_years, construction_years)
-
     lifetime_congestion_benefit = calculate_nominal_growing_series(
         annual_congestion_benefit, g, project_lifetime
     )
@@ -201,17 +184,7 @@ def calculate_congestion_reduction_costs(
         delay_years=delay_years, construction_years=construction_years,
     )
 
-    lifetime_curtailment_benefit = calculate_nominal_growing_series(
-        annual_curtailment_benefit, g, project_lifetime
-    )
-    lifetime_curtailment_benefit_pv = calculate_growing_annuity_pv(
-        annual_curtailment_benefit, g, wacc_real, project_lifetime,
-        delay_years=delay_years, construction_years=construction_years,
-    )
-
-    lifetime_remedial_benefit_pv = (
-        lifetime_congestion_benefit_pv + lifetime_curtailment_benefit_pv
-    )
+    lifetime_remedial_benefit_pv = lifetime_congestion_benefit_pv
 
     # Delay opportunity costs — delay period starts at year 1 (no additional delay shift)
     delay_construction_years = delay_years + construction_years
@@ -221,31 +194,19 @@ def calculate_congestion_reduction_costs(
     congestion_delay_cost_pv = calculate_growing_annuity_pv(
         annual_congestion_benefit, g, wacc_real, delay_construction_years,
     )
-    curtailment_delay_cost_nominal = calculate_nominal_growing_series(
-        annual_curtailment_benefit, g, delay_construction_years
-    )
-    curtailment_delay_cost_pv = calculate_growing_annuity_pv(
-        annual_curtailment_benefit, g, wacc_real, delay_construction_years,
-    )
 
     return CongestionReductionResults(
         effective_capacity_relief=delta_C_eff,
         constrained_hours=H,
         average_exceedance=X,
-        congestion_fraction=f,
         relief_mw=relief_mw,
         annual_congestion_benefit=annual_congestion_benefit,
         lifetime_congestion_benefit=lifetime_congestion_benefit,
         lifetime_congestion_benefit_pv=lifetime_congestion_benefit_pv,
-        annual_curtailment_benefit=annual_curtailment_benefit,
-        lifetime_curtailment_benefit=lifetime_curtailment_benefit,
-        lifetime_curtailment_benefit_pv=lifetime_curtailment_benefit_pv,
         annual_remedial_benefit=annual_remedial_benefit,
         lifetime_remedial_benefit_pv=lifetime_remedial_benefit_pv,
         congestion_delay_cost_nominal=congestion_delay_cost_nominal,
         congestion_delay_cost_pv=congestion_delay_cost_pv,
-        curtailment_delay_cost_nominal=curtailment_delay_cost_nominal,
-        curtailment_delay_cost_pv=curtailment_delay_cost_pv,
     )
 
 
@@ -270,9 +231,7 @@ def main() -> None:
         params.flow_factor,
         params.constrained_hours,
         params.average_exceedance,
-        params.congestion_fraction,
         params.average_congestion_price,
-        params.average_curtailment_price,
         project_details_cc.project_lifetime,
         project_details_cc.delay_years,
         project_details_cc.construction_years,
@@ -281,14 +240,13 @@ def main() -> None:
     )
 
     print("=" * 60)
-    print("CONGESTION/CURTAILMENT PHYSICAL RESULTS AND QUANTITIES")
+    print("CONGESTION PHYSICAL RESULTS AND QUANTITIES")
     print("=" * 60)
     print(
         f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW"
     )
     print(f"Constrained hours: {congestion_results.constrained_hours:,.0f} hrs/yr")
     print(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
-    print(f"Congestion fraction (f): {congestion_results.congestion_fraction:.3f}")
     print(f"Relief MW (min of relief and exceedance): {congestion_results.relief_mw:,.2f} MW")
 
     print()
@@ -308,24 +266,7 @@ def main() -> None:
 
     print()
     print("=" * 60)
-    print("CURTAILMENT REDUCTION BENEFIT RESULTS")
-    print("=" * 60)
-    print(
-        f"Annual curtailment benefit: ${congestion_results.annual_curtailment_benefit:,.2f}"
-    )
-    print(
-        f"Lifetime curtailment benefit: ${congestion_results.lifetime_curtailment_benefit:,.2f}"
-    )
-    print(
-        f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
-    )
-    print(
-        f"Lifetime curtailment benefit PV: ${congestion_results.lifetime_curtailment_benefit_pv:,.2f}"
-    )
-
-    print()
-    print("=" * 60)
-    print("TOTAL REMEDIAL BENEFIT (CONGESTION + CURTAILMENT)")
+    print("TOTAL REMEDIAL BENEFIT (CONGESTION)")
     print("=" * 60)
     print(f"Annual remedial benefit: ${congestion_results.annual_remedial_benefit:,.2f}")
     print(
@@ -341,12 +282,6 @@ def main() -> None:
     )
     print(
         f"Congestion delay cost (PV): ${congestion_results.congestion_delay_cost_pv:,.2f}"
-    )
-    print(
-        f"Curtailment delay cost (nominal): ${congestion_results.curtailment_delay_cost_nominal:,.2f}"
-    )
-    print(
-        f"Curtailment delay cost (PV): ${congestion_results.curtailment_delay_cost_pv:,.2f}"
     )
     print("=" * 60)
 
@@ -410,10 +345,10 @@ def main() -> None:
         "congestion_benefit_annual": congestion_results.annual_congestion_benefit,
         "congestion_benefit_nominal": congestion_results.lifetime_congestion_benefit,
         "congestion_benefit_pv": congestion_results.lifetime_congestion_benefit_pv,
-        # BENEFITS - Curtailment reduction (operational benefits)
-        "curtailment_benefit_annual": congestion_results.annual_curtailment_benefit,
-        "curtailment_benefit_nominal": congestion_results.lifetime_curtailment_benefit,
-        "curtailment_benefit_pv": congestion_results.lifetime_curtailment_benefit_pv,
+        # BENEFITS - Curtailment removed (zeros kept for runner key compatibility until Task 5)
+        "curtailment_benefit_annual": 0.0,
+        "curtailment_benefit_nominal": 0.0,
+        "curtailment_benefit_pv": 0.0,
         # BENEFITS - Delivered energy (throughput value at value of load)
         "delivered_benefit_annual": delivered_benefit_annual,
         "delivered_benefit_nominal": delivered_benefit_nominal,
@@ -422,11 +357,8 @@ def main() -> None:
         # COSTS - Delay/construction opportunity costs
         "congestion_delay_cost_nominal": congestion_results.congestion_delay_cost_nominal,
         "congestion_delay_cost_pv": congestion_results.congestion_delay_cost_pv,
-        "curtailment_delay_cost_nominal": congestion_results.curtailment_delay_cost_nominal,
-        "curtailment_delay_cost_pv": congestion_results.curtailment_delay_cost_pv,
         # Physical metrics (for reference)
         "effective_capacity_relief_mw": congestion_results.effective_capacity_relief,
-        "congestion_fraction": congestion_results.congestion_fraction,
         "constrained_hours": congestion_results.constrained_hours,
         "relief_mw": congestion_results.relief_mw,
     }

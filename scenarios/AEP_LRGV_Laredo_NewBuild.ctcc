@@ -2176,23 +2176,19 @@
         "constraints": {
           "flow_factor": 0.8,
           "constrained_hours": 1200,
-          "average_exceedance": 400,
-          "congestion_fraction": 1.0
+          "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 15.0
         }
       },
       "incremental_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 0,
-          "average_exceedance": 0,
-          "congestion_fraction": 0.5
+          "average_exceedance": 0
         },
         "prices": {
-          "average_congestion_price": 0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 0
         }
       }
     },
@@ -4509,7 +4505,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_Laredo_NewBuild",
-    "timestamp": "2026-08-03T13:51:59.299933",
+    "timestamp": "2026-08-04T10:25:45.385447",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
@@ -4746,10 +4742,7 @@
         "energy_delivered_annual_mwh_yr": 8162918.400000001,
         "congestion_delay_cost_nominal": 75327930.29606725,
         "congestion_delay_cost_pv": 60721778.72220207,
-        "curtailment_delay_cost_nominal": 0.0,
-        "curtailment_delay_cost_pv": 0.0,
         "effective_capacity_relief_mw": 1433.6000000000001,
-        "congestion_fraction": 1.0,
         "constrained_hours": 1200.0,
         "relief_mw": 400.0,
         "capacity_value_annual": 0.0,
@@ -4965,9 +4958,7 @@
       "outage_pv": 431763213.3693823,
       "delay_cost_pv": 53901831.34006571,
       "congestion_delay_cost_pv": 60721778.72220207,
-      "curtailment_delay_cost_pv": 0.0,
       "congestion_benefit_pv": 122558445.03957836,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_pv": 5835868418.852285,
       "delivered_benefit_nominal": 22100723230.970802,
       "capacity_value_benefit_pv": 0.0,
@@ -5238,7 +5229,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
       "scenario_id": "AEP_LRGV_Laredo_NewBuild",
-      "timestamp": "2026-08-03T13:51:59.299933",
+      "timestamp": "2026-08-04T10:25:45.385447",
       "capacity_mw": 1792,
       "line_length_miles": 200,
       "construction_type": "Overhead",
@@ -5264,7 +5255,6 @@
       "risk_costs_pv": 461531509.35132545,
       "delay_cost_pv": 53901831.34006571,
       "congestion_delay_cost_pv": 60721778.72220207,
-      "curtailment_delay_cost_pv": 0.0,
       "emissions_displacement_delay_pv": 0.0,
       "delay_costs_pv": 114623610.06226778,
       "emissions_comp_cost_pv": 6215247033.812497,
@@ -5278,7 +5268,6 @@
       "soft_costs_pv": 1485612968.2029228,
       "emissions_costs_pv": 6215247033.812497,
       "congestion_benefit_pv": 122558445.03957836,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_annual": 0,
       "delivered_benefit_nominal": 22100723230.970802,
       "delivered_benefit_pv": 5835868418.852285,
@@ -5522,13 +5511,6 @@
         "detail": []
       },
       {
-        "taxonomy_id": "curtailment_benefit",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
-        "value_annual": 0.0,
-        "detail": []
-      },
-      {
         "taxonomy_id": "delivered_energy_benefit",
         "value_pv": 5835868418.852285,
         "value_nominal": 22100723230.970802,
@@ -5546,13 +5528,6 @@
         "taxonomy_id": "congestion_delay",
         "value_pv": 60721778.72220207,
         "value_nominal": 75327930.29606725,
-        "value_annual": null,
-        "detail": []
-      },
-      {
-        "taxonomy_id": "curtailment_delay",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
         "value_annual": null,
         "detail": []
       },
@@ -8003,7 +7978,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-03T13:51:59.632747",
+    "timestamp": "2026-08-04T10:25:45.717735",
     "scenario_id": "AEP_LRGV_Laredo_NewBuild",
     "source": "aep_lrgv_laredo_newbuild_case_study"
   }

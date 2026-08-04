@@ -388,7 +388,7 @@ var TUTORIAL_STEPS = {
       position: 'bottom'
     },
 
-    // ── Section F: Congestion & Curtailment ────────────────────────────
+    // ── Section F: Congestion ────────────────────────────
     {
       type: 'goto',
       target: '.sidebar-subitem[data-sub-item-id="system-constraints"]',
@@ -399,7 +399,7 @@ var TUTORIAL_STEPS = {
 
     {
       type: 'info',
-      title: 'Congestion & Curtailment',
+      title: 'Congestion',
       body: 'SunZia relieves the NM-to-AZ export constraint. NM currently has a 900 MW firm export limit but 2,000+ MW of installed wind (RETA 2022).',
       position: 'bottom'
     },
@@ -407,7 +407,7 @@ var TUTORIAL_STEPS = {
       type: 'set',
       target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.constrained_hours"]',
       title: 'Constrained Hours',
-      body: 'Enter 4000. The NM export constraint binds ~50% of wind-producing hours \u2014 whether that time resolves as congestion (redispatch) or curtailment is set by the congestion fraction below.',
+      body: 'Enter 4000. The NM export constraint binds ~50% of wind-producing hours.',
       value: '4000',
       expected: 4000,
       displayValue: '4000',
@@ -421,16 +421,6 @@ var TUTORIAL_STEPS = {
       value: '500',
       expected: 500,
       displayValue: '500',
-      position: 'bottom'
-    },
-    {
-      type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.congestion_fraction"]',
-      title: 'Congestion Fraction',
-      body: 'Enter 0.3. This is a wind-export corridor, so most constrained hours resolve as curtailment rather than redispatch \u2014 30% of constrained hours are congestion (the rest is curtailment).',
-      value: '0.3',
-      expected: 0.3,
-      displayValue: '0.3',
       position: 'bottom'
     },
     {
@@ -451,16 +441,6 @@ var TUTORIAL_STEPS = {
       value: '15',
       expected: 15,
       displayValue: '15',
-      position: 'bottom'
-    },
-    {
-      type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_curtailment_price"]',
-      title: 'Curtailment Price',
-      body: 'Enter $41/MWh. LADWP\u2013Pattern Energy Red Cloud Wind PPA price (Utility Dive, Dec 2021).',
-      value: '41',
-      expected: 41,
-      displayValue: '41',
       position: 'bottom'
     },
 

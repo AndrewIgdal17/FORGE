@@ -18,9 +18,9 @@
       "subgroup": "build",
       "label": "Structure Cost",
       "discount_rate": "wacc_real",
-      "condition": "greenfield_only",
+      "condition": "not_reconductoring",
       "display_order": 2,
-      "description": "Terrain-adjusted structure cost. Zero for reconductoring."
+      "description": "Terrain-adjusted structure cost. Zero for reconductoring; full for greenfield and rebuild."
     },
     {
       "id": "build_converter",
@@ -144,17 +144,6 @@
       "description": "Opportunity cost of congestion during delay + construction period."
     },
     {
-      "id": "curtailment_delay",
-      "side": "cost",
-      "bucket": "soft",
-      "subgroup": "delay",
-      "label": "Curtailment Delay Cost",
-      "discount_rate": "wacc_real",
-      "condition": null,
-      "display_order": 8,
-      "description": "Opportunity cost of curtailment during delay + construction period."
-    },
-    {
       "id": "emissions_displacement_delay",
       "side": "cost",
       "bucket": "soft",
@@ -219,17 +208,6 @@
       "condition": null,
       "display_order": 1,
       "description": "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."
-    },
-    {
-      "id": "curtailment_benefit",
-      "side": "benefit",
-      "bucket": "remedial",
-      "subgroup": "curtailment",
-      "label": "Curtailment Reduction Benefit",
-      "discount_rate": "wacc_real",
-      "condition": null,
-      "display_order": 2,
-      "description": "Value of curtailment relief MWh. Remedial: fixes curtailed renewables."
     },
     {
       "id": "delivered_energy_benefit",
@@ -450,9 +428,6 @@
       "year"
     ],
     "congestion_benefit": [
-      "allocation"
-    ],
-    "curtailment_benefit": [
       "allocation"
     ],
     "base_delay": [

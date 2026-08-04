@@ -2176,23 +2176,19 @@
         "constraints": {
           "flow_factor": 0.8,
           "constrained_hours": 1200,
-          "average_exceedance": 400,
-          "congestion_fraction": 1.0
+          "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 15.0
         }
       },
       "incremental_congestion_curtailment_reductions": {
         "constraints": {
           "constrained_hours": 1200,
-          "average_exceedance": 400,
-          "congestion_fraction": 1.0
+          "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0,
-          "average_curtailment_price": 0
+          "average_congestion_price": 15.0
         }
       }
     },
@@ -4509,7 +4505,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-    "timestamp": "2026-08-03T13:51:58.023887",
+    "timestamp": "2026-08-04T10:25:44.109402",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
@@ -4746,10 +4742,7 @@
         "energy_delivered_annual_mwh_yr": 0.0,
         "congestion_delay_cost_nominal": 0.0,
         "congestion_delay_cost_pv": 0.0,
-        "curtailment_delay_cost_nominal": 0.0,
-        "curtailment_delay_cost_pv": 0.0,
         "effective_capacity_relief_mw": 0.0,
-        "congestion_fraction": 1.0,
         "constrained_hours": 1200.0,
         "relief_mw": 0.0,
         "capacity_value_annual": 0.0,
@@ -4794,9 +4787,7 @@
       "outage_pv": 271169721.13673913,
       "delay_cost_pv": 18845138.771857657,
       "congestion_delay_cost_pv": 0.0,
-      "curtailment_delay_cost_pv": 0.0,
       "congestion_benefit_pv": 0.0,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_pv": 0.0,
       "delivered_benefit_nominal": 0.0,
       "capacity_value_benefit_pv": 0.0,
@@ -4911,7 +4902,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
       "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-      "timestamp": "2026-08-03T13:51:58.023887",
+      "timestamp": "2026-08-04T10:25:44.109402",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -4937,7 +4928,6 @@
       "risk_costs_pv": 309078145.74762625,
       "delay_cost_pv": 18845138.771857657,
       "congestion_delay_cost_pv": 0.0,
-      "curtailment_delay_cost_pv": 0.0,
       "emissions_displacement_delay_pv": 0.0,
       "delay_costs_pv": 18845138.771857657,
       "emissions_comp_cost_pv": 10032348922.451912,
@@ -4951,7 +4941,6 @@
       "soft_costs_pv": 1870385509.9966867,
       "emissions_costs_pv": 10032348922.451912,
       "congestion_benefit_pv": 0.0,
-      "curtailment_benefit_pv": 0.0,
       "delivered_benefit_annual": 0,
       "delivered_benefit_nominal": 0.0,
       "delivered_benefit_pv": 0.0,
@@ -5159,13 +5148,6 @@
         "detail": []
       },
       {
-        "taxonomy_id": "curtailment_benefit",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
-        "value_annual": 0.0,
-        "detail": []
-      },
-      {
         "taxonomy_id": "delivered_energy_benefit",
         "value_pv": 0.0,
         "value_nominal": 0.0,
@@ -5181,13 +5163,6 @@
       },
       {
         "taxonomy_id": "congestion_delay",
-        "value_pv": 0.0,
-        "value_nominal": 0.0,
-        "value_annual": null,
-        "detail": []
-      },
-      {
-        "taxonomy_id": "curtailment_delay",
         "value_pv": 0.0,
         "value_nominal": 0.0,
         "value_annual": null,
@@ -7523,7 +7498,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-03T13:51:58.561412",
+    "timestamp": "2026-08-04T10:25:44.655938",
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
     "source": "case_study"
   }

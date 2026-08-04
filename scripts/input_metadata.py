@@ -661,12 +661,7 @@ for _group_key, _group_label in [
 # ===================================================================
 
 def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputField]:
-    """Generate congestion/curtailment fields for greenfield or reconductoring.
-
-    Single-constraint, two-price decomposition. `congestion_fraction`
-    (f) splits constrained hours between redispatch (congestion) and renewable
-    curtailment; there is no separate curtailment-hours constraint.
-    """
+    """Generate congestion constraint fields for greenfield or reconductoring."""
     fields: list[InputField] = []
     _has_flow = "greenfield" in yaml_root
     _base = f"17_congestion_curtailment_reductions"
@@ -690,23 +685,11 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
            label="Average Exceedance", help_text="Average MW exceedance during constrained hours (X)",
            unit="MW", condition="always_hidden", tier="first-glance", display_order=3,
            sub_tab="system-constraints"),
-        _f(f"{prefix}_congestion_fraction", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.constraints.congestion_fraction",
-           label="Congestion Fraction", help_text="Fraction of constrained hours resulting in redispatch (f); remainder is curtailment",
-           input_type="percent", condition="always_hidden", tier="first-glance", display_order=4,
-           validation={"min": 0, "max": 1, "step": 0.01},
-           sub_tab="system-constraints"),
         _f(f"{prefix}_cong_price", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.prices.average_congestion_price",
            label="Average Congestion Price", help_text="Marginal redispatch cost during constrained hours; monetizes relief",
            unit="$/MWh", input_type="currency", condition="always_hidden",
-           tier="first-glance", display_order=5,
-           sub_tab="system-constraints"),
-        _f(f"{prefix}_curt_price", taxonomy_id="curtailment_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.prices.average_curtailment_price",
-           label="Average Curtailment Price", help_text="Value per MWh of curtailed energy (PPA proxy / avoided cost)",
-           unit="$/MWh", input_type="currency", condition="always_hidden",
-           tier="first-glance", display_order=6,
+           tier="first-glance", display_order=4,
            sub_tab="system-constraints"),
     ]
     return fields

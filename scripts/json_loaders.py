@@ -245,13 +245,15 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         prices = reductions_data["prices"]
         flow_factor = constraints["flow_factor"]
 
+    # Backward compat: ignore removed fields from old .ctcc files
+    constraints.pop("congestion_fraction", None)
+    prices.pop("average_curtailment_price", None)
+
     return CongestionCurtailmentParams(
         flow_factor=float(flow_factor),
         constrained_hours=float(constraints["constrained_hours"]),
         average_exceedance=float(constraints["average_exceedance"]),
-        congestion_fraction=float(constraints["congestion_fraction"]),
         average_congestion_price=float(prices["average_congestion_price"]),
-        average_curtailment_price=float(prices["average_curtailment_price"]),
     )
 
 
