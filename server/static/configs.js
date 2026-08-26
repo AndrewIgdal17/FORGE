@@ -51,7 +51,7 @@
           { key: 'revenue_pv', label: 'Revenue', path: 'bcr.revenue_pv', format: 'currency' },
           { key: 'total_benefits_pv', label: 'Total Benefits', path: 'bcr.total_benefits_pv', format: 'currency' },
         ]},
-        { group: 'Cost Buckets (PV)', metrics: [
+        { group: 'Cost Categories (PV)', metrics: [
           { key: 'hard_costs_pv', label: 'Hard Costs', path: 'bcr.hard_costs_pv', format: 'currency' },
           { key: 'soft_costs_pv', label: 'Soft Costs', path: 'bcr.soft_costs_pv', format: 'currency' },
           { key: 'emissions_costs_pv', label: 'Line Loss Compensation Emissions', path: 'bcr.emissions_costs_pv', format: 'currency' },
@@ -88,7 +88,7 @@
         'BCR — Firm': 'bcr',
         'BCR — Capital Screening': 'bcr',
         'Costs (PV)': 'costs',
-        'Cost Buckets (PV)': 'costs',
+        'Cost Categories (PV)': 'costs',
         'Benefits': 'benefits',
         'Risk Costs (PV)': 'costs',
         'Delay Costs (PV)': 'costs',

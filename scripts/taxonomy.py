@@ -21,7 +21,7 @@ from typing import Literal
 # ---------------------------------------------------------------------------
 
 Side = Literal["cost", "benefit", "transfer", "reporting_only", "utility"]
-Bucket = Literal[
+Category = Literal[
     "hard", "soft", "risk", "emissions",
     "remedial", "enabling", "transfer", "reporting",
     "project", "route", "financial",
@@ -48,7 +48,7 @@ Family = Literal["societal", "firm"]
 class TaxonomyItem:
     id: str
     side: Side
-    bucket: Bucket
+    category: Category
     subgroup: str
     label: str
     discount_rate: DiscountRate | None
@@ -89,7 +89,7 @@ class BCRDefinition:
 # ---------------------------------------------------------------------------
 
 TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
-    # --- Hard costs (bucket: hard) ---
+    # --- Hard costs (category: hard) ---
     TaxonomyItem("build_conductor", "cost", "hard", "build",
                  "Conductor Cost", "wacc_real", None, 1,
                  "Terrain-adjusted, contingency-applied conductor cost (variable + fixed)."),
@@ -108,7 +108,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("env_mitigation", "cost", "hard", "environmental",
                  "Environmental Mitigation", "wacc_real", None, 6,
                  "Base per-acre mitigation + wetland/habitat credit costs."),
-    # --- Soft costs (bucket: soft) ---
+    # --- Soft costs (category: soft) ---
     TaxonomyItem("oandm", "cost", "soft", "operational",
                  "O&M", "wacc_real", None, 1,
                  "Annual conductor + structure + converter + vegetation management O&M."),
@@ -133,21 +133,21 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("emissions_displacement_delay", "cost", "soft", "delay",
                  "Displacement Delay Emissions Cost", "social", None, 9,
                  "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."),
-    # --- Risk costs (bucket: risk) ---
+    # --- Risk costs (category: risk) ---
     TaxonomyItem("wildfire_eac", "cost", "risk", "wildfire",
                  "Expected Wildfire Cost", "social", None, 1,
                  "Expected annual loss from wildfire (ignition rate x severity x risk growth)."),
     TaxonomyItem("outage_eac", "cost", "risk", "outage",
                  "Expected Outage Cost", "social", None, 2,
                  "Expected annual cost from transmission outages (rate x duration x VoLL x risk growth)."),
-    # --- Emissions costs (bucket: emissions) ---
+    # --- Emissions costs (category: emissions) ---
     TaxonomyItem("emissions_comp", "cost", "emissions", "loss_compensation",
                  "Loss-Compensation Emissions", "social", None, 1,
                  "Social cost of emissions from generation compensating for line losses."),
     TaxonomyItem("emissions_fac", "reporting_only", "reporting", "facilitated",
                  "Facilitated Emissions", "social", None, 2,
                  "Intermediate quantity (not a BCR cost or benefit). Social cost of pollutant emissions from the energy delivered via this project path. The Avoided Emissions Benefit equals the no-line equivalent minus this value."),
-    # --- Benefits (buckets: remedial, enabling, avoided_emissions) ---
+    # --- Benefits (categories: remedial, enabling, avoided_emissions) ---
     TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
                  "Congestion Reduction Benefit", "wacc_real", None, 1,
                  "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."),
@@ -403,17 +403,17 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
 
 
 def get_items_by_side(side: Side) -> list[TaxonomyItem]:
-    """Return taxonomy items filtered by side, sorted by (bucket, display_order)."""
+    """Return taxonomy items filtered by side, sorted by (category, display_order)."""
     return sorted(
         (item for item in TAXONOMY_ITEMS if item.side == side),
-        key=lambda item: (item.bucket, item.display_order),
+        key=lambda item: (item.category, item.display_order),
     )
 
 
-def get_items_by_bucket(bucket: Bucket) -> list[TaxonomyItem]:
-    """Return taxonomy items filtered by bucket, sorted by display_order."""
+def get_items_by_category(category: Category) -> list[TaxonomyItem]:
+    """Return taxonomy items filtered by category, sorted by display_order."""
     return sorted(
-        (item for item in TAXONOMY_ITEMS if item.bucket == bucket),
+        (item for item in TAXONOMY_ITEMS if item.category == category),
         key=lambda item: item.display_order,
     )
 
@@ -491,8 +491,8 @@ if __name__ == "__main__":
     # 8a. Item count
     assert len(TAXONOMY) == 34, f"Expected 34 items, got {len(TAXONOMY)}"
 
-    # 8b. Bucket membership
-    _side_bucket_rules: dict[str, set[str]] = {
+    # 8b. Category membership
+    _side_category_rules: dict[str, set[str]] = {
         "cost": {"hard", "soft", "risk", "emissions"},
         "benefit": {"remedial", "enabling", "avoided_emissions"},
         "transfer": {"transfer"},
@@ -500,10 +500,10 @@ if __name__ == "__main__":
         "utility": {"project", "route", "financial"},
     }
     for _item in TAXONOMY_ITEMS:
-        _allowed = _side_bucket_rules[_item.side]
-        assert _item.bucket in _allowed, (
-            f"{_item.id}: side={_item.side!r} requires bucket in {_allowed}, "
-            f"got {_item.bucket!r}"
+        _allowed = _side_category_rules[_item.side]
+        assert _item.category in _allowed, (
+            f"{_item.id}: side={_item.side!r} requires category in {_allowed}, "
+            f"got {_item.category!r}"
         )
 
     # 8c. Discount rate

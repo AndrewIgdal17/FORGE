@@ -383,7 +383,7 @@ function createCategory(title, content, isCollapsed = false) {
   return category;
 }
 
-C.BUCKET_LABELS = {
+C.CATEGORY_LABELS = {
   hard: 'Hard Costs', soft: 'Soft Costs',
   risk: 'Risk Costs', emissions: 'Line Loss Compensation Emissions',
   remedial: 'Remedial Benefits', enabling: 'Enabling Benefits',
@@ -391,7 +391,7 @@ C.BUCKET_LABELS = {
   transfer: 'Revenue (Transfer)', reporting: 'Transfers & Reporting',
 };
 
-C.COST_BUCKET_ORDER = ['hard', 'soft', 'risk', 'emissions'];
+C.COST_CATEGORY_ORDER = ['hard', 'soft', 'risk', 'emissions'];
 
 function buildResultById(results) {
   const m = {};
@@ -445,15 +445,15 @@ function renderSectionOverview(results, sectionType) {
   if (!C.taxonomy) return container;
   var rid = buildResultById(results);
 
-  var buckets, parentTotal;
+  var categories, parentTotal;
   if (sectionType === 'costs') {
-    buckets = C.COST_BUCKET_ORDER;
+    categories = C.COST_CATEGORY_ORDER;
   } else {
-    buckets = ['remedial', 'enabling', 'avoided_emissions'];
+    categories = ['remedial', 'enabling', 'avoided_emissions'];
   }
 
-  parentTotal = buckets.reduce(function(s, b) {
-    return s + (C.taxonomyByBucket[b] || []).reduce(function(ss, i) {
+  parentTotal = categories.reduce(function(s, b) {
+    return s + (C.taxonomyByCategory[b] || []).reduce(function(ss, i) {
       return ss + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
   }, 0);
@@ -470,30 +470,30 @@ function renderSectionOverview(results, sectionType) {
   heading.appendChild(headValue);
   container.appendChild(heading);
 
-  buckets.forEach(function(b) {
-    var items = (C.taxonomyByBucket[b] || []);
-    var bucketPV = items.reduce(function(s, i) {
+  categories.forEach(function(b) {
+    var items = (C.taxonomyByCategory[b] || []);
+    var categoryPV = items.reduce(function(s, i) {
       return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
-    if (bucketPV <= 0) return;
+    if (categoryPV <= 0) return;
 
-    var pct = parentTotal > 0 ? ((bucketPV / parentTotal) * 100).toFixed(0) : '0';
+    var pct = parentTotal > 0 ? ((categoryPV / parentTotal) * 100).toFixed(0) : '0';
 
     var card = document.createElement('div');
-    card.className = 'results-bucket-card';
+    card.className = 'results-category-card';
 
     var title = document.createElement('div');
-    title.className = 'bucket-title';
-    title.textContent = (C.BUCKET_LABELS && C.BUCKET_LABELS[b]) || b;
+    title.className = 'category-title';
+    title.textContent = (C.CATEGORY_LABELS && C.CATEGORY_LABELS[b]) || b;
     card.appendChild(title);
 
     var value = document.createElement('div');
-    value.className = 'bucket-value';
-    value.textContent = formatCurrency(bucketPV, 0);
+    value.className = 'category-value';
+    value.textContent = formatCurrency(categoryPV, 0);
     card.appendChild(value);
 
     var pctEl = document.createElement('div');
-    pctEl.className = 'bucket-pct';
+    pctEl.className = 'category-pct';
     pctEl.textContent = pct + '% of total ' + sectionType;
     card.appendChild(pctEl);
 
@@ -505,7 +505,7 @@ function renderSectionOverview(results, sectionType) {
     card.appendChild(renderCompositionBar(segments));
     card.appendChild(renderCompositionLegend(segments));
 
-    var subItemId = getSubItemIdForBucket(b);
+    var subItemId = getSubItemIdForCategory(b);
     card.addEventListener('click', function() {
       if (typeof navigateToSubItem === 'function') {
         var sectionId = sectionType === 'costs' ? 'r-costs' : 'r-benefits';
@@ -519,7 +519,7 @@ function renderSectionOverview(results, sectionType) {
   return container;
 }
 
-function getSubItemIdForBucket(bucket) {
+function getSubItemIdForCategory(category) {
   var map = {
     hard: 'r-capital',
     soft: 'r-operational',
@@ -529,7 +529,7 @@ function getSubItemIdForBucket(bucket) {
     enabling: 'r-loss-comp',
     avoided_emissions: 'r-emissions-costs'
   };
-  return map[bucket] || 'r-capital';
+  return map[category] || 'r-capital';
 }
 
 function renderExpandableCard(item, rid, colorIndex, parentTotal) {
@@ -554,7 +554,7 @@ function renderExpandableCard(item, rid, colorIndex, parentTotal) {
 
   var sublabel = document.createElement('div');
   sublabel.className = 'detail-sublabel';
-  sublabel.textContent = pct + '% of bucket';
+  sublabel.textContent = pct + '% of category';
   if (hasDetail) sublabel.textContent += ' \u00B7 ' + detailRows.length + ' components';
   left.appendChild(sublabel);
 
@@ -601,38 +601,38 @@ function renderExpandableCard(item, rid, colorIndex, parentTotal) {
   return card;
 }
 
-function renderDetailDrillIn(results, buckets) {
+function renderDetailDrillIn(results, categories) {
   var container = document.createElement('div');
   if (!C.taxonomy) return container;
   var rid = buildResultById(results);
 
   var allItems = [];
-  buckets.forEach(function(b) {
-    var items = (C.taxonomyByBucket[b] || []).slice().sort(function(a, bb) {
+  categories.forEach(function(b) {
+    var items = (C.taxonomyByCategory[b] || []).slice().sort(function(a, bb) {
       return a.display_order - bb.display_order;
     });
     allItems = allItems.concat(items);
   });
 
-  var bucketTotal = allItems.reduce(function(s, i) {
+  var categoryTotal = allItems.reduce(function(s, i) {
     return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
   }, 0);
 
-  var grandTotal = C.COST_BUCKET_ORDER.reduce(function(s, b) {
-    return s + (C.taxonomyByBucket[b] || []).reduce(function(ss, i) {
+  var grandTotal = C.COST_CATEGORY_ORDER.reduce(function(s, b) {
+    return s + (C.taxonomyByCategory[b] || []).reduce(function(ss, i) {
       return ss + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
   }, 0);
-  var pctOfTotal = grandTotal > 0 ? ((bucketTotal / grandTotal) * 100).toFixed(0) : '0';
+  var pctOfTotal = grandTotal > 0 ? ((categoryTotal / grandTotal) * 100).toFixed(0) : '0';
 
   var heading = document.createElement('div');
   heading.className = 'results-section-total';
   var headLabel = document.createElement('div');
   headLabel.className = 'total-label';
-  headLabel.textContent = ((C.BUCKET_LABELS && C.BUCKET_LABELS[buckets[0]]) || buckets[0]) + ' Costs (PV)';
+  headLabel.textContent = ((C.CATEGORY_LABELS && C.CATEGORY_LABELS[categories[0]]) || categories[0]) + ' Costs (PV)';
   var headValue = document.createElement('div');
   headValue.className = 'total-value';
-  headValue.textContent = formatCurrency(bucketTotal, 0);
+  headValue.textContent = formatCurrency(categoryTotal, 0);
   var headPct = document.createElement('div');
   headPct.className = 'total-pct';
   headPct.textContent = pctOfTotal + '% of total project costs';
@@ -656,26 +656,26 @@ function renderDetailDrillIn(results, buckets) {
   }).sort(function(a, b) {
     return (rid[b.id].value_pv || 0) - (rid[a.id].value_pv || 0);
   }).forEach(function(item, idx) {
-    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, bucketTotal));
+    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, categoryTotal));
   });
   container.appendChild(cardsWrapper);
 
   return container;
 }
 
-function renderBenefitDrillIn(results, bucket, subgroup) {
+function renderBenefitDrillIn(results, category, subgroup) {
   var container = document.createElement('div');
   if (!C.taxonomy) return container;
   var rid = buildResultById(results);
 
-  var items = (C.taxonomyByBucket[bucket] || []).slice().sort(function(a, b) {
+  var items = (C.taxonomyByCategory[category] || []).slice().sort(function(a, b) {
     return a.display_order - b.display_order;
   });
   if (subgroup) {
     items = items.filter(function(i) { return i.subgroup === subgroup; });
   }
 
-  var bucketTotal = items.reduce(function(s, i) {
+  var categoryTotal = items.reduce(function(s, i) {
     return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
   }, 0);
 
@@ -683,11 +683,11 @@ function renderBenefitDrillIn(results, bucket, subgroup) {
   heading.className = 'results-section-total';
   var headLabel = document.createElement('div');
   headLabel.className = 'total-label';
-  var labelKey = subgroup || bucket;
-  headLabel.textContent = ((C.BUCKET_LABELS && C.BUCKET_LABELS[labelKey]) || labelKey) + ' Benefits (PV)';
+  var labelKey = subgroup || category;
+  headLabel.textContent = ((C.CATEGORY_LABELS && C.CATEGORY_LABELS[labelKey]) || labelKey) + ' Benefits (PV)';
   var headValue = document.createElement('div');
   headValue.className = 'total-value';
-  headValue.textContent = formatCurrency(bucketTotal, 0);
+  headValue.textContent = formatCurrency(categoryTotal, 0);
   heading.appendChild(headLabel);
   heading.appendChild(headValue);
   container.appendChild(heading);
@@ -706,7 +706,7 @@ function renderBenefitDrillIn(results, bucket, subgroup) {
   items.filter(function(i) {
     return rid[i.id] && (rid[i.id].value_pv || 0) > 0;
   }).forEach(function(item, idx) {
-    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, bucketTotal));
+    cardsWrapper.appendChild(renderExpandableCard(item, rid, idx, categoryTotal));
   });
   container.appendChild(cardsWrapper);
 
@@ -811,20 +811,20 @@ function renderCostsByTaxonomy(results) {
   let grandTotalPV = 0;
   let grandTotalNom = 0;
 
-  C.COST_BUCKET_ORDER.forEach(bucket => {
-    const bucketItems = costItems.filter(i => i.bucket === bucket);
-    if (bucketItems.length === 0) return;
+  C.COST_CATEGORY_ORDER.forEach(cat => {
+    const categoryItems = costItems.filter(i => i.category === cat);
+    if (categoryItems.length === 0) return;
     const section = document.createElement('div');
     section.className = 'cost-section-items';
     section.appendChild(pairHeader());
 
     const subgroups = {};
-    bucketItems.forEach(item => {
+    categoryItems.forEach(item => {
       (subgroups[item.subgroup] ??= []).push(item);
     });
 
-    let bucketPV = 0;
-    let bucketNom = 0;
+    let categoryPV = 0;
+    let categoryNom = 0;
     Object.entries(subgroups).forEach(([sg, items]) => {
       items.sort((a, b) => a.display_order - b.display_order);
       if (Object.keys(subgroups).length > 1) {
@@ -837,15 +837,15 @@ function renderCostsByTaxonomy(results) {
       items.forEach(item => {
         const r = resultById[item.id];
         section.appendChild(renderTaxonomyItem(item, r, true));
-        bucketPV += r?.value_pv || 0;
-        bucketNom += r?.value_nominal || 0;
+        categoryPV += r?.value_pv || 0;
+        categoryNom += r?.value_nominal || 0;
       });
     });
 
-    section.appendChild(subtotalPairRow('Bucket Subtotal', bucketNom, bucketPV));
-    grandTotalPV += bucketPV;
-    grandTotalNom += bucketNom;
-    container.appendChild(createCategory(C.BUCKET_LABELS[bucket] || bucket, section, true));
+    section.appendChild(subtotalPairRow('Category Subtotal', categoryNom, categoryPV));
+    grandTotalPV += categoryPV;
+    grandTotalNom += categoryNom;
+    container.appendChild(createCategory(C.CATEGORY_LABELS[cat] || cat, section, true));
   });
 
   const totalSection = document.createElement('div');
@@ -864,7 +864,7 @@ function renderBenefitsByTaxonomy(results) {
   const bcr = results.bcr || {};
 
   // Remedial
-  const remItems = (C.taxonomyByBucket['remedial'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+  const remItems = (C.taxonomyByCategory['remedial'] || []).slice().sort((a,b) => a.display_order - b.display_order);
   const remSection = document.createElement('div');
   remSection.className = 'cost-section-items';
   remSection.appendChild(pairHeader());
@@ -879,7 +879,7 @@ function renderBenefitsByTaxonomy(results) {
   container.appendChild(createCategory('Remedial Benefits', remSection, true));
 
   // Enabling
-  const enItems = (C.taxonomyByBucket['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+  const enItems = (C.taxonomyByCategory['enabling'] || []).slice().sort((a,b) => a.display_order - b.display_order);
   const enSection = document.createElement('div');
   enSection.className = 'cost-section-items';
   enSection.appendChild(pairHeader());
@@ -894,7 +894,7 @@ function renderBenefitsByTaxonomy(results) {
   container.appendChild(createCategory('Enabling Benefits', enSection, true));
 
   // Avoided Emissions
-  const avItems = (C.taxonomyByBucket['avoided_emissions'] || []).slice().sort((a,b) => a.display_order - b.display_order);
+  const avItems = (C.taxonomyByCategory['avoided_emissions'] || []).slice().sort((a,b) => a.display_order - b.display_order);
   const avSection = document.createElement('div');
   avSection.className = 'cost-section-items';
   avSection.appendChild(pairHeader());
@@ -1595,12 +1595,12 @@ function renderCTCCResults(results) {
       content.appendChild(glanceHeading);
 
       let _totalCostPV = 0;
-      C.COST_BUCKET_ORDER.forEach(b => {
-        _totalCostPV += (C.taxonomyByBucket[b] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+      C.COST_CATEGORY_ORDER.forEach(b => {
+        _totalCostPV += (C.taxonomyByCategory[b] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
       });
-      const remPV = (C.taxonomyByBucket['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-      const enPV = (C.taxonomyByBucket['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
-      const avEmPV = (C.taxonomyByBucket['avoided_emissions'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+      const remPV = (C.taxonomyByCategory['remedial'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+      const enPV = (C.taxonomyByCategory['enabling'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
+      const avEmPV = (C.taxonomyByCategory['avoided_emissions'] || []).reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
       const totalBenefitsPV = remPV + enPV + avEmPV;
       const netBenefitPV = bcr.net_benefit_pv != null ? bcr.net_benefit_pv : (totalBenefitsPV - _totalCostPV);
 
@@ -1642,14 +1642,14 @@ function renderCTCCResults(results) {
       costsHdr.appendChild(costsSubEl);
       costsCard.appendChild(costsHdr);
 
-      C.COST_BUCKET_ORDER.forEach(b => {
-        const items = (C.taxonomyByBucket[b] || []);
+      C.COST_CATEGORY_ORDER.forEach(b => {
+        const items = (C.taxonomyByCategory[b] || []);
         const pv = items.reduce((s, i) => s + (_rid[i.id]?.value_pv || 0), 0);
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(0,0,0,0.06)';
         const rlbl = document.createElement('span');
         rlbl.style.cssText = 'font-size:0.85rem;color:rgba(0,0,0,0.7)';
-        rlbl.textContent = C.BUCKET_LABELS[b] || b;
+        rlbl.textContent = C.CATEGORY_LABELS[b] || b;
         const rval = document.createElement('span');
         rval.style.cssText = 'font-size:0.85rem;font-weight:600;font-family:"SF Mono",Monaco,"Cascadia Code","Roboto Mono",Consolas,monospace';
         rval.textContent = formatCurrency(pv, 0);
@@ -1777,8 +1777,8 @@ function renderResultsOverview(results) {
   heroGrid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem';
 
   var rid = buildResultById(results);
-  var totalCostPV = C.COST_BUCKET_ORDER.reduce(function(sum, b) {
-    return sum + (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+  var totalCostPV = C.COST_CATEGORY_ORDER.reduce(function(sum, b) {
+    return sum + (C.taxonomyByCategory[b] || []).reduce(function(s, i) {
       return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
   }, 0);
@@ -1807,19 +1807,19 @@ function renderResultsOverview(results) {
   });
   container.appendChild(heroGrid);
 
-  var costSegments = C.COST_BUCKET_ORDER.map(function(b) {
-    var pv = (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+  var costSegments = C.COST_CATEGORY_ORDER.map(function(b) {
+    var pv = (C.taxonomyByCategory[b] || []).reduce(function(s, i) {
       return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
-    return { label: C.BUCKET_LABELS[b] || b, value: pv };
+    return { label: C.CATEGORY_LABELS[b] || b, value: pv };
   }).filter(function(s) { return s.value > 0; });
 
-  var benefitBuckets = ['remedial', 'enabling', 'avoided_emissions'];
-  var benefitSegments = benefitBuckets.map(function(b) {
-    var pv = (C.taxonomyByBucket[b] || []).reduce(function(s, i) {
+  var benefitCategories = ['remedial', 'enabling', 'avoided_emissions'];
+  var benefitSegments = benefitCategories.map(function(b) {
+    var pv = (C.taxonomyByCategory[b] || []).reduce(function(s, i) {
       return s + (rid[i.id] ? rid[i.id].value_pv || 0 : 0);
     }, 0);
-    return { label: C.BUCKET_LABELS[b] || b, value: pv };
+    return { label: C.CATEGORY_LABELS[b] || b, value: pv };
   }).filter(function(s) { return s.value > 0; });
 
   if (costSegments.length > 0) {

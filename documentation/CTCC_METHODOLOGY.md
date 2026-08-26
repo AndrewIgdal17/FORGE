@@ -1420,9 +1420,9 @@ The same effective capacity relief and curtailment-then-congestion allocation de
 
 ## Reporting framework
 
-Total costs are organized into **four reporting buckets** for the appendix and results presentation:
+Total costs are organized into **four reporting categories** for the appendix and results presentation:
 
-| Bucket | Definition | Components |
+| Category | Definition | Components |
 |--------|-----------|-----------|
 | $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
 | $C_{\text{soft}}$ | Operational + energy/emissions losses + delay | O&M + insurance + rent + line losses + residual exceedance + all delay |
@@ -1431,9 +1431,9 @@ Total costs are organized into **four reporting buckets** for the appendix and r
 
 $$C^P = C_{\text{hard}}^P + C_{\text{soft}}^P + C_{\text{risk}}^P + C_{\text{emissions}}^P$$
 
-Total benefits are organized into **two buckets**:
+Total benefits are organized into **two categories**:
 
-| Bucket | Definition | Components |
+| Category | Definition | Components |
 |--------|-----------|-----------|
 | $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief + curtailment relief |
 | $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy benefit ($B_{\text{delivered,lifetime}}$) |

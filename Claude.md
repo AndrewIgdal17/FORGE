@@ -893,7 +893,7 @@ pip install -r requirements.txt
 - **Primary BCR removal:** `BCRConfig` dataclass deleted; `bcr_primary` metric removed from calculator, web UI, CSV export, and scenario files.
 - **4-file frontend:** CSS extracted to `styles.css` (~1846 lines); config objects extracted to `configs.js` (~909 lines); TAB_HIERARCHY engine extracted to `hierarchy-engine.js` (~294 lines). `index.html` reduced to ~6850 lines.
 - **TAB_HIERARCHY migration:** All 9 input tabs (Project, Route & Terrain, Financial, Capital Costs, Operational Costs, Delay Costs, Risk Costs, Emissions, Benefits) use config-driven declarative layout via `TAB_HIERARCHY` in `configs.js`.
-- **Benefit/cost bucket restructuring:** Benefits split into remedial ($B_{\text{remedial}}$: congestion + curtailment) and enabling ($B_{\text{enabling}}$: delivered energy). Costs organized into four reporting buckets: hard, soft, risk, emissions.
+- **Benefit/cost category restructuring:** Benefits split into remedial ($B_{\text{remedial}}$: congestion + curtailment) and enabling ($B_{\text{enabling}}$: delivered energy). Costs organized into four reporting categories: hard, soft, risk, emissions.
 - **Scenario Manager features:** Baseline deltas, hierarchical metric picker with super-groups, select-all, fuel mix presets dropdown.
 
 ### v3.0 (2026-03-11)

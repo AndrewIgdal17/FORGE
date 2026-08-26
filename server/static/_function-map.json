@@ -1158,7 +1158,7 @@
         "startLine": 420,
         "endLine": 420,
         "lines": 1,
-        "preview": "C.taxonomyByBucket = {};"
+        "preview": "C.taxonomyByCategory = {};"
       },
       {
         "name": "<ExpressionStatement>",

@@ -4505,7 +4505,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-    "timestamp": "2026-08-04T10:25:44.109402",
+    "timestamp": "2026-08-26T11:40:57.356670",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
@@ -4758,10 +4758,10 @@
       "total_delay_pv": 18845138.771857657,
       "total_costs_pv": 12647455965.01647,
       "total_benefits_pv": 0.0,
-      "reporting_bucket_hard_pv": 435643386.8202457,
-      "reporting_bucket_soft_pv": 1870385509.9966867,
-      "reporting_bucket_risk_pv": 309078145.74762625,
-      "reporting_bucket_emissions_pv": 10032348922.451912,
+      "reporting_category_hard_pv": 435643386.8202457,
+      "reporting_category_soft_pv": 1870385509.9966867,
+      "reporting_category_risk_pv": 309078145.74762625,
+      "reporting_category_emissions_pv": 10032348922.451912,
       "fac_emissions_project_pv": 0.0,
       "displacement_avoided_cost_pv": 0.0,
       "benefits_remedial_pv": 0.0,
@@ -4902,7 +4902,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
       "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-      "timestamp": "2026-08-04T10:25:44.109402",
+      "timestamp": "2026-08-26T11:40:57.356670",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -7498,7 +7498,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-04T10:25:44.655938",
+    "timestamp": "2026-08-26T11:40:57.878396",
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
     "source": "case_study"
   }

@@ -18,9 +18,9 @@ from financial_utils import calculate_real_wacc
 
 FIDELITY_TOLERANCE = 0.01  # $0.01 — IEEE 754 floating-point accumulation only; no formula disagreement
 
-# Buckets used internally to route each stream's PV contribution.
-_OUTPUT_COST_BUCKETS = ("C_hard", "C_soft", "C_risk", "C_emissions")
-_OUTPUT_BENEFIT_BUCKETS = ("B_remedial", "B_enabling", "B_displacement")
+# Categories used internally to route each stream's PV contribution.
+_OUTPUT_COST_CATEGORIES = ("C_hard", "C_soft", "C_risk", "C_emissions")
+_OUTPUT_BENEFIT_CATEGORIES = ("B_remedial", "B_enabling", "B_displacement")
 
 
 @dataclass
@@ -34,7 +34,7 @@ class StreamSpec:
     annual: float
     growth_rate: float
     discount_rate: float
-    bucket: str  # "C_soft_op" | "C_risk_wf" | "C_risk_out" | "B_remedial" | "B_enabling"
+    category: str  # "C_soft_op" | "C_risk_wf" | "C_risk_out" | "B_remedial" | "B_enabling"
 
 
 @dataclass
@@ -49,7 +49,7 @@ class ArrayStreamSpec:
     key: str
     values: list[float]
     discount_rate: float
-    bucket: str  # "C_emissions" | "B_displacement"
+    category: str  # "C_emissions" | "B_displacement"
 
 
 def _dig(d: dict, *keys: str, default: float = 0.0) -> Any:
@@ -186,11 +186,11 @@ def _build_array_streams(results: dict, social_discount_rate: float) -> list[Arr
     """Full-fidelity annual arrays exported by emissions.py / facilitated_emissions.py.
 
     Note: fac_emissions_{withline,noline}_annual_values are NOT included here.
-    Per taxonomy.py, `emissions_fac` is a "reporting_only" item (bucket
+    Per taxonomy.py, `emissions_fac` is a "reporting_only" item (category
     "reporting") — it is diagnostic and is not part of total_costs_pv /
     total_benefits_pv. Only the loss-compensation cost (emissions_comp,
-    bucket "emissions") and the displacement benefit (displacement_avoided,
-    bucket "avoided_emissions") are counted; including the fac_emissions
+    category "emissions") and the displacement benefit (displacement_avoided,
+    category "avoided_emissions") are counted; including the fac_emissions
     arrays here would break the fidelity assertion.
     """
     emissions_annual = results.get("emissions_comp_annual_values") or []
@@ -241,7 +241,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     # --- Delay costs: distributed uniformly across delay years -------------
     # (congestion delay opportunity cost, construction cost escalation during
     # delay, and displacement-delay emissions cost — all pre-COD costs that
-    # land in the soft-cost bucket).
+    # land in the soft-cost category).
     total_delay_soft_pv = (
         bcr.get("delay_cost_pv", 0.0)
         + bcr.get("congestion_delay_cost_pv", 0.0)
@@ -323,17 +323,17 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
             for s in operational_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
-                if s.bucket == "B_remedial":
+                if s.category == "B_remedial":
                     pv_B_remedial += val
-                elif s.bucket == "B_enabling":
+                elif s.category == "B_enabling":
                     pv_B_enabling += val
-                elif s.bucket == "C_soft_op":
+                elif s.category == "C_soft_op":
                     pv_soft_op_year += val
 
             for s in risk_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
                 pv_C_risk += val
-                if s.bucket == "C_risk_wf":
+                if s.category == "C_risk_wf":
                     pv_C_risk_wf += val
                 else:
                     pv_C_risk_out += val
@@ -343,9 +343,9 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                     nominal_val = a.values[k - 1]
                     if nominal_val:
                         pv = nominal_val / (1 + a.discount_rate) ** (D + C + k)
-                        if a.bucket == "C_emissions":
+                        if a.category == "C_emissions":
                             pv_C_emissions += pv
-                        elif a.bucket == "B_displacement":
+                        elif a.category == "B_displacement":
                             pv_B_displacement += pv
 
             pv_C_soft += pv_soft_op_year
@@ -354,7 +354,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                 R_t = rate_base_real / L + rate_base_real * wacc_real * (1 - (k - 1) / L)
                 pv_revenue_year = R_t / (1 + wacc_real) ** (D + C + k)
 
-        # ROW rent lands in the soft-cost bucket regardless of phase (it can
+        # ROW rent lands in the soft-cost category regardless of phase (it can
         # fall in the delay or construction phase for lease/license
         # agreements) and counts toward the operational-soft-cost
         # accumulator used by the system/ratepayer BCR denominators, same as

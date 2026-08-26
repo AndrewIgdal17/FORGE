@@ -16,7 +16,7 @@
       C.taxonomy = null;
       C.taxonomyById = {};
       C.taxonomyBySide = {};
-      C.taxonomyByBucket = {};
+      C.taxonomyByCategory = {};
 
       // Input metadata state (loaded once from GET /api/input_metadata)
       C.inputMetadata = null;

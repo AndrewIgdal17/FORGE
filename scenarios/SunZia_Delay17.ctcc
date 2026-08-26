@@ -4504,7 +4504,7 @@
   },
   "results": {
     "scenario_id": "SunZia_Delay17",
-    "timestamp": "2026-08-04T10:25:40.546031",
+    "timestamp": "2026-08-26T11:40:52.076229",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
@@ -4928,10 +4928,10 @@
       "total_delay_pv": 7695993707.441119,
       "total_costs_pv": 24740972881.729477,
       "total_benefits_pv": 19155114147.278908,
-      "reporting_bucket_hard_pv": 2360726488.1100874,
-      "reporting_bucket_soft_pv": 8387312216.186415,
-      "reporting_bucket_risk_pv": 10216185166.092545,
-      "reporting_bucket_emissions_pv": 3776749011.340429,
+      "reporting_category_hard_pv": 2360726488.1100874,
+      "reporting_category_soft_pv": 8387312216.186415,
+      "reporting_category_risk_pv": 10216185166.092545,
+      "reporting_category_emissions_pv": 3776749011.340429,
       "fac_emissions_project_pv": 54650847240.58126,
       "displacement_avoided_cost_pv": 13797743537.011612,
       "benefits_remedial_pv": 305218065.1451805,
@@ -5228,7 +5228,7 @@
     "csv_equivalent": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
       "scenario_id": "SunZia_Delay17",
-      "timestamp": "2026-08-04T10:25:40.546031",
+      "timestamp": "2026-08-26T11:40:52.076229",
       "capacity_mw": 2400,
       "line_length_miles": 550,
       "construction_type": "Overhead",
@@ -8399,7 +8399,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-04T10:25:41.385559",
+    "timestamp": "2026-08-26T11:40:52.900978",
     "scenario_id": "SunZia_Delay17",
     "source": "sunzia_case_study"
   }

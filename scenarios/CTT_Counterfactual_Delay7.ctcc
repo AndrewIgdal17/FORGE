@@ -4504,7 +4504,7 @@
   },
   "results": {
     "scenario_id": "CTT_Counterfactual_Delay7",
-    "timestamp": "2026-08-04T10:25:37.398134",
+    "timestamp": "2026-08-26T11:40:55.549527",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
@@ -4928,10 +4928,10 @@
       "total_delay_pv": 1046659414.502873,
       "total_costs_pv": 9580500942.485023,
       "total_benefits_pv": 10771435964.790668,
-      "reporting_bucket_hard_pv": 759057445.4245412,
-      "reporting_bucket_soft_pv": 2031841587.6862082,
-      "reporting_bucket_risk_pv": 360885974.363507,
-      "reporting_bucket_emissions_pv": 6428715935.010768,
+      "reporting_category_hard_pv": 759057445.4245412,
+      "reporting_category_soft_pv": 2031841587.6862082,
+      "reporting_category_risk_pv": 360885974.363507,
+      "reporting_category_emissions_pv": 6428715935.010768,
       "fac_emissions_project_pv": 19018576310.300014,
       "displacement_avoided_cost_pv": 8086408376.360096,
       "benefits_remedial_pv": 244550847.58126217,
@@ -5228,7 +5228,7 @@
     "csv_equivalent": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
       "scenario_id": "CTT_Counterfactual_Delay7",
-      "timestamp": "2026-08-04T10:25:37.398134",
+      "timestamp": "2026-08-26T11:40:55.549527",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -7961,7 +7961,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-04T10:25:37.755279",
+    "timestamp": "2026-08-26T11:40:55.891571",
     "scenario_id": "CTT_Counterfactual_Delay7",
     "source": "ctt_panhandle_crez_case_study"
   }

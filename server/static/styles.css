@@ -582,7 +582,7 @@
       }
 
       /* ── Results Section Overview Cards ── */
-      .results-bucket-card {
+      .results-category-card {
         background: var(--color-bg-white);
         border: 1px solid var(--color-border);
         border-radius: 8px;
@@ -591,11 +591,11 @@
         cursor: pointer;
         transition: box-shadow 0.15s, border-color 0.15s;
       }
-      .results-bucket-card:hover {
+      .results-category-card:hover {
         border-color: var(--color-border-medium);
         box-shadow: var(--shadow-sm);
       }
-      .results-bucket-card .bucket-title {
+      .results-category-card .category-title {
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -603,13 +603,13 @@
         color: var(--color-text-secondary);
         margin-bottom: 0.25rem;
       }
-      .results-bucket-card .bucket-value {
+      .results-category-card .category-value {
         font-size: 1.5rem;
         font-weight: 800;
         color: var(--color-text);
         margin-bottom: 0.15rem;
       }
-      .results-bucket-card .bucket-pct {
+      .results-category-card .category-pct {
         font-size: 0.7rem;
         color: var(--color-text-muted);
         margin-bottom: 0.75rem;

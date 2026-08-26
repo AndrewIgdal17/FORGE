@@ -629,11 +629,11 @@
             C.taxonomy = taxData;
             C.taxonomyById = {};
             C.taxonomyBySide = {};
-            C.taxonomyByBucket = {};
+            C.taxonomyByCategory = {};
             (taxData.items || []).forEach(item => {
               C.taxonomyById[item.id] = item;
               (C.taxonomyBySide[item.side] ??= []).push(item);
-              (C.taxonomyByBucket[item.bucket] ??= []).push(item);
+              (C.taxonomyByCategory[item.category] ??= []).push(item);
             });
           }
           if (!C.inputMetadata) C.inputMetadata = metaData;

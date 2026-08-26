@@ -86,7 +86,7 @@ BATCH_SUMMARY_FIELDS = [
     "energy_emissions_costs_pv",
     # 8. Total Costs PV
     "total_costs_pv",
-    # 8a. Appendix-aligned cost buckets
+    # 8a. Appendix-aligned cost categories
     "hard_costs_pv",
     "soft_costs_pv",
     "emissions_costs_pv",
@@ -101,7 +101,7 @@ BATCH_SUMMARY_FIELDS = [
     "annual_revenue_real",
     "displacement_avoided_cost_pv",
     "total_benefits_pv",
-    # 9a. Appendix-aligned benefit buckets
+    # 9a. Appendix-aligned benefit categories
     "benefits_remedial_pv",
     "benefits_enabling_pv",
     # 9b. Transparency (intermediate quantities)
@@ -1010,7 +1010,7 @@ class CTCCOutputManager:
                     results.get("congestion_benefit_pv", 0)
                     + results.get("delivered_benefit_pv", 0)
                 ),
-                # Benefit buckets (appendix-aligned)
+                # Benefit categories (appendix-aligned)
                 "benefits_remedial_pv": results.get("congestion_benefit_pv", 0),
                 "benefits_enabling_pv": results.get("delivered_benefit_pv", 0),
                 # COSTS (increase system cost)

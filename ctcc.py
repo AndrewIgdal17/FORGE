@@ -123,9 +123,9 @@ def build_csv_equivalent(
 
 
 def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
-    """Create a minimal summary aligned with CSV/BCR totals and appendix buckets."""
+    """Create a minimal summary aligned with CSV/BCR totals and appendix categories."""
     return {
-        # Pipeline groupings (cost/benefit bucket subtotals for the summary dict)
+        # Pipeline groupings (cost/benefit category subtotals for the summary dict)
         "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
         "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
         "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),
@@ -133,15 +133,15 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
         "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
         "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
-        # Appendix-aligned cost buckets (C_hard + C_soft + C_risk + C_emissions)
-        "reporting_bucket_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
-        "reporting_bucket_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
-        "reporting_bucket_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
-        "reporting_bucket_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
+        # Appendix-aligned cost categories (C_hard + C_soft + C_risk + C_emissions)
+        "reporting_category_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
+        "reporting_category_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
+        "reporting_category_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
+        "reporting_category_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
         # Facilitated emissions + displacement (reporting)
         "fac_emissions_project_pv": csv_equivalent.get("fac_emissions_project_pv", 0),
         "displacement_avoided_cost_pv": csv_equivalent.get("displacement_avoided_cost_pv", 0),
-        # Appendix-aligned benefit buckets (B_remedial + B_enabling)
+        # Appendix-aligned benefit categories (B_remedial + B_enabling)
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
         "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
     }
@@ -208,8 +208,8 @@ def _hoist_trajectory_arrays(results: dict) -> None:
     dict (docs/design/2026-07-10__bcr-trajectory-spec.md), so hoist them here
     rather than duplicating the year-by-year loops elsewhere.
     """
-    for (bucket, module_key), array_keys in _TRAJECTORY_ARRAY_KEYS.items():
-        module_results = results.get(bucket, {}).get(module_key, {})
+    for (category, module_key), array_keys in _TRAJECTORY_ARRAY_KEYS.items():
+        module_results = results.get(category, {}).get(module_key, {})
         for array_key in array_keys:
             if array_key in module_results:
                 results[array_key] = module_results[array_key]

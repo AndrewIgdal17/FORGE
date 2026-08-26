@@ -350,9 +350,9 @@ class JSONOutputManager:
             + self.summary["total_energy_emissions_pv"]
         )
 
-        # Appendix reporting buckets — fallback derivation from nested dicts.
+        # Appendix reporting categories — fallback derivation from nested dicts.
         # On the JSON-input path, summary_override from build_summary_from_csv_equivalent()
-        # provides authoritative bucket values computed by calculate_costs(); this block
+        # provides authoritative category values computed by calculate_costs(); this block
         # serves as a fallback for any path that does not set summary_override.
         _ll = self.costs.get("line_loss", {})
         _em = self.costs.get("emissions", {})
@@ -362,12 +362,12 @@ class JSONOutputManager:
         _disp_delay_pv = displacement_delay.get("displacement_delay_cost_pv", 0) or 0
         _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _disp_delay_pv
         _energy_line_pv = _ll.get("total_pv", 0) or 0
-        self.summary["reporting_bucket_hard_pv"] = self.summary["total_capital_pv"]
-        self.summary["reporting_bucket_soft_pv"] = (
+        self.summary["reporting_category_hard_pv"] = self.summary["total_capital_pv"]
+        self.summary["reporting_category_soft_pv"] = (
             _delay_total_pv + self.summary["total_operational_pv"] + _energy_line_pv
         )
-        self.summary["reporting_bucket_risk_pv"] = self.summary["total_risk_pv"]
-        self.summary["reporting_bucket_emissions_pv"] = (
+        self.summary["reporting_category_risk_pv"] = self.summary["total_risk_pv"]
+        self.summary["reporting_category_emissions_pv"] = (
             (_em.get("total_pv", 0) or 0)
         )
 

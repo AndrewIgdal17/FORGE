@@ -11,7 +11,7 @@ Computes:
   - Layer 1: C_fac,emissions^(s) for s in {withline, noline} — absolute social
     cost of emissions from each grid trajectory over E_delivered_annual.
   - Layer 2: C_displ,emissions^P = C_fac,emissions^no - C_fac,emissions^with —
-    displacement avoided cost; enters B_avoided_emissions (benefit bucket).
+    displacement avoided cost; enters B_avoided_emissions (benefit category).
 
 Reuses the evolution engine and emissions-by-year functions from emissions.py.
 Methodology note: enabling_resources_displacement_emissions_method.md §§ II.4–II.5b.

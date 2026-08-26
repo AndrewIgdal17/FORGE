@@ -6,7 +6,7 @@ Quick reference for all BCR perspectives calculated by CTCC.
 
 Revenue (the utility's annual transmission revenue requirement, ATRR) is a **transfer** from ratepayers to the utility — zero-sum from society's perspective. Societal BCRs exclude revenue. Revenue appears only in the Utility BCR (numerator) and Ratepayer BCR (denominator).
 
-## Cost and Benefit Buckets
+## Cost and Benefit Categories
 
 **Benefits:**
 - **Remedial** ($B_{\text{remedial}}$): congestion relief + curtailment relief

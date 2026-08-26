@@ -889,7 +889,7 @@ const EQ_RENT_PV = {
 
 const EQ_ROW_CAPITAL = {
   latex: 'C_{\\text{ROW,capital}} = \\xi_{\\text{acq}} \\cdot C_{\\text{acquisition}} + \\xi_{\\text{hold}} \\cdot C_{\\text{hold}}',
-  context: 'Total ROW capital cost (PV). Part of the Hard cost bucket.',
+  context: 'Total ROW capital cost (PV). Part of the Hard cost category.',
   appendixPage: 11, appendixLabel: 'Capital ROW'
 };
 
@@ -918,7 +918,7 @@ const EQ_CONG_DELAY = {
 
 const EQ_ALL_DELAY = {
   latex: 'C_{\\text{delay}} = C_{\\text{base,delay}} + C_{\\text{cong,delay}}',
-  context: 'Total delay cost (PV). Part of the Soft cost bucket.',
+  context: 'Total delay cost (PV). Part of the Soft cost category.',
   appendixPage: 22, appendixLabel: 'Base Delay'
 };
 

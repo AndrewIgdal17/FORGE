@@ -102,16 +102,16 @@ _ALL_BENEFIT_IDS = frozenset(
     tid for tid, item in TAXONOMY.items() if item.side == "benefit"
 )
 _SOFT_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].bucket == "soft"
+    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "soft"
 )
 _HARD_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].bucket == "hard"
+    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "hard"
 )
 _RISK_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].bucket == "risk"
+    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "risk"
 )
 _EMISSIONS_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].bucket == "emissions"
+    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "emissions"
 )
 _OPERATIONAL_IDS = frozenset(
     tid for tid in _ALL_COST_IDS if TAXONOMY[tid].subgroup == "operational"
@@ -122,16 +122,16 @@ _DELAY_IDS = frozenset(
 _BASE_DELAY_IDS = frozenset({"base_delay"})
 _ENERGY_EMISSIONS_IDS = frozenset(
     tid for tid in _ALL_COST_IDS
-    if TAXONOMY[tid].subgroup == "energy" or TAXONOMY[tid].bucket == "emissions"
+    if TAXONOMY[tid].subgroup == "energy" or TAXONOMY[tid].category == "emissions"
 )
 _REMEDIAL_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].bucket == "remedial"
+    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "remedial"
 )
 _ENABLING_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].bucket == "enabling"
+    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "enabling"
 )
 _AVOIDED_EMISSIONS_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].bucket == "avoided_emissions"
+    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "avoided_emissions"
 )
 
 _DENOM_SETS: dict[str, frozenset[str]] = {
@@ -200,7 +200,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     """Compute all BCR metrics from taxonomy-tagged results.
 
     Returns a flat dict with 102 keys matching the legacy output format:
-    individual item PVs, bucket subtotals, BCR ratios, net benefits,
+    individual item PVs, category subtotals, BCR ratios, net benefits,
     and total_costs_excluding variants.
     """
     by_id: dict[str, TaxonomyResult] = {r.taxonomy_id: r for r in results}
@@ -217,7 +217,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     # energy_losses_nominal is not in legacy BCR output but is needed by csv_equivalent
     out["energy_losses_nominal"] = flat.get("energy_losses_nominal", 0)
 
-    # Bucket subtotals
+    # Category subtotals
     total_costs_pv = _sum_pv(_ALL_COST_IDS)
     total_costs_nominal = _sum_nom(_ALL_COST_IDS)
     total_benefits_pv = _sum_pv(_ALL_BENEFIT_IDS)

@@ -4504,7 +4504,7 @@
   },
   "results": {
     "scenario_id": "TBC_Delay4",
-    "timestamp": "2026-08-04T10:25:42.173237",
+    "timestamp": "2026-08-26T11:40:59.586796",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
@@ -4888,10 +4888,10 @@
       "total_delay_pv": 79888665.36001204,
       "total_costs_pv": 692016424.251885,
       "total_benefits_pv": 2462821824.009362,
-      "reporting_bucket_hard_pv": 322303624.9899666,
-      "reporting_bucket_soft_pv": 247303393.72127646,
-      "reporting_bucket_risk_pv": 40114030.886405066,
-      "reporting_bucket_emissions_pv": 82295374.65423693,
+      "reporting_category_hard_pv": 322303624.9899666,
+      "reporting_category_soft_pv": 247303393.72127646,
+      "reporting_category_risk_pv": 40114030.886405066,
+      "reporting_category_emissions_pv": 82295374.65423693,
       "fac_emissions_project_pv": 3202983803.538396,
       "displacement_avoided_cost_pv": 0.0,
       "benefits_remedial_pv": 130343204.99231867,
@@ -5148,7 +5148,7 @@
     "csv_equivalent": {
       "project_name": "TBC_400MW_SubseaCu_VSC",
       "scenario_id": "TBC_Delay4",
-      "timestamp": "2026-08-04T10:25:42.173237",
+      "timestamp": "2026-08-26T11:40:59.586796",
       "capacity_mw": 500,
       "line_length_miles": 53,
       "construction_type": "Subsea",
@@ -7368,7 +7368,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-04T10:25:42.613958",
+    "timestamp": "2026-08-26T11:41:00.016757",
     "scenario_id": "TBC_Delay4",
     "source": "tbc_case_study"
   }

@@ -4504,7 +4504,7 @@
   },
   "results": {
     "scenario_id": "VW1_Delay2",
-    "timestamp": "2026-08-04T10:25:46.966367",
+    "timestamp": "2026-08-26T11:40:54.075218",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "VW1_Subsea_AC_657MW_SubseaCopper_NA",
@@ -4848,10 +4848,10 @@
       "total_delay_pv": 23014004.163210373,
       "total_costs_pv": 8623318324.032803,
       "total_benefits_pv": 3184866024.429017,
-      "reporting_bucket_hard_pv": 1387055213.666027,
-      "reporting_bucket_soft_pv": 1381247263.9193292,
-      "reporting_bucket_risk_pv": 5807358494.669947,
-      "reporting_bucket_emissions_pv": 47657351.77749972,
+      "reporting_category_hard_pv": 1387055213.666027,
+      "reporting_category_soft_pv": 1381247263.9193292,
+      "reporting_category_risk_pv": 5807358494.669947,
+      "reporting_category_emissions_pv": 47657351.77749972,
       "fac_emissions_project_pv": 7500899190.903361,
       "displacement_avoided_cost_pv": 431485502.4448452,
       "benefits_remedial_pv": 15668108.926566469,
@@ -5068,7 +5068,7 @@
     "csv_equivalent": {
       "project_name": "VW1_Subsea_AC_657MW_SubseaCopper_NA",
       "scenario_id": "VW1_Delay2",
-      "timestamp": "2026-08-04T10:25:46.966367",
+      "timestamp": "2026-08-26T11:40:54.075218",
       "capacity_mw": 657,
       "line_length_miles": 88.3,
       "construction_type": "Subsea",
@@ -6799,7 +6799,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-08-04T10:25:47.380086",
+    "timestamp": "2026-08-26T11:40:54.464097",
     "scenario_id": "VW1_Delay2",
     "source": "vineyard_wind_case_study"
   }
