@@ -1,10 +1,12 @@
 # CTCC Methodology
 
-**Purpose (for editors and readers):** This document captures only the **logic and method** of the CTCC—variables, equations, and procedural logic. It is the canonical method reference for running CTCC. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
+> **This is a derived implementation reference**, maintained inside the code submodule for developer convenience. The canonical methodology lives in `methodology/appendix.tex` (vault side). If this document and the appendix disagree, the appendix is correct — update this file to match, not the reverse. See `.cursor/rules/46-ctcc.mdc` ("Appendix is canon").
+
+**Purpose (for editors and readers):** This document captures the **logic and method** of the CTCC — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
 
 ---
 
-This document is the **complete methodology** for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue. It is the single source of truth for the method. **This methodology takes precedence** for categorization and notation.
+This document covers the methodology for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue.
 
 ---
 
