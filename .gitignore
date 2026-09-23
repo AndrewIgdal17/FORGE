@@ -111,5 +111,12 @@ papers/
 
 # Generated data files
 combined_data.json
+test_results.json
 outputs/ctcc_results_*.json
 outputs/json_output_*.json
+
+# Vault-adjacent / local agent artifacts
+.superpowers/
+.claude/
+Generalized_CTCC_Equation.*
+Projects/
