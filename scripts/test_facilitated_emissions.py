@@ -1,7 +1,7 @@
 """Standalone accuracy tests for facilitated_emissions.py (single-trajectory model).
 
 Verifies the module against hand-calculated expected values.
-Run: cd repos/ctcc/scripts && python test_facilitated_emissions.py
+Run: cd repos/forge/scripts && python test_facilitated_emissions.py
 """
 
 import sys

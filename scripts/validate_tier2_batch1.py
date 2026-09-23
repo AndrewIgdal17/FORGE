@@ -1,6 +1,6 @@
-"""Post-Tier-2-Batch-1 validation: compare current .ctcc outputs to pre-change reference values.
+"""Post-Tier-2-Batch-1 validation: compare current .forge outputs to pre-change reference values.
 
-Reference values are from Projects/CTCC/papers/paper1-energy-policy/case-studies/real-world-case-studies.tex
+Reference values are from Projects/FORGE/papers/paper1-energy-policy/case-studies/real-world-case-studies.tex
 (the last iteration before Tier 1 + Tier 2 methodology changes).
 
 Methodology changes that affect values:
@@ -138,7 +138,7 @@ Env mitigation:    ↑ for subsea (marine 2% CAPEX added)
 
 
 def load_scenario(name: str) -> dict:
-    path = SCENARIOS_DIR / f"{name}.ctcc"
+    path = SCENARIOS_DIR / f"{name}.forge"
     if not path.exists():
         return None
     with open(path) as f:
@@ -146,7 +146,7 @@ def load_scenario(name: str) -> dict:
 
 
 def extract_metrics(data: dict) -> dict:
-    """Extract key comparison metrics from a .ctcc results dict."""
+    """Extract key comparison metrics from a .forge results dict."""
     results = data["results"]
     costs = results.get("costs", {})
     benefits = results.get("benefits", {})
@@ -233,7 +233,7 @@ def main():
         current = extract_metrics(data)
 
         print(f"\n{'━' * 90}")
-        print(f"  {ref['label']}  ({scenario_name}.ctcc)")
+        print(f"  {ref['label']}  ({scenario_name}.forge)")
         print(f"  {ref['notes']}")
         print(f"{'━' * 90}")
 

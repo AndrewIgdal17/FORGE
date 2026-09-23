@@ -4,7 +4,7 @@ Pydantic API validation tests: invalid or partial payloads must return 422.
 
 Run from code/server: python -c \"import sys; sys.path.insert(0, '..'); exec(open('../testing/test_api_validation.py').read())\"
 Or from code/: venv/bin/python -m pytest testing/test_api_validation.py -v (if pytest installed)
-Or from code/server: python -c \"from pathlib import Path; import sys; sys.path.insert(0, str(Path('..').resolve())); from testing.test_api_validation import *; test_process_invalid_mode(); test_ctcc_calculate_invalid_mode(); test_ctcc_calculate_invalid_input_mode(); print('OK')\"
+Or from code/server: python -c \"from pathlib import Path; import sys; sys.path.insert(0, str(Path('..').resolve())); from testing.test_api_validation import *; test_process_invalid_mode(); test_forge_calculate_invalid_mode(); test_forge_calculate_invalid_input_mode(); print('OK')\"
 """
 
 from __future__ import annotations
@@ -39,16 +39,16 @@ def test_process_values_not_list():
     assert r.status_code in (200, 422)
 
 
-def test_ctcc_calculate_invalid_mode():
-    """POST /api/ctcc/calculate with wrong top-level 'mode' should return 422."""
-    r = client.post("/api/ctcc/calculate", json={"mode": "wrong"})
+def test_forge_calculate_invalid_mode():
+    """POST /api/forge/calculate with wrong top-level 'mode' should return 422."""
+    r = client.post("/api/forge/calculate", json={"mode": "wrong"})
     assert r.status_code == 422
 
 
-def test_ctcc_calculate_invalid_input_mode():
-    """POST /api/ctcc/calculate with input_mode not in ['json','yaml'] should return 422."""
+def test_forge_calculate_invalid_input_mode():
+    """POST /api/forge/calculate with input_mode not in ['json','yaml'] should return 422."""
     r = client.post(
-        "/api/ctcc/calculate",
+        "/api/forge/calculate",
         json={
             "mode": "calculate",
             "input_mode": "xml",
@@ -58,10 +58,10 @@ def test_ctcc_calculate_invalid_input_mode():
     assert r.status_code == 422
 
 
-def test_ctcc_calculate_partial_ok():
-    """POST /api/ctcc/calculate with minimal valid payload can return 200 or 500 (server may fail on missing data)."""
+def test_forge_calculate_partial_ok():
+    """POST /api/forge/calculate with minimal valid payload can return 200 or 500 (server may fail on missing data)."""
     r = client.post(
-        "/api/ctcc/calculate",
+        "/api/forge/calculate",
         json={
             "mode": "calculate",
             "input_mode": "yaml",

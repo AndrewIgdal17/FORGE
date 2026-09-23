@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-CTCC Test Runner
-Automated test suite for Comprehensive Transmission Cost Calculator
+FORGE Test Runner
+Automated test suite for Framework for Open Reproducible Grid Economics
 
 Usage:
     ./run_tests.py                    # Run all tests
@@ -49,7 +49,7 @@ class TestRunner:
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
         self.results: List[TestResult] = []
-        self.project_root = Path(__file__).parent.parent  # Go up to CTCC root
+        self.project_root = Path(__file__).parent.parent  # Go up to FORGE root
         self.venv_python = self.project_root / "venv" / "bin" / "python3"
         self.outputs_dir = self.project_root / "outputs"
         self.temp_files = []
@@ -138,8 +138,8 @@ class TestRunner:
         scenario_id = f"test_yaml_json_{int(time.time())}"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
-        env = {"CTCC_SCENARIO_ID": scenario_id}
+        cmd = [str(self.venv_python), "forge.py", "--simple"]
+        env = {"FORGE_SCENARIO_ID": scenario_id}
         success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
@@ -149,11 +149,11 @@ class TestRunner:
                           f"Command failed: {stderr[:200]}")
             return False
 
-        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        json_output = self.outputs_dir / f"forge_results_{scenario_id}.json"
         self.temp_files.append(json_output)
         if not json_output.exists():
             self.add_result(test_id, "YAML→JSON mode", "fail", duration,
-                          "ctcc_results_*.json not created")
+                          "forge_results_*.json not created")
             return False
 
         self.add_result(test_id, "YAML→JSON mode", "pass", duration)
@@ -174,8 +174,8 @@ class TestRunner:
         scenario_id = f"test_{int(time.time())}"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
-        env = {"CTCC_SCENARIO_ID": scenario_id}
+        cmd = [str(self.venv_python), "forge.py", "--simple"]
+        env = {"FORGE_SCENARIO_ID": scenario_id}
         success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
@@ -185,7 +185,7 @@ class TestRunner:
                           f"Command failed: {stderr[:200]}")
             return False
 
-        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        json_output = self.outputs_dir / f"forge_results_{scenario_id}.json"
         self.temp_files.append(json_output)
 
         if not json_output.exists():
@@ -219,7 +219,7 @@ class TestRunner:
         test_id = "1.2.1"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "--norisk", "--simple"]
+        cmd = [str(self.venv_python), "forge.py", "--norisk", "--simple"]
         success, stdout, stderr = self.run_command(cmd, timeout=180)
 
         duration = time.time() - start_time
@@ -239,13 +239,13 @@ class TestRunner:
         return True
 
     def test_1_2_6_custom_scenario_id(self):
-        """Test 1.2.6: Custom scenario ID (via CTCC_SCENARIO_ID)"""
+        """Test 1.2.6: Custom scenario ID (via FORGE_SCENARIO_ID)"""
         test_id = "1.2.6"
         scenario_id = "custom_test_123"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
-        env = {"CTCC_SCENARIO_ID": scenario_id}
+        cmd = [str(self.venv_python), "forge.py", "--simple"]
+        env = {"FORGE_SCENARIO_ID": scenario_id}
         success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
@@ -256,7 +256,7 @@ class TestRunner:
             return False
 
         # Check that file has correct name
-        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        json_output = self.outputs_dir / f"forge_results_{scenario_id}.json"
         self.temp_files.append(json_output)
 
         if not json_output.exists():
@@ -321,8 +321,8 @@ class TestRunner:
 
         # Step 1: Run YAML→JSON (calculator is YAML-in, JSON-out)
         scenario_id = f"roundtrip_yaml_{int(time.time())}"
-        cmd1 = [str(self.venv_python), "ctcc.py", "--simple"]
-        success1, stdout1, stderr1 = self.run_command(cmd1, timeout=180, env={"CTCC_SCENARIO_ID": scenario_id})
+        cmd1 = [str(self.venv_python), "forge.py", "--simple"]
+        success1, stdout1, stderr1 = self.run_command(cmd1, timeout=180, env={"FORGE_SCENARIO_ID": scenario_id})
 
         if not success1:
             duration = time.time() - start_time
@@ -330,12 +330,12 @@ class TestRunner:
                           "YAML→JSON failed")
             return False
 
-        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        json_output = self.outputs_dir / f"forge_results_{scenario_id}.json"
         self.temp_files.append(json_output)
         if not json_output.exists():
             duration = time.time() - start_time
             self.add_result(test_id, "Round-trip test", "fail", duration,
-                          "ctcc_results_*.json not created")
+                          "forge_results_*.json not created")
             return False
 
         try:
@@ -366,8 +366,8 @@ class TestRunner:
         start_time = time.time()
 
         scenario_id = f"bcr_test_{int(time.time())}"
-        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
-        env = {"CTCC_SCENARIO_ID": scenario_id}
+        cmd = [str(self.venv_python), "forge.py", "--simple"]
+        env = {"FORGE_SCENARIO_ID": scenario_id}
         success, stdout, stderr = self.run_command(cmd, timeout=180, env=env)
 
         duration = time.time() - start_time
@@ -384,7 +384,7 @@ class TestRunner:
             return False
 
         # Validate JSON output has BCR
-        json_output = self.outputs_dir / f"ctcc_results_{scenario_id}.json"
+        json_output = self.outputs_dir / f"forge_results_{scenario_id}.json"
         self.temp_files.append(json_output)
 
         try:
@@ -421,7 +421,7 @@ class TestRunner:
         self.temp_files.append(invalid_json)
         invalid_json.write_text("{invalid json content")
 
-        cmd = [str(self.venv_python), "ctcc.py", "-j", "--json-file", str(invalid_json), "--simple"]
+        cmd = [str(self.venv_python), "forge.py", "-j", "--json-file", str(invalid_json), "--simple"]
         success, stdout, stderr = self.run_command(cmd, timeout=30)
 
         duration = time.time() - start_time
@@ -452,7 +452,7 @@ class TestRunner:
         test_id = "9.1.1"
         start_time = time.time()
 
-        cmd = [str(self.venv_python), "ctcc.py", "--simple"]
+        cmd = [str(self.venv_python), "forge.py", "--simple"]
         success, stdout, stderr = self.run_command(cmd, timeout=180)
 
         duration = time.time() - start_time
@@ -661,7 +661,7 @@ class TestRunner:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description="CTCC Test Runner",
+        description="FORGE Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
@@ -697,7 +697,7 @@ def main():
 
     # Print header
     print(f"\n{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.HEADER}CTCC TEST SUITE{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.HEADER}FORGE TEST SUITE{Colors.ENDC}")
     print(f"{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.ENDC}\n")
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Priority: {args.priority}")
