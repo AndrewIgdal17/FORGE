@@ -293,7 +293,6 @@ HOST=0.0.0.0 ./run_fastapi.command
 
 - **Implementation Guide**: `../IMPLEMENTATION_COMPLETE.md`
 - **API Documentation**: `../FASTAPI_JSON_RESPONSE.md`
-- **System Overview**: `../claude.md`
 - **Test Script**: `../test_fastapi_endpoint.py`
 
 ---

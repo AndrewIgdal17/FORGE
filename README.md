@@ -326,7 +326,6 @@ cd testing
   - **testing/README.md** - Testing quick start
   - **testing/TESTING.md** - Complete testing guide
   - **testing/TEST_PLAN.md** - Full test plan
-- **Claude.md** - Comprehensive development documentation
 - **MODE_FLOW_DIAGRAM.md** - Architecture and flow diagrams
 - **server/COMMAND_FILES_GUIDE.md** - Server command documentation
 

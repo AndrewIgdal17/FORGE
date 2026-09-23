@@ -262,5 +262,4 @@ Tests to be implemented:
 
 For test failures or questions, refer to:
 - `TEST_PLAN.md` - Comprehensive test plan
-- `CLAUDE.md` - Developer documentation
 - `README.md` - User guide

@@ -67,7 +67,6 @@ Use `--save-report` to generate `test_results.json` with:
 
 - **TESTING.md** - Complete testing guide with examples
 - **TEST_PLAN.md** - Full manual test plan (all test categories)
-- **../CLAUDE.md** - Developer documentation
 - **../README.md** - User guide
 
 ## Requirements
