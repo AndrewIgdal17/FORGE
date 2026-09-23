@@ -1,4 +1,4 @@
-// CTCC Config Objects
+// FORGE Config Objects
 // Extracted from index.html — loaded via <script src="/static/configs.js"> before the main inline script.
 
 // =============================================
@@ -105,7 +105,7 @@
         sensitivity: 'BCR — Societal Exclusions',
       };
 
-      const CMP_PICKER_STORAGE_KEY = 'ctcc-cmp-picker-details';
+      const CMP_PICKER_STORAGE_KEY = 'forge-cmp-picker-details';
 
       // Comparison catalog: group order is fixed (BCR — Societal Exclusions last); within each group,
       // metrics are alphabetical by label. Flatten order drives sortComparisonColumnsByCatalog(); add-column UI is the

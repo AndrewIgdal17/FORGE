@@ -1,4 +1,4 @@
-// CTCC Utility Functions
+// FORGE Utility Functions
 // Extracted from index.html — loaded via <script src="/static/utils.js">
 
 (function() {

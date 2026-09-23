@@ -1,9 +1,9 @@
-// CTCC Input Form Renderer
+// FORGE Input Form Renderer
 // Extracted from index.html — loaded via <script src="/static/input-renderer.js">
 
 (function() {
 'use strict';
-const C = window.CTCC;
+const C = window.FORGE;
 
 const LOCK_SVG = '<svg width="11" height="11" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const UNLOCK_SVG = '<svg width="11" height="11" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 014 0" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
@@ -133,7 +133,7 @@ const TAB_GUIDE_CONTENT = {
   },
   'financial': {
     oneliner: 'Define the economic rates and financing assumptions that drive every present-value calculation in your project.',
-    body: 'The CTCC converts all costs and benefits to present value so they can be compared on equal footing. The rates you set here \u2014 your weighted average cost of capital (WACC), inflation rate, and social discount rate \u2014 determine how future dollars are translated into today\u2019s dollars. A higher discount rate shrinks distant costs and benefits; a lower one makes them weigh more heavily. These rates also feed the Allowance for Funds Used During Construction (AFUDC) calculation and the revenue requirement. Getting them wrong shifts the entire cost-benefit balance.',
+    body: 'The FORGE converts all costs and benefits to present value so they can be compared on equal footing. The rates you set here \u2014 your weighted average cost of capital (WACC), inflation rate, and social discount rate \u2014 determine how future dollars are translated into today\u2019s dollars. A higher discount rate shrinks distant costs and benefits; a lower one makes them weigh more heavily. These rates also feed the Allowance for Funds Used During Construction (AFUDC) calculation and the revenue requirement. Getting them wrong shifts the entire cost-benefit balance.',
     items: ['Discount and financing rates (WACC, inflation, social discount rate)', 'AFUDC capitalization rules and cost timing', 'Revenue requirement assumptions for the utility perspective'],
   },
   'capital-costs': {
@@ -371,7 +371,7 @@ const TAB_GUIDE_CONTENT = {
 function renderTabGuideBanner(tabOrSubTabId, container) {
   const content = TAB_GUIDE_CONTENT[tabOrSubTabId];
   if (!content) return;
-  const storageKey = 'ctcc-tab-guide-dismissed-' + tabOrSubTabId;
+  const storageKey = 'forge-tab-guide-dismissed-' + tabOrSubTabId;
   if (localStorage.getItem(storageKey) === 'permanent') return;
 
   const banner = document.createElement('div');
@@ -643,7 +643,7 @@ function createFieldFromMetadata(meta, value) {
 
   if (meta.appendixRef || meta.appendixPage) {
     const pill = document.createElement('span');
-    pill.className = 'ctcc-source-pill';
+    pill.className = 'forge-source-pill';
     const ref = meta.appendixRef || 'Appendix';
     const page = meta.appendixPage;
     pill.innerHTML = '<svg width="8" height="8" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> ' + ref + (page ? ' p.\u200b' + page : '');
@@ -769,7 +769,7 @@ function renderTaxonomySections(container, fields, data, taxById, scopeEl) {
     restoreBtn.className = 'restore-defaults-btn';
     restoreBtn.textContent = 'Restore Defaults';
     restoreBtn.addEventListener('click', () => {
-      showRestoreDefaultsDialog('ctcc-restore-section-' + taxId, 'this section', () => {
+      showRestoreDefaultsDialog('forge-restore-section-' + taxId, 'this section', () => {
         resetSectionToDefaults(taxId);
         showToast('Defaults restored');
       });
@@ -1019,7 +1019,7 @@ function renderTerrainTable(data) {
 
   const wrapper = document.createElement('div');
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--editable terrain-table';
+  table.className = 'forge-table forge-table--editable terrain-table';
   const terrainCaption = document.createElement('caption');
   terrainCaption.textContent = 'Terrain Miles';
   terrainCaption.appendChild(makeHelpIcon('Route miles by terrain type. Must sum to project total miles.'));
@@ -1149,7 +1149,7 @@ function renderTerrainTable(data) {
   table.appendChild(tbody);
 
   const terrainTableCard = document.createElement('div');
-  terrainTableCard.className = 'ctcc-table-card';
+  terrainTableCard.className = 'forge-table-card';
 
   const terrainCardHeader = document.createElement('div');
   terrainCardHeader.className = 'card-header';
@@ -1162,13 +1162,13 @@ function renderTerrainTable(data) {
       setMultipliersLocked(true);
       return;
     }
-    const suppressed = localStorage.getItem('ctcc-suppress-multiplier-warning') === 'true';
+    const suppressed = localStorage.getItem('forge-suppress-multiplier-warning') === 'true';
     if (suppressed) {
       setMultipliersLocked(false);
       return;
     }
     showMultiplierConfirmDialog(wrapper, (suppress) => {
-      if (suppress) localStorage.setItem('ctcc-suppress-multiplier-warning', 'true');
+      if (suppress) localStorage.setItem('forge-suppress-multiplier-warning', 'true');
       setMultipliersLocked(false);
     });
   });
@@ -1177,7 +1177,7 @@ function renderTerrainTable(data) {
   terrainTableCard.appendChild(table);
 
   const terrainSource = document.createElement('div');
-  terrainSource.className = 'ctcc-source';
+  terrainSource.className = 'forge-source';
   terrainSource.innerHTML = SOURCE_ICON_SVG + ' Multipliers: MISO Transmission Expansion Planning (2023)';
   terrainTableCard.appendChild(terrainSource);
 
@@ -1203,7 +1203,7 @@ function renderROWZonesTable(data) {
   const wrapper = document.createElement('div');
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--editable row-table-greenfield';
+  table.className = 'forge-table forge-table--editable row-table-greenfield';
   table.id = 'row-zone-table';
   const rowCaption = document.createElement('caption');
   rowCaption.textContent = 'Right-of-Way Zones';
@@ -1369,11 +1369,11 @@ function renderROWZonesTable(data) {
   table.appendChild(tbody);
 
   const rowTableCard = document.createElement('div');
-  rowTableCard.className = 'ctcc-table-card';
+  rowTableCard.className = 'forge-table-card';
   rowTableCard.appendChild(table);
 
   const rowSource = document.createElement('div');
-  rowSource.className = 'ctcc-source';
+  rowSource.className = 'forge-source';
   rowSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> BLM ROW Rates, 43 CFR 2806 (2023)';
   rowTableCard.appendChild(rowSource);
 
@@ -1439,7 +1439,7 @@ function updateROWColumnVisibility() {
   const table = document.getElementById('row-zone-table');
   if (!table) return;
   const gf = isGreenfieldROW();
-  table.className = gf ? 'ctcc-table ctcc-table--editable row-table-greenfield' : 'ctcc-table ctcc-table--editable row-table-existing';
+  table.className = gf ? 'forge-table forge-table--editable row-table-greenfield' : 'forge-table forge-table--editable row-table-existing';
   const panel = document.getElementById('row-cost-panel');
   if (panel) {
     panel.querySelectorAll('.greenfield-only').forEach(el => el.style.display = gf ? '' : 'none');
@@ -1922,7 +1922,7 @@ function renderEnvBaseMitigationTable(data) {
 
   // Base mitigation table
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--editable terrain-table';
+  table.className = 'forge-table forge-table--editable terrain-table';
   const ebCaption = document.createElement('caption');
   ebCaption.textContent = 'Base Mitigation Costs';
   ebCaption.appendChild(makeHelpIcon('Per-acre environmental restoration costs by terrain for the active construction type.'));
@@ -2019,11 +2019,11 @@ function renderEnvBaseMitigationTable(data) {
   table.appendChild(tbody);
 
   const envBaseTableCard = document.createElement('div');
-  envBaseTableCard.className = 'ctcc-table-card';
+  envBaseTableCard.className = 'forge-table-card';
   envBaseTableCard.appendChild(table);
 
   const envBaseSource = document.createElement('div');
-  envBaseSource.className = 'ctcc-source';
+  envBaseSource.className = 'forge-source';
   envBaseSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Environmental mitigation cost estimates';
   envBaseTableCard.appendChild(envBaseSource);
 
@@ -2055,7 +2055,7 @@ function renderEnvCreditsTable(data) {
   wrapper.appendChild(totalAcresDisplay);
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--editable terrain-table';
+  table.className = 'forge-table forge-table--editable terrain-table';
   const ecCaption = document.createElement('caption');
   ecCaption.textContent = 'Habitat Credit Costs';
   ecCaption.appendChild(makeHelpIcon('Per-acre credit purchase costs for habitat and wetland mitigation.'));
@@ -2115,11 +2115,11 @@ function renderEnvCreditsTable(data) {
   table.appendChild(tbody);
 
   const envCreditsTableCard = document.createElement('div');
-  envCreditsTableCard.className = 'ctcc-table-card';
+  envCreditsTableCard.className = 'forge-table-card';
   envCreditsTableCard.appendChild(table);
 
   const envCreditsSource = document.createElement('div');
-  envCreditsSource.className = 'ctcc-source';
+  envCreditsSource.className = 'forge-source';
   envCreditsSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Habitat credit market rates';
   envCreditsTableCard.appendChild(envCreditsSource);
 
@@ -2221,7 +2221,7 @@ function isReconductoring() {
 function renderConductorDetailsTable() {
   const wrapper = document.createElement('div');
   wrapper.id = 'conductor-details-wrapper';
-  wrapper.className = 'ctcc-params-card';
+  wrapper.className = 'forge-params-card';
 
   const cat = buildCategoryString();
   const entry = getCircuitDetailsEntry();
@@ -2277,7 +2277,7 @@ function renderConductorDetailsTable() {
   wrapper.appendChild(container);
 
   const source = document.createElement('div');
-  source.className = 'ctcc-source';
+  source.className = 'forge-source';
   source.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL/DOE Conductor Database (2024)';
   wrapper.appendChild(source);
 
@@ -2293,7 +2293,7 @@ function updateAcDcWarning() {
   if (shouldShow && !banner) {
     banner = document.createElement('div');
     banner.id = 'ac-dc-conversion-warning';
-    banner.className = 'ctcc-validation-banner';
+    banner.className = 'forge-validation-banner';
     banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="banner-text">AC\u2194DC conversion scenario \u2014 capacity comparisons may not be directly comparable. Review results carefully.</span>';
     const configSubTab = document.querySelector('[data-sub-tab="technology"]');
     if (configSubTab) configSubTab.prepend(banner);
@@ -2353,7 +2353,7 @@ function renderStructureDetailsTable() {
   ];
 
   const paramsCard = document.createElement('div');
-  paramsCard.className = 'ctcc-params-card';
+  paramsCard.className = 'forge-params-card';
 
   const sdCardHeader = document.createElement('div');
   sdCardHeader.className = 'card-header';
@@ -2391,7 +2391,7 @@ function renderStructureDetailsTable() {
   paramsCard.appendChild(sdContainer);
 
   const sdSource = document.createElement('div');
-  sdSource.className = 'ctcc-source';
+  sdSource.className = 'forge-source';
   sdSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL Transmission Structure Database (2024)';
   paramsCard.appendChild(sdSource);
 
@@ -2463,7 +2463,7 @@ function renderConverterDetailsTable() {
   ];
 
   const cvParamsCard = document.createElement('div');
-  cvParamsCard.className = 'ctcc-params-card';
+  cvParamsCard.className = 'forge-params-card';
 
   const cvCardHeader = document.createElement('div');
   cvCardHeader.className = 'card-header';
@@ -2503,7 +2503,7 @@ function renderConverterDetailsTable() {
   cvParamsCard.appendChild(cvContainer);
 
   const cvSource = document.createElement('div');
-  cvSource.className = 'ctcc-source';
+  cvSource.className = 'forge-source';
   cvSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> NREL Converter Database (2024)';
   cvParamsCard.appendChild(cvSource);
 
@@ -2547,7 +2547,7 @@ function renderConductorMaintenanceTable() {
   const entry = C.conductorOmLookup ? (C.conductorOmLookup[cat] ?? null) : null;
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table capital-cost-table conductor-maintenance-table';
+  table.className = 'forge-table capital-cost-table conductor-maintenance-table';
   const cmCaption = document.createElement('caption');
   cmCaption.textContent = 'Conductor Maintenance Costs';
   cmCaption.appendChild(makeHelpIcon('Annual per-mile maintenance cost for conductor from the NREL/DOE database.'));
@@ -2583,7 +2583,7 @@ function renderConductorMaintenanceTable() {
   tbody.appendChild(tr);
   table.appendChild(tbody);
   const cmCard = document.createElement('div');
-  cmCard.className = 'ctcc-table-card';
+  cmCard.className = 'forge-table-card';
   const cmCardHeader = document.createElement('div');
   cmCardHeader.className = 'card-header';
   cmCardHeader.textContent = 'Conductor Maintenance ';
@@ -2594,7 +2594,7 @@ function renderConductorMaintenanceTable() {
   cmCard.appendChild(cmCardHeader);
   cmCard.appendChild(table);
   const cmSource = document.createElement('div');
-  cmSource.className = 'ctcc-source';
+  cmSource.className = 'forge-source';
   cmSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
   cmCard.appendChild(cmSource);
   wrapper.appendChild(cmCard);
@@ -2637,7 +2637,7 @@ function renderStructureMaintenanceTable() {
   const entry = C.structureDetailsLookup ? (C.structureDetailsLookup[constructionType] ?? null) : null;
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table capital-cost-table structure-maintenance-table';
+  table.className = 'forge-table capital-cost-table structure-maintenance-table';
   const smCaption = document.createElement('caption');
   smCaption.textContent = 'Structure Maintenance Costs';
   smCaption.appendChild(makeHelpIcon('Annual per-structure maintenance cost by terrain from the NREL/DOE database.'));
@@ -2708,7 +2708,7 @@ function renderStructureMaintenanceTable() {
   table.appendChild(tbody);
 
   const smCard = document.createElement('div');
-  smCard.className = 'ctcc-table-card';
+  smCard.className = 'forge-table-card';
   const smCardHeader = document.createElement('div');
   smCardHeader.className = 'card-header';
   smCardHeader.textContent = 'Structure Maintenance ';
@@ -2719,7 +2719,7 @@ function renderStructureMaintenanceTable() {
   smCard.appendChild(smCardHeader);
   smCard.appendChild(table);
   const smSource = document.createElement('div');
-  smSource.className = 'ctcc-source';
+  smSource.className = 'forge-source';
   smSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
   smCard.appendChild(smSource);
   wrapper.appendChild(smCard);
@@ -2759,7 +2759,7 @@ function renderConverterMaintenanceTable() {
   const entry = C.converterDetailsLookup ? (C.converterDetailsLookup[cat] ?? null) : null;
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table capital-cost-table converter-maintenance-table';
+  table.className = 'forge-table capital-cost-table converter-maintenance-table';
   const cvmCaption = document.createElement('caption');
   cvmCaption.textContent = 'Converter Maintenance Costs';
   cvmCaption.appendChild(makeHelpIcon('Annual converter O&M cost from the NREL/DOE database.'));
@@ -2795,7 +2795,7 @@ function renderConverterMaintenanceTable() {
   tbody.appendChild(tr);
   table.appendChild(tbody);
   const cvmCard = document.createElement('div');
-  cvmCard.className = 'ctcc-table-card';
+  cvmCard.className = 'forge-table-card';
   const cvmCardHeader = document.createElement('div');
   cvmCardHeader.className = 'card-header';
   cvmCardHeader.textContent = 'Converter Maintenance ';
@@ -2806,7 +2806,7 @@ function renderConverterMaintenanceTable() {
   cvmCard.appendChild(cvmCardHeader);
   cvmCard.appendChild(table);
   const cvmSource = document.createElement('div');
-  cvmSource.className = 'ctcc-source';
+  cvmSource.className = 'forge-source';
   cvmSource.innerHTML = SOURCE_ICON_SVG + ' Industry O&amp;M benchmarks';
   cvmCard.appendChild(cvmSource);
   wrapper.appendChild(cvmCard);
@@ -2865,7 +2865,7 @@ function renderInsurableAssetsTable(data) {
   wrapper.appendChild(premiumDiv);
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table';
+  table.className = 'forge-table conductor-details-table';
   const insCaption = document.createElement('caption');
   insCaption.textContent = 'Insurable Assets';
   insCaption.appendChild(makeHelpIcon('Capital cost components eligible for operational insurance. Annual premium = total insured value \u00d7 premium rate.'));
@@ -2930,11 +2930,11 @@ function renderInsurableAssetsTable(data) {
   table.appendChild(tbody);
 
   const insTableCard = document.createElement('div');
-  insTableCard.className = 'ctcc-table-card';
+  insTableCard.className = 'forge-table-card';
   insTableCard.appendChild(table);
 
   const insSource = document.createElement('div');
-  insSource.className = 'ctcc-source';
+  insSource.className = 'forge-source';
   insSource.innerHTML = '<svg width="10" height="10" viewBox="0 0 16 16"><path d="M13 1H3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2zM5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h4v1H5v-1z" fill="currentColor"/></svg> Industry benchmark rates';
   insTableCard.appendChild(insSource);
 
@@ -3014,7 +3014,7 @@ function renderVegetationManagementTable() {
   const TERRAIN_LABELS = {forested:'Forested', scrubbed_flat:'Scrubbed Flat', wetland:'Wetland', farmland:'Farmland', desert_barren:'Desert/Barren', urban:'Urban', rolling_hills:'Rolling Hills', mountain:'Mountain', subsea:'Subsea'};
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table capital-cost-table veg-mgmt-table';
+  table.className = 'forge-table capital-cost-table veg-mgmt-table';
   const vmCaption = document.createElement('caption');
   vmCaption.textContent = 'Vegetation Management Costs';
   vmCaption.appendChild(makeHelpIcon('Annual per-mile vegetation management cost by terrain from the NREL/DOE database.'));
@@ -3056,7 +3056,7 @@ function renderVegetationManagementTable() {
   table.appendChild(tbody);
 
   const vmCard = document.createElement('div');
-  vmCard.className = 'ctcc-table-card';
+  vmCard.className = 'forge-table-card';
   const vmCardHeader = document.createElement('div');
   vmCardHeader.className = 'card-header';
   vmCardHeader.textContent = 'Vegetation Management ';
@@ -3067,7 +3067,7 @@ function renderVegetationManagementTable() {
   vmCard.appendChild(vmCardHeader);
   vmCard.appendChild(table);
   const vmSource = document.createElement('div');
-  vmSource.className = 'ctcc-source';
+  vmSource.className = 'forge-source';
   vmSource.innerHTML = SOURCE_ICON_SVG + ' Utility vegetation management cost surveys';
   vmCard.appendChild(vmSource);
   wrapper.appendChild(vmCard);
@@ -3133,7 +3133,7 @@ function renderEnergyMixTable(data) {
     'Post-COD Growth Rates': 'Annual growth/decline in each source\u2019s share with the line\u2019s influence (decimal rate; e.g. -3% = -0.03).',
   };
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--compact ctcc-table--editable conductor-details-table energy-mix-table';
+  table.className = 'forge-table forge-table--compact forge-table--editable conductor-details-table energy-mix-table';
   const emCaption = document.createElement('caption');
   emCaption.textContent = 'Grid Mix';
   emCaption.appendChild(makeHelpIcon('Single-trajectory regional grid: one initial mix, two rate regimes (pre-COD without the line, post-COD with the line). Used for displacement and emissions calculations.'));
@@ -3223,7 +3223,7 @@ function renderLineLossParametersTable() {
   ];
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table conductor-details-table';
+  table.className = 'forge-table conductor-details-table';
   const llCaption = document.createElement('caption');
   llCaption.textContent = 'Line Loss Parameters';
   llCaption.appendChild(makeHelpIcon('Electrical parameters from the NREL/DOE database that determine resistive line losses.'));
@@ -3319,7 +3319,7 @@ function renderIntensityTable(data) {
     'NO\u2093 (kg/MWh)': 'Nitrogen oxide emission intensity',
   };
   const intTable = document.createElement('table');
-  intTable.className = 'ctcc-table ctcc-table--compact conductor-details-table';
+  intTable.className = 'forge-table forge-table--compact conductor-details-table';
   const intCaption = document.createElement('caption');
   intCaption.textContent = 'Emission Intensities';
   intCaption.appendChild(makeHelpIcon('Pollutant emission rates by fuel source in kg per MWh of generation.'));
@@ -3370,7 +3370,7 @@ function renderExternalityCostTable(data) {
   const wrapper = document.createElement('div');
   wrapper.id = 'externality-cost-wrapper';
   const extTable = document.createElement('table');
-  extTable.className = 'ctcc-table conductor-details-table';
+  extTable.className = 'forge-table conductor-details-table';
   const extCaption = document.createElement('caption');
   extCaption.textContent = 'Externality Costs';
   extCaption.appendChild(makeHelpIcon('Social cost of each pollutant used to monetize avoided emissions.'));
@@ -3540,7 +3540,7 @@ function renderWildfireRiskPanel(data) {
 
       // CT Multiplier table (Pattern 7)
       const multTable = document.createElement('table');
-      multTable.className = 'ctcc-table capital-cost-table'; multTable.style.marginTop = '1rem';
+      multTable.className = 'forge-table capital-cost-table'; multTable.style.marginTop = '1rem';
       const wfMultCaption = document.createElement('caption');
       wfMultCaption.textContent = 'Construction Type Multiplier';
       wfMultCaption.appendChild(makeHelpIcon('Ignition rate multiplier by construction method. Locked values from PG&E SOM / SDG&E CPUC / CIGRE data.'));
@@ -3682,7 +3682,7 @@ function renderOutageRiskPanel(data) {
 
       // Duration Multiplier table (Pattern 7)
       const durTable = document.createElement('table');
-      durTable.className = 'ctcc-table capital-cost-table'; durTable.style.marginTop = '1rem';
+      durTable.className = 'forge-table capital-cost-table'; durTable.style.marginTop = '1rem';
       const outMultCaption = document.createElement('caption');
       outMultCaption.textContent = 'Duration Multiplier';
       outMultCaption.appendChild(makeHelpIcon('Outage duration multiplier by construction method. Locked values from CIGRE TB 815 / IEA Wind TEM95 data.'));
@@ -3725,7 +3725,7 @@ function renderOutageRiskPanel(data) {
       panel.appendChild(bodDiv);
 
       const rateTable = document.createElement('table');
-      rateTable.className = 'ctcc-table capital-cost-table'; rateTable.style.marginTop = '1rem';
+      rateTable.className = 'forge-table capital-cost-table'; rateTable.style.marginTop = '1rem';
       const rateCaption = document.createElement('caption');
       rateCaption.textContent = 'Outage Rate by Construction Type';
       rateCaption.appendChild(makeHelpIcon('Line-level outage frequency per construction type (outages/mi/yr).'));
@@ -3823,7 +3823,7 @@ function renderFinancialRatesPanel(data) {
 
     if (rf.id === 'wacc_nominal') {
       const computedDiv = document.createElement('div');
-      computedDiv.className = 'ctcc-computed-value';
+      computedDiv.className = 'forge-computed-value';
       computedDiv.innerHTML = '<div class="computed-label"><svg width="12" height="12" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> Real WACC (computed)</div><span class="computed-val" id="wacc-real-display">\u2014</span>';
       wrapper.appendChild(computedDiv);
     }
@@ -3932,7 +3932,7 @@ function renderFinancialAFUDCPanel(data) {
 
   // Cost Timing Matrix table
   const table = document.createElement('table');
-  table.className = 'ctcc-table ctcc-table--compact conductor-details-table';
+  table.className = 'forge-table forge-table--compact conductor-details-table';
   table.id = 'cost-timing-table';
   table.style.marginTop = '1.5rem';
   const timingCaption = document.createElement('caption');
@@ -4060,7 +4060,7 @@ function renderEconomicDetailsPanel(data) {
 
   // VoLL tiers table
   const vollTable = document.createElement('table');
-  vollTable.className = 'ctcc-table conductor-details-table';
+  vollTable.className = 'forge-table conductor-details-table';
   vollTable.style.marginTop = '1.5rem';
   const vollCaption = document.createElement('caption');
   vollCaption.textContent = 'Value of Lost Load (piecewise by outage duration)';
@@ -4304,7 +4304,7 @@ function renderCapitalCostSubTab(subTabId, data) {
   const entry = getBuildCostEntry();
 
   const table = document.createElement('table');
-  table.className = 'ctcc-table capital-cost-table';
+  table.className = 'forge-table capital-cost-table';
   const ccCaption = document.createElement('caption');
   ccCaption.textContent = (SUBTAB_LABELS[subTabId] || subTabId) + ' Build Costs';
   ccCaption.appendChild(makeHelpIcon('Unit build costs from the NREL/DOE database. Locked values are defaults; unlock to override.'));
@@ -4325,7 +4325,7 @@ function renderCapitalCostSubTab(subTabId, data) {
 
   const costInputs = [];
   let locked = true;
-  const storageKey = `ctcc-suppress-${subTabId}-cost-warning`;
+  const storageKey = `forge-suppress-${subTabId}-cost-warning`;
 
   const tbody = document.createElement('tbody');
   costFields.forEach(cf => {
@@ -4366,7 +4366,7 @@ function renderCapitalCostSubTab(subTabId, data) {
   };
 
   const ccCard = document.createElement('div');
-  ccCard.className = 'ctcc-table-card';
+  ccCard.className = 'forge-table-card';
   const ccCardHeader = document.createElement('div');
   ccCardHeader.className = 'card-header';
   ccCardHeader.textContent = (SUBTAB_LABELS[subTabId] || subTabId) + ' Build Costs ';
@@ -4377,7 +4377,7 @@ function renderCapitalCostSubTab(subTabId, data) {
   ccCard.appendChild(ccCardHeader);
   ccCard.appendChild(table);
   const ccSource = document.createElement('div');
-  ccSource.className = 'ctcc-source';
+  ccSource.className = 'forge-source';
   ccSource.innerHTML = SOURCE_ICON_SVG + ' ' + (CC_SOURCE_LABELS[subTabId] || 'NREL/DOE Cost Database');
   ccCard.appendChild(ccSource);
   wrapper.appendChild(ccCard);
@@ -4463,7 +4463,7 @@ function rebuildCapitalCosts(fromConfigChange) {
   });
 
   searchRoot.querySelectorAll('.capital-cost-table').forEach(table => {
-    const card = table.closest('.ctcc-table-card');
+    const card = table.closest('.forge-table-card');
     if (card) {
       const pill = card.querySelector('.lock-pill');
       if (pill) {
@@ -4493,7 +4493,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
     return;
   }
 
-  C.ctccJsonData = data;
+  C.forgeJsonData = data;
 
   // Clear content-panel of old rendered sub-items (prevents ghost duplicates
   // when renderJsonInputs is called multiple times, e.g. default load → scenario load)
@@ -4506,11 +4506,11 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
 
   // Create (or reuse) an off-screen holder so all sub-item containers live in the DOM
   // while not visible — this lets setTimeout-based event-listener setup find elements.
-  var offscreen = document.getElementById('ctcc-offscreen-inputs');
+  var offscreen = document.getElementById('forge-offscreen-inputs');
   if (offscreen) offscreen.innerHTML = '';
   if (!offscreen) {
     offscreen = document.createElement('div');
-    offscreen.id = 'ctcc-offscreen-inputs';
+    offscreen.id = 'forge-offscreen-inputs';
     offscreen.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;';
     document.body.appendChild(offscreen);
   }
@@ -4780,7 +4780,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           renderTaxonomySections(stContent, stFields, data, taxById, stContent);
           // Build delay cost totals table and split grid
           const delayTable = document.createElement('table');
-          delayTable.className = 'ctcc-table';
+          delayTable.className = 'forge-table';
           delayTable.id = 'delay-cost-table';
           const delayCaption = document.createElement('caption');
           delayCaption.textContent = 'Annual Delay Costs';
@@ -5016,7 +5016,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           const ctEl = document.querySelector('[data-path="01_project_technical_details.project.construction_type"]');
           if (ctEl) {
             ctEl.addEventListener('change', () => {
-              setTimeout(() => rebuildRiskPanels(C.ctccJsonData), 0);
+              setTimeout(() => rebuildRiskPanels(C.forgeJsonData), 0);
             });
           }
         }, 0);
@@ -5025,7 +5025,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
           const reconEl = document.querySelector('[data-path="01_project_technical_details.project.reconductoring"]');
           if (reconEl) {
             reconEl.addEventListener('change', () => {
-              setTimeout(() => rebuildConstraintsPanel(C.ctccJsonData), 0);
+              setTimeout(() => rebuildConstraintsPanel(C.forgeJsonData), 0);
             });
           }
         }, 0);
@@ -5036,9 +5036,9 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
   });
 
   // Attach global form listeners for cross-tab update functions
-  var ctccFormEl = document.getElementById('demo-form');
-  if (ctccFormEl) {
-    ctccFormEl.addEventListener('input', function() {
+  var forgeFormEl = document.getElementById('demo-form');
+  if (forgeFormEl) {
+    forgeFormEl.addEventListener('input', function() {
       updateEnvironmentalAcres();
     });
   }
@@ -5084,7 +5084,7 @@ function renderInputsFromTaxonomy(data, taxonomyData, metadataList) {
       document.querySelector('[data-sub-tab="technology"]');
     if (configPanel && !document.getElementById('category-validation-banner')) {
       const banner = document.createElement('div');
-      banner.className = 'ctcc-validation-banner';
+      banner.className = 'forge-validation-banner';
       banner.id = 'category-validation-banner';
       banner.style.display = 'none';
       banner.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="banner-text"></span>';
@@ -5257,7 +5257,7 @@ const GRID_MIX_GROUPS = ['initial', 'rate_pre_cod', 'rate_post_cod'];
 function syncFuelMixPresetBarVisibility() {
   const bar = document.getElementById('fuel-mix-preset-bar');
   if (!bar) return;
-  const inputMode = Array.from(document.querySelectorAll('input[name="ctcc-input-mode"]')).find((input) => input.checked)?.value ?? 'json';
+  const inputMode = Array.from(document.querySelectorAll('input[name="forge-input-mode"]')).find((input) => input.checked)?.value ?? 'json';
   bar.style.display = inputMode === 'json' ? '' : 'none';
 }
 
@@ -5403,7 +5403,7 @@ function renderJsonInputs(data) {
 
 function renderSubItemContent(subItemId) {
   var contentPanel = document.getElementById('content-panel');
-  var offscreen = document.getElementById('ctcc-offscreen-inputs');
+  var offscreen = document.getElementById('forge-offscreen-inputs');
   if (!contentPanel) return;
 
   var container = C._renderedSubItems && C._renderedSubItems[subItemId];
@@ -5439,7 +5439,7 @@ function renderSubItemContent(subItemId) {
       restoreBtn.addEventListener('click', function() {
         var subId = C._currentSubItemId;
         if (!subId) return;
-        showRestoreDefaultsDialog('ctcc-restore-sub-' + subId, subId.replace(/-/g, ' '), function() {
+        showRestoreDefaultsDialog('forge-restore-sub-' + subId, subId.replace(/-/g, ' '), function() {
           var panel = document.getElementById('content-panel');
           if (!panel) return;
           panel.querySelectorAll('input[data-path], select[data-path]').forEach(function(el) {

@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var C = window.CTCC;
+  var C = window.FORGE;
 
   /* ── private helpers ── */
 
@@ -138,9 +138,9 @@
           showToast('Saved as \u201c' + copyName + '\u201d.');
         } else if (action === 'rename') {
           startInlineRename();
-        } else if (action === 'export-ctcc') {
+        } else if (action === 'export-forge') {
           var sc = C.sessionScenarios.find(function (s) { return s.id === C.activeScenarioId; });
-          if (sc) exportAsCtcc(sc);
+          if (sc) exportAsForge(sc);
         } else if (action === 'export-csv') {
           var sc = C.sessionScenarios.find(function (s) { return s.id === C.activeScenarioId; });
           if (sc) exportAsCsv(sc);

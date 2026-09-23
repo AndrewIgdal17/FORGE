@@ -52,9 +52,9 @@ function hideAssistant() {
 }
 
 function markTutorialDone() {
-  if (window.CTCC && window.CTCC.currentUserId && typeof _sb !== 'undefined') {
+  if (window.FORGE && window.FORGE.currentUserId && typeof _sb !== 'undefined') {
     _sb.from('profiles').update({ has_done_tutorial: true })
-      .eq('id', window.CTCC.currentUserId);
+      .eq('id', window.FORGE.currentUserId);
   }
 }
 
@@ -88,7 +88,7 @@ function getContextualTip() {
   }
   if (tab === 'results') return 'Results update live as you change inputs. The <strong>Summary</strong> shows headline BCR and cost/benefit totals.';
   if (tab === 'scenarios') return 'Manage your scenarios here. Use <strong>Compare</strong> for side-by-side metrics. <strong>Duplicate</strong> a scenario to create a variant.';
-  return 'Welcome to the CTCC. Click <strong>+ New Scenario</strong> to get started.';
+  return 'Welcome to the FORGE. Click <strong>+ New Scenario</strong> to get started.';
 }
 
 function startQuickTour() {
@@ -113,7 +113,7 @@ function showWelcomeBubble() {
   if (!_bubbleEl) return;
   _bubbleEl.innerHTML =
     '<div class="assistant-bubble-content">' +
-      'Looks like you\'re new to the CTCC. We recommend you take a tour with us as we walk through a tutorial!' +
+      'Looks like you\'re new to the FORGE. We recommend you take a tour with us as we walk through a tutorial!' +
     '</div>' +
     '<div class="assistant-bubble-actions">' +
       '<button type="button" onclick="startFullTour()">Start Tour</button>' +

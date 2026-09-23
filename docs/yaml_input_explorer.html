@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CTCC YAML Input Explorer</title>
+    <title>FORGE YAML Input Explorer</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
@@ -526,7 +526,7 @@
   <body>
     <div class="container">
       <header class="header">
-        <h1>🔧 CTCC YAML Input Explorer</h1>
+        <h1>🔧 FORGE YAML Input Explorer</h1>
         <p>
           Interactive documentation for all Transmission Cost Calculator input
           parameters
@@ -619,18 +619,18 @@
             <h2>⚙️ Execution Workflow</h2>
             <p style="margin-bottom: 1rem; color: var(--text-secondary)">
               Visual representation of what happens when you run
-              <code>python ctcc.py</code>
+              <code>python forge.py</code>
             </p>
             <div class="mermaid-diagram">
               <div id="execution-workflow"></div>
               <script type="text/mermaid" id="execution-workflow-code">
                 flowchart TD
-                    Start["python ctcc.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
+                    Start["python forge.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
 
                     ParseArgs --> LoadYAML{"Load YAML Config<br/>Primary BCR Settings"}
                     LoadYAML -->|"Config exists"| MergeFlags["Merge YAML config with CLI flags<br/>YAML overrides CLI"]
                     LoadYAML -->|"No config"| SetEnvVars
-                    MergeFlags --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE, CTCC_OUTPUT_MODE<br/>CTCC_JSON_DATA_FILE, CTCC_SCENARIO_ID<br/>CTCC_NO_WILDFIRE, etc."]
+                    MergeFlags --> SetEnvVars["Set Environment Variables<br/>FORGE_INPUT_MODE, FORGE_OUTPUT_MODE<br/>FORGE_JSON_DATA_FILE, FORGE_SCENARIO_ID<br/>FORGE_NO_WILDFIRE, etc."]
 
                     SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
 
@@ -686,7 +686,7 @@
                     MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
 
                     CheckSuccess -->|"No"| EndError["End: Show error message"]
-                    CheckSuccess -->|"Yes"| CheckOutputMode{"Check CTCC_OUTPUT_MODE"}
+                    CheckSuccess -->|"Yes"| CheckOutputMode{"Check FORGE_OUTPUT_MODE"}
 
                     CheckOutputMode -->|"csv"| CSVMode["CSV Output Mode"]
                     CheckOutputMode -->|"json"| JSONMode["JSON Output Mode"]
@@ -697,7 +697,7 @@
 
                     JSONMode --> AggregateJSON["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
                     AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
-                    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>ctcc_results_{id}.json"]
+                    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>forge_results_{id}.json"]
                     WriteFinalJSON --> CleanupJSON["Clean up intermediate<br/>JSON files"]
                     CleanupJSON --> EndJSON["End: JSON file in outputs/"]
 
@@ -725,29 +725,29 @@
                     EditConfig --> ClickCalculate["User clicks<br/>Calculate button"]
 
                     ClickCalculate --> CollectData["Frontend: Collect<br/>edited JSON data"]
-                    CollectData --> SendRequest["Frontend: POST request<br/>/api/ctcc/calculate<br/>with combined_data"]
+                    CollectData --> SendRequest["Frontend: POST request<br/>/api/forge/calculate<br/>with combined_data"]
 
-                    SendRequest --> APIEndpoint["FastAPI: calculate_ctcc<br/>endpoint receives request"]
-                    APIEndpoint --> CallProcessor["Call run_ctcc_calculation<br/>ctcc_processor.py"]
+                    SendRequest --> APIEndpoint["FastAPI: calculate_forge<br/>endpoint receives request"]
+                    APIEndpoint --> CallProcessor["Call run_forge_calculation<br/>forge_processor.py"]
 
-                    CallProcessor --> CheckFormat{"Check data format<br/>Full CTCC format?"}
+                    CallProcessor --> CheckFormat{"Check data format<br/>Full FORGE format?"}
                     CheckFormat -->|"Yes"| UseDirect["Use combined_data<br/>directly"]
                     CheckFormat -->|"No"| MergeTemplate["Merge with template<br/>final_combined.json"]
-                    UseDirect --> WriteTemp["Write temp JSON file<br/>ctcc_api_{id}_*.json"]
+                    UseDirect --> WriteTemp["Write temp JSON file<br/>forge_api_{id}_*.json"]
                     MergeTemplate --> WriteTemp
 
                     WriteTemp --> EnsureVenv["Ensure CLI venv exists<br/>and has dependencies"]
-                    EnsureVenv --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE=json<br/>CTCC_OUTPUT_MODE=json<br/>CTCC_JSON_DATA_FILE=temp_file<br/>CTCC_SCENARIO_ID={id}"]
+                    EnsureVenv --> SetEnvVars["Set Environment Variables<br/>FORGE_INPUT_MODE=json<br/>FORGE_OUTPUT_MODE=json<br/>FORGE_JSON_DATA_FILE=temp_file<br/>FORGE_SCENARIO_ID={id}"]
 
-                    SetEnvVars --> CallCtcc["Call ctcc.py as subprocess<br/>venv/bin/python3 ctcc.py"]
+                    SetEnvVars --> CallForge["Call forge.py as subprocess<br/>venv/bin/python3 forge.py"]
 
-                    CallCtcc --> CtccInit["ctcc.py: Initialize<br/>Generate scenario ID<br/>Set env vars"]
-                    CtccInit --> BuildScripts["ctcc.py: Build script list<br/>Based on flags/config"]
+                    CallForge --> ForgeInit["forge.py: Initialize<br/>Generate scenario ID<br/>Set env vars"]
+                    ForgeInit --> BuildScripts["forge.py: Build script list<br/>Based on flags/config"]
                     BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>weighted_miles.py, build_costs.py, etc."]
 
                     ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
                     RunScript --> ScriptSubprocess["Script: Run as subprocess<br/>cwd=scripts/"]
-                    ScriptSubprocess --> ScriptLoadJSON["Script: Load Data<br/>via json_loaders<br/>from CTCC_JSON_DATA_FILE"]
+                    ScriptSubprocess --> ScriptLoadJSON["Script: Load Data<br/>via json_loaders<br/>from FORGE_JSON_DATA_FILE"]
                     ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations"]
                     ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via json_output_manager<br/>json_output_{id}_*.json"]
                     ScriptOutputJSON --> MoreScripts{"More scripts?"}
@@ -756,9 +756,9 @@
 
                     AggregateJSON --> AggregateOutputs["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
                     AggregateJSON --> CalcBCR["Calculate BCR from<br/>aggregated JSON data"]
-                    CalcBCR --> WriteFinal["Write final output<br/>ctcc_results_{id}.json"]
+                    CalcBCR --> WriteFinal["Write final output<br/>forge_results_{id}.json"]
 
-                    WriteFinal --> ProcessorRead["Processor: Read<br/>ctcc_results_{id}.json"]
+                    WriteFinal --> ProcessorRead["Processor: Read<br/>forge_results_{id}.json"]
                     ProcessorRead --> CleanupFiles["Processor: Cleanup<br/>Delete temp input file<br/>Delete output file"]
                     CleanupFiles --> ReturnResponse["Processor: Return<br/>JSON response dict"]
 
@@ -831,7 +831,7 @@
           initializeConfigurations();
           initializeEventListeners();
 
-          console.log("CTCC YAML Explorer initialized successfully!");
+          console.log("FORGE YAML Explorer initialized successfully!");
         } catch (error) {
           console.error("Error initializing application:", error);
           // Fallback data for demo purposes
@@ -1032,7 +1032,7 @@
             return d.children ? "end" : "start";
           })
           .text((d) => {
-            if (d.depth === 0) return "CTCC";
+            if (d.depth === 0) return "FORGE";
             if (d.depth === 1) return d.data.name;
             // Shorten long filenames to prevent overlap
             const name = d.data.name.replace(".yaml", "").replace(/_/g, " ");
@@ -1167,7 +1167,7 @@
               return d.children ? "end" : "start";
             })
             .text((d) => {
-              if (d.depth === 0) return "CTCC";
+              if (d.depth === 0) return "FORGE";
               if (d.depth === 1) return d.data.name;
               // Shorten long filenames to prevent overlap
               const name = d.data.name.replace(".yaml", "").replace(/_/g, " ");
@@ -1210,7 +1210,7 @@
 
       function transformDataForD3(yamlData) {
         const root = {
-          name: "CTCC Input Parameters",
+          name: "FORGE Input Parameters",
           field_count: yamlData.metadata.total_fields,
           children: [],
         };
@@ -1664,7 +1664,7 @@
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "ctcc_yaml_fields.csv";
+        a.download = "forge_yaml_fields.csv";
         a.click();
         window.URL.revokeObjectURL(url);
       }

@@ -1,9 +1,9 @@
-// CTCC Results Renderer
+// FORGE Results Renderer
 // Extracted from index.html — loaded via <script src="/static/results-renderer.js">
 
 (function() {
 'use strict';
-const C = window.CTCC;
+const C = window.FORGE;
 
 // "Run Comparison" button state management
 function updateDesignCmpRunButton() {
@@ -114,7 +114,7 @@ function renderDesignComparison(results) {
 
   function configCard(title, cap, conductor, lossRate) {
     const card = document.createElement('div');
-    card.className = 'results-summary-card ctcc-card';
+    card.className = 'results-summary-card forge-card';
     const lbl = document.createElement('div');
     lbl.className = 'results-summary-label';
     lbl.textContent = title;
@@ -137,7 +137,7 @@ function renderDesignComparison(results) {
 
   cardsGrid.appendChild(configCard('Your Project', p.capacity_mw, p.conductor_type, p.loss_percent));
   const altCard = configCard('Alternative', c.capacity_mw, c.conductor_type, c.loss_percent);
-  altCard.classList.add('highlight', 'ctcc-card--highlight');
+  altCard.classList.add('highlight', 'forge-card--highlight');
   cardsGrid.appendChild(altCard);
   container.appendChild(cardsGrid);
 
@@ -1095,7 +1095,7 @@ function renderCustomBCRByTaxonomy(results) {
   container.appendChild(togglesDiv);
 
   const resultBox = document.createElement('div');
-  resultBox.className = 'custom-bcr-result ctcc-card ctcc-card--success';
+  resultBox.className = 'custom-bcr-result forge-card forge-card--success';
   const bcrMetric = document.createElement('div');
   bcrMetric.className = 'custom-bcr-metric';
   bcrMetric.innerHTML = '<div class="label">Custom BCR</div><div class="value" id="custom-bcr-value">' + formatNumber(totalCostsPV > 0 ? totalBenefitsPV / totalCostsPV : 0, 3) + '</div>';
@@ -1365,7 +1365,7 @@ function renderBCRHeadline(results) {
 
     coreDefs.filter(d => d.family === fam).forEach(m => {
       const card = document.createElement('div');
-      card.className = 'bcr-headline-card ctcc-card';
+      card.className = 'bcr-headline-card forge-card';
       const lbl = document.createElement('div');
       lbl.className = 'label';
       lbl.textContent = m.label;
@@ -1469,9 +1469,9 @@ function renderPerspectivesTable(results) {
   return container;
 }
 
-function renderCTCCResults(results) {
+function renderFORGEResults(results) {
     const resultEl = document.getElementById('result');
-  // Backward compat: derive taxonomy_results for old .ctcc files
+  // Backward compat: derive taxonomy_results for old .forge files
   if (!results.taxonomy_results || results.taxonomy_results.length === 0) {
     results.taxonomy_results = deriveTaxonomyResultsFromLegacy(results);
   }
@@ -1608,7 +1608,7 @@ function renderCTCCResults(results) {
       heroGrid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem';
       [{label:'Total Costs',value:_totalCostPV}, {label:'Total Benefits',value:totalBenefitsPV}].forEach(m => {
         const card = document.createElement('div');
-        card.className = 'results-summary-card highlight ctcc-card ctcc-card--highlight';
+        card.className = 'results-summary-card highlight forge-card forge-card--highlight';
         const lbl = document.createElement('div');
         lbl.className = 'results-summary-label';
         lbl.textContent = m.label;
@@ -1627,7 +1627,7 @@ function renderCTCCResults(results) {
 
       // Left: Costs breakdown
       const costsCard = document.createElement('div');
-      costsCard.className = 'results-summary-card ctcc-card';
+      costsCard.className = 'results-summary-card forge-card';
       costsCard.style.padding = '1.25rem';
       const costsHdr = document.createElement('div');
       costsHdr.className = 'results-section-heading';
@@ -1670,7 +1670,7 @@ function renderCTCCResults(results) {
 
       // Right: Benefits breakdown
       const benCard = document.createElement('div');
-      benCard.className = 'results-summary-card ctcc-card';
+      benCard.className = 'results-summary-card forge-card';
       benCard.style.padding = '1.25rem';
       const benHdr = document.createElement('div');
       benHdr.className = 'results-section-heading';
@@ -1793,7 +1793,7 @@ function renderResultsOverview(results) {
     { label: 'Societal BCR', text: formatNumber(societalBCR, 3), color: societalBCR >= 1 ? '#10b981' : '#b00020' },
   ].forEach(function(m) {
     var card = document.createElement('div');
-    card.className = 'results-summary-card highlight ctcc-card ctcc-card--highlight';
+    card.className = 'results-summary-card highlight forge-card forge-card--highlight';
     var lbl = document.createElement('div');
     lbl.className = 'results-summary-label';
     lbl.textContent = m.label;
@@ -1947,7 +1947,7 @@ function renderResultsSubItem(subItemId) {
 // Public API
 window.populateDesignCmpDropdowns = populateDesignCmpDropdowns;
 window.renderBCRHeadline = renderBCRHeadline;
-window.renderCTCCResults = renderCTCCResults;
+window.renderFORGEResults = renderFORGEResults;
 window.renderDesignComparison = renderDesignComparison;
 window.renderPerspectivesTable = renderPerspectivesTable;
 window.updateDelayCostPanel = updateDelayCostPanel;

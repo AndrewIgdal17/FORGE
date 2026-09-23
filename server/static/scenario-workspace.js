@@ -1,12 +1,12 @@
-// CTCC Scenario Workspace UI
+// FORGE Scenario Workspace UI
 // Extracted from scenarios.js — loaded only on workspace.html
 // Depends on: scenario-data.js, scenario-ui.js, workspace inline globals
-// (autoCalculate, switchTab, renderJsonInputs, renderCTCCResults,
+// (autoCalculate, switchTab, renderJsonInputs, renderFORGEResults,
 //  markResultsAvailable, setSnapshotOriginalData)
 
 (function() {
 'use strict';
-var C = window.CTCC;
+var C = window.FORGE;
 
 function setActiveScenario(scenario) {
   C.activeScenarioId = scenario.id;

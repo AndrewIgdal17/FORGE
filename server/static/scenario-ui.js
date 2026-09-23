@@ -1,10 +1,10 @@
-// CTCC Scenario UI Layer
+// FORGE Scenario UI Layer
 // Extracted from scenarios.js — loaded via <script src="/static/scenario-ui.js">
 // Depends on: scenario-data.js, comparison.js, utils.js, scenario-workspace.js (workspace only)
 
 (function() {
 'use strict';
-var C = window.CTCC;
+var C = window.FORGE;
 
 async function removeScenarioFromSession(id) {
   await deleteScenarioFromDB(id);
@@ -180,7 +180,7 @@ function renderScenarioList() {
     const meta = document.createElement('span');
     meta.className = 'scenario-card-meta';
     const sourceLabel = scenario.metadata?.source === 'run' ? 'Calculated' :
-                        scenario.metadata?.source === 'upload-ctcc' ? 'Uploaded (.ctcc)' :
+                        scenario.metadata?.source === 'upload-forge' ? 'Uploaded (.forge)' :
                         scenario.metadata?.source === 'upload-csv' ? 'Uploaded (.csv)' :
                         scenario.metadata?.source === 'new' ? 'Draft' :
                         scenario.metadata?.source === 'wizard' ? 'Wizard' : 'Saved';

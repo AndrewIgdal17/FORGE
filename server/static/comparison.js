@@ -1,10 +1,10 @@
-// CTCC Comparison Table
+// FORGE Comparison Table
 // Extracted from index.html — loaded via <script src="/static/comparison.js">
 
 (function() {
 'use strict';
 
-  const C = window.CTCC;
+  const C = window.FORGE;
 
 let cmpMetricPickerPanelEl = null;
 

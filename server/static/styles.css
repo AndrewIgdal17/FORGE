@@ -1,4 +1,4 @@
-/* CTCC Design Token System — see Projects/CTCC/docs/design/2026-06-27__css-foundation-spec.md */
+/* FORGE Design Token System — see Projects/FORGE/docs/design/2026-06-27__css-foundation-spec.md */
 :root {
   /* ── Primary (blue) ── */
   --color-primary: #0066cc;
@@ -122,7 +122,7 @@
         height: 100vh;
       }
       /* ── Base Input System ── */
-      .ctcc-input,
+      .forge-input,
       input[type="text"],
       input[type="number"],
       input[type="email"],
@@ -140,7 +140,7 @@
         width: 100%;
       }
 
-      .ctcc-input:focus,
+      .forge-input:focus,
       input:focus,
       select:focus,
       textarea:focus {
@@ -265,13 +265,13 @@
       }
 
       /* ── Table System ── */
-      .ctcc-table {
+      .forge-table {
         width: 100%;
         border-collapse: collapse;
         font-size: var(--text-sm);
         font-family: var(--font-mono);
       }
-      .ctcc-table th {
+      .forge-table th {
         text-align: left;
         font-size: var(--text-xs);
         font-weight: 600;
@@ -281,26 +281,26 @@
         text-transform: uppercase;
         letter-spacing: 0.03em;
       }
-      .ctcc-table td {
+      .forge-table td {
         padding: var(--space-xs) var(--space-sm);
         border-bottom: 1px solid var(--color-border);
         color: var(--color-text);
       }
-      .ctcc-table td[data-numeric] {
+      .forge-table td[data-numeric] {
         text-align: right;
         font-variant-numeric: tabular-nums;
       }
 
-      .ctcc-table--compact th,
-      .ctcc-table--compact td {
+      .forge-table--compact th,
+      .forge-table--compact td {
         padding: var(--space-2xs) var(--space-xs);
         font-size: var(--text-xs);
       }
 
-      .ctcc-table--editable td {
+      .forge-table--editable td {
         padding: var(--space-2xs);
       }
-      .ctcc-table--editable input {
+      .forge-table--editable input {
         width: 100%;
         padding: var(--space-2xs) var(--space-xs);
         border: 1px solid transparent;
@@ -309,44 +309,44 @@
         font-family: var(--font-mono);
         font-size: var(--text-xs);
       }
-      .ctcc-table--editable input:focus {
+      .forge-table--editable input:focus {
         border-color: var(--color-primary);
         background: var(--color-bg-white);
       }
-      .ctcc-table--editable tr:hover {
+      .forge-table--editable tr:hover {
         background: var(--color-bg-hover);
       }
 
       /* ── Card System ── */
-      .ctcc-card {
+      .forge-card {
         background: var(--color-bg-white);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
         padding: var(--space-lg);
         box-shadow: var(--shadow-sm);
       }
-      .ctcc-card + .ctcc-card {
+      .forge-card + .forge-card {
         margin-top: var(--space-md);
       }
-      .ctcc-card--flush {
+      .forge-card--flush {
         padding: 0;
       }
-      .ctcc-card--highlight {
+      .forge-card--highlight {
         border-left: 3px solid var(--color-primary);
       }
-      .ctcc-card--success {
+      .forge-card--success {
         border-left: 3px solid var(--color-success);
       }
 
       /* ── Params Card ── */
-      .ctcc-params-card {
+      .forge-params-card {
         background: var(--color-bg-white);
         border: 1px solid var(--color-border);
         border-radius: 8px;
         overflow: hidden;
         box-shadow: var(--shadow-sm);
       }
-      .ctcc-params-card .card-header {
+      .forge-params-card .card-header {
         display: flex;
         align-items: center;
         padding: 0.6rem 0.85rem;
@@ -356,7 +356,7 @@
         font-weight: 600;
         color: var(--color-text-secondary);
       }
-      .ctcc-params-card .card-header .badge-readonly {
+      .forge-params-card .card-header .badge-readonly {
         margin-left: auto;
         font-size: 0.6rem;
         color: var(--color-text-muted);
@@ -366,20 +366,20 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
-      .ctcc-params-card .param-row {
+      .forge-params-card .param-row {
         display: flex;
         justify-content: space-between;
         padding: 0.55rem 0.85rem;
         border-bottom: 1px solid #f1f5f9;
         font-size: var(--text-sm);
       }
-      .ctcc-params-card .param-row:last-child {
+      .forge-params-card .param-row:last-child {
         border-bottom: none;
       }
-      .ctcc-params-card .param-key {
+      .forge-params-card .param-key {
         color: var(--color-text-muted);
       }
-      .ctcc-params-card .param-value {
+      .forge-params-card .param-value {
         color: var(--color-text);
         font-weight: 500;
         font-family: var(--font-mono);
@@ -387,7 +387,7 @@
       }
 
       /* ── Table Card ── */
-      .ctcc-table-card {
+      .forge-table-card {
         background: var(--color-bg-white);
         border: 1px solid var(--color-border);
         border-radius: 8px;
@@ -395,7 +395,7 @@
         box-shadow: var(--shadow-sm);
         margin: 0 1rem 1rem;
       }
-      .ctcc-table-card .card-header {
+      .forge-table-card .card-header {
         display: flex;
         align-items: center;
         padding: 0.55rem 0.75rem;
@@ -405,7 +405,7 @@
         font-weight: 600;
         color: var(--color-text-secondary);
       }
-      .ctcc-table-card th {
+      .forge-table-card th {
         text-align: left;
         padding: 0.55rem 0.75rem;
         font-size: 0.72rem;
@@ -414,16 +414,16 @@
         border-bottom: 1px solid var(--color-border);
         text-transform: none;
       }
-      .ctcc-table-card td {
+      .forge-table-card td {
         padding: 0.5rem 0.75rem;
         border-bottom: 1px solid #f1f5f9;
       }
-      .ctcc-table-card tfoot td {
+      .forge-table-card tfoot td {
         background: var(--color-bg-subtle);
         border-top: 2px solid var(--color-border);
         font-weight: 600;
       }
-      .ctcc-table-card input {
+      .forge-table-card input {
         width: 72px;
         padding: 0.35rem 0.5rem;
         border: 1px solid var(--color-border);
@@ -435,7 +435,7 @@
       }
 
       /* ── Lock Pill ── */
-      .ctcc-table-card .lock-pill {
+      .forge-table-card .lock-pill {
         margin-left: auto;
         display: inline-flex;
         align-items: center;
@@ -447,14 +447,14 @@
         border-radius: 4px;
         background: var(--color-bg-subtle);
       }
-      .ctcc-table-card .lock-pill svg {
+      .forge-table-card .lock-pill svg {
         opacity: 0.5;
       }
-      .ctcc-table-card .lock-pill--unlocked {
+      .forge-table-card .lock-pill--unlocked {
         color: var(--color-primary);
         background: var(--color-primary-bg);
       }
-      .ctcc-table-card td.locked-value {
+      .forge-table-card td.locked-value {
         color: var(--color-text-muted);
         font-family: var(--font-mono);
         font-size: 0.75rem;
@@ -491,7 +491,7 @@
       }
 
       /* ── Computed Value ── */
-      .ctcc-computed-value {
+      .forge-computed-value {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -501,14 +501,14 @@
         border-radius: 8px;
         margin: 0 1.25rem 0.75rem;
       }
-      .ctcc-computed-value .computed-label {
+      .forge-computed-value .computed-label {
         display: flex;
         align-items: center;
         gap: 0.4rem;
         font-size: 0.75rem;
         color: var(--color-text-muted);
       }
-      .ctcc-computed-value .computed-val {
+      .forge-computed-value .computed-val {
         font-size: 0.82rem;
         font-weight: 600;
         color: var(--color-text);
@@ -516,7 +516,7 @@
       }
 
       /* ── Citations ── */
-      .ctcc-source {
+      .forge-source {
         padding: 0.4rem 0.75rem;
         background: var(--color-bg-subtle);
         border-top: 1px solid var(--color-border);
@@ -526,11 +526,11 @@
         align-items: center;
         gap: 0.35rem;
       }
-      .ctcc-source svg {
+      .forge-source svg {
         flex-shrink: 0;
         opacity: 0.6;
       }
-      .ctcc-source-pill {
+      .forge-source-pill {
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
@@ -543,11 +543,11 @@
         cursor: pointer;
         margin-top: 0.3rem;
       }
-      .ctcc-source-pill:hover {
+      .forge-source-pill:hover {
         background: var(--color-bg-hover);
         color: var(--color-text-secondary);
       }
-      .ctcc-source-pill svg {
+      .forge-source-pill svg {
         opacity: 0.5;
         flex-shrink: 0;
       }
@@ -703,7 +703,7 @@
       }
 
       /* ── Validation Banner ── */
-      .ctcc-validation-banner {
+      .forge-validation-banner {
         display: flex;
         align-items: center;
         gap: 0.4rem;
@@ -715,12 +715,12 @@
         color: #92400e;
         margin: 0.75rem 1rem;
       }
-      .ctcc-validation-banner svg {
+      .forge-validation-banner svg {
         flex-shrink: 0;
       }
 
       /* ── Slider ── */
-      .ctcc-slider {
+      .forge-slider {
         -webkit-appearance: none;
         appearance: none;
         width: 100%;
@@ -729,7 +729,7 @@
         border-radius: 3px;
         outline: none;
       }
-      .ctcc-slider::-webkit-slider-thumb {
+      .forge-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
         width: 14px;
@@ -740,7 +740,7 @@
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0,0,0,0.15);
       }
-      .ctcc-slider::-moz-range-thumb {
+      .forge-slider::-moz-range-thumb {
         width: 14px;
         height: 14px;
         background: white;
@@ -751,13 +751,13 @@
       }
 
       /* ── Toggle Switch ── */
-      .ctcc-toggle {
+      .forge-toggle {
         display: inline-flex;
         align-items: center;
         gap: 0.6rem;
         cursor: pointer;
       }
-      .ctcc-toggle-track {
+      .forge-toggle-track {
         width: 36px;
         height: 20px;
         background: var(--color-border-medium);
@@ -765,10 +765,10 @@
         position: relative;
         transition: background 0.2s;
       }
-      .ctcc-toggle-track.active {
+      .forge-toggle-track.active {
         background: var(--color-primary);
       }
-      .ctcc-toggle-thumb {
+      .forge-toggle-thumb {
         width: 16px;
         height: 16px;
         background: white;
@@ -779,10 +779,10 @@
         transition: left 0.2s;
         box-shadow: 0 1px 2px rgba(0,0,0,0.15);
       }
-      .ctcc-toggle-track.active .ctcc-toggle-thumb {
+      .forge-toggle-track.active .forge-toggle-thumb {
         left: 18px;
       }
-      .ctcc-toggle-label {
+      .forge-toggle-label {
         font-size: 0.78rem;
         color: var(--color-text-secondary);
       }
@@ -2910,13 +2910,13 @@
         font-variant-numeric: tabular-nums;
       }
 
-      .ctcc-table {
+      .forge-table {
         width: fit-content;
         border-collapse: collapse;
         margin-bottom: 0.5rem;
         font-size: 0.85rem;
       }
-      .ctcc-table th {
+      .forge-table th {
         text-align: left;
         padding: 0.4rem 0.6rem;
         font-size: 0.75rem;
@@ -2926,12 +2926,12 @@
         letter-spacing: 0.04em;
         border-bottom: 2px solid rgba(0, 0, 0, 0.1);
       }
-      .ctcc-table td {
+      .forge-table td {
         padding: 0.2rem 0.4rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         vertical-align: middle;
       }
-      .ctcc-table:not(.terrain-table) td:first-child {
+      .forge-table:not(.terrain-table) td:first-child {
         width: 3rem;
         text-align: center;
         color: rgba(0, 0, 0, 0.45);
@@ -2962,7 +2962,7 @@
       .terrain-total-row .computed-cell {
         font-weight: 600;
       }
-      .ctcc-table input {
+      .forge-table input {
         width: 100%;
         border: 1px solid transparent;
         background: transparent;
@@ -2971,18 +2971,18 @@
         border-radius: 0.25rem;
         transition: border-color 0.15s;
       }
-      .ctcc-table input:hover {
+      .forge-table input:hover {
         border-color: rgba(0, 0, 0, 0.12);
       }
-      .ctcc-table input:focus {
+      .forge-table input:focus {
         outline: none;
         border-color: #0066cc;
         background: rgba(0, 100, 200, 0.03);
       }
-      .ctcc-table tr:hover td {
+      .forge-table tr:hover td {
         background: rgba(0, 0, 0, 0.02);
       }
-      .ctcc-table caption {
+      .forge-table caption {
         font-weight: 600;
         font-size: 0.95rem;
         text-align: left;

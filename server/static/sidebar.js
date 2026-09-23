@@ -96,7 +96,7 @@ var currentSectionId = null;
 var currentSubItemId = null;
 
 function getFieldCount(sectionId) {
-  var C = window.CTCC;
+  var C = window.FORGE;
   if (!C || !C.inputMetadata) return null;
   var count = 0;
   for (var i = 0; i < C.inputMetadata.length; i++) {

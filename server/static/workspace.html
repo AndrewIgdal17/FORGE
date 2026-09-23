@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>CTCC — Workspace</title>
+    <title>FORGE — Workspace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/static/styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -59,14 +59,14 @@
     </div>
 
     <nav class="app-top-nav">
-      <a href="/app" class="app-top-nav-logo">CTCC</a>
+      <a href="/app" class="app-top-nav-logo">FORGE</a>
       <div class="app-top-nav-links">
         <a href="/app" class="app-top-nav-link" data-nav="home">Home</a>
         <a href="/app/workspace" class="app-top-nav-link active" data-nav="workspace">Workspace</a>
         <a href="/app/scenarios-manager" class="app-top-nav-link" data-nav="scenarios">Scenarios</a>
       </div>
       <div class="app-top-nav-user">
-        <span class="ctcc-user-display"></span>
+        <span class="forge-user-display"></span>
         <button type="button" class="app-top-nav-logout" onclick="_sb.auth.signOut().then(function(){window.location.href='/';})">Log out</button>
       </div>
     </nav>
@@ -91,7 +91,7 @@
           <div class="split-menu-item" data-action="save-copy">Save as Copy</div>
           <div class="split-menu-item" data-action="rename">Rename</div>
           <div class="split-menu-sep"></div>
-          <div class="split-menu-item" data-action="export-ctcc">Export .ctcc</div>
+          <div class="split-menu-item" data-action="export-forge">Export .forge</div>
           <div class="split-menu-item" data-action="export-csv">Export .csv</div>
         </div>
       </div>
@@ -162,8 +162,8 @@
           <div class="save-option-desc">Save scenario to database.</div>
           <span id="save-saved-indicator" style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 0.75rem; font-weight: 500; color: #10b981;"></span>
         </div>
-        <div class="save-option" id="save-opt-ctcc" data-option="ctcc">
-          <div class="save-option-title">Export as .ctcc</div>
+        <div class="save-option" id="save-opt-forge" data-option="forge">
+          <div class="save-option-title">Export as .forge</div>
           <div class="save-option-desc">Download as a JSON file you can re-import later.</div>
         </div>
         <div class="save-option" id="save-opt-csv" data-option="csv">
@@ -177,7 +177,7 @@
       </div>
     </div>
 
-    <script>window.CTCC = {};</script>
+    <script>window.FORGE = {};</script>
     <script>window._tourPage = 'workspace';</script>
     <script src="/static/configs.js"></script>
     <script src="/static/utils.js"></script>

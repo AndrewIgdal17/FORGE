@@ -1,12 +1,12 @@
-// CTCC Scenario Data Layer
+// FORGE Scenario Data Layer
 // Extracted from scenarios.js — loaded via <script src="/static/scenario-data.js">
 // Depends on: utils.js (setValueAtPath, csvEscape, flattenObject, parseCsvLine),
-//             supabase client (_sb), window.CTCC
+//             supabase client (_sb), window.FORGE
 
 (function() {
 'use strict';
 
-  const C = window.CTCC;
+  const C = window.FORGE;
 
   let _snapshotCache = {};
 
@@ -343,7 +343,7 @@
     }
   }
 
-  function exportAsCtcc(scenario) {
+  function exportAsForge(scenario) {
     let fullInputs = scenario.inputs;
     if (scenario.id === C.activeScenarioId && typeof collectJsonData === 'function') {
       fullInputs = collectJsonData() || fullInputs;
@@ -355,7 +355,7 @@
       );
     }
 
-    const defaults = C.ctccJsonData;
+    const defaults = C.forgeJsonData;
     const slimInputs = extractScenarioInputs(fullInputs);
     const overrides = defaults ? computeOverrides(fullInputs, defaults) : {};
 
@@ -371,7 +371,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = (scenario.customName || 'scenario').replace(/[^a-zA-Z0-9_-]/g, '_') + '.ctcc';
+    a.download = (scenario.customName || 'scenario').replace(/[^a-zA-Z0-9_-]/g, '_') + '.forge';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -390,7 +390,7 @@
       );
     }
 
-    const defaults = C.ctccJsonData;
+    const defaults = C.forgeJsonData;
     const slimInputs = extractScenarioInputs(fullInputs);
     const overrides = defaults ? computeOverrides(fullInputs, defaults) : {};
 
@@ -443,7 +443,7 @@
     URL.revokeObjectURL(url);
   }
 
-  function validateCtccFile(data) {
+  function validateForgeFile(data) {
     const errors = [];
     if (!data || typeof data !== 'object') { errors.push('Invalid JSON structure'); return { valid: false, errors }; }
     if (data.version === '2.0') {
@@ -457,25 +457,25 @@
     return { valid: errors.length === 0, errors };
   }
 
-  function loadCtccFile(text, fileName) {
+  function loadForgeFile(text, fileName) {
     try {
       const data = JSON.parse(text);
-      const validation = validateCtccFile(data);
+      const validation = validateForgeFile(data);
       if (!validation.valid) {
-        alert('Invalid .ctcc file:\n' + validation.errors.join('\n'));
+        alert('Invalid .forge file:\n' + validation.errors.join('\n'));
         return;
       }
       if (data.results && data.results.results && data.results.results.bcr) {
         data.results = data.results.results;
       }
 
-      const name = data.customName || fileName.replace('.ctcc', '');
+      const name = data.customName || fileName.replace('.forge', '');
       let inputs;
 
       if (data.version === '2.0') {
-        const defaults = C.ctccJsonData;
+        const defaults = C.forgeJsonData;
         if (!defaults) {
-          alert('Cannot import v2.0 .ctcc file: reference data not loaded yet. Open the workspace first.');
+          alert('Cannot import v2.0 .forge file: reference data not loaded yet. Open the workspace first.');
           return;
         }
         inputs = assembleFullInputs(defaults, data.overrides || {}, data.inputs);
@@ -490,10 +490,10 @@
       addScenarioToSession(inputs, data.results || null,
         { timestamp: data.metadata?.timestamp || new Date().toISOString(),
           scenario_id: data.metadata?.scenario_id || '',
-          source: 'upload-ctcc' },
+          source: 'upload-forge' },
         generateScenarioName(name));
     } catch (e) {
-      alert('Failed to parse .ctcc file: ' + e.message);
+      alert('Failed to parse .forge file: ' + e.message);
     }
   }
 
@@ -530,7 +530,7 @@
       let inputs = null;
 
       if (isV2) {
-        const defaults = C.ctccJsonData;
+        const defaults = C.forgeJsonData;
         if (!defaults) {
           alert('Cannot import v2.0 CSV file: reference data not loaded yet. Open the workspace first.');
           return;
@@ -568,7 +568,7 @@
         }
       } else {
         if (sections.INPUTS && sections.INPUTS.length > 1) {
-          inputs = C.ctccJsonData ? JSON.parse(JSON.stringify(C.ctccJsonData)) : {};
+          inputs = C.forgeJsonData ? JSON.parse(JSON.stringify(C.forgeJsonData)) : {};
           for (let i = 1; i < sections.INPUTS.length; i++) {
             const parts = parseCsvLine(sections.INPUTS[i]);
             if (parts.length >= 3) {
@@ -609,7 +609,7 @@
     }
   }
 
-  async function loadCtccJson() {
+  async function loadForgeJson() {
     try {
       const baseUrl = C.apiBaseUrl;
       if (!C.taxonomy || !C.inputMetadata) {
@@ -748,12 +748,12 @@
   window.assembleFullInputs = assembleFullInputs;
   window.extractScenarioInputs = extractScenarioInputs;
   window.computeOverrides = computeOverrides;
-  window.exportAsCtcc = exportAsCtcc;
+  window.exportAsForge = exportAsForge;
   window.exportAsCsv = exportAsCsv;
-  window.validateCtccFile = validateCtccFile;
-  window.loadCtccFile = loadCtccFile;
+  window.validateForgeFile = validateForgeFile;
+  window.loadForgeFile = loadForgeFile;
   window.loadCsvFile = loadCsvFile;
-  window.loadCtccJson = loadCtccJson;
+  window.loadForgeJson = loadForgeJson;
   window.displayCsvFiles = displayCsvFiles;
   window.downloadCsvFile = downloadCsvFile;
   window.downloadAllCsvFiles = downloadAllCsvFiles;

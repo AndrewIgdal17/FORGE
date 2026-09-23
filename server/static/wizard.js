@@ -1,4 +1,4 @@
-// CTCC New Scenario Wizard — full-screen multi-step flow for creating scenarios.
+// FORGE New Scenario Wizard — full-screen multi-step flow for creating scenarios.
 
 (function() {
 'use strict';

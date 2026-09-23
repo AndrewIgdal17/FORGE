@@ -167,7 +167,7 @@ function onInput() {
 }
 
 function initSidebarSearch() {
-  var C = window.CTCC, wrap;
+  var C = window.FORGE, wrap;
   if (!C || !C.inputMetadata) return;
   inputEl = document.getElementById('sidebar-search-input');
   if (!inputEl) return;

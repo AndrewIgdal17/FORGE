@@ -36,7 +36,7 @@ var TOUR_STEPS = (function () {
     {
       target: '#scenario-upload-btn',
       title: 'Load from File',
-      body: 'Import one or more scenario files (.ctcc portable JSON or .csv spreadsheet). Imported scenarios appear in the list below.',
+      body: 'Import one or more scenario files (.forge portable JSON or .csv spreadsheet). Imported scenarios appear in the list below.',
       tip: 'You can also reach this from the Load from File button on the Home page.',
       position: 'bottom'
     },
@@ -116,7 +116,7 @@ var TOUR_STEPS = (function () {
     {
       target: '.app-top-nav-logo',
       title: 'Tour Complete!',
-      body: 'You\u2019ve explored all the key features of CTCC. Create a new scenario from Home, or dive into an existing one from Scenarios.',
+      body: 'You\u2019ve explored all the key features of FORGE. Create a new scenario from Home, or dive into an existing one from Scenarios.',
       position: 'bottom'
     }
   ];
@@ -135,7 +135,7 @@ var TOUR_STEPS = (function () {
       {
         target: '.app-top-nav-logo',
         title: 'Home Link',
-        body: 'Click the CTCC logo anywhere in the app to return to this Home page.',
+        body: 'Click the FORGE logo anywhere in the app to return to this Home page.',
         position: 'bottom'
       },
       {
@@ -154,7 +154,7 @@ var TOUR_STEPS = (function () {
       {
         target: '#landing-load-file-btn',
         title: 'Load from File',
-        body: 'Import a previously exported scenario file (.ctcc or .csv) instead of building from scratch. You\u2019ll land on Scenarios with the upload dialog open.',
+        body: 'Import a previously exported scenario file (.forge or .csv) instead of building from scratch. You\u2019ll land on Scenarios with the upload dialog open.',
         position: 'bottom'
       },
       {
@@ -204,7 +204,7 @@ var TOUR_STEPS = (function () {
       {
         target: '#split-save',
         title: 'Save Controls',
-        body: 'The split button saves your work. Click the \u25BE chevron to open a menu with Save as Copy, Rename, and export options (.ctcc and .csv formats).',
+        body: 'The split button saves your work. Click the \u25BE chevron to open a menu with Save as Copy, Rename, and export options (.forge and .csv formats).',
         tip: 'Press \u2318S (Mac) or Ctrl+S (Windows) to save from anywhere on the page.',
         position: 'bottom'
       },

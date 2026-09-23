@@ -2,12 +2,12 @@
 'use strict';
 
       document.addEventListener('DOMContentLoaded', function() {
-      const C = window.CTCC;
+      const C = window.FORGE;
       const form = document.getElementById("demo-form");
       const resultEl = document.getElementById("result");
       const loadStatus = document.getElementById("load-status");
 
-      C.ctccJsonData = null;
+      C.forgeJsonData = null;
       C.refVersion = 'v1.0';
       /** Cached from GET /api/fuel_mix_presets for Fuel Mixes dropdown. */
       C.cachedFuelMixPresets = [];
@@ -50,7 +50,7 @@
         if (C.autoCalcInFlight) { C.autoCalcQueued = true; return; }
         C.autoCalcInFlight = true;
         const calcScenarioId = C.activeScenarioId;
-        document.dispatchEvent(new CustomEvent('ctcc-calc-started'));
+        document.dispatchEvent(new CustomEvent('forge-calc-started'));
         try {
           const baseUrl = C.apiBaseUrl;
           const payload = {
@@ -64,7 +64,7 @@
           const _calcHeaders = { 'Content-Type': 'application/json' };
           if (_authToken) _calcHeaders['Authorization'] = 'Bearer ' + _authToken;
           const resp = await fetch(
-            new URL('/api/ctcc/calculate', baseUrl).toString(),
+            new URL('/api/forge/calculate', baseUrl).toString(),
             { method: 'POST', headers: _calcHeaders,
               body: JSON.stringify(payload) }
           );
@@ -74,7 +74,7 @@
             C.latestValidResults = json.results;
             C.lastRunResults = json.results;
             markResultsAvailable(0);
-            document.dispatchEvent(new CustomEvent('ctcc-results-updated',
+            document.dispatchEvent(new CustomEvent('forge-results-updated',
               { detail: { results: json.results } }));
             if (json.results._partial) {
               const warnings = json.results._warnings || [];
@@ -227,13 +227,13 @@
               name);
           }
           hideSaveDialog();
-        } else if (option === 'ctcc') {
+        } else if (option === 'forge') {
           const scenario = {
             customName: document.getElementById('save-memory-name').value.trim() || 'Scenario',
             inputs: currentInputs,
             results: resultsToSave,
           };
-          exportAsCtcc(scenario);
+          exportAsForge(scenario);
           hideSaveDialog();
         } else if (option === 'csv') {
           const scenario = {
@@ -284,9 +284,9 @@
         C.apiBaseUrl = deriveDefaultApiBase(window.location.href, DEFAULT_PORT);
       }
 
-      function initCtccInputs() {
-        if (!C.ctccJsonData) {
-          return loadCtccJson();
+      function initForgeInputs() {
+        if (!C.forgeJsonData) {
+          return loadForgeJson();
         }
       }
 
@@ -343,10 +343,10 @@
       window.fetchFuelMixPresets = fetchFuelMixPresets;
 
       function collectJsonData() {
-        if (!C.ctccJsonData) return null;
+        if (!C.forgeJsonData) return null;
 
         // Deep clone the original data to preserve nested structures
-        const result = JSON.parse(JSON.stringify(C.ctccJsonData));
+        const result = JSON.parse(JSON.stringify(C.forgeJsonData));
 
         // Helper function to set value at path
         function setValueAtPath(path, value) {
@@ -366,7 +366,7 @@
         // Collect from content-panel (visible sub-item) and offscreen holder (all others)
         const allInputContainers = [
           document.getElementById('content-panel'),
-          document.getElementById('ctcc-offscreen-inputs')
+          document.getElementById('forge-offscreen-inputs')
         ].filter(Boolean);
 
         // Update with edited values from form inputs
@@ -495,10 +495,10 @@
       // emissionsChartInstances defined near renderEmissionsImpactPanel
 
 
-      document.addEventListener('ctcc-results-updated', (e) => {
+      document.addEventListener('forge-results-updated', (e) => {
         updateROWCostPanel(e.detail.results);
       });
-      document.addEventListener('ctcc-calc-started', () => {
+      document.addEventListener('forge-calc-started', () => {
         const ind = document.getElementById('rcp-computing');
         if (ind) ind.style.display = '';
         const dInd = document.getElementById('dcp-computing');
@@ -510,7 +510,7 @@
       });
 
 
-      document.addEventListener('ctcc-results-updated', (e) => {
+      document.addEventListener('forge-results-updated', (e) => {
         updateDelayCostPanel(e.detail.results);
         updateEnergyImpactPanel(e.detail.results);
         updateEmissionsImpactPanel(e.detail.results);
@@ -585,13 +585,13 @@
             combined_data: null
           };
 
-          if (C.ctccJsonData) {
+          if (C.forgeJsonData) {
             payload.combined_data = collectJsonData();
           } else {
             payload.combined_data = await fetchFinalCombined(baseUrl);
           }
 
-          const endpoint = new URL("/api/ctcc/calculate", baseUrl).toString();
+          const endpoint = new URL("/api/forge/calculate", baseUrl).toString();
 
           const _fAuthToken = await _getAuthToken();
           const _fHeaders = { "Content-Type": "application/json" };
@@ -612,7 +612,7 @@
           if (json.results) {
             C.lastRunResults = json.results;
             C.latestValidResults = json.results;
-            document.dispatchEvent(new CustomEvent('ctcc-results-ready'));
+            document.dispatchEvent(new CustomEvent('forge-results-ready'));
           } else {
             resultEl.textContent = JSON.stringify(json, null, 2);
           }
@@ -669,7 +669,7 @@
 
 
       initialiseApiBase();
-      var dataReady = initCtccInputs();
+      var dataReady = initForgeInputs();
 
       // --- App entry (waits for auth check to resolve) ---
       if (window._authReady) {
@@ -678,9 +678,9 @@
           var profile = auth.profile;
           var session = auth.session;
 
-          window.CTCC.userProfile = profile;
-          window.CTCC.currentUserId = session.user.id;
-          document.querySelectorAll('.ctcc-user-display').forEach(function(el) {
+          window.FORGE.userProfile = profile;
+          window.FORGE.currentUserId = session.user.id;
+          document.querySelectorAll('.forge-user-display').forEach(function(el) {
             el.textContent = profile.username || '';
           });
 
@@ -729,11 +729,11 @@
             }, 500);
           } else if (params.get('scenario')) {
             var scenarioId = params.get('scenario');
-            var found = window.CTCC.sessionScenarios.find(function(s) { return s.id === scenarioId; });
+            var found = window.FORGE.sessionScenarios.find(function(s) { return s.id === scenarioId; });
             if (found && typeof setActiveScenario === 'function') setActiveScenario(found);
-          } else if (window.CTCC.sessionScenarios.length > 0) {
-            var userScenarios = window.CTCC.sessionScenarios.filter(function(s) { return s.user_id === session.user.id; });
-            var latest = userScenarios.length > 0 ? userScenarios[0] : window.CTCC.sessionScenarios[0];
+          } else if (window.FORGE.sessionScenarios.length > 0) {
+            var userScenarios = window.FORGE.sessionScenarios.filter(function(s) { return s.user_id === session.user.id; });
+            var latest = userScenarios.length > 0 ? userScenarios[0] : window.FORGE.sessionScenarios[0];
             if (typeof setActiveScenario === 'function') setActiveScenario(latest);
           }
         });

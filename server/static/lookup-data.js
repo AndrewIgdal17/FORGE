@@ -1,11 +1,11 @@
-// CTCC Lookup Data Tables
+// FORGE Lookup Data Tables
 // Extracted from index.html — loaded via <script src="/static/lookup-data.js">
 
 (function() {
 'use strict';
-const C = window.CTCC;
+const C = window.FORGE;
 
-// Lookup caches on CTCC namespace so index.html input-renderers can access them
+// Lookup caches on FORGE namespace so index.html input-renderers can access them
 C.rowWidthLookup = null;
 C.buildCostLookup = null;
 C.circuitDetailsLookup = null;

@@ -1,7 +1,7 @@
 (function() {
 'use strict';
 
-var STORAGE_KEY = 'ctcc-tour-state';
+var STORAGE_KEY = 'forge-tour-state';
 var _steps = [];
 var _currentStepIdx = -1;
 var _overlayEl = null;
