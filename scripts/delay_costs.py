@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-21
 # Description: This script calculates the delay costs for a transmission line.
 #              It computes the delay costs for a transmission line over the delay period.

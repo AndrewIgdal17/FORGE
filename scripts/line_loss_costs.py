@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-27
 # Description: This script uses the energy_losses script to calculate the line losses for
 # a reconductoring project and its original state. Then it calculates each years

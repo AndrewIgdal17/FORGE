@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-20
 # Description: This script calculates the right-of-way costs for a transmission line.
 #              ROW agreement type (permanent easement, lease/license, fee simple, federal/hybrid)

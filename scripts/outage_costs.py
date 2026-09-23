@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-29
 # Description: This script calculates expected outage costs using simplified probabilistic
 #              reliability approach with line-level outage rates, multiplicative duration model,

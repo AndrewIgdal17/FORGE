@@ -1,4 +1,3 @@
-# Author: Dane McFarlane
 # Date: 2025-11-10
 # Description: Loader wrapper for the calculator. Calculator uses YAML input only;
 #              this module re-exports yaml_loaders and provides get_*_raw from YAMLS_DIR.

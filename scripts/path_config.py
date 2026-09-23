@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-01-XX
 # Description: Centralized path configuration for FORGE scripts.
 #              Provides absolute paths based on script location to ensure

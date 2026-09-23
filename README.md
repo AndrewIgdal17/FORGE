@@ -338,8 +338,3 @@ cd testing
 ## License
 
 University of Texas at Austin
-
-## Authors
-
-- Andrew Igdal - Original implementation
-- Extended with FastAPI server and flexible mode system

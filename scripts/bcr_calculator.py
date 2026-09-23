@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-11-04
 # Description: Calculate benefit-cost ratios (BCR) for transmission projects.
 #              Taxonomy-driven aggregation (Phase 2.3 rewrite).

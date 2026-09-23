@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-21
 # Description: Framework for Open Reproducible Grid Economics (FORGE) - Main Script
 #              Orchestrates all individual cost calculation modules

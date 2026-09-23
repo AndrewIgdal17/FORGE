@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-01-XX
 # Description: Shared calculation utility functions for transmission line calculations.
 

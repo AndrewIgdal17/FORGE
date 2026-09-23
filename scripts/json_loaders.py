@@ -1,4 +1,3 @@
-# Author: Dane McFarlane
 # Date: 2025-11-10
 # Description: JSON-based data loading utilities for transmission cost calculator.
 #              Parallel implementation to yaml_loaders.py that uses JSON input instead of YAML files.

@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-29
 # Description: This script calculates expected wildfire costs using probabilistic risk approach.
 #              Based on line-level ignition rate, construction type multiplier, event severity,

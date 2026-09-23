@@ -1,4 +1,3 @@
-# Author: Dane McFarlane
 # Date: 2025-11-10
 # Description: JSON output manager for FORGE API calculations.
 #              Parallel implementation to csv_output_manager.py that collects results in memory as JSON.

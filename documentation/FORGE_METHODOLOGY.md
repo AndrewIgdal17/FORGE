@@ -1,6 +1,6 @@
 # FORGE Methodology
 
-> **This is a derived implementation reference**, maintained inside the code submodule for developer convenience. The canonical methodology lives in `methodology/appendix.tex` (vault side). If this document and the appendix disagree, the appendix is correct — update this file to match, not the reverse. See `.cursor/rules/46-forge.mdc` ("Appendix is canon").
+> This document describes the FORGE methodology and equation reference for developers working on the calculator.
 
 **Purpose (for editors and readers):** This document captures the **logic and method** of the FORGE — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
 
@@ -1740,11 +1740,4 @@ Both use the same capital spending: same nominal amounts ($C^{nom}$ for build, R
 3. Different purpose: utility number = rate base $RB_{nominal}$; society number = PV of spending.
 
 AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views.
-
----
-
-## Related
-
-- [[Projects/FORGE/FORGE MOC]]
-- [[Projects/FORGE/CODEMAP]]
 

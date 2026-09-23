@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-27
 # Description: This calculates the build costs for a transmission line project. Then adjusts it to terrian adjustment
 # via the weighted_miles.py script

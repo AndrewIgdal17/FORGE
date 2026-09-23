@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-11-XX
 # Description: Calculate rate-based revenue requirement (utility perspective).
 #              FERC-style declining-balance formula rate: straight-line depreciation

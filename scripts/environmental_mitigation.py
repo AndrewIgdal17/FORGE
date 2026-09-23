@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-28
 # Description: This script calculates environmental mitigation costs for a transmission line.
 #              It computes base construction/restoration costs and wetland/habitat credit purchases

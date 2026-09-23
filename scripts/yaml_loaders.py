@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-01-XX
 # Description: Centralized YAML loading utilities for transmission cost calculator.
 

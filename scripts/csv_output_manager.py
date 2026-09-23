@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-29
 # Description: CSV output manager for FORGE batch analysis, sensitivity studies, and Monte Carlo simulations.
 

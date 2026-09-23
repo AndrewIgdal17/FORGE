@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-27
 # Descriptions: This script calculates transmission line losses
 

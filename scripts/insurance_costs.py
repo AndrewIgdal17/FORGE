@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-28
 # Description: This script calculates operational insurance costs for transmission line assets.
 #              Insurance premiums are based on insurable asset value (conductors, structures, converters)

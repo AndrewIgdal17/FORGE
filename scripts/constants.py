@@ -1,4 +1,3 @@
-# Author: Auto-generated
 # Date: 2025-01-XX
 # Description: Centralized constants for FORGE calculations.
 #              Eliminates magic numbers throughout the codebase.

@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-20
 # Description: This script calculates the weighted miles of a transmission line.
 

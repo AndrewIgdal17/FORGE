@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-24
 # Description: This script calculates the congestion reduction costs for a transmission line project.
 #              It computes the congestion reduction costs for a transmission line over the project lifetime.

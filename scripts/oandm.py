@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-27
 # Description: This script calculates the O&M costs for a transmission line project.
 #              It calculates O&M costs for conductors, converters, and structures.

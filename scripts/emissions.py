@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-10-26
 # Description: Emissions Reductions Calculation. This calculates the societal costs of emissions due to
 # 1. Delays and long construction times slowing the deployment of new renewable energy capacity

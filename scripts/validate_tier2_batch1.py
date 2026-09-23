@@ -1,6 +1,6 @@
 """Post-Tier-2-Batch-1 validation: compare current .forge outputs to pre-change reference values.
 
-Reference values are from Projects/FORGE/papers/paper1-energy-policy/case-studies/real-world-case-studies.tex
+Reference values from published case studies
 (the last iteration before Tier 1 + Tier 2 methodology changes).
 
 Methodology changes that affect values:

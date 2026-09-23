@@ -1,4 +1,3 @@
-# Author: Andrew Igdal
 # Date: 2025-01-28
 # Description: Shared financial utility functions for present value calculations and amortization.
 #              This module consolidates duplicated financial calculation functions from across scripts.
