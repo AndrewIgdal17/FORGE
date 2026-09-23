@@ -1,6 +1,6 @@
-# CTCC Developer Documentation
+# FORGE Developer Documentation
 
-Comprehensive technical documentation for developers working on CTCC.
+Comprehensive technical documentation for developers working on FORGE.
 
 **Last Updated:** 2026-05-10
 **Version:** 4.0
@@ -27,13 +27,13 @@ Comprehensive technical documentation for developers working on CTCC.
 
 ## Project Overview
 
-### What is CTCC?
+### What is FORGE?
 
-CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis tool for high-voltage transmission line projects. It calculates 12 cost and benefit categories to help utilities and regulators make informed decisions about energy infrastructure investments.
+FORGE (Framework for Open Reproducible Grid Economics) is a cost-benefit analysis tool for high-voltage transmission line projects. It calculates 12 cost and benefit categories to help utilities and regulators make informed decisions about energy infrastructure investments.
 
 ### Key Features
 
-- **Single I/O contract:** Calculator is YAML in, JSON out (input: `yamls/` or `CTCC_YAMLS_DIR`; output: `ctcc_results_{scenario_id}.json`). The API still accepts and returns JSON; the server converts client JSON to a temp YAML directory before invoking the calculator.
+- **Single I/O contract:** Calculator is YAML in, JSON out (input: `yamls/` or `FORGE_YAMLS_DIR`; output: `forge_results_{scenario_id}.json`). The API still accepts and returns JSON; the server converts client JSON to a temp YAML directory before invoking the calculator.
 - **14 calculation scripts:** Build, ROW, environmental, revenue, O&M, risk, benefits, etc.
 - **3 Financial Perspectives:** Nominal, AFUDC (regulatory), Present Value (societal)
 - **Web UI:** Browser-based interface for editing and running calculations
@@ -44,7 +44,7 @@ CTCC (Comprehensive Transmission Cost Calculator) is a cost-benefit analysis too
 
 ### Cost categories (methodology)
 
-Costs are grouped into **5 categories** (variables, equations, and notation are in **[documentation/CTCC_METHODOLOGY.md](documentation/CTCC_METHODOLOGY.md)**; that document is the full CTCC methodology and takes precedence):
+Costs are grouped into **5 categories** (variables, equations, and notation are in **[documentation/FORGE_METHODOLOGY.md](documentation/FORGE_METHODOLOGY.md)**; that document is the full FORGE methodology and takes precedence):
 
 1. **Capital costs:** Build (1.a), Capital ROW—acquisition, holding (1.b), Environmental Mitigation (1.c)
 2. **Operational costs:** O&M (2.a), Operational Insurance (2.b), Operational ROW—rent (2.c)
@@ -60,7 +60,7 @@ Costs are grouped into **5 categories** (variables, equations, and notation are 
 - **Configuration:** YAML (PyYAML), JSON. The calculator reads only YAML (from a directory); JSON is used at the API boundary and in server templates.
 - **Frontend:** Vanilla JavaScript (no frameworks). Config-driven layout via TAB_HIERARCHY (configs.js) + hierarchy engine (hierarchy-engine.js)
 
-**Context optimization:** Use the "Context and information gathering" section below for where to look and how to search. Prefer `documentation/CTCC_METHODOLOGY.md` for methodology and notation. Scope searches to the relevant directory. Prefer search + targeted read for files over ~500 lines.
+**Context optimization:** Use the "Context and information gathering" section below for where to look and how to search. Prefer `documentation/FORGE_METHODOLOGY.md` for methodology and notation. Scope searches to the relevant directory. Prefer search + targeted read for files over ~500 lines.
 
 ---
 
@@ -70,10 +70,10 @@ Use this section to reduce context burn and improve answers: start in the right 
 
 ### Entry points and map
 
-- **Calculation logic:** `scripts/` + `documentation/CTCC_METHODOLOGY.md`
-- **API / server:** `ctcc.py` + `server/app/`
+- **Calculation logic:** `scripts/` + `documentation/FORGE_METHODOLOGY.md`
+- **API / server:** `forge.py` + `server/app/`
 - **Paper and appendix:** Maintained externally (not in this repo).
-- **Config:** `yamls/` (or directory set by `CTCC_YAMLS_DIR`); loader mappings in `scripts/yaml_loaders.py`. Server template/merge uses `server/json/`; the merged request is written as a temp YAML directory for the calculator. `json_loaders.py` exists for server-side use; the calculator does not use it.
+- **Config:** `yamls/` (or directory set by `FORGE_YAMLS_DIR`); loader mappings in `scripts/yaml_loaders.py`. Server template/merge uses `server/json/`; the merged request is written as a temp YAML directory for the calculator. `json_loaders.py` exists for server-side use; the calculator does not use it.
 - **Testing:** `testing/` and root-level `test_*.py`
 
 See [File Structure](#file-structure) for the full tree.
@@ -86,14 +86,14 @@ See [File Structure](#file-structure) for the full tree.
 
 ### Canonical references
 
-- **Methodology (variables, equations, notation):** `documentation/CTCC_METHODOLOGY.md`
+- **Methodology (variables, equations, notation):** `documentation/FORGE_METHODOLOGY.md`
 - **Paper, appendix, and module LaTeX:** Maintained externally (not in this repo).
 - **Developer reference:** this file (CLAUDE.md)
 
 ### Large files
 
-- **documentation/CTCC_METHODOLOGY.md** (~1850 lines): search for variable/section names, then read the specific section (offset/limit).
-- Long scripts (e.g. `ctcc.py`, `json_output_manager.py`, `yaml_loaders.py`): grep for the function or symbol first, then targeted read.
+- **documentation/FORGE_METHODOLOGY.md** (~1850 lines): search for variable/section names, then read the specific section (offset/limit).
+- Long scripts (e.g. `forge.py`, `json_output_manager.py`, `yaml_loaders.py`): grep for the function or symbol first, then targeted read.
 
 ### Script–cost mapping
 
@@ -121,10 +121,10 @@ See [File Structure](#file-structure) for the full tree.
 flowchart LR
   subgraph calc [Calculation or cost logic]
     scripts[scripts/]
-    methodology[CTCC_METHODOLOGY.md]
+    methodology[FORGE_METHODOLOGY.md]
   end
   subgraph api [API or server]
-    ctcc[ctcc.py]
+    forge[forge.py]
     server[server/app/]
   end
   subgraph paper [Paper or appendix]
@@ -149,7 +149,7 @@ flowchart LR
 
 ```bash
 # Clone and navigate to project
-cd CTCC
+cd FORGE
 
 # Create CLI virtual environment
 python3 -m venv venv
@@ -166,14 +166,14 @@ pip install -r requirements.txt
 ### Run Calculations (CLI)
 
 ```bash
-# Default: read yamls/, write outputs/ctcc_results_{scenario_id}.json
-python ctcc.py
+# Default: read yamls/, write outputs/forge_results_{scenario_id}.json
+python forge.py
 
 # With overrides
-CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=my_id python ctcc.py
+FORGE_YAMLS_DIR=/path/to/yamls FORGE_SCENARIO_ID=my_id python forge.py
 
 # Legacy: run each script as subprocess
-python ctcc.py --subprocess
+python forge.py --subprocess
 ```
 
 ### Start Web Server
@@ -193,7 +193,7 @@ cd server
 # Output: server/json/final_combined.json
 ```
 
-The calculator does not take JSON input; conversion from client JSON to YAML happens only at the API boundary (server writes a temp YAML dir before invoking ctcc). This tool is for refreshing server templates.
+The calculator does not take JSON input; conversion from client JSON to YAML happens only at the API boundary (server writes a temp YAML dir before invoking forge). This tool is for refreshing server templates.
 
 ---
 
@@ -201,24 +201,24 @@ The calculator does not take JSON input; conversion from client JSON to YAML hap
 
 ### High-Level Design
 
-CTCC uses a single calculator contract and two entry points:
+FORGE uses a single calculator contract and two entry points:
 
-1. Entry point (`ctcc.py` or `ctcc_processor.py`) receives the request.
+1. Entry point (`forge.py` or `forge_processor.py`) receives the request.
 2. **14 calculation scripts** run **in-process by default** (or as subprocesses with `--subprocess`); they use **yaml_loaders only** and **JSON output only**.
-3. ctcc.py aggregates results and writes one JSON file (`ctcc_results_{scenario_id}.json`).
-4. Server path: merges request with template, writes **temp YAML directory**, sets `CTCC_YAMLS_DIR`, invokes ctcc, reads the JSON result, returns the response.
+3. forge.py aggregates results and writes one JSON file (`forge_results_{scenario_id}.json`).
+4. Server path: merges request with template, writes **temp YAML directory**, sets `FORGE_YAMLS_DIR`, invokes forge, reads the JSON result, returns the response.
 
 ### Design Principles
 
 1. **Single Responsibility:** Each script calculates one cost category.
-2. **Single input path (YAML dir):** Calculator reads only from a YAML directory (`yamls/` or `CTCC_YAMLS_DIR`).
+2. **Single input path (YAML dir):** Calculator reads only from a YAML directory (`yamls/` or `FORGE_YAMLS_DIR`).
 3. **Single output path (JSON):** Calculator writes only one JSON result file.
-4. **Delegation:** Server delegates to `ctcc.py`; it does not duplicate calculation logic.
-5. **Environment:** Optional overrides via `CTCC_YAMLS_DIR` and `CTCC_SCENARIO_ID`.
+4. **Delegation:** Server delegates to `forge.py`; it does not duplicate calculation logic.
+5. **Environment:** Optional overrides via `FORGE_YAMLS_DIR` and `FORGE_SCENARIO_ID`.
 
 ### Entry Points
 
-#### 1. CLI: `ctcc.py`
+#### 1. CLI: `forge.py`
 
 **Purpose:** Direct command-line calculations.
 
@@ -230,45 +230,45 @@ CTCC uses a single calculator contract and two entry points:
 **Usage:**
 
 ```bash
-python ctcc.py
+python forge.py
 # Optional env overrides:
-CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=my_id python ctcc.py
+FORGE_YAMLS_DIR=/path/to/yamls FORGE_SCENARIO_ID=my_id python forge.py
 # Legacy subprocess mode:
-python ctcc.py --subprocess
+python forge.py --subprocess
 ```
 
-**Flow:** Parse args; load BCR config from YAML; set or generate `CTCC_SCENARIO_ID`; run 14 scripts in-process (or subprocess); aggregate JSON, compute BCR; write `outputs/ctcc_results_{scenario_id}.json`.
+**Flow:** Parse args; load BCR config from YAML; set or generate `FORGE_SCENARIO_ID`; run 14 scripts in-process (or subprocess); aggregate JSON, compute BCR; write `outputs/forge_results_{scenario_id}.json`.
 
-#### 2. API: `server/app/ctcc_processor.py`
+#### 2. API: `server/app/forge_processor.py`
 
 **Purpose:** Web API backend
 
 **Key Functions:**
 
-- `run_ctcc_calculation(payload)` - Main calculation function
+- `run_forge_calculation(payload)` - Main calculation function
 
 **How it works:**
 
 1. Receives JSON payload with `combined_data` (and optional `scenario_id`).
-2. Merges with template if simplified format; writes merged data to a **temp YAML directory** (one file per key), sets **CTCC_YAMLS_DIR**.
-3. Invokes `ctcc.py` via subprocess (no temp JSON input file).
-4. Reads `ctcc_results_{scenario_id}.json`; removes temp YAML dir.
+2. Merges with template if simplified format; writes merged data to a **temp YAML directory** (one file per key), sets **FORGE_YAMLS_DIR**.
+3. Invokes `forge.py` via subprocess (no temp JSON input file).
+4. Reads `forge_results_{scenario_id}.json`; removes temp YAML dir.
 5. Returns structured JSON response (always JSON; no CSV path).
 
-**Why delegate to ctcc.py?**
+**Why delegate to forge.py?**
 
 - Single source of truth (fix once, works everywhere)
-- Automatic benefit from ctcc.py improvements
+- Automatic benefit from forge.py improvements
 - Reduced code: 453 → 189 lines (58% reduction)
 
 ### Data Flow
 
 ```
-YAML directory (yamls/ or CTCC_YAMLS_DIR)
+YAML directory (yamls/ or FORGE_YAMLS_DIR)
     ↓
-Environment (CTCC_YAMLS_DIR, CTCC_SCENARIO_ID)
+Environment (FORGE_YAMLS_DIR, FORGE_SCENARIO_ID)
     ↓
-ctcc.py
+forge.py
     ↓
 14 scripts (in-process by default)
     ↓
@@ -278,22 +278,22 @@ Calculation logic
     ↓
 smart_output → json_output_manager only
     ↓
-Output: ctcc_results_{scenario_id}.json
+Output: forge_results_{scenario_id}.json
 ```
 
 ### Smart Loaders & Output
 
 **Purpose:** Provide a single loader/output API to calculation scripts. The calculator has one input path and one output path.
 
-**smart_loaders.py:** Always uses `yaml_loaders`. Scripts read from `YAMLS_DIR` (from `path_config`; overridable via `CTCC_YAMLS_DIR`). There is no branching on input mode; the calculator does not use `json_loaders`.
+**smart_loaders.py:** Always uses `yaml_loaders`. Scripts read from `YAMLS_DIR` (from `path_config`; overridable via `FORGE_YAMLS_DIR`). There is no branching on input mode; the calculator does not use `json_loaders`.
 
 **smart_output.py:** Always uses `JSONOutputManager` (or the shared aggregator when in-process). There is no CSV branch; scripts always write to the JSON aggregator.
 
-**Benefits:** Scripts use generic imports (`from smart_loaders import load_...`, `from smart_output import CTCCOutputManager`). Single I/O contract; adding a new source (e.g. a database) would be a single adapter that produces a YAML dir or is used at the server boundary.
+**Benefits:** Scripts use generic imports (`from smart_loaders import load_...`, `from smart_output import FORGEOutputManager`). Single I/O contract; adding a new source (e.g. a database) would be a single adapter that produces a YAML dir or is used at the server boundary.
 
 ### Rate Base and ROW Capital vs. Operational
 
-- **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc (nominal at COD). **Rate-based revenue** uses Option A: the nominal rate base is deflated to base year; annual revenue is constant real $/year; present value uses real WACC—consistent with real discounting elsewhere in CTCC.
+- **Rate base** = AFUDC capital at COD: build\_cost\_afudc + row\_cost\_afudc + env\_mitigation\_afudc (nominal at COD). **Rate-based revenue** uses Option A: the nominal rate base is deflated to base year; annual revenue is constant real $/year; present value uses real WACC—consistent with real discounting elsewhere in FORGE.
 - **ROW capital** (acquisition + holding) is AFUDC-eligible and included in capital costs and rate base. **ROW rent** (annual ROW payment) is operational only (O&M + insurance + row rent); it is not in rate base or capital.
 - **Cost timing:** AFUDC-eligible cost timing patterns require `during_delay + during_construction = 1` (enforced in `calculate_afudc_capitalized_cost`).
 
@@ -308,7 +308,7 @@ Output: ctcc_results_{scenario_id}.json
 ```python
 # scripts/new_module.py
 from smart_loaders import load_project_technical_details, load_financing_details
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 def calculate_new_costs(project_data, financing_data):
     """Calculate costs for new module."""
@@ -329,7 +329,7 @@ def main():
     results = calculate_new_costs(project_data, financing_data)
 
     # Write output
-    output_manager = CTCCOutputManager()
+    output_manager = FORGEOutputManager()
     output_manager.add_new_module_costs(results)
     output_manager.write_batch_summary()
 
@@ -349,7 +349,7 @@ def add_new_module_costs(self, results):
     self.costs["new_module"] = results
 ```
 
-#### Step 3: Update ctcc.py
+#### Step 3: Update forge.py
 
 ```python
 scripts = [
@@ -364,17 +364,17 @@ scripts = [
 
 ```bash
 # Test individual script (point at a YAML dir and scenario)
-export CTCC_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
-export CTCC_SCENARIO_ID=test
+export FORGE_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
+export FORGE_SCENARIO_ID=test
 python3 scripts/new_module.py
 
-# Test via ctcc.py
-python ctcc.py
+# Test via forge.py
+python forge.py
 # Or with overrides:
-CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=test python ctcc.py
+FORGE_YAMLS_DIR=/path/to/yamls FORGE_SCENARIO_ID=test python forge.py
 
 # Test via API
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d @test_payload.json
 ```
@@ -398,16 +398,16 @@ curl -X POST http://localhost:8000/api/ctcc/calculate \
 
 The calculator has a **single input contract**: it reads only from a YAML directory. To support a new source (e.g. a database or XML):
 
-- **Option A:** Build an **adapter** that produces a YAML directory (e.g. export DB → YAML files), then point `CTCC_YAMLS_DIR` at that directory.
-- **Option B:** Use the new source at the **server boundary**: the API can accept the new format, merge it into the request, and write the merged data to the temp YAML directory before invoking ctcc.
+- **Option A:** Build an **adapter** that produces a YAML directory (e.g. export DB → YAML files), then point `FORGE_YAMLS_DIR` at that directory.
+- **Option B:** Use the new source at the **server boundary**: the API can accept the new format, merge it into the request, and write the merged data to the temp YAML directory before invoking forge.
 
 The calculator does not branch on input format; `smart_loaders` always uses `yaml_loaders`.
 
 ### Adding New Output Format
 
-The calculator has a **single output**: one JSON file per run (`ctcc_results_{scenario_id}.json`). To produce another format (e.g. CSV):
+The calculator has a **single output**: one JSON file per run (`forge_results_{scenario_id}.json`). To produce another format (e.g. CSV):
 
-- Add a **post-step** that reads `ctcc_results_*.json` and exports to CSV (or another format). Do not change the calculator's output contract.
+- Add a **post-step** that reads `forge_results_*.json` and exports to CSV (or another format). Do not change the calculator's output contract.
 
 ---
 
@@ -439,9 +439,9 @@ Returns combined JSON configuration
 
 ---
 
-#### POST `/api/ctcc/calculate`
+#### POST `/api/forge/calculate`
 
-Runs CTCC calculations. The API always returns JSON results; the server writes merged data to a temp YAML directory, sets `CTCC_YAMLS_DIR`, invokes ctcc, and returns the JSON from `ctcc_results_{scenario_id}.json`.
+Runs FORGE calculations. The API always returns JSON results; the server writes merged data to a temp YAML directory, sets `FORGE_YAMLS_DIR`, invokes forge, and returns the JSON from `forge_results_{scenario_id}.json`.
 
 **Request:**
 
@@ -511,10 +511,10 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
 ## File Structure
 
 ```
-CTCC/
-├── ctcc.py                       # CLI entry point
+FORGE/
+├── forge.py                       # CLI entry point
 ├── yaml_to_json.py               # YAML→JSON converter (server/template use)
-├── cleanup_ctcc.sh               # Cleanup script
+├── cleanup_forge.sh               # Cleanup script
 │
 ├── scripts/                      # Calculation modules (14 scripts)
 │   ├── smart_loaders.py          # Always yaml_loaders
@@ -541,7 +541,7 @@ CTCC/
 │   ├── line_loss_costs.py       # 12. Line losses
 │   ├── oandm.py                 # 13. O&M
 │   ├── revenue.py               # 14. Revenue
-│   └── ...                      # (bcr_calculator invoked from ctcc.py)
+│   └── ...                      # (bcr_calculator invoked from forge.py)
 │
 ├── yamls/                        # YAML configuration (22 files)
 │   ├── 01_project_technical_details.yaml
@@ -549,13 +549,13 @@ CTCC/
 │   └── ...
 │
 ├── outputs/                      # Calculation results
-│   ├── ctcc_results_*.json      # Primary output (one per scenario)
+│   ├── forge_results_*.json      # Primary output (one per scenario)
 │   └── json_output_*.json       # Optional temp files when using --subprocess
 │
 ├── server/                       # FastAPI web server
 │   ├── app/
 │   │   ├── main.py               # FastAPI app
-│   │   ├── ctcc_processor.py     # Calculation orchestrator
+│   │   ├── forge_processor.py     # Calculation orchestrator
 │   │   └── processor.py          # Demo processor
 │   │
 │   ├── static/
@@ -593,12 +593,12 @@ CTCC/
 
 ```bash
 # Default: YAML dir → JSON output
-python ctcc.py
+python forge.py
 
 # With overrides
-CTCC_SCENARIO_ID=test python ctcc.py
+FORGE_SCENARIO_ID=test python forge.py
 # Or:
-CTCC_YAMLS_DIR=/path/to/yamls CTCC_SCENARIO_ID=test python ctcc.py
+FORGE_YAMLS_DIR=/path/to/yamls FORGE_SCENARIO_ID=test python forge.py
 ```
 
 #### Test API
@@ -612,7 +612,7 @@ cd server
 open http://localhost:8000
 
 # Test with curl
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d @test_payload.json
 ```
@@ -620,8 +620,8 @@ curl -X POST http://localhost:8000/api/ctcc/calculate \
 #### Test Individual Script
 
 ```bash
-export CTCC_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
-export CTCC_SCENARIO_ID=test
+export FORGE_YAMLS_DIR=/path/to/yamls   # e.g. path to yamls/
+export FORGE_SCENARIO_ID=test
 python3 scripts/build_costs.py
 ```
 
@@ -631,8 +631,8 @@ python3 scripts/build_costs.py
 # API vs CLI comparison
 python test_api_vs_cli.py
 
-# CTCC processor test
-python test_ctcc_processor.py
+# FORGE processor test
+python test_forge_processor.py
 ```
 
 ### Unit Testing
@@ -668,9 +668,9 @@ tests/
 
 **Status:** ✅ Resolved in v2.0
 
-**Problem:** `ctcc_processor.py` duplicated all calculation logic (453 lines).
+**Problem:** `forge_processor.py` duplicated all calculation logic (453 lines).
 
-**Solution:** Refactored to delegate to `ctcc.py` via subprocess (189 lines, 58% reduction).
+**Solution:** Refactored to delegate to `forge.py` via subprocess (189 lines, 58% reduction).
 
 ### Issue 3: JSON Data Loading in Parent Process (OBSOLETE)
 
@@ -682,9 +682,9 @@ The calculator no longer has a JSON input mode. All input is via a YAML director
 
 **Status:** ⚠️ Known limitation
 
-**Problem:** The calculator output is **JSON only** (`ctcc_results_*.json`). There is no CSV output from the calculator.
+**Problem:** The calculator output is **JSON only** (`forge_results_*.json`). There is no CSV output from the calculator.
 
-**Workaround:** For CSV or per-module files, add a separate export step that reads `ctcc_results_*.json` and writes the desired CSV(s). Do not expect the calculator to produce CSV directly.
+**Workaround:** For CSV or per-module files, add a separate export step that reads `forge_results_*.json` and writes the desired CSV(s). Do not expect the calculator to produce CSV directly.
 
 ### Issue 5: Reconductoring Environmental Mitigation Credits (RESOLVED)
 
@@ -704,7 +704,7 @@ The calculator no longer has a JSON input mode. All input is via a YAML director
 
 **Problem:** Emissions due to line-loss compensation are calculated using the configured **average** energy source mix (canonical YAML **`yamls/18_energy_source_mix.yaml`**, merged at load with `16_emissions_reductions` in `load_emissions_details()`). For incremental emissions from extra MWh of loss, the theoretically correct measure is the **marginal** unit (or marginal emission factor), not the system average.
 
-**Current behavior:** The emissions script (`scripts/emissions.py`) uses `energy_source_mix` shares as weights: emissions = TEC × Σ (mix_share_j × intensity_j). Average mix data is easy to obtain and consistent with CTCC’s current annual-level resolution.
+**Current behavior:** The emissions script (`scripts/emissions.py`) uses `energy_source_mix` shares as weights: emissions = TEC × Σ (mix_share_j × intensity_j). Average mix data is easy to obtain and consistent with FORGE’s current annual-level resolution.
 
 **Decided future direction:** The long-term plan is to base line-loss emissions on **EPA eGRID** (Emissions & Generation Resource Integrated Database): use eGRID **total output emission rates** for average-grid (scope 2–style) estimates and eGRID **non-baseload output emission rates** as a marginal-ish proxy when appropriate. eGRID rates are operational/stack (direct) emissions per MWh, not lifecycle—so adopting eGRID is a conceptual shift from current lifecycle-ish intensity defaults. See [papers/paper1/future_improvements.md](papers/paper1/future_improvements.md) for eGRID details, rationale for deferral, and when to revisit.
 
@@ -736,10 +736,10 @@ Planned or desired improvements that are intentionally deferred are documented i
 
 ```bash
 # Production environment variables
-export CTCC_ENV=production
-export CTCC_LOG_LEVEL=INFO
-export CTCC_MAX_TIMEOUT=600000
-export CTCC_TEMP_DIR=/var/tmp/ctcc
+export FORGE_ENV=production
+export FORGE_LOG_LEVEL=INFO
+export FORGE_MAX_TIMEOUT=600000
+export FORGE_TEMP_DIR=/var/tmp/forge
 ```
 
 ### Docker Deployment
@@ -808,14 +808,14 @@ cd server
 
 ```bash
 # Check environment
-env | grep CTCC
+env | grep FORGE
 
 # Required for overrides (defaults: yamls/ and generated scenario ID)
-# CTCC_YAMLS_DIR  - path to YAML config directory
-# CTCC_SCENARIO_ID - scenario identifier for output filename
+# FORGE_YAMLS_DIR  - path to YAML config directory
+# FORGE_SCENARIO_ID - scenario identifier for output filename
 # Clear if needed
-unset CTCC_YAMLS_DIR
-unset CTCC_SCENARIO_ID
+unset FORGE_YAMLS_DIR
+unset FORGE_SCENARIO_ID
 ```
 
 ### Temp Files Not Cleaned Up
@@ -829,7 +829,7 @@ unset CTCC_SCENARIO_ID
 rm outputs/json_output_*.json
 
 # Or use cleanup script
-./cleanup_ctcc.sh
+./cleanup_forge.sh
 ```
 
 ### Virtual Environment Issues
@@ -840,7 +840,7 @@ rm outputs/json_output_*.json
 
 ```bash
 # CLI venv
-cd CTCC
+cd FORGE
 rm -rf venv
 python3 -m venv venv
 source venv/bin/activate
@@ -900,9 +900,9 @@ pip install -r requirements.txt
 
 **Single calculator contract (YAML in, JSON out):**
 
-- Calculator reads only from a YAML directory (`yamls/` or `CTCC_YAMLS_DIR`); writes only JSON (`ctcc_results_{scenario_id}.json`).
-- Server writes merged request to a temp YAML directory and sets `CTCC_YAMLS_DIR`; no temp JSON input file.
-- Calculator always uses `yaml_loaders` and `JSONOutputManager`; no `-j`/`-o`/`--id` flags; scenario via `CTCC_SCENARIO_ID`.
+- Calculator reads only from a YAML directory (`yamls/` or `FORGE_YAMLS_DIR`); writes only JSON (`forge_results_{scenario_id}.json`).
+- Server writes merged request to a temp YAML directory and sets `FORGE_YAMLS_DIR`; no temp JSON input file.
+- Calculator always uses `yaml_loaders` and `JSONOutputManager`; no `-j`/`-o`/`--id` flags; scenario via `FORGE_SCENARIO_ID`.
 - Scripts run in-process by default; `--subprocess` remains for legacy.
 - See [audit/refactor51126.md](../audit/refactor51126.md) and [MODE_FLOW_DIAGRAM.md](MODE_FLOW_DIAGRAM.md).
 
@@ -912,7 +912,7 @@ pip install -r requirements.txt
 
 - Added JSON input/output modes
 - Implemented command-line flags (`-j`, `-o`, `--id`)
-- Refactored server processor to delegate to `ctcc.py`
+- Refactored server processor to delegate to `forge.py`
 - Fixed YAML loader missing file mappings
 - Created comprehensive documentation
 
@@ -930,7 +930,7 @@ pip install -r requirements.txt
 
 - 13 calculation modules
 - YAML input, CSV output
-- CLI interface (`ctcc.py`)
+- CLI interface (`forge.py`)
 - BCR calculator
 - Financial utilities (AFUDC, PV)
 

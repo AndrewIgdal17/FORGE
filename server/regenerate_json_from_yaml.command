@@ -5,8 +5,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CTCC_DIR="$(dirname "$SCRIPT_DIR")"
-YAMLS_DIR="$CTCC_DIR/yamls"
+FORGE_DIR="$(dirname "$SCRIPT_DIR")"
+YAMLS_DIR="$FORGE_DIR/yamls"
 JSON_DIR="$SCRIPT_DIR/json"
 
 echo "Regenerating JSON files from YAML files..."
@@ -15,13 +15,13 @@ echo "Destination: $JSON_DIR"
 echo
 
 # Check if venv exists
-if [[ ! -d "$CTCC_DIR/venv" ]]; then
-  echo "Error: Virtual environment not found at $CTCC_DIR/venv" >&2
+if [[ ! -d "$FORGE_DIR/venv" ]]; then
+  echo "Error: Virtual environment not found at $FORGE_DIR/venv" >&2
   exit 1
 fi
 
 # Activate virtual environment
-source "$CTCC_DIR/venv/bin/activate"
+source "$FORGE_DIR/venv/bin/activate"
 
 # Count YAML files
 yaml_count=$(find "$YAMLS_DIR" -maxdepth 1 -name "*.yaml" | wc -l | tr -d ' ')

@@ -1,12 +1,12 @@
-# CTCC Methodology
+# FORGE Methodology
 
-> **This is a derived implementation reference**, maintained inside the code submodule for developer convenience. The canonical methodology lives in `methodology/appendix.tex` (vault side). If this document and the appendix disagree, the appendix is correct — update this file to match, not the reverse. See `.cursor/rules/46-ctcc.mdc` ("Appendix is canon").
+> **This is a derived implementation reference**, maintained inside the code submodule for developer convenience. The canonical methodology lives in `methodology/appendix.tex` (vault side). If this document and the appendix disagree, the appendix is correct — update this file to match, not the reverse. See `.cursor/rules/46-forge.mdc` ("Appendix is canon").
 
-**Purpose (for editors and readers):** This document captures the **logic and method** of the CTCC — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
+**Purpose (for editors and readers):** This document captures the **logic and method** of the FORGE — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
 
 ---
 
-This document covers the methodology for the Comprehensive Transmission Cost Calculator (CTCC): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue.
+This document covers the methodology for the Framework for Open Reproducible Grid Economics (FORGE): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion and curtailment reduction, and benefit of delivered energy), and revenue.
 
 ---
 
@@ -94,7 +94,7 @@ $$
 
 ## Financial parameters
 
-This section defines discount rates, inflation, and base year used across CTCC. It also summarizes the link to real WACC (Fisher).
+This section defines discount rates, inflation, and base year used across FORGE. It also summarizes the link to real WACC (Fisher).
 
 **Variables**
 
@@ -142,7 +142,7 @@ $$
 | $C_{adj,cont,structure}$    | Structure cost ($)                                              | Terrain adjusted, contingency applied                                                     |
 | $C_{adj,cont,converter}$    | Converter cost (if DC) ($)                                      | Terrain adjusted, contingency applied                                                     |
 | $F_{conductor}$             | Fixed conductor costs ($)                                       | Conductors have both fixed and variable costs                                             |
-| $F_{structure}$             | Fixed structure costs ($)                                       | Currently, structures have no fixed costs in the CTCC                                     |
+| $F_{structure}$             | Fixed structure costs ($)                                       | Currently, structures have no fixed costs in the FORGE                                     |
 | $F_{converter}$             | Fixed converter costs ($)                                       | Converters only have fixed costs                                                          |
 | $V_{conductor}$             | Variable conductor costs ($/mi)                                 | Conductors have both fixed and variable costs. The miles used are terrain adjusted miles. |
 | $V_{structure}$             | Variable structure costs ($/mi)                                 | Structures only have variable costs currently. The miles used are terrain adjusted miles. |
@@ -163,7 +163,7 @@ C_{conductor} = V_{conductor} \cdot M_{total} + F_{conductor},\quad C_{structure
 
 $$
 
-As of 2026-02-17, $F_{structure} = 0$ and $V_{converter} = 0$. The CTCC uses difficulty-adjusted terrain miles (weighted miles) rather than raw miles:
+As of 2026-02-17, $F_{structure} = 0$ and $V_{converter} = 0$. The FORGE uses difficulty-adjusted terrain miles (weighted miles) rather than raw miles:
 
 $$
 C_{adj,conductor} = V_{conductor} \cdot M_{weighted,total} + F_{conductor},\quad C_{adj,structure} = V_{structure} \cdot M_{weighted,total},\quad C_{adj,converter} = F_{converter}.
@@ -734,7 +734,7 @@ Same as Capital ROW: Reconductoring or existing ROW → Existing Lease/License (
 
 ## Energy/Emissions
 
-The CTCC calculates the thermal losses on a line. Energy losses are the physical quantity of energy lost on the transmission path (line and, for DC, converters). We calculate it to estimate energy loss costs and emissions costs.
+The FORGE calculates the thermal losses on a line. Energy losses are the physical quantity of energy lost on the transmission path (line and, for DC, converters). We calculate it to estimate energy loss costs and emissions costs.
 
 ### Energy losses
 
@@ -1278,7 +1278,7 @@ $$
 Base delay costs are not capitalized; there is no AFUDC term. They do not enter rate base. They are expensed during the delay period.
 
 **Societal perspective**
-The relevant measure is real (present value) base delay cost, $C_{delay,real}$, using $r_{WACC,real}$ (from financing details). This aligns with the PV of capital and other cost streams in CTCC.
+The relevant measure is real (present value) base delay cost, $C_{delay,real}$, using $r_{WACC,real}$ (from financing details). This aligns with the PV of capital and other cost streams in FORGE.
 
 **Link to other delay cost categories**
 5.b (congestion delay costs) and 5.c (curtailment delay costs) are opportunity costs of foregone congestion/curtailment relief during delay and construction; see those sections.
@@ -1452,13 +1452,13 @@ Revenue ($R_{\text{PV}}$) is a transfer (utility benefit = ratepayer cost); excl
 
 ### Congestion and Curtailment Reduction Benefits
 
-Transmission congestion is when the grid is short of capacity and can't deliver all the power that's wanted, so some value is lost (e.g. higher prices, redispatch). Curtailment is when generators (often renewables) must cut output because the wires can't take it. The CTCC treats both as constraints that a new or upgraded line can partly relieve. The benefits are the monetary value of that relief: less congestion and less curtailment thanks to the project.
+Transmission congestion is when the grid is short of capacity and can't deliver all the power that's wanted, so some value is lost (e.g. higher prices, redispatch). Curtailment is when generators (often renewables) must cut output because the wires can't take it. The FORGE treats both as constraints that a new or upgraded line can partly relieve. The benefits are the monetary value of that relief: less congestion and less curtailment thanks to the project.
 
 **Effective relief**
 The project doesn't necessarily relieve capacity equal to its nameplate. For a greenfield line, only a fraction of nameplate effectively relieves the constraint (flow factor $\phi$). For reconductoring, relief is the increase in capacity (new minus old). That effective relief, $\Delta C_{effective}$, is the MW available each hour to reduce congestion and/or curtailment.
 
 **Curtailment first**
-The same MW of relief can't count twice. The CTCC assigns relief first to curtailment, then what's left ($\Delta C_{remaining}$) to congestion. So you get curtailment benefit from up to $\min(\Delta C_{effective}, MW_{curtailment})$ over curtailment hours, and congestion benefit from the remaining capacity over congestion hours.
+The same MW of relief can't count twice. The FORGE assigns relief first to curtailment, then what's left ($\Delta C_{remaining}$) to congestion. So you get curtailment benefit from up to $\min(\Delta C_{effective}, MW_{curtailment})$ over curtailment hours, and congestion benefit from the remaining capacity over congestion hours.
 
 **Overlap**
 Congestion hours and curtailment hours can overlap. An overlap fraction $\theta$ splits congestion hours into overlap and non-overlap. On overlap hours, congestion relief is capped by $\Delta C_{remaining}$ (because curtailment already used some of $\Delta C_{effective}$). On non-overlap hours, the full $\Delta C_{effective}$ is available for congestion relief (capped by exceedance $X_{congestion}$). So: overlap congestion relief uses $\Delta C_{remaining}$; non-overlap congestion relief uses $\Delta C_{effective}$.
@@ -1488,7 +1488,7 @@ Benefits = value of the congestion and curtailment that the project removes, plu
 | $R_{congestion,nonoverlap,annual}$ | Non-overlap-hours congestion relief due to project, MWh/yr          |                                                                             |
 | $C_{new}$                          | New line capacity, MW                                               | Greenfield and reconductoring.                                              |
 | $C_{old}$                          | Old line capacity, MW                                               | Reconductoring only.                                                        |
-| $\Delta C_{remaining}$             | Capacity remaining to address congestion after curtailment, MW      | Curtailment is addressed first in CTCC.                                     |
+| $\Delta C_{remaining}$             | Capacity remaining to address congestion after curtailment, MW      | Curtailment is addressed first in FORGE.                                     |
 | $B_{congestion,annual}$            | Annual benefit from congestion reduction, $/yr                      |                                                                             |
 | $B_{curtailment,annual}$           | Annual benefit from curtailment reduction, $/yr                     |                                                                             |
 | $B_{congestion,lifetime,nominal}$  | Nominal lifetime benefit from congestion reduction, $               |                                                                             |
@@ -1745,6 +1745,6 @@ AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}
 
 ## Related
 
-- [[Projects/CTCC/CTCC MOC]]
-- [[Projects/CTCC/CODEMAP]]
+- [[Projects/FORGE/FORGE MOC]]
+- [[Projects/FORGE/CODEMAP]]
 

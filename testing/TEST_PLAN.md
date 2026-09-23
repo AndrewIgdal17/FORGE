@@ -1,7 +1,7 @@
-# CTCC Testing Plan
+# FORGE Testing Plan
 
 ## Overview
-This plan covers testing all major functions of the Comprehensive Transmission Cost Calculator (CTCC), including CLI modes, calculation modules, API endpoints, and integration scenarios.
+This plan covers testing all major functions of the Framework for Open Reproducible Grid Economics (FORGE), including CLI modes, calculation modules, API endpoints, and integration scenarios.
 
 ---
 
@@ -11,25 +11,25 @@ This plan covers testing all major functions of the Comprehensive Transmission C
 Test all four mode combinations:
 
 **Test 1.1.1: Default Mode (YAML → CSV)**
-- Command: `venv/bin/python3 ctcc.py`
+- Command: `venv/bin/python3 forge.py`
 - Expected Input: 22 YAML files from `yamls/`
 - Expected Output: 12 CSV files in `outputs/` + `batch_summary.csv`
 - Validation: Check all CSV files exist, contain data, no errors
 
 **Test 1.1.2: JSON Input → CSV Output**
-- Command: `venv/bin/python3 ctcc.py -j`
+- Command: `venv/bin/python3 forge.py -j`
 - Expected Input: Auto-generated `combined_data.json` from YAML
 - Expected Output: 12 CSV files in `outputs/`
 - Validation: Compare with YAML→CSV results (should be identical)
 
 **Test 1.1.3: JSON Input → JSON Output**
-- Command: `venv/bin/python3 ctcc.py -j -o --id test_scenario`
+- Command: `venv/bin/python3 forge.py -j -o --id test_scenario`
 - Expected Input: `combined_data.json`
-- Expected Output: Single `ctcc_results_test_scenario.json`
+- Expected Output: Single `forge_results_test_scenario.json`
 - Validation: JSON structure valid, contains all 13 cost modules
 
 **Test 1.1.4: YAML Input → JSON Output (Not supported)**
-- Command: `venv/bin/python3 ctcc.py -o`
+- Command: `venv/bin/python3 forge.py -o`
 - Expected: Should default to YAML input with JSON output
 - Validation: Verify mode detection works correctly
 
@@ -37,28 +37,28 @@ Test all four mode combinations:
 Test calculation control flags:
 
 **Test 1.2.1: Skip Risk Calculations**
-- Command: `venv/bin/python3 ctcc.py --norisk --simple`
+- Command: `venv/bin/python3 forge.py --norisk --simple`
 - Validation: Wildfire and outage scripts skipped (11 scripts run instead of 13)
 
 **Test 1.2.2: Skip Emissions**
-- Command: `venv/bin/python3 ctcc.py --no_emissions --simple`
+- Command: `venv/bin/python3 forge.py --no_emissions --simple`
 - Validation: Emissions script skipped (12 scripts run)
 
 **Test 1.2.3: Skip Line Losses**
-- Command: `venv/bin/python3 ctcc.py --no_linelosses --simple`
+- Command: `venv/bin/python3 forge.py --no_linelosses --simple`
 - Validation: Line loss script skipped (12 scripts run)
 
 **Test 1.2.4: Capital Only Mode**
-- Command: `venv/bin/python3 ctcc.py --capital_only --simple`
+- Command: `venv/bin/python3 forge.py --capital_only --simple`
 - Validation: Only 4 scripts run (weighted_miles, build, ROW, environmental)
 
 **Test 1.2.5: Simple Mode**
-- Command: `venv/bin/python3 ctcc.py --simple`
+- Command: `venv/bin/python3 forge.py --simple`
 - Validation: Output suppressed except BCR analysis
 
 **Test 1.2.6: Custom Scenario ID**
-- Command: `venv/bin/python3 ctcc.py -j -o --id custom_test_123`
-- Validation: Output file named `ctcc_results_custom_test_123.json`
+- Command: `venv/bin/python3 forge.py -j -o --id custom_test_123`
+- Validation: Output file named `forge_results_custom_test_123.json`
 
 ---
 
@@ -69,9 +69,9 @@ Test each of the 13 calculation scripts independently:
 
 **Test 2.1.1: Weighted Miles (Preprocessing)**
 ```bash
-export CTCC_INPUT_MODE=yaml
-export CTCC_OUTPUT_MODE=csv
-export CTCC_SCENARIO_ID=test
+export FORGE_INPUT_MODE=yaml
+export FORGE_OUTPUT_MODE=csv
+export FORGE_SCENARIO_ID=test
 venv/bin/python3 scripts/weighted_miles.py
 ```
 - Validation: Terrain multiplier calculated correctly
@@ -122,15 +122,15 @@ venv/bin/python3 scripts/bcr_calculator.py
 
 **Test 3.1.1: YAML Loader Selection**
 ```bash
-export CTCC_INPUT_MODE=yaml
+export FORGE_INPUT_MODE=yaml
 python3 -c "from scripts.smart_loaders import load_project_technical_details; print(load_project_technical_details())"
 ```
 - Validation: Loads from YAML files correctly
 
 **Test 3.1.2: JSON Loader Selection**
 ```bash
-export CTCC_INPUT_MODE=json
-export CTCC_JSON_DATA_FILE=server/json/final_combined.json
+export FORGE_INPUT_MODE=json
+export FORGE_JSON_DATA_FILE=server/json/final_combined.json
 python3 -c "from scripts.smart_loaders import load_project_technical_details; print(load_project_technical_details())"
 ```
 - Validation: Loads from JSON file correctly
@@ -143,15 +143,15 @@ python3 -c "from scripts.smart_loaders import load_project_technical_details; pr
 
 **Test 3.2.1: CSV Output Manager**
 ```bash
-export CTCC_OUTPUT_MODE=csv
-python3 -c "from scripts.smart_output import CTCCOutputManager; mgr = CTCCOutputManager(); print(type(mgr._manager))"
+export FORGE_OUTPUT_MODE=csv
+python3 -c "from scripts.smart_output import FORGEOutputManager; mgr = FORGEOutputManager(); print(type(mgr._manager))"
 ```
 - Validation: Returns CSVOutputManager instance
 
 **Test 3.2.2: JSON Output Manager**
 ```bash
-export CTCC_OUTPUT_MODE=json
-python3 -c "from scripts.smart_output import CTCCOutputManager; mgr = CTCCOutputManager(); print(type(mgr._manager))"
+export FORGE_OUTPUT_MODE=json
+python3 -c "from scripts.smart_output import FORGEOutputManager; mgr = FORGEOutputManager(); print(type(mgr._manager))"
 ```
 - Validation: Returns JSONOutputManager instance
 
@@ -188,9 +188,9 @@ curl http://localhost:8000/api/final_combined | jq .
 - Validation: Returns complete JSON configuration (21 sections)
 - Validation: JSON is valid and parseable
 
-**Test 4.2.2: POST /api/ctcc/calculate (JSON→JSON)**
+**Test 4.2.2: POST /api/forge/calculate (JSON→JSON)**
 ```bash
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d '{
     "input_mode": "json",
@@ -203,9 +203,9 @@ curl -X POST http://localhost:8000/api/ctcc/calculate \
 - Validation: results object contains all cost modules
 - Validation: BCR metrics present
 
-**Test 4.2.3: POST /api/ctcc/calculate (JSON→CSV)**
+**Test 4.2.3: POST /api/forge/calculate (JSON→CSV)**
 ```bash
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d '{
     "input_mode": "json",
@@ -262,7 +262,7 @@ cd server
 
 **Test 5.1.3: Auto-Conversion in CLI**
 ```bash
-venv/bin/python3 ctcc.py -j
+venv/bin/python3 forge.py -j
 ```
 - Validation: Auto-converts YAML to JSON if no JSON file provided
 - Validation: Creates combined_data.json in project root
@@ -360,9 +360,9 @@ venv/bin/python3 ctcc.py -j
 
 **Test 7.3.1: Multiple Scenario IDs**
 ```bash
-venv/bin/python3 ctcc.py -j -o --id scenario1 &
-venv/bin/python3 ctcc.py -j -o --id scenario2 &
-venv/bin/python3 ctcc.py -j -o --id scenario3 &
+venv/bin/python3 forge.py -j -o --id scenario1 &
+venv/bin/python3 forge.py -j -o --id scenario2 &
+venv/bin/python3 forge.py -j -o --id scenario3 &
 wait
 ```
 - Validation: All three complete successfully
@@ -377,15 +377,15 @@ wait
 
 **Test 8.1.1: Full Analysis Workflow**
 1. Edit configuration: `yamls/01_project_technical_details.yaml`
-2. Run calculation: `venv/bin/python3 ctcc.py`
+2. Run calculation: `venv/bin/python3 forge.py`
 3. View results: Check `outputs/batch_summary.csv`
 4. Validation: All 13 modules complete, BCR calculated
 
 **Test 8.1.2: Multi-Scenario Comparison**
-1. Run baseline: `venv/bin/python3 ctcc.py -j -o --id baseline`
+1. Run baseline: `venv/bin/python3 forge.py -j -o --id baseline`
 2. Modify config (capacity +20%)
-3. Run high_capacity: `venv/bin/python3 ctcc.py -j -o --id high_capacity`
-4. Compare: `diff outputs/ctcc_results_baseline.json outputs/ctcc_results_high_capacity.json`
+3. Run high_capacity: `venv/bin/python3 forge.py -j -o --id high_capacity`
+4. Compare: `diff outputs/forge_results_baseline.json outputs/forge_results_high_capacity.json`
 5. Validation: Costs increase proportionally
 
 **Test 8.1.3: Web UI Workflow**
@@ -401,7 +401,7 @@ wait
 **Test 8.2.1: Programmatic Processing**
 1. Fetch config: `GET /api/final_combined`
 2. Modify parameters programmatically
-3. Submit calculation: `POST /api/ctcc/calculate`
+3. Submit calculation: `POST /api/forge/calculate`
 4. Parse JSON results
 5. Validation: Automation workflow works end-to-end
 
@@ -434,7 +434,7 @@ wait
 
 **Test 10.1: Help Text**
 ```bash
-venv/bin/python3 ctcc.py --help
+venv/bin/python3 forge.py --help
 ```
 - Validation: All flags documented
 - Validation: Examples provided

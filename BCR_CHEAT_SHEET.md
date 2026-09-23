@@ -1,6 +1,6 @@
 # BCR (Benefit-Cost Ratio) Cheat Sheet
 
-Quick reference for all BCR perspectives calculated by CTCC.
+Quick reference for all BCR perspectives calculated by FORGE.
 
 ## Revenue as Transfer
 

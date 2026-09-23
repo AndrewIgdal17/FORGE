@@ -1,4 +1,4 @@
-# CTCC - Comprehensive Transmission Cost Calculator
+# FORGE - Framework for Open Reproducible Grid Economics
 
 A flexible cost-benefit analysis tool for transmission line projects supporting multiple input/output modes.
 
@@ -6,23 +6,23 @@ A flexible cost-benefit analysis tool for transmission line projects supporting 
 
 ```bash
 # Default mode (YAML → CSV)
-venv/bin/python3 ctcc.py
+venv/bin/python3 forge.py
 
 # JSON input with JSON output
-venv/bin/python3 ctcc.py -j -o --id my_scenario
+venv/bin/python3 forge.py -j -o --id my_scenario
 
 # JSON input with CSV output
-venv/bin/python3 ctcc.py -j
+venv/bin/python3 forge.py -j
 
 # Get help
-venv/bin/python3 ctcc.py --help
+venv/bin/python3 forge.py --help
 ```
 
 ## Installation
 
 ```bash
 # Navigate to directory
-cd CTCC
+cd FORGE
 
 # Create and activate virtual environment
 python3 -m venv venv
@@ -37,10 +37,10 @@ pip install pyyaml pandas numpy
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `-j`, `--json` | Use JSON input mode | `ctcc.py -j` |
-| `-o`, `--json-out` | Use JSON output mode | `ctcc.py -j -o` |
-| `--id NAME` | Set scenario ID | `ctcc.py --id baseline` |
-| `-h`, `--help` | Show help message | `ctcc.py --help` |
+| `-j`, `--json` | Use JSON input mode | `forge.py -j` |
+| `-o`, `--json-out` | Use JSON output mode | `forge.py -j -o` |
+| `--id NAME` | Set scenario ID | `forge.py --id baseline` |
+| `-h`, `--help` | Show help message | `forge.py --help` |
 
 ## Mode Combinations
 
@@ -48,13 +48,13 @@ pip install pyyaml pandas numpy
 |-------|--------|-------|-------------|--------------|
 | YAML | CSV | *(default)* | `yamls/*.yaml` (22) | `outputs/*.csv` (12) |
 | JSON | CSV | `-j` | `combined_data.json` | `outputs/*.csv` (12) |
-| JSON | JSON | `-j -o` | `combined_data.json` | `ctcc_results_[id].json` |
+| JSON | JSON | `-j -o` | `combined_data.json` | `forge_results_[id].json` |
 
 ## Usage Examples
 
 ### Example 1: Traditional Analysis (Default)
 ```bash
-venv/bin/python3 ctcc.py
+venv/bin/python3 forge.py
 ```
 - **Input:** 22 YAML files in `yamls/`
 - **Output:** 12 CSV files in `outputs/`
@@ -62,7 +62,7 @@ venv/bin/python3 ctcc.py
 
 ### Example 2: JSON Input, CSV Output
 ```bash
-venv/bin/python3 ctcc.py -j
+venv/bin/python3 forge.py -j
 ```
 - **Input:** Single `combined_data.json` (auto-generated from YAML)
 - **Output:** 12 CSV files in `outputs/`
@@ -70,10 +70,10 @@ venv/bin/python3 ctcc.py -j
 
 ### Example 3: Full JSON Mode
 ```bash
-venv/bin/python3 ctcc.py -j -o --id scenario_A
+venv/bin/python3 forge.py -j -o --id scenario_A
 ```
 - **Input:** Single `combined_data.json`
-- **Output:** Single `ctcc_results_scenario_A.json`
+- **Output:** Single `forge_results_scenario_A.json`
 - **Use:** API integration, programmatic processing
 
 ## Output Files
@@ -93,7 +93,7 @@ venv/bin/python3 ctcc.py -j -o --id scenario_A
 - `oandm_costs.csv` - Operations & maintenance
 
 **JSON Mode** (`-o` flag):
-- `ctcc_results_[scenario_id].json` - Single aggregated file with all results
+- `forge_results_[scenario_id].json` - Single aggregated file with all results
 
 ## Comparing Scenarios
 
@@ -110,7 +110,7 @@ python3 compare_scenarios.py
 
 ## Cost Modules
 
-CTCC calculates 13 cost and benefit categories:
+FORGE calculates 13 cost and benefit categories:
 
 **Capital Costs:**
 1. **Build Costs** - Conductors, structures, converters with AFUDC
@@ -145,7 +145,7 @@ CTCC calculates 13 cost and benefit categories:
 vim yamls/01_project_technical_details.yaml
 
 # Run calculations
-venv/bin/python3 ctcc.py
+venv/bin/python3 forge.py
 
 # View results
 open outputs/batch_summary.csv
@@ -154,26 +154,26 @@ open outputs/batch_summary.csv
 ### Workflow 2: Multiple Scenarios
 ```bash
 # Run different scenarios
-venv/bin/python3 ctcc.py -j -o --id high_capacity
-venv/bin/python3 ctcc.py -j -o --id low_cost
-venv/bin/python3 ctcc.py -j -o --id baseline
+venv/bin/python3 forge.py -j -o --id high_capacity
+venv/bin/python3 forge.py -j -o --id low_cost
+venv/bin/python3 forge.py -j -o --id baseline
 
 # Compare results
-diff outputs/ctcc_results_high_capacity.json outputs/ctcc_results_baseline.json
+diff outputs/forge_results_high_capacity.json outputs/forge_results_baseline.json
 ```
 
 ### Workflow 3: Programmatic Processing
 ```bash
 # Run with JSON output
-venv/bin/python3 ctcc.py -j -o --id analysis
+venv/bin/python3 forge.py -j -o --id analysis
 
 # Process with custom script
-python analyze_results.py outputs/ctcc_results_analysis.json
+python analyze_results.py outputs/forge_results_analysis.json
 ```
 
 ## Web Interface
 
-CTCC includes a FastAPI web server with browser UI:
+FORGE includes a FastAPI web server with browser UI:
 
 ```bash
 # Start server
@@ -208,7 +208,7 @@ curl http://localhost:8000/api/final_combined
 
 **Run calculation:**
 ```bash
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d '{
     "input_mode": "json",
@@ -238,8 +238,8 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
 ## Project Structure
 
 ```
-CTCC/
-├── ctcc.py                    # Main CLI script with flags
+FORGE/
+├── forge.py                    # Main CLI script with flags
 ├── yaml_to_json.py            # YAML → JSON converter
 ├── README.md                  # This file
 ├── yamls/                     # Input YAML files (22 files)
@@ -257,7 +257,7 @@ CTCC/
 ├── server/                    # FastAPI web server
 │   ├── app/
 │   │   ├── main.py           # FastAPI application
-│   │   └── ctcc_processor.py # Calculation orchestrator
+│   │   └── forge_processor.py # Calculation orchestrator
 │   ├── static/
 │   │   └── index.html        # Web UI
 │   ├── json/                  # JSON configuration files
@@ -272,20 +272,20 @@ CTCC/
 ### "PyYAML is required"
 Use the virtual environment:
 ```bash
-venv/bin/python3 ctcc.py
+venv/bin/python3 forge.py
 ```
 
 ### "No such file or directory: yamls/"
-Make sure you're in the CTCC directory:
+Make sure you're in the FORGE directory:
 ```bash
-cd /path/to/CTCC
-venv/bin/python3 ctcc.py
+cd /path/to/FORGE
+venv/bin/python3 forge.py
 ```
 
 ### Check Current Mode
 The output shows your configuration:
 ```bash
-venv/bin/python3 ctcc.py -j
+venv/bin/python3 forge.py -j
 # 🔧 Input Mode: JSON
 # 🔧 Output Mode: CSV
 # 📋 Scenario ID: 20251110_132500
@@ -293,7 +293,7 @@ venv/bin/python3 ctcc.py -j
 
 ### Clean Up Temporary Files
 ```bash
-./cleanup_ctcc.sh
+./cleanup_forge.sh
 ```
 
 ## Development
@@ -304,9 +304,9 @@ venv/bin/python3 ctcc.py -j
 2. Use smart loaders:
    ```python
    from smart_loaders import load_project_technical_details
-   from smart_output import CTCCOutputManager
+   from smart_output import FORGEOutputManager
    ```
-3. Add to `ctcc.py` script list
+3. Add to `forge.py` script list
 4. Update documentation
 
 ### Testing

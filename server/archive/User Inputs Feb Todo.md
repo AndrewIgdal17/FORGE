@@ -6,7 +6,7 @@
 # Project Overview
 Right now Capacity MW is a field where you can enter any number.
 
-The CTCC has sub sets of CT X AC/DC that determine
+The FORGE has sub sets of CT X AC/DC that determine
 - What Capacity can be chosen 
 - What conductor type is an option
 
@@ -59,9 +59,9 @@ Need to have the sum of the routes miles
 # Financial Parameters
 Base year comes first (get rid of comma)
 
-Also we need to display the real WACC. It is calculated by the CTCC.
+Also we need to display the real WACC. It is calculated by the FORGE.
 
-We should probably get rid of capital structure and just rely on the WACC nominal. The CTCC's current logic is to default to WACC nominal if a capital structure isn't provided. So if one is provided it will ignore WACC nominal.
+We should probably get rid of capital structure and just rely on the WACC nominal. The FORGE's current logic is to default to WACC nominal if a capital structure isn't provided. So if one is provided it will ignore WACC nominal.
 
 
 Everything from AFUDC -> Construction Insurance timing should be its own tab, labeled something like "Regulated Rate of Return" or "Revenue Requirements"

@@ -1,5 +1,5 @@
 graph TD
-    Root["CTCC Input Parameters<br/>📊 24 YAMLs<br/>🔢 3927 Fields<br/>⚙️ 0 Configs"]
+    Root["FORGE Input Parameters<br/>📊 24 YAMLs<br/>🔢 3927 Fields<br/>⚙️ 0 Configs"]
     
     Root --> Tech["Technical Details<br/>📋 152 fields"]
     Root --> Phys["Physical Details<br/>🌍 18 fields"]

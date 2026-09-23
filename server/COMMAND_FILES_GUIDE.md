@@ -1,13 +1,13 @@
-# CTCC Server Command Files Guide
+# FORGE Server Command Files Guide
 
-This directory contains three command files for running different aspects of the CTCC server infrastructure.
+This directory contains three command files for running different aspects of the FORGE server infrastructure.
 
 ---
 
 ## 📁 Command Files
 
 ### 1. `run_fastapi.command` - FastAPI Server
-**Purpose**: Launches the main FastAPI application server with CTCC calculation endpoint.
+**Purpose**: Launches the main FastAPI application server with FORGE calculation endpoint.
 
 **What it does:**
 - Creates/activates virtual environment (`.venv`)
@@ -45,7 +45,7 @@ HOST=127.0.0.1 ./run_fastapi.command # Localhost only
 - `GET /` - Serves web UI (`index.html`)
 - `GET /api/final_combined` - Returns combined JSON
 - `POST /api/process` - Simple/Bulk demo mode
-- `POST /api/ctcc/calculate` - **NEW: CTCC calculations** ⭐
+- `POST /api/forge/calculate` - **NEW: FORGE calculations** ⭐
 
 **Access URLs:**
 - Local: `http://127.0.0.1:8000`
@@ -82,7 +82,7 @@ STATIC_PORT=8080 ./web_ui_server.command  # Use custom port
 - Lightweight development server
 - Serving static assets separately
 
-**Note**: This server only serves static files. For CTCC calculations, you need `run_fastapi.command`.
+**Note**: This server only serves static files. For FORGE calculations, you need `run_fastapi.command`.
 
 ---
 
@@ -101,7 +101,7 @@ STATIC_PORT=8080 ./web_ui_server.command  # Use custom port
 ```
 
 **Interactive Options:**
-1. Use `../yamls/` (CTCC project directory)
+1. Use `../yamls/` (FORGE project directory)
 2. Use `yamls/` (local copy in server)
 3. Browse for directory (macOS file picker)
 
@@ -121,7 +121,7 @@ vim ../yamls/03_financing.yaml
 
 # 2. Convert to JSON
 ./convert_yamls.command
-# Select option 1 (CTCC/yamls/)
+# Select option 1 (FORGE/yamls/)
 
 # 3. Start server
 ./run_fastapi.command
@@ -144,7 +144,7 @@ cd server
 # The server auto-reloads on file changes
 ```
 
-### For Testing CTCC:
+### For Testing FORGE:
 ```bash
 # 1. Ensure YAMLs are converted to JSON
 cd server
@@ -156,7 +156,7 @@ cd server
 # 3. Open web UI
 open http://127.0.0.1:8000
 
-# 4. Select "CTCC" mode in the web interface
+# 4. Select "FORGE" mode in the web interface
 # 5. Configure input/output modes
 # 6. Click "Send JSON"
 ```
@@ -178,9 +178,9 @@ server/
 ├── app/
 │   ├── main.py                 # FastAPI application
 │   ├── processor.py            # Demo mode processor
-│   └── ctcc_processor.py       # CTCC calculation orchestrator ⭐
+│   └── forge_processor.py       # FORGE calculation orchestrator ⭐
 ├── static/
-│   └── index.html              # Web UI with CTCC mode ⭐
+│   └── index.html              # Web UI with FORGE mode ⭐
 ├── json/
 │   ├── 01_project_technical_details.json
 │   ├── 02_project_physical_details.json
@@ -260,18 +260,18 @@ HOST=0.0.0.0 ./run_fastapi.command
 
 ---
 
-## 🆕 What's New in CTCC Implementation
+## 🆕 What's New in FORGE Implementation
 
 ### Updated Features:
 
-1. **FastAPI Endpoint**: `/api/ctcc/calculate`
+1. **FastAPI Endpoint**: `/api/forge/calculate`
    - Accepts JSON input with full configuration
    - Supports YAML mode (server-side files)
    - Returns JSON results or CSV file list
    - Configurable input/output modes
 
 2. **Web UI Enhancements**:
-   - New "CTCC" mode alongside Simple/Bulk
+   - New "FORGE" mode alongside Simple/Bulk
    - Input mode selector (JSON/YAML)
    - Output mode selector (JSON/CSV)
    - Scenario ID field (optional)
@@ -314,11 +314,11 @@ HOST=0.0.0.0 ./run_fastapi.command
 
 1. **Start the server**: `./run_fastapi.command`
 2. **Open web UI**: `http://127.0.0.1:8000`
-3. **Test CTCC mode**: Select CTCC, configure, submit
+3. **Test FORGE mode**: Select FORGE, configure, submit
 4. **Check logs**: Review `logs/fastapi_*.log`
 5. **Run tests**: `cd .. && python test_fastapi_endpoint.py`
 
 ---
 
 **Last Updated**: 2025-11-10
-**CTCC Version**: JSON Input/Output Implementation Complete
+**FORGE Version**: JSON Input/Output Implementation Complete

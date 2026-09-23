@@ -1,6 +1,6 @@
-# CTCC YAML Input Explorer
+# FORGE YAML Input Explorer
 
-A beautiful, interactive documentation tool for exploring all input parameters in the Comprehensive Transmission Cost Calculator (CTCC).
+A beautiful, interactive documentation tool for exploring all input parameters in the Framework for Open Reproducible Grid Economics (FORGE).
 
 ## 🚀 Quick Start
 
@@ -102,5 +102,5 @@ The documentation is easily customizable:
 
 ---
 
-**Created for the Comprehensive Transmission Cost Calculator (CTCC)**
+**Created for the Framework for Open Reproducible Grid Economics (FORGE)**
 _Interactive documentation that makes complex data accessible and beautiful._

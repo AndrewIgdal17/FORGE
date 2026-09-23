@@ -1,8 +1,8 @@
-# CTCC Testing Guide
+# FORGE Testing Guide
 
 ## Quick Start
 
-From the CTCC root directory:
+From the FORGE root directory:
 
 ```bash
 cd testing
@@ -80,7 +80,7 @@ The test runner provides colored output:
 
 ```
 ======================================================================
-CTCC TEST SUITE
+FORGE TEST SUITE
 ======================================================================
 
 Started: 2025-11-17 08:41:17
@@ -157,7 +157,7 @@ def test_X_Y_Z_my_new_test(self):
     start_time = time.time()
 
     # Run your test
-    cmd = [str(self.venv_python), "ctcc.py", "--some-flag"]
+    cmd = [str(self.venv_python), "forge.py", "--some-flag"]
     success, stdout, stderr = self.run_command(cmd, timeout=180)
 
     duration = time.time() - start_time
@@ -228,7 +228,7 @@ venv/bin/python3 run_tests.py --verbose
 Temporary test files are automatically cleaned up. Manual cleanup:
 ```bash
 rm -f test_combined.json invalid_test.json
-rm -f outputs/ctcc_results_test_*.json
+rm -f outputs/forge_results_test_*.json
 ```
 
 ### Python Path Issues

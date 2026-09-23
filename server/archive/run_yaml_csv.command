@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run CTCC in YAML input → CSV output mode (traditional mode)
+# Run FORGE in YAML input → CSV output mode (traditional mode)
 
 set -euo pipefail
 
@@ -44,12 +44,12 @@ else
 fi
 
 echo ""
-echo "Starting CTCC: YAML → CSV mode..."
+echo "Starting FORGE: YAML → CSV mode..."
 echo ""
 
-# Run ctcc.py (default mode is YAML → CSV, no flags needed)
-"$VENV_PYTHON" ctcc.py
+# Run forge.py (default mode is YAML → CSV, no flags needed)
+"$VENV_PYTHON" forge.py
 
 echo ""
-echo "CTCC execution complete."
+echo "FORGE execution complete."
 echo "CSV files saved to: outputs/"

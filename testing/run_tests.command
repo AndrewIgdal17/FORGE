@@ -1,12 +1,12 @@
 #!/bin/bash
-# Convenience launcher for CTCC test suite
+# Convenience launcher for FORGE test suite
 # Double-click this file on macOS to run tests
 
 # Change to testing directory
 cd "$(dirname "$0")"
 
 echo "=================================="
-echo "CTCC Test Suite"
+echo "FORGE Test Suite"
 echo "=================================="
 echo ""
 

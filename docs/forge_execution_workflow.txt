@@ -1,10 +1,10 @@
 flowchart TD
-    Start["python ctcc.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
+    Start["python forge.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
     
     ParseArgs --> LoadYAML{"Load YAML Config<br/>Primary BCR Settings"}
     LoadYAML -->|"Config exists"| MergeFlags["Merge YAML config with CLI flags<br/>YAML overrides CLI"]
     LoadYAML -->|"No config"| SetEnvVars
-    MergeFlags --> SetEnvVars["Set Environment Variables<br/>CTCC_INPUT_MODE, CTCC_OUTPUT_MODE<br/>CTCC_JSON_DATA_FILE, CTCC_SCENARIO_ID<br/>CTCC_NO_WILDFIRE, etc."]
+    MergeFlags --> SetEnvVars["Set Environment Variables<br/>FORGE_INPUT_MODE, FORGE_OUTPUT_MODE<br/>FORGE_JSON_DATA_FILE, FORGE_SCENARIO_ID<br/>FORGE_NO_WILDFIRE, etc."]
     
     SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
     
@@ -60,7 +60,7 @@ flowchart TD
     MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
     
     CheckSuccess -->|"No"| EndError["End: Show error message"]
-    CheckSuccess -->|"Yes"| CheckOutputMode{"Check CTCC_OUTPUT_MODE"}
+    CheckSuccess -->|"Yes"| CheckOutputMode{"Check FORGE_OUTPUT_MODE"}
     
     CheckOutputMode -->|"csv"| CSVMode["CSV Output Mode"]
     CheckOutputMode -->|"json"| JSONMode["JSON Output Mode"]
@@ -71,7 +71,7 @@ flowchart TD
     
     JSONMode --> AggregateJSON["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
     AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
-    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>ctcc_results_{id}.json"]
+    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>forge_results_{id}.json"]
     WriteFinalJSON --> CleanupJSON["Clean up intermediate<br/>JSON files"]
     CleanupJSON --> EndJSON["End: JSON file in outputs/"]
     

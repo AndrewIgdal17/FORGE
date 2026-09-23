@@ -62,7 +62,7 @@ sleep 5
 
 # Test API call
 echo "Testing API calculation endpoint..."
-curl -X POST http://localhost:8000/api/ctcc/calculate \
+curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d @- << 'EOF' > /tmp/api_test_response.json
 {

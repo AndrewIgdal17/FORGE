@@ -1,5 +1,5 @@
 {
-  "sourceFile": "/Users/ai17/Documents/Andys_Workshop/repos/ctcc/server/static/index.html",
+  "sourceFile": "/Users/ai17/Documents/Andys_Workshop/repos/forge/server/static/index.html",
   "scriptStartLine": 374,
   "scriptEndLine": 6928,
   "lineOffset": 373,
@@ -85,7 +85,7 @@
         "lines": 1
       },
       {
-        "name": "ctccSection",
+        "name": "forgeSection",
         "type": "const",
         "startLine": 387,
         "endLine": 387,
@@ -120,21 +120,21 @@
         "lines": 1
       },
       {
-        "name": "ctccJsonInputs",
+        "name": "forgeJsonInputs",
         "type": "const",
         "startLine": 393,
         "endLine": 393,
         "lines": 1
       },
       {
-        "name": "ctccYamlMessage",
+        "name": "forgeYamlMessage",
         "type": "const",
         "startLine": 394,
         "endLine": 394,
         "lines": 1
       },
       {
-        "name": "ctccInputModeInputs",
+        "name": "forgeInputModeInputs",
         "type": "const",
         "startLine": 395,
         "endLine": 395,
@@ -1102,7 +1102,7 @@
         "startLine": 388,
         "endLine": 388,
         "lines": 1,
-        "preview": "console.log('Sections found:', {simpleSection, bulkSection, ctccSection});"
+        "preview": "console.log('Sections found:', {simpleSection, bulkSection, forgeSection});"
       },
       {
         "name": "<ExpressionStatement>",
@@ -1118,7 +1118,7 @@
         "startLine": 412,
         "endLine": 412,
         "lines": 1,
-        "preview": "C.ctccJsonData = null;"
+        "preview": "C.forgeJsonData = null;"
       },
       {
         "name": "<ExpressionStatement>",
@@ -1591,7 +1591,7 @@
         "lines": 16
       },
       {
-        "name": "updateCtccInputVisibility",
+        "name": "updateForgeInputVisibility",
         "type": "function",
         "startLine": 1168,
         "endLine": 1183,
@@ -1836,7 +1836,7 @@
         "startLine": 2789,
         "endLine": 2791,
         "lines": 3,
-        "preview": "document.addEventListener('ctcc-results-updated', (e) => {"
+        "preview": "document.addEventListener('forge-results-updated', (e) => {"
       },
       {
         "name": "<ExpressionStatement>",
@@ -1844,7 +1844,7 @@
         "startLine": 2792,
         "endLine": 2801,
         "lines": 10,
-        "preview": "document.addEventListener('ctcc-calc-started', () => {"
+        "preview": "document.addEventListener('forge-calc-started', () => {"
       },
       {
         "name": "<ExpressionStatement>",
@@ -1852,7 +1852,7 @@
         "startLine": 2872,
         "endLine": 2876,
         "lines": 5,
-        "preview": "document.addEventListener('ctcc-results-updated', (e) => {"
+        "preview": "document.addEventListener('forge-results-updated', (e) => {"
       },
       {
         "name": "<ExpressionStatement>",
@@ -1924,7 +1924,7 @@
         "startLine": 6922,
         "endLine": 6924,
         "lines": 3,
-        "preview": "ctccInputModeInputs.forEach((input) => {"
+        "preview": "forgeInputModeInputs.forEach((input) => {"
       },
       {
         "name": "<ExpressionStatement>",

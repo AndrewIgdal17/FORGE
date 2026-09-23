@@ -96,11 +96,11 @@ prompt_for_directory() {
 }
 
 # Define possible YAML directories
-ctcc_yaml_dir="$(dirname "$SCRIPT_DIR")/yamls"  # CTCC/yamls/
+forge_yaml_dir="$(dirname "$SCRIPT_DIR")/yamls"  # FORGE/yamls/
 local_yaml_dir="$SCRIPT_DIR/yamls"              # server/yamls/
 
 echo "Select YAML source directory:"
-echo "1. CTCC/yamls/ ($(basename "$(dirname "$SCRIPT_DIR")")/yamls/)"
+echo "1. FORGE/yamls/ ($(basename "$(dirname "$SCRIPT_DIR")")/yamls/)"
 echo "2. yamls/ from command directory ($(basename "$SCRIPT_DIR")/yamls/)"
 echo "3. Browse for directory (macOS file picker)"
 echo -n "Enter choice (1, 2, or 3): "
@@ -108,8 +108,8 @@ read -r dir_choice
 
 case "$dir_choice" in
   "1")
-    if [[ -d "$ctcc_yaml_dir" ]]; then
-      yaml_dir="$ctcc_yaml_dir"
+    if [[ -d "$forge_yaml_dir" ]]; then
+      yaml_dir="$forge_yaml_dir"
       echo "Using: $yaml_dir"
       
       # Check if it contains YAML files
@@ -127,7 +127,7 @@ case "$dir_choice" in
         fi
       fi
     else
-      echo "Error: CTCC/yamls/ directory not found at $ctcc_yaml_dir"
+      echo "Error: FORGE/yamls/ directory not found at $forge_yaml_dir"
       echo "Falling back to browse option..."
       if browsed_dir=$(browse_for_directory); then
         yaml_dir="$browsed_dir"

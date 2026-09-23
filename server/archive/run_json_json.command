@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run CTCC in JSON input → JSON output mode (full JSON mode)
+# Run FORGE in JSON input → JSON output mode (full JSON mode)
 
 set -euo pipefail
 
@@ -44,13 +44,13 @@ else
 fi
 
 echo ""
-echo "Starting CTCC: JSON → JSON mode..."
+echo "Starting FORGE: JSON → JSON mode..."
 echo ""
 
-# Run ctcc.py with JSON input and JSON output flags
-"$VENV_PYTHON" ctcc.py -j -o
+# Run forge.py with JSON input and JSON output flags
+"$VENV_PYTHON" forge.py -j -o
 
 echo ""
-echo "CTCC execution complete."
+echo "FORGE execution complete."
 echo "Input: combined_data.json (auto-generated from YAML)"
-echo "Output: outputs/ctcc_results_[scenario_id].json"
+echo "Output: outputs/forge_results_[scenario_id].json"

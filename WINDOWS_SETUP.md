@@ -1,6 +1,6 @@
-# CTCC Setup Guide for Windows
+# FORGE Setup Guide for Windows
 
-This guide helps Windows users set up and run CTCC.
+This guide helps Windows users set up and run FORGE.
 
 ## Prerequisites
 
@@ -43,14 +43,14 @@ If you installed Python but forgot to add it to PATH:
 - Windows Python installer includes `py` launcher
 - The batch files automatically detect and use `py -3` if `python` isn't found
 
-## Running CTCC on Windows
+## Running FORGE on Windows
 
 ### CLI Calculations
 
-Open Command Prompt and navigate to CTCC directory:
+Open Command Prompt and navigate to FORGE directory:
 
 ```cmd
-cd path\to\CTCC
+cd path\to\FORGE
 
 REM Run YAML → CSV mode
 run_yaml_csv.bat
@@ -65,7 +65,7 @@ run_json_json.bat
 ### Web Interface (API Server)
 
 ```cmd
-cd path\to\CTCC\server
+cd path\to\FORGE\server
 run_calc_server.bat
 ```
 
@@ -152,7 +152,7 @@ Use `python -m pip` instead of `pip` directly.
 
 **Solution:**
 ```cmd
-cd CTCC
+cd FORGE
 venv\Scripts\activate.bat
 python -m pip install -r requirements.txt
 ```
@@ -181,13 +181,13 @@ run_calc_server.bat
 **Cause:** Windows path length limit (260 characters)
 
 **Solution:**
-Move CTCC to shorter path:
+Move FORGE to shorter path:
 ```cmd
 REM Bad (too long)
-C:\Users\YourName\Documents\Projects\Research\UT-TransmissionCalc\CTCC
+C:\Users\YourName\Documents\Projects\Research\UT-TransmissionCalc\FORGE
 
 REM Good (short)
-C:\CTCC
+C:\FORGE
 ```
 
 ## Performance Tips
@@ -199,7 +199,7 @@ After first run, to skip dependency reinstall:
 REM Comment out the pip install lines in batch file
 REM Or use existing venv without update
 venv\Scripts\activate.bat
-python ctcc.py -j -o
+python forge.py -j -o
 ```
 
 ### Running in Background
@@ -212,15 +212,15 @@ start /B run_calc_server.bat
 ## File Locations
 
 ### Virtual Environments
-- CLI: `CTCC\venv\` (auto-created)
-- Server: `CTCC\server\.venv\` (auto-created)
+- CLI: `FORGE\venv\` (auto-created)
+- Server: `FORGE\server\.venv\` (auto-created)
 
 ### Outputs
-- CSV files: `CTCC\outputs\*.csv`
-- JSON results: `CTCC\outputs\ctcc_results_*.json`
+- CSV files: `FORGE\outputs\*.csv`
+- JSON results: `FORGE\outputs\forge_results_*.json`
 
 ### Logs
-- Server logs: `CTCC\server\logs\*.log`
+- Server logs: `FORGE\server\logs\*.log`
 
 ## Python Launcher (`py`) vs `python`
 
@@ -286,11 +286,11 @@ If you're still stuck:
 
 - [ ] Python 3.8+ installed
 - [ ] Python added to PATH (check "Add Python to PATH" during install)
-- [ ] Cloned CTCC repository
+- [ ] Cloned FORGE repository
 - [ ] Opened Command Prompt
-- [ ] Navigated to CTCC directory (`cd path\to\CTCC`)
+- [ ] Navigated to FORGE directory (`cd path\to\FORGE`)
 - [ ] Ran batch file (`run_json_json.bat`)
 - [ ] First run completed (venv created, dependencies installed)
 - [ ] Subsequent runs work instantly
 
-Once the checklist is complete, CTCC is ready to use on Windows!
+Once the checklist is complete, FORGE is ready to use on Windows!

@@ -1,6 +1,6 @@
-# CTCC Testing Suite
+# FORGE Testing Suite
 
-Automated test suite for the Comprehensive Transmission Cost Calculator (CTCC).
+Automated test suite for the Framework for Open Reproducible Grid Economics (FORGE).
 
 ## Quick Start
 
@@ -74,7 +74,7 @@ Use `--save-report` to generate `test_results.json` with:
 
 - Python 3.8+
 - Virtual environment with dependencies installed
-- CTCC project properly set up
+- FORGE project properly set up
 
 ## Exit Codes
 
