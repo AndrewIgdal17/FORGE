@@ -221,7 +221,7 @@ class YAMLParser:
         }
         
         mermaid = """graph TD
-    Root["CTCC Input Parameters<br/>📊 {total_yamls} YAMLs<br/>🔢 {total_fields} Fields<br/>⚙️ {total_configs} Configs"]
+    Root["FORGE Input Parameters<br/>📊 {total_yamls} YAMLs<br/>🔢 {total_fields} Fields<br/>⚙️ {total_configs} Configs"]
     
     Root --> Tech["Technical Details<br/>📋 {tech_count} fields"]
     Root --> Phys["Physical Details<br/>🌍 {phys_count} fields"]

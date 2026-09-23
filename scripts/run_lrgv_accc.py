@@ -2,7 +2,7 @@
 
 Builds inputs from canonical YAML defaults, patches with LRGV corridor parameters
 extracted from the legacy case-study scenarios, runs both variants through the
-calculation engine, and saves updated .ctcc files in the current format
+calculation engine, and saves updated .forge files in the current format
 (grid_mix, single-constraint congestion, no allowed_return_rate).
 """
 
@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def _patch_lrgv_common(inputs: dict) -> dict:
@@ -242,8 +242,8 @@ def main():
     print_results(results_acsr, "AEP LRGV — ACSR Structure Rebuild (2yr delay)")
 
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_accc, results_accc, "AEP_LRGV_ACCC", "AEP_LRGV_ACCC")
-    save_ctcc_file(inputs_acsr, results_acsr, "AEP_LRGV_ACSR_Rebuild", "AEP_LRGV_ACSR_Rebuild")
+    save_forge_file(inputs_accc, results_accc, "AEP_LRGV_ACCC", "AEP_LRGV_ACCC")
+    save_forge_file(inputs_acsr, results_acsr, "AEP_LRGV_ACSR_Rebuild", "AEP_LRGV_ACSR_Rebuild")
 
     bcr_accc = results_accc["bcr"]
     bcr_acsr = results_acsr["bcr"]

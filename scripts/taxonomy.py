@@ -1,10 +1,10 @@
-"""CTCC taxonomy — single source of truth for Python.
+"""FORGE taxonomy — single source of truth for Python.
 
 Defines the 36-item taxonomy (25 cost/benefit + 12 utility), dimensions
 registry, BCR definitions, excludable groups, and calculator key mappings.
 Read-only reference data; importable by any module without circular imports.
 
-Canonical source: .cursor/plans/2026-05-10__ctcc-cost-benefit-taxonomy.md
+Canonical source: .cursor/plans/2026-05-10__forge-cost-benefit-taxonomy.md
 """
 
 from __future__ import annotations
@@ -307,7 +307,7 @@ BCR_FAMILY_META: dict[Family, dict[str, str | int]] = {
 # Section 3c — Exclusion variants (3 Tier 1, analytically motivated)
 #
 # Only variants with a clear regulatory or analytical question are retained.
-# See: Projects/CTCC/docs/research/2026-07-08__bcr-framework-justification.md
+# See: Projects/FORGE/docs/research/2026-07-08__bcr-framework-justification.md
 # The interactive "Custom BCR" builder (powered by EXCLUDABLE_GROUPS above)
 # lets users compose arbitrary exclusions on demand.
 # ---------------------------------------------------------------------------

@@ -1,13 +1,13 @@
 # Author: Andrew Igdal
 # Date: 2026-07-10
-# Description: Year-by-year BCR/NPV trajectory. Post-processes a finished CTCC
+# Description: Year-by-year BCR/NPV trajectory. Post-processes a finished FORGE
 #              `results` dict (after all cost/benefit modules + bcr_calculator
 #              have run) into a list of per-year rows covering the delay,
 #              construction, and operational phases. Enables payback-period
 #              analysis, web app charts, and paper figures.
 #
-#              Design doc: Projects/CTCC/docs/design/2026-07-10__bcr-trajectory-spec.md
-#              Plan: Projects/CTCC/docs/plans/2026-07-10__row-rent-escalation-and-bcr-trajectory.md
+#              Design doc: Projects/FORGE/docs/design/2026-07-10__bcr-trajectory-spec.md
+#              Plan: Projects/FORGE/docs/plans/2026-07-10__row-rent-escalation-and-bcr-trajectory.md
 
 from __future__ import annotations
 
@@ -202,10 +202,10 @@ def _build_array_streams(results: dict, social_discount_rate: float) -> list[Arr
 
 
 def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
-    """Compute a year-by-year BCR/NPV trajectory from finished CTCC results.
+    """Compute a year-by-year BCR/NPV trajectory from finished FORGE results.
 
     Args:
-        results: The full CTCC results dict (post bcr_calculator.compute_all_bcrs()).
+        results: The full FORGE results dict (post bcr_calculator.compute_all_bcrs()).
         inputs: The combined YAML input data (timing, discount rates, growth rates).
 
     Returns:

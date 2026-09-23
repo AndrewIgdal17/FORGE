@@ -114,7 +114,7 @@ def validate_bcr_results(
 
     Args:
         results: Dictionary of results from batch_summary.csv
-        bcr_warning_detected: Whether BCR warning was detected in CTCC stdout
+        bcr_warning_detected: Whether BCR warning was detected in FORGE stdout
 
     Returns:
         tuple: (results_dict, error_message_or_none)
@@ -126,7 +126,7 @@ def validate_bcr_results(
     if missing_bcr:
         error_info = f"BCR columns missing or empty: {missing_bcr}."
         if bcr_warning_detected:
-            error_info += " CTCC stdout indicates BCR calculation issue."
+            error_info += " FORGE stdout indicates BCR calculation issue."
         error_info += " This suggests the BCR calculator failed to write columns to batch_summary.csv."
         return results, error_info
 
@@ -134,13 +134,13 @@ def validate_bcr_results(
 
 
 # ============================================================================
-# CTCC EXECUTION UTILITIES
+# FORGE EXECUTION UTILITIES
 # ============================================================================
 
 
-def format_ctcc_error(result: subprocess.CompletedProcess[str]) -> str:
+def format_forge_error(result: subprocess.CompletedProcess[str]) -> str:
     """
-    Format CTCC subprocess error message.
+    Format FORGE subprocess error message.
 
     Args:
         result: subprocess.CompletedProcess or subprocess result object
@@ -148,7 +148,7 @@ def format_ctcc_error(result: subprocess.CompletedProcess[str]) -> str:
     Returns:
         Formatted error message string
     """
-    error_msg = f"CTCC failed with return code {result.returncode}"
+    error_msg = f"FORGE failed with return code {result.returncode}"
     if result.stderr:
         error_msg += f"\nStderr: {result.stderr[-500:]}"
     if result.stdout:
@@ -156,18 +156,18 @@ def format_ctcc_error(result: subprocess.CompletedProcess[str]) -> str:
     return error_msg
 
 
-def run_ctcc_with_temp_yamls(
+def run_forge_with_temp_yamls(
     temp_yaml_dir: Path | str,
     base_dir: Path | str,
     scenario_id: str,
-    ctcc_args: Optional[List[str]] = None,
+    forge_args: Optional[List[str]] = None,
     use_env_dict: bool = True,
     read_results_by_scenario_id_func: Optional[
         Callable[[Path, str], Optional[Dict[str, Any]]]
     ] = None,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """
-    Run CTCC with temporary YAML directory.
+    Run FORGE with temporary YAML directory.
 
     This is a unified version combining the best features from both
     sensitivity_analysis.py and oat_analysis.py implementations.
@@ -176,7 +176,7 @@ def run_ctcc_with_temp_yamls(
         temp_yaml_dir: Path to temporary YAML directory
         base_dir: Base directory of the project
         scenario_id: Unique scenario ID for this sample
-        ctcc_args: Additional args for ctcc.py (e.g., ["--simple"])
+        forge_args: Additional args for forge.py (e.g., ["--simple"])
         use_env_dict: If True, use env dict; if False, set os.environ directly
         read_results_by_scenario_id_func: Function to read results by scenario_id
 
@@ -202,19 +202,19 @@ def run_ctcc_with_temp_yamls(
         # Set environment variable for scenario ID
         if use_env_dict:
             env = os.environ.copy()
-            env["CTCC_SCENARIO_ID"] = scenario_id
+            env["FORGE_SCENARIO_ID"] = scenario_id
         else:
-            os.environ["CTCC_SCENARIO_ID"] = scenario_id
+            os.environ["FORGE_SCENARIO_ID"] = scenario_id
 
-        # Build CTCC command
-        ctcc_cmd = [sys.executable, "ctcc.py"]
-        if ctcc_args:
-            ctcc_cmd.extend(ctcc_args)
+        # Build FORGE command
+        forge_cmd = [sys.executable, "forge.py"]
+        if forge_args:
+            forge_cmd.extend(forge_args)
 
-        # Run CTCC
+        # Run FORGE
         if use_env_dict:
             result = subprocess.run(
-                ctcc_cmd,
+                forge_cmd,
                 cwd=base_dir,
                 capture_output=True,
                 text=True,
@@ -223,7 +223,7 @@ def run_ctcc_with_temp_yamls(
             )
         else:
             result = subprocess.run(
-                ctcc_cmd,
+                forge_cmd,
                 cwd=str(base_dir),
                 capture_output=True,
                 text=True,
@@ -232,12 +232,12 @@ def run_ctcc_with_temp_yamls(
 
         # Check for errors
         if result.returncode != 0:
-            error_msg = format_ctcc_error(result)
+            error_msg = format_forge_error(result)
             return None, error_msg
 
         # DEBUG: Print subprocess output to see BCR debug messages
         print(
-            f"[DEBUG SENS] CTCC subprocess completed with return code {result.returncode}"
+            f"[DEBUG SENS] FORGE subprocess completed with return code {result.returncode}"
         )
         if result.stdout:
             # Extract and print BCR-related debug messages
@@ -246,7 +246,7 @@ def run_ctcc_with_temp_yamls(
             ]
             if debug_lines:
                 print(
-                    f"[DEBUG SENS] Found {len(debug_lines)} debug lines in CTCC stdout:"
+                    f"[DEBUG SENS] Found {len(debug_lines)} debug lines in FORGE stdout:"
                 )
                 for line in debug_lines[:30]:  # Print first 30 debug lines
                     print(f"  {line}")
@@ -267,20 +267,20 @@ def run_ctcc_with_temp_yamls(
             ]
             if bcr_lines:
                 print(
-                    f"[DEBUG SENS] Found {len(bcr_lines)} BCR-related lines in CTCC stdout:"
+                    f"[DEBUG SENS] Found {len(bcr_lines)} BCR-related lines in FORGE stdout:"
                 )
                 for line in bcr_lines[:30]:
                     print(f"  {line}")
 
-            # Specifically check for CTCC debug messages about script execution and BCR
-            ctcc_debug_lines = [
-                line for line in result.stdout.split("\n") if "[DEBUG CTCC]" in line
+            # Specifically check for FORGE debug messages about script execution and BCR
+            forge_debug_lines = [
+                line for line in result.stdout.split("\n") if "[DEBUG FORGE]" in line
             ]
-            if ctcc_debug_lines:
-                print(f"[DEBUG SENS] Found {len(ctcc_debug_lines)} CTCC debug lines:")
-                for line in ctcc_debug_lines:
+            if forge_debug_lines:
+                print(f"[DEBUG SENS] Found {len(forge_debug_lines)} FORGE debug lines:")
+                for line in forge_debug_lines:
                     print(f"  {line}")
-        # Extract actual scenario_id from CTCC output (it prints it)
+        # Extract actual scenario_id from FORGE output (it prints it)
         actual_scenario_id = scenario_id
         if result.stdout:
             for line in result.stdout.split("\n"):
@@ -391,7 +391,7 @@ def run_ctcc_with_temp_yamls(
         return results, None
 
     except subprocess.TimeoutExpired:
-        return None, "CTCC run timed out"
+        return None, "FORGE run timed out"
     except Exception as e:
         return None, str(e)
     finally:

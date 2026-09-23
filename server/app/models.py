@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serial
 
 
 def _sanitize_floats_for_json(obj: Any) -> Any:
-    """Recursively convert float inf/nan to JSON-safe strings. Used by CTCCOutputPayload serializer and get_final_combined."""
+    """Recursively convert float inf/nan to JSON-safe strings. Used by FORGEOutputPayload serializer and get_final_combined."""
     if isinstance(obj, dict):
         return {k: _sanitize_floats_for_json(v) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -60,7 +60,7 @@ class OutputPayload(BaseModel):
     text: Optional[str] = None
 
 
-class CTCCInputPayload(BaseModel):
+class FORGEInputPayload(BaseModel):
     mode: Literal["calculate"] = "calculate"
     input_mode: Literal["json", "yaml"] = "json"
     output_mode: Literal["json"] = "json"
@@ -101,8 +101,8 @@ class UserMergeInput(BaseModel):
     financial: Optional[UserMergeFinancial] = None
 
 
-class CTCCResults(BaseModel):
-    """Top-level shape of ctcc_results_*.json (API response results)."""
+class FORGEResults(BaseModel):
+    """Top-level shape of forge_results_*.json (API response results)."""
 
     model_config = ConfigDict(extra="ignore")
 
@@ -116,13 +116,13 @@ class CTCCResults(BaseModel):
     bcr: Optional[Dict[str, Any]] = None
 
 
-class CTCCOutputPayload(BaseModel):
+class FORGEOutputPayload(BaseModel):
     success: bool
     scenario_id: str
     timestamp: str
     input_mode: str
     error: Optional[str] = None
-    results: Optional[CTCCResults] = None
+    results: Optional[FORGEResults] = None
 
     @model_serializer(mode="wrap")
     def _serialize_json_safe(self, handler: Any) -> Any:

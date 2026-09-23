@@ -1,10 +1,10 @@
-"""Run Trans Bay Cable CTCC scenario: 4-year delay (actual).
+"""Run Trans Bay Cable FORGE scenario: 4-year delay (actual).
 
 Builds inputs from canonical YAML defaults, patches with TBC-specific inputs from the
 research document (underground-project-data-research.md), runs the scenario, and saves results.
 
 Trans Bay Cable: 53-mile, 400 MW (modeled as 500 MW), ±200 kV HVDC submarine cable
-under San Francisco Bay. Subsea construction type — first subsea CTCC case study.
+under San Francisco Bay. Subsea construction type — first subsea FORGE case study.
 """
 
 import copy
@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def patch_tbc_inputs(inputs: dict) -> dict:
@@ -234,17 +234,17 @@ def main():
     results_delay4 = run_scenario(inputs_delay4, "TBC_Delay4")
     print_results(results_delay4, "Trans Bay Cable — 4-Year Delay (Actual)")
 
-    # --- Save .ctcc file ---
+    # --- Save .forge file ---
     print("\n\nSaving scenario file...")
-    save_ctcc_file(inputs_delay4, results_delay4, "TBC_Delay4", "TBC_Delay4", source="tbc_case_study")
+    save_forge_file(inputs_delay4, results_delay4, "TBC_Delay4", "TBC_Delay4", source="tbc_case_study")
 
     # --- TBC-specific validation ---
     print(f"\n  --- COST VALIDATION ---")
     build_pv = results_delay4["costs"]["build"]["total_pv"]
-    print(f"  Build cost PV (CTCC):   {fmt(build_pv)}")
+    print(f"  Build cost PV (FORGE):   {fmt(build_pv)}")
     print(f"  Actual total project:   $505M (includes civil works, site, community payments)")
     rev_pv = results_delay4["benefits"]["capital_recovery"]["capital_recovery_pv"]
-    print(f"  Capital recovery PV (CTCC): {fmt(rev_pv)}")
+    print(f"  Capital recovery PV (FORGE): {fmt(rev_pv)}")
     print(f"  Actual TRR:             ~$130M/yr (FERC-approved)")
 
     print("\nDone.")

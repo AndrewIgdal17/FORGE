@@ -18,7 +18,7 @@ from typing import Dict, Any, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 from constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
 from financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from smart_loaders import (
@@ -337,7 +337,7 @@ def main() -> None:
     # ========================================================================
 
     # Initialize CSV output manager
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
 
     # Prepare results dictionary with all calculated values
     results = {

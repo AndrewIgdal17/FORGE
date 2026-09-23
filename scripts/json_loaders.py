@@ -21,7 +21,7 @@ class JSONDataSource:
     """
     Singleton data source for JSON-based configuration.
     Stores the combined JSON data in memory for all loader functions to access.
-    Automatically loads from CTCC_JSON_DATA_FILE environment variable if set.
+    Automatically loads from FORGE_JSON_DATA_FILE environment variable if set.
     """
 
     _instance = None
@@ -44,15 +44,15 @@ class JSONDataSource:
 
         if self._json_data is None:
             raise RuntimeError(
-                "JSON data not set. Call set_data() first or set CTCC_JSON_DATA_FILE environment variable."
+                "JSON data not set. Call set_data() first or set FORGE_JSON_DATA_FILE environment variable."
             )
         if key not in self._json_data:
             raise KeyError(f"Key '{key}' not found in JSON data.")
         return self._json_data[key]
 
     def _load_from_env_file(self):
-        """Load JSON data from file specified in CTCC_JSON_DATA_FILE environment variable."""
-        json_file_path = os.environ.get("CTCC_JSON_DATA_FILE")
+        """Load JSON data from file specified in FORGE_JSON_DATA_FILE environment variable."""
+        json_file_path = os.environ.get("FORGE_JSON_DATA_FILE")
         if json_file_path and os.path.exists(json_file_path):
             try:
                 with open(json_file_path, "r") as f:
@@ -245,7 +245,7 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         prices = reductions_data["prices"]
         flow_factor = constraints["flow_factor"]
 
-    # Backward compat: ignore removed fields from old .ctcc files
+    # Backward compat: ignore removed fields from old .forge files
     constraints.pop("congestion_fraction", None)
     prices.pop("average_curtailment_price", None)
 

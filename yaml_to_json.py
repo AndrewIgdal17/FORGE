@@ -1,6 +1,6 @@
 """
 Convert all YAML files in the yamls/ directory to a single combined JSON file.
-This version is designed for use with ctcc.py to enable JSON input mode.
+This version is designed for use with forge.py to enable JSON input mode.
 """
 
 import json
@@ -62,7 +62,7 @@ def convert_yamls_to_combined_json(yamls_dir: Path, output_file: Path) -> None:
 
 def main():
     """Main entry point for standalone execution."""
-    # Default paths relative to CTCC root
+    # Default paths relative to FORGE root
     script_dir = Path(__file__).parent
     yamls_dir = script_dir / "yamls"
     output_file = script_dir / "combined_data.json"

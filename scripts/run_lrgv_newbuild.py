@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def patch_laredo_newbuild(inputs: dict) -> dict:
@@ -220,7 +220,7 @@ def main():
     print_results(results, "AEP LRGV — Laredo New-Build 345kV AC (7yr delay)")
 
     print("\n\nSaving scenario file...")
-    save_ctcc_file(inputs, results, "AEP_LRGV_Laredo_NewBuild", "AEP_LRGV_Laredo_NewBuild", source="aep_lrgv_laredo_newbuild_case_study")
+    save_forge_file(inputs, results, "AEP_LRGV_Laredo_NewBuild", "AEP_LRGV_Laredo_NewBuild", source="aep_lrgv_laredo_newbuild_case_study")
 
     # --- Comparison with existing LRGV scenarios ---
     print(f"\n{'='*60}")
@@ -229,7 +229,7 @@ def main():
 
     bcr_nb = results["bcr"]
     for ref_name in ["AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"]:
-        ref_path = REPO_ROOT / "scenarios" / f"{ref_name}.ctcc"
+        ref_path = REPO_ROOT / "scenarios" / f"{ref_name}.forge"
         if ref_path.exists():
             with open(ref_path) as f:
                 ref = json.load(f)

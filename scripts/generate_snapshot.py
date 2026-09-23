@@ -1,7 +1,7 @@
 """Generate a ref_snapshot SQL INSERT from current YAML values.
 
 Usage:
-    cd repos/ctcc
+    cd repos/forge
     .venv/bin/python scripts/generate_snapshot.py > /tmp/snapshot_v1.sql
 
 Then paste the output into the Supabase SQL Editor.

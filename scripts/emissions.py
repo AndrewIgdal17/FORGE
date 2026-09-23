@@ -14,7 +14,7 @@ from typing import Dict, Any, List, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Local utility imports
 from energy_losses import (
@@ -415,7 +415,7 @@ def main() -> None:
 
     The script calculates annual and lifetime emissions, monetizes them using societal costs,
     and calculates present values using the social discount rate. Results are printed to console
-    and written to CSV outputs via CTCCOutputManager.
+    and written to CSV outputs via FORGEOutputManager.
 
     Outputs:
         - Prints detailed emissions results by pollutant (CO2, SOx, NOx)
@@ -514,7 +514,7 @@ def main() -> None:
     # ========================================================================
 
     # Initialize CSV output manager
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
 
     # Prepare results dictionary
     results = {

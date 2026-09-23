@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 from emissions import (
     calculate_energy_mix_by_year,
     calculate_emissions_by_year,
@@ -227,7 +227,7 @@ def main() -> None:
     social_discount_rate = load_financing_social_discount_rate()
     project_details = load_project_technical_details()
 
-    output_manager = CTCCOutputManager()
+    output_manager = FORGEOutputManager()
     cc_results = getattr(output_manager, '_manager', output_manager).benefits.get(
         "congestion_curtailment", {}
     )
@@ -237,7 +237,7 @@ def main() -> None:
     if energy_delivered_annual_mwh <= 0 and not getattr(output_manager, '_using_shared', False):
         import glob
         import json as _json_loader
-        scenario_id = os.environ.get("CTCC_SCENARIO_ID", "")
+        scenario_id = os.environ.get("FORGE_SCENARIO_ID", "")
         pattern = os.path.join("outputs", f"json_output_{scenario_id}_congestion_curtailment_reduction.json")
         candidates = glob.glob(pattern) or glob.glob(os.path.join("..", pattern))
         for fpath in candidates:

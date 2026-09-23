@@ -15,7 +15,7 @@ from typing import Tuple, Dict, Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Local utility imports
 from smart_loaders import (
@@ -81,7 +81,7 @@ def get_rate_base() -> float:
     Returns:
         float: Rate base (real, AFUDC-capitalized), or 0 if not found
     """
-    scenario_id = os.environ.get("CTCC_SCENARIO_ID")
+    scenario_id = os.environ.get("FORGE_SCENARIO_ID")
     try:
         shared = get_output_manager()
         if shared is not None and getattr(shared, "costs", None) is not None:
@@ -156,7 +156,7 @@ def main() -> None:
         print("(revenue.rate_based.enabled = false in financing.yaml)")
         print("=" * 60)
         # Still write zeros to CSV for consistency
-        csv_manager = CTCCOutputManager()
+        csv_manager = FORGEOutputManager()
         results = {
             "capital_recovery_nominal": 0,
             "capital_recovery_pv": 0,
@@ -238,7 +238,7 @@ def main() -> None:
     print("=" * 60)
 
     # CSV Output
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
     results = {
         "capital_recovery_nominal": capital_recovery_nominal,
         "capital_recovery_pv": capital_recovery_pv,

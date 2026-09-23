@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def patch_ctt_inputs(inputs: dict) -> dict:
@@ -206,10 +206,10 @@ def main():
     results_cf = run_scenario(inputs_counterfactual, "CTT_Counterfactual_Delay7")
     print_results(results_cf, "CTT Panhandle — 7-Year Delay (Counterfactual)")
 
-    # --- Save .ctcc files ---
+    # --- Save .forge files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_actual, results_actual, "CTT_Actual_Delay2", "CTT_Actual_Delay2", source="ctt_panhandle_crez_case_study")
-    save_ctcc_file(
+    save_forge_file(inputs_actual, results_actual, "CTT_Actual_Delay2", "CTT_Actual_Delay2", source="ctt_panhandle_crez_case_study")
+    save_forge_file(
         inputs_counterfactual, results_cf, "CTT_Counterfactual_Delay7", "CTT_Counterfactual_Delay7", source="ctt_panhandle_crez_case_study"
     )
 
@@ -238,9 +238,9 @@ def main():
     # Validation against actuals
     build_pv = results_actual["costs"]["build"]["total_pv"]
     print(f"\n  --- VALIDATION ---")
-    print(f"  CTCC build cost PV:     {fmt(build_pv)}")
+    print(f"  FORGE build cost PV:     {fmt(build_pv)}")
     print(f"  CTT actual all-in cost: ~$450M (2013$), ~$560M (2026$, 2.5% inflation)")
-    print(f"  CTCC annual benefits:   {fmt(cc_a['congestion_benefit_pv'] / 50)}/yr (approx)")
+    print(f"  FORGE annual benefits:   {fmt(cc_a['congestion_benefit_pv'] / 50)}/yr (approx)")
     print(f"  Observed CTT benefits:  $110M-$220M/year (estimated attribution)")
 
     print("\nDone.")

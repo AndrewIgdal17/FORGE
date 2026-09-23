@@ -33,7 +33,7 @@ class SmartOutputManager:
             return
 
         from json_output_manager import JSONOutputManager
-        scenario_id = os.environ.get('CTCC_SCENARIO_ID', 'default')
+        scenario_id = os.environ.get('FORGE_SCENARIO_ID', 'default')
         self._manager = JSONOutputManager(scenario_id=scenario_id)
 
     def write_batch_summary(self):
@@ -57,5 +57,5 @@ class SmartOutputManager:
         return getattr(self._manager, name)
 
 
-# For backward compatibility, export as CTCCOutputManager
-CTCCOutputManager = SmartOutputManager
+# For backward compatibility, export as FORGEOutputManager
+FORGEOutputManager = SmartOutputManager

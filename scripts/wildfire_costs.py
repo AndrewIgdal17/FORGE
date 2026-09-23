@@ -14,7 +14,7 @@ from typing import Dict, Any, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Local utility imports
 from constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERANCE
@@ -189,7 +189,7 @@ def main() -> None:
     print("      No AFUDC applies to expected loss calculations.")
     print("=" * 80)
 
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
     csv_manager.add_wildfire_costs(results)
     csv_manager.write_batch_summary()
 

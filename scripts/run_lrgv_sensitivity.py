@@ -17,7 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from ctcc import run_calculation  # noqa: E402
+from forge import run_calculation  # noqa: E402
 
 SCENARIOS = [
     ("AEP_LRGV_ACCC", "LRGV ACCC Reconductoring"),
@@ -30,7 +30,7 @@ DISCOUNT_RATES = [0.02, 0.03, 0.05]
 
 
 def load_scenario(name: str) -> dict:
-    path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
+    path = REPO_ROOT / "scenarios" / f"{name}.forge"
     with open(path) as f:
         return json.load(f)
 

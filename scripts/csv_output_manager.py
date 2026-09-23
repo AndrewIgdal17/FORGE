@@ -1,6 +1,6 @@
 # Author: Andrew Igdal
 # Date: 2025-10-29
-# Description: CSV output manager for CTCC batch analysis, sensitivity studies, and Monte Carlo simulations.
+# Description: CSV output manager for FORGE batch analysis, sensitivity studies, and Monte Carlo simulations.
 
 from __future__ import annotations
 
@@ -128,8 +128,8 @@ BATCH_SUMMARY_FIELDS = [
 ]
 
 
-class CTCCOutputManager:
-    """Manages CSV outputs for CTCC batch analysis."""
+class FORGEOutputManager:
+    """Manages CSV outputs for FORGE batch analysis."""
 
     def __init__(
         self, output_dir: str = str(OUTPUTS_DIR), scenario_id: Optional[str] = None
@@ -146,7 +146,7 @@ class CTCCOutputManager:
         # Use microseconds to ensure uniqueness even if runs happen in the same second
         self.scenario_id = (
             scenario_id
-            or os.environ.get("CTCC_SCENARIO_ID")
+            or os.environ.get("FORGE_SCENARIO_ID")
             or datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         )
         self.timestamp = datetime.now().isoformat()

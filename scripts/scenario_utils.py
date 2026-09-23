@@ -1,4 +1,4 @@
-"""Shared utilities for CTCC case study scenario runners."""
+"""Shared utilities for FORGE case study scenario runners."""
 
 from __future__ import annotations
 
@@ -41,9 +41,9 @@ _YAML_STEMS = [
 
 
 def build_default_inputs() -> dict[str, Any]:
-    """Build a complete CTCC input dict from the canonical repo YAML defaults.
+    """Build a complete FORGE input dict from the canonical repo YAML defaults.
 
-    Returns the same dict structure that a .ctcc file's "inputs" key contains:
+    Returns the same dict structure that a .forge file's "inputs" key contains:
     keys are YAML filenames without extension, values are the parsed YAML content.
     """
     inputs: dict[str, Any] = {}
@@ -55,8 +55,8 @@ def build_default_inputs() -> dict[str, Any]:
 
 
 def run_scenario(inputs: dict, scenario_id: str) -> dict:
-    """Run a single scenario through the CTCC calculation engine."""
-    from ctcc import run_calculation
+    """Run a single scenario through the FORGE calculation engine."""
+    from forge import run_calculation
 
     return run_calculation(
         combined_data=inputs,
@@ -65,11 +65,11 @@ def run_scenario(inputs: dict, scenario_id: str) -> dict:
     )
 
 
-def save_ctcc_file(
+def save_forge_file(
     inputs: dict, results: dict, name: str, scenario_id: str, source: str = "case_study"
 ) -> Path:
-    """Save a complete .ctcc file with inputs, results, and metadata."""
-    ctcc = {
+    """Save a complete .forge file with inputs, results, and metadata."""
+    forge = {
         "version": "1.0",
         "customName": name,
         "inputs": inputs,
@@ -80,9 +80,9 @@ def save_ctcc_file(
             "source": source,
         },
     }
-    out_path = SCENARIOS_DIR / f"{name}.ctcc"
+    out_path = SCENARIOS_DIR / f"{name}.forge"
     with open(out_path, "w") as f:
-        json.dump(ctcc, f, indent=2, default=str)
+        json.dump(forge, f, indent=2, default=str)
     print(f"  Saved: {out_path}")
     return out_path
 

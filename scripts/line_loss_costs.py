@@ -14,7 +14,7 @@ from typing import Dict, Any, Tuple, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Standard library imports
 import yaml
@@ -476,7 +476,7 @@ def main() -> None:
             construction_years=project_details.construction_years,
         )
 
-        csv_manager = CTCCOutputManager()
+        csv_manager = FORGEOutputManager()
         results = {
             "annual_cost": primary_annual_loss_cost,
             "total_nominal": primary_lifetime_nominal_cost,
@@ -802,7 +802,7 @@ def main() -> None:
     # ========================================================================
     # Use NEW configuration's total losses (line + converter for DC) for BCR
 
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
     price = project_details.value_of_load
 
     g_benefit = project_details.benefit_price_escalation_real

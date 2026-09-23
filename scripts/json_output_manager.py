@@ -1,6 +1,6 @@
 # Author: Dane McFarlane
 # Date: 2025-11-10
-# Description: JSON output manager for CTCC API calculations.
+# Description: JSON output manager for FORGE API calculations.
 #              Parallel implementation to csv_output_manager.py that collects results in memory as JSON.
 
 from datetime import datetime
@@ -36,7 +36,7 @@ def _require_when_reconductoring(
 
 class JSONOutputManager:
     """
-    Manages JSON outputs for CTCC API calculations.
+    Manages JSON outputs for FORGE API calculations.
     Collects all calculation results in memory and provides structured JSON output.
     """
 

@@ -20,10 +20,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
-from .ctcc_processor import run_ctcc_calculation
+from .forge_processor import run_forge_calculation
 from .models import (
-    CTCCInputPayload,
-    CTCCOutputPayload,
+    FORGEInputPayload,
+    FORGEOutputPayload,
     InputPayload,
     OutputPayload,
     sanitize_for_json,
@@ -39,7 +39,7 @@ if str(SCRIPTS_DIR) not in _sys.path:
     _sys.path.insert(0, str(SCRIPTS_DIR))
 STATIC_DIR = BASE_DIR / "static"
 JSON_DIR = BASE_DIR / "json"
-OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # CTCC/outputs directory
+OUTPUTS_DIR = BASE_DIR.parent / "outputs"  # FORGE/outputs directory
 YAMLS_DIR = BASE_DIR.parent / "yamls"
 LANDING_FILE = STATIC_DIR / "landing.html"
 SIGNUP_FILE = STATIC_DIR / "signup.html"
@@ -54,7 +54,7 @@ PRESERVED_JSON_NAMES = frozenset(
 )
 SKIP_BASENAME = "project_category_template"
 
-app = FastAPI(title="CTCC API Server")
+app = FastAPI(title="FORGE API Server")
 
 # --- Supabase JWT auth (Phase B) ---
 _SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -175,13 +175,13 @@ async def serve_login() -> FileResponse:
 
 @app.get("/app", response_class=FileResponse)
 async def serve_home() -> FileResponse:
-    """Serve the CTCC home page."""
+    """Serve the FORGE home page."""
     return FileResponse(HOME_FILE)
 
 
 @app.get("/app/workspace", response_class=FileResponse)
 async def serve_workspace() -> FileResponse:
-    """Serve the CTCC workspace (inputs + results)."""
+    """Serve the FORGE workspace (inputs + results)."""
     return FileResponse(WORKSPACE_FILE)
 
 
@@ -237,7 +237,7 @@ async def get_final_combined() -> JSONResponse:
 
 @app.get("/api/taxonomy", response_class=JSONResponse)
 async def get_taxonomy() -> JSONResponse:
-    """Return the CTCC cost/benefit taxonomy (reference data, static)."""
+    """Return the FORGE cost/benefit taxonomy (reference data, static)."""
     from taxonomy import taxonomy_to_dict
     return JSONResponse(sanitize_for_json(taxonomy_to_dict()))
 
@@ -263,13 +263,13 @@ async def process_payload(payload: InputPayload) -> OutputPayload:
     return OutputPayload.model_validate(result)
 
 
-@app.post("/api/ctcc/calculate", response_model=CTCCOutputPayload)
-async def calculate_ctcc(
-    payload: CTCCInputPayload,
+@app.post("/api/forge/calculate", response_model=FORGEOutputPayload)
+async def calculate_forge(
+    payload: FORGEInputPayload,
     _user: dict = Depends(require_auth),
-) -> CTCCOutputPayload:
+) -> FORGEOutputPayload:
     """
-    Run CTCC calculations with JSON input and output.
+    Run FORGE calculations with JSON input and output.
 
     Accepts a JSON payload, runs the calculator in-process,
     and returns the calculation results as JSON.
@@ -279,8 +279,8 @@ async def calculate_ctcc(
         payload_dict["combined_data"] = _get_final_combined_cached()
 
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, run_ctcc_calculation, payload_dict)
-    return CTCCOutputPayload.model_validate(result)
+    result = await loop.run_in_executor(None, run_forge_calculation, payload_dict)
+    return FORGEOutputPayload.model_validate(result)
 
 
 @app.get("/api/outputs/{filename}")

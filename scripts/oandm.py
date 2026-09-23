@@ -13,7 +13,7 @@ from typing import Dict, Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Local utility imports
 from yaml_loaders import (
@@ -668,7 +668,7 @@ def main() -> None:
     # ========================================================================
 
     # Initialize CSV output manager
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
 
     results = {
         "total_annual": _total_annual_oandm,

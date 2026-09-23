@@ -1,6 +1,6 @@
 # Author: Andrew Igdal
 # Date: 2025-10-21
-# Description: Comprehensive Transmission Cost Calculator (CTCC) - Main Script
+# Description: Framework for Open Reproducible Grid Economics (FORGE) - Main Script
 #              Orchestrates all individual cost calculation modules
 
 from __future__ import annotations
@@ -42,13 +42,13 @@ _PRELOAD_MODULES = [
 for _mod_name in _PRELOAD_MODULES:
     importlib.import_module(_mod_name)
 
-_CTCC_ROOT = Path(__file__).resolve().parent
+_FORGE_ROOT = Path(__file__).resolve().parent
 _calculation_lock = threading.Lock()
 
 
 def _set_yamls_dir(new_path: Path) -> None:
     """Patch YAMLS_DIR across path_config and all modules that cached it at import time."""
-    os.environ["CTCC_YAMLS_DIR"] = str(new_path)
+    os.environ["FORGE_YAMLS_DIR"] = str(new_path)
     import path_config
     path_config.YAMLS_DIR = new_path
     for mod in sys.modules.values():
@@ -257,7 +257,7 @@ def write_final_json_output(
         results["derived_parameters"] = _ctx.derived_parameters
 
     # Write to final output file
-    output_file = os.path.join(output_dir, f"ctcc_results_{scenario_id}.json")
+    output_file = os.path.join(output_dir, f"forge_results_{scenario_id}.json")
     os.makedirs(output_dir, exist_ok=True)
 
     with open(output_file, "w") as f:
@@ -327,7 +327,7 @@ def run_calculation(
     capital_only: bool = False,
     quiet: bool = True,
 ) -> dict[str, Any]:
-    """Run the full CTCC calculation pipeline in-process.
+    """Run the full FORGE calculation pipeline in-process.
 
     Accepts a Python dict of inputs, returns a Python dict of results.
     Thread-safe via _calculation_lock (env vars are process-global).
@@ -337,19 +337,19 @@ def run_calculation(
         saved_yamls_dir = path_config.YAMLS_DIR
         saved_env = {
             k: os.environ.get(k)
-            for k in ("CTCC_YAMLS_DIR", "CTCC_SCENARIO_ID", "CTCC_OUTPUT_MODE")
+            for k in ("FORGE_YAMLS_DIR", "FORGE_SCENARIO_ID", "FORGE_OUTPUT_MODE")
         }
         temp_yaml_dir = None
         try:
-            temp_yaml_dir = tempfile.mkdtemp(prefix=f"ctcc_yaml_{scenario_id}_")
+            temp_yaml_dir = tempfile.mkdtemp(prefix=f"forge_yaml_{scenario_id}_")
             for key, value in combined_data.items():
                 yaml_path = os.path.join(temp_yaml_dir, f"{key}.yaml")
                 with open(yaml_path, "w") as f:
                     yaml.dump(value, f, default_flow_style=False, sort_keys=False)
 
             _set_yamls_dir(Path(temp_yaml_dir))
-            os.environ["CTCC_SCENARIO_ID"] = scenario_id
-            os.environ["CTCC_OUTPUT_MODE"] = "json"
+            os.environ["FORGE_SCENARIO_ID"] = scenario_id
+            os.environ["FORGE_OUTPUT_MODE"] = "json"
 
             from json_output_manager import JSONOutputManager
             aggregator = JSONOutputManager(scenario_id=scenario_id)
@@ -530,7 +530,7 @@ def main() -> None:
     """
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Comprehensive Transmission Cost Calculator (CTCC)"
+        description="Framework for Open Reproducible Grid Economics (FORGE)"
     )
     parser.add_argument(
         "--norisk",
@@ -596,7 +596,7 @@ def main() -> None:
 
     # Set environment variables for congestion/curtailment script
     if args.no_congestion:
-        os.environ["CTCC_NO_CONGESTION"] = "1"
+        os.environ["FORGE_NO_CONGESTION"] = "1"
 
     # Handle --norisk deprecation: if used, set individual flags
     if args.norisk:
@@ -605,7 +605,7 @@ def main() -> None:
 
     if not args.simple:
         print("=" * 80)
-        print("COMPREHENSIVE TRANSMISSION COST CALCULATOR (CTCC)")
+        print("FRAMEWORK FOR OPEN REPRODUCIBLE GRID ECONOMICS (FORGE)")
         print("=" * 80)
         if args.norisk:
             print("⚠️  [DEPRECATED] --norisk flag is deprecated")
@@ -656,11 +656,11 @@ def main() -> None:
     # Generate a single scenario_id for this entire run
     # Only generate if not already set (for parallel sensitivity analysis)
     # Use microseconds to ensure uniqueness even if runs happen in the same second
-    if "CTCC_SCENARIO_ID" not in os.environ:
+    if "FORGE_SCENARIO_ID" not in os.environ:
         scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        os.environ["CTCC_SCENARIO_ID"] = scenario_id
+        os.environ["FORGE_SCENARIO_ID"] = scenario_id
     else:
-        scenario_id = os.environ["CTCC_SCENARIO_ID"]
+        scenario_id = os.environ["FORGE_SCENARIO_ID"]
 
     if not args.simple:
         print(f"\n📋 Scenario ID: {scenario_id}\n")
@@ -735,7 +735,7 @@ def main() -> None:
             "contingencies": _contingencies,
         })
 
-    os.environ["CTCC_OUTPUT_MODE"] = "json"
+    os.environ["FORGE_OUTPUT_MODE"] = "json"
 
     # List of scripts to run in order
     # If --capital_only is set, only run capital scripts plus prerequisites

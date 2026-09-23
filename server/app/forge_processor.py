@@ -1,5 +1,5 @@
 """
-CTCC calculation processor for FastAPI.
+FORGE calculation processor for FastAPI.
 Calls the calculator in-process via run_calculation() for speed.
 """
 
@@ -11,23 +11,23 @@ from datetime import datetime
 
 from .models import UserMergeInput
 
-CTCC_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(CTCC_ROOT))
-sys.path.insert(0, str(CTCC_ROOT / "scripts"))
+FORGE_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(FORGE_ROOT))
+sys.path.insert(0, str(FORGE_ROOT / "scripts"))
 
-from ctcc import run_calculation
+from forge import run_calculation
 
 
 def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Merge simplified user input data with the full CTCC template structure.
+    Merge simplified user input data with the full FORGE template structure.
 
     Args:
         user_data: Simplified data from web interface
-        template: Full CTCC template with all required sections
+        template: Full FORGE template with all required sections
 
     Returns:
-        Merged data ready for CTCC processing
+        Merged data ready for FORGE processing
     """
     merged = template.copy()
 
@@ -79,9 +79,9 @@ def merge_user_data_with_template(user_data: Dict[str, Any], template: Dict[str,
     return merged
 
 
-def run_ctcc_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
+def run_forge_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Run CTCC calculations in-process.
+    Run FORGE calculations in-process.
 
     Args:
         payload: Dictionary containing:

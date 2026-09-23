@@ -16,7 +16,7 @@ from typing import Tuple
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from smart_output import CTCCOutputManager
+from smart_output import FORGEOutputManager
 
 # Local utility imports
 from smart_loaders import (
@@ -343,7 +343,7 @@ def main() -> None:
     # CSV OUTPUT - Write results to batch summary and detail CSV
     # ========================================================================
 
-    csv_manager = CTCCOutputManager()
+    csv_manager = FORGEOutputManager()
     results = {
         "total_nominal": total_nominal_cost,
         "total_afudc": total_afudc,

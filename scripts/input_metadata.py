@@ -1,4 +1,4 @@
-"""CTCC input field metadata — one entry per input field.
+"""FORGE input field metadata — one entry per input field.
 
 Bridges taxonomy items to form controls. Each entry declares which
 taxonomy item a field feeds, which tab it appears on, its label,

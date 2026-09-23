@@ -1,4 +1,4 @@
-"""Run SunZia CTCC scenarios: 17-year delay (actual) and 2-year delay (counterfactual).
+"""Run SunZia FORGE scenarios: 17-year delay (actual) and 2-year delay (counterfactual).
 
 Builds inputs from canonical YAML defaults, patches with SunZia-specific values,
 runs both scenarios through the calculation engine, and saves results.
@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def patch_sunzia_inputs(inputs: dict) -> dict:
@@ -228,10 +228,10 @@ def main():
     results_delay2 = run_scenario(inputs_delay2, "SunZia_Delay2")
     print_results(results_delay2, "SunZia — 2-Year Delay (CREZ-Style Counterfactual)")
 
-    # --- Save .ctcc files ---
+    # --- Save .forge files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_delay17, results_delay17, "SunZia_Delay17", "SunZia_Delay17", source="sunzia_case_study")
-    save_ctcc_file(inputs_delay2, results_delay2, "SunZia_Delay2", "SunZia_Delay2", source="sunzia_case_study")
+    save_forge_file(inputs_delay17, results_delay17, "SunZia_Delay17", "SunZia_Delay17", source="sunzia_case_study")
+    save_forge_file(inputs_delay2, results_delay2, "SunZia_Delay2", "SunZia_Delay2", source="sunzia_case_study")
 
     # --- Comparison ---
     bcr17 = results_delay17["bcr"]

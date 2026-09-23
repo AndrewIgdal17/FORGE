@@ -15,11 +15,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from ctcc import run_calculation  # noqa: E402
+from forge import run_calculation  # noqa: E402
 
 
 def load_scenario(name: str) -> dict:
-    path = REPO_ROOT / "scenarios" / f"{name}.ctcc"
+    path = REPO_ROOT / "scenarios" / f"{name}.forge"
     with open(path) as f:
         return json.load(f)
 

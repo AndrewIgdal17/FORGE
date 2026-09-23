@@ -1,10 +1,10 @@
-"""Run Vineyard Wind 1 CTCC scenarios: 6-year delay (actual) and 2-year delay (counterfactual).
+"""Run Vineyard Wind 1 FORGE scenarios: 6-year delay (actual) and 2-year delay (counterfactual).
 
 Builds inputs from canonical YAML defaults, patches with VW1-specific inputs from the subsea
 case study research document, runs both scenarios, and saves results.
 
 Vineyard Wind 1: 800 MW HVAC subsea export cable, Barnstable MA.
-Modeled at 657 MW (closest CTCC AC tier) with utilization adjusted to preserve throughput.
+Modeled at 657 MW (closest FORGE AC tier) with utilization adjusted to preserve throughput.
 Construction type: Subsea. AC. Zero wildfire. Dual parallel cables (capacity_at_risk=0.5).
 """
 
@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from scenario_utils import build_default_inputs, run_scenario, save_ctcc_file, fmt  # noqa: E402
+from scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt  # noqa: E402
 
 
 def patch_vineyard_wind_inputs(inputs: dict) -> dict:
@@ -27,7 +27,7 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     proj["project"]["name"] = "VW1_Subsea_AC_657MW_SubseaCopper_NA"
     proj["project"]["construction_type"] = "Subsea"
     proj["project"]["ac_dc"] = "AC"
-    proj["project"]["capacity_mw"] = 657  # actual: 800 MW; 657 is closest CTCC AC tier
+    proj["project"]["capacity_mw"] = 657  # actual: 800 MW; 657 is closest FORGE AC tier
     proj["project"]["conductor_type"] = "Subsea Copper Conductor"
     proj["project"]["converter_type"] = "NA"
     proj["project"]["number_of_converters"] = 0
@@ -226,10 +226,10 @@ def main():
     results_delay2 = run_scenario(inputs_delay2, "VW1_Delay2")
     print_results(results_delay2, "Vineyard Wind 1 — 2-Year Delay (Streamlined Counterfactual)")
 
-    # --- Save .ctcc files ---
+    # --- Save .forge files ---
     print("\n\nSaving scenario files...")
-    save_ctcc_file(inputs_delay6, results_delay6, "VW1_Delay6", "VW1_Delay6", source="vineyard_wind_case_study")
-    save_ctcc_file(inputs_delay2, results_delay2, "VW1_Delay2", "VW1_Delay2", source="vineyard_wind_case_study")
+    save_forge_file(inputs_delay6, results_delay6, "VW1_Delay6", "VW1_Delay6", source="vineyard_wind_case_study")
+    save_forge_file(inputs_delay2, results_delay2, "VW1_Delay2", "VW1_Delay2", source="vineyard_wind_case_study")
 
     # --- Comparison ---
     bcr6 = results_delay6["bcr"]
@@ -243,7 +243,7 @@ def main():
     delta = bcr2.get("net_benefit_pv", 0) - bcr6.get("net_benefit_pv", 0)
     print(f"  Social cost of 4 extra years: {fmt(delta)}")
     print(f"\n  Build cost PV (validation): {fmt(results_delay6['costs']['build']['total_pv'])}")
-    print(f"  Target: ~$210-232M (Prysmian contract); CTCC uses generic rates")
+    print(f"  Target: ~$210-232M (Prysmian contract); FORGE uses generic rates")
 
     print("\nDone.")
 
