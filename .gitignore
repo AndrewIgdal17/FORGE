@@ -2,8 +2,9 @@
 server/logs/
 server/json/
 
-# Python cache files
+# Python bytecache
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 *.so
@@ -112,8 +113,12 @@ papers/
 # Generated data files
 combined_data.json
 test_results.json
+testing/test_results.json
 outputs/ctcc_results_*.json
 outputs/json_output_*.json
+
+# Lock files
+yamls.lock
 
 # Vault-adjacent / local agent artifacts
 .superpowers/
