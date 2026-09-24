@@ -310,7 +310,8 @@ def run_calculation(
                 calculate_construction_start_year as _calc_cstart,
             )
             from scripts.utils.smart_loaders import get_financing_data_raw
-            _afudc_rate, _afudc_source = _calc_afudc(get_financing_data_raw())
+            _fin_raw = get_financing_data_raw()
+            _afudc_rate, _afudc_source = _calc_afudc(_fin_raw)
             _cod_year = _calc_cod(_project_details.delay_years, _project_details.construction_years)
             _construction_start_year = _calc_cstart(_project_details.delay_years)
 
@@ -325,9 +326,14 @@ def run_calculation(
                 row_width_feet=_row_width_feet,
                 weighted_miles=_weighted_miles,
                 average_terrain_multiplier=_avg_terrain_mult,
+                number_of_converters=_project_details.number_of_converters,
+                social_discount_rate=_fin_raw["financial"].get("social_discount_rate", 0),
+                afudc_rate=_afudc_rate,
+                afudc_source=_afudc_source,
+                cod_year=_cod_year,
+                construction_start_year=_construction_start_year,
             ))
 
-            _fin_raw = get_financing_data_raw()
             add_derived({
                 "category_string": _category_string,
                 "row_width_feet": _row_width_feet,
@@ -598,6 +604,17 @@ def main() -> None:
     _row_width_feet = load_row_widths(_category_string)
     _weighted_miles, _avg_terrain_mult = _calc_wm()
 
+    from scripts.utils.financial_utils import (
+        calculate_afudc_rate as _calc_afudc_cli,
+        calculate_cod_year as _calc_cod_cli,
+        calculate_construction_start_year as _calc_cstart_cli,
+    )
+    from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
+    _fin_raw_cli = _get_fin_raw_cli()
+    _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_fin_raw_cli)
+    _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
+    _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
+
     set_run_context(RunContext(
         project_details=_project_details,
         terrain_miles=_terrain_miles,
@@ -609,19 +626,14 @@ def main() -> None:
         row_width_feet=_row_width_feet,
         weighted_miles=_weighted_miles,
         average_terrain_multiplier=_avg_terrain_mult,
+        number_of_converters=_project_details.number_of_converters,
+        social_discount_rate=_fin_raw_cli["financial"].get("social_discount_rate", 0),
+        afudc_rate=_afudc_rate_cli,
+        afudc_source=_afudc_source_cli,
+        cod_year=_cod_year_cli,
+        construction_start_year=_cstart_cli,
     ))
 
-    from scripts.utils.financial_utils import (
-        calculate_afudc_rate as _calc_afudc_cli,
-        calculate_cod_year as _calc_cod_cli,
-        calculate_construction_start_year as _calc_cstart_cli,
-    )
-    from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
-    _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_get_fin_raw_cli())
-    _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
-    _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
-
-    _fin_raw_cli = _get_fin_raw_cli()
     add_derived({
         "category_string": _category_string,
         "row_width_feet": _row_width_feet,

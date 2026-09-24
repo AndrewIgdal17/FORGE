@@ -23,8 +23,8 @@ from scripts.utils.financial_utils import calculate_present_value, calculate_cod
 from scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 from scripts.calc.build_costs import load_costs
 from scripts.utils.weighted_miles import calculate_weighted_miles
-from scripts.utils.constants import TRANSMISSION_TYPE_DC
 from scripts.utils.path_config import YAMLS_DIR
+from scripts.utils.run_context import get_run_context
 
 def calculate_insurance_costs(
     insurance_yaml: Dict[str, Any],
@@ -121,26 +121,21 @@ def main() -> None:
 
     category = build_category_string(project_details=project_details)
 
-    # Determine number of converters
-    if project_details.ac_dc == TRANSMISSION_TYPE_DC:
-        try:
-            project_details_data = get_project_data_raw()
-            if "project" not in project_details_data:
-                raise KeyError("Missing 'project' key in project technical details")
-            if "number_of_converters" not in project_details_data["project"]:
-                raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details"
-                )
-            number_of_converters = project_details_data["project"][
-                "number_of_converters"
-            ]
-        except KeyError as e:
-            raise KeyError(f"Missing required key in project technical details: {e}")
+    ctx = get_run_context()
+    if ctx is not None:
+        number_of_converters = ctx.number_of_converters
     else:
-        number_of_converters = 0
+        # Standalone fallback: read from YAML directly
+        project_data = get_project_data_raw()
+        project = project_data.get("project", {})
+        if project_details.ac_dc == "DC":
+            if "number_of_converters" not in project:
+                raise KeyError("Missing 'number_of_converters' for DC project")
+            number_of_converters = int(project["number_of_converters"])
+        else:
+            number_of_converters = 0
 
     # Load build costs to get insurable asset values
-    from scripts.utils.run_context import get_run_context
     _ctx = get_run_context()
     if _ctx is not None and _ctx.build_costs is not None:
         costs = _ctx.build_costs

@@ -31,6 +31,7 @@ class ProjectTechnicalDetails:
     construction_years: int
     project_lifetime: int
     converter_loss_percentage: Optional[float]
+    number_of_converters: int = 0
     row_agreement_type: Optional[str] = (
         None  # permanent_easement_new | lease_license_existing | fee_simple | federal_hybrid; if None, inferred from project_type/uses_existing_row
     )
@@ -218,6 +219,16 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
                 if (project_type in ("reconductoring", "rebuild") or uses_existing_row)
                 else "permanent_easement_new"
             )
+        # Extract number_of_converters for DC projects
+        if ac_dc == "DC":
+            if "number_of_converters" not in project_data:
+                raise KeyError(
+                    "Missing 'number_of_converters' in 01_project_technical_details.yaml "
+                    "for DC project — required field"
+                )
+            n_conv = int(project_data["number_of_converters"])
+        else:
+            n_conv = 0
         return ProjectTechnicalDetails(
             construction_type=construction_type,
             ac_dc=ac_dc,
@@ -231,6 +242,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             construction_years=timeline_data["construction_years"],
             project_lifetime=timeline_data["project_lifetime"],
             converter_loss_percentage=converter_loss_percentage,
+            number_of_converters=n_conv,
             row_agreement_type=row_agreement_type,
         )
     except FileNotFoundError:

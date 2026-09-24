@@ -66,6 +66,12 @@ class RunContext:
     row_width_feet: float
     weighted_miles: float
     average_terrain_multiplier: float
+    number_of_converters: int = 0
+    social_discount_rate: float = 0.0
+    afudc_rate: float = 0.0
+    afudc_source: str = ""
+    cod_year: float = 0.0
+    construction_start_year: float = 0.0
     build_costs: Optional[BuildCosts] = None
     derived_parameters: Dict[str, Any] = dc_field(default_factory=dict)
 

@@ -41,6 +41,7 @@ from scripts.utils.smart_loaders import (
     get_project_data_raw,
     load_congestion_reductions,
 )
+from scripts.utils.run_context import get_run_context
 
 @dataclass
 class LineLossProjectDetails:
@@ -142,11 +143,17 @@ def load_project_details() -> LineLossProjectDetails:
         congestion_params = load_congestion_reductions()
         benefit_price_escalation_real = congestion_params.benefit_price_escalation_real
 
-        # Get number_of_converters if DC
-        if ac_dc == "DC":
-            number_of_converters = project.get("number_of_converters", 0)
+        ctx = get_run_context()
+        if ctx is not None:
+            number_of_converters = ctx.number_of_converters
         else:
-            number_of_converters = 0
+            # Standalone fallback: read from YAML directly
+            if ac_dc == "DC":
+                if "number_of_converters" not in project:
+                    raise KeyError("Missing 'number_of_converters' for DC project")
+                number_of_converters = int(project["number_of_converters"])
+            else:
+                number_of_converters = 0
 
         # Get greenfield comparison fields (optional, only for greenfield projects)
         greenfield_comparison_capacity_mw = project.get(

@@ -32,6 +32,7 @@ from scripts.utils.financial_utils import (
 )
 from scripts.utils.weighted_miles import calculate_weighted_miles
 from scripts.utils.path_config import YAMLS_DIR
+from scripts.utils.run_context import get_run_context
 
 @dataclass
 class BuildCosts:
@@ -195,28 +196,19 @@ def main() -> None:
     from scripts.utils.calculation_utils import build_category_string
     category = build_category_string(project_details=project_details)
 
-    # Determine number of converters
-    if project_details.ac_dc == "DC":
-        # Load project data to get number_of_converters
-        try:
-            project_details_data = get_project_data_raw()
-            if "project" not in project_details_data:
-                raise KeyError(
-                    "Missing 'project' key in project technical details"
-                )
-            if "number_of_converters" not in project_details_data["project"]:
-                raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details"
-                )
-            number_of_converters = project_details_data["project"][
-                "number_of_converters"
-            ]
-        except KeyError as e:
-            raise KeyError(
-                f"Missing required key in project technical details: {e}"
-            )
+    ctx = get_run_context()
+    if ctx is not None:
+        number_of_converters = ctx.number_of_converters
     else:
-        number_of_converters = 0
+        # Standalone fallback: read from YAML directly
+        project_data = get_project_data_raw()
+        project = project_data.get("project", {})
+        if project_details.ac_dc == "DC":
+            if "number_of_converters" not in project:
+                raise KeyError("Missing 'number_of_converters' for DC project")
+            number_of_converters = int(project["number_of_converters"])
+        else:
+            number_of_converters = 0
 
     total_miles = load_physical_details()
     contingencies = load_contingencies()

@@ -20,7 +20,6 @@ from scripts.utils.smart_loaders import (
     load_emissions_details,
     load_grid_mix,
     load_financing_social_discount_rate,
-    get_project_data_raw,
 )
 from scripts.utils.financial_utils import calculate_present_value, calculate_cod_year
 from scripts.utils.calculation_utils import from_percent
@@ -432,28 +431,6 @@ def main() -> None:
     energy_source_mix_details = build_mix_input(
         cod_state_pct, grid_mix["rate_post_cod"]
     )
-
-    # Get number_of_converters if DC
-    if project_details.ac_dc == "DC":
-        try:
-            project_details_data = get_project_data_raw()
-            if "project" not in project_details_data:
-                raise KeyError(
-                    "Missing 'project' key in project technical details"
-                )
-            if "number_of_converters" not in project_details_data["project"]:
-                raise KeyError(
-                    "Missing 'number_of_converters' key in project section of technical details"
-                )
-            number_of_converters = project_details_data["project"][
-                "number_of_converters"
-            ]
-        except KeyError as e:
-            raise KeyError(
-                f"Missing required key in project technical details: {e}"
-            )
-    else:
-        number_of_converters = 0
 
     # Calculate total energy losses
     loss_data = get_total_energy_losses()
