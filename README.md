@@ -1,22 +1,24 @@
 # FORGE - Framework for Open Reproducible Grid Economics
 
-A flexible cost-benefit analysis tool for transmission line projects supporting multiple input/output modes.
+A cost-benefit analysis tool for transmission line projects.
 
 ## Quick Start
 
 ```bash
-# Default mode (YAML → CSV)
+# Default run (YAML inputs → JSON output)
 venv/bin/python3 forge.py
 
-# JSON input with JSON output
-venv/bin/python3 forge.py -j -o --id my_scenario
+# BCR-only console output (suppress intermediate module output)
+venv/bin/python3 forge.py --simple
 
-# JSON input with CSV output
-venv/bin/python3 forge.py -j
+# Skip selected cost or benefit categories
+venv/bin/python3 forge.py --no_wildfire --no_outages
 
 # Get help
 venv/bin/python3 forge.py --help
 ```
+
+`forge.py` loads calculator modules in-process via `importlib.import_module()` and calls `mod.main()`. Output is JSON only: `outputs/forge_results_{scenario_id}.json`.
 
 ## Installation
 
@@ -30,111 +32,58 @@ source venv/bin/activate  # macOS/Linux
 # or: venv\Scripts\activate  # Windows
 
 # Install dependencies
-pip install pyyaml pandas numpy
+pip install -r requirements.txt
 ```
 
 ## Command-Line Flags
 
-| Flag | Description | Example |
-|------|-------------|---------|
-| `-j`, `--json` | Use JSON input mode | `forge.py -j` |
-| `-o`, `--json-out` | Use JSON output mode | `forge.py -j -o` |
-| `--id NAME` | Set scenario ID | `forge.py --id baseline` |
-| `-h`, `--help` | Show help message | `forge.py --help` |
-
-## Mode Combinations
-
-| Input | Output | Flags | Input Files | Output Files |
-|-------|--------|-------|-------------|--------------|
-| YAML | CSV | *(default)* | `yamls/*.yaml` (22) | `outputs/*.csv` (12) |
-| JSON | CSV | `-j` | `combined_data.json` | `outputs/*.csv` (12) |
-| JSON | JSON | `-j -o` | `combined_data.json` | `forge_results_[id].json` |
-
-## Usage Examples
-
-### Example 1: Traditional Analysis (Default)
-```bash
-venv/bin/python3 forge.py
-```
-- **Input:** 22 YAML files in `yamls/`
-- **Output:** 12 CSV files in `outputs/`
-- **Use:** Spreadsheet analysis, detailed breakdowns
-
-### Example 2: JSON Input, CSV Output
-```bash
-venv/bin/python3 forge.py -j
-```
-- **Input:** Single `combined_data.json` (auto-generated from YAML)
-- **Output:** 12 CSV files in `outputs/`
-- **Use:** Single config file, multiple outputs
-
-### Example 3: Full JSON Mode
-```bash
-venv/bin/python3 forge.py -j -o --id scenario_A
-```
-- **Input:** Single `combined_data.json`
-- **Output:** Single `forge_results_scenario_A.json`
-- **Use:** API integration, programmatic processing
-
-## Output Files
-
-**CSV Mode** (default):
-- `batch_summary.csv` - Main results with all metrics
-- `build_costs.csv` - Construction costs breakdown
-- `insurance_costs.csv` - Insurance calculations
-- `row_costs.csv` - Right-of-way costs
-- `environmental_mitigation.csv` - Environmental costs
-- `delay_costs.csv` - Delay impacts
-- `wildfire_costs.csv` - Wildfire risk
-- `outage_costs.csv` - Outage risk by terrain
-- `congestion.csv` - Congestion benefits
-- `emissions_costs.csv` - Emissions calculations
-- `line_loss_costs.csv` - Energy loss costs
-- `oandm_costs.csv` - Operations & maintenance
-
-**JSON Mode** (`-o` flag):
-- `forge_results_[scenario_id].json` - Single aggregated file with all results
-
-## Comparing Scenarios
-
-After running multiple scenarios (e.g. with different `--id` values), use the comparison script to contrast them:
-
-```bash
-python3 compare_scenarios.py
-# or: ./run_compare_scenarios.command
-```
-
-- The script lists all scenarios in `outputs/batch_summary.csv` (numbered and lettered).
-- Enter which to compare (e.g. `1 3 5`, `1-4`, or `A C E`), then hit Enter.
-- It writes `outputs/scenario_comparison_YYYYMMDD_HHMMSS.csv` (metrics × scenarios) and `.md` (overview tables and a short contrast summary).
+| Flag | Description |
+|------|-------------|
+| `--simple` | Only show BCR analysis (suppress intermediate outputs) |
+| `--no_emissions` | Skip emissions cost calculations |
+| `--no_linelosses` | Skip line loss cost calculations |
+| `--capital_only` | Run only capital cost modules (build, ROW, environmental mitigation) plus prerequisites |
+| `--no_oandm` | Skip O&M cost calculations |
+| `--no_insurance` | Skip general insurance cost calculations |
+| `--no_delay_costs` | Skip delay cost calculations |
+| `--no_wildfire` | Skip wildfire risk costs |
+| `--no_outages` | Skip outage risk costs |
+| `--no_congestion` | Skip congestion benefit calculations |
 
 ## Cost Modules
 
-FORGE calculates 12 cost and benefit categories:
+FORGE runs 17 calculator modules:
 
 **Capital Costs:**
-1. **Build Costs** - Conductors, structures, converters with AFUDC
-2. **ROW** - Right-of-way acquisition or rental
-3. **Environmental** - Mitigation and compliance
+1. **Build Costs** (`build_costs`) — Conductors, structures, converters with AFUDC
+2. **ROW** (`row_costs`) — Right-of-way acquisition or rental
+3. **Environmental** (`environmental_mitigation`) — Mitigation and compliance
+
+**Transfers:**
+4. **Revenue** (`revenue`) — Rate-based ATRR (utility–ratepayer transfer)
 
 **Operational Costs:**
-4. **O&M** - Operations, maintenance, vegetation management
-5. **Insurance** - Operational insurance premiums
-6. **Line Losses** - Energy loss calculations
-7. **Emissions** - Carbon emissions costs
+5. **O&M** (`oandm`) — Operations, maintenance, vegetation management
+6. **Insurance** (`insurance_costs`) — Operational insurance premiums
+7. **Energy Losses** (`energy_losses`) — Physical conductor and converter losses
+8. **Line Loss Costs** (`line_loss_costs`) — Valued energy-loss costs
+9. **Emissions** (`emissions`) — Loss-compensation carbon emissions costs
+10. **Facilitated Emissions** (`facilitated_emissions`) — Project-path vs. no-line emissions (feeds avoided-emissions benefit)
+11. **Displacement Delay** (`displacement_delay_cost`) — Foregone displacement benefit during delay
 
 **Risk Costs:**
-8. **Wildfire** - Wildfire risk assessment
-9. **Outage** - Outage risk by terrain type
+12. **Wildfire** (`wildfire_costs`) — Wildfire risk assessment
+13. **Outage** (`outage_costs`) — Outage risk by terrain type
 
 **Other Costs:**
-10. **Delays** - Construction delay impacts
+14. **Delays** (`delay_costs`) — Construction delay impacts
 
 **Benefits:**
-11. **Congestion Reduction** - Congestion reduction benefits
+15. **Congestion Reduction** (`congestion_reduction`) — Congestion relief, delivered energy, and capacity value
 
 **Analysis:**
-12. **BCR** - Benefit-cost ratio calculations
+16. **BCR** (`bcr_calculator`) — Benefit-cost ratio calculations
+17. **BCR Trajectory** (`bcr_trajectory`) — Year-by-year BCR/NPV trajectory
 
 ## Common Workflows
 
@@ -146,61 +95,61 @@ vim yamls/01_project_technical_details.yaml
 # Run calculations
 venv/bin/python3 forge.py
 
-# View results
-open outputs/batch_summary.csv
+# Results written to outputs/forge_results_{scenario_id}.json
 ```
 
-### Workflow 2: Multiple Scenarios
+### Workflow 2: Category Exclusions
 ```bash
-# Run different scenarios
-venv/bin/python3 forge.py -j -o --id high_capacity
-venv/bin/python3 forge.py -j -o --id low_cost
-venv/bin/python3 forge.py -j -o --id baseline
+# Omit wildfire and outage risk
+venv/bin/python3 forge.py --no_wildfire --no_outages
 
-# Compare results
-diff outputs/forge_results_high_capacity.json outputs/forge_results_baseline.json
+# Capital costs only
+venv/bin/python3 forge.py --capital_only
 ```
 
-### Workflow 3: Programmatic Processing
+### Workflow 3: BCR-Only Console Output
 ```bash
-# Run with JSON output
-venv/bin/python3 forge.py -j -o --id analysis
-
-# Process with custom script
-python analyze_results.py outputs/forge_results_analysis.json
+venv/bin/python3 forge.py --simple
 ```
 
 ## Web Interface
 
-FORGE includes a FastAPI web server with browser UI:
+FORGE includes a FastAPI web server with browser UI. Server code lives in `server/app/main.py`. The workspace entry point is `/app/workspace` (`server/static/workspace.html`).
 
 ```bash
-# Start server
-cd server
+# Start server (from this directory)
 ./run_calc_server.command
 
-# Open browser
-open http://localhost:8000
+# Open workspace
+open http://localhost:8000/app/workspace
 ```
 
 **Features:**
 - Browser-based UI for editing configuration
-- Real-time calculations
-- CSV file preview and download
-- JSON export
+- In-process calculations
+- JSON results
 - API endpoints for integration
 
 ## API Usage
 
 ### Start Server
 ```bash
-cd server
 ./run_calc_server.command
 ```
 
 ### API Endpoints
 
-**Get configuration:**
+**Get taxonomy (cost/benefit structure):**
+```bash
+curl http://localhost:8000/api/taxonomy
+```
+
+**Get input-field metadata (taxonomy-driven forms):**
+```bash
+curl http://localhost:8000/api/input_metadata
+```
+
+**Get combined YAML-derived configuration:**
 ```bash
 curl http://localhost:8000/api/final_combined
 ```
@@ -210,60 +159,33 @@ curl http://localhost:8000/api/final_combined
 curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
   -d '{
-    "input_mode": "json",
-    "output_mode": "json",
-    "scenario_id": "test",
-    "combined_data": { ... }
+    "combined_data": { ... },
+    "scenario_id": "test"
   }'
 ```
-
-**Download CSV:**
-```bash
-curl http://localhost:8000/api/outputs/batch_summary.csv?download=true \
-  -o batch_summary.csv
-```
-
-## Advanced Options
-
-### Command Files
-```bash
-./run_yaml_csv.command     # YAML → CSV (traditional)
-./run_json_csv.command      # JSON → CSV
-./run_json_json.command     # JSON → JSON (full JSON mode)
-```
-
-**Note:** These convenience scripts use command-line flags internally.
 
 ## Project Structure
 
 ```
-FORGE/
-├── forge.py                    # Main CLI script with flags
-├── yaml_to_json.py            # YAML → JSON converter
-├── README.md                  # This file
-├── yamls/                     # Input YAML files (22 files)
-├── scripts/                   # Calculation modules
-│   ├── smart_loaders.py      # Auto-detects input mode
-│   ├── smart_output.py       # Auto-detects output mode
-│   ├── json_loaders.py       # JSON input handler
-│   ├── json_output_manager.py # JSON output handler
-│   ├── yaml_loaders.py       # YAML input handler
-│   ├── csv_output_manager.py # CSV output handler
-│   ├── build_costs.py        # Build cost calculations
-│   ├── oandm.py              # O&M calculations
-│   └── ... (13 modules total)
-├── outputs/                   # Results directory
-├── server/                    # FastAPI web server
-│   ├── app/
-│   │   ├── main.py           # FastAPI application
-│   │   └── forge_processor.py # Calculation orchestrator
-│   ├── static/
-│   │   └── index.html        # Web UI
-│   ├── json/                  # JSON configuration files
-│   ├── run_calc_server.command  # Start API server
-│   ├── web_ui_server.command    # Start static file server
-│   └── convert_yamls.command    # YAML to JSON converter
-└── venv/                      # Virtual environment
+forge.py                    # Main entry point
+scripts/
+  calc/                     # 17 calculator modules
+  generators/               # JSON generators + snapshot
+  io/                       # Loaders, taxonomy, adapters, output managers
+  runners/                  # 6 scenario runners
+  sensitivity/              # 4 sensitivity scripts
+  tests/                    # Test/validation scripts
+  utils/                    # Financial, calculation, path utilities
+server/
+  app/                      # FastAPI web server
+  static/                   # Web app frontend (entry: workspace.html)
+  json/                     # Pre-generated JSON for web app
+test/                       # pytest test suite (15 tests)
+testing/                    # Integration test runner
+scenarios/                  # 10 .forge scenario files
+yamls/                      # 24 YAML input data files
+docs/                       # Documentation
+documentation/              # Methodology description
 ```
 
 ## Troubleshooting
@@ -281,20 +203,6 @@ cd /path/to/FORGE
 venv/bin/python3 forge.py
 ```
 
-### Check Current Mode
-The output shows your configuration:
-```bash
-venv/bin/python3 forge.py -j
-# 🔧 Input Mode: JSON
-# 🔧 Output Mode: CSV
-# 📋 Scenario ID: 20251110_132500
-```
-
-### Clean Up Temporary Files
-```bash
-./cleanup_forge.sh
-```
-
 ## Development
 
 ### Adding a New Cost Module
@@ -302,7 +210,7 @@ venv/bin/python3 forge.py -j
 1. Create module file: `scripts/calc/new_module.py`
 2. Use smart loaders:
    ```python
-   from smart_loaders import load_project_technical_details
+   from scripts.utils.smart_loaders import load_project_technical_details
    from scripts.utils.smart_output import SmartOutputManager
    ```
 3. Add to `forge.py` script list
@@ -321,17 +229,17 @@ cd testing
 ## Documentation
 
 - **README.md** (this file) - Quick start guide
+- **BCR_CHEAT_SHEET.md** - BCR perspectives and exclusion variants
 - **testing/** - Automated test suite
   - **testing/README.md** - Testing quick start
   - **testing/TESTING.md** - Complete testing guide
   - **testing/TEST_PLAN.md** - Full test plan
-- **MODE_FLOW_DIAGRAM.md** - Architecture and flow diagrams
 - **server/COMMAND_FILES_GUIDE.md** - Server command documentation
 
 ## Version History
 
-- **v2.0** - Added JSON modes, command-line flags, web UI, API integration, refactored server processor
-- **v1.0** - Original YAML → CSV implementation
+- **v2.0** - In-process JSON calculator, web UI, API integration
+- **v1.0** - Original YAML-driven implementation
 
 ## License
 

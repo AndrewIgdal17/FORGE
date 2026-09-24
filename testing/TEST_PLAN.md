@@ -1,107 +1,102 @@
 # FORGE Testing Plan
 
 ## Overview
-This plan covers testing all major functions of the Framework for Open Reproducible Grid Economics (FORGE), including CLI modes, calculation modules, API endpoints, and integration scenarios.
+This plan covers testing all major functions of the Framework for Open Reproducible Grid Economics (FORGE), including CLI flags, calculation modules, API endpoints, and integration scenarios. The calculator is YAML-in, JSON-out.
 
 ---
 
 ## 1. CLI Mode Testing
 
-### 1.1 Input/Output Mode Combinations
-Test all four mode combinations:
+### 1.1 Default run
 
-**Test 1.1.1: Default Mode (YAML → CSV)**
+**Test 1.1.1: Default Mode (YAML → JSON)**
 - Command: `venv/bin/python3 forge.py`
-- Expected Input: 22 YAML files from `yamls/`
-- Expected Output: 12 CSV files in `outputs/` + `batch_summary.csv`
-- Validation: Check all CSV files exist, contain data, no errors
+- Expected Input: YAML files from `yamls/`
+- Expected Output: `outputs/forge_results_<scenario_id>.json`
+- Validation: JSON file exists, is valid, contains `scenario_id`, `costs`, `technical_parameters`
 
-**Test 1.1.2: JSON Input → CSV Output**
-- Command: `venv/bin/python3 forge.py -j`
-- Expected Input: Auto-generated `combined_data.json` from YAML
-- Expected Output: 12 CSV files in `outputs/`
-- Validation: Compare with YAML→CSV results (should be identical)
+**Test 1.1.2: Simple Mode**
+- Command: `venv/bin/python3 forge.py --simple`
+- Validation: Console output suppressed except BCR analysis; JSON output still written
 
-**Test 1.1.3: JSON Input → JSON Output**
-- Command: `venv/bin/python3 forge.py -j -o --id test_scenario`
-- Expected Input: `combined_data.json`
-- Expected Output: Single `forge_results_test_scenario.json`
-- Validation: JSON structure valid, contains all 13 cost modules
-
-**Test 1.1.4: YAML Input → JSON Output (Not supported)**
-- Command: `venv/bin/python3 forge.py -o`
-- Expected: Should default to YAML input with JSON output
-- Validation: Verify mode detection works correctly
+**Test 1.1.3: Custom Scenario ID**
+- Command: `FORGE_SCENARIO_ID=custom_test_123 venv/bin/python3 forge.py --simple`
+- Validation: Output file named `forge_results_custom_test_123.json`
 
 ### 1.2 Command-Line Flags
 Test calculation control flags:
 
-**Test 1.2.1: Skip Risk Calculations**
-- Command: `venv/bin/python3 forge.py --norisk --simple`
-- Validation: Wildfire and outage scripts skipped (11 scripts run instead of 13)
+**Test 1.2.1: Skip Wildfire**
+- Command: `venv/bin/python3 forge.py --no_wildfire --simple`
+- Validation: `wildfire_costs` skipped
 
-**Test 1.2.2: Skip Emissions**
+**Test 1.2.2: Skip Outages**
+- Command: `venv/bin/python3 forge.py --no_outages --simple`
+- Validation: `outage_costs` skipped
+
+**Test 1.2.3: Skip Emissions**
 - Command: `venv/bin/python3 forge.py --no_emissions --simple`
-- Validation: Emissions script skipped (12 scripts run)
+- Validation: `emissions`, `facilitated_emissions`, and `displacement_delay_cost` skipped
 
-**Test 1.2.3: Skip Line Losses**
+**Test 1.2.4: Skip Line Losses**
 - Command: `venv/bin/python3 forge.py --no_linelosses --simple`
-- Validation: Line loss script skipped (12 scripts run)
+- Validation: `line_loss_costs` skipped
 
-**Test 1.2.4: Capital Only Mode**
+**Test 1.2.5: Capital Only Mode**
 - Command: `venv/bin/python3 forge.py --capital_only --simple`
-- Validation: Only 4 scripts run (weighted_miles, build, ROW, environmental)
+- Validation: Only `weighted_miles`, `build_costs`, `row_costs`, `environmental_mitigation` run
 
-**Test 1.2.5: Simple Mode**
-- Command: `venv/bin/python3 forge.py --simple`
-- Validation: Output suppressed except BCR analysis
-
-**Test 1.2.6: Custom Scenario ID**
-- Command: `venv/bin/python3 forge.py -j -o --id custom_test_123`
-- Validation: Output file named `forge_results_custom_test_123.json`
+**Test 1.2.6: Other `--no_*` flags**
+- Commands:
+  - `venv/bin/python3 forge.py --no_oandm --simple`
+  - `venv/bin/python3 forge.py --no_insurance --simple`
+  - `venv/bin/python3 forge.py --no_delay_costs --simple`
+  - `venv/bin/python3 forge.py --no_congestion --simple`
+- Validation: Matching module skipped (O&M, insurance, delay, congestion)
 
 ---
 
 ## 2. Calculation Module Testing
 
 ### 2.1 Individual Module Testing
-Test each of the 13 calculation scripts independently:
+Test each of the 17 calculator modules in `scripts/calc/`, plus preprocessing in `scripts/utils/`:
 
 **Test 2.1.1: Weighted Miles (Preprocessing)**
 ```bash
-export FORGE_INPUT_MODE=yaml
-export FORGE_OUTPUT_MODE=csv
-export FORGE_SCENARIO_ID=test
-venv/bin/python3 scripts/weighted_miles.py
+venv/bin/python3 -m scripts.utils.weighted_miles
 ```
 - Validation: Terrain multiplier calculated correctly
 
 **Test 2.1.2: Build Costs**
 ```bash
-venv/bin/python3 scripts/build_costs.py
+venv/bin/python3 -m scripts.calc.build_costs
 ```
 - Validation: Nominal, AFUDC, and PV costs calculated
-- Check: CSV output contains all required columns
 
-**Test 2.1.3-2.1.13: Remaining Modules**
-Test individually:
-- insurance_costs.py
-- row_costs.py
-- environmental_mitigation.py
-- delay_costs.py
-- wildfire_costs.py
-- outage_costs.py
-- congestion_reduction.py
-- energy_losses.py
-- emissions.py
-- line_loss_costs.py
-- oandm.py
+**Test 2.1.3–2.1.17: Remaining modules**
+Run individually via `python -m`:
+- `scripts.calc.row_costs`
+- `scripts.calc.environmental_mitigation`
+- `scripts.calc.revenue`
+- `scripts.calc.insurance_costs`
+- `scripts.calc.delay_costs`
+- `scripts.calc.wildfire_costs`
+- `scripts.calc.outage_costs`
+- `scripts.calc.congestion_reduction`
+- `scripts.calc.energy_losses`
+- `scripts.calc.oandm`
+- `scripts.calc.emissions`
+- `scripts.calc.facilitated_emissions`
+- `scripts.calc.displacement_delay_cost`
+- `scripts.calc.line_loss_costs`
+- `scripts.calc.bcr_calculator`
+- `scripts.calc.bcr_trajectory`
 
-**Test 2.1.14: BCR Calculator**
+**Test 2.1.18: BCR Calculator**
 ```bash
-venv/bin/python3 scripts/bcr_calculator.py
+venv/bin/python3 -m scripts.calc.bcr_calculator
 ```
-- Validation: All BCR metrics calculated (system BCR, capital BCR, net benefits)
+- Validation: Perspective BCRs present (`bcr_societal`, `bcr_utility`, `bcr_ratepayer`) and exclusion variants
 
 ### 2.2 Module Integration Testing
 
@@ -112,7 +107,7 @@ venv/bin/python3 scripts/bcr_calculator.py
 
 **Test 2.2.2: Data Flow**
 - Test: Data written by one module is correctly read by dependent modules
-- Test: batch_summary.csv accumulates results from all modules
+- Test: Aggregated JSON accumulates results from all modules
 
 ---
 
@@ -120,44 +115,30 @@ venv/bin/python3 scripts/bcr_calculator.py
 
 ### 3.1 Smart Loaders
 
-**Test 3.1.1: YAML Loader Selection**
+Calculator input is YAML-only. `scripts.utils.smart_loaders` re-exports `scripts.io.yaml_loaders`.
+
+**Test 3.1.1: YAML Loader**
 ```bash
-export FORGE_INPUT_MODE=yaml
-python3 -c "from scripts.smart_loaders import load_project_technical_details; print(load_project_technical_details())"
+python3 -c "from scripts.utils.smart_loaders import load_project_technical_details; print(load_project_technical_details())"
 ```
 - Validation: Loads from YAML files correctly
 
-**Test 3.1.2: JSON Loader Selection**
-```bash
-export FORGE_INPUT_MODE=json
-export FORGE_JSON_DATA_FILE=server/json/final_combined.json
-python3 -c "from scripts.smart_loaders import load_project_technical_details; print(load_project_technical_details())"
-```
-- Validation: Loads from JSON file correctly
-
-**Test 3.1.3: Mode Auto-Detection**
-- Test both modes return identical data structures
-- Validate all loader functions work (load_project_technical_details, load_financing_details, etc.)
+**Test 3.1.2: Loader Coverage**
+- Validate loader functions work (`load_project_technical_details`, `load_financing_details`, `get_physical_data_raw`, etc.)
 
 ### 3.2 Smart Output
 
-**Test 3.2.1: CSV Output Manager**
-```bash
-export FORGE_OUTPUT_MODE=csv
-python3 -c "from scripts.smart_output import FORGEOutputManager; mgr = FORGEOutputManager(); print(type(mgr._manager))"
-```
-- Validation: Returns CSVOutputManager instance
+Output is JSON-only (`SmartOutputManager` → `JSONOutputManager`).
 
-**Test 3.2.2: JSON Output Manager**
+**Test 3.2.1: JSON Output Manager**
 ```bash
-export FORGE_OUTPUT_MODE=json
-python3 -c "from scripts.smart_output import FORGEOutputManager; mgr = FORGEOutputManager(); print(type(mgr._manager))"
+python3 -c "from scripts.utils.smart_output import SmartOutputManager; mgr = SmartOutputManager(); print(type(mgr._manager))"
 ```
-- Validation: Returns JSONOutputManager instance
+- Validation: Delegates to `JSONOutputManager` (or the shared in-process manager)
 
-**Test 3.2.3: Output Method Consistency**
-- Test: All add_* methods exist in both managers
-- Test: Methods have consistent signatures
+**Test 3.2.2: Output Methods**
+- Test: `add_*` methods exist on the manager
+- Test: In-process runs write a single `forge_results_<id>.json`
 
 ---
 
@@ -167,17 +148,22 @@ python3 -c "from scripts.smart_output import FORGEOutputManager; mgr = FORGEOutp
 
 **Test 4.1.1: Start FastAPI Server**
 ```bash
-cd server
 ./run_calc_server.command
 ```
-- Validation: Server starts on port 8000
+- Validation: Server starts on port 8000 (from repo root)
 - Validation: No startup errors
 
 **Test 4.1.2: Health Check**
 ```bash
 curl http://localhost:8000/
 ```
-- Expected: Returns HTML (index.html)
+- Expected: Returns HTML (`landing.html`)
+
+**Test 4.1.3: Workspace UI**
+```bash
+curl -I http://localhost:8000/app/workspace
+```
+- Expected: Serves `workspace.html` (main app entry)
 
 ### 4.2 API Endpoints
 
@@ -185,10 +171,10 @@ curl http://localhost:8000/
 ```bash
 curl http://localhost:8000/api/final_combined | jq .
 ```
-- Validation: Returns complete JSON configuration (21 sections)
+- Validation: Returns complete JSON configuration
 - Validation: JSON is valid and parseable
 
-**Test 4.2.2: POST /api/forge/calculate (JSON→JSON)**
+**Test 4.2.2: POST /api/forge/calculate**
 ```bash
 curl -X POST http://localhost:8000/api/forge/calculate \
   -H "Content-Type: application/json" \
@@ -200,42 +186,34 @@ curl -X POST http://localhost:8000/api/forge/calculate \
   }' | jq .
 ```
 - Validation: Returns success=true
-- Validation: results object contains all cost modules
+- Validation: results object contains cost modules
 - Validation: BCR metrics present
 
-**Test 4.2.3: POST /api/forge/calculate (JSON→CSV)**
+**Test 4.2.3: GET /api/outputs/{filename}**
 ```bash
-curl -X POST http://localhost:8000/api/forge/calculate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input_mode": "json",
-    "output_mode": "csv",
-    "scenario_id": "api_test_csv",
-    "combined_data": <final_combined_content>
-  }' | jq .
-```
-- Validation: Returns success=true
-- Validation: csv_files array contains 12+ files
-- Validation: output_dir path provided
-
-**Test 4.2.4: GET /api/outputs/{filename}**
-```bash
-# Preview
+# Preview (CSV files in outputs/ only)
 curl http://localhost:8000/api/outputs/batch_summary.csv
 
 # Download
-curl http://localhost:8000/api/outputs/batch_summary.csv?download=true -o test_batch_summary.csv
+curl "http://localhost:8000/api/outputs/batch_summary.csv?download=true" -o test_batch_summary.csv
 ```
-- Validation: CSV content returned
+- Validation: File returned if it exists under `outputs/`
 - Validation: Download flag sets proper headers
-- Validation: Security checks prevent directory traversal
+- Validation: Security checks prevent directory traversal; non-CSV names rejected
+
+**Test 4.2.4: Other metadata endpoints**
+```bash
+curl http://localhost:8000/api/taxonomy | jq .
+curl http://localhost:8000/api/input_metadata | jq .
+curl http://localhost:8000/api/fuel_mix_presets | jq .
+```
+- Validation: Each returns valid JSON
 
 **Test 4.2.5: Error Handling**
-- Test: Invalid scenario_id
-- Test: Missing combined_data
+- Test: Missing combined_data (server may fill from `final_combined`)
 - Test: Malformed JSON
 - Test: Non-existent output file
-- Expected: Appropriate HTTP error codes (400, 404, 500)
+- Expected: Appropriate HTTP error codes (400, 404, 422, 500)
 
 ---
 
@@ -247,33 +225,25 @@ curl http://localhost:8000/api/outputs/batch_summary.csv?download=true -o test_b
 ```bash
 venv/bin/python3 yaml_to_json.py yamls/ test_combined.json
 ```
-- Validation: All 21 YAML files converted (1 template skipped)
-- Validation: Output JSON has 21 top-level keys
+- Validation: YAML files converted (template skipped)
+- Validation: Output JSON has expected top-level keys
 - Validation: No data loss during conversion
 
 **Test 5.1.2: Server Converter**
 ```bash
 cd server
-./convert_yamls.command
+./regenerate_json_from_yaml.command
 ```
-- Validation: Prompts for directory selection
-- Validation: Creates final_combined.json
+- Validation: Writes per-file JSON under `server/json/`
+- Validation: Creates `final_combined.json`
 - Validation: File is valid JSON
-
-**Test 5.1.3: Auto-Conversion in CLI**
-```bash
-venv/bin/python3 forge.py -j
-```
-- Validation: Auto-converts YAML to JSON if no JSON file provided
-- Validation: Creates combined_data.json in project root
 
 ### 5.2 Data Integrity
 
 **Test 5.2.1: Round-Trip Comparison**
-- Run: YAML→CSV with scenario A
-- Convert: YAML→JSON
-- Run: JSON→CSV with scenario B
-- Compare: Scenario A and B results should be identical
+- Run: YAML→JSON with scenario A (`forge.py --simple`)
+- Convert: YAML→JSON via `yaml_to_json.py`
+- Validation: Calculation JSON is valid and contains required keys
 
 ---
 
@@ -302,20 +272,19 @@ venv/bin/python3 forge.py -j
 
 ### 6.3 BCR Metrics
 
-**Test 6.3.1: System BCR Calculation**
-- Formula: Total Benefits (PV) / Total Costs (PV)
+**Test 6.3.1: Societal BCR**
+- Key: `bcr_societal`
 - Test: BCR > 1.0 (economically viable)
 - Test: BCR < 1.0 (not viable)
 
-**Test 6.3.2: Capital BCR**
-- Formula: Total Benefits / Capital Costs Only
-- Validation: Excludes operational and risk costs
+**Test 6.3.2: Stakeholder BCRs**
+- Keys: `bcr_utility`, `bcr_ratepayer`
+- Validation: Present in BCR output
 
 **Test 6.3.3: Exclusion BCRs**
-- Test: System BCR (excl. risk)
-- Test: System BCR (excl. emissions)
-- Test: System BCR (excl. both)
-- Validation: Exclusions properly subtract from denominator
+- Test: `bcr_excl_avoided_emissions`, `bcr_excl_emissions_costs`, `bcr_excl_all_emissions`
+- Test: `bcr_excl_outage`, `bcr_excl_wildfire`, `bcr_excl_outage_wildfire`
+- Validation: Exclusions match taxonomy definitions
 
 ---
 
@@ -333,7 +302,7 @@ venv/bin/python3 forge.py -j
 
 **Test 7.1.3: Invalid JSON**
 - Provide: Malformed JSON to API
-- Expected: 400 error with validation message
+- Expected: 400/422 error with validation message
 
 **Test 7.1.4: Missing Required Fields**
 - Remove: Required field from configuration
@@ -360,9 +329,9 @@ venv/bin/python3 forge.py -j
 
 **Test 7.3.1: Multiple Scenario IDs**
 ```bash
-venv/bin/python3 forge.py -j -o --id scenario1 &
-venv/bin/python3 forge.py -j -o --id scenario2 &
-venv/bin/python3 forge.py -j -o --id scenario3 &
+FORGE_SCENARIO_ID=scenario1 venv/bin/python3 forge.py --simple &
+FORGE_SCENARIO_ID=scenario2 venv/bin/python3 forge.py --simple &
+FORGE_SCENARIO_ID=scenario3 venv/bin/python3 forge.py --simple &
 wait
 ```
 - Validation: All three complete successfully
@@ -378,22 +347,22 @@ wait
 **Test 8.1.1: Full Analysis Workflow**
 1. Edit configuration: `yamls/01_project_technical_details.yaml`
 2. Run calculation: `venv/bin/python3 forge.py`
-3. View results: Check `outputs/batch_summary.csv`
-4. Validation: All 13 modules complete, BCR calculated
+3. View results: Check `outputs/forge_results_*.json`
+4. Validation: Modules complete, BCR calculated
 
 **Test 8.1.2: Multi-Scenario Comparison**
-1. Run baseline: `venv/bin/python3 forge.py -j -o --id baseline`
+1. Run baseline: `FORGE_SCENARIO_ID=baseline venv/bin/python3 forge.py --simple`
 2. Modify config (capacity +20%)
-3. Run high_capacity: `venv/bin/python3 forge.py -j -o --id high_capacity`
+3. Run high_capacity: `FORGE_SCENARIO_ID=high_capacity venv/bin/python3 forge.py --simple`
 4. Compare: `diff outputs/forge_results_baseline.json outputs/forge_results_high_capacity.json`
 5. Validation: Costs increase proportionally
 
 **Test 8.1.3: Web UI Workflow**
-1. Start server: `cd server && ./run_calc_server.command`
-2. Open browser: `http://localhost:8000`
+1. Start server: `./run_calc_server.command` (repo root)
+2. Open browser: `http://localhost:8000/app/workspace`
 3. Edit configuration in UI
 4. Run calculation via UI
-5. Download CSV results
+5. Inspect JSON results
 6. Validation: UI matches CLI results
 
 ### 8.2 API Integration Workflow
@@ -413,13 +382,11 @@ wait
 
 **Test 9.1.1: CLI Performance**
 - Measure: Time for complete calculation
-- Baseline: YAML→CSV mode
-- Compare: JSON modes (should be similar)
 - Target: < 30 seconds for 100-mile project
 
 **Test 9.1.2: API Performance**
-- Measure: Response time for API calculation
-- Target: < 35 seconds (includes subprocess overhead)
+- Measure: Response time for in-process API calculation
+- Target: < 35 seconds
 
 ### 9.2 Memory Usage
 
@@ -436,7 +403,7 @@ wait
 ```bash
 venv/bin/python3 forge.py --help
 ```
-- Validation: All flags documented
+- Validation: All flags documented (`--simple`, `--capital_only`, `--no_*`)
 - Validation: Examples provided
 
 **Test 10.2: README Examples**
@@ -445,10 +412,30 @@ venv/bin/python3 forge.py --help
 
 ---
 
+## 11. Pytest Suites
+
+Automated unit and validation tests live outside `run_tests.py`.
+
+```bash
+# From repo root: 15 tests
+python -m pytest test/ -v
+# test/test_capacity_value.py
+# test/test_build_costs.py
+# test/test_bcr_incremental_comparison.py
+
+python -m pytest scripts/tests/ -v
+# scripts/tests/test_facilitated_emissions.py
+# scripts/tests/validate_tier2_batch1.py
+
+python -m pytest testing/test_api_validation.py -v
+```
+
+---
+
 ## Test Execution Summary
 
 ### Priority Levels
-- **P0 (Critical)**: CLI mode combinations, API endpoints, calculation modules
+- **P0 (Critical)**: CLI flags, API endpoints, calculation modules
 - **P1 (High)**: Financial calculations, BCR metrics, error handling
 - **P2 (Medium)**: Edge cases, performance, documentation
 - **P3 (Low)**: Concurrent execution, extreme values
@@ -461,6 +448,7 @@ venv/bin/python3 forge.py --help
 5. Integration Workflows (8.1-8.2)
 6. Edge Cases (7.1-7.2)
 7. Performance (9.1-9.2)
+8. Pytest suites (11)
 
 ### Success Criteria
 - ✅ All P0 tests pass
@@ -480,9 +468,9 @@ Create a test results file to track progress:
 
 | Test ID | Description | Status | Notes |
 |---------|-------------|--------|-------|
-| 1.1.1   | Default YAML→CSV | ⬜ | |
-| 1.1.2   | JSON→CSV | ⬜ | |
-| 1.1.3   | JSON→JSON | ⬜ | |
+| 1.1.1   | Default YAML→JSON | ⬜ | |
+| 1.1.2   | --simple | ⬜ | |
+| 1.1.3   | Custom scenario ID | ⬜ | |
 ...
 ```
 

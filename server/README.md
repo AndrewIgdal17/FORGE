@@ -1,65 +1,69 @@
-# FastAPI JSON Template
+# FORGE Web Server
 
-Minimal example of a front-end page sending JSON to a FastAPI backend, delegating to a
-Python helper, and returning the generated JSON result back to the browser.
+FastAPI server for the Framework for Open Reproducible Grid Economics (FORGE) web app. Serves the browser UI, taxonomy-driven input metadata, and an in-process calculation API. Output is JSON.
 
-## Project layout
+## Layout
 
-- `app/main.py` — FastAPI application with routes for `GET /` (serve the demo page),
-  `GET /api/final_combined` (serve the aggregated JSON), and `POST /api/process`
-  (transform inbound payloads).
-- `app/processor.py` — Re-usable Python function that transforms the inbound payload.
-- `static/index.html` — Standalone HTML page with a form that uses `fetch()` to call the
-  backend and renders the response.
-
-## Getting started
-
-```bash
-python -m venv .venv
-source .venv/bin/activate        # On Windows use: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+```
+server/
+├── app/
+│   ├── main.py                 # FastAPI app, page routes, API routes, JWT auth
+│   ├── forge_processor.py      # In-process calculator pipeline
+│   ├── models.py               # Pydantic request/response models
+│   └── fuel_mix_presets.py     # Fuel-mix preset catalog
+├── static/                     # Frontend (HTML, JS, CSS, icons, appendix.pdf)
+│   ├── workspace.html          # Main app entry (not index.html)
+│   ├── landing.html
+│   ├── login.html
+│   ├── signup.html
+│   ├── home.html
+│   └── scenarios-manager.html
+├── json/                       # Pre-generated JSON from yamls/ (plus final_combined.json)
+├── logs/                       # Uvicorn access logs
+└── regenerate_json_from_yaml.command
 ```
 
-Open <http://127.0.0.1:8000/> in a browser and use the **Mode** selector:
+Start the server from the **repo root**, not this directory:
 
-- **Simple** — send the text + number inputs and receive summary stats.
-- **Bulk** — the page fetches `final_combined.json` via `GET /api/final_combined`, sends
-  it back to `POST /api/process`, and the server returns a flattened list of keys with
-  dotted paths (one line per value).
+```bash
+./run_calc_server.command
+```
 
-Because CORS is configured to allow any origin, you can also host the HTML file elsewhere
-and point the request at the running FastAPI instance. The **API Base URL** input
-autofills with the page's own host but swaps the port to `8000`; update it if your API is
-listening elsewhere (e.g. the WAN address printed by `run_fastapi.command`). The form
-then appends `/api/process` automatically.
+That script runs `uv sync`, then `uvicorn app.main:app` from `server/` (default `http://127.0.0.1:8000`). Override with `HOST` and `PORT`.
 
-### macOS shortcut
+Manual equivalent (from this directory, after dependencies are installed):
 
-Double-click `run_fastapi.command` (or execute it from Terminal) to launch the server,
-print the reachable address on your network, and stream FastAPI request logs. Logs are
-also archived in `logs/` for later inspection.
+```bash
+../.venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-- `run_fastapi.command` — launches the API + HTML app (uses uvicorn), ensures the
-  virtual environment + dependencies are ready, and prints detected public/WAN and LAN
-  URLs.
-- `serve_static.command` — hosts only the `static/` directory via Python's simple HTTP
-  server, again reporting both WAN and LAN URLs for sharing `index.html`.
+Open the workspace at `http://127.0.0.1:8000/app/workspace`.
 
-`run_fastapi.command` creates `.venv/` on first run and installs dependencies listed in
-`requirements.txt` when needed. WAN detection relies on outbound HTTP; if blocked, the
-scripts fall back to LAN/local addresses, and reaching the public URL can still require
-port forwarding from your router.
+## Page routes
 
-### Utilities
+| Route | File |
+|-------|------|
+| `GET /` | `static/landing.html` |
+| `GET /signup` | `static/signup.html` |
+| `GET /login` | `static/login.html` |
+| `GET /app` | `static/home.html` |
+| `GET /app/workspace` | `static/workspace.html` (main app) |
+| `GET /app/scenarios-manager` | `static/scenarios-manager.html` |
+| `/static/*` | Static files |
 
-- `yaml_to_json.py` — command-line helper for converting YAML files to JSON.
-  ```bash
-  python yaml_to_json.py input.yaml output.json
-  # or omit output to print to stdout
-  python yaml_to_json.py input.yaml
-  ```
-  When an output file is provided, the script also refreshes `final_combined.json`
-  in the same directory, bundling every converted JSON except
-  `project_category_template.json` into a minimized aggregate.
-  Run this against the YAML sources before using the **Bulk** mode in the demo UI.
+## API routes
+
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/final_combined` | GET | Combined default input JSON (regenerated from `yamls/` when YAML files change) |
+| `/api/taxonomy` | GET | Cost/benefit taxonomy for the UI |
+| `/api/input_metadata` | GET | Per-field metadata for taxonomy-driven forms |
+| `/api/fuel_mix_presets` | GET | Fuel-mix preset catalog |
+| `/api/forge/calculate` | POST | Run a FORGE calculation in-process; returns JSON |
+| `/api/outputs/{filename}` | GET | Serve a `.csv` file from `outputs/` if present |
+
+`POST /api/forge/calculate` accepts `FORGEInputPayload` (`input_mode` and `output_mode` are JSON-only). If `combined_data` is omitted, the server uses the cached `final_combined` payload. Auth: Supabase JWT when `SUPABASE_URL` is set; local runs without that env var skip auth.
+
+## JSON inputs
+
+`server/json/` holds per-YAML JSON files plus `final_combined.json` and `fuel_mix_presets.json`. `GET /api/final_combined` refreshes from `yamls/` when YAML mtimes change. To regenerate all JSON files by hand, run `./regenerate_json_from_yaml.command` (see `COMMAND_FILES_GUIDE.md`).

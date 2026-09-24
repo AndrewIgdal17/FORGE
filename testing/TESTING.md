@@ -50,14 +50,13 @@ cd testing
 
 ## Current Test Coverage
 
-### Implemented Tests
+### Implemented Tests (`run_tests.py`)
 
 #### P0 Tests (Critical)
-- ✅ **1.1.1** - YAML→CSV Mode
-- ✅ **1.1.2** - JSON→CSV Mode
-- ✅ **1.1.3** - JSON→JSON Mode
-- ✅ **1.2.1** - --norisk Flag
-- ✅ **1.2.6** - Custom Scenario ID
+- ✅ **1.1.1** - YAML→JSON Mode
+- ⏭️ **1.1.2** - JSON→CSV Mode (skipped; calculator is YAML-in, JSON-out)
+- ✅ **1.1.3** - YAML→JSON Mode (custom ID)
+- ✅ **1.2.6** - Custom Scenario ID (`FORGE_SCENARIO_ID`)
 - ✅ **5.1.1** - YAML→JSON Converter
 - ✅ **5.2.1** - Round-trip Comparison
 
@@ -67,6 +66,25 @@ cd testing
 
 #### P2 Tests (Medium Priority)
 - ✅ **9.1.1** - CLI Performance
+
+### Pytest suite
+
+From the repo root:
+
+```bash
+python -m pytest test/ -v
+```
+
+15 tests across `test_capacity_value.py`, `test_build_costs.py`, and `test_bcr_incremental_comparison.py`.
+
+Additional suites:
+
+```bash
+python -m pytest scripts/tests/ -v
+python -m pytest testing/test_api_validation.py -v
+```
+
+`scripts/tests/` holds `test_facilitated_emissions.py` and `validate_tier2_batch1.py`. `testing/test_api_validation.py` checks that invalid `/api/forge/calculate` payloads return 422.
 
 ### Test Output
 
@@ -91,11 +109,11 @@ Verbose: False
 P0 TESTS - CRITICAL
 ======================================================================
 
-  [1.1.1] YAML→CSV mode: ✅ PASS (2.50s)
-  [1.1.2] JSON→CSV mode: ✅ PASS (2.31s)
-  [1.1.3] JSON→JSON mode: ✅ PASS (1.56s)
+  [1.1.1] YAML→JSON mode: ✅ PASS (2.50s)
+  [1.1.2] JSON→CSV mode: ⏭️ SKIP (0.00s)
+    → Calculator is YAML-in, JSON-out; API converts JSON at boundary
+  [1.1.3] YAML→JSON mode (custom ID): ✅ PASS (1.56s)
     → Output size: 8.4 KB
-  [1.2.1] --norisk flag: ✅ PASS (2.12s)
   [1.2.6] Custom scenario ID: ✅ PASS (1.78s)
   [5.1.1] YAML→JSON converter: ✅ PASS (0.45s)
   [5.2.1] Round-trip test: ✅ PASS (4.89s)
@@ -104,11 +122,11 @@ P0 TESTS - CRITICAL
 TEST SUMMARY
 ======================================================================
 
-Total Tests:    7
-Passed:         7
+Total Tests:    6
+Passed:         5
 Failed:         0
 Warnings:       0
-Skipped:        0
+Skipped:        1
 
 Total Time:     15.61s
 
@@ -134,7 +152,7 @@ When using `--save-report`, test results are saved to `test_results.json`:
   "results": [
     {
       "test_id": "1.1.1",
-      "name": "YAML→CSV mode",
+      "name": "YAML→JSON mode",
       "status": "pass",
       "duration": 2.50,
       "message": ""
@@ -165,7 +183,7 @@ def test_X_Y_Z_my_new_test(self):
     # Validate results
     if not success:
         self.add_result(test_id, "Test Name", "fail", duration,
-                       f"Error: {stderr}")
+                       f"Error: {stderr[:200]}")
         return False
 
     # Add more validation...

@@ -6,7 +6,7 @@
 
 ---
 
-This document covers the methodology for the Framework for Open Reproducible Grid Economics (FORGE): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion reduction and delivered energy), and revenue.
+This document covers the methodology for the Framework for Open Reproducible Grid Economics (FORGE): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion reduction, delivered energy, capacity value, avoided emissions), revenue, and benefit-cost ratios.
 
 ---
 
@@ -27,17 +27,19 @@ This document covers the methodology for the Framework for Open Reproducible Gri
   - [Thermal line loss costs (3.a)](#thermal-line-loss-costs-3a)
   - [Emissions costs (3.b)](#emissions-costs-3b)
   - [Residual exceedance cost (3.c)](#residual-exceedance-cost-3c)
+  - [Facilitated emissions and avoided-emissions benefit](#facilitated-emissions-and-avoided-emissions-benefit)
 - [Risk costs](#risk-costs)
   - [Expected cost of wildfires (4.a)](#expected-cost-of-wildfires-4a)
   - [Expected cost of outages (4.b)](#expected-cost-of-outages-4b)
 - [Delay costs](#delay-costs)
   - [Base delay costs (5.a)](#base-delay-costs-5a)
   - [Congestion delay costs (5.b)](#congestion-delay-costs-5b)
-  - [Curtailment delay costs (5.c, removed)](#curtailment-delay-costs-5c-removed)
+  - [Displacement delay cost (5.c)](#displacement-delay-cost-5c)
 - [Benefits](#benefits)
   - [Congestion Reduction Benefits](#congestion-reduction-benefits)
   - [Benefit of Delivered Energy](#benefit-of-delivered-energy)
 - [Revenue (Benefit to Utility / Cost to Ratepayers)](#revenue-benefit-to-utility--cost-to-ratepayers)
+- [Benefit-cost ratios](#benefit-cost-ratios)
 
 ---
 
@@ -282,7 +284,7 @@ C_{ROW,capital,nominal} = \xi_{acquisition}\, C_{acquisition} + \xi_{holding}\, 
 $$
 
 **Regulatory perspective (AFUDC)**
-A timing pattern is applied and AFUDC capitalization logic is applied as for other capital costs (timing for row acquisition and row holding).
+Only acquisition is AFUDC-eligible and enters rate base. A timing pattern is applied to $C_{acquisition}$ and AFUDC is compounded to COD, as for other capital costs. Holding is a FERC Account 567 operating expense during the delay period: it is not capitalized, not AFUDC-eligible, and does not enter rate base.
 
 **Societal perspective**
 Discount at real WACC (real = present value):
@@ -476,9 +478,10 @@ O&M is operational only: it is not AFUDC-eligible (no regulatory capitalization)
 | $c_{converter}$          | Converter O&M                    | $/mile/year. By category. |
 | $\xi_{DC}$               | Binary for DC projects           | 1 if DC, 0 if AC. Gates converter O&M (Build costs). |
 | $n_{structure}(terrain)$ | Structures per mile              | By terrain. Overhead only. |
-| $N_{structure}$          | Total structures                 | Overhead: $N_{structure} = \sum_{terrain} M_{terrain} \times n_{structure}(terrain)$. Non-overhead: not used (see $c_{structure,mi}$). |
+| $N_{structure}$          | Total structures                 | Overhead: $N_{structure} = \sum_{terrain} M_{terrain} \times n_{structure}(terrain)$. Non-overhead: not used. |
 | $c_{structure}$          | Cost per structure per year      | $/structure/year. Overhead only. |
-| $c_{structure,mi}$       | Structure O&M per mile per year  | $/mile/year. Non-overhead only; one value per construction type (often 0). |
+| $K_{line}$               | Line CAPEX                       | $. Post-contingency conductor + structure CAPEX (excludes converter stations). From build costs. |
+| $r_{om,line}(CT)$        | Non-overhead line O&M rate       | Fraction of $K_{line}$ per year. Underground direct-buried 0.15%; underground tunnel 0.4%; subsea 2.5%. |
 | $c_{veg}(terrain)$       | Vegetation management            | $/mile/year by terrain. Overhead only. |
 | $C_{O\&M,annual}$        | Total annual O&M                 | $/year. Sum of conductor + converter + structure + vegetation.                                                                                           |
 | $C_{O\&M,nominal}$       | O&M cost (nominal)               | Undiscounted lifetime O&M.                                                                                                                               |
@@ -496,13 +499,15 @@ $$
 
 (1-based; first year of operation.)
 
-2. Conductor (annual)
+2. Conductor (annual; overhead)
 
 $$
 C_{conductor,annual} = c_{conductor} \times M_{total}
 
 
 $$
+
+For non-overhead, conductor O&M is not a separate $/mile term; it is included in the line-CAPEX percentage (equation 4).
 
 3. Converter (annual; DC only)
 
@@ -514,18 +519,18 @@ $$
 
 ($\xi_{DC}$ encodes DC vs AC in the formalism; converter O&M is included only when $\xi_{DC} = 1$ (DC).)
 
-4. Structure (annual, structure-only — piecewise)
+4. Structure / line (annual, piecewise)
 
 $$
 C_{structure,annual} = \begin{cases}
 c_{structure} \times N_{structure} & \text{if overhead} \\
-c_{structure,mi} \times M_{total} & \text{if non-overhead}
+r_{om,line}(CT) \times K_{line} & \text{if non-overhead}
 \end{cases}
 
 
 $$
 
-Note: Currently $c_{structure,mi} = 0$ for non-overhead (underground direct-buried, underground tunnel, subsea).
+Non-overhead line O&M is a percentage of line CAPEX $K_{line} = C_{adj,cont,conductor} + C_{adj,cont,structure}$ (post-contingency, excluding converter stations): 0.15% underground direct-buried, 0.4% underground tunnel, 2.5% subsea. For non-overhead this term is the total line O&M (conductor + structure), not a $/mile structure rate.
 
 Overhead: total structures
 
@@ -547,8 +552,18 @@ Overhead only in practice (non-overhead construction types have $c_{veg}(terrain
 
 6. Total annual O&M
 
+Overhead:
+
 $$
 C_{O\&M,annual} = C_{conductor,annual} + C_{converter,annual} + C_{structure,annual} + C_{veg,annual}
+
+
+$$
+
+Non-overhead (line O&M already includes conductor + structure; vegetation is zero):
+
+$$
+C_{O\&M,annual} = C_{structure,annual} + C_{converter,annual}
 
 
 $$
@@ -751,7 +766,7 @@ The FORGE calculates the thermal losses on a line. Energy losses are the physica
 | $n_{conductorsperphase}$      | Conductors per phase (or per pole) | Conductors in parallel per phase/pole.                                                                                      |
 | $R_{mi}$                      | Resistance per mile                | $\Omega$/mile. AC: resistance at 75°C; DC: resistance at 20°C. Depends on conductor and circuit.                            |
 | $I$                           | Phase current                      | A. RMS phase current at full capacity and nominal voltage.                                                                  |
-| $\phi_{AC}$                   | AC power factor                    | Dimensionless (e.g. 0.95). Used only for AC. NOT THE SAME AS THE FLOW FACTOR FOR CONGESTION AND CURTAILMENT CONSIDERATIONS. |
+| $\phi_{AC}$                   | AC power factor                    | Dimensionless (e.g. 0.95). Used only for AC. Not the same as the flow factor $\phi$ used for congestion relief. |
 | $f_{load}$                    | Full-load adjustment factor        | Dimensionless. Converts “full-load” loss to an average over the utilization profile; function of $u$.                        |
 | $H$                           | Hours per year                     | h/year (e.g. 8760).                                                                                                         |
 | $T_{lifetime}$                | Project lifetime                   | years.                                                                                                                      |
@@ -1049,6 +1064,17 @@ $C_{residual,nominal}$ and $C_{residual,real}$ (PV) follow the same discounting 
 
 ---
 
+### Facilitated emissions and avoided-emissions benefit
+
+`facilitated_emissions.py` computes operational displacement avoided emissions $B_{\text{avoided,emissions}}$. It compares two generation-mix trajectories over delivered energy $E_{\text{delivered,annual}}$, both starting from the same grid state at COD, discounted at $r_{social}$:
+
+- **No-line:** mix evolves at the without-line rate.
+- **Project-line:** mix evolves at the with-line rate.
+
+$B_{\text{avoided,emissions}} = C_{\text{fac,noline}} - C_{\text{fac,withline}}$. Facilitated emissions on the project path is an intermediate (reporting-only) quantity, not a BCR cost. Loss-compensation emissions (3.b) remain a separate cost stream.
+
+---
+
 ## Risk costs
 
 ### Expected cost of wildfires (4.a)
@@ -1133,7 +1159,7 @@ The relevant measure is real (present value) expected wildfire cost, $C_{wf,real
 
 ### Expected cost of outages (4.b)
 
-Expected cost of outages is the expected annual cost (EAC) from transmission outages over the project's operating life. It uses a line-level outage rate by construction type, a base duration with construction-type multiplier, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
+Expected cost of outages is the expected annual loss (`expected_annual_loss`) from transmission outages over the project's operating life. It uses a line-level outage rate by construction type, a base duration with construction-type multiplier, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
 
 **Variables**
 
@@ -1152,13 +1178,13 @@ Expected cost of outages is the expected annual cost (EAC) from transmission out
 | $U$                  | Unserved energy per event, MWh/event                         | $U = H_{eff} \times MW_{lost}$.                                                                   |
 | $v(h)$               | Value of lost load (VoLL), $/MWh                             | Piecewise by duration (e.g. tier 1: 0–4 h, tier 2: 4–24 h, tier 3: 24+ h).                         |
 | $C_{event}$          | Cost per outage event, $/event                               | Piecewise VoLL over $U$ (unserved MWh valued at $v(h)$ by duration tier).                          |
-| $EAC$                | Expected annual cost, $/yr                                   | $EAC = \lambda \times C_{event}$.                                                                 |
+| $\textit{expected\_annual\_loss}$ | Expected annual loss, $/yr                          | $\textit{expected\_annual\_loss} = \lambda \times C_{event}$. |
 | $g_{outages}$        | Outage risk growth rate, decimal                             | Annual increase in expected cost (optional).                                                       |
 | $T_{lifetime}$       | Project lifetime, years                                      |                                                                                                    |
 | $T_{COD}$            | Commercial operation date (year index), years                | First year of operation; cost stream starts here.                                                  |
 | $r_{social}$         | Social discount rate, decimal                                | Used to discount this externality cost (societal perspective).                                     |
-| $C_{outage,nominal}$ | Expected outage cost (nominal), $                            | Sum of growing annual EAC over lifetime; undiscounted.                                             |
-| $C_{outage,real}$    | Expected outage cost (real / PV), $                          | PV of growing EAC stream from $T_{COD}$ over $T_{lifetime}$; discounted for delay and construction. |
+| $C_{outage,nominal}$ | Expected outage cost (nominal), $                            | Sum of growing annual expected_annual_loss over lifetime; undiscounted.                            |
+| $C_{outage,real}$    | Expected outage cost (real / PV), $                          | PV of growing expected_annual_loss stream from $T_{COD}$ over $T_{lifetime}$; discounted for delay and construction. |
 
 **Equations**
 
@@ -1182,10 +1208,10 @@ $$
 
 Cost per event is the piecewise VoLL applied to unserved energy: duration is split into tiers (e.g. 0–4 h at $v_1$ $/MWh$, 4–24 h at $v_2$ $/MWh$, 24+ h at $v_3$ $/MWh$). Total cost = $\sum_{tiers} (\text{hours in tier}) \times MW_{lost} \times v_{tier}$. Denote this $C_{event}$.
 
-4. Expected annual cost
+4. Expected annual loss
 
 $$
-EAC = \lambda \times C_{event}
+\textit{expected\_annual\_loss} = \lambda \times C_{event}
 
 
 $$
@@ -1195,7 +1221,7 @@ $$
 Growing annual cost at rate $g_{outages}$ over $T_{lifetime}$ years:
 
 $$
-C_{outage,nominal} = EAC \times \frac{(1+g_{outages})^{T_{lifetime}} - 1}{g_{outages}} \quad (g_{outages} \neq 0); \qquad C_{outage,nominal} = EAC \times T_{lifetime} \quad (g_{outages} = 0)
+C_{outage,nominal} = \textit{expected\_annual\_loss} \times \frac{(1+g_{outages})^{T_{lifetime}} - 1}{g_{outages}} \quad (g_{outages} \neq 0); \qquad C_{outage,nominal} = \textit{expected\_annual\_loss} \times T_{lifetime} \quad (g_{outages} = 0)
 
 
 $$
@@ -1205,7 +1231,7 @@ $$
 Growing annuity from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{social}$, with delay and construction period discounting:
 
 $$
-C_{outage,real} = \frac{EAC \times \frac{1 - \left(\frac{1+g_{outages}}{1+r_{social}}\right)^{T_{lifetime}}}{r_{social} - g_{outages}}}{(1+r_{social})^{T_{delay} + T_{construction}}} \quad (r_{social} \neq g_{outages})
+C_{outage,real} = \frac{\textit{expected\_annual\_loss} \times \frac{1 - \left(\frac{1+g_{outages}}{1+r_{social}}\right)^{T_{lifetime}}}{r_{social} - g_{outages}}}{(1+r_{social})^{T_{delay} + T_{construction}}} \quad (r_{social} \neq g_{outages})
 
 
 $$
@@ -1281,7 +1307,7 @@ Base delay costs are not capitalized; there is no AFUDC term. They do not enter 
 The relevant measure is real (present value) base delay cost, $C_{delay,real}$, using $r_{WACC,real}$ (from financing details). This aligns with the PV of capital and other cost streams in FORGE.
 
 **Link to other delay cost categories**
-5.b (congestion delay costs) is the opportunity cost of foregone congestion relief during delay and construction; see that section. A separately modeled curtailment delay cost (former 5.c) was removed.
+5.b (congestion delay costs) is the opportunity cost of foregone congestion relief during delay and construction; see that section. 5.c (displacement delay cost) is the opportunity cost of foregone emissions displacement during delay.
 
 ---
 
@@ -1352,9 +1378,9 @@ The same effective capacity relief defines $B_{congestion,annual}$. 5.b uses tha
 
 ---
 
-### Curtailment delay costs (5.c, removed)
+### Displacement delay cost (5.c)
 
-A separately modeled curtailment-reduction benefit (and its matching delay opportunity cost) was removed from the calculator. Constraint relief is valued as congestion only; throughput is valued as delivered energy. Curtailment as a grid phenomenon still exists; it is not a distinct FORGE cost or benefit stream.
+`displacement_delay_cost.py` computes the displacement delay cost during the pre-COD delay period: every delay year is a year in which dirtier generation runs instead of being displaced by the project's cleaner mix. Both trajectories start from the same initial grid mix at year 0 (without-line at the pre-COD rate; hypothetical with-line at the post-COD rate). The year-by-year emissions difference is valued at year-specific social costs and discounted at $r_{social}$. The cost is not AFUDC-eligible and does not enter rate base.
 
 ## Reporting framework
 
@@ -1363,20 +1389,21 @@ Total costs are organized into **four reporting categories** for the appendix an
 | Category | Definition | Components |
 |--------|-----------|-----------|
 | $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
-| $C_{\text{soft}}$ | Operational + energy/emissions losses + delay | O&M + insurance + rent + line losses + residual exceedance + all delay |
+| $C_{\text{soft}}$ | Operational + energy losses + delay | O&M + insurance + rent + line losses + residual exceedance + base delay + congestion delay + displacement delay |
 | $C_{\text{risk}}$ | Expected losses from uncertain events | $C_{\text{wf}} + C_{\text{outage}}$ |
-| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions + facilitated emissions |
+| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions |
 
 $$C^P = C_{\text{hard}}^P + C_{\text{soft}}^P + C_{\text{risk}}^P + C_{\text{emissions}}^P$$
 
-Total benefits are organized into **two categories**:
+Total benefits are organized into **three categories**:
 
 | Category | Definition | Components |
 |--------|-----------|-----------|
 | $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief |
-| $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy benefit ($B_{\text{delivered,lifetime}}$) |
+| $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy + capacity value |
+| $B_{\text{avoided,emissions}}$ | Cleaner generation mix vs no-line | $B_{\text{avoided,emissions}}$ |
 
-$$B^P = B_{\text{remedial}}^P + B_{\text{enabling}}^P$$
+$$B^P = B_{\text{remedial}}^P + B_{\text{enabling}}^P + B_{\text{avoided,emissions}}^P$$
 
 $$NB^P = B^P - C^P$$
 
@@ -1388,58 +1415,28 @@ Revenue ($R_{\text{PV}}$) is a transfer (utility benefit = ratepayer cost); excl
 
 ### Congestion Reduction Benefits
 
-Transmission congestion is when the grid is short of capacity and can't deliver all the power that's wanted, so some value is lost (e.g. higher prices, redispatch). Generator curtailment (output cut because the wires can't take it) is a related grid phenomenon; FORGE does not model it as a separate benefit stream. Constraint relief is valued as congestion; throughput is valued as delivered energy.
+Transmission congestion is when the grid is short of capacity and can't deliver all the power that's wanted, so some value is lost (e.g. higher prices, redispatch). Constraint relief is valued as congestion; throughput is valued as delivered energy.
 
 **Effective relief**
 The project doesn't necessarily relieve capacity equal to its nameplate. For a greenfield line, only a fraction of nameplate effectively relieves the constraint (flow factor $\phi$). For reconductoring, relief is the increase in capacity (new minus old). That effective relief, $\Delta C_{effective}$, is the MW available each hour to reduce congestion.
 
-**Monetization (live)**
-Congestion relief is valued at $\gamma_{congestion}$ ($/MWh$):
-
-$$
-B_{congestion,annual} = H \times \min(\Delta C_{effective},\, X) \times \gamma_{congestion}
-$$
-
-Annual benefits are then summed over the project lifetime in nominal terms, or discounted to present value at real WACC from the commercial operation date ($T_{COD}$).
-
-**Summary**
-Benefits = value of the congestion the project removes, plus the benefit of delivered energy (see below). Effective capacity relief is computed (greenfield vs reconductoring). Total benefits in the calculator sum congestion and delivered-energy benefits, in nominal or real (PV) terms.
-
-**Historical (removed):** The calculator previously split constraint hours into a separately modeled curtailment stream (curtailment-first allocation with overlap $\theta$). That stream was removed so constraint relief is valued as congestion only; the two-price formulas below are a historical record, not live method.
-
 **Variables**
 
-| Variable                           | Meaning / units                                                     | Notes                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| $\Delta C_{effective}$             | Effective capacity relief, MW                                       |                                                                             |
-| $\phi$                             | Flow factor, dimensionless [0,1]                                    |                                                                             |
-| $\theta$                           | Binding hours and curtailment overlap                               | 0 = no overlap, 1 = full overlap; 0 if only congestion or only curtailment. |
-| $H_{congestion}$                   | Hours of congestion per year, h/yr                                  |                                                                             |
-| $H_{curtailment}$                  | Hours of curtailment per year, h/yr                                 |                                                                             |
-| $H_{congestion,overlap}$           | Hours of congestion that overlap with curtailment, h/yr             |                                                                             |
-| $H_{congestion,nonoverlap}$        | Hours of congestion that do not overlap with curtailment, h/yr      |                                                                             |
-| $\gamma_{congestion}$              | Value of congestion, $/MWh                                          |                                                                             |
-| $\gamma_{curtailment}$             | Value of curtailed energy, $/MWh                                    |                                                                             |
-| $R_{curtailment,annual}$           | Average curtailment relief due to project, MWh/yr                   |                                                                             |
-| $R_{congestion,annual}$            | Average congestion relief due to project, MWh/yr                    | Sum of overlap and non-overlap relief.                                      |
-| $R_{congestion,overlap,annual}$    | Overlap-hours congestion relief due to project, MWh/yr              |                                                                             |
-| $R_{congestion,nonoverlap,annual}$ | Non-overlap-hours congestion relief due to project, MWh/yr          |                                                                             |
-| $C_{new}$                          | New line capacity, MW                                               | Greenfield and reconductoring.                                              |
-| $C_{old}$                          | Old line capacity, MW                                               | Reconductoring only.                                                        |
-| $\Delta C_{remaining}$             | Capacity remaining to address congestion after curtailment, MW      | Curtailment was addressed first in FORGE.                                    |
-| $B_{congestion,annual}$            | Annual benefit from congestion reduction, $/yr                      |                                                                             |
-| $B_{curtailment,annual}$           | Annual benefit from curtailment reduction, $/yr                     |                                                                             |
-| $B_{congestion,lifetime,nominal}$  | Nominal lifetime benefit from congestion reduction, $               |                                                                             |
-| $B_{curtailment,lifetime,nominal}$ | Nominal lifetime benefit from curtailment reduction, $              |                                                                             |
-| $B_{total,nominal}$                | Nominal total benefit from congestion and curtailment reductions, $ |                                                                             |
-| $B_{congestion,lifetime,real}$     | Real (PV) lifetime benefit from congestion reduction, $             |                                                                             |
-| $B_{curtailment,lifetime,real}$    | Real (PV) lifetime benefit from curtailment reduction, $            |                                                                             |
-| $B_{total,real}$                   | Real total benefit from congestion and curtailment reductions, $    |                                                                             |
-| $MW_{curtailment}$                 | MW of curtailed resources, MW                                       |                                                                             |
-| $X_{congestion}$                   | MW of congestion (exceedance), MW                                   |                                                                             |
-| $T_{lifetime}$                     | Project lifetime, years                                             |                                                                             |
-| $T_{COD}$                          | Commercial operation date (year index), years                       | Sum of delay and construction years.                                        |
-| $r_{WACC,real}$                    | Real WACC, decimal                                                  | Used to discount benefits.                                                  |
+| Variable                          | Meaning / units                                    | Notes                                              |
+| --------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| $\Delta C_{effective}$            | Effective capacity relief, MW                      |                                                    |
+| $\phi$                            | Flow factor, dimensionless [0,1]                   | Greenfield only.                                   |
+| $H$                               | Hours of congestion per year, h/yr                 |                                                    |
+| $\gamma_{congestion}$             | Value of congestion, $/MWh                         |                                                    |
+| $X$                               | MW of congestion (exceedance), MW                  |                                                    |
+| $C_{new}$                         | New line capacity, MW                              | Greenfield and reconductoring.                     |
+| $C_{old}$                         | Old line capacity, MW                              | Reconductoring only.                               |
+| $B_{congestion,annual}$           | Annual benefit from congestion reduction, $/yr     |                                                    |
+| $B_{congestion,lifetime,nominal}$ | Nominal lifetime benefit from congestion reduction, $ |                                                |
+| $B_{congestion,lifetime,real}$    | Real (PV) lifetime benefit from congestion reduction, $ |                                              |
+| $T_{lifetime}$                    | Project lifetime, years                            |                                                    |
+| $T_{COD}$                         | Commercial operation date (year index), years      | Sum of delay and construction years.               |
+| $r_{WACC,real}$                   | Real WACC, decimal                                 | Used to discount benefits.                         |
 
 **Equations**
 
@@ -1451,83 +1448,15 @@ $$
 
 $$
 
-2. Capacity remaining to address congestion (curtailment first)
+2. Annual congestion benefit
 
 $$
-\Delta C_{remaining} = \max\left(0,\, \Delta C_{effective} - \min(\Delta C_{effective},\, MW_{curtailment})\right)
-
-
-$$
-
-3. Overlap of congestion and curtailment hours
-
-$$
-\theta = \begin{cases} \min\!\left(1,\,\frac{H_{curtailment}}{H_{congestion}}\right) & \text{if } H_{curtailment}>0 \text{ and } H_{congestion}>0 \\ 0 & \text{otherwise} \end{cases}
+B_{congestion,annual} = H \times \min(\Delta C_{effective},\, X) \times \gamma_{congestion}
 
 
 $$
 
-$$
-H_{congestion,overlap} = \theta \times H_{congestion}
-
-
-$$
-
-$$
-H_{congestion,nonoverlap} = (1 - \theta) \times H_{congestion}
-
-
-$$
-
-4. Curtailment relief and benefit
-
-$$
-R_{curtailment,annual} = H_{curtailment} \times \min(\Delta C_{effective},\, MW_{curtailment})
-
-
-$$
-
-$$
-B_{curtailment,annual} = R_{curtailment,annual} \times \gamma_{curtailment} \times (1 - \sigma_{curtailment})
-
-
-$$
-
-5. Congestion relief (overlap uses remaining capacity; non-overlap uses full effective relief)
-
-$$
-R_{congestion,annual} = R_{congestion,overlap,annual} + R_{congestion,nonoverlap,annual}
-
-
-$$
-
-where
-
-$$
-R_{congestion,overlap,annual} = H_{congestion,overlap} \times \min(\Delta C_{remaining},\, X_{congestion})
-
-
-$$
-
-$$
-R_{congestion,nonoverlap,annual} = H_{congestion,nonoverlap} \times \min(\Delta C_{effective},\, X_{congestion})
-
-
-$$
-
-$$
-B_{congestion,annual} = R_{congestion,annual} \times \gamma_{congestion} \times (1 - \sigma_{congestion})
-
-
-$$
-
-6. Nominal lifetime benefits
-
-$$
-B_{curtailment,lifetime,nominal} = B_{curtailment,annual} \times T_{lifetime}
-
-
-$$
+3. Nominal lifetime benefit
 
 $$
 B_{congestion,lifetime,nominal} = B_{congestion,annual} \times T_{lifetime}
@@ -1535,13 +1464,7 @@ B_{congestion,lifetime,nominal} = B_{congestion,annual} \times T_{lifetime}
 
 $$
 
-7. Present value (real) lifetime benefits
-
-$$
-B_{curtailment,lifetime,PV} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{curtailment,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}
-
-
-$$
+4. Present value (real) lifetime benefit
 
 $$
 B_{congestion,lifetime,PV} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{congestion,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}
@@ -1595,7 +1518,7 @@ Revenue to the utility from rate base is a transfer: benefit to the utility = co
 | $RB_{nominal}$     | Nominal rate base at COD, $                        | AFUDC capital at COD. Sum of build, ROW capital, env. mitigation.                                                       |
 | $C^{cap}$          | Total capital in rate base at COD, $               | $RB_{nominal} = C^{cap}$. Same as rate base.                                                                            |
 | $C^{cap}_{build}$  | Capitalized build cost, $                          | Nominal spending capitalized to COD via AFUDC.                                                                          |
-| $C^{cap}_{ROW}$    | Capitalized ROW capital cost, $                    | Nominal spending capitalized to COD via AFUDC.                                                                          |
+| $C^{cap}_{ROW}$    | Capitalized ROW capital cost, $                    | Acquisition only, capitalized to COD via AFUDC. Holding is not AFUDC-eligible.                                          |
 | $C^{cap}_{envmit}$ | Capitalized environmental mitigation cost, $       | Nominal spending capitalized to COD via AFUDC.                                                                          |
 | $C^{nom}_i$        | Nominal spending (pre-AFUDC) for component $i$, $   | Same timing as for AFUDC. $C^{cap}_i = C^{nom}_i + AFUDC_i$.                                                             |
 | $\pi$              | Inflation rate, decimal                            |                                                                                                                         |
@@ -1677,5 +1600,27 @@ Both use the same capital spending: same nominal amounts ($C^{nom}$ for build, R
 2. Same idea of time value: utility compounds to COD (AFUDC); society discounts to base year (real WACC).
 3. Different purpose: utility number = rate base $RB_{nominal}$; society number = PV of spending.
 
-AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views.
+AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views. ROW AFUDC applies to acquisition only; holding is not in rate base.
+
+---
+
+## Benefit-cost ratios
+
+FORGE reports nine BCR perspectives: three core and six exclusion variants. All values are present-value. Revenue is a transfer and is excluded from the societal BCR. ATRR is the utility revenue requirement (capital recovery + O&M + insurance + ROW rent).
+
+**Core**
+
+- `bcr_societal` $= B^P / C^P$ (all benefits / all costs).
+- `bcr_utility` $= \text{ATRR} / (\text{ATRR} + C_{\text{base delay}})$.
+- `bcr_ratepayer` $= (B_{\text{remedial}} + B_{\text{enabling}}) / (\text{ATRR} + C_{\text{loss}})$. Ratepayer numerator excludes $B_{\text{avoided,emissions}}$.
+
+**Exclusion variants** (societal BCR with named terms removed)
+
+- `bcr_excl_avoided_emissions`: $(B^P - B_{\text{avoided,emissions}}) / C^P$
+- `bcr_excl_emissions_costs`: $B^P / (C^P - C_{\text{emissions}})$
+- `bcr_excl_all_emissions`: $(B^P - B_{\text{avoided,emissions}}) / (C^P - C_{\text{emissions}})$
+- `bcr_excl_outage`: $B^P / (C^P - C_{\text{outage}})$
+- `bcr_excl_wildfire`: $B^P / (C^P - C_{\text{wf}})$
+- `bcr_excl_outage_wildfire`: $B^P / (C^P - C_{\text{wf}} - C_{\text{outage}})$
+
 

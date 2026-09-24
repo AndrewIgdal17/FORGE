@@ -10,7 +10,7 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 
 **Benefits:**
 - **Remedial** ($B_{\text{remedial}}$): congestion relief
-- **Enabling** ($B_{\text{enabling}}$): delivered energy benefit
+- **Enabling** ($B_{\text{enabling}}$): delivered energy benefit + capacity value benefit
 - **Avoided emissions** ($B_{\text{avoided,emissions}}$): displacement of dirtier generation
 
 **Costs:**
@@ -64,9 +64,9 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 
 ---
 
-## Exclusion Variants (3)
+## Exclusion Variants (6)
 
-Three variants of the societal BCR, each answering a specific sensitivity question. Additional exclusion combinations are available interactively via the Custom BCR builder.
+Six variants of the societal BCR computed by `compute_all_bcrs()`. Additional exclusion combinations are available interactively via the Custom BCR builder.
 
 ### `bcr_excluding_avoided_emissions` — Excl. Avoided Emissions
 
@@ -75,6 +75,36 @@ Three variants of the societal BCR, each answering a specific sensitivity questi
 **Question:** What is the BCR under the FERC-minimum benefit set (no emissions benefits)?
 
 **Use case:** Jurisdictions that do not recognize a social cost of carbon; alignment with FERC Order 1920's seven required benefits (which exclude emissions).
+
+---
+
+### `bcr_excluding_emissions` — Excl. Emissions Costs
+
+**Formula:** $B^P / (C^P - C_{\text{emissions}})$
+
+**Question:** What is the societal BCR without loss-compensation emissions costs?
+
+**Use case:** Sensitivity that keeps avoided-emissions benefits but drops the emissions cost of compensating for line losses.
+
+---
+
+### `bcr_excluding_avoided_emissions_and_emissions` — Excl. All Emissions
+
+**Formula:** $(B^P - B_{\text{avoided,emissions}}) / (C^P - C_{\text{emissions}})$
+
+**Question:** What is the BCR with no emissions on either side?
+
+**Use case:** Pure market-flow BCR (no social cost of carbon in benefits or costs).
+
+---
+
+### `bcr_excluding_outage_risk` — Excl. Outage
+
+**Formula:** $B^P / (C^P - C_{\text{outage}})$
+
+**Question:** What is the societal BCR excluding outage risk only?
+
+**Use case:** Projects or reviewers that omit outage risk while retaining wildfire risk.
 
 ---
 
@@ -106,6 +136,9 @@ Three variants of the societal BCR, each answering a specific sensitivity questi
 | Should a utility build this? | `bcr_utility` |
 | Do ratepayers benefit? | `bcr_ratepayer` |
 | What if we exclude emissions benefits? | `bcr_excluding_avoided_emissions` |
+| Without loss-compensation emissions costs? | `bcr_excluding_emissions` |
+| No emissions on either side? | `bcr_excluding_avoided_emissions_and_emissions` |
+| Exclude outage risk only? | `bcr_excluding_outage_risk` |
 | Low-wildfire region? | `bcr_excluding_wildfire_risk` |
 | No risk costs at all? | `bcr_excluding_wildfire_risk_and_outage_risk` |
 

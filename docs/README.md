@@ -12,7 +12,7 @@ A beautiful, interactive documentation tool for exploring all input parameters i
 
 ### System Overview
 
-- **21 YAML files** containing **4,922 input fields**
+- **24 YAML files** containing **3,924 input fields**
 - **128 project configurations** covering different transmission line types
 - **7 categories** organized by function (Technical, Physical, Financial, etc.)
 
@@ -39,9 +39,11 @@ The documentation features:
 
 ```
 docs/
-├── yaml_input_explorer.html    # Main interactive documentation
-├── yaml_structure.json         # Parsed YAML data (5MB)
-└── mermaid_diagram.txt         # Generated Mermaid diagram code
+├── README.md                     # This file
+├── forge_execution_workflow.txt  # Calculator execution flowchart
+├── mermaid_diagram.txt           # Generated Mermaid diagram code
+├── yaml_input_explorer.html      # Main interactive documentation
+└── yaml_structure.json           # Parsed YAML data
 ```
 
 ## 🔧 Technical Details
@@ -62,15 +64,15 @@ docs/
 
 ## 🎯 Categories Overview
 
-| Category           | Files | Fields | Description                                  |
-| ------------------ | ----- | ------ | -------------------------------------------- |
-| **Technical**      | 2     | 70     | Project specifications and technical details |
-| **Physical**       | 1     | 18     | Terrain and physical characteristics         |
-| **Financial**      | 3     | 14     | Financing, insurance, and delay costs        |
-| **Operations**     | 5     | 2,604  | Build costs and O&M operations               |
-| **Environmental**  | 4     | 121    | Environmental impacts and mitigation         |
-| **Benefits**       | 3     | 25     | Congestion and outage benefits |
-| **Configurations** | 3     | 2,070  | 128 project configuration templates          |
+| Category           | Files | Fields | Description                                                      |
+| ------------------ | ----- | ------ | ---------------------------------------------------------------- |
+| **Technical**      | 7     | 152    | Project specs, ROW details, outage costs, energy mix, timing     |
+| **Physical**       | 1     | 18     | Terrain and physical characteristics                             |
+| **Financial**      | 3     | 22     | Financing, insurance, and delay costs                            |
+| **Operations**     | 5     | 1,394  | Build costs and O&M operations                                   |
+| **Environmental**  | 4     | 80     | Environmental impacts and mitigation                             |
+| **Benefits**       | 1     | 8      | Congestion reduction benefits                                    |
+| **Configurations** | 3     | 2,250  | 128 project configuration templates                              |
 
 ## 🚀 Future Enhancements
 
