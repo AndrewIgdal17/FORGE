@@ -1,4 +1,4 @@
-"""FastAPI application that accepts JSON, delegates to a processor, and returns JSON."""
+"""FastAPI application that accepts JSON, runs FORGE calculations, and returns JSON."""
 
 from __future__ import annotations
 
@@ -24,12 +24,9 @@ from .forge_processor import run_forge_calculation
 from .models import (
     FORGEInputPayload,
     FORGEOutputPayload,
-    InputPayload,
-    OutputPayload,
     sanitize_for_json,
 )
 from .fuel_mix_presets import load_fuel_mix_presets
-from .processor import generate_result
 
 import sys as _sys
 
@@ -254,13 +251,6 @@ async def get_fuel_mix_presets() -> JSONResponse:
     """Reference grid_mix presets for the web UI (file-backed catalog)."""
     data = load_fuel_mix_presets()
     return JSONResponse(sanitize_for_json(data))
-
-
-@app.post("/api/process", response_model=OutputPayload)
-async def process_payload(payload: InputPayload) -> OutputPayload:
-    """Receive JSON payload, invoke processor, and return the generated result."""
-    result = generate_result(payload)
-    return OutputPayload.model_validate(result)
 
 
 @app.post("/api/forge/calculate", response_model=FORGEOutputPayload)

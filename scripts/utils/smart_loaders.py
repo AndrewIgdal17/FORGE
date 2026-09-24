@@ -10,11 +10,6 @@ from .run_context import get_run_context
 from scripts.io.yaml_loaders import *  # noqa: F401, F403
 
 
-def get_input_mode() -> str:
-    """Current input mode; calculator is YAML-in only."""
-    return "yaml"
-
-
 def get_project_data_raw() -> Dict[str, Any]:
     """
     Get raw project technical details from YAML.

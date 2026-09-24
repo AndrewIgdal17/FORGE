@@ -402,7 +402,7 @@ def main() -> None:
 
     The script calculates annual and lifetime emissions, monetizes them using societal costs,
     and calculates present values using the social discount rate. Results are printed to console
-    and written to CSV outputs via FORGEOutputManager.
+    and written via SmartOutputManager.
 
     Outputs:
         - Prints detailed emissions results by pollutant (CO2, SOx, NOx)

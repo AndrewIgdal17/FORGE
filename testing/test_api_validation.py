@@ -4,7 +4,7 @@ Pydantic API validation tests: invalid or partial payloads must return 422.
 
 Run from code/server: python -c \"import sys; sys.path.insert(0, '..'); exec(open('../testing/test_api_validation.py').read())\"
 Or from code/: venv/bin/python -m pytest testing/test_api_validation.py -v (if pytest installed)
-Or from code/server: python -c \"from pathlib import Path; import sys; sys.path.insert(0, str(Path('..').resolve())); from testing.test_api_validation import *; test_process_invalid_mode(); test_forge_calculate_invalid_mode(); test_forge_calculate_invalid_input_mode(); print('OK')\"
+Or from code/server: python -c \"from pathlib import Path; import sys; sys.path.insert(0, str(Path('..').resolve())); from testing.test_api_validation import *; test_forge_calculate_invalid_mode(); test_forge_calculate_invalid_input_mode(); print('OK')\"
 """
 
 from __future__ import annotations
@@ -26,19 +26,6 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_process_invalid_mode():
-    """POST /api/process with invalid 'mode' should return 422."""
-    r = client.post("/api/process", json={"mode": "invalid_mode"})
-    assert r.status_code == 422
-
-
-def test_process_values_not_list():
-    """POST /api/process with values as string instead of list should be coerced or 422."""
-    r = client.post("/api/process", json={"mode": "simple", "values": "not a list"})
-    # InputPayload has field_validator that coerces; if values is not a list it becomes []
-    assert r.status_code in (200, 422)
-
-
 def test_forge_calculate_invalid_mode():
     """POST /api/forge/calculate with wrong top-level 'mode' should return 422."""
     r = client.post("/api/forge/calculate", json={"mode": "wrong"})
@@ -46,7 +33,7 @@ def test_forge_calculate_invalid_mode():
 
 
 def test_forge_calculate_invalid_input_mode():
-    """POST /api/forge/calculate with input_mode not in ['json','yaml'] should return 422."""
+    """POST /api/forge/calculate with input_mode not 'json' should return 422."""
     r = client.post(
         "/api/forge/calculate",
         json={
@@ -64,7 +51,7 @@ def test_forge_calculate_partial_ok():
         "/api/forge/calculate",
         json={
             "mode": "calculate",
-            "input_mode": "yaml",
+            "input_mode": "json",
             "output_mode": "json",
         },
     )

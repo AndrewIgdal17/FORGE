@@ -55,7 +55,3 @@ class SmartOutputManager:
     def __getattr__(self, name):
         """Delegate all method calls to the underlying manager."""
         return getattr(self._manager, name)
-
-
-# For backward compatibility, export as FORGEOutputManager
-FORGEOutputManager = SmartOutputManager

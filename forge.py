@@ -6,11 +6,9 @@ from __future__ import annotations
 
 import importlib
 import shutil
-import subprocess
 import sys
 import os
 import argparse
-import glob
 import json
 import tempfile
 import threading
@@ -66,54 +64,6 @@ def _set_yamls_dir(new_path: Path) -> None:
             mod.YAMLS_DIR = new_path
 
 
-def _module_to_script_path(module_name: str) -> str:
-    """Map a dotted package name to a path relative to scripts/.
-
-    ``scripts.calc.build_costs`` → ``calc/build_costs.py``
-    """
-    parts = module_name.split(".")
-    if parts and parts[0] == "scripts":
-        parts = parts[1:]
-    return str(Path(*parts).with_suffix(".py"))
-
-
-def run_script(script_name: str, quiet: bool = False) -> bool:
-    """
-    Run a Python script and capture its output.
-
-    Args:
-        script_name (str): Dotted module name (e.g. scripts.calc.build_costs)
-        quiet (bool): If True, suppress output messages
-
-    Returns:
-        bool: True if successful, False if error
-    """
-    try:
-        # Pass environment variables explicitly to ensure subprocess scripts can access them
-        env = os.environ.copy()
-        result = subprocess.run(
-            [sys.executable, _module_to_script_path(script_name)],
-            capture_output=True,
-            text=True,
-            cwd="scripts",
-            env=env,
-        )
-        if result.returncode == 0:
-            if not quiet:
-                print(f"✅ {script_name} completed successfully")
-                print(result.stdout)
-            return True
-        else:
-            if not quiet:
-                print(f"❌ {script_name} failed with error:")
-                print(result.stderr)
-            return False
-    except Exception as e:
-        if not quiet:
-            print(f"❌ Error running {script_name}: {e}")
-        return False
-
-
 def build_csv_equivalent(
     json_results: dict,
     bcr_results: dict | None,
@@ -166,48 +116,6 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
         "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
     }
-
-
-def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dict:
-    """
-    Aggregate all JSON output files from individual calculation scripts.
-
-    Args:
-        scenario_id: The scenario ID to match output files
-        output_dir: Directory containing the output files
-
-    Returns:
-        Aggregated results dictionary
-    """
-    from scripts.io.json_output_manager import JSONOutputManager
-
-    # Create a new manager to aggregate results
-    aggregator = JSONOutputManager(scenario_id=scenario_id)
-
-    # Find all JSON output files for this scenario
-    pattern = os.path.join(output_dir, f"json_output_{scenario_id}_*.json")
-    json_files = glob.glob(pattern)
-
-    # Debug: Log what files we found
-    print(f"DEBUG: Looking for JSON files matching: {pattern}", file=sys.stderr)
-    print(
-        f"DEBUG: Found {len(json_files)} JSON files: {[os.path.basename(f) for f in json_files]}",
-        file=sys.stderr,
-    )
-
-    # Load and merge each file
-    for json_file in json_files:
-        print(
-            f"DEBUG: Loading JSON file: {os.path.basename(json_file)}", file=sys.stderr
-        )
-        aggregator.load_from_file(json_file)
-        # Clean up the intermediate file
-        try:
-            os.unlink(json_file)
-        except Exception:
-            pass
-
-    return aggregator
 
 
 _TRAJECTORY_ARRAY_KEYS = {
@@ -553,11 +461,6 @@ def main() -> None:
         description="Framework for Open Reproducible Grid Economics (FORGE)"
     )
     parser.add_argument(
-        "--norisk",
-        action="store_true",
-        help="[DEPRECATED] Skip risk cost calculations (wildfire and outage costs). Use --no_wildfire --no_outages instead.",
-    )
-    parser.add_argument(
         "--simple",
         action="store_true",
         help="Simple output mode: only show BCR analysis (suppress intermediate outputs)",
@@ -607,31 +510,16 @@ def main() -> None:
         action="store_true",
         help="Skip congestion benefit calculations",
     )
-    parser.add_argument(
-        "--subprocess",
-        action="store_true",
-        help="Run each calculation script as a subprocess (legacy). Default is in-process.",
-    )
     args = parser.parse_args()
 
     # Set environment variables for congestion/curtailment script
     if args.no_congestion:
         os.environ["FORGE_NO_CONGESTION"] = "1"
 
-    # Handle --norisk deprecation: if used, set individual flags
-    if args.norisk:
-        args.no_wildfire = True
-        args.no_outages = True
-
     if not args.simple:
         print("=" * 80)
         print("FRAMEWORK FOR OPEN REPRODUCIBLE GRID ECONOMICS (FORGE)")
         print("=" * 80)
-        if args.norisk:
-            print("⚠️  [DEPRECATED] --norisk flag is deprecated")
-            print("   Use --no_wildfire --no_outages instead")
-            print("   Risk costs disabled (wildfire and outage)")
-            print("=" * 80)
         if args.no_wildfire:
             print("⚠️  Wildfire risk costs disabled (--no_wildfire flag set)")
             print("   Skipping: wildfire_costs.py")
@@ -686,74 +574,72 @@ def main() -> None:
         print(f"\n📋 Scenario ID: {scenario_id}\n")
 
     # Calculator is JSON-out only; always use JSON aggregator
-    in_process_aggregator = None
-    if not args.subprocess:
-        from scripts.io.json_output_manager import JSONOutputManager
-        in_process_aggregator = JSONOutputManager(scenario_id=scenario_id)
-        set_output_manager(in_process_aggregator)
+    from scripts.io.json_output_manager import JSONOutputManager
+    aggregator = JSONOutputManager(scenario_id=scenario_id)
+    set_output_manager(aggregator)
 
-        # Populate RunContext: load shared data once for the entire run
-        from scripts.utils.smart_loaders import get_physical_data_raw
-        from scripts.io.yaml_loaders import (
-            load_project_technical_details, load_financing_details,
-            load_contingencies, load_row_widths,
-        )
-        from scripts.utils.calculation_utils import build_category_string
-        from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
+    # Populate RunContext: load shared data once for the entire run
+    from scripts.utils.smart_loaders import get_physical_data_raw
+    from scripts.io.yaml_loaders import (
+        load_project_technical_details, load_financing_details,
+        load_contingencies, load_row_widths,
+    )
+    from scripts.utils.calculation_utils import build_category_string
+    from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
 
-        _project_details = load_project_technical_details()
-        _financing = load_financing_details()
-        _contingencies = load_contingencies()
-        _physical_raw = get_physical_data_raw()
-        _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
-        _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
-        _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
-        _category_string = build_category_string(project_details=_project_details)
-        _row_width_feet = load_row_widths(_category_string)
-        _weighted_miles, _avg_terrain_mult = _calc_wm()
+    _project_details = load_project_technical_details()
+    _financing = load_financing_details()
+    _contingencies = load_contingencies()
+    _physical_raw = get_physical_data_raw()
+    _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
+    _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
+    _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
+    _category_string = build_category_string(project_details=_project_details)
+    _row_width_feet = load_row_widths(_category_string)
+    _weighted_miles, _avg_terrain_mult = _calc_wm()
 
-        set_run_context(RunContext(
-            project_details=_project_details,
-            terrain_miles=_terrain_miles,
-            terrain_multipliers=_terrain_multipliers,
-            total_miles=_total_miles,
-            financing=_financing,
-            contingencies=_contingencies,
-            category_string=_category_string,
-            row_width_feet=_row_width_feet,
-            weighted_miles=_weighted_miles,
-            average_terrain_multiplier=_avg_terrain_mult,
-        ))
+    set_run_context(RunContext(
+        project_details=_project_details,
+        terrain_miles=_terrain_miles,
+        terrain_multipliers=_terrain_multipliers,
+        total_miles=_total_miles,
+        financing=_financing,
+        contingencies=_contingencies,
+        category_string=_category_string,
+        row_width_feet=_row_width_feet,
+        weighted_miles=_weighted_miles,
+        average_terrain_multiplier=_avg_terrain_mult,
+    ))
 
-        from scripts.utils.financial_utils import (
-            calculate_afudc_rate as _calc_afudc_cli,
-            calculate_cod_year as _calc_cod_cli,
-            calculate_construction_start_year as _calc_cstart_cli,
-        )
-        from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
-        _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_get_fin_raw_cli())
-        _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
-        _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
+    from scripts.utils.financial_utils import (
+        calculate_afudc_rate as _calc_afudc_cli,
+        calculate_cod_year as _calc_cod_cli,
+        calculate_construction_start_year as _calc_cstart_cli,
+    )
+    from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
+    _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_get_fin_raw_cli())
+    _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
+    _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
 
-        _fin_raw_cli = _get_fin_raw_cli()
-        add_derived({
-            "category_string": _category_string,
-            "row_width_feet": _row_width_feet,
-            "weighted_miles": _weighted_miles,
-            "average_terrain_multiplier": _avg_terrain_mult,
-            "total_miles": _total_miles,
-            "terrain_miles": _terrain_miles,
-            "terrain_multipliers": _terrain_multipliers,
-            "wacc_real": _financing.wacc_real,
-            "wacc_nominal": _financing.wacc_nominal,
-            "inflation_rate": _financing.inflation_rate,
-            "social_discount_rate": _fin_raw_cli["financial"].get("social_discount_rate", 0),
-            "afudc_rate": _afudc_rate_cli,
-            "afudc_source": _afudc_source_cli,
-            "cod_year": _cod_year_cli,
-            "construction_start_year": _cstart_cli,
-            "contingencies": _contingencies,
-        })
+    _fin_raw_cli = _get_fin_raw_cli()
+    add_derived({
+        "category_string": _category_string,
+        "row_width_feet": _row_width_feet,
+        "weighted_miles": _weighted_miles,
+        "average_terrain_multiplier": _avg_terrain_mult,
+        "total_miles": _total_miles,
+        "terrain_miles": _terrain_miles,
+        "terrain_multipliers": _terrain_multipliers,
+        "wacc_real": _financing.wacc_real,
+        "wacc_nominal": _financing.wacc_nominal,
+        "inflation_rate": _financing.inflation_rate,
+        "social_discount_rate": _fin_raw_cli["financial"].get("social_discount_rate", 0),
+        "afudc_rate": _afudc_rate_cli,
+        "afudc_source": _afudc_source_cli,
+        "cod_year": _cod_year_cli,
+        "construction_start_year": _cstart_cli,
+        "contingencies": _contingencies,
+    })
 
     os.environ["FORGE_OUTPUT_MODE"] = "json"
 
@@ -787,41 +673,20 @@ def main() -> None:
         if not args.simple:
             print(f"\n🔄 Running {script}...")
 
-        if args.subprocess:
-            if script == "scripts.calc.line_loss_costs":
-                env = os.environ.copy()
-                result = subprocess.run(
-                    [sys.executable, _module_to_script_path(script)],
-                    capture_output=True,
-                    text=True,
-                    cwd="scripts",
-                    env=env,
-                )
-                success = result.returncode == 0
-                if not success and not args.simple:
-                    if result.stderr:
-                        print(result.stderr, file=sys.stderr)
-                    if result.stdout:
-                        print(result.stdout, file=sys.stderr)
-                elif success and not args.simple and result.stdout:
-                    print(result.stdout)
+        try:
+            mod = importlib.import_module(script)
+            t0 = _time.perf_counter()
+            mod.main()
+            elapsed_ms = (_time.perf_counter() - t0) * 1000
+            module_timings.append((script, elapsed_ms))
+            success = True
+        except Exception as e:
+            success = False
+            if not args.simple:
+                print(f"❌ {script} failed with error:", file=sys.stderr)
+                traceback.print_exc()
             else:
-                success = run_script(script, quiet=args.simple)
-        else:
-            try:
-                mod = importlib.import_module(script)
-                t0 = _time.perf_counter()
-                mod.main()
-                elapsed_ms = (_time.perf_counter() - t0) * 1000
-                module_timings.append((script, elapsed_ms))
-                success = True
-            except Exception as e:
-                success = False
-                if not args.simple:
-                    print(f"❌ {script} failed with error:", file=sys.stderr)
-                    traceback.print_exc()
-                else:
-                    print(f"❌ Error running {script}: {e}", file=sys.stderr)
+                print(f"❌ Error running {script}: {e}", file=sys.stderr)
 
         if success:
             successful_runs += 1
@@ -850,14 +715,9 @@ def main() -> None:
             # In simple mode, just print the BCR analysis header
             print("=" * 80)
 
-        # Aggregate JSON results and compute BCR (calculator is JSON-out only)
+        # Compute BCR from in-process aggregator (calculator is JSON-out only)
         bcr_results = None
         try:
-            if not args.subprocess and in_process_aggregator is not None:
-                aggregator = in_process_aggregator
-            else:
-                aggregator = aggregate_json_outputs(scenario_id, output_dir="outputs")
-
             csv_equivalent = None
             summary_override = None
             taxonomy_results_json = None
@@ -899,19 +759,19 @@ def main() -> None:
 
             if not args.simple:
                 print(f"✅ JSON results written to {output_file}")
-            if not args.subprocess:
-                clear_run_context()
-                clear_output_manager()
+            clear_run_context()
+            clear_output_manager()
         except Exception as e:
-            if not args.subprocess:
-                clear_run_context()
-                clear_output_manager()
+            clear_run_context()
+            clear_output_manager()
             if not args.simple:
                 print(f"⚠️  JSON output aggregation failed: {e}")
                 traceback.print_exc()
             else:
                 print(f"⚠️  JSON output aggregation failed: {e}")
     else:
+        clear_run_context()
+        clear_output_manager()
         if not args.simple:
             print("⚠️  Some calculations failed. Check the output above.")
         else:

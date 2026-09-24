@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer
+from pydantic import BaseModel, ConfigDict, model_serializer
 
 
 def _sanitize_floats_for_json(obj: Any) -> Any:
@@ -27,42 +27,9 @@ def sanitize_for_json(obj: Any) -> Any:
     return _sanitize_floats_for_json(obj)
 
 
-class InputPayload(BaseModel):
-    mode: Literal["simple", "bulk"] = "simple"
-    message: str = ""
-    values: List[float] = Field(default_factory=list)
-    combinedData: Optional[Dict[str, Any]] = None
-
-    @field_validator("values", mode="before")
-    @classmethod
-    def coerce_values_to_floats(cls, v: Any) -> List[float]:
-        """Coerce or drop non-numeric entries; preserve same behavior as processor _is_number."""
-        if v is None or not isinstance(v, list):
-            return []
-        result: List[float] = []
-        for item in v:
-            try:
-                result.append(float(item))
-            except (TypeError, ValueError):
-                continue
-        return result
-
-
-class OutputPayload(BaseModel):
-    mode: Literal["simple", "bulk"]
-    originalMessage: Optional[str] = None
-    characterCount: Optional[int] = None
-    valuesProvided: Optional[int] = None
-    sum: Optional[float] = None
-    average: Optional[float] = None
-    entries: Optional[int] = None
-    lines: Optional[List[str]] = None
-    text: Optional[str] = None
-
-
 class FORGEInputPayload(BaseModel):
     mode: Literal["calculate"] = "calculate"
-    input_mode: Literal["json", "yaml"] = "json"
+    input_mode: Literal["json"] = "json"
     output_mode: Literal["json"] = "json"
     combined_data: Optional[Dict[str, Any]] = None
     scenario_id: Optional[str] = None

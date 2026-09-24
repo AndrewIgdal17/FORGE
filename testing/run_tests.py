@@ -214,30 +214,6 @@ class TestRunner:
                       f"Output size: {json_output.stat().st_size / 1024:.1f} KB")
         return True
 
-    def test_1_2_1_norisk_flag(self):
-        """Test 1.2.1: --norisk flag"""
-        test_id = "1.2.1"
-        start_time = time.time()
-
-        cmd = [str(self.venv_python), "forge.py", "--norisk", "--simple"]
-        success, stdout, stderr = self.run_command(cmd, timeout=180)
-
-        duration = time.time() - start_time
-
-        if not success:
-            self.add_result(test_id, "--norisk flag", "fail", duration,
-                          f"Command failed: {stderr[:200]}")
-            return False
-
-        # Check that risk warning appears
-        if "Risk costs disabled" not in stdout:
-            self.add_result(test_id, "--norisk flag", "warning", duration,
-                          "Risk disabled warning not found")
-            return False
-
-        self.add_result(test_id, "--norisk flag", "pass", duration)
-        return True
-
     def test_1_2_6_custom_scenario_id(self):
         """Test 1.2.6: Custom scenario ID (via FORGE_SCENARIO_ID)"""
         test_id = "1.2.6"
@@ -507,7 +483,6 @@ class TestRunner:
             ("1.1.1: YAML→JSON Mode", self.test_1_1_1_yaml_json_mode),
             ("1.1.2: JSON→CSV (skipped)", self.test_1_1_2_json_csv_mode),
             ("1.1.3: YAML→JSON (custom ID)", self.test_1_1_3_yaml_json_mode),
-            ("1.2.1: --norisk Flag", self.test_1_2_1_norisk_flag),
             ("1.2.6: Custom Scenario ID", self.test_1_2_6_custom_scenario_id),
             ("5.1.1: YAML→JSON Converter", self.test_5_1_1_yaml_to_json_converter),
             ("5.2.1: Round-trip Test", self.test_5_2_1_round_trip_comparison),
