@@ -141,10 +141,19 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     output_manager = SmartOutputManager()
-    cc_results = getattr(output_manager, '_manager', output_manager).benefits.get(
-        "congestion", {}
-    )
-    energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
+    actual_manager = getattr(output_manager, '_manager', output_manager)
+    energy_delivered_annual_mwh = 0.0
+
+    if hasattr(actual_manager, 'require_upstream'):
+        try:
+            energy_delivered_annual_mwh = actual_manager.require_upstream(
+                "benefits", "congestion", "energy_delivered_annual_mwh_yr"
+            )
+        except KeyError as exc:
+            print(f"⚠️  {exc}", flush=True)
+    elif hasattr(actual_manager, 'benefits'):
+        cc_results = actual_manager.benefits.get("congestion", {})
+        energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
 
     # Subprocess fallback: load energy_delivered from congestion JSON on disk
     if energy_delivered_annual_mwh <= 0 and not getattr(output_manager, '_using_shared', False):

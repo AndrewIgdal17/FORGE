@@ -234,6 +234,55 @@ class JSONOutputManager:
         """Add benefit-cost ratio metrics."""
         self.bcr = bcr_results
 
+    def require_upstream(self, category: str, module_key: str, field: str) -> float:
+        """Read a single field from an upstream module's output, failing loudly if absent.
+
+        Args:
+            category: "costs" or "benefits"
+            module_key: The module's output key (e.g. "build", "congestion")
+            field: The specific field name within that module's output dict
+
+        Returns:
+            The field value as a float.
+
+        Raises:
+            KeyError: If the module hasn't written results or the field doesn't exist.
+        """
+        store = self.costs if category == "costs" else self.benefits
+        if module_key not in store:
+            raise KeyError(
+                f"Module '{module_key}' has not run or written to {category}. "
+                f"Cannot read '{field}'. Check pipeline ordering."
+            )
+        module_dict = store[module_key]
+        if field not in module_dict:
+            raise KeyError(
+                f"Field '{field}' not found in {category}['{module_key}']. "
+                f"Available keys: {list(module_dict.keys())}"
+            )
+        return float(module_dict[field])
+
+    def require_upstream_dict(self, category: str, module_key: str) -> dict:
+        """Return the full output dict from an upstream module, failing loudly if absent.
+
+        Args:
+            category: "costs" or "benefits"
+            module_key: The module's output key (e.g. "build", "congestion")
+
+        Returns:
+            The module's full output dict.
+
+        Raises:
+            KeyError: If the module hasn't written results.
+        """
+        store = self.costs if category == "costs" else self.benefits
+        if module_key not in store:
+            raise KeyError(
+                f"Module '{module_key}' has not run or written to {category}. "
+                f"Check pipeline ordering."
+            )
+        return store[module_key]
+
     def calculate_summary(self):
         """
         Calculate summary totals from all cost and benefit modules.

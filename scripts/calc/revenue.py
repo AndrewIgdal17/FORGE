@@ -78,16 +78,15 @@ def get_rate_base() -> float:
     try:
         shared = get_output_manager()
         if shared is not None and getattr(shared, "costs", None) is not None:
-            costs = shared.costs
-            build_afudc = float(costs.get("build", {}).get("total_afudc", 0) or 0)
-            row_afudc = float(costs.get("row", {}).get("total_afudc", 0) or 0)
-            env_afudc = float(
-                costs.get("environmental", {}).get("total_afudc", 0) or 0
-            )
-            total_inprocess = build_afudc + row_afudc + env_afudc
-            if total_inprocess > 0:
-                return total_inprocess
+            build_afudc = shared.require_upstream("costs", "build", "total_afudc")
+            row_afudc = shared.require_upstream("costs", "row", "total_afudc")
+            env_afudc = shared.require_upstream("costs", "environmental", "total_afudc")
+            return build_afudc + row_afudc + env_afudc
+    except KeyError as exc:
+        print(f"⚠️  Rate base lookup failed: {exc}", flush=True)
+        # Fall through to disk-based fallback below
 
+    try:
         if not scenario_id:
             return 0.0
 
