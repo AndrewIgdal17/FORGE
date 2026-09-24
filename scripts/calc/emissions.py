@@ -402,11 +402,11 @@ def main() -> None:
 
     The script calculates annual and lifetime emissions, monetizes them using societal costs,
     and calculates present values using the social discount rate. Results are printed to console
-    and written via SmartOutputManager.
+    and written via SmartOutputManager (JSON).
 
     Outputs:
         - Prints detailed emissions results by pollutant (CO2, SOx, NOx)
-        - Writes to emissions_costs.csv and batch_summary.csv
+        - Writes JSON via SmartOutputManager (shared in-process aggregator, or a JSON file)
         - Calculates both nominal and present value costs
     """
     # Load emissions details

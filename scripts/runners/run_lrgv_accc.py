@@ -7,11 +7,8 @@ calculation engine, and saves updated .forge files in the current format
 """
 
 import copy
-from pathlib import Path
 
 from scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def _patch_lrgv_common(inputs: dict) -> dict:
     """Shared LRGV corridor parameters (existing ROW, South Texas terrain, ERCOT grid)."""

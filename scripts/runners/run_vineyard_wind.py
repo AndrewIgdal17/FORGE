@@ -9,11 +9,8 @@ Construction type: Subsea. AC. Zero wildfire. Dual parallel cables (capacity_at_
 """
 
 import copy
-from pathlib import Path
 
 from scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     """Patch S9 inputs with Vineyard Wind 1 subsea cable values."""

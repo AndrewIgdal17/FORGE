@@ -306,7 +306,7 @@ var TOUR_STEPS = (function () {
       {
         target: '.sidebar-section[data-section-id="r-benefits"] .sidebar-section-header',
         title: 'Benefits Breakdown',
-        body: 'The Benefits section works the same way \u2014 expand it to drill into Congestion, Curtailment, Loss Compensation, and Remedial Actions.',
+        body: 'The Benefits section works the same way \u2014 expand it to drill into Congestion Reduction, Remedial Benefits, Enabling Benefits, Avoided Emissions, and Line Loss Compensation Emissions.',
         position: 'right'
       },
       {

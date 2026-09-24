@@ -8,11 +8,8 @@ under San Francisco Bay. Subsea construction type — first subsea FORGE case st
 """
 
 import copy
-from pathlib import Path
 
 from scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def patch_tbc_inputs(inputs: dict) -> dict:
     """Patch S9 inputs with Trans Bay Cable-specific values."""

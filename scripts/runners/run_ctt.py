@@ -8,11 +8,8 @@ Scenario B: CTT_Counterfactual_Delay7 — what would have happened without CREZ 
 """
 
 import copy
-from pathlib import Path
 
 from scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def patch_ctt_inputs(inputs: dict) -> dict:
     """Patch S1 inputs with CTT Panhandle CREZ values (Scenario A: actual 2yr delay)."""

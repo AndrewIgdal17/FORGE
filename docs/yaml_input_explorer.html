@@ -639,69 +639,58 @@
                     CheckCapitalOnly -->|"Yes"| CapitalScripts["Build Capital-Only Script List"]
                     CheckCapitalOnly -->|"No"| FullScripts["Build Full Script List"]
 
-                    CapitalScripts --> ScriptList1["Scripts: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py"]
+                    CapitalScripts --> ScriptList1["Scripts: scripts/utils/weighted_miles.py<br/>scripts/calc/build_costs.py<br/>scripts/calc/row_costs.py<br/>scripts/calc/environmental_mitigation.py"]
 
-                    FullScripts --> ScriptList2["Always: weighted_miles.py<br/>build_costs.py<br/>row_costs.py<br/>environmental_mitigation.py<br/>revenue.py"]
+                    FullScripts --> ScriptList2["Always: scripts/utils/weighted_miles.py<br/>scripts/calc/build_costs.py<br/>scripts/calc/row_costs.py<br/>scripts/calc/environmental_mitigation.py<br/>scripts/calc/revenue.py"]
 
                     ScriptList2 --> Conditional1{"--no_insurance?"}
-                    Conditional1 -->|"No"| AddInsurance["Add: insurance_costs.py"]
+                    Conditional1 -->|"No"| AddInsurance["Add: scripts/calc/insurance_costs.py"]
                     Conditional1 -->|"Yes"| Conditional2
                     AddInsurance --> Conditional2{"--no_delay_costs?"}
-                    Conditional2 -->|"No"| AddDelay["Add: delay_costs.py"]
+                    Conditional2 -->|"No"| AddDelay["Add: scripts/calc/delay_costs.py"]
                     Conditional2 -->|"Yes"| Conditional3
                     AddDelay --> Conditional3{"--no_wildfire?"}
-                    Conditional3 -->|"No"| AddWildfire["Add: wildfire_costs.py"]
+                    Conditional3 -->|"No"| AddWildfire["Add: scripts/calc/wildfire_costs.py"]
                     Conditional3 -->|"Yes"| Conditional4
                     AddWildfire --> Conditional4{"--no_outages?"}
-                    Conditional4 -->|"No"| AddOutage["Add: outage_costs.py"]
+                    Conditional4 -->|"No"| AddOutage["Add: scripts/calc/outage_costs.py"]
                     Conditional4 -->|"Yes"| AlwaysBenefits
-                    AddOutage --> AlwaysBenefits["Always: congestion_reduction.py"]
+                    AddOutage --> AlwaysBenefits["Always: scripts/calc/congestion_reduction.py"]
 
-                    AlwaysBenefits --> AlwaysEnergy["Always: energy_losses.py"]
+                    AlwaysBenefits --> AlwaysEnergy["Always: scripts/calc/energy_losses.py"]
 
                     AlwaysEnergy --> Conditional5{"--no_oandm?"}
-                    Conditional5 -->|"No"| AddOandM["Add: oandm.py"]
+                    Conditional5 -->|"No"| AddOandM["Add: scripts/calc/oandm.py"]
                     Conditional5 -->|"Yes"| Conditional6
                     AddOandM --> Conditional6{"--no_emissions?"}
-                    Conditional6 -->|"No"| AddEmissions["Add: emissions.py"]
+                    Conditional6 -->|"No"| AddEmissions["Add: scripts/calc/emissions.py"]
                     Conditional6 -->|"Yes"| Conditional7
                     AddEmissions --> Conditional7{"--no_linelosses?"}
-                    Conditional7 -->|"No"| AddLineLosses["Add: line_loss_costs.py"]
+                    Conditional7 -->|"No"| AddLineLosses["Add: scripts/calc/line_loss_costs.py"]
                     Conditional7 -->|"Yes"| ExecuteLoop
 
                     ScriptList1 --> ExecuteLoop["Execute Scripts Sequentially"]
 
-                    ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
+                    ExecuteLoop --> RunScript["For each script:<br/>importlib.import_module + main()"]
 
-                    RunScript --> Subprocess["Run as subprocess<br/>cwd=scripts/<br/>env=os.environ.copy()"]
+                    RunScript --> InProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)<br/>shared JSON aggregator"]
 
-                    Subprocess --> ScriptLoad["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+                    InProcess --> ScriptLoad["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
 
                     ScriptLoad --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
 
-                    ScriptCalc --> ScriptOutput["Script: Write Output<br/>via smart_output<br/>(CSV or JSON)"]
+                    ScriptCalc --> ScriptOutput["Script: Write Output<br/>via SmartOutputManager<br/>(JSON)"]
 
                     ScriptOutput --> MoreScripts{"More scripts?"}
                     MoreScripts -->|"Yes"| RunScript
                     MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
 
                     CheckSuccess -->|"No"| EndError["End: Show error message"]
-                    CheckSuccess -->|"Yes"| CheckOutputMode{"Check FORGE_OUTPUT_MODE"}
-
-                    CheckOutputMode -->|"csv"| CSVMode["CSV Output Mode"]
-                    CheckOutputMode -->|"json"| JSONMode["JSON Output Mode"]
-
-                    CSVMode --> CalcBCR_CSV["Calculate BCR from<br/>batch_summary.csv"]
-                    CalcBCR_CSV --> UpdateCSV["Update batch_summary.csv<br/>with BCR metrics"]
-                    UpdateCSV --> EndCSV["End: CSV files in outputs/"]
-
-                    JSONMode --> AggregateJSON["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
+                    CheckSuccess -->|"Yes"| AggregateJSON["Read shared JSON aggregator<br/>in-process results"]
                     AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
                     CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>forge_results_{id}.json"]
-                    WriteFinalJSON --> CleanupJSON["Clean up intermediate<br/>JSON files"]
-                    CleanupJSON --> EndJSON["End: JSON file in outputs/"]
+                    WriteFinalJSON --> EndJSON["End: JSON results"]
 
-                    EndCSV --> End
                     EndJSON --> End
                     EndError --> End["Complete"]
               </script>
@@ -736,18 +725,17 @@
                     UseDirect --> WriteTemp["Write temp JSON file<br/>forge_api_{id}_*.json"]
                     MergeTemplate --> WriteTemp
 
-                    WriteTemp --> EnsureVenv["Ensure CLI venv exists<br/>and has dependencies"]
-                    EnsureVenv --> SetEnvVars["Set Environment Variables<br/>FORGE_INPUT_MODE=json<br/>FORGE_OUTPUT_MODE=json<br/>FORGE_JSON_DATA_FILE=temp_file<br/>FORGE_SCENARIO_ID={id}"]
+                    WriteTemp --> SetEnvVars["Set Environment Variables<br/>FORGE_OUTPUT_MODE=json<br/>FORGE_SCENARIO_ID={id}"]
 
-                    SetEnvVars --> CallForge["Call forge.py as subprocess<br/>venv/bin/python3 forge.py"]
+                    SetEnvVars --> CallForge["Call run_calculation()<br/>in-process"]
 
-                    CallForge --> ForgeInit["forge.py: Initialize<br/>Generate scenario ID<br/>Set env vars"]
-                    ForgeInit --> BuildScripts["forge.py: Build script list<br/>Based on flags/config"]
-                    BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>weighted_miles.py, build_costs.py, etc."]
+                    CallForge --> ForgeInit["run_calculation: Initialize<br/>Generate scenario ID<br/>Set env vars"]
+                    ForgeInit --> BuildScripts["Build script list<br/>scripts/calc/ modules"]
+                    BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>scripts/utils/weighted_miles.py, scripts/calc/build_costs.py, etc."]
 
-                    ExecuteLoop --> RunScript["For each script:<br/>run_script(script_name)"]
-                    RunScript --> ScriptSubprocess["Script: Run as subprocess<br/>cwd=scripts/"]
-                    ScriptSubprocess --> ScriptLoadJSON["Script: Load Data<br/>via json_loaders<br/>from FORGE_JSON_DATA_FILE"]
+                    ExecuteLoop --> RunScript["For each script:<br/>importlib.import_module + main()"]
+                    RunScript --> ScriptInProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)"]
+                    ScriptInProcess --> ScriptLoadJSON["Script: Load Data<br/>via smart_loaders / json_loaders"]
                     ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations"]
                     ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via json_output_manager<br/>json_output_{id}_*.json"]
                     ScriptOutputJSON --> MoreScripts{"More scripts?"}

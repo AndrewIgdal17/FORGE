@@ -5,11 +5,8 @@ runs both scenarios through the calculation engine, and saves results.
 """
 
 import copy
-from pathlib import Path
 
 from scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
-
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def patch_sunzia_inputs(inputs: dict) -> dict:
     """Patch S9 inputs with SunZia-specific values."""

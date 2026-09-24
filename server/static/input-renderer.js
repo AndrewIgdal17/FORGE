@@ -360,7 +360,7 @@ const TAB_GUIDE_CONTENT = {
     body: 'Outage rates set event frequency per mile by construction type; base duration determines how much energy goes unserved per event, scaled by a construction-type multiplier. You can model increasing risk over time with an optional growth rate.',
     items: ['Base outage duration (hrs/event)', 'Construction-type duration multiplier', 'Outage rate by construction type (outages/mi/yr)', 'Optional outage risk growth rate'],
   },
-  // L4 sub-sub-tabs: System Details — Constraints (single-constraint, two-price decomposition)
+  // L4 sub-sub-tabs: System Details — Constraints (single-constraint, single-price congestion reduction)
   'congestion': {
     oneliner: 'Quantify the transmission constraint your project will relieve.',
     body: 'The single-constraint model captures a targeted constraint that resolves through costlier redispatch (congestion). You\u2019ll specify how many hours per year the constraint binds, the average megawatt exceedance during those hours, and the marginal congestion price \u2014 together, these determine the annual value of relief.',
@@ -4173,7 +4173,7 @@ function renderConstraintsPanel(data) {
     if (l4Idx > 0) panel.style.display = 'none';
 
     if (l4Id === 'congestion') {
-      // Single-constraint, two-price decomposition (constraints + prices, flat paths)
+      // Single-constraint, single-price congestion reduction (constraints + price, flat paths)
       const congFields = [];
       if (!recon) {
         congFields.push({label: 'Flow Factor', path: `${yamlSection}.${yamlRoot}.constraints.flow_factor`, type: 'percent', help: 'Deliverability to targeted constraint [0,1]'});

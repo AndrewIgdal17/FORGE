@@ -1426,7 +1426,7 @@ Benefits = value of the congestion the project removes, plus the benefit of deli
 | $R_{congestion,nonoverlap,annual}$ | Non-overlap-hours congestion relief due to project, MWh/yr          |                                                                             |
 | $C_{new}$                          | New line capacity, MW                                               | Greenfield and reconductoring.                                              |
 | $C_{old}$                          | Old line capacity, MW                                               | Reconductoring only.                                                        |
-| $\Delta C_{remaining}$             | Capacity remaining to address congestion after curtailment, MW      | Curtailment is addressed first in FORGE.                                     |
+| $\Delta C_{remaining}$             | Capacity remaining to address congestion after curtailment, MW      | Curtailment was addressed first in FORGE.                                    |
 | $B_{congestion,annual}$            | Annual benefit from congestion reduction, $/yr                      |                                                                             |
 | $B_{curtailment,annual}$           | Annual benefit from curtailment reduction, $/yr                     |                                                                             |
 | $B_{congestion,lifetime,nominal}$  | Nominal lifetime benefit from congestion reduction, $               |                                                                             |

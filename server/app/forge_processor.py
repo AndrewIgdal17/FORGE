@@ -87,7 +87,7 @@ def run_forge_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         payload: Dictionary containing:
             - combined_data: Full or simplified configuration JSON
             - scenario_id: Optional scenario identifier
-            - input_mode: Accepted for backwards compatibility
+            - input_mode: Must be "json"; pydantic rejects any other value
 
     Returns:
         Dictionary containing calculation results or error information
