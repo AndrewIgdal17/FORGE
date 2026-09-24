@@ -183,6 +183,65 @@ def calculate_emissions_by_year(
 
     return emissions
 
+
+def _as_nested_societal_costs(societal_costs: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+    """Normalize nested or YAML-flat societal cost dicts to nested form.
+
+    Nested: ``{pollutant: {"base_cost_per_kg": float, "growth_rate": float}}``
+    YAML-flat: ``{pollutant_cost_per_kg, pollutant_cost_annual_growth, ...}``
+    """
+    if not societal_costs:
+        return {}
+    first_val = next(iter(societal_costs.values()))
+    if isinstance(first_val, dict) and "base_cost_per_kg" in first_val:
+        return societal_costs
+    nested: Dict[str, Dict[str, float]] = {}
+    prefixes = set()
+    for key in societal_costs:
+        if key.endswith("_cost_per_kg"):
+            prefixes.add(key[: -len("_cost_per_kg")])
+        elif key.endswith("_cost_annual_growth"):
+            prefixes.add(key[: -len("_cost_annual_growth")])
+    for pollutant in prefixes:
+        nested[pollutant] = {
+            "base_cost_per_kg": float(
+                societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
+            ),
+            "growth_rate": float(
+                societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
+            ),
+        }
+    return nested
+
+
+def monetize_annual_emissions(
+    emissions_by_pollutant: dict,
+    societal_costs: dict,
+    year_idx: int,
+) -> float:
+    """Compute total social cost for one year's emissions across all pollutants.
+
+    Args:
+        emissions_by_pollutant: {pollutant: kg} for one year
+        societal_costs: {pollutant: {"base_cost_per_kg": float, "growth_rate": float}}
+            Also accepts YAML-flat keys ({pollutant}_cost_per_kg /
+            {pollutant}_cost_annual_growth) used by load_emissions_details().
+        year_idx: 0-based year index (for cost escalation)
+
+    Returns:
+        Total cost ($) for this year, nominal (undiscounted).
+    """
+    nested = _as_nested_societal_costs(societal_costs)
+    total = 0.0
+    for pollutant, kg in emissions_by_pollutant.items():
+        if pollutant not in nested:
+            continue
+        sc = nested[pollutant]
+        cost_per_kg = sc["base_cost_per_kg"] * (1 + sc["growth_rate"]) ** year_idx
+        total += kg * cost_per_kg
+    return total
+
+
 def calculate_lifetime_emissions(
     total_losses_mwh_per_year: float,
     alpha_compensation: float,
@@ -230,32 +289,22 @@ def calculate_lifetime_emissions(
         )
         yearly_emissions.append(emissions)
 
-        # Calculate costs for this year: C_k = E_k x c_k(tau)
-        year_cost = 0.0
-        for pollutant, emissions_kg in emissions.items():
-            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
-            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
-            cost_per_kg = base_cost * (1 + growth) ** (year - 1)
-            pollutant_cost = emissions_kg * cost_per_kg
-            year_cost += pollutant_cost
-            total_emissions[pollutant] += emissions_kg
-            total_costs_by_pollutant[pollutant] += pollutant_cost
-
+        year_idx = year - 1
+        year_cost = monetize_annual_emissions(emissions, societal_costs, year_idx)
         yearly_costs.append(year_cost)
         annual_values.append(year_cost)
         lifetime_cost += year_cost
 
-        # Calculate present value for this year
         year_discount_year = start_year + year - 1
         year_pv = year_cost / ((1 + social_discount_rate) ** year_discount_year)
         lifetime_cost_pv += year_pv
 
-        # Track PV by pollutant
         for pollutant, emissions_kg in emissions.items():
-            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
-            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
-            cost_per_kg = base_cost * (1 + growth) ** (year - 1)
-            pollutant_cost = emissions_kg * cost_per_kg
+            total_emissions[pollutant] += emissions_kg
+            pollutant_cost = monetize_annual_emissions(
+                {pollutant: emissions_kg}, societal_costs, year_idx
+            )
+            total_costs_by_pollutant[pollutant] += pollutant_cost
             pollutant_pv = pollutant_cost / (
                 (1 + social_discount_rate) ** year_discount_year
             )

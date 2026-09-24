@@ -30,6 +30,7 @@ from scripts.calc.emissions import (
     calculate_emissions_by_year,
     compute_cod_state,
     build_mix_input,
+    monetize_annual_emissions,
 )
 from scripts.utils.smart_loaders import (
     load_emissions_details,
@@ -81,14 +82,7 @@ def _compute_instance_costs(
         emissions = calculate_emissions_by_year(
             energy_delivered_annual_mwh, energy_mix, emission_intensities
         )
-        year_cost = 0.0
-        for pollutant, emissions_kg in emissions.items():
-            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
-            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
-            cost_per_kg = base_cost * (1 + growth) ** year_idx
-            pollutant_cost = emissions_kg * cost_per_kg
-            year_cost += pollutant_cost
-
+        year_cost = monetize_annual_emissions(emissions, societal_costs, year_idx)
         total_nominal += year_cost
         annual_values.append(year_cost)
 
@@ -98,10 +92,9 @@ def _compute_instance_costs(
         total_pv += year_pv
 
         for pollutant, emissions_kg in emissions.items():
-            base_cost = societal_costs.get(f"{pollutant}_cost_per_kg", 0.0)
-            growth = societal_costs.get(f"{pollutant}_cost_annual_growth", 0.0)
-            cost_per_kg = base_cost * (1 + growth) ** year_idx
-            pollutant_cost = emissions_kg * cost_per_kg
+            pollutant_cost = monetize_annual_emissions(
+                {pollutant: emissions_kg}, societal_costs, year_idx
+            )
             pollutant_pv = pollutant_cost / (
                 (1 + social_discount_rate) ** discount_year
             )
