@@ -261,6 +261,82 @@ def _build_scripts_list(
     return scripts
 
 
+def _bootstrap_run_context() -> "RunContext":
+    """Load YAML data once and populate the shared RunContext.
+
+    Called by both run_calculation() and main(). Returns the populated
+    RunContext; also calls set_run_context() and add_derived() as side effects.
+    """
+    from scripts.utils.smart_loaders import get_physical_data_raw
+    from scripts.io.yaml_loaders import (
+        load_project_technical_details, load_financing_details,
+        load_contingencies, load_row_widths,
+    )
+    from scripts.utils.calculation_utils import build_category_string
+    from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
+    from scripts.utils.financial_utils import (
+        calculate_afudc_rate, calculate_cod_year, calculate_construction_start_year,
+    )
+    from scripts.utils.smart_loaders import get_financing_data_raw
+
+    project_details = load_project_technical_details()
+    financing = load_financing_details()
+    contingencies = load_contingencies()
+    physical_raw = get_physical_data_raw()
+    terrain_miles = physical_raw["terrain"]["terrain_miles"]
+    terrain_multipliers = physical_raw["terrain"]["terrain_multipliers"]
+    total_miles = sum(v for v in terrain_miles.values() if v is not None)
+    category_string = build_category_string(project_details=project_details)
+    row_width_feet = load_row_widths(category_string)
+    weighted_miles, avg_terrain_mult = _calc_wm()
+
+    fin_raw = get_financing_data_raw()
+    afudc_rate, afudc_source = calculate_afudc_rate(fin_raw)
+    cod_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
+    construction_start_year = calculate_construction_start_year(project_details.delay_years)
+
+    ctx = RunContext(
+        project_details=project_details,
+        terrain_miles=terrain_miles,
+        terrain_multipliers=terrain_multipliers,
+        total_miles=total_miles,
+        financing=financing,
+        contingencies=contingencies,
+        category_string=category_string,
+        row_width_feet=row_width_feet,
+        weighted_miles=weighted_miles,
+        average_terrain_multiplier=avg_terrain_mult,
+        number_of_converters=project_details.number_of_converters,
+        social_discount_rate=fin_raw["financial"].get("social_discount_rate", 0),
+        afudc_rate=afudc_rate,
+        afudc_source=afudc_source,
+        cod_year=cod_year,
+        construction_start_year=construction_start_year,
+    )
+    set_run_context(ctx)
+
+    add_derived({
+        "category_string": category_string,
+        "row_width_feet": row_width_feet,
+        "weighted_miles": weighted_miles,
+        "average_terrain_multiplier": avg_terrain_mult,
+        "total_miles": total_miles,
+        "terrain_miles": terrain_miles,
+        "terrain_multipliers": terrain_multipliers,
+        "wacc_real": financing.wacc_real,
+        "wacc_nominal": financing.wacc_nominal,
+        "inflation_rate": financing.inflation_rate,
+        "social_discount_rate": fin_raw["financial"].get("social_discount_rate", 0),
+        "afudc_rate": afudc_rate,
+        "afudc_source": afudc_source,
+        "cod_year": cod_year,
+        "construction_start_year": construction_start_year,
+        "contingencies": contingencies,
+    })
+
+    return ctx
+
+
 def run_calculation(
     combined_data: dict[str, Any],
     scenario_id: str,
@@ -304,73 +380,7 @@ def run_calculation(
             set_output_manager(aggregator)
 
             # Populate RunContext: load shared data once for the entire run
-            from scripts.utils.smart_loaders import get_physical_data_raw
-            from scripts.io.yaml_loaders import (
-                load_project_technical_details, load_financing_details,
-                load_contingencies, load_row_widths,
-            )
-            from scripts.utils.calculation_utils import build_category_string
-            from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
-
-            _project_details = load_project_technical_details()
-            _financing = load_financing_details()
-            _contingencies = load_contingencies()
-            _physical_raw = get_physical_data_raw()
-            _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
-            _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
-            _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
-            _category_string = build_category_string(project_details=_project_details)
-            _row_width_feet = load_row_widths(_category_string)
-            _weighted_miles, _avg_terrain_mult = _calc_wm()
-
-            from scripts.utils.financial_utils import (
-                calculate_afudc_rate as _calc_afudc,
-                calculate_cod_year as _calc_cod,
-                calculate_construction_start_year as _calc_cstart,
-            )
-            from scripts.utils.smart_loaders import get_financing_data_raw
-            _fin_raw = get_financing_data_raw()
-            _afudc_rate, _afudc_source = _calc_afudc(_fin_raw)
-            _cod_year = _calc_cod(_project_details.delay_years, _project_details.construction_years)
-            _construction_start_year = _calc_cstart(_project_details.delay_years)
-
-            set_run_context(RunContext(
-                project_details=_project_details,
-                terrain_miles=_terrain_miles,
-                terrain_multipliers=_terrain_multipliers,
-                total_miles=_total_miles,
-                financing=_financing,
-                contingencies=_contingencies,
-                category_string=_category_string,
-                row_width_feet=_row_width_feet,
-                weighted_miles=_weighted_miles,
-                average_terrain_multiplier=_avg_terrain_mult,
-                number_of_converters=_project_details.number_of_converters,
-                social_discount_rate=_fin_raw["financial"].get("social_discount_rate", 0),
-                afudc_rate=_afudc_rate,
-                afudc_source=_afudc_source,
-                cod_year=_cod_year,
-                construction_start_year=_construction_start_year,
-            ))
-
-            add_derived({
-                "category_string": _category_string,
-                "row_width_feet": _row_width_feet,
-                "weighted_miles": _weighted_miles,
-                "average_terrain_multiplier": _avg_terrain_mult,
-                "total_miles": _total_miles,
-                "terrain_miles": _terrain_miles,
-                "terrain_multipliers": _terrain_multipliers,
-                "wacc_real": _financing.wacc_real,
-                "wacc_nominal": _financing.wacc_nominal,
-                "inflation_rate": _financing.inflation_rate,
-                "social_discount_rate": _fin_raw["financial"].get("social_discount_rate", 0),
-                "afudc_rate": _afudc_rate,
-                "afudc_source": _afudc_source,
-                "cod_year": _cod_year,
-                "construction_start_year": _construction_start_year,
-                "contingencies": _contingencies,
-            })
+            _bootstrap_run_context()
 
             scripts = _build_scripts_list(
                 no_emissions=no_emissions,
@@ -604,73 +614,7 @@ def main() -> None:
     set_output_manager(aggregator)
 
     # Populate RunContext: load shared data once for the entire run
-    from scripts.utils.smart_loaders import get_physical_data_raw
-    from scripts.io.yaml_loaders import (
-        load_project_technical_details, load_financing_details,
-        load_contingencies, load_row_widths,
-    )
-    from scripts.utils.calculation_utils import build_category_string
-    from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
-
-    _project_details = load_project_technical_details()
-    _financing = load_financing_details()
-    _contingencies = load_contingencies()
-    _physical_raw = get_physical_data_raw()
-    _terrain_miles = _physical_raw["terrain"]["terrain_miles"]
-    _terrain_multipliers = _physical_raw["terrain"]["terrain_multipliers"]
-    _total_miles = sum(v for v in _terrain_miles.values() if v is not None)
-    _category_string = build_category_string(project_details=_project_details)
-    _row_width_feet = load_row_widths(_category_string)
-    _weighted_miles, _avg_terrain_mult = _calc_wm()
-
-    from scripts.utils.financial_utils import (
-        calculate_afudc_rate as _calc_afudc_cli,
-        calculate_cod_year as _calc_cod_cli,
-        calculate_construction_start_year as _calc_cstart_cli,
-    )
-    from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
-    _fin_raw_cli = _get_fin_raw_cli()
-    _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_fin_raw_cli)
-    _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
-    _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
-
-    set_run_context(RunContext(
-        project_details=_project_details,
-        terrain_miles=_terrain_miles,
-        terrain_multipliers=_terrain_multipliers,
-        total_miles=_total_miles,
-        financing=_financing,
-        contingencies=_contingencies,
-        category_string=_category_string,
-        row_width_feet=_row_width_feet,
-        weighted_miles=_weighted_miles,
-        average_terrain_multiplier=_avg_terrain_mult,
-        number_of_converters=_project_details.number_of_converters,
-        social_discount_rate=_fin_raw_cli["financial"].get("social_discount_rate", 0),
-        afudc_rate=_afudc_rate_cli,
-        afudc_source=_afudc_source_cli,
-        cod_year=_cod_year_cli,
-        construction_start_year=_cstart_cli,
-    ))
-
-    add_derived({
-        "category_string": _category_string,
-        "row_width_feet": _row_width_feet,
-        "weighted_miles": _weighted_miles,
-        "average_terrain_multiplier": _avg_terrain_mult,
-        "total_miles": _total_miles,
-        "terrain_miles": _terrain_miles,
-        "terrain_multipliers": _terrain_multipliers,
-        "wacc_real": _financing.wacc_real,
-        "wacc_nominal": _financing.wacc_nominal,
-        "inflation_rate": _financing.inflation_rate,
-        "social_discount_rate": _fin_raw_cli["financial"].get("social_discount_rate", 0),
-        "afudc_rate": _afudc_rate_cli,
-        "afudc_source": _afudc_source_cli,
-        "cod_year": _cod_year_cli,
-        "construction_start_year": _cstart_cli,
-        "contingencies": _contingencies,
-    })
+    _bootstrap_run_context()
 
     os.environ["FORGE_OUTPUT_MODE"] = "json"
 
