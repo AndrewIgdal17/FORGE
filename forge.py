@@ -152,6 +152,7 @@ def write_final_json_output(
     csv_equivalent: dict | None = None,
     summary_override: dict | None = None,
     taxonomy_results_json: list | None = None,
+    simple: bool = False,
 ):
     """
     Write the final aggregated JSON output file.
@@ -163,6 +164,8 @@ def write_final_json_output(
         output_dir: Directory to write the output file
         csv_equivalent: Flat dict aligned with CSV schema
         summary_override: Summary aligned with CSV/BCR totals
+        taxonomy_results_json: Taxonomy-adapted results for the JSON payload
+        simple: If True, suppress trajectory-failure warnings (CLI --simple)
     """
     # Add BCR results if available
     if bcr_results:
@@ -180,6 +183,22 @@ def write_final_json_output(
         results["summary"] = summary_override
     if taxonomy_results_json is not None:
         results["taxonomy_results"] = taxonomy_results_json
+
+    # Compute BCR trajectory (year-by-year reconstruction). CLI has no
+    # in-memory combined_data, so rebuild it from the YAML files on disk.
+    if bcr_results:
+        try:
+            from scripts.calc.bcr_trajectory import compute_trajectory
+            from scripts.utils.path_config import YAMLS_DIR
+            combined_data = {}
+            for yaml_file in YAMLS_DIR.glob("*.yaml"):
+                key = yaml_file.stem
+                with open(yaml_file) as _f:
+                    combined_data[key] = yaml.safe_load(_f) or {}
+            results["trajectory"] = compute_trajectory(results, combined_data)
+        except Exception as e:
+            if not simple:
+                print(f"⚠️  BCR trajectory computation failed: {e}", file=sys.stderr)
 
     _ctx = get_run_context()
     if _ctx is not None and _ctx.derived_parameters:
@@ -767,6 +786,7 @@ def main() -> None:
                 csv_equivalent=csv_equivalent,
                 summary_override=summary_override,
                 taxonomy_results_json=taxonomy_results_json,
+                simple=args.simple,
             )
 
             if not args.simple:
