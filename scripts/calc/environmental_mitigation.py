@@ -160,12 +160,13 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    from scripts.utils.calculation_utils import build_category_string
     ctx = get_run_context()
-    if ctx is not None:
-        category = ctx.category_string
-    else:
-        category = build_category_string(project_details=project_details)
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    category = ctx.category_string
 
     # Load ROW width for this project category
     row_width_feet = load_row_widths(category)
@@ -181,28 +182,15 @@ def main() -> None:
     # Appendix §3: C_marine,env = r_marine,env × C_subsea,CAPEX from build costs.
     subsea_capex = 0.0
     if project_details.construction_type == "Subsea":
-        if ctx is not None and ctx.build_costs is not None:
-            subsea_capex = (
-                ctx.build_costs.conductor_cost_with_contingencies
-                + ctx.build_costs.structure_cost_with_contingencies
+        if ctx.build_costs is None:
+            raise RuntimeError(
+                f"{__name__} requires a RunContext. Run via forge.py or set up "
+                "RunContext in your test fixture."
             )
-        else:
-            from scripts.calc.build_costs import load_and_escalate_costs
-            from scripts.io.yaml_loaders import load_contingencies
-            contingencies = load_contingencies()
-            n_conv = (
-                ctx.number_of_converters
-                if ctx is not None
-                else project_details.number_of_converters
-            )
-            costs = load_and_escalate_costs(
-                category, n_conv, contingencies,
-                project_details.project_type, project_details,
-            )
-            subsea_capex = (
-                costs.conductor_cost_with_contingencies
-                + costs.structure_cost_with_contingencies
-            )
+        subsea_capex = (
+            ctx.build_costs.conductor_cost_with_contingencies
+            + ctx.build_costs.structure_cost_with_contingencies
+        )
 
     # Calculate environmental mitigation costs (nominal)
     rebuild_env_mitigation_fraction = em_yaml.get(

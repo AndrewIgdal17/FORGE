@@ -196,13 +196,14 @@ def main() -> None:
     """Main function to calculate and display outage costs."""
     project_details = load_project_technical_details()
 
-    from scripts.utils.calculation_utils import build_category_string
     from scripts.utils.run_context import get_run_context
     ctx = get_run_context()
-    if ctx is not None:
-        category = ctx.category_string
-    else:
-        category = build_category_string(project_details=project_details)
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    category = ctx.category_string
 
     from scripts.utils.smart_loaders import load_terrain_miles, load_circuit_and_resistance_details
     terrain_miles = load_terrain_miles()

@@ -18,7 +18,6 @@ from scripts.utils.smart_loaders import (
     load_physical_details,
     load_contingencies,
     load_financing_details,
-    get_project_data_raw,
     get_financing_data_raw,
 )
 from scripts.utils.financial_utils import (
@@ -207,7 +206,7 @@ def load_and_escalate_costs(
             overrides = {k: v for k, v in raw_ov.items() if v is not None}
             if not overrides:
                 overrides = None
-    except Exception:
+    except (FileNotFoundError, KeyError, ValueError, yaml.YAMLError):
         pass
 
     costs = load_costs(
@@ -245,25 +244,14 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    from scripts.utils.calculation_utils import build_category_string
     ctx = get_run_context()
-    if ctx is not None:
-        category = ctx.category_string
-    else:
-        category = build_category_string(project_details=project_details)
-
-    if ctx is not None:
-        number_of_converters = ctx.number_of_converters
-    else:
-        # Standalone fallback: read from YAML directly
-        project_data = get_project_data_raw()
-        project = project_data.get("project", {})
-        if project_details.ac_dc == "DC":
-            if "number_of_converters" not in project:
-                raise KeyError("Missing 'number_of_converters' for DC project")
-            number_of_converters = int(project["number_of_converters"])
-        else:
-            number_of_converters = 0
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    category = ctx.category_string
+    number_of_converters = ctx.number_of_converters
 
     total_miles = load_physical_details()
     contingencies = load_contingencies()

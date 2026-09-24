@@ -144,16 +144,12 @@ def load_project_details() -> LineLossProjectDetails:
         benefit_price_escalation_real = congestion_params.benefit_price_escalation_real
 
         ctx = get_run_context()
-        if ctx is not None:
-            number_of_converters = ctx.number_of_converters
-        else:
-            # Standalone fallback: read from YAML directly
-            if ac_dc == "DC":
-                if "number_of_converters" not in project:
-                    raise KeyError("Missing 'number_of_converters' for DC project")
-                number_of_converters = int(project["number_of_converters"])
-            else:
-                number_of_converters = 0
+        if ctx is None:
+            raise RuntimeError(
+                f"{__name__} requires a RunContext. Run via forge.py or set up "
+                "RunContext in your test fixture."
+            )
+        number_of_converters = ctx.number_of_converters
 
         # Get greenfield comparison fields (optional, only for greenfield projects)
         greenfield_comparison_capacity_mw = project.get(

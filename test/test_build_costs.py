@@ -2,6 +2,8 @@
 import inspect
 import textwrap
 
+import pytest
+
 from scripts.calc.build_costs import load_costs
 
 
@@ -211,3 +213,23 @@ def test_load_and_escalate_costs_applies_overrides(tmp_path, monkeypatch):
     )
     assert without_overrides.converter_cost == 4_000.0
     assert with_overrides.converter_cost == 19_998.0  # 9999 * 2 converters
+
+
+def test_load_and_escalate_costs_does_not_swallow_unexpected_errors(tmp_path, monkeypatch):
+    """Override YAML I/O may skip missing files; unexpected errors must propagate."""
+    import yaml as _yaml
+    from scripts.calc.build_costs import load_and_escalate_costs
+
+    details = _patch_load_and_escalate(tmp_path, monkeypatch)
+    real_safe_load = _yaml.safe_load
+    calls = {"n": 0}
+
+    def _maybe_explode(stream):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("yaml exploded")
+        return real_safe_load(stream)
+
+    monkeypatch.setattr("scripts.calc.build_costs.yaml.safe_load", _maybe_explode)
+    with pytest.raises(RuntimeError, match="yaml exploded"):
+        load_and_escalate_costs("test_cat", 2, _CONTINGENCIES, "greenfield", details)

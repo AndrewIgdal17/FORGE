@@ -83,14 +83,15 @@ def main() -> None:
     project_details = load_project_technical_details()
 
     # Construct category identifier
-    from scripts.utils.calculation_utils import build_category_string
     from scripts.utils.run_context import get_run_context
 
     ctx = get_run_context()
-    if ctx is not None:
-        category = ctx.category_string
-    else:
-        category = build_category_string(project_details=project_details)
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    category = ctx.category_string
 
     # Load row width for this project category
     row_width_feet = load_row_widths(category)

@@ -17,7 +17,6 @@ from scripts.io.yaml_loaders import (
     load_physical_details_detailed,
 )
 from scripts.utils.financial_utils import calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
-from scripts.utils.calculation_utils import build_category_string
 from scripts.utils.path_config import YAMLS_DIR
 from scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
 from scripts.utils.run_context import get_run_context, add_derived
@@ -76,29 +75,12 @@ def load_converter_om_costs(
         float: Total annual converter O&M cost ($/year), NOT per-mile.
     """
     ctx = get_run_context()
-    if ctx is not None and ctx.build_costs is not None:
-        converter_capex = ctx.build_costs.converter_cost_with_contingencies
-    else:
-        from scripts.calc.build_costs import load_and_escalate_costs
-        from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
-        project_details = load_project_technical_details()
-        contingencies = load_contingencies()
-        if ctx is not None:
-            category = ctx.category_string
-        else:
-            category = build_category_string(
-                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-            )
-        n_conv = (
-            ctx.number_of_converters
-            if ctx is not None
-            else project_details.number_of_converters
+    if ctx is None or ctx.build_costs is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
         )
-        costs = load_and_escalate_costs(
-            category, n_conv, contingencies,
-            project_details.project_type, project_details,
-        )
-        converter_capex = costs.converter_cost_with_contingencies
+    converter_capex = ctx.build_costs.converter_cost_with_contingencies
 
     # Appendix §4: ξ_DC gates converter O&M by project type (not upstream CAPEX value)
     xi_dc = 1.0 if ac_dc == "DC" else 0.0
@@ -165,35 +147,15 @@ def load_nonoverhead_line_om(
         )
 
     ctx = get_run_context()
-    if ctx is not None and ctx.build_costs is not None:
-        line_capex = (
-            ctx.build_costs.conductor_cost_with_contingencies
-            + ctx.build_costs.structure_cost_with_contingencies
+    if ctx is None or ctx.build_costs is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
         )
-    else:
-        from scripts.calc.build_costs import load_and_escalate_costs
-        from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
-        project_details = load_project_technical_details()
-        contingencies = load_contingencies()
-        if ctx is not None:
-            category = ctx.category_string
-        else:
-            category = build_category_string(
-                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-            )
-        n_conv = (
-            ctx.number_of_converters
-            if ctx is not None
-            else project_details.number_of_converters
-        )
-        costs = load_and_escalate_costs(
-            category, n_conv, contingencies,
-            project_details.project_type, project_details,
-        )
-        line_capex = (
-            costs.conductor_cost_with_contingencies
-            + costs.structure_cost_with_contingencies
-        )
+    line_capex = (
+        ctx.build_costs.conductor_cost_with_contingencies
+        + ctx.build_costs.structure_cost_with_contingencies
+    )
 
     return line_capex * om_rate
 

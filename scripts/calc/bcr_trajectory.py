@@ -317,6 +317,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     cum_revenue = 0.0
     cum_C_delay = 0.0
     cum_base_delay = 0.0
+    cum_line_loss = 0.0
 
     trajectory: list[dict] = []
 
@@ -326,6 +327,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         pv_B_remedial = pv_B_enabling = pv_B_avoided_emissions = 0.0
         pv_soft_op_year = 0.0
         pv_revenue_year = 0.0
+        pv_line_loss_year = 0.0
 
         # ROW rent: own payment window (may start pre-COD for lease/license
         # agreements), independent of the delay/construction/operation phases
@@ -367,6 +369,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                     pv_B_enabling += val
                 elif s.category == "C_soft_op":
                     pv_soft_op_year += val
+                    if s.key == "energy_losses_annual_cost":
+                        pv_line_loss_year += val
 
             for s in risk_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
@@ -411,6 +415,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_B_avoided_emissions += pv_B_avoided_emissions
         cum_C_soft_op += pv_soft_op_year
         cum_revenue += pv_revenue_year
+        cum_line_loss += pv_line_loss_year
 
         cum_C_total = cum_C_hard + cum_C_soft + cum_C_risk + cum_C_emissions
         cum_B_total = cum_B_remedial + cum_B_enabling + cum_B_avoided_emissions
@@ -442,14 +447,18 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         npv_excl_emissions_costs = cum_B_total - denom_excl_emissions if bcr_excl_emissions_costs is not None else None
         npv_excl_all_emissions = num_excl_all_emissions - denom_excl_emissions if bcr_excl_all_emissions is not None else None
 
-        denom_utility = cum_revenue + cum_base_delay
-        bcr_utility = cum_revenue / denom_utility if denom_utility > 0 else None
+        # ATRR = capital recovery + O&M + insurance + ROW rent (taxonomy
+        # revenue_requirement). Line losses live in cum_C_soft_op but are not
+        # in ATRR; congestion delay is not in atrr_delay (base_delay only).
+        atrr = cum_revenue + cum_C_soft_op - cum_line_loss
+        denom_utility = atrr + cum_base_delay
+        bcr_utility = atrr / denom_utility if denom_utility > 0 else None
         num_excl_av_em = cum_B_total - cum_B_avoided_emissions
         bcr_excl_avoided_emissions = num_excl_av_em / cum_C_total if cum_C_total > 0 else None
         denom_excl_wf = cum_C_total - cum_C_risk_wf
         bcr_excl_wildfire = cum_B_total / denom_excl_wf if denom_excl_wf > 0 else None
 
-        npv_utility = cum_revenue - denom_utility if bcr_utility is not None else None
+        npv_utility = atrr - denom_utility if bcr_utility is not None else None
         npv_excl_avoided_emissions = num_excl_av_em - cum_C_total if bcr_excl_avoided_emissions is not None else None
         npv_excl_wildfire = cum_B_total - denom_excl_wf if bcr_excl_wildfire is not None else None
 
