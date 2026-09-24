@@ -110,7 +110,7 @@ python3 compare_scenarios.py
 
 ## Cost Modules
 
-FORGE calculates 13 cost and benefit categories:
+FORGE calculates 12 cost and benefit categories:
 
 **Capital Costs:**
 1. **Build Costs** - Conductors, structures, converters with AFUDC
@@ -131,11 +131,10 @@ FORGE calculates 13 cost and benefit categories:
 10. **Delays** - Construction delay impacts
 
 **Benefits:**
-11. **Congestion** - Congestion reduction benefits
-12. **Curtailment** - Curtailment reduction benefits
+11. **Congestion Reduction** - Congestion reduction benefits
 
 **Analysis:**
-13. **BCR** - Benefit-cost ratio calculations
+12. **BCR** - Benefit-cost ratio calculations
 
 ## Common Workflows
 
@@ -300,11 +299,11 @@ venv/bin/python3 forge.py -j
 
 ### Adding a New Cost Module
 
-1. Create module file: `scripts/new_module.py`
+1. Create module file: `scripts/calc/new_module.py`
 2. Use smart loaders:
    ```python
    from smart_loaders import load_project_technical_details
-   from smart_output import FORGEOutputManager
+   from scripts.utils.smart_output import SmartOutputManager
    ```
 3. Add to `forge.py` script list
 4. Update documentation
