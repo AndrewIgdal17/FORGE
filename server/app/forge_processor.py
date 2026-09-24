@@ -12,8 +12,8 @@ from datetime import datetime
 from .models import UserMergeInput
 
 FORGE_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(FORGE_ROOT))
-sys.path.insert(0, str(FORGE_ROOT / "scripts"))
+if str(FORGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(FORGE_ROOT))
 
 from forge import run_calculation
 

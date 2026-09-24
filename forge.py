@@ -22,21 +22,32 @@ from datetime import datetime
 
 import yaml
 
-# Add scripts directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
-from csv_output_manager import BATCH_SUMMARY_FIELDS
-from run_context import (
+from scripts.io.csv_output_manager import BATCH_SUMMARY_FIELDS
+from scripts.utils.run_context import (
     set_output_manager, get_output_manager, clear_output_manager,
     RunContext, set_run_context, get_run_context, clear_run_context,
     add_derived,
 )
 
 _PRELOAD_MODULES = [
-    "weighted_miles", "build_costs", "row_costs", "environmental_mitigation",
-    "revenue", "insurance_costs", "delay_costs", "wildfire_costs",
-    "outage_costs", "congestion_curtailment_reduction", "energy_losses",
-    "oandm", "emissions", "facilitated_emissions", "displacement_delay_cost",
-    "line_loss_costs", "taxonomy_adapters", "bcr_calculator",
+    "scripts.utils.weighted_miles",
+    "scripts.calc.build_costs",
+    "scripts.calc.row_costs",
+    "scripts.calc.environmental_mitigation",
+    "scripts.calc.revenue",
+    "scripts.calc.insurance_costs",
+    "scripts.calc.delay_costs",
+    "scripts.calc.wildfire_costs",
+    "scripts.calc.outage_costs",
+    "scripts.calc.congestion_curtailment_reduction",
+    "scripts.calc.energy_losses",
+    "scripts.calc.oandm",
+    "scripts.calc.emissions",
+    "scripts.calc.facilitated_emissions",
+    "scripts.calc.displacement_delay_cost",
+    "scripts.calc.line_loss_costs",
+    "scripts.io.taxonomy_adapters",
+    "scripts.calc.bcr_calculator",
 ]
 for _mod_name in _PRELOAD_MODULES:
     importlib.import_module(_mod_name)
@@ -48,11 +59,22 @@ _calculation_lock = threading.Lock()
 def _set_yamls_dir(new_path: Path) -> None:
     """Patch YAMLS_DIR across path_config and all modules that cached it at import time."""
     os.environ["FORGE_YAMLS_DIR"] = str(new_path)
-    import path_config
+    from scripts.utils import path_config
     path_config.YAMLS_DIR = new_path
     for mod in sys.modules.values():
         if mod and hasattr(mod, "YAMLS_DIR") and mod is not path_config:
             mod.YAMLS_DIR = new_path
+
+
+def _module_to_script_path(module_name: str) -> str:
+    """Map a dotted package name to a path relative to scripts/.
+
+    ``scripts.calc.build_costs`` → ``calc/build_costs.py``
+    """
+    parts = module_name.split(".")
+    if parts and parts[0] == "scripts":
+        parts = parts[1:]
+    return str(Path(*parts).with_suffix(".py"))
 
 
 def run_script(script_name: str, quiet: bool = False) -> bool:
@@ -60,7 +82,7 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
     Run a Python script and capture its output.
 
     Args:
-        script_name (str): Name of the script to run
+        script_name (str): Dotted module name (e.g. scripts.calc.build_costs)
         quiet (bool): If True, suppress output messages
 
     Returns:
@@ -70,7 +92,7 @@ def run_script(script_name: str, quiet: bool = False) -> bool:
         # Pass environment variables explicitly to ensure subprocess scripts can access them
         env = os.environ.copy()
         result = subprocess.run(
-            [sys.executable, script_name],
+            [sys.executable, _module_to_script_path(script_name)],
             capture_output=True,
             text=True,
             cwd="scripts",
@@ -157,7 +179,7 @@ def aggregate_json_outputs(scenario_id: str, output_dir: str = "outputs") -> dic
     Returns:
         Aggregated results dictionary
     """
-    from json_output_manager import JSONOutputManager
+    from scripts.io.json_output_manager import JSONOutputManager
 
     # Create a new manager to aggregate results
     aggregator = JSONOutputManager(scenario_id=scenario_id)
@@ -276,39 +298,39 @@ def _build_scripts_list(
     no_oandm: bool = False,
     capital_only: bool = False,
 ) -> list[str]:
-    """Build the ordered list of calculator module filenames to run."""
+    """Build the ordered list of calculator module dotted paths to run."""
     if capital_only:
         return [
-            "weighted_miles.py",
-            "build_costs.py",
-            "row_costs.py",
-            "environmental_mitigation.py",
+            "scripts.utils.weighted_miles",
+            "scripts.calc.build_costs",
+            "scripts.calc.row_costs",
+            "scripts.calc.environmental_mitigation",
         ]
     scripts = [
-        "weighted_miles.py",
-        "build_costs.py",
-        "row_costs.py",
-        "environmental_mitigation.py",
-        "revenue.py",
+        "scripts.utils.weighted_miles",
+        "scripts.calc.build_costs",
+        "scripts.calc.row_costs",
+        "scripts.calc.environmental_mitigation",
+        "scripts.calc.revenue",
     ]
     if not no_insurance:
-        scripts.append("insurance_costs.py")
+        scripts.append("scripts.calc.insurance_costs")
     if not no_delay_costs:
-        scripts.append("delay_costs.py")
+        scripts.append("scripts.calc.delay_costs")
     if not no_wildfire:
-        scripts.append("wildfire_costs.py")
+        scripts.append("scripts.calc.wildfire_costs")
     if not no_outages:
-        scripts.append("outage_costs.py")
-    scripts.append("congestion_curtailment_reduction.py")
-    scripts.append("energy_losses.py")
+        scripts.append("scripts.calc.outage_costs")
+    scripts.append("scripts.calc.congestion_curtailment_reduction")
+    scripts.append("scripts.calc.energy_losses")
     if not no_oandm:
-        scripts.append("oandm.py")
+        scripts.append("scripts.calc.oandm")
     if not no_emissions:
-        scripts.append("emissions.py")
-        scripts.append("facilitated_emissions.py")
-        scripts.append("displacement_delay_cost.py")
+        scripts.append("scripts.calc.emissions")
+        scripts.append("scripts.calc.facilitated_emissions")
+        scripts.append("scripts.calc.displacement_delay_cost")
     if not no_linelosses:
-        scripts.append("line_loss_costs.py")
+        scripts.append("scripts.calc.line_loss_costs")
     return scripts
 
 
@@ -332,7 +354,7 @@ def run_calculation(
     Thread-safe via _calculation_lock (env vars are process-global).
     """
     with _calculation_lock:
-        import path_config
+        from scripts.utils import path_config
         saved_yamls_dir = path_config.YAMLS_DIR
         saved_env = {
             k: os.environ.get(k)
@@ -350,18 +372,18 @@ def run_calculation(
             os.environ["FORGE_SCENARIO_ID"] = scenario_id
             os.environ["FORGE_OUTPUT_MODE"] = "json"
 
-            from json_output_manager import JSONOutputManager
+            from scripts.io.json_output_manager import JSONOutputManager
             aggregator = JSONOutputManager(scenario_id=scenario_id)
             set_output_manager(aggregator)
 
             # Populate RunContext: load shared data once for the entire run
-            from smart_loaders import get_physical_data_raw
-            from yaml_loaders import (
+            from scripts.utils.smart_loaders import get_physical_data_raw
+            from scripts.io.yaml_loaders import (
                 load_project_technical_details, load_financing_details,
                 load_contingencies, load_row_widths,
             )
-            from calculation_utils import build_category_string
-            from weighted_miles import calculate_weighted_miles as _calc_wm
+            from scripts.utils.calculation_utils import build_category_string
+            from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
 
             _project_details = load_project_technical_details()
             _financing = load_financing_details()
@@ -374,12 +396,12 @@ def run_calculation(
             _row_width_feet = load_row_widths(_category_string)
             _weighted_miles, _avg_terrain_mult = _calc_wm()
 
-            from financial_utils import (
+            from scripts.utils.financial_utils import (
                 calculate_afudc_rate as _calc_afudc,
                 calculate_cod_year as _calc_cod,
                 calculate_construction_start_year as _calc_cstart,
             )
-            from smart_loaders import get_financing_data_raw
+            from scripts.utils.smart_loaders import get_financing_data_raw
             _afudc_rate, _afudc_source = _calc_afudc(get_financing_data_raw())
             _cod_year = _calc_cod(_project_details.delay_years, _project_details.construction_years)
             _construction_start_year = _calc_cstart(_project_details.delay_years)
@@ -436,12 +458,11 @@ def run_calculation(
                 sys.stdout = open(os.devnull, "w")
             try:
                 for script in scripts:
-                    stem = script.replace(".py", "")
                     try:
-                        mod = importlib.import_module(stem)
+                        mod = importlib.import_module(script)
                         t0 = _time.perf_counter()
                         mod.main()
-                        module_timings.append((stem, (_time.perf_counter() - t0) * 1000))
+                        module_timings.append((script, (_time.perf_counter() - t0) * 1000))
                     except Exception:
                         failed_scripts.append(script)
                         if not quiet:
@@ -457,11 +478,11 @@ def run_calculation(
             summary_override = None
             taxonomy_results_json = None
             try:
-                from taxonomy_adapters import (
+                from scripts.io.taxonomy_adapters import (
                     adapt_all_results,
                     taxonomy_results_to_json_list,
                 )
-                from bcr_calculator import compute_all_bcrs
+                from scripts.calc.bcr_calculator import compute_all_bcrs
 
                 t0 = _time.perf_counter()
                 taxonomy_results = adapt_all_results(json_results)
@@ -497,7 +518,7 @@ def run_calculation(
                 results["taxonomy_results"] = taxonomy_results_json
 
             if results.get("bcr"):
-                from bcr_trajectory import compute_trajectory
+                from scripts.calc.bcr_trajectory import compute_trajectory
                 results["trajectory"] = compute_trajectory(results, combined_data)
 
             _ctx = get_run_context()
@@ -667,18 +688,18 @@ def main() -> None:
     # Calculator is JSON-out only; always use JSON aggregator
     in_process_aggregator = None
     if not args.subprocess:
-        from json_output_manager import JSONOutputManager
+        from scripts.io.json_output_manager import JSONOutputManager
         in_process_aggregator = JSONOutputManager(scenario_id=scenario_id)
         set_output_manager(in_process_aggregator)
 
         # Populate RunContext: load shared data once for the entire run
-        from smart_loaders import get_physical_data_raw
-        from yaml_loaders import (
+        from scripts.utils.smart_loaders import get_physical_data_raw
+        from scripts.io.yaml_loaders import (
             load_project_technical_details, load_financing_details,
             load_contingencies, load_row_widths,
         )
-        from calculation_utils import build_category_string
-        from weighted_miles import calculate_weighted_miles as _calc_wm
+        from scripts.utils.calculation_utils import build_category_string
+        from scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
 
         _project_details = load_project_technical_details()
         _financing = load_financing_details()
@@ -704,12 +725,12 @@ def main() -> None:
             average_terrain_multiplier=_avg_terrain_mult,
         ))
 
-        from financial_utils import (
+        from scripts.utils.financial_utils import (
             calculate_afudc_rate as _calc_afudc_cli,
             calculate_cod_year as _calc_cod_cli,
             calculate_construction_start_year as _calc_cstart_cli,
         )
-        from smart_loaders import get_financing_data_raw as _get_fin_raw_cli
+        from scripts.utils.smart_loaders import get_financing_data_raw as _get_fin_raw_cli
         _afudc_rate_cli, _afudc_source_cli = _calc_afudc_cli(_get_fin_raw_cli())
         _cod_year_cli = _calc_cod_cli(_project_details.delay_years, _project_details.construction_years)
         _cstart_cli = _calc_cstart_cli(_project_details.delay_years)
@@ -736,59 +757,16 @@ def main() -> None:
 
     os.environ["FORGE_OUTPUT_MODE"] = "json"
 
-    # List of scripts to run in order
-    # If --capital_only is set, only run capital scripts plus prerequisites
-    if args.capital_only:
-        scripts = [
-            "weighted_miles.py",
-            "build_costs.py",
-            "row_costs.py",
-            "environmental_mitigation.py",
-        ]
-    else:
-        # Always-on scripts (prerequisites and capital costs)
-        scripts = [
-            "weighted_miles.py",  # Always (prerequisite)
-            "build_costs.py",  # Always (capital cost)
-            "row_costs.py",  # Always (capital cost)
-            "environmental_mitigation.py",  # Always (capital cost)
-            "revenue.py",  # Always (revenue)
-        ]
-
-        # Conditionally add insurance costs
-        if not args.no_insurance:
-            scripts.append("insurance_costs.py")
-
-        # Conditionally add delay costs
-        if not args.no_delay_costs:
-            scripts.append("delay_costs.py")
-
-        # Conditionally add risk cost scripts
-        if not args.no_wildfire:
-            scripts.append("wildfire_costs.py")
-        if not args.no_outages:
-            scripts.append("outage_costs.py")
-
-        # Always run congestion_curtailment_reduction.py
-        # (flags control what it calculates via environment variables)
-        scripts.append("congestion_curtailment_reduction.py")
-
-        # Always run energy_losses.py (prerequisite for line_loss_costs)
-        scripts.append("energy_losses.py")
-
-        # Conditionally add O&M costs
-        if not args.no_oandm:
-            scripts.append("oandm.py")
-
-        # Conditionally add emissions and line_loss_costs based on flags
-        if not args.no_emissions:
-            scripts.append("emissions.py")
-            scripts.append("facilitated_emissions.py")
-            scripts.append("displacement_delay_cost.py")
-        if not args.no_linelosses:
-            scripts.append("line_loss_costs.py")
-
-        # Add more scripts as you create them
+    scripts = _build_scripts_list(
+        no_emissions=args.no_emissions,
+        no_linelosses=args.no_linelosses,
+        no_insurance=args.no_insurance,
+        no_delay_costs=args.no_delay_costs,
+        no_wildfire=args.no_wildfire,
+        no_outages=args.no_outages,
+        no_oandm=args.no_oandm,
+        capital_only=args.capital_only,
+    )
 
     successful_runs = 0
     total_runs = len(scripts)
@@ -798,11 +776,11 @@ def main() -> None:
     # Debug: Log which scripts will be run
     if not args.simple:
         print(f"DEBUG: Scripts to run ({total_runs}): {scripts}", file=sys.stderr)
-        if "line_loss_costs.py" in scripts:
-            print("DEBUG: line_loss_costs.py IS in the scripts list", file=sys.stderr)
+        if "scripts.calc.line_loss_costs" in scripts:
+            print("DEBUG: line_loss_costs IS in the scripts list", file=sys.stderr)
         else:
             print(
-                "DEBUG: line_loss_costs.py is NOT in the scripts list!", file=sys.stderr
+                "DEBUG: line_loss_costs is NOT in the scripts list!", file=sys.stderr
             )
 
     for script in scripts:
@@ -810,10 +788,10 @@ def main() -> None:
             print(f"\n🔄 Running {script}...")
 
         if args.subprocess:
-            if script == "line_loss_costs.py":
+            if script == "scripts.calc.line_loss_costs":
                 env = os.environ.copy()
                 result = subprocess.run(
-                    [sys.executable, script],
+                    [sys.executable, _module_to_script_path(script)],
                     capture_output=True,
                     text=True,
                     cwd="scripts",
@@ -830,13 +808,12 @@ def main() -> None:
             else:
                 success = run_script(script, quiet=args.simple)
         else:
-            stem = script.replace(".py", "")
             try:
-                mod = importlib.import_module(stem)
+                mod = importlib.import_module(script)
                 t0 = _time.perf_counter()
                 mod.main()
                 elapsed_ms = (_time.perf_counter() - t0) * 1000
-                module_timings.append((stem, elapsed_ms))
+                module_timings.append((script, elapsed_ms))
                 success = True
             except Exception as e:
                 success = False
@@ -886,11 +863,11 @@ def main() -> None:
             taxonomy_results_json = None
             json_results = aggregator.get_json_results()
             try:
-                from taxonomy_adapters import (
+                from scripts.io.taxonomy_adapters import (
                     adapt_all_results,
                     taxonomy_results_to_json_list,
                 )
-                from bcr_calculator import compute_all_bcrs, print_bcr_summary
+                from scripts.calc.bcr_calculator import compute_all_bcrs, print_bcr_summary
 
                 t0 = _time.perf_counter()
                 taxonomy_results = adapt_all_results(json_results)

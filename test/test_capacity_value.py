@@ -1,10 +1,5 @@
 """Tests for capacity value benefit computation."""
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-
-from congestion_curtailment_reduction import calculate_capacity_value_benefit
-
+from scripts.calc.congestion_curtailment_reduction import calculate_capacity_value_benefit
 
 def test_capacity_value_basic():
     """Gate on, known inputs → expected annual and PV."""
@@ -23,7 +18,6 @@ def test_capacity_value_basic():
     assert abs(result["capacity_value_annual"] - 93_184_000.0) < 1.0
     assert result["capacity_value_pv"] > 0
 
-
 def test_capacity_value_gate_off():
     """Gate off → zero benefit regardless of other inputs."""
     result = calculate_capacity_value_benefit(
@@ -39,7 +33,6 @@ def test_capacity_value_gate_off():
     )
     assert result["capacity_value_annual"] == 0.0
     assert result["capacity_value_pv"] == 0.0
-
 
 def test_capacity_value_zero_credit():
     """Zero capacity credit → zero benefit."""
