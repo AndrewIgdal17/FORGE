@@ -84,8 +84,13 @@ def main() -> None:
 
     # Construct category identifier
     from scripts.utils.calculation_utils import build_category_string
+    from scripts.utils.run_context import get_run_context
 
-    category = build_category_string(project_details=project_details)
+    ctx = get_run_context()
+    if ctx is not None:
+        category = ctx.category_string
+    else:
+        category = build_category_string(project_details=project_details)
 
     # Load row width for this project category
     row_width_feet = load_row_widths(category)

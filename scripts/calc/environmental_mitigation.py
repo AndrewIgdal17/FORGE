@@ -166,7 +166,11 @@ def main() -> None:
 
     # Construct category identifier
     from scripts.utils.calculation_utils import build_category_string
-    category = build_category_string(project_details=project_details)
+    ctx = get_run_context()
+    if ctx is not None:
+        category = ctx.category_string
+    else:
+        category = build_category_string(project_details=project_details)
 
     # Load ROW width for this project category
     row_width_feet = load_row_widths(category)
@@ -182,7 +186,6 @@ def main() -> None:
     # Appendix §3: C_marine,env = r_marine,env × C_subsea,CAPEX from build costs.
     subsea_capex = 0.0
     if project_details.construction_type == "Subsea":
-        ctx = get_run_context()
         if ctx is not None and ctx.build_costs is not None:
             subsea_capex = (
                 ctx.build_costs.conductor_cost_with_contingencies

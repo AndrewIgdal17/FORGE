@@ -54,9 +54,12 @@ def get_total_energy_losses() -> dict:
 
     # Construct new category for resistance lookup
     from scripts.utils.calculation_utils import build_category_string
-    new_category = build_category_string(project_details=project_details)
-
     ctx = get_run_context()
+    if ctx is not None:
+        new_category = ctx.category_string
+    else:
+        new_category = build_category_string(project_details=project_details)
+
     if ctx is not None:
         number_of_converters = ctx.number_of_converters
     else:

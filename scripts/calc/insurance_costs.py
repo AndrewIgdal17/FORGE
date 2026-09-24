@@ -118,9 +118,12 @@ def main() -> None:
     # Construct category identifier
     from scripts.utils.calculation_utils import build_category_string
 
-    category = build_category_string(project_details=project_details)
-
     ctx = get_run_context()
+    if ctx is not None:
+        category = ctx.category_string
+    else:
+        category = build_category_string(project_details=project_details)
+
     if ctx is not None:
         number_of_converters = ctx.number_of_converters
     else:
@@ -135,9 +138,8 @@ def main() -> None:
             number_of_converters = 0
 
     # Load build costs to get insurable asset values
-    _ctx = get_run_context()
-    if _ctx is not None and _ctx.build_costs is not None:
-        costs = _ctx.build_costs
+    if ctx is not None and ctx.build_costs is not None:
+        costs = ctx.build_costs
     else:
         from scripts.calc.build_costs import load_and_escalate_costs
         contingencies = load_contingencies()

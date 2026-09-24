@@ -93,7 +93,13 @@ def load_conductor_om_costs(
             )
         conductor_om_costs = data["project_categories_om_conductors"]
 
-        category = build_category_string(construction_type, ac_dc, capacity_mw, conductor_type, converter_type)
+        ctx = get_run_context()
+        if ctx is not None:
+            category = ctx.category_string
+        else:
+            category = build_category_string(
+                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            )
 
         if category not in conductor_om_costs:
             raise KeyError(f"Category '{category}' not found in conductor O&M YAML")
@@ -141,9 +147,12 @@ def load_converter_om_costs(
         from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
         project_details = load_project_technical_details()
         contingencies = load_contingencies()
-        category = build_category_string(
-            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-        )
+        if ctx is not None:
+            category = ctx.category_string
+        else:
+            category = build_category_string(
+                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            )
         n_conv = (
             ctx.number_of_converters
             if ctx is not None
@@ -230,9 +239,12 @@ def load_nonoverhead_line_om(
         from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
         project_details = load_project_technical_details()
         contingencies = load_contingencies()
-        category = build_category_string(
-            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-        )
+        if ctx is not None:
+            category = ctx.category_string
+        else:
+            category = build_category_string(
+                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            )
         n_conv = (
             ctx.number_of_converters
             if ctx is not None

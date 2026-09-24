@@ -248,9 +248,12 @@ def main() -> None:
 
     # Construct category identifier
     from scripts.utils.calculation_utils import build_category_string
-    category = build_category_string(project_details=project_details)
-
     ctx = get_run_context()
+    if ctx is not None:
+        category = ctx.category_string
+    else:
+        category = build_category_string(project_details=project_details)
+
     if ctx is not None:
         number_of_converters = ctx.number_of_converters
     else:
