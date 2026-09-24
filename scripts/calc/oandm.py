@@ -18,16 +18,13 @@ from scripts.io.yaml_loaders import (
 )
 from scripts.utils.financial_utils import calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from scripts.utils.calculation_utils import build_category_string
-from scripts.utils.path_config import YAMLS_DIR, PROJECT_ROOT
+from scripts.utils.path_config import YAMLS_DIR
 from scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
 from scripts.utils.run_context import get_run_context, add_derived
 
-# Methodology constants (O&M rates, build cost reference data) are read from the canonical
-# repo YAML directory, not the per-scenario temp directory. These are reference data that
-# do not vary between scenarios — rates (0.5%, 0.7%, 0.15%, 0.4%, 2.5%, $15,636/mi) and
-# build cost tables used to compute line CAPEX for the % of CAPEX O&M formula.
-# Per-scenario user inputs (terrain miles, project details, etc.) still come from YAMLS_DIR.
-STATIC_YAMLS_DIR = PROJECT_ROOT / "yamls"
+# All four O&M rate tables (12-15) read through the scenario-aware YAMLS_DIR.
+# API-mode scenario customizations to conductor/structure/converter rates
+# now take effect the same way vegetation management customizations do.
 
 def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, float]:
     """
@@ -108,7 +105,7 @@ def load_converter_om_costs(
 
     # Load converter O&M rate by technology type
     try:
-        with open(STATIC_YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
+        with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data or "converter_om_rate" not in data:
             raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
@@ -125,7 +122,7 @@ def load_converter_om_costs(
             om_rate = rates[converter_type]
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Converter O&M YAML not found at {STATIC_YAMLS_DIR / '15_category_om_converters.yaml'}"
+            f"Converter O&M YAML not found at {YAMLS_DIR / '15_category_om_converters.yaml'}"
         )
 
     return converter_capex * om_rate * xi_dc
@@ -149,7 +146,7 @@ def load_nonoverhead_line_om(
     """
     # Load O&M rate for this construction type
     try:
-        with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+        with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data or "project_categories_om_structures" not in data:
             raise ValueError("Missing 'project_categories_om_structures' in structure O&M YAML")
@@ -164,7 +161,7 @@ def load_nonoverhead_line_om(
         om_rate = entry["om_pct_of_line_capex"]
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Structure O&M YAML not found at {STATIC_YAMLS_DIR / '14_category_om_structures.yaml'}"
+            f"Structure O&M YAML not found at {YAMLS_DIR / '14_category_om_structures.yaml'}"
         )
 
     ctx = get_run_context()
@@ -216,7 +213,7 @@ def main() -> None:
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         # Overhead: base O&M rate (flat $/mile) + vegetation management (terrain-specific)
         try:
-            with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+            with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
                 struct_data = yaml.safe_load(file)
             oh_entry = struct_data["project_categories_om_structures"]["Overhead"]
             base_om_per_mile_year = oh_entry["base_om_per_mile_year"]
@@ -265,7 +262,7 @@ def main() -> None:
         total_vegetation_management_cost_per_year = 0.0
         structure_dict = {}
 
-        with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
+        with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
             struct_data = yaml.safe_load(file)
         om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.02)
 
