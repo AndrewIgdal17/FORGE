@@ -16,7 +16,7 @@ FIDELITY_TOLERANCE = 0.01  # $0.01 — IEEE 754 floating-point accumulation only
 
 # Categories used internally to route each stream's PV contribution.
 _OUTPUT_COST_CATEGORIES = ("C_hard", "C_soft", "C_risk", "C_emissions")
-_OUTPUT_BENEFIT_CATEGORIES = ("B_remedial", "B_enabling", "B_displacement")
+_OUTPUT_BENEFIT_CATEGORIES = ("B_remedial", "B_enabling", "B_avoided_emissions")
 
 @dataclass
 class StreamSpec:
@@ -43,7 +43,7 @@ class ArrayStreamSpec:
     key: str
     values: list[float]
     discount_rate: float
-    category: str  # "C_emissions" | "B_displacement"
+    category: str  # "C_emissions" | "B_avoided_emissions"
 
 def _dig(d: dict, *keys: str, default: float = 0.0) -> Any:
     """Nested dict.get() that tolerates missing intermediate keys."""
@@ -162,7 +162,7 @@ def _build_risk_streams(results: dict, inputs: dict, social_discount_rate: float
     g_wf = _dig(inputs, "06_wildfire_costs", "wildfire", "risk_growth_rate")
     g_out = _dig(inputs, "07_outage_costs", "outage", "risk_growth_rate")
     eal_wf = _dig(results, "costs", "wildfire", "EAL")
-    eac_out = _dig(results, "costs", "outage", "EAC")
+    eac_out = _dig(results, "costs", "outage", "expected_annual_loss")
     return [
         StreamSpec("EAL_wf", eal_wf, g_wf, social_discount_rate, "C_risk_wf"),
         StreamSpec("EAC_out", eac_out, g_out, social_discount_rate, "C_risk_out"),
@@ -175,7 +175,7 @@ def _build_array_streams(results: dict, social_discount_rate: float) -> list[Arr
     Per taxonomy.py, `emissions_fac` is a "reporting_only" item (category
     "reporting") — it is diagnostic and is not part of total_costs_pv /
     total_benefits_pv. Only the loss-compensation cost (emissions_comp,
-    category "emissions") and the displacement benefit (displacement_avoided,
+    category "emissions") and the displacement benefit (avoided_emissions_benefit,
     category "avoided_emissions") are counted; including the fac_emissions
     arrays here would break the fidelity assertion.
     """
@@ -183,7 +183,7 @@ def _build_array_streams(results: dict, social_discount_rate: float) -> list[Arr
     displacement_annual = results.get("displacement_annual_values") or []
     return [
         ArrayStreamSpec("emissions_comp_annual_values", emissions_annual, social_discount_rate, "C_emissions"),
-        ArrayStreamSpec("displacement_annual_values", displacement_annual, social_discount_rate, "B_displacement"),
+        ArrayStreamSpec("displacement_annual_values", displacement_annual, social_discount_rate, "B_avoided_emissions"),
     ]
 
 def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
@@ -256,7 +256,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     cum_C_emissions = 0.0
     cum_B_remedial = 0.0
     cum_B_enabling = 0.0
-    cum_B_displacement = 0.0
+    cum_B_avoided_emissions = 0.0
     # Internal-only accumulators (not part of the output schema) needed for
     # the ratepayer BCR denominator, which excludes delay costs, risk costs,
     # and emissions costs.
@@ -270,7 +270,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     for t in range(1, total_years + 1):
         pv_C_hard = pv_C_soft = pv_C_risk = pv_C_emissions = 0.0
         pv_C_risk_wf = pv_C_risk_out = 0.0
-        pv_B_remedial = pv_B_enabling = pv_B_displacement = 0.0
+        pv_B_remedial = pv_B_enabling = pv_B_avoided_emissions = 0.0
         pv_soft_op_year = 0.0
         pv_revenue_year = 0.0
 
@@ -330,8 +330,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                         pv = nominal_val / (1 + a.discount_rate) ** (D + C + k)
                         if a.category == "C_emissions":
                             pv_C_emissions += pv
-                        elif a.category == "B_displacement":
-                            pv_B_displacement += pv
+                        elif a.category == "B_avoided_emissions":
+                            pv_B_avoided_emissions += pv
 
             pv_C_soft += pv_soft_op_year
 
@@ -355,12 +355,12 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_C_emissions += pv_C_emissions
         cum_B_remedial += pv_B_remedial
         cum_B_enabling += pv_B_enabling
-        cum_B_displacement += pv_B_displacement
+        cum_B_avoided_emissions += pv_B_avoided_emissions
         cum_C_soft_op += pv_soft_op_year
         cum_revenue += pv_revenue_year
 
         cum_C_total = cum_C_hard + cum_C_soft + cum_C_risk + cum_C_emissions
-        cum_B_total = cum_B_remedial + cum_B_enabling + cum_B_displacement
+        cum_B_total = cum_B_remedial + cum_B_enabling + cum_B_avoided_emissions
 
         # BCR perspectives (mirrors bcr_calculator.py's numerator/denominator
         # rules — see taxonomy.py BCR_DEFINITIONS for bcr_ratepayer).
@@ -383,7 +383,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         )
 
         denom_excl_emissions = cum_C_total - cum_C_emissions
-        num_excl_all_emissions = cum_B_total - cum_B_displacement
+        num_excl_all_emissions = cum_B_total - cum_B_avoided_emissions
         bcr_excl_emissions_costs = cum_B_total / denom_excl_emissions if denom_excl_emissions > 0 else None
         bcr_excl_all_emissions = num_excl_all_emissions / denom_excl_emissions if denom_excl_emissions > 0 else None
         npv_excl_emissions_costs = cum_B_total - denom_excl_emissions if bcr_excl_emissions_costs is not None else None
@@ -391,7 +391,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
         denom_utility = cum_revenue + cum_base_delay
         bcr_utility = cum_revenue / denom_utility if denom_utility > 0 else None
-        num_excl_av_em = cum_B_total - cum_B_displacement
+        num_excl_av_em = cum_B_total - cum_B_avoided_emissions
         bcr_excl_avoided_emissions = num_excl_av_em / cum_C_total if cum_C_total > 0 else None
         denom_excl_wf = cum_C_total - cum_C_risk_wf
         bcr_excl_wildfire = cum_B_total / denom_excl_wf if denom_excl_wf > 0 else None
@@ -410,7 +410,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "pv_C_emissions": pv_C_emissions,
             "pv_B_remedial": pv_B_remedial,
             "pv_B_enabling": pv_B_enabling,
-            "pv_B_displacement": pv_B_displacement,
+            "pv_B_avoided_emissions": pv_B_avoided_emissions,
             "cum_C_hard": cum_C_hard,
             "cum_C_soft": cum_C_soft,
             "cum_C_risk": cum_C_risk,
@@ -418,7 +418,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "cum_C_total": cum_C_total,
             "cum_B_remedial": cum_B_remedial,
             "cum_B_enabling": cum_B_enabling,
-            "cum_B_displacement": cum_B_displacement,
+            "cum_B_avoided_emissions": cum_B_avoided_emissions,
             "cum_B_total": cum_B_total,
             "bcr_societal": bcr_societal,
             "bcr_excl_wf_out": bcr_excl_wf_out,

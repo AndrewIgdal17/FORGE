@@ -755,7 +755,7 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'base_delay', value_pv: delay.total_pv||0, value_nominal: delay.total_nominal||0, detail: [] },
     { taxonomy_id: 'congestion_delay', value_pv: cc.congestion_delay_cost_pv||0, value_nominal: cc.congestion_delay_cost_nominal||0, detail: [] },
     { taxonomy_id: 'wildfire_eac', value_pv: wf.pv_cost||0, value_nominal: wf.nominal_total||0, value_annual: wf.EAL||null, detail: [] },
-    { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.EAC||null, detail: [
+    { taxonomy_id: 'outage_eac', value_pv: out.pv_cost||0, value_nominal: out.nominal_total||0, value_annual: out.expected_annual_loss||null, detail: [
       { dimension: 'component', dimension_key: 'load_shed_per_event', value_pv: 0, value_annual: out.cost_loadshed || 0 },
       { dimension: 'component', dimension_key: 'redispatch_per_event', value_pv: 0, value_annual: out.cost_redispatch || 0 },
     ] },
@@ -764,7 +764,7 @@ function deriveTaxonomyResultsFromLegacy(results) {
     { taxonomy_id: 'congestion_benefit', value_pv: cc.congestion_benefit_pv||0, value_nominal: cc.congestion_benefit_nominal||0, value_annual: cc.congestion_benefit_annual||null, detail: [] },
     { taxonomy_id: 'delivered_energy_benefit', value_pv: cc.delivered_benefit_pv||0, value_nominal: cc.delivered_benefit_nominal||0, value_annual: cc.delivered_benefit_annual||null, detail: [] },
     { taxonomy_id: 'revenue', value_pv: rev.revenue_pv||0, value_nominal: rev.revenue_nominal||0, value_annual: rev.annual_revenue||null, detail: [] },
-    { taxonomy_id: 'displacement_avoided', value_pv: fac.displacement_avoided_cost_pv||0, value_nominal: fac.displacement_avoided_cost_nominal||0, detail: [] },
+    { taxonomy_id: 'avoided_emissions_benefit', value_pv: fac.displacement_avoided_benefit_pv||0, value_nominal: fac.displacement_avoided_benefit_nominal||0, detail: [] },
   ];
 }
 
@@ -1320,7 +1320,7 @@ function updateEmissionsImpactPanel(results) {
 
   const emisComp = byId['emissions_comp'];
   const emisFac = byId['emissions_fac'];
-  const displ = byId['displacement_avoided'];
+  const displ = byId['avoided_emissions_benefit'];
   setVal('comp_cost_nominal', fmt(emisComp?.value_nominal || 0));
   setVal('comp_cost_pv', fmt(emisComp?.value_pv || 0));
   setVal('fac_cost_nominal', fmt(emisFac?.value_nominal || 0));

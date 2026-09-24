@@ -25,7 +25,6 @@ from scripts.utils.smart_loaders import (
 )
 from scripts.utils.financial_utils import (
     calculate_present_value,
-    calculate_amortized_cost,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
@@ -36,7 +35,13 @@ from scripts.utils.path_config import YAMLS_DIR
 
 @dataclass
 class BuildCosts:
-    """Build cost calculation results."""
+    """Terrain-adjusted build cost results (appendix Eq 2, $C_{adj,*}$).
+
+    Component fields (`conductor_cost`, `structure_cost`, `converter_cost`)
+    hold ungated terrain-adjusted values. Binary selectors $\\xi_{structure}$
+    and $\\xi_{DC}$ are applied to `total_cost` and to the `_with_contingencies`
+    fields (including `total_cost_with_contingencies`).
+    """
     total_cost: float
     total_cost_with_contingencies: float
     conductor_cost: float
@@ -50,7 +55,6 @@ class BuildCosts:
 
 def load_costs(
     category: str,
-    total_miles: float,
     number_of_converters: int,
     contingencies: Dict[str, float],
     project_type: str,
@@ -61,15 +65,13 @@ def load_costs(
 
     Args:
         category: Project category identifier
-        total_miles: Total miles of transmission line
         number_of_converters: Number of converters needed
         contingencies: Dictionary of contingency percentages
         project_type: "greenfield" | "reconductoring" | "rebuild"
 
     Returns:
-        tuple: (total_cost, total_cost_with_contingencies, conductor_cost, structure_cost,
-                converter_cost, conductor_cost_with_contingencies, structure_cost_with_contingencies,
-                converter_cost_with_contingencies, weighted_miles, average_terrain_multiplier)
+        BuildCosts with terrain-adjusted component costs (appendix Eq 2) and
+        selector-gated totals / `_with_contingencies` fields.
     """
     try:
         with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
@@ -126,25 +128,32 @@ def load_costs(
     conductor_cost = (
         variable_conductor_cost_per_mile * weighted_miles
     ) + fixed_conductor_cost
+    structure_cost = variable_structure_cost_per_mile * weighted_miles
+    converter_cost = fixed_converter_cost * number_of_converters
 
-    # If reconductoring, structure and converter costs = 0
-    if project_type == "reconductoring":
-        structure_cost = 0
-        converter_cost = 0
-    else:
-        structure_cost = variable_structure_cost_per_mile * weighted_miles
-        converter_cost = fixed_converter_cost * number_of_converters
+    # Explicit binary selectors matching appendix (ξ_structure, ξ_DC)
+    xi_structure = 0.0 if project_type == "reconductoring" else 1.0
+    xi_dc = 1.0 if number_of_converters > 0 else 0.0
 
-    total_cost = conductor_cost + structure_cost + converter_cost
+    total_cost = (
+        conductor_cost
+        + xi_structure * structure_cost
+        + xi_structure * xi_dc * converter_cost
+    )
 
     conductor_cost_with_contingencies = conductor_cost * (
         1 + contingencies["conductor_contingency"]
     )
-    structure_cost_with_contingencies = structure_cost * (
-        1 + contingencies["structure_contingency"]
+    structure_cost_with_contingencies = (
+        xi_structure
+        * structure_cost
+        * (1 + contingencies["structure_contingency"])
     )
-    converter_cost_with_contingencies = converter_cost * (
-        1 + contingencies["converter_contingency"]
+    converter_cost_with_contingencies = (
+        xi_structure
+        * xi_dc
+        * converter_cost
+        * (1 + contingencies["converter_contingency"])
     )
 
     total_cost_with_contingencies = (
@@ -227,7 +236,7 @@ def main() -> None:
         pass
 
     costs = load_costs(
-        category, total_miles, number_of_converters, contingencies,
+        category, number_of_converters, contingencies,
         project_details.project_type, overrides=build_cost_overrides,
     )
 

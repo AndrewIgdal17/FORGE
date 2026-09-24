@@ -1,9 +1,11 @@
 # Date: 2025-10-20
 # Description: This script calculates the right-of-way costs for a transmission line.
 #              ROW agreement type (permanent easement, lease/license, fee simple, federal/hybrid)
-#              determines which cost terms apply; acquisition and annual ROW payment are
-#              mutually exclusive unless the regime is federal_hybrid. Holding cost is an
-#              option fee during delay; cost of capital on acquisition during delay is in AFUDC.
+#              determines which cost terms apply via explicit xi selectors at assembly
+#              (appendix §Capital ROW Eq 5, §Op ROW Rent Eq 1). Acquisition and annual
+#              ROW payment are mutually exclusive unless the regime is federal_hybrid.
+#              Holding is an operating expense during delay (FERC Account 567), not
+#              AFUDC-eligible. Only acquisition enters rate base.
 
 from __future__ import annotations
 
@@ -40,7 +42,8 @@ def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, fl
     For each zone where the transmission line passes (miles > 0), computes zone
     area in acres and multiplies by zone-specific rates for acquisition,
     option fee (hold_cost), and annual ROW payment (rent_cost). The caller
-    applies the ROW agreement type to zero out terms that do not apply.
+    applies explicit xi selectors when assembling totals; component costs
+    here are ungated.
 
     Args:
         row_width_feet: Width of the right-of-way in feet (used to calculate zone area)
@@ -101,12 +104,11 @@ def main() -> None:
         if (project_details.project_type in ("reconductoring", "rebuild") or project_details.uses_existing_row)
         else "permanent_easement_new"
     )
-    if agreement_type == "lease_license_existing":
-        acquisition_cost = 0.0
-        yearly_holding_cost = 0.0
-    elif agreement_type in ("permanent_easement_new", "fee_simple"):
-        yearly_rent_cost = 0.0
-    # federal_hybrid: keep all three (acquisition, holding, annual ROW payment)
+    # Explicit binary selectors (appendix §Capital ROW Eq 5, §Op ROW Rent Eq 1).
+    # Component costs stay ungated; selectors apply at assembly of totals.
+    xi_acquisition = 0.0 if agreement_type == "lease_license_existing" else 1.0
+    xi_holding = 0.0 if agreement_type == "lease_license_existing" else 1.0
+    xi_rent = 1.0 if agreement_type in ("lease_license_existing", "federal_hybrid") else 0.0
 
     from scripts.utils.run_context import add_derived
     from scripts.utils.calculation_utils import miles_to_acres
@@ -122,8 +124,8 @@ def main() -> None:
         "agreement_type": agreement_type,
     })
 
-    # Real annual escalation applied to ROW rent and holding cost (default 0% real,
-    # backward-compatible with pre-escalation YAMLs).
+    # Real annual escalation applied to operational ROW rent only (default 0% real,
+    # backward-compatible with pre-escalation YAMLs). Holding uses a flat product.
     g_rent = float(_row_details.get("row_rent_escalation_real", 0.0))
 
     # Load financing parameters
@@ -149,125 +151,80 @@ def main() -> None:
             project_details.project_lifetime + project_details.construction_years
         )
 
-    if agreement_type == "lease_license_existing":
-        total_holding_cost = 0.0
-        acquisition_cost_used = 0.0  # no acquisition for lease/license
-        total_rent_cost = calculate_nominal_growing_series(
-            yearly_rent_cost,
-            g_rent,
-            rent_total_years,
-        )
-        total_nominal_cost = (
-            total_holding_cost + acquisition_cost_used + total_rent_cost
-        )
+    # Holding: appendix §Capital ROW Eq 4 — simple product, no escalation.
+    total_holding_cost = (
+        xi_holding * yearly_holding_cost * project_details.delay_years
+    )
+    # Rent: appendix §Op ROW Rent Eq 3 — growing series gated by xi_rent.
+    total_rent_cost = xi_rent * calculate_nominal_growing_series(
+        yearly_rent_cost,
+        g_rent,
+        rent_total_years,
+    )
+    acquisition_cost_used = xi_acquisition * acquisition_cost
+    total_nominal_cost = (
+        total_holding_cost + acquisition_cost_used + total_rent_cost
+    )
 
-        acquisition_capitalized = 0.0
-        acquisition_afudc = 0.0
-        holding_capitalized = 0.0
-        holding_afudc = 0.0
-        total_holding_cost_pv = 0.0
-        total_acquisition_cost_pv = 0.0
-        # rent_start_year == 1 here, so no delay/construction shift is applied;
-        # the growing annuity already covers year 1 through rent_total_years.
-        total_rent_cost_pv = calculate_growing_annuity_pv(
-            yearly_rent_cost,
-            g_rent,
-            financing.wacc_real,
-            int(rent_total_years),
-            delay_years=0.0,
-            construction_years=0.0,
-        )
-        # Lease/license: only rent; capital is zero
-        row_capital_afudc = 0.0
-        row_capital_pv = 0.0
-        row_capital_nominal = 0.0
-        row_rent_pv = total_rent_cost_pv
-        row_rent_nominal = total_rent_cost
-        total_afudc = 0.0
-        total_pv_cost = total_rent_cost_pv
-    else:
-        total_holding_cost = calculate_nominal_growing_series(
-            yearly_holding_cost,
-            g_rent,
-            project_details.delay_years,
-        )
-        total_rent_cost = calculate_nominal_growing_series(
-            yearly_rent_cost,
-            g_rent,
-            rent_total_years,
-        )
-        acquisition_cost_used = acquisition_cost
-        total_nominal_cost = (
-            total_holding_cost + acquisition_cost_used + total_rent_cost
-        )
-
-        if afudc_setup.apply_afudc and acquisition_cost_used != 0:
-            acquisition_capitalized, acquisition_afudc = (
-                calculate_afudc_capitalized_cost(
-                    acquisition_cost_used,
-                    afudc_setup.timing_patterns["row_acquisition"],
-                    project_details.delay_years,
-                    project_details.construction_years,
-                    afudc_setup.afudc_rate,
-                    afudc_setup.delay_active,
-                    spending_profiles=afudc_setup.spending_profiles,
-                )
-            )
-        else:
-            acquisition_capitalized = acquisition_cost_used
-            acquisition_afudc = 0.0
-
-        # Holding: AFUDC-eligible (option fee during delay)
-        if (
-            afudc_setup.apply_afudc
-            and total_holding_cost > 0
-        ):
-            holding_capitalized, holding_afudc = calculate_afudc_capitalized_cost(
-                total_holding_cost,
-                afudc_setup.timing_patterns["row_holding"],
+    # Only acquisition is AFUDC-eligible (appendix L392–393, L475–476).
+    if afudc_setup.apply_afudc and acquisition_cost_used != 0:
+        acquisition_capitalized, acquisition_afudc = (
+            calculate_afudc_capitalized_cost(
+                acquisition_cost_used,
+                afudc_setup.timing_patterns["row_acquisition"],
                 project_details.delay_years,
                 project_details.construction_years,
                 afudc_setup.afudc_rate,
                 afudc_setup.delay_active,
                 spending_profiles=afudc_setup.spending_profiles,
             )
-        else:
-            holding_capitalized = total_holding_cost
-            holding_afudc = 0.0
+        )
+    else:
+        acquisition_capitalized = acquisition_cost_used
+        acquisition_afudc = 0.0
 
-        validate_discount_rate(financing.wacc_real, "wacc_real")
-        # Holding (option fee) is paid during the delay period only (years 1..delay_years).
-        total_holding_cost_pv = calculate_growing_annuity_pv(
-            yearly_holding_cost,
-            g_rent,
-            financing.wacc_real,
-            int(project_details.delay_years),
-            delay_years=0.0,
-            construction_years=0.0,
-        )
-        total_acquisition_cost_pv = (
-            acquisition_cost_used
-            / (1 + financing.wacc_real) ** project_details.delay_years
-        )
-        # rent_start_year == delay_years + 1 here, so shift the growing annuity
-        # by delay_years to reproduce the same payment timing.
-        total_rent_cost_pv = calculate_growing_annuity_pv(
-            yearly_rent_cost,
-            g_rent,
-            financing.wacc_real,
-            int(rent_total_years),
-            delay_years=project_details.delay_years,
-            construction_years=0.0,
-        )
+    # Holding is a real operating expense (FERC Account 567), not AFUDC-eligible.
+    holding_capitalized = total_holding_cost
+    holding_afudc = 0.0
 
-        # Capital = acquisition + holding only (no rent)
-        row_capital_afudc = acquisition_capitalized + holding_capitalized
-        row_capital_pv = total_acquisition_cost_pv + total_holding_cost_pv
-        row_capital_nominal = acquisition_cost_used + total_holding_cost
-        row_rent_pv = total_rent_cost_pv
-        row_rent_nominal = total_rent_cost
-        total_afudc = row_capital_afudc
-        total_pv_cost = row_capital_pv + total_rent_cost_pv
+    validate_discount_rate(financing.wacc_real, "wacc_real")
+    # Holding PV: constant-payment annuity over delay (growth_rate=0).
+    total_holding_cost_pv = xi_holding * calculate_growing_annuity_pv(
+        yearly_holding_cost,
+        0.0,
+        financing.wacc_real,
+        int(project_details.delay_years),
+        delay_years=0.0,
+        construction_years=0.0,
+    )
+    total_acquisition_cost_pv = (
+        acquisition_cost_used
+        / (1 + financing.wacc_real) ** project_details.delay_years
+    )
+    # Lease rent starts year 1 (no delay shift); hybrid starts after delay.
+    rent_delay = (
+        0.0
+        if agreement_type == "lease_license_existing"
+        else project_details.delay_years
+    )
+    total_rent_cost_pv = xi_rent * calculate_growing_annuity_pv(
+        yearly_rent_cost,
+        g_rent,
+        financing.wacc_real,
+        int(rent_total_years),
+        delay_years=rent_delay,
+        construction_years=0.0,
+    )
+
+    # Capital = acquisition only. Holding is operating expense, not capital.
+    row_capital_afudc = acquisition_capitalized
+    row_capital_pv = total_acquisition_cost_pv
+    row_holding_pv = total_holding_cost_pv
+    row_capital_nominal = acquisition_cost_used + total_holding_cost
+    row_rent_pv = total_rent_cost_pv
+    row_rent_nominal = total_rent_cost
+    total_afudc = row_capital_afudc
+    total_pv_cost = row_capital_pv + row_holding_pv + total_rent_cost_pv
 
     # Display results
     print("=" * 80)
@@ -284,20 +241,16 @@ def main() -> None:
     print(f"  Rent Escalation Rate (g_rent): {g_rent:.2%}/year (real)")
     print(f"  Holding Cost (option fee): ${total_holding_cost:,.2f}")
     print(
-        f"    (Annual: ${yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))"
+        f"    (Annual: ${xi_holding * yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))"
     )
     print(f"  Acquisition Cost: ${acquisition_cost_used:,.2f}")
     print(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
-    print(f"    (Annual: ${yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
+    print(f"    (Annual: ${xi_rent * yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
     print(f"  ---")
     print(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
     print()
 
-    if (
-        afudc_setup.apply_afudc
-        and agreement_type != "lease_license_existing"
-        and (acquisition_cost_used != 0 or total_holding_cost != 0)
-    ):
+    if afudc_setup.apply_afudc and acquisition_cost_used != 0:
         print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         print(
             f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})"
@@ -308,8 +261,8 @@ def main() -> None:
         print()
         print(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
         print(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
-        print(f"  Holding Cost Capitalized: ${holding_capitalized:,.2f}")
-        print(f"    AFUDC on Holding: ${holding_afudc:,.2f}")
+        print(f"  Holding Cost (operating expense): ${holding_capitalized:,.2f}")
+        print(f"    AFUDC on Holding: ${holding_afudc:,.2f} (not AFUDC-eligible)")
         print(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
         print(f"    (NOT AFUDC-eligible - operational period)")
         print(f"  ---")
@@ -344,6 +297,7 @@ def main() -> None:
         "row_capital_pv": row_capital_pv,
         "row_capital_afudc": row_capital_afudc,
         "row_capital_nominal": row_capital_nominal,
+        "row_holding_pv": row_holding_pv,
         "row_rent_pv": row_rent_pv,
         "row_rent_nominal": row_rent_nominal,
         "acquisition_nominal": acquisition_cost_used,

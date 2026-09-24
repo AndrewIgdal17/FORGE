@@ -111,7 +111,7 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "reporting_category_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
         # Facilitated emissions + displacement (reporting)
         "fac_emissions_project_pv": csv_equivalent.get("fac_emissions_project_pv", 0),
-        "displacement_avoided_cost_pv": csv_equivalent.get("displacement_avoided_cost_pv", 0),
+        "displacement_avoided_benefit_pv": csv_equivalent.get("displacement_avoided_benefit_pv", 0),
         # Appendix-aligned benefit categories (B_remedial + B_enabling)
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
         "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),

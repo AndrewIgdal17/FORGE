@@ -44,7 +44,7 @@ def extract_metrics(results: dict) -> dict:
         "total_benefits_pv": bcr.get("total_benefits_pv", 0),
         "net_benefit_pv": bcr.get("net_benefit_pv", 0),
         "build_cost_pv": costs["build"]["total_pv"],
-        "displacement_avoided_pv": bcr.get("displacement_avoided_cost_pv", 0),
+        "displacement_avoided_pv": bcr.get("displacement_avoided_benefit_pv", 0),
     }
 
 def fmt(val, prefix="$"):

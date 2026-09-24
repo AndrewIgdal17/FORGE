@@ -54,6 +54,27 @@ function getMetricConfig(metricKey) {
   return null;
 }
 
+function getMetricGroupName(metricKey) {
+  for (const group of COMPARISON_METRICS) {
+    for (const m of group.metrics) {
+      if (m.key === metricKey) return group.group;
+    }
+  }
+  return null;
+}
+
+/** Cost metrics use avoided-cost Δ (baseline − scenario). Benefits/BCR stay scenario − baseline. */
+function isAvoidedCostMetric(metricKey) {
+  const groupName = getMetricGroupName(metricKey);
+  return COMPARISON_GROUP_SUPERGROUP[groupName] === 'costs';
+}
+
+function comparisonDelta(baselineValue, scenarioValue, metricKey) {
+  return isAvoidedCostMetric(metricKey)
+    ? (baselineValue - scenarioValue)
+    : (scenarioValue - baselineValue);
+}
+
 function getExcludedCosts(scenario) {
   if (!scenario.results) return 0;
   const bcr = scenario.results.bcr || {};
@@ -783,7 +804,7 @@ function formatDeltaLine(baselineScenario, rowScenario, metricKey) {
   const a = getMetricNumericOrNull(baselineScenario, metricKey);
   const b = getMetricNumericOrNull(rowScenario, metricKey);
   if (a === null || b === null) return 'Δ —';
-  const d = b - a;
+  const d = comparisonDelta(a, b, metricKey);
   if (config.format === 'currency') return 'Δ ' + formatSignedCurrencyValue(d, 0);
   if (config.format === 'number3') return 'Δ ' + formatSignedNumberValue(d, 3);
   if (config.format === 'number2') return 'Δ ' + formatSignedNumberValue(d, 2);
@@ -799,7 +820,7 @@ function formatPercentDeltaLine(baselineScenario, rowScenario, metricKey) {
   const a = getMetricNumericOrNull(baselineScenario, metricKey);
   const b = getMetricNumericOrNull(rowScenario, metricKey);
   if (a === null || b === null || a === 0) return '—';
-  const pct = ((b - a) / a) * 100;
+  const pct = (comparisonDelta(a, b, metricKey) / a) * 100;
   if (!isFinite(pct)) return '—';
   const t = pct.toFixed(1);
   if (pct > 0) return '+' + t + '%';

@@ -39,6 +39,7 @@ def get_total_energy_losses() -> dict:
         - total_converter_losses_mwh: Converter losses in MWh per year
         - converter_loss_percent: Converter loss percentage
         - total_losses_mwh_per_year: Combined line + converter losses in MWh per year
+        - total_lifetime_losses_mwh: Combined line + converter lifetime losses in MWh
         - project_lifetime: Project lifetime in years
         - voltage_kv: Voltage used in calculations (kV)
         - conductors_per_phase: Number of conductors per phase
@@ -170,6 +171,11 @@ def get_total_energy_losses() -> dict:
 
     # Total energy losses is the sum of line and converter losses
     total_losses_mwh_per_year = losses_mwh_per_year + total_converter_losses_mwh
+    project_lifetime = project_details.project_lifetime
+    # Appendix $E_{\text{totalloss,lifetime}}$: line lifetime + converter annual × lifetime
+    total_lifetime_losses_mwh = lifetime_losses_mwh + (
+        total_converter_losses_mwh * project_lifetime
+    )
 
     return {
         "losses_mwh_per_year": losses_mwh_per_year,
@@ -183,7 +189,8 @@ def get_total_energy_losses() -> dict:
         "total_converter_losses_mwh": total_converter_losses_mwh,
         "converter_loss_percent": converter_loss_percent,
         "total_losses_mwh_per_year": total_losses_mwh_per_year,
-        "project_lifetime": project_details.project_lifetime,
+        "total_lifetime_losses_mwh": total_lifetime_losses_mwh,
+        "project_lifetime": project_lifetime,
         "voltage_kv": voltage_kv,
         "conductors_per_phase": conductors_per_phase,
         "number_of_phases": number_of_phases,
@@ -211,8 +218,7 @@ def print_results(
     converter_loss_percent: float,
     total_converter_losses_mwh: float,
     losses_mwh_per_year: float,
-    lifetime_losses_mwh: float,
-    project_details,
+    total_lifetime_losses_mwh: float,
 ) -> None:
     """Print organized results in sections."""
     # System Configuration
@@ -258,7 +264,7 @@ def print_results(
         f"Total losses MWh/yr: {losses_mwh_per_year + total_converter_losses_mwh:,.2f}"
     )
     print(
-        f"Total Lifetime losses MWh: {lifetime_losses_mwh + (total_converter_losses_mwh * project_details.project_lifetime):,.2f}"
+        f"Total Lifetime losses MWh: {total_lifetime_losses_mwh:,.2f}"
     )
 
 def main() -> None:
@@ -320,8 +326,7 @@ def main() -> None:
         loss_data["converter_loss_percent"],
         loss_data["total_converter_losses_mwh"],
         loss_data["losses_mwh_per_year"],
-        loss_data["lifetime_losses_mwh"],
-        project_details,
+        loss_data["total_lifetime_losses_mwh"],
     )
 
 if __name__ == "__main__":

@@ -163,7 +163,7 @@ def extract_metrics(data: dict) -> dict:
     fac = benefits.get("facilitated_emissions", {})
     congestion_pv = cc.get("congestion_benefit_pv", 0)
     delivered_pv = cc.get("delivered_benefit_pv", 0)
-    avoided_emissions_pv = fac.get("displacement_avoided_cost_pv", 0)
+    avoided_emissions_pv = fac.get("displacement_avoided_benefit_pv", 0)
 
     # O&M and insurance
     oandm_pv = costs.get("oandm", {}).get("total_pv", 0)

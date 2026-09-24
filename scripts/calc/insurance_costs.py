@@ -14,7 +14,6 @@ from scripts.utils.smart_output import SmartOutputManager
 # Local utility imports
 from scripts.utils.smart_loaders import (
     load_project_technical_details,
-    load_physical_details,
     load_contingencies,
     load_financing_details,
     load_insurance_details,
@@ -34,12 +33,19 @@ def calculate_insurance_costs(
     converter_cost_with_contingencies: float,
     project_lifetime: int,
     construction_type: str,
+    wacc_real: float,
+    delay_years: float,
+    construction_years: float,
 ) -> Dict[str, float]:
     """
     Calculate operational insurance costs based on insurable asset value.
 
     Overhead/underground lines use a self-insurance reserve rate; subsea cables
     and converter stations use commercial property insurance rates.
+
+    Premiums escalate at g_ins over the project lifetime (appendix §5).
+    Nominal lifetime cost is the growing series; PV is the growing annuity
+    discounted at real WACC from COD.
 
     Args:
         insurance_yaml: Loaded insurance YAML data
@@ -48,10 +54,13 @@ def calculate_insurance_costs(
         converter_cost_with_contingencies: Converter cost with contingencies
         project_lifetime: Project lifetime in years
         construction_type: Construction type string (e.g. "Overhead", "Subsea")
+        wacc_real: Real WACC used to discount the growing annuity
+        delay_years: Years of delay before construction starts
+        construction_years: Years of construction (premiums start at COD)
 
     Returns:
         dict: Contains insurable_value, annual_premium, premium_rate, line_rate,
-              converter_rate, escalation_rate, nominal_lifetime_cost
+              converter_rate, escalation_rate, nominal_lifetime_cost, insurance_pv
     """
     ins_cfg = insurance_yaml["insurance"]
     components = ins_cfg.get("insurable_components", {})
@@ -62,23 +71,34 @@ def calculate_insurance_costs(
     line_rate = rate_by_type.get(yaml_ct, ins_cfg.get("premium_rate_default", 0.002))
     converter_rate = rate_by_type.get("converter", line_rate)
 
-    # Compute insurable values by component
-    line_insurable = 0.0
-    if components.get("conductors", True):
-        line_insurable += conductor_cost_with_contingencies
-    if components.get("structures", True):
-        line_insurable += structure_cost_with_contingencies
-
-    converter_insurable = 0.0
-    if components.get("converters", True):
-        converter_insurable += converter_cost_with_contingencies
+    # Explicit binary selectors (appendix §5 ξ_conductor, ξ_structure, ξ_converter)
+    xi_conductor = 1.0 if components.get("conductors", True) else 0.0
+    xi_structure = 1.0 if components.get("structures", True) else 0.0
+    xi_converter = 1.0 if components.get("converters", True) else 0.0
+    line_insurable = (
+        xi_conductor * conductor_cost_with_contingencies
+        + xi_structure * structure_cost_with_contingencies
+    )
+    converter_insurable = xi_converter * converter_cost_with_contingencies
 
     insurable_value = line_insurable + converter_insurable
     annual_premium = (line_insurable * line_rate) + (converter_insurable * converter_rate)
     premium_rate = annual_premium / insurable_value if insurable_value > 0 else 0.0
 
-    escalation_rate = ins_cfg.get("escalation_rate", 0.0)
-    nominal_lifetime_cost = annual_premium * project_lifetime
+    escalation_rate = ins_cfg.get("escalation_rate", 0.02)
+    nominal_lifetime_cost = calculate_nominal_growing_series(
+        annual_amount=annual_premium,
+        growth_rate=escalation_rate,
+        project_lifetime=project_lifetime,
+    )
+    insurance_pv = calculate_growing_annuity_pv(
+        annual_amount=annual_premium,
+        growth_rate=escalation_rate,
+        discount_rate=wacc_real,
+        project_lifetime=project_lifetime,
+        delay_years=delay_years,
+        construction_years=construction_years,
+    )
 
     return {
         "insurable_value": insurable_value,
@@ -88,6 +108,7 @@ def calculate_insurance_costs(
         "converter_rate": converter_rate,
         "escalation_rate": escalation_rate,
         "nominal_lifetime_cost": nominal_lifetime_cost,
+        "insurance_pv": insurance_pv,
     }
 
 def main() -> None:
@@ -124,11 +145,9 @@ def main() -> None:
     if _ctx is not None and _ctx.build_costs is not None:
         costs = _ctx.build_costs
     else:
-        total_miles = load_physical_details()
         contingencies = load_contingencies()
         costs = load_costs(
             category,
-            total_miles,
             number_of_converters,
             contingencies,
             project_details.project_type,
@@ -137,7 +156,10 @@ def main() -> None:
     # Load insurance parameters
     insurance_yaml = load_insurance_details()
 
-    # Calculate operational insurance costs
+    # Load financing parameters for present value calculation
+    financing = load_financing_details()
+
+    # Calculate operational insurance costs (growing series + growing annuity)
     results = calculate_insurance_costs(
         insurance_yaml,
         costs.conductor_cost_with_contingencies,
@@ -145,30 +167,13 @@ def main() -> None:
         costs.converter_cost_with_contingencies,
         project_details.project_lifetime,
         project_details.construction_type,
+        financing.wacc_real,
+        project_details.delay_years,
+        project_details.construction_years,
     )
 
     from scripts.utils.run_context import add_derived
     add_derived({"insurable_value": results["insurable_value"]})
-
-    # Load financing parameters for present value calculation
-    financing = load_financing_details()
-
-    # Calculate Present Value for operational insurance using growing annuity
-    # Premiums start at COD and escalate at real escalation_rate
-    escalation_rate = results["escalation_rate"]
-    insurance_pv = calculate_growing_annuity_pv(
-        annual_amount=results["annual_premium"],
-        growth_rate=escalation_rate,
-        discount_rate=financing.wacc_real,
-        project_lifetime=project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    nominal_lifetime_cost = calculate_nominal_growing_series(
-        annual_amount=results["annual_premium"],
-        growth_rate=escalation_rate,
-        project_lifetime=project_details.project_lifetime,
-    )
 
     # Display results
     print("=" * 80)
@@ -197,14 +202,14 @@ def main() -> None:
     print(f"  Escalation Rate: {results['escalation_rate']:.1%} real/yr")
     print(f"  Project Lifetime: {project_details.project_lifetime} years")
     print(f"  ---")
-    print(f"  TOTAL NOMINAL COST: ${nominal_lifetime_cost:,.2f}")
+    print(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
     print()
 
     print("[UTILITY PERSPECTIVE - Present Value]")
     print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
     print(f"  Base Year: {financing.base_year}")
     print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE: ${insurance_pv:,.2f}")
+    print(f"  TOTAL PRESENT VALUE: ${results['insurance_pv']:,.2f}")
     print()
     print("NOTE: Operational risk-bearing cost is not AFUDC-eligible (operating expense).")
     print("=" * 80)
@@ -219,8 +224,8 @@ def main() -> None:
     # Prepare operational insurance results dictionary for CSV
     csv_results = {
         "annual_premium": results["annual_premium"],
-        "nominal_lifetime_cost": nominal_lifetime_cost,
-        "pv_total": insurance_pv,
+        "nominal_lifetime_cost": results["nominal_lifetime_cost"],
+        "pv_total": results["insurance_pv"],
         "insurable_value": results["insurable_value"],
         "premium_rate": results["premium_rate"],
     }

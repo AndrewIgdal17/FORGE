@@ -186,7 +186,7 @@ def calculate_emissions_by_year(
 
 def calculate_lifetime_emissions(
     total_losses_mwh_per_year: float,
-    compensation_percent: float,
+    alpha_compensation: float,
     energy_source_mix_details: Dict[str, Any],
     emission_intensities: Dict[str, Any],
     societal_costs: Dict[str, float],
@@ -207,7 +207,7 @@ def calculate_lifetime_emissions(
     start_year = calculate_cod_year(delay_years, construction_years)
 
     # Calculate TEC (Total Energy Compensated)
-    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = alpha_compensation * total_losses_mwh_per_year
 
     # Calculate energy mix for each year
     energy_mix_by_year = calculate_energy_mix_by_year(
@@ -292,7 +292,7 @@ def calculate_lifetime_emissions(
     )
 
 def print_emissions_results(
-    compensation_percent: float,
+    alpha_compensation: float,
     energy_source_mix_details: Dict[str, Any],
     avg_annual_emissions: Dict[str, float],
     societal_costs: Dict[str, float],
@@ -311,7 +311,7 @@ def print_emissions_results(
     print("=" * 60)
     print("COMPENSATION CONFIGURATION")
     print("=" * 60)
-    print(f"Compensation percentage (alpha): {compensation_percent:.1%}")
+    print(f"Compensation percentage (alpha): {alpha_compensation:.1%}")
     print(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
     print(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
     print()
@@ -411,7 +411,7 @@ def main() -> None:
     """
     # Load emissions details
     (
-        compensation_percent,
+        alpha_compensation,
         emission_intensities_details,
         societal_costs_details,
     ) = load_emissions_details()
@@ -463,7 +463,7 @@ def main() -> None:
     # Calculate emissions across lifetime
     emissions_results = calculate_lifetime_emissions(
         total_losses_mwh_per_year,
-        compensation_percent,
+        alpha_compensation,
         energy_source_mix_details,
         emission_intensities_details,
         societal_costs_details,
@@ -474,14 +474,14 @@ def main() -> None:
     )
 
     # Calculate TEC for display
-    total_energy_compensated_mwh = compensation_percent * total_losses_mwh_per_year
+    total_energy_compensated_mwh = alpha_compensation * total_losses_mwh_per_year
 
     from scripts.utils.run_context import add_derived
     add_derived({"total_energy_compensated_mwh": total_energy_compensated_mwh})
 
     # Print results
     print_emissions_results(
-        compensation_percent,
+        alpha_compensation,
         energy_source_mix_details,
         emissions_results.avg_annual_emissions,
         societal_costs_details,

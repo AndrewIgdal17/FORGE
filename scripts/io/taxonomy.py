@@ -162,7 +162,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Capital Recovery (Rate-Based)", "wacc_real", None, 1,
                  "Utility-ratepayer transfer: allowed return x rate base. Not in societal NB."),
     # --- Avoided emissions benefit ---
-    TaxonomyItem("displacement_avoided", "benefit", "avoided_emissions", "displacement",
+    TaxonomyItem("avoided_emissions_benefit", "benefit", "avoided_emissions", "displacement",
                  "Avoided Emissions Benefit", "social", None, 1,
                  "Benefit from cleaner generation enabled by this project. Equals the difference between the no-line and project-path societal emission costs, discounted at the social rate."),
     # --- Utility (shared input groups, no scenario_results) ---
@@ -232,8 +232,8 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("emissions_fac", "source", "Per-source mix contribution"),
     DimensionEntry("emissions_fac", "year", "Evolving mix over project lifetime"),
     DimensionEntry("emissions_fac", "instance", "Project vs. no-line (two engine runs)"),
-    DimensionEntry("displacement_avoided", "pollutant", "CO2, SOx, NOx avoided mass + cost"),
-    DimensionEntry("displacement_avoided", "year", "Evolving differential over project lifetime"),
+    DimensionEntry("avoided_emissions_benefit", "pollutant", "CO2, SOx, NOx avoided mass + cost"),
+    DimensionEntry("avoided_emissions_benefit", "year", "Evolving differential over project lifetime"),
     DimensionEntry("congestion_benefit", "allocation", "Overlap vs. non-overlap binding hours"),
     DimensionEntry("base_delay", "category", "Legal, admin, labor, regulatory, etc. (8 categories from YAML)"),
     DimensionEntry("insurance", "component", "Conductors, structures, converters insurable base"),
@@ -258,7 +258,7 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
     ),
     "avoided_emissions": ExcludableGroup(
         "avoided_emissions", "Avoided Emissions",
-        frozenset({"displacement_avoided"}),
+        frozenset({"avoided_emissions_benefit"}),
     ),
     "line_losses": ExcludableGroup(
         "line_losses", "Line Losses (conductor + converter)",
@@ -389,7 +389,7 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     # Transfer
     "capital_recovery": "capital_recovery_pv",
     # Reporting-only
-    "displacement_avoided": "displacement_avoided_cost_pv",
+    "avoided_emissions_benefit": "displacement_avoided_benefit_pv",
     # Soft costs — delay (displacement)
     "emissions_displacement_delay": "emissions_displacement_delay_pv",
 }
@@ -505,7 +505,7 @@ if __name__ == "__main__":
 
     # 8c. Discount rate
     _expected_social = {"wildfire_eac", "outage_eac", "emissions_comp",
-                        "emissions_fac", "displacement_avoided",
+                        "emissions_fac", "avoided_emissions_benefit",
                         "emissions_displacement_delay"}
     _actual_social = {item.id for item in TAXONOMY_ITEMS if item.discount_rate == "social"}
     assert _actual_social == _expected_social, (

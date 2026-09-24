@@ -222,11 +222,15 @@ def calculate_construction_start_year(delay_years: float) -> float:
 def calculate_amortized_cost(
     principal: float, wacc_real: float, project_lifetime: int
 ) -> float:
-    """
-    Calculate annual amortized cost using standard amortization formula.
+    """Level-annuity capital recovery factor.
 
-    This converts a lump-sum cost into equal annual payments over the project lifetime.
-    Uses the real WACC as the discount rate.
+    NOTE: This is NOT the FERC declining-balance formula rate used in the
+    appendix revenue requirement (§Revenue, Eq REV-3). The appendix method
+    is implemented in revenue.py. This function is retained as a general
+    utility for potential future use outside the core methodology.
+
+    Converts a lump-sum cost into equal annual payments over the project
+    lifetime. Uses the real WACC as the discount rate.
 
     Args:
         principal (float): Initial cost (total build cost)

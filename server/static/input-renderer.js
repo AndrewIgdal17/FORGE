@@ -941,7 +941,7 @@ const EQ_EMISSIONS = {
 };
 
 const EQ_DISPLACEMENT = {
-  latex: 'B_{\\text{displacement}} = \\sum_{f} (s^{CF}_f - s^{P}_f) \\cdot I_{f,p} \\cdot E \\cdot c_p',
+  latex: 'B_{\\text{avoided,emissions}} = \\sum_{f} (s^{CF}_f - s^{P}_f) \\cdot I_{f,p} \\cdot E \\cdot c_p',
   context: 'Avoided emissions benefit from displacing counterfactual generation with project generation.',
   appendixPage: 49, appendixLabel: 'Displacement'
 };

@@ -153,7 +153,7 @@ def print_results(results: dict, label: str):
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
-    print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_cost_pv', 0))}")
+    print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_benefit_pv', 0))}")
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- TRANSPARENCY ---")

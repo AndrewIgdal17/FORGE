@@ -168,7 +168,7 @@ _BCR_OUTPUT_KEYS = frozenset({
     "oandm_pv", "insurance_pv",
     "energy_losses_pv", "conductor_loss_pv", "converter_loss_pv",
     "emissions_comp_cost_pv", "fac_emissions_project_pv",
-    "displacement_avoided_cost_pv",
+    "displacement_avoided_benefit_pv",
     "wildfire_pv", "outage_pv",
     "delay_cost_pv", "congestion_delay_cost_pv",
     "emissions_displacement_delay_pv",
@@ -270,6 +270,25 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             out["net_benefit_ratepayer_pv"] = net_benefit
 
     return out
+
+
+def compute_incremental_comparison(bcr_p: dict, bcr_b: dict) -> dict:
+    """Compute incremental comparison between project P and baseline B.
+
+    Appendix §Reporting L2025-2027:
+      ΔC = C^B - C^P  (avoided-cost: positive = P has lower cost)
+      ΔB = B^P - B^B  (positive = P has higher benefit)
+      ΔNB = ΔB + ΔC = NB^P - NB^B
+    """
+    delta_cost = bcr_b.get("total_costs_pv", 0) - bcr_p.get("total_costs_pv", 0)
+    delta_benefit = bcr_p.get("total_benefits_pv", 0) - bcr_b.get("total_benefits_pv", 0)
+    delta_net_benefit = delta_benefit + delta_cost
+    return {
+        "delta_cost_pv": delta_cost,
+        "delta_benefit_pv": delta_benefit,
+        "delta_net_benefit_pv": delta_net_benefit,
+    }
+
 
 # ---------------------------------------------------------------------------
 # Print summary

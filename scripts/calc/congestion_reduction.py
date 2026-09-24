@@ -75,6 +75,16 @@ def _get_old_capacity_mw() -> int:
         )
     return old_capacity_mw if old_capacity_mw is not None else 0
 
+
+def require_value_of_load_per_mwh(project: Dict[str, Any]) -> float:
+    """Return γ_load; fail loudly if the required delivered-energy parameter is missing."""
+    if "value_of_load_per_mwh" not in project:
+        raise KeyError(
+            "Missing required parameter 'value_of_load_per_mwh' for delivered energy benefit"
+        )
+    return float(project["value_of_load_per_mwh"])
+
+
 def load_project_technical_details() -> CongestionProjectDetails:
     """
     Load project technical details using centralized loaders.
@@ -163,6 +173,8 @@ def calculate_congestion_reduction_costs(
     relief_mw = min(delta_C_eff, X)
     annual_congestion_benefit = H * relief_mw * average_congestion_price
     annual_remedial_benefit = annual_congestion_benefit
+    # Appendix §10: congestion delay cost annual = congestion benefit annual (identity)
+    cong_delay_annual = annual_congestion_benefit
 
     # Lifetime (nominal growing series) and PV (growing annuity)
     lifetime_congestion_benefit = calculate_nominal_growing_series(
@@ -178,10 +190,10 @@ def calculate_congestion_reduction_costs(
     # Delay opportunity costs — delay period starts at year 1 (no additional delay shift)
     delay_construction_years = delay_years + construction_years
     congestion_delay_cost_nominal = calculate_nominal_growing_series(
-        annual_congestion_benefit, g, delay_construction_years
+        cong_delay_annual, g, delay_construction_years
     )
     congestion_delay_cost_pv = calculate_growing_annuity_pv(
-        annual_congestion_benefit, g, wacc_real, delay_construction_years,
+        cong_delay_annual, g, wacc_real, delay_construction_years,
     )
 
     return CongestionReductionResults(
@@ -281,9 +293,7 @@ def main() -> None:
     project_data = get_project_data_raw()
     project = project_data["project"]
     line_utilization = float(project["line_utilization"])
-    value_of_load_per_mwh = float(
-        project.get("value_of_load_per_mwh", 0.0)
-    )
+    value_of_load_per_mwh = require_value_of_load_per_mwh(project)
     delta_c_effective = congestion_results.effective_capacity_relief
     energy_delivered_annual_mwh_yr = (
         delta_c_effective * line_utilization * HOURS_PER_YEAR
@@ -414,14 +424,8 @@ def calculate_capacity_value_benefit(
     """
     g = benefit_price_escalation_real
 
-    if not applicability_gate or capacity_credit <= 0 or capacity_price <= 0:
-        return {
-            "capacity_value_annual": 0.0,
-            "capacity_value_nominal": 0.0,
-            "capacity_value_pv": 0.0,
-        }
-
-    annual = delta_c_effective * capacity_credit * capacity_price
+    indicator_cap = 1.0 if (applicability_gate and capacity_credit > 0 and capacity_price > 0) else 0.0
+    annual = delta_c_effective * capacity_credit * capacity_price * indicator_cap
 
     nominal = calculate_nominal_growing_series(annual, g, project_lifetime)
 

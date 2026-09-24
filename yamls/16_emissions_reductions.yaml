@@ -10,9 +10,9 @@ emissions_reductions:
     co2_intensity_kg_per_mwh:
       coal: 820
       oil: 650
-      natural_gas: 450
+      natural_gas: 490
       solar: 48
-      wind: 12
+      wind: 11
       hydro: 24 # IPCC AR5 WG3 Ch7, Table A.III.2 lifecycle median (Bruckner et al., 2014). Prior value (4) was infrastructure-only per Dones et al. (2007).
       nuclear: 12
       other: 0

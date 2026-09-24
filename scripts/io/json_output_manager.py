@@ -196,7 +196,7 @@ class JSONOutputManager:
     def add_facilitated_emissions_costs(self, results: Dict[str, Any]):
         """Add facilitated emissions + displacement results.
 
-        Stored under benefits: displacement_avoided is a benefit (B_avoided_emissions).
+        Stored under benefits: avoided_emissions_benefit is a benefit (B_avoided_emissions).
         Facilitated emissions (emissions_fac) is reporting_only (intermediate quantity).
         """
         self.benefits["facilitated_emissions"] = results
@@ -253,7 +253,7 @@ class JSONOutputManager:
         wildfire = self.costs.get("wildfire", {})
         outage = self.costs.get("outage", {})
 
-        # Facilitated emissions (now under benefits; displacement_avoided is a benefit)
+        # Facilitated emissions (now under benefits; avoided_emissions_benefit is a benefit)
 
         # Delay costs
         delay = self.costs.get("delay", {})

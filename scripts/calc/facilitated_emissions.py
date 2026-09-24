@@ -46,8 +46,8 @@ class FacilitatedEmissionsResults:
     fac_emissions_project_nominal: float = 0.0
     fac_emissions_noline_pv: float = 0.0
     fac_emissions_noline_nominal: float = 0.0
-    displacement_avoided_cost_pv: float = 0.0
-    displacement_avoided_cost_nominal: float = 0.0
+    displacement_avoided_benefit_pv: float = 0.0
+    displacement_avoided_benefit_nominal: float = 0.0
     project_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
     noline_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
     displacement_pv_by_pollutant: Dict[str, float] = field(default_factory=dict)
@@ -164,8 +164,8 @@ def calculate_facilitated_emissions(
         fac_emissions_project_nominal=proj_nom,
         fac_emissions_noline_pv=noline_pv,
         fac_emissions_noline_nominal=noline_nom,
-        displacement_avoided_cost_pv=disp_pv,
-        displacement_avoided_cost_nominal=disp_nom,
+        displacement_avoided_benefit_pv=disp_pv,
+        displacement_avoided_benefit_nominal=disp_nom,
         project_pv_by_pollutant=proj_by_poll,
         noline_pv_by_pollutant=noline_by_poll,
         displacement_pv_by_pollutant=disp_by_poll,
@@ -199,9 +199,9 @@ def print_facilitated_emissions_results(
     print("=" * 60)
     print("DISPLACEMENT AVOIDED COST (LAYER 2)")
     print("=" * 60)
-    print(f"  Nominal: ${results.displacement_avoided_cost_nominal:,.2f}")
-    print(f"  PV:      ${results.displacement_avoided_cost_pv:,.2f}")
-    sign = "cleaner project" if results.displacement_avoided_cost_pv > 0 else "dirtier project"
+    print(f"  Nominal: ${results.displacement_avoided_benefit_nominal:,.2f}")
+    print(f"  PV:      ${results.displacement_avoided_benefit_pv:,.2f}")
+    sign = "cleaner project" if results.displacement_avoided_benefit_pv > 0 else "dirtier project"
     print(f"  Sign:    {sign}")
     for p, v in results.displacement_pv_by_pollutant.items():
         print(f"    {p.upper()} avoided PV: ${v:,.2f}")
@@ -267,8 +267,8 @@ def main() -> None:
         "fac_emissions_project_nominal": results.fac_emissions_project_nominal,
         "fac_emissions_noline_pv": results.fac_emissions_noline_pv,
         "fac_emissions_noline_nominal": results.fac_emissions_noline_nominal,
-        "displacement_avoided_cost_pv": results.displacement_avoided_cost_pv,
-        "displacement_avoided_cost_nominal": results.displacement_avoided_cost_nominal,
+        "displacement_avoided_benefit_pv": results.displacement_avoided_benefit_pv,
+        "displacement_avoided_benefit_nominal": results.displacement_avoided_benefit_nominal,
         "project_co2_pv": results.project_pv_by_pollutant.get("co2", 0.0),
         "project_sox_pv": results.project_pv_by_pollutant.get("sox", 0.0),
         "project_nox_pv": results.project_pv_by_pollutant.get("nox", 0.0),

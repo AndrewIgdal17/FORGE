@@ -86,10 +86,10 @@ def test_hand_calculated():
     ok &= assert_close(r.fac_emissions_project_pv, 22651.965548, "withline_pv", tol=0.01)
     ok &= assert_close(r.fac_emissions_noline_nominal, 24000.0, "noline_nominal")
     ok &= assert_close(r.fac_emissions_noline_pv, 24000.0, "noline_pv")
-    ok &= assert_close(r.displacement_avoided_cost_pv, 1348.034452, "displacement_pv", tol=0.01)
-    ok &= assert_close(r.displacement_avoided_cost_nominal, 1348.034452, "displacement_nom", tol=0.01)
+    ok &= assert_close(r.displacement_avoided_benefit_pv, 1348.034452, "displacement_pv", tol=0.01)
+    ok &= assert_close(r.displacement_avoided_benefit_nominal, 1348.034452, "displacement_nom", tol=0.01)
 
-    if r.displacement_avoided_cost_pv <= 0:
+    if r.displacement_avoided_benefit_pv <= 0:
         print("  FAIL displacement should be positive (cleaner with-line trajectory)")
         ok = False
 
@@ -118,8 +118,8 @@ def test_zero_displacement():
     )
 
     ok = True
-    ok &= assert_close(r.displacement_avoided_cost_pv, 0.0, "displacement_pv")
-    ok &= assert_close(r.displacement_avoided_cost_nominal, 0.0, "displacement_nom")
+    ok &= assert_close(r.displacement_avoided_benefit_pv, 0.0, "displacement_pv")
+    ok &= assert_close(r.displacement_avoided_benefit_nominal, 0.0, "displacement_nom")
     ok &= assert_close(r.fac_emissions_project_pv, r.fac_emissions_noline_pv, "withline_pv == noline_pv")
 
     return ok
@@ -154,11 +154,11 @@ def test_discount_sanity():
     else:
         print(f"  OK   noline PV ({r.fac_emissions_noline_pv:.2f}) < nominal ({r.fac_emissions_noline_nominal:.2f})")
 
-    if r.displacement_avoided_cost_pv <= 0:
-        print(f"  FAIL displacement should be positive (cleaner with-line trajectory), got {r.displacement_avoided_cost_pv:.2f}")
+    if r.displacement_avoided_benefit_pv <= 0:
+        print(f"  FAIL displacement should be positive (cleaner with-line trajectory), got {r.displacement_avoided_benefit_pv:.2f}")
         ok = False
     else:
-        print(f"  OK   displacement positive: ${r.displacement_avoided_cost_pv:.2f}")
+        print(f"  OK   displacement positive: ${r.displacement_avoided_benefit_pv:.2f}")
 
     return ok
 

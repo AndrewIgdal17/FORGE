@@ -62,7 +62,7 @@ BATCH_SUMMARY_FIELDS = [
     "rate_base",
     "rate_base_real",
     "annual_revenue_real",
-    "displacement_avoided_cost_pv",
+    "displacement_avoided_benefit_pv",
     "total_benefits_pv",
     # 9a. Appendix-aligned benefit categories
     "benefits_remedial_pv",

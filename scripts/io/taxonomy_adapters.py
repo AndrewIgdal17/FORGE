@@ -250,7 +250,7 @@ def adapt_outage(outage: dict) -> list[TaxonomyResult]:
             "outage_eac",
             value_pv=_safe(outage, "pv_cost"),
             value_nominal=_safe(outage, "nominal_total"),
-            value_annual=_safe(outage, "EAC"),
+            value_annual=_safe(outage, "expected_annual_loss"),
             detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
@@ -282,7 +282,7 @@ def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
 
 
 def adapt_facilitated_emissions(fac_em: dict) -> list[TaxonomyResult]:
-    """Adapt costs.facilitated_emissions -> emissions_fac, displacement_avoided."""
+    """Adapt costs.facilitated_emissions -> emissions_fac, avoided_emissions_benefit."""
     if not fac_em:
         return []
     pollutants = ("co2", "sox", "nox")
@@ -302,9 +302,9 @@ def adapt_facilitated_emissions(fac_em: dict) -> list[TaxonomyResult]:
             detail=fac_detail if fac_detail else None,
         ),
         TaxonomyResult(
-            "displacement_avoided",
-            value_pv=_safe(fac_em, "displacement_avoided_cost_pv"),
-            value_nominal=_safe(fac_em, "displacement_avoided_cost_nominal"),
+            "avoided_emissions_benefit",
+            value_pv=_safe(fac_em, "displacement_avoided_benefit_pv"),
+            value_nominal=_safe(fac_em, "displacement_avoided_benefit_nominal"),
         ),
     ]
 
@@ -375,7 +375,7 @@ def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
         TaxonomyResult(
             "capital_recovery",
             value_pv=_safe(capital_recovery, "capital_recovery_pv"),
-            value_nominal=_safe(capital_recovery, "capital_recovery_nominal"),
+            value_nominal=_safe(capital_recovery, "capital_recovery_real"),
             value_annual=_safe(capital_recovery, "annual_revenue"),
         ),
     ]
@@ -469,7 +469,7 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "emissions_comp_cost_nominal": _nom("emissions_comp"),
         "fac_emissions_project_pv": _pv("emissions_fac"),
         "fac_emissions_project_nominal": _nom("emissions_fac"),
-        "displacement_avoided_cost_pv": _pv("displacement_avoided"),
+        "displacement_avoided_benefit_pv": _pv("avoided_emissions_benefit"),
         "wildfire_pv": _pv("wildfire_eac"),
         "wildfire_nominal": _nom("wildfire_eac"),
         "outage_pv": _pv("outage_eac"),
@@ -485,7 +485,7 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "capacity_value_benefit_pv": _pv("capacity_value_benefit"),
         "capacity_value_benefit_nominal": _nom("capacity_value_benefit"),
         "capital_recovery_pv": _pv("capital_recovery"),
-        "capital_recovery_nominal": _nom("capital_recovery"),
+        "capital_recovery_real": _nom("capital_recovery"),
         "emissions_displacement_delay_pv": _pv("emissions_displacement_delay"),
         "emissions_displacement_delay_nominal": _nom("emissions_displacement_delay"),
     }

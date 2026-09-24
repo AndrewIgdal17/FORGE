@@ -21,6 +21,7 @@ from scripts.utils.financial_utils import calculate_present_value, calculate_cod
 from scripts.utils.calculation_utils import build_category_string
 from scripts.utils.path_config import YAMLS_DIR, PROJECT_ROOT
 from scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
+from scripts.utils.run_context import get_run_context, add_derived
 
 # Methodology constants (O&M rates, build cost reference data) are read from the canonical
 # repo YAML directory, not the per-scenario temp directory. These are reference data that
@@ -123,17 +124,40 @@ def load_converter_om_costs(
     conductor_type: str,
 ) -> float:
     """
-    Calculate annual converter O&M cost as a percentage of converter station CAPEX.
+    Calculate annual converter O&M as r_om,conv × K_converter × ξ_DC.
 
-    For AC projects, returns 0. For DC projects, reads the converter O&M rate
-    (0.5% for all HVDC converter types) and multiplies by fixed_converter_cost from the
-    build costs YAML.
+    K_converter is post-contingency, post-soft-cost total converter CAPEX
+    (includes N_conv) from ctx.build_costs. ξ_DC = 1 for DC projects
+    (ac_dc == "DC"), else 0 for AC projects.
 
     Returns:
         float: Total annual converter O&M cost ($/year), NOT per-mile.
     """
-    if ac_dc == "AC":
-        return 0.0
+    ctx = get_run_context()
+    if ctx is not None and ctx.build_costs is not None:
+        converter_capex = ctx.build_costs.converter_cost_with_contingencies
+    else:
+        # fallback: existing YAML read for standalone mode
+        try:
+            with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
+                build_data = yaml.safe_load(file)
+            if not build_data or "project_categories_build_costs" not in build_data:
+                raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
+            build_costs = build_data["project_categories_build_costs"]
+
+            category = build_category_string(
+                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            )
+            if category not in build_costs:
+                raise KeyError(f"Category '{category}' not found in build costs YAML")
+            converter_capex = build_costs[category].get("fixed_converter_cost", 0)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
+            )
+
+    # Appendix §4: ξ_DC gates converter O&M by project type (not upstream CAPEX value)
+    xi_dc = 1.0 if ac_dc == "DC" else 0.0
 
     # Load converter O&M rate by technology type
     try:
@@ -143,36 +167,21 @@ def load_converter_om_costs(
             raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
         rates = data["converter_om_rate"]
         if converter_type not in rates:
-            raise KeyError(
-                f"Converter type '{converter_type}' not found in converter_om_rate. "
-                f"Available: {list(rates.keys())}"
-            )
-        om_rate = rates[converter_type]
+            if xi_dc == 0.0:
+                om_rate = 0.0
+            else:
+                raise KeyError(
+                    f"Converter type '{converter_type}' not found in converter_om_rate. "
+                    f"Available: {list(rates.keys())}"
+                )
+        else:
+            om_rate = rates[converter_type]
     except FileNotFoundError:
         raise FileNotFoundError(
             f"Converter O&M YAML not found at {STATIC_YAMLS_DIR / '15_category_om_converters.yaml'}"
         )
 
-    # Load fixed_converter_cost from build costs YAML
-    try:
-        with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
-            build_data = yaml.safe_load(file)
-        if not build_data or "project_categories_build_costs" not in build_data:
-            raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
-        build_costs = build_data["project_categories_build_costs"]
-
-        category = build_category_string(
-            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-        )
-        if category not in build_costs:
-            raise KeyError(f"Category '{category}' not found in build costs YAML")
-        fixed_converter_cost = build_costs[category].get("fixed_converter_cost", 0)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
-        )
-
-    return fixed_converter_cost * om_rate
+    return converter_capex * om_rate * xi_dc
 
 def load_nonoverhead_line_om(
     construction_type: str,
@@ -184,7 +193,8 @@ def load_nonoverhead_line_om(
     """
     Compute total annual line O&M for non-overhead construction types as % of line CAPEX.
 
-    Line CAPEX = conductor_cost + structure_cost (excludes converter stations).
+    K_line = C_adj,cont,conductor + C_adj,cont,structure (post-contingency,
+    post-soft-cost CAPEX from ctx.build_costs; excludes converter stations).
     Rates from 14_category_om_structures.yaml: UG 0.15%, tunnel 0.4%, subsea 2.5%.
 
     Returns:
@@ -210,37 +220,42 @@ def load_nonoverhead_line_om(
             f"Structure O&M YAML not found at {STATIC_YAMLS_DIR / '14_category_om_structures.yaml'}"
         )
 
-    # Compute line CAPEX from build costs YAML (same source as build_costs.py)
-    try:
-        with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
-            build_data = yaml.safe_load(file)
-        if not build_data or "project_categories_build_costs" not in build_data:
-            raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
-        build_costs = build_data["project_categories_build_costs"]
-
-        category = build_category_string(
-            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+    ctx = get_run_context()
+    if ctx is not None and ctx.build_costs is not None:
+        line_capex = (
+            ctx.build_costs.conductor_cost_with_contingencies
+            + ctx.build_costs.structure_cost_with_contingencies
         )
-        if category not in build_costs:
-            raise KeyError(f"Category '{category}' not found in build costs YAML")
+    else:
+        # fallback: existing YAML read for standalone mode
+        try:
+            with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
+                build_data = yaml.safe_load(file)
+            if not build_data or "project_categories_build_costs" not in build_data:
+                raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
+            build_costs = build_data["project_categories_build_costs"]
 
-        cat_data = build_costs[category]
-        variable_conductor_cost_per_mile = cat_data.get("variable_conductor_cost_per_mile", 0)
-        fixed_conductor_cost = cat_data.get("fixed_conductor_cost", 0)
-        variable_structure_cost_per_mile = cat_data.get("variable_structure_cost_per_mile", 0)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
-        )
+            category = build_category_string(
+                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+            )
+            if category not in build_costs:
+                raise KeyError(f"Category '{category}' not found in build costs YAML")
 
-    # Compute weighted miles (same logic as build_costs.py)
-    from scripts.utils.weighted_miles import calculate_weighted_miles
-    weighted_miles, _ = calculate_weighted_miles()
+            cat_data = build_costs[category]
+            variable_conductor_cost_per_mile = cat_data.get("variable_conductor_cost_per_mile", 0)
+            fixed_conductor_cost = cat_data.get("fixed_conductor_cost", 0)
+            variable_structure_cost_per_mile = cat_data.get("variable_structure_cost_per_mile", 0)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
+            )
 
-    # Line CAPEX = conductor + structure (excludes converters)
-    conductor_cost = (variable_conductor_cost_per_mile * weighted_miles) + fixed_conductor_cost
-    structure_cost = variable_structure_cost_per_mile * weighted_miles
-    line_capex = conductor_cost + structure_cost
+        from scripts.utils.weighted_miles import calculate_weighted_miles
+        weighted_miles, _ = calculate_weighted_miles()
+
+        conductor_cost = (variable_conductor_cost_per_mile * weighted_miles) + fixed_conductor_cost
+        structure_cost = variable_structure_cost_per_mile * weighted_miles
+        line_capex = conductor_cost + structure_cost
 
     return line_capex * om_rate
 
@@ -466,7 +481,7 @@ def main() -> None:
         except (FileNotFoundError, KeyError, TypeError) as e:
             raise ValueError(f"Cannot load overhead base O&M rate: {e}")
 
-        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.0)
+        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.02)
 
         base_om_per_year = base_om_per_mile_year * physical_details.total_miles
 
@@ -510,7 +525,7 @@ def main() -> None:
 
         with open(STATIC_YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
             struct_data = yaml.safe_load(file)
-        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.0)
+        om_real_escalation_rate = struct_data.get("om_real_escalation_rate", 0.02)
 
     # Calculate lifetime costs (nominal, with real escalation)
     total_structure_cost_lifetime = calculate_nominal_growing_series(
@@ -572,7 +587,6 @@ def main() -> None:
     )
     pv_total = pv_line_om + pv_converter
 
-    from scripts.utils.run_context import add_derived
     _total_annual_oandm = total_line_om_per_year + total_converter_cost_per_year
     _total_nominal_oandm = calculate_nominal_growing_series(
         _total_annual_oandm, om_real_escalation_rate, project_details.project_lifetime,

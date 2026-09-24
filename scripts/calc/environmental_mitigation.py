@@ -32,6 +32,7 @@ from scripts.utils.financial_utils import (
     calculate_construction_start_year,
 )
 from scripts.utils.path_config import YAMLS_DIR
+from scripts.utils.run_context import get_run_context, add_derived
 
 def calculate_environmental_mitigation_costs(
     em_yaml: Dict[str, Any],
@@ -52,8 +53,8 @@ def calculate_environmental_mitigation_costs(
         terrain_miles_dict: Dictionary of terrain type to miles
         row_width_feet: ROW width in feet
         project_type: "greenfield" | "reconductoring" | "rebuild"
-                     reconductoring zeroes wetland/habitat credits (existing ROW);
-                     rebuild scales credits by rebuild_env_mitigation_fraction
+                     ξ_credits = 0 for reconductoring (existing ROW),
+                     rebuild_env_mitigation_fraction for rebuild, 1 otherwise
         subsea_capex: Subsea line construction CAPEX (conductor + structure),
                      used for marine environmental mitigation (% of CAPEX)
         rebuild_env_mitigation_fraction: Fraction of wetland/habitat credits
@@ -126,15 +127,15 @@ def calculate_environmental_mitigation_costs(
             cost_per_acre = habitat_costs.get(terrain, 30000)
             habitat_credits += cost_per_acre * effective_acres
 
-    # For reconductoring projects, set credits to zero since they use existing ROW
-    # and don't create new permanent environmental impacts requiring mitigation credits.
-    # Rebuild projects apply a partial fraction of credits.
-    if project_type == "reconductoring":
-        wetlands_credits = 0.0
-        habitat_credits = 0.0
-    elif project_type == "rebuild":
-        wetlands_credits *= rebuild_env_mitigation_fraction
-        habitat_credits *= rebuild_env_mitigation_fraction
+    # Appendix §3: ξ_credits gates wetland/habitat credits at the point of use
+    # (reconductoring uses existing ROW; rebuild applies a partial fraction).
+    xi_credits = (
+        0.0 if project_type == "reconductoring"
+        else rebuild_env_mitigation_fraction if project_type == "rebuild"
+        else 1.0
+    )
+    wetlands_credits_gated = xi_credits * wetlands_credits
+    habitat_credits_gated = xi_credits * habitat_credits
 
     # Marine environmental mitigation (subsea only, % of CAPEX)
     marine_env_mitigation_pct_capex = mitigation_config.get("marine_env_mitigation_pct_capex", 0.03)
@@ -145,11 +146,11 @@ def calculate_environmental_mitigation_costs(
 
     return {
         "base_cost": base_cost,
-        "wetlands_credits": wetlands_credits,
-        "habitat_credits": habitat_credits,
-        "total_credits": wetlands_credits + habitat_credits,
+        "wetlands_credits": wetlands_credits_gated,
+        "habitat_credits": habitat_credits_gated,
+        "total_credits": wetlands_credits_gated + habitat_credits_gated,
         "marine_cost": marine_cost,
-        "total": base_cost + wetlands_credits + habitat_credits + marine_cost,
+        "total": base_cost + wetlands_credits_gated + habitat_credits_gated + marine_cost,
         "uplift_factor_applied": uplift_factor,
         "total_base_acres": total_base_acres,
         "total_effective_acres": total_effective_acres,
@@ -177,22 +178,29 @@ def main() -> None:
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
 
-    # Compute subsea CAPEX for marine mitigation (subsea only)
+    # Compute subsea CAPEX for marine mitigation (subsea only).
+    # Appendix §3: C_marine,env = r_marine,env × C_subsea,CAPEX from build costs.
     subsea_capex = 0.0
     if project_details.construction_type == "Subsea":
-        from scripts.utils.weighted_miles import calculate_weighted_miles
-        import yaml as _yaml
-        _static_yamls = YAMLS_DIR
-        with open(_static_yamls / "10_project_category_build_costs.yaml", "r") as _f:
-            _bc_data = _yaml.safe_load(_f)
-        _build_costs = _bc_data["project_categories_build_costs"]
-        _cat = category
-        if _cat in _build_costs:
-            _cat_data = _build_costs[_cat]
-            _wm, _ = calculate_weighted_miles()
-            _conductor_cost = (_cat_data.get("variable_conductor_cost_per_mile", 0) * _wm) + _cat_data.get("fixed_conductor_cost", 0)
-            _structure_cost = _cat_data.get("variable_structure_cost_per_mile", 0) * _wm
-            subsea_capex = _conductor_cost + _structure_cost
+        ctx = get_run_context()
+        if ctx is not None and ctx.build_costs is not None:
+            subsea_capex = (
+                ctx.build_costs.conductor_cost_with_contingencies
+                + ctx.build_costs.structure_cost_with_contingencies
+            )
+        else:
+            from scripts.utils.weighted_miles import calculate_weighted_miles
+            with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as _f:
+                _bc_data = yaml.safe_load(_f)
+            _build_costs = _bc_data["project_categories_build_costs"]
+            if category in _build_costs:
+                _cat_data = _build_costs[category]
+                _wm, _ = calculate_weighted_miles()
+                _conductor_cost = (
+                    _cat_data.get("variable_conductor_cost_per_mile", 0) * _wm
+                ) + _cat_data.get("fixed_conductor_cost", 0)
+                _structure_cost = _cat_data.get("variable_structure_cost_per_mile", 0) * _wm
+                subsea_capex = _conductor_cost + _structure_cost
 
     # Calculate environmental mitigation costs (nominal)
     rebuild_env_mitigation_fraction = em_yaml.get(
@@ -205,7 +213,6 @@ def main() -> None:
         rebuild_env_mitigation_fraction=rebuild_env_mitigation_fraction,
     )
 
-    from scripts.utils.run_context import add_derived
     from scripts.utils.calculation_utils import miles_to_acres
     _terrain_acres = {t: miles_to_acres(m, row_width_feet) for t, m in terrain_miles.items() if m > 0}
     _uplift = results["uplift_factor_applied"]
@@ -256,34 +263,34 @@ def main() -> None:
     # Validate wacc_real before direct use to prevent division by zero
     validate_discount_rate(financing.wacc_real, "wacc_real")
 
-    credit_start_year = calculate_construction_start_year(project_details.delay_years)
+    construction_start_year = calculate_construction_start_year(project_details.delay_years)
     if project_details.construction_years > 0:
         annual_total_credits = results["total_credits"] / project_details.construction_years
         annual_wetlands = results["wetlands_credits"] / project_details.construction_years
         annual_habitat = results["habitat_credits"] / project_details.construction_years
         total_credits_pv = calculate_present_value(
-            annual_total_credits, financing.wacc_real, project_details.construction_years, credit_start_year
+            annual_total_credits, financing.wacc_real, project_details.construction_years, construction_start_year
         )
         wetlands_credits_pv = calculate_present_value(
-            annual_wetlands, financing.wacc_real, project_details.construction_years, credit_start_year
+            annual_wetlands, financing.wacc_real, project_details.construction_years, construction_start_year
         )
         habitat_credits_pv = calculate_present_value(
-            annual_habitat, financing.wacc_real, project_details.construction_years, credit_start_year
+            annual_habitat, financing.wacc_real, project_details.construction_years, construction_start_year
         )
     else:
-        total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** credit_start_year
-        wetlands_credits_pv = results["wetlands_credits"] / (1 + financing.wacc_real) ** credit_start_year
-        habitat_credits_pv = results["habitat_credits"] / (1 + financing.wacc_real) ** credit_start_year
+        total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** construction_start_year
+        wetlands_credits_pv = results["wetlands_credits"] / (1 + financing.wacc_real) ** construction_start_year
+        habitat_credits_pv = results["habitat_credits"] / (1 + financing.wacc_real) ** construction_start_year
 
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years
     if project_details.construction_years > 0:
         annual_base_cost = (results["base_cost"] + results["marine_cost"]) / project_details.construction_years
         base_cost_pv = calculate_present_value(
-            annual_base_cost, financing.wacc_real, project_details.construction_years, credit_start_year
+            annual_base_cost, financing.wacc_real, project_details.construction_years, construction_start_year
         )
     else:
-        base_cost_pv = (results["base_cost"] + results["marine_cost"]) / (1 + financing.wacc_real) ** credit_start_year
+        base_cost_pv = (results["base_cost"] + results["marine_cost"]) / (1 + financing.wacc_real) ** construction_start_year
 
     # Total PV
     total_pv = base_cost_pv + total_credits_pv
@@ -337,7 +344,7 @@ def main() -> None:
     print(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
     print(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
     print(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")
-    print(f"    (Payments start at year {credit_start_year:.1f})")
+    print(f"    (Payments start at year {construction_start_year:.1f})")
     print(f"  ---")
     print(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
     print("=" * 80)

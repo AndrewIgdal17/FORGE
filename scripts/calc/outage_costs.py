@@ -90,7 +90,7 @@ def calculate_outage_costs(
         ac_dc: "AC" or "DC"; used to auto-derive rho when load_shed_fraction is "auto"
 
     Returns:
-        dict: Contains EAC, nominal_cost, pv_cost
+        dict: Contains expected_annual_loss, nominal_cost, pv_cost
 
     Raises:
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
@@ -109,7 +109,7 @@ def calculate_outage_costs(
         rho = 0.05 if ac_dc == "AC" else 0.80
     else:
         rho = float(rho_config)
-    redispatch_cost = outage_config.get("redispatch_cost_per_mwh", 20)
+    redispatch_cost = outage_config.get("redispatch_cost_per_mwh", 24)
 
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
     outage_duration = outage_config.get("outage_duration", 6)
@@ -126,7 +126,7 @@ def calculate_outage_costs(
     # Outage rate: overhead uses decomposition model, others use flat per-mile
     rate_entry = outage_rate_config.get(yaml_construction_type, 0.015)
     if isinstance(rate_entry, dict):
-        lambda_terminal = rate_entry.get("lambda_terminal", 0.3)
+        lambda_terminal = rate_entry.get("lambda_terminal", 0.2136)
         lambda_per_mile = rate_entry.get("lambda_per_mile", 0.012)
         lambda_total = lambda_terminal + lambda_per_mile * total_miles
         outage_rate = lambda_total / total_miles if total_miles > 0 else lambda_per_mile
@@ -143,8 +143,8 @@ def calculate_outage_costs(
     # MW lost per event
     mw_lost_per_event = capacity_at_risk * capacity_mw * line_utilization
 
-    # Unserved energy per event
-    unserved_mwh_per_event = duration_effective * mw_lost_per_event
+    # Unserved energy per event (ρ = load_shed_fraction)
+    unserved_mwh_per_event = rho * duration_effective * mw_lost_per_event
 
     # Two-tier cost per event: load-shed (VoLL) + redispatch (flat rate)
     mw_shed = rho * mw_lost_per_event
@@ -155,17 +155,17 @@ def calculate_outage_costs(
     cost_redispatch = mw_redisp * duration_effective * redispatch_cost
     cost_per_event = cost_loadshed + cost_redispatch
 
-    # Expected Annual Cost
-    EAC = lambda_total * cost_per_event
+    # Expected annual loss
+    expected_annual_loss = lambda_total * cost_per_event
 
     nominal_total = calculate_nominal_growing_series(
-        annual_amount=EAC,
+        annual_amount=expected_annual_loss,
         growth_rate=growth_rate,
         project_lifetime=project_lifetime,
     )
 
     pv_cost = calculate_growing_annuity_pv(
-        annual_amount=EAC,
+        annual_amount=expected_annual_loss,
         growth_rate=growth_rate,
         discount_rate=discount_rate,
         project_lifetime=project_lifetime,
@@ -175,7 +175,7 @@ def calculate_outage_costs(
 
     return {
         "lambda_total": lambda_total,
-        "EAC": EAC,
+        "expected_annual_loss": expected_annual_loss,
         "capacity_at_risk": capacity_at_risk,
         "growth_rate": growth_rate,
         "nominal_total": nominal_total,
@@ -230,7 +230,7 @@ def main() -> None:
     from scripts.utils.run_context import add_derived
     add_derived({
         "lambda_total_outage": results["lambda_total"],
-        "EAC_outage": results["EAC"],
+        "expected_annual_loss_outage": results["expected_annual_loss"],
         "mw_lost_per_event": results["capacity_at_risk"] * project_details.capacity_mw,
         "construction_type_multiplier_outage_duration": results["duration_multiplier"],
     })
@@ -267,8 +267,8 @@ def main() -> None:
     print(f"  Total cost/event: ${results['cost_per_event']:,.0f}")
     print()
 
-    print("EXPECTED ANNUAL COST:")
-    print(f"  EAC: ${results['EAC']:,.2f}/year")
+    print("EXPECTED ANNUAL LOSS:")
+    print(f"  expected_annual_loss: ${results['expected_annual_loss']:,.2f}/year")
     print()
 
     print("[NOMINAL VALUES]")

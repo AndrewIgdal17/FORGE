@@ -29,7 +29,7 @@ def calculate_wildfire_costs(
     construction_type: str,
     terrain_miles: Dict[str, float],
     project_lifetime: int,
-    discount_rate: float,
+    social_discount_rate: float,
     delay_years: float = 0,
     construction_years: float = 0,
 ) -> Dict[str, Any]:
@@ -41,7 +41,7 @@ def calculate_wildfire_costs(
         construction_type: Construction type (overhead, underground, etc.)
         terrain_miles: Dictionary of terrain type to miles (summed for total length)
         project_lifetime: Project lifetime in years
-        discount_rate: Discount rate for PV calculation
+        social_discount_rate: Social discount rate for PV calculation (r_social)
         delay_years: Years of delay before construction starts
         construction_years: Years of construction
 
@@ -49,9 +49,9 @@ def calculate_wildfire_costs(
         dict: Contains lambda_total, EAL, nominal_cost, pv_cost
 
     Raises:
-        ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
+        ValueError: If social_discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
-    validate_discount_rate(discount_rate)
+    validate_discount_rate(social_discount_rate)
 
     wildfire_config = wildfire_yaml["wildfire"]
     severity = wildfire_config["severity_per_event"]
@@ -80,7 +80,7 @@ def calculate_wildfire_costs(
     pv_cost = calculate_growing_annuity_pv(
         annual_amount=EAL,
         growth_rate=growth_rate,
-        discount_rate=discount_rate,
+        discount_rate=social_discount_rate,
         project_lifetime=project_lifetime,
         delay_years=delay_years,
         construction_years=construction_years,
@@ -112,7 +112,7 @@ def main() -> None:
     financing_yaml = get_financing_data_raw()
 
     # Social discount rate only — risk externalities use r_social (appendix hard-codes this)
-    discount_rate = financing_yaml["financial"]["social_discount_rate"]
+    social_discount_rate = financing_yaml["financial"]["social_discount_rate"]
     discount_source = "social discount rate"
 
     results = calculate_wildfire_costs(
@@ -120,7 +120,7 @@ def main() -> None:
         project_details.construction_type,
         terrain_miles,
         project_details.project_lifetime,
-        discount_rate,
+        social_discount_rate,
         delay_years=project_details.delay_years,
         construction_years=project_details.construction_years,
     )
@@ -166,11 +166,11 @@ def main() -> None:
     print()
 
     print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {discount_rate:.2%} ({discount_source})")
+    print(f"  Discount Rate: {social_discount_rate:.2%} ({discount_source})")
     print(f"  Growing Annuity Formula: Applied")
-    if results["growth_rate"] > discount_rate:
+    if results["growth_rate"] > social_discount_rate:
         print(
-            f"  ⚠️  WARNING: Risk growth rate ({results['growth_rate']:.2%}) > discount rate ({discount_rate:.2%})"
+            f"  ⚠️  WARNING: Risk growth rate ({results['growth_rate']:.2%}) > discount rate ({social_discount_rate:.2%})"
         )
         print(f"      PV grows over time - risk is escalating faster than discounting!")
     print(f"  ---")

@@ -150,12 +150,11 @@ def main() -> None:
         # Still write zeros to CSV for consistency
         csv_manager = SmartOutputManager()
         results = {
-            "capital_recovery_nominal": 0,
+            "capital_recovery_real": 0,
             "capital_recovery_pv": 0,
             "annual_revenue": 0,
             "rate_base": 0,
             "rate_base_real": 0,
-            "rate_base_pv": 0,
             "annual_revenue_real": 0,
             "revenue_year_1": 0,
             "revenue_year_n": 0,
@@ -192,7 +191,7 @@ def main() -> None:
     r_wacc_real = financing.wacc_real
 
     capital_recovery_pv = 0.0
-    capital_recovery_nominal = 0.0
+    capital_recovery_real = 0.0
     annual_revenues = []
 
     for t in range(1, n + 1):
@@ -200,7 +199,7 @@ def main() -> None:
         return_t = rate_base_real * r_wacc_real * (1 - (t - 1) / n)
         revenue_t = depreciation_t + return_t
         annual_revenues.append(revenue_t)
-        capital_recovery_nominal += revenue_t
+        capital_recovery_real += revenue_t
         discount_year = cod_year + t - 1
         capital_recovery_pv += revenue_t / (1 + r_wacc_real) ** discount_year
 
@@ -221,7 +220,7 @@ def main() -> None:
     print(f"Project Lifetime:                {n} years")
     print(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")
     print(f"Revenue Year {n} (real $/year):   ${revenue_year_n:,.2f}")
-    print(f"Undiscounted Total (real):      ${capital_recovery_nominal:,.2f}")
+    print(f"Undiscounted Total (real):      ${capital_recovery_real:,.2f}")
     print()
     print(
         f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%}):"
@@ -232,12 +231,11 @@ def main() -> None:
     # CSV Output
     csv_manager = SmartOutputManager()
     results = {
-        "capital_recovery_nominal": capital_recovery_nominal,
+        "capital_recovery_real": capital_recovery_real,
         "capital_recovery_pv": capital_recovery_pv,
         "annual_revenue": revenue_year_1,
         "rate_base": rate_base,
         "rate_base_real": rate_base_real,
-        "rate_base_pv": capital_recovery_pv,
         "annual_revenue_real": revenue_year_1,
         "revenue_year_1": revenue_year_1,
         "revenue_year_n": revenue_year_n,
