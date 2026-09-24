@@ -189,18 +189,22 @@ def main() -> None:
                 + ctx.build_costs.structure_cost_with_contingencies
             )
         else:
-            from scripts.utils.weighted_miles import calculate_weighted_miles
-            with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as _f:
-                _bc_data = yaml.safe_load(_f)
-            _build_costs = _bc_data["project_categories_build_costs"]
-            if category in _build_costs:
-                _cat_data = _build_costs[category]
-                _wm, _ = calculate_weighted_miles()
-                _conductor_cost = (
-                    _cat_data.get("variable_conductor_cost_per_mile", 0) * _wm
-                ) + _cat_data.get("fixed_conductor_cost", 0)
-                _structure_cost = _cat_data.get("variable_structure_cost_per_mile", 0) * _wm
-                subsea_capex = _conductor_cost + _structure_cost
+            from scripts.calc.build_costs import load_and_escalate_costs
+            from scripts.io.yaml_loaders import load_contingencies
+            contingencies = load_contingencies()
+            n_conv = (
+                ctx.number_of_converters
+                if ctx is not None
+                else project_details.number_of_converters
+            )
+            costs = load_and_escalate_costs(
+                category, n_conv, contingencies,
+                project_details.project_type, project_details,
+            )
+            subsea_capex = (
+                costs.conductor_cost_with_contingencies
+                + costs.structure_cost_with_contingencies
+            )
 
     # Calculate environmental mitigation costs (nominal)
     rebuild_env_mitigation_fraction = em_yaml.get(

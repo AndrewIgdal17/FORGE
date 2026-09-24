@@ -186,6 +186,60 @@ def load_costs(
         average_terrain_multiplier=average_terrain_multiplier,
     )
 
+
+def load_and_escalate_costs(
+    category: str,
+    number_of_converters: int,
+    contingencies: dict,
+    project_type: str,
+    project_details,
+) -> BuildCosts:
+    """Load build costs with overrides and delay escalation — full pipeline equivalent.
+
+    Use this in downstream modules' standalone fallback paths to get the same
+    BuildCosts object that main() would produce. This replaces incomplete
+    re-derivation fallbacks that were missing overrides/escalation/contingencies.
+    """
+    overrides = None
+    try:
+        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as f:
+            raw = yaml.safe_load(f) or {}
+        raw_ov = raw.get("overrides")
+        if raw_ov and isinstance(raw_ov, dict):
+            overrides = {k: v for k, v in raw_ov.items() if v is not None}
+            if not overrides:
+                overrides = None
+    except Exception:
+        pass
+
+    costs = load_costs(
+        category, number_of_converters, contingencies, project_type, overrides=overrides
+    )
+
+    delay_years = getattr(project_details, "delay_years", 0) or 0
+    if delay_years > 0:
+        from scripts.utils.smart_loaders import get_financing_data_raw as _get_financing_data_raw
+        fin_raw = _get_financing_data_raw()
+        escalation_rate = (
+            fin_raw.get("financial", {}).get("construction_cost_escalation_rate", 0) or 0
+        )
+        if escalation_rate > 0:
+            factor = (1 + escalation_rate) ** delay_years
+            costs = BuildCosts(
+                total_cost=costs.total_cost,
+                total_cost_with_contingencies=costs.total_cost_with_contingencies * factor,
+                conductor_cost=costs.conductor_cost,
+                structure_cost=costs.structure_cost,
+                converter_cost=costs.converter_cost,
+                conductor_cost_with_contingencies=costs.conductor_cost_with_contingencies * factor,
+                structure_cost_with_contingencies=costs.structure_cost_with_contingencies * factor,
+                converter_cost_with_contingencies=costs.converter_cost_with_contingencies * factor,
+                weighted_miles=costs.weighted_miles,
+                average_terrain_multiplier=costs.average_terrain_multiplier,
+            )
+    return costs
+
+
 def main() -> None:
     """
     Main function to calculate and display build costs.

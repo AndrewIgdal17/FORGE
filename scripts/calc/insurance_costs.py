@@ -21,7 +21,6 @@ from scripts.utils.smart_loaders import (
 )
 from scripts.utils.financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from scripts.utils.calculation_utils import normalize_construction_type_for_yaml
-from scripts.calc.build_costs import load_costs
 from scripts.utils.weighted_miles import calculate_weighted_miles
 from scripts.utils.path_config import YAMLS_DIR
 from scripts.utils.run_context import get_run_context
@@ -140,12 +139,11 @@ def main() -> None:
     if _ctx is not None and _ctx.build_costs is not None:
         costs = _ctx.build_costs
     else:
+        from scripts.calc.build_costs import load_and_escalate_costs
         contingencies = load_contingencies()
-        costs = load_costs(
-            category,
-            number_of_converters,
-            contingencies,
-            project_details.project_type,
+        costs = load_and_escalate_costs(
+            category, number_of_converters, contingencies,
+            project_details.project_type, project_details,
         )
 
     # Load insurance parameters

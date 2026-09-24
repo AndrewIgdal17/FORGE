@@ -137,24 +137,23 @@ def load_converter_om_costs(
     if ctx is not None and ctx.build_costs is not None:
         converter_capex = ctx.build_costs.converter_cost_with_contingencies
     else:
-        # fallback: existing YAML read for standalone mode
-        try:
-            with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
-                build_data = yaml.safe_load(file)
-            if not build_data or "project_categories_build_costs" not in build_data:
-                raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
-            build_costs = build_data["project_categories_build_costs"]
-
-            category = build_category_string(
-                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-            )
-            if category not in build_costs:
-                raise KeyError(f"Category '{category}' not found in build costs YAML")
-            converter_capex = build_costs[category].get("fixed_converter_cost", 0)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
-            )
+        from scripts.calc.build_costs import load_and_escalate_costs
+        from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
+        project_details = load_project_technical_details()
+        contingencies = load_contingencies()
+        category = build_category_string(
+            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+        )
+        n_conv = (
+            ctx.number_of_converters
+            if ctx is not None
+            else project_details.number_of_converters
+        )
+        costs = load_and_escalate_costs(
+            category, n_conv, contingencies,
+            project_details.project_type, project_details,
+        )
+        converter_capex = costs.converter_cost_with_contingencies
 
     # Appendix §4: ξ_DC gates converter O&M by project type (not upstream CAPEX value)
     xi_dc = 1.0 if ac_dc == "DC" else 0.0
@@ -227,35 +226,26 @@ def load_nonoverhead_line_om(
             + ctx.build_costs.structure_cost_with_contingencies
         )
     else:
-        # fallback: existing YAML read for standalone mode
-        try:
-            with open(STATIC_YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
-                build_data = yaml.safe_load(file)
-            if not build_data or "project_categories_build_costs" not in build_data:
-                raise ValueError("Missing 'project_categories_build_costs' in build costs YAML")
-            build_costs = build_data["project_categories_build_costs"]
-
-            category = build_category_string(
-                construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-            )
-            if category not in build_costs:
-                raise KeyError(f"Category '{category}' not found in build costs YAML")
-
-            cat_data = build_costs[category]
-            variable_conductor_cost_per_mile = cat_data.get("variable_conductor_cost_per_mile", 0)
-            fixed_conductor_cost = cat_data.get("fixed_conductor_cost", 0)
-            variable_structure_cost_per_mile = cat_data.get("variable_structure_cost_per_mile", 0)
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f"Build costs YAML not found at {STATIC_YAMLS_DIR / '10_project_category_build_costs.yaml'}"
-            )
-
-        from scripts.utils.weighted_miles import calculate_weighted_miles
-        weighted_miles, _ = calculate_weighted_miles()
-
-        conductor_cost = (variable_conductor_cost_per_mile * weighted_miles) + fixed_conductor_cost
-        structure_cost = variable_structure_cost_per_mile * weighted_miles
-        line_capex = conductor_cost + structure_cost
+        from scripts.calc.build_costs import load_and_escalate_costs
+        from scripts.io.yaml_loaders import load_contingencies, load_project_technical_details
+        project_details = load_project_technical_details()
+        contingencies = load_contingencies()
+        category = build_category_string(
+            construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+        )
+        n_conv = (
+            ctx.number_of_converters
+            if ctx is not None
+            else project_details.number_of_converters
+        )
+        costs = load_and_escalate_costs(
+            category, n_conv, contingencies,
+            project_details.project_type, project_details,
+        )
+        line_capex = (
+            costs.conductor_cost_with_contingencies
+            + costs.structure_cost_with_contingencies
+        )
 
     return line_capex * om_rate
 

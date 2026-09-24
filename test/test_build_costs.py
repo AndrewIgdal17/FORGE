@@ -89,3 +89,125 @@ def test_greenfield_ac_gates_converter_when_no_converters(tmp_path, monkeypatch)
     assert result.converter_cost == 0.0
     assert result.total_cost == 15_100.0  # conductor + structure
     assert result.converter_cost_with_contingencies == 0.0
+
+
+# ---------------------------------------------------------------------------
+# load_and_escalate_costs — full pipeline equivalent for standalone fallbacks
+# ---------------------------------------------------------------------------
+
+_CONTINGENCIES = {
+    "conductor_contingency": 0.10,
+    "structure_contingency": 0.20,
+    "converter_contingency": 0.15,
+}
+
+
+class _FakeProjectDetails:
+    delay_years = 0
+    project_type = "greenfield"
+
+
+def _patch_load_and_escalate(tmp_path, monkeypatch, delay_years=0, escalation_rate=0.0, extra_yaml=""):
+    yaml_text = textwrap.dedent(
+        """\
+        soft_cost_multiplier: 0.10
+        project_categories_build_costs:
+          test_cat:
+            variable_conductor_cost_per_mile: 1000.0
+            fixed_conductor_cost: 100.0
+            variable_structure_cost_per_mile: 500.0
+            fixed_converter_cost: 2000.0
+        """
+    ) + extra_yaml
+    (tmp_path / "10_project_category_build_costs.yaml").write_text(yaml_text)
+    monkeypatch.setattr("scripts.calc.build_costs.YAMLS_DIR", tmp_path)
+    monkeypatch.setattr(
+        "scripts.calc.build_costs.calculate_weighted_miles",
+        lambda: (10.0, 1.2),
+    )
+    monkeypatch.setattr(
+        "scripts.utils.smart_loaders.get_financing_data_raw",
+        lambda: {"financial": {"construction_cost_escalation_rate": escalation_rate}},
+    )
+    details = _FakeProjectDetails()
+    details.delay_years = delay_years
+    return details
+
+
+def test_load_and_escalate_costs_exists():
+    from scripts.calc.build_costs import load_and_escalate_costs
+
+    assert callable(load_and_escalate_costs)
+
+
+def test_load_and_escalate_costs_escalates_contingency_fields(tmp_path, monkeypatch):
+    """Delay escalation scales *_with_contingencies; bare fields stay unescalated."""
+    from scripts.calc.build_costs import load_and_escalate_costs, load_costs
+
+    details = _patch_load_and_escalate(
+        tmp_path, monkeypatch, delay_years=2, escalation_rate=0.05
+    )
+    unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+    escalated = load_and_escalate_costs(
+        "test_cat", 2, _CONTINGENCIES, "greenfield", details
+    )
+
+    factor = (1.05) ** 2
+    assert escalated.conductor_cost == unescalated.conductor_cost
+    assert escalated.structure_cost == unescalated.structure_cost
+    assert escalated.converter_cost == unescalated.converter_cost
+    assert escalated.total_cost == unescalated.total_cost
+    assert abs(
+        escalated.conductor_cost_with_contingencies
+        - unescalated.conductor_cost_with_contingencies * factor
+    ) < 1e-9
+    assert abs(
+        escalated.structure_cost_with_contingencies
+        - unescalated.structure_cost_with_contingencies * factor
+    ) < 1e-9
+    assert abs(
+        escalated.converter_cost_with_contingencies
+        - unescalated.converter_cost_with_contingencies * factor
+    ) < 1e-9
+    assert abs(
+        escalated.total_cost_with_contingencies
+        - unescalated.total_cost_with_contingencies * factor
+    ) < 1e-9
+    assert escalated.weighted_miles == unescalated.weighted_miles
+    assert escalated.average_terrain_multiplier == unescalated.average_terrain_multiplier
+
+
+def test_load_and_escalate_costs_skips_escalation_when_delay_zero(tmp_path, monkeypatch):
+    from scripts.calc.build_costs import load_and_escalate_costs, load_costs
+
+    details = _patch_load_and_escalate(
+        tmp_path, monkeypatch, delay_years=0, escalation_rate=0.05
+    )
+    unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+    result = load_and_escalate_costs(
+        "test_cat", 2, _CONTINGENCIES, "greenfield", details
+    )
+    assert result.total_cost_with_contingencies == unescalated.total_cost_with_contingencies
+
+
+def test_load_and_escalate_costs_applies_overrides(tmp_path, monkeypatch):
+    """Overrides from the build-cost YAML are applied (same as main())."""
+    from scripts.calc.build_costs import load_and_escalate_costs, load_costs
+
+    details = _patch_load_and_escalate(
+        tmp_path,
+        monkeypatch,
+        delay_years=0,
+        extra_yaml=textwrap.dedent(
+            """\
+            overrides:
+              fixed_converter_cost: 9999.0
+            """
+        ),
+    )
+    without_overrides = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+    with_overrides = load_and_escalate_costs(
+        "test_cat", 2, _CONTINGENCIES, "greenfield", details
+    )
+    assert without_overrides.converter_cost == 4_000.0
+    assert with_overrides.converter_cost == 19_998.0  # 9999 * 2 converters
