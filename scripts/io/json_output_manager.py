@@ -214,10 +214,10 @@ class JSONOutputManager:
         """Add design comparison results (greenfield line-loss comparison)."""
         self.costs["design_comparison"] = results
 
-    def add_congestion_curtailment(self, results: Dict[str, Any]):
-        """Add congestion, curtailment, and delivered-energy benefits.
+    def add_congestion(self, results: Dict[str, Any]):
+        """Add congestion and delivered-energy benefits.
         results includes delivered_benefit_annual, delivered_benefit_nominal, delivered_benefit_pv as own keys."""
-        self.benefits["congestion_curtailment"] = results
+        self.benefits["congestion"] = results
 
     def add_revenue(self, results: Dict[str, Any]):
         """Add revenue results."""
@@ -312,10 +312,10 @@ class JSONOutputManager:
             "grand_total_cost_pv": 0,  # Calculated below
         }
 
-        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
-        congestion_curtailment = self.benefits.get("congestion_curtailment", {})
+        # Get congestion delay costs from benefits section (they're costs, not benefits)
+        congestion = self.benefits.get("congestion", {})
         congestion_delay_nominal = (
-            congestion_curtailment.get("congestion_delay_cost_nominal", 0) or 0
+            congestion.get("congestion_delay_cost_nominal", 0) or 0
         )
 
         # Calculate grand totals
@@ -333,10 +333,10 @@ class JSONOutputManager:
             "total_capital_afudc"
         ] + delay.get("total_afudc", 0)
 
-        # Get congestion/curtailment delay costs from benefits section (they're costs, not benefits)
-        congestion_curtailment = self.benefits.get("congestion_curtailment", {})
+        # Get congestion delay costs from benefits section (they're costs, not benefits)
+        congestion = self.benefits.get("congestion", {})
         congestion_delay_pv = (
-            congestion_curtailment.get("congestion_delay_cost_pv", 0) or 0
+            congestion.get("congestion_delay_cost_pv", 0) or 0
         )
 
         self.summary["grand_total_cost_pv"] = (
@@ -356,7 +356,7 @@ class JSONOutputManager:
         _ll = self.costs.get("line_loss", {})
         _em = self.costs.get("emissions", {})
         _dl = self.costs.get("delay", {})
-        _cc2 = self.benefits.get("congestion_curtailment", {})
+        _cc2 = self.benefits.get("congestion", {})
         _cdpv2 = _cc2.get("congestion_delay_cost_pv", 0) or 0
         _disp_delay_pv = displacement_delay.get("displacement_delay_cost_pv", 0) or 0
         _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _cdpv2 + _disp_delay_pv

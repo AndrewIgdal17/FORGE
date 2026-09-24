@@ -1,5 +1,5 @@
 """Tests for capacity value benefit computation."""
-from scripts.calc.congestion_curtailment_reduction import calculate_capacity_value_benefit
+from scripts.calc.congestion_reduction import calculate_capacity_value_benefit
 
 def test_capacity_value_basic():
     """Gate on, known inputs → expected annual and PV."""

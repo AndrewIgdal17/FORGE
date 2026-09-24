@@ -87,7 +87,7 @@ venv/bin/python3 forge.py -j -o --id scenario_A
 - `delay_costs.csv` - Delay impacts
 - `wildfire_costs.csv` - Wildfire risk
 - `outage_costs.csv` - Outage risk by terrain
-- `congestion_curtailment.csv` - Congestion/curtailment benefits
+- `congestion.csv` - Congestion benefits
 - `emissions_costs.csv` - Emissions calculations
 - `line_loss_costs.csv` - Energy loss costs
 - `oandm_costs.csv` - Operations & maintenance

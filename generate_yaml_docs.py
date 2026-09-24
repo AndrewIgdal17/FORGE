@@ -47,7 +47,7 @@ class YAMLParser:
             return "Operations"
         elif any(x in filename_lower for x in ["environmental", "emissions", "wildfire"]):
             return "Environmental"
-        elif any(x in filename_lower for x in ["congestion", "curtailment", "avoided"]):
+        elif any(x in filename_lower for x in ["congestion", "avoided"]):
             return "Benefits"
         elif any(x in filename_lower for x in ["category", "template", "circuit", "resistance"]):
             return "Configurations"

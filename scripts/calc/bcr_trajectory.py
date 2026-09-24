@@ -87,7 +87,7 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
     """
     project_details = inputs["01_project_technical_details"]
 
-    g_benefit = inputs.get("17_congestion_curtailment_reductions", {}).get(
+    g_benefit = inputs.get("17_congestion_reductions", {}).get(
         "benefit_price_escalation_real", 0.0
     )
     g_om = inputs.get("14_category_om_structures", {}).get(
@@ -95,7 +95,7 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
     )
     g_insurance = _dig(inputs, "04_insurance", "insurance", "escalation_rate")
 
-    cc = _dig(results, "benefits", "congestion_curtailment", default={}) or {}
+    cc = _dig(results, "benefits", "congestion", default={}) or {}
     annual_congestion = cc.get("congestion_benefit_annual", 0.0)
     annual_delivered = cc.get("delivered_benefit_annual", 0.0)
     annual_capacity_value = cc.get("capacity_value_annual", 0.0)

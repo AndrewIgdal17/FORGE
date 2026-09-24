@@ -405,7 +405,7 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.constrained_hours"]',
+      target: '[data-path="17_congestion_reductions.greenfield_congestion_reductions.constraints.constrained_hours"]',
       title: 'Constrained Hours',
       body: 'Enter 4000. The NM export constraint binds ~50% of wind-producing hours.',
       value: '4000',
@@ -415,7 +415,7 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.average_exceedance"]',
+      target: '[data-path="17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance"]',
       title: 'Average Exceedance',
       body: 'Enter 500 MW. Flow exceeds the 900 MW firm limit by this amount on average.',
       value: '500',
@@ -425,7 +425,7 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.flow_factor"]',
+      target: '[data-path="17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor"]',
       title: 'Flow Factor',
       body: 'Enter 1.0. Dedicated point-to-point HVDC link with full deliverability.',
       value: '1.0',
@@ -435,7 +435,7 @@ var TUTORIAL_STEPS = {
     },
     {
       type: 'set',
-      target: '[data-path="17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_congestion_price"]',
+      target: '[data-path="17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price"]',
       title: 'Congestion Price',
       body: 'Enter $15/MWh. Estimated NM-to-AZ price spread (no organized market LMP pre-EDAM).',
       value: '15',

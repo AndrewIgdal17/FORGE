@@ -457,7 +457,7 @@ const TAB_TOOLTIP_CONTENT = {
   'energy-emissions-energy': { gloss: 'Fuel mix and loss parameters', appendixRef: 'Energy Losses', appendixPage: 23 },
   'energy-emissions-emissions': { gloss: 'Emission intensities and externality costs', appendixRef: 'Emissions Costs', appendixPage: 37 },
   'economic-details': { gloss: 'Value of load and lost load', appendixRef: 'System Constraints and Relief', appendixPage: 5 },
-  'system-constraints': { gloss: 'Congestion and curtailment severity', appendixRef: 'System Constraints and Relief', appendixPage: 5 },
+  'system-constraints': { gloss: 'Congestion severity (binding hours, exceedance, pricing)', appendixRef: 'System Constraints and Relief', appendixPage: 5 },
   'terrain-mix': { gloss: 'Miles and multipliers by terrain type', appendixRef: 'Weighted Miles', appendixPage: 2 },
   'rights-of-way': { gloss: 'Land acquisition and holding zones', appendixRef: 'Capital ROW Costs', appendixPage: 11 },
   'base-mitigation': { gloss: 'Per-acre restoration by terrain', appendixRef: 'Environmental Mitigation', appendixPage: 14 },
@@ -474,7 +474,6 @@ const TAB_TOOLTIP_CONTENT = {
   'emission-intensities': { gloss: 'kg pollutant per MWh by fuel', appendixRef: 'Emissions Costs', appendixPage: 37 },
   'emission-externality-costs': { gloss: 'Societal cost per kg pollutant', appendixRef: 'Emissions Costs', appendixPage: 37 },
   'congestion': { gloss: 'Binding hours, exceedance, pricing', appendixRef: 'System Constraints and Relief', appendixPage: 5 },
-  'curtailment': { gloss: 'Curtailed hours, MW, pricing', appendixRef: 'System Constraints and Relief', appendixPage: 5 },
 };
 
 function showMultiplierConfirmDialog(anchorEl, onConfirm) {

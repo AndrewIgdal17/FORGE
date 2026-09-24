@@ -14,7 +14,7 @@
     '01_project_technical_details',
     '03_financing',
     '05_delays',
-    '17_congestion_curtailment_reductions',
+    '17_congestion_reductions',
   ]);
 
   const NEW_SCENARIO_BLANK_FIELDS = [

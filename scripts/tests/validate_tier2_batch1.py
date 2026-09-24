@@ -159,10 +159,9 @@ def extract_metrics(data: dict) -> dict:
     wildfire_pv = costs.get("wildfire", {}).get("pv_cost", 0)
 
     # Benefits
-    cc = benefits.get("congestion_curtailment", {})
+    cc = benefits.get("congestion", {})
     fac = benefits.get("facilitated_emissions", {})
     congestion_pv = cc.get("congestion_benefit_pv", 0)
-    curtailment_pv = cc.get("curtailment_benefit_pv", 0)
     delivered_pv = cc.get("delivered_benefit_pv", 0)
     avoided_emissions_pv = fac.get("displacement_avoided_cost_pv", 0)
 
@@ -184,7 +183,6 @@ def extract_metrics(data: dict) -> dict:
         "wildfire_pv": wildfire_pv,
         "avoided_emissions_pv": avoided_emissions_pv,
         "congestion_benefit_pv": congestion_pv,
-        "curtailment_benefit_pv": curtailment_pv,
         "delivered_benefit_pv": delivered_pv,
         "oandm_pv": oandm_pv,
         "insurance_pv": insurance_pv,

@@ -37,7 +37,7 @@ _PRELOAD_MODULES = [
     "scripts.calc.delay_costs",
     "scripts.calc.wildfire_costs",
     "scripts.calc.outage_costs",
-    "scripts.calc.congestion_curtailment_reduction",
+    "scripts.calc.congestion_reduction",
     "scripts.calc.energy_losses",
     "scripts.calc.oandm",
     "scripts.calc.emissions",
@@ -229,7 +229,7 @@ def _build_scripts_list(
         scripts.append("scripts.calc.wildfire_costs")
     if not no_outages:
         scripts.append("scripts.calc.outage_costs")
-    scripts.append("scripts.calc.congestion_curtailment_reduction")
+    scripts.append("scripts.calc.congestion_reduction")
     scripts.append("scripts.calc.energy_losses")
     if not no_oandm:
         scripts.append("scripts.calc.oandm")
@@ -512,7 +512,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Set environment variables for congestion/curtailment script
+    # Set environment variables for congestion-reduction script
     if args.no_congestion:
         os.environ["FORGE_NO_CONGESTION"] = "1"
 
@@ -543,7 +543,7 @@ def main() -> None:
         if args.no_congestion:
             print("⚠️  Congestion benefits disabled (--no_congestion flag set)")
             print(
-                "   Congestion portion of congestion_curtailment_reduction.py will be skipped"
+                "   Congestion portion of congestion_reduction.py will be skipped"
             )
             print("=" * 80)
         if args.no_emissions:

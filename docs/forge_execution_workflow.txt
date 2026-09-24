@@ -29,7 +29,7 @@ flowchart TD
     AddWildfire --> Conditional4{"--no_outages?"}
     Conditional4 -->|"No"| AddOutage["Add: outage_costs.py"]
     Conditional4 -->|"Yes"| AlwaysBenefits
-    AddOutage --> AlwaysBenefits["Always: congestion_curtailment_reduction.py"]
+    AddOutage --> AlwaysBenefits["Always: congestion_reduction.py"]
     
     AlwaysBenefits --> AlwaysEnergy["Always: energy_losses.py"]
     

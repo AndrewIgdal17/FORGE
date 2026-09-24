@@ -39,7 +39,7 @@ from scripts.utils.smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
     get_project_data_raw,
-    load_congestion_curtailment_reductions,
+    load_congestion_reductions,
 )
 
 @dataclass
@@ -139,7 +139,7 @@ def load_project_details() -> LineLossProjectDetails:
         )
         financing = load_financing_details()
         wacc_real = financing.wacc_real
-        congestion_params = load_congestion_curtailment_reductions()
+        congestion_params = load_congestion_reductions()
         benefit_price_escalation_real = congestion_params.benefit_price_escalation_real
 
         # Get number_of_converters if DC

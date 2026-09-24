@@ -111,8 +111,8 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     row["zone_2"]["hold_cost"] = 3_000
 
     # --- 17: Congestion (same import constraint as LRGV) ---
-    cc = inputs["17_congestion_curtailment_reductions"]
-    gf = cc["greenfield_congestion_curtailment_reductions"]
+    cc = inputs["17_congestion_reductions"]
+    gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
     gf["constraints"]["constrained_hours"] = 1200
     gf["constraints"]["average_exceedance"] = 400
@@ -163,7 +163,7 @@ def print_results(results: dict, label: str):
     print(f"  Outage:                 {fmt(costs['outage']['pv_cost'])}")
     print(f"  Emissions (loss-comp):  {fmt(costs['emissions']['total_pv'])}")
 
-    cc = benefits["congestion_curtailment"]
+    cc = benefits["congestion"]
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")

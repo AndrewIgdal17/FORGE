@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 from scripts.utils.financial_utils import calculate_real_wacc, get_wacc_nominal
 from .yaml_loaders import (
     ProjectTechnicalDetails,
-    CongestionCurtailmentParams,
+    CongestionParams,
     PhysicalDetailsDetailed,
     CircuitAndResistanceDetails,
     FinancingDetails,
@@ -219,14 +219,14 @@ def load_emissions_details():
     )
 
 
-def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
+def load_congestion_reductions() -> CongestionParams:
     """
-    Load congestion and curtailment reduction parameters from merged JSON.
+    Load congestion reduction parameters from merged JSON.
 
     Returns:
-        CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
+        CongestionParams: Dataclass containing congestion parameters
     """
-    data = _data_source.get_data("17_congestion_curtailment_reductions")
+    data = _data_source.get_data("17_congestion_reductions")
 
     project_data = _data_source.get_data("01_project_technical_details")
     project_type = project_data["project"]["project_type"]
@@ -234,21 +234,21 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
 
     # Load from appropriate section
     if use_incremental:
-        reductions_data = data["incremental_congestion_curtailment_reductions"]
+        reductions_data = data["incremental_congestion_reductions"]
         constraints = reductions_data["constraints"]
         prices = reductions_data["prices"]
         flow_factor = 0.0
     else:
-        reductions_data = data["greenfield_congestion_curtailment_reductions"]
+        reductions_data = data["greenfield_congestion_reductions"]
         constraints = reductions_data["constraints"]
         prices = reductions_data["prices"]
         flow_factor = constraints["flow_factor"]
 
-    # Backward compat: ignore removed fields from old .forge files
+    # Backward compat: ignore fields from the removed separately-modeled curtailment stream
     constraints.pop("congestion_fraction", None)
     prices.pop("average_curtailment_price", None)
 
-    return CongestionCurtailmentParams(
+    return CongestionParams(
         flow_factor=float(flow_factor),
         constrained_hours=float(constraints["constrained_hours"]),
         average_exceedance=float(constraints["average_exceedance"]),

@@ -37,8 +37,8 @@ class ProjectTechnicalDetails:
 
 
 @dataclass
-class CongestionCurtailmentParams:
-    """Congestion and curtailment reduction parameters."""
+class CongestionParams:
+    """Congestion reduction parameters."""
 
     flow_factor: float
     constrained_hours: float
@@ -488,12 +488,12 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 
 
-def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
+def load_congestion_reductions() -> CongestionParams:
     """
-    Load congestion and curtailment reduction parameters from merged YAML file.
+    Load congestion reduction parameters from merged YAML file.
 
     Returns:
-        CongestionCurtailmentParams: Dataclass containing all congestion and curtailment parameters
+        CongestionParams: Dataclass containing congestion parameters
     """
     try:
         with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
@@ -517,44 +517,46 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
     use_incremental = project_type in ("reconductoring", "rebuild")
 
     try:
-        with open(YAMLS_DIR / "17_congestion_curtailment_reductions.yaml", "r") as file:
+        with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
             data = yaml.safe_load(file)
         if not data:
             raise ValueError(
-                "Congestion/curtailment reductions YAML file is empty or invalid"
+                "Congestion reductions YAML file is empty or invalid"
             )
 
         # Load from appropriate section
         if use_incremental:
-            if "incremental_congestion_curtailment_reductions" not in data:
+            if "incremental_congestion_reductions" not in data:
                 raise KeyError(
-                    "Missing 'incremental_congestion_curtailment_reductions' key in YAML file"
+                    "Missing 'incremental_congestion_reductions' key in YAML file"
                 )
-            reductions_data = data["incremental_congestion_curtailment_reductions"]
+            reductions_data = data["incremental_congestion_reductions"]
             constraints = reductions_data["constraints"]
             prices = reductions_data["prices"]
             constraints.pop("congestion_fraction", None)
+            # Legacy key from the removed separately-modeled curtailment stream.
             prices.pop("average_curtailment_price", None)
             flow_factor = 0.0
             constrained_hours = float(constraints["constrained_hours"])
             average_exceedance = float(constraints["average_exceedance"])
             average_congestion_price = float(prices["average_congestion_price"])
         else:
-            if "greenfield_congestion_curtailment_reductions" not in data:
+            if "greenfield_congestion_reductions" not in data:
                 raise KeyError(
-                    "Missing 'greenfield_congestion_curtailment_reductions' key in YAML file"
+                    "Missing 'greenfield_congestion_reductions' key in YAML file"
                 )
-            reductions_data = data["greenfield_congestion_curtailment_reductions"]
+            reductions_data = data["greenfield_congestion_reductions"]
             constraints = reductions_data["constraints"]
             prices = reductions_data["prices"]
             constraints.pop("congestion_fraction", None)
+            # Legacy key from the removed separately-modeled curtailment stream.
             prices.pop("average_curtailment_price", None)
             flow_factor = constraints["flow_factor"]
             constrained_hours = float(constraints["constrained_hours"])
             average_exceedance = float(constraints["average_exceedance"])
             average_congestion_price = float(prices["average_congestion_price"])
 
-        return CongestionCurtailmentParams(
+        return CongestionParams(
             flow_factor=float(flow_factor),
             constrained_hours=constrained_hours,
             average_exceedance=average_exceedance,
@@ -565,17 +567,17 @@ def load_congestion_curtailment_reductions() -> CongestionCurtailmentParams:
         )
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Congestion/curtailment reductions YAML not found at {YAMLS_DIR / '17_congestion_curtailment_reductions.yaml'}"
+            f"Congestion reductions YAML not found at {YAMLS_DIR / '17_congestion_reductions.yaml'}"
         )
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing congestion/curtailment reductions YAML: {e}")
+        raise ValueError(f"Error parsing congestion reductions YAML: {e}")
     except KeyError as e:
         raise KeyError(
-            f"Missing required key in congestion/curtailment reductions YAML: {e}"
+            f"Missing required key in congestion reductions YAML: {e}"
         )
     except (ValueError, TypeError) as e:
         raise ValueError(
-            f"Error converting congestion/curtailment reduction values to float: {e}"
+            f"Error converting congestion reduction values to float: {e}"
         )
 
 

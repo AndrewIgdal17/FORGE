@@ -1,7 +1,7 @@
 # Date: 2025-10-24
 # Description: This script calculates the congestion reduction costs for a transmission line project.
 #              It computes the congestion reduction costs for a transmission line over the project lifetime.
-#              Single-constraint, two-price decomposition.
+#              Single-constraint congestion relief (curtailment is not a separate stream).
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from scripts.utils.smart_output import SmartOutputManager
 from scripts.utils.constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
 from scripts.utils.financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from scripts.utils.smart_loaders import (
-    load_congestion_curtailment_reductions,
+    load_congestion_reductions,
     load_project_technical_details as load_project_technical_details_centralized,
     load_financing_details,
     get_project_data_raw,
@@ -25,7 +25,7 @@ from scripts.utils.smart_loaders import (
 
 @dataclass
 class CongestionProjectDetails:
-    """Project technical details for congestion/curtailment calculations."""
+    """Project technical details for congestion-reduction calculations."""
 
     delay_years: float
     construction_years: int
@@ -80,7 +80,7 @@ def load_project_technical_details() -> CongestionProjectDetails:
     Load project technical details using centralized loaders.
 
     This function wraps the centralized loader and extracts only the fields
-    needed for congestion/curtailment calculations.
+    needed for congestion-reduction calculations.
 
     Returns:
         CongestionProjectDetails: Project technical details dataclass
@@ -208,8 +208,8 @@ def main() -> None:
     # Load financing details
     financing = load_financing_details()
 
-    # Load congestion and curtailment reduction parameters (merged)
-    params = load_congestion_curtailment_reductions()
+    # Load congestion reduction parameters
+    params = load_congestion_reductions()
 
     # Calculate congestion reduction costs
     congestion_results = calculate_congestion_reduction_costs(
@@ -333,10 +333,6 @@ def main() -> None:
         "congestion_benefit_annual": congestion_results.annual_congestion_benefit,
         "congestion_benefit_nominal": congestion_results.lifetime_congestion_benefit,
         "congestion_benefit_pv": congestion_results.lifetime_congestion_benefit_pv,
-        # BENEFITS - Curtailment removed (zeros kept for runner key compatibility until Task 5)
-        "curtailment_benefit_annual": 0.0,
-        "curtailment_benefit_nominal": 0.0,
-        "curtailment_benefit_pv": 0.0,
         # BENEFITS - Delivered energy (throughput value at value of load)
         "delivered_benefit_annual": delivered_benefit_annual,
         "delivered_benefit_nominal": delivered_benefit_nominal,
@@ -393,7 +389,7 @@ def main() -> None:
     })
 
     # Write to CSV/JSON
-    csv_manager.add_congestion_curtailment(results)
+    csv_manager.add_congestion(results)
     csv_manager.write_batch_summary()
 
 def calculate_capacity_value_benefit(

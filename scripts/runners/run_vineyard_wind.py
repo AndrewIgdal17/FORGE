@@ -98,8 +98,8 @@ def patch_vineyard_wind_inputs(inputs: dict) -> dict:
     row["zone_3"]["hold_cost"] = 0
 
     # --- Tab 17: Congestion (offshore wind) ---
-    cc = inputs["17_congestion_curtailment_reductions"]
-    gf = cc["greenfield_congestion_curtailment_reductions"]
+    cc = inputs["17_congestion_reductions"]
+    gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 1.0
     gf["constraints"]["constrained_hours"] = 500
     gf["constraints"]["average_exceedance"] = 200
@@ -151,7 +151,7 @@ def print_results(results: dict, label: str):
     print(f"  Outage:                 {fmt(costs['outage']['pv_cost'])}")
     print(f"  Emissions (loss-comp):  {fmt(costs['emissions']['total_pv'])}")
 
-    cc = benefits["congestion_curtailment"]
+    cc = benefits["congestion"]
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")

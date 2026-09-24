@@ -142,22 +142,22 @@ def main() -> None:
 
     output_manager = SmartOutputManager()
     cc_results = getattr(output_manager, '_manager', output_manager).benefits.get(
-        "congestion_curtailment", {}
+        "congestion", {}
     )
     energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
 
-    # Subprocess fallback: load energy_delivered from congestion_curtailment JSON on disk
+    # Subprocess fallback: load energy_delivered from congestion JSON on disk
     if energy_delivered_annual_mwh <= 0 and not getattr(output_manager, '_using_shared', False):
         import glob
         import json as _json_loader
         scenario_id = os.environ.get("FORGE_SCENARIO_ID", "")
-        pattern = os.path.join("outputs", f"json_output_{scenario_id}_congestion_curtailment_reduction.json")
+        pattern = os.path.join("outputs", f"json_output_{scenario_id}_congestion_reduction.json")
         candidates = glob.glob(pattern) or glob.glob(os.path.join("..", pattern))
         for fpath in candidates:
             try:
                 with open(fpath) as _f:
                     disk_data = _json_loader.load(_f)
-                disk_benefits = disk_data.get("benefits", {}).get("congestion_curtailment", {})
+                disk_benefits = disk_data.get("benefits", {}).get("congestion", {})
                 val = disk_benefits.get("energy_delivered_annual_mwh_yr", 0.0)
                 if val > 0:
                     energy_delivered_annual_mwh = val

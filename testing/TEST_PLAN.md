@@ -91,7 +91,7 @@ Test individually:
 - delay_costs.py
 - wildfire_costs.py
 - outage_costs.py
-- congestion_curtailment_reduction.py
+- congestion_reduction.py
 - energy_losses.py
 - emissions.py
 - line_loss_costs.py

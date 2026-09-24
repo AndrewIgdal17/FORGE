@@ -69,7 +69,7 @@ docs/
 | **Financial**      | 3     | 14     | Financing, insurance, and delay costs        |
 | **Operations**     | 5     | 2,604  | Build costs and O&M operations               |
 | **Environmental**  | 4     | 121    | Environmental impacts and mitigation         |
-| **Benefits**       | 3     | 25     | Congestion, curtailment, and outage benefits |
+| **Benefits**       | 3     | 25     | Congestion and outage benefits |
 | **Configurations** | 3     | 2,070  | 128 project configuration templates          |
 
 ## 🚀 Future Enhancements

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "total_yamls": 24,
-    "total_fields": 3927,
+    "total_fields": 3924,
     "total_configurations": 0,
     "categories": {
       "Technical": {
@@ -26,11 +26,11 @@
       },
       "Environmental": {
         "file_count": 4,
-        "field_count": 79
+        "field_count": 80
       },
       "Benefits": {
         "file_count": 1,
-        "field_count": 12
+        "field_count": 8
       },
       "Configurations": {
         "file_count": 3,
@@ -113,12 +113,12 @@
                 "description": "",
                 "path": "01_project_technical_details.project.value_of_load_per_mwh"
               },
-              "reconductoring": {
-                "type": "bool",
-                "default": false,
+              "project_type": {
+                "type": "str",
+                "default": "greenfield",
                 "units": null,
                 "description": "",
-                "path": "01_project_technical_details.project.reconductoring"
+                "path": "01_project_technical_details.project.project_type"
               },
               "uses_existing_row": {
                 "type": "bool",
@@ -201,7 +201,7 @@
       "comments": {
         "greenfield_comparison_capacity_mw": "Design comparison fields (set via Design Comparison subtab, not Project tab)"
       },
-      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 0 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  value_of_load_per_mwh: 0 # $/MWh (>= 0)\n\n  reconductoring: False # True or False\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Design comparison fields (set via Design Comparison subtab, not Project tab)\n  greenfield_comparison_capacity_mw: null\n  greenfield_comparison_conductor_type: null\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 0 # years (>= 0)\n  project_lifetime: 40 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
+      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 0 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  value_of_load_per_mwh: 0 # $/MWh (>= 0)\n\n  project_type: \"greenfield\" # \"greenfield\" | \"reconductoring\" | \"rebuild\"\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Design comparison fields (set via Design Comparison subtab, not Project tab)\n  greenfield_comparison_capacity_mw: null\n  greenfield_comparison_conductor_type: null\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 0 # years (>= 0)\n  project_lifetime: 40 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
     },
     "02_project_physical_details.yaml": {
       "filename": "02_project_physical_details.yaml",
@@ -626,7 +626,7 @@
       },
       "field_count": 1,
       "comments": {},
-      "raw_content": "# Delay Costs\n# Direct out-of-pocket annual expenditure during the pre-construction/permitting period.\n# This single field replaces the prior 8-category decomposition (legal, admin, labor,\n# material_and_equipment, regulatory, public_relations, project_management, miscellaneous)\n# which had no published source for individual category rates.\n# Users should input their project-specific total annual pre-construction spend.\n# Foregone congestion/curtailment benefits during delay are modeled separately.\n\nannual_base_delay_cost: 0 # $/year. Total direct out-of-pocket spend during delay. Default 0 (project-specific; no published benchmark exists).\n"
+      "raw_content": "# Delay Costs\n# Direct out-of-pocket annual expenditure during the pre-construction/permitting period.\n# This single field replaces the prior 8-category decomposition (legal, admin, labor,\n# material_and_equipment, regulatory, public_relations, project_management, miscellaneous)\n# which had no published source for individual category rates.\n# Users should input their project-specific total annual pre-construction spend.\n# Foregone congestion benefits during delay are modeled separately.\n\nannual_base_delay_cost: 0 # $/year. Total direct out-of-pocket spend during delay. Default 0 (project-specific; no published benchmark exists).\n"
     },
     "06_wildfire_costs.yaml": {
       "filename": "06_wildfire_costs.yaml",
@@ -980,6 +980,13 @@
                 "description": "",
                 "path": "09_environmental_mitigation.environmental_mitigation.marine_env_mitigation_pct_capex"
               },
+              "rebuild_env_mitigation_fraction": {
+                "type": "float",
+                "default": 0.5,
+                "units": null,
+                "description": "",
+                "path": "09_environmental_mitigation.environmental_mitigation.rebuild_env_mitigation_fraction"
+              },
               "wetland_credit_cost_per_acre": {
                 "type": "int",
                 "default": 51361,
@@ -1284,17 +1291,17 @@
                 "field_count": 5
               }
             },
-            "field_count": 40
+            "field_count": 41
           }
         },
-        "field_count": 40
+        "field_count": 41
       },
-      "field_count": 40,
+      "field_count": 41,
       "comments": {
         "base_mitigation_cost_per_acre": "All-in construction/restoration mitigation ($/acre) by terrain + construction type",
         "wetland_credit_cost_per_acre": "Credit purchases (off-site mitigation via banks)"
       },
-      "raw_content": "# Environmental Mitigation Costs\n# Costs per mile by terrain type for environmental mitigation\n\nenvironmental_mitigation:\n  mitigation_uplift_factor: 1.25  # Construction workspace extends beyond ROW via temporary construction easements (TCEs); effective impacted width ≈ 1.25× ROW width.\n  mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2008 (33 CFR §332.3(f))).\n  marine_env_mitigation_pct_capex: 0.03 # 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.\n\n  # All-in construction/restoration mitigation ($/acre) by terrain + construction type\n  base_mitigation_cost_per_acre:\n    overhead:\n      forested: 5486    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 clearing cost.\n      scrubbed_flat: 1000  # $/acre, 2025$. Order-of-magnitude estimate; light brush clearing.\n      wetland: 5000  # $/acre, 2025$. Kept at current value (different concept from MISO $64K construction-difficulty adder).\n      farmland: 800  # $/acre, 2025$. Minimal clearing; crop/pasture restoration.\n      desert_barren: 1000  # $/acre, 2025$. Stabilization and revegetation of arid soils.\n      urban: 1500  # $/acre, 2025$. Hardscape restoration, limited clearing.\n      rolling_hills: 1500  # $/acre, 2025$. Moderate grading and revegetation.\n      mountain: 7132    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 mountainous terrain clearing.\n      subsea: 1000  # $/acre, 2025$. Onshore landfall/construction yard restoration.\n\n    underground_direct_buried:\n      forested: 5000  # $/acre, 2025$. Same clearing scope as overhead (full canopy removal for trench).\n      scrubbed_flat: 1000  # $/acre, 2025$. Light clearing for trench access.\n      wetland: 10000  # $/acre, 2025$. 2× overhead: trench dewatering + wetland restoration.\n      farmland: 800  # $/acre, 2025$. Minimal; topsoil strip and replace.\n      desert_barren: 1000  # $/acre, 2025$. Trench stabilization.\n      urban: 2000  # $/acre, 2025$. Pavement/utility relocation + surface restoration.\n      rolling_hills: 1500  # $/acre, 2025$. Moderate grading for trench alignment.\n      mountain: 9000  # $/acre, 2025$. Rock excavation + steep-slope stabilization.\n      subsea: 1000  # $/acre, 2025$. Onshore landfall restoration.\n\n    underground_tunnel:\n      forested: 5000  # $/acre, 2025$. Portal/shaft site clearing only (tunnel itself is subsurface).\n      scrubbed_flat: 1000  # $/acre, 2025$. Portal site preparation.\n      wetland: 10000  # $/acre, 2025$. Portal + access road through regulated wetland.\n      farmland: 800  # $/acre, 2025$. Portal site on agricultural land.\n      desert_barren: 1000  # $/acre, 2025$. Portal site stabilization.\n      urban: 2000  # $/acre, 2025$. Portal site in developed area.\n      rolling_hills: 1500  # $/acre, 2025$. Portal site grading.\n      mountain: 9000  # $/acre, 2025$. Portal excavation in rock.\n      subsea: 1000  # $/acre, 2025$. Shore portal restoration.\n      linear_corridor_default: 1500  # $/acre, 2025$. Generic corridor if terrain unknown.\n      shaft_site_default: 1000  # $/acre, 2025$. Average shaft pad/disturbed site.\n\n    subsea:\n      seabed_corridor_default: 0  # $/acre. Passive seabed recovery (no active restoration).\n      landfall_default: 1000  # $/acre, 2025$. Basic onshore landfall site restoration.\n\n  # Credit purchases (off-site mitigation via banks)\n  wetland_credit_cost_per_acre: 51361 # MISO MTEP25 Workbook Table 2.2-9: $51,360.69/acre (MISO, 2025).\n\n  habitat_credit_cost_per_acre:\n    forested: 49188    # $/acre, 2025$ (CPI-U from ~2007$, ×1.5525). Ecosystem Marketplace/Forest Trends (2011) national average ($31,683, 51 transactions 2005–09). Uniform: geography > ecosystem type (GAO 2024).\n    scrubbed_flat: 49188  # $/acre, 2025$. Same source; per-terrain data insufficient for differentiation.\n    desert_barren: 49188  # $/acre, 2025$. Same source.\n    rolling_hills: 49188  # $/acre, 2025$. Same source.\n    mountain: 49188    # $/acre, 2025$. Same source.\n"
+      "raw_content": "# Environmental Mitigation Costs\n# Costs per mile by terrain type for environmental mitigation\n\nenvironmental_mitigation:\n  mitigation_uplift_factor: 1.25  # Construction workspace extends beyond ROW via temporary construction easements (TCEs); effective impacted width ≈ 1.25× ROW width.\n  mitigation_ratio: 2.0 # Compensatory mitigation ratio (impacted acres × ratio = credits required). Default 2.0 per 33 CFR §332.3(f) Category II preservation (USACE, 2008 (33 CFR §332.3(f))).\n  marine_env_mitigation_pct_capex: 0.03 # 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.\n  rebuild_env_mitigation_fraction: 0.5  # 0.0-1.0; multiplier on wetland/habitat credits for rebuild projects only\n\n  # All-in construction/restoration mitigation ($/acre) by terrain + construction type\n  base_mitigation_cost_per_acre:\n    overhead:\n      forested: 5486    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 clearing cost.\n      scrubbed_flat: 1000  # $/acre, 2025$. Order-of-magnitude estimate; light brush clearing.\n      wetland: 5000  # $/acre, 2025$. Kept at current value (different concept from MISO $64K construction-difficulty adder).\n      farmland: 800  # $/acre, 2025$. Minimal clearing; crop/pasture restoration.\n      desert_barren: 1000  # $/acre, 2025$. Stabilization and revegetation of arid soils.\n      urban: 1500  # $/acre, 2025$. Hardscape restoration, limited clearing.\n      rolling_hills: 1500  # $/acre, 2025$. Moderate grading and revegetation.\n      mountain: 7132    # $/acre, 2025$. MISO MTEP25 Table 2.2-9 mountainous terrain clearing.\n      subsea: 1000  # $/acre, 2025$. Onshore landfall/construction yard restoration.\n\n    underground_direct_buried:\n      forested: 5000  # $/acre, 2025$. Same clearing scope as overhead (full canopy removal for trench).\n      scrubbed_flat: 1000  # $/acre, 2025$. Light clearing for trench access.\n      wetland: 10000  # $/acre, 2025$. 2× overhead: trench dewatering + wetland restoration.\n      farmland: 800  # $/acre, 2025$. Minimal; topsoil strip and replace.\n      desert_barren: 1000  # $/acre, 2025$. Trench stabilization.\n      urban: 2000  # $/acre, 2025$. Pavement/utility relocation + surface restoration.\n      rolling_hills: 1500  # $/acre, 2025$. Moderate grading for trench alignment.\n      mountain: 9000  # $/acre, 2025$. Rock excavation + steep-slope stabilization.\n      subsea: 1000  # $/acre, 2025$. Onshore landfall restoration.\n\n    underground_tunnel:\n      forested: 5000  # $/acre, 2025$. Portal/shaft site clearing only (tunnel itself is subsurface).\n      scrubbed_flat: 1000  # $/acre, 2025$. Portal site preparation.\n      wetland: 10000  # $/acre, 2025$. Portal + access road through regulated wetland.\n      farmland: 800  # $/acre, 2025$. Portal site on agricultural land.\n      desert_barren: 1000  # $/acre, 2025$. Portal site stabilization.\n      urban: 2000  # $/acre, 2025$. Portal site in developed area.\n      rolling_hills: 1500  # $/acre, 2025$. Portal site grading.\n      mountain: 9000  # $/acre, 2025$. Portal excavation in rock.\n      subsea: 1000  # $/acre, 2025$. Shore portal restoration.\n      linear_corridor_default: 1500  # $/acre, 2025$. Generic corridor if terrain unknown.\n      shaft_site_default: 1000  # $/acre, 2025$. Average shaft pad/disturbed site.\n\n    subsea:\n      seabed_corridor_default: 0  # $/acre. Passive seabed recovery (no active restoration).\n      landfall_default: 1000  # $/acre, 2025$. Basic onshore landfall site restoration.\n\n  # Credit purchases (off-site mitigation via banks)\n  wetland_credit_cost_per_acre: 51361 # MISO MTEP25 Workbook Table 2.2-9: $51,360.69/acre (MISO, 2025).\n\n  habitat_credit_cost_per_acre:\n    forested: 49188    # $/acre, 2025$ (CPI-U from ~2007$, ×1.5525). Ecosystem Marketplace/Forest Trends (2011) national average ($31,683, 51 transactions 2005–09). Uniform: geography > ecosystem type (GAO 2024).\n    scrubbed_flat: 49188  # $/acre, 2025$. Same source; per-terrain data insufficient for differentiation.\n    desert_barren: 49188  # $/acre, 2025$. Same source.\n    rolling_hills: 49188  # $/acre, 2025$. Same source.\n    mountain: 49188    # $/acre, 2025$. Same source.\n"
     },
     "10_project_category_build_costs.yaml": {
       "filename": "10_project_category_build_costs.yaml",
@@ -13305,9 +13312,9 @@
       },
       "raw_content": "# Emissions Reductions\n# Environmental benefits from emissions reductions\n# Energy source mix lives in 18_energy_source_mix.yaml (merged at load for emissions.py).\n\nemissions_reductions:\n  compensation_percent: 1.0 # [0,1]\n\n  # User Inputs - Emission Intensities (Blue)\n  emission_intensities:\n    co2_intensity_kg_per_mwh:\n      coal: 820\n      oil: 650\n      natural_gas: 450\n      solar: 48\n      wind: 12\n      hydro: 24 # IPCC AR5 WG3 Ch7, Table A.III.2 lifecycle median (Bruckner et al., 2014). Prior value (4) was infrastructure-only per Dones et al. (2007).\n      nuclear: 12\n      other: 0\n    sox_intensity_kg_per_mwh:\n      coal: 13\n      oil: 10\n      natural_gas: 0.1\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n    nox_intensity_kg_per_mwh:\n      coal: 4\n      oil: 3.5\n      natural_gas: 0.2\n      solar: 0\n      wind: 0\n      hydro: 0\n      nuclear: 0\n      other: 0\n\n  # User Inputs - Societal Costs (Yellow)\n  societal_costs_per_kg:\n    co2_cost_per_kg: 0.236 # $/kg CO2 = $236/tCO2. EPA SC-GHG 2023, 2025$ (CPI-U from 2020$, ×1.2438). 2% Ramsey rate.\n    co2_cost_annual_growth: 0.02 # real annual escalation (Rennert et al. 2022)\n    sox_cost_per_kg: 76  # $/kg SOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related).\n    nox_cost_per_kg: 143 # $/kg NOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone).\n"
     },
-    "17_congestion_curtailment_reductions.yaml": {
-      "filename": "17_congestion_curtailment_reductions.yaml",
-      "filepath": "yamls/17_congestion_curtailment_reductions.yaml",
+    "17_congestion_reductions.yaml": {
+      "filename": "17_congestion_reductions.yaml",
+      "filepath": "yamls/17_congestion_reductions.yaml",
       "category": "Benefits",
       "structure": {
         "type": "object",
@@ -13317,11 +13324,11 @@
             "default": 0.01,
             "units": null,
             "description": "At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).",
-            "path": "17_congestion_curtailment_reductions.benefit_price_escalation_real"
+            "path": "17_congestion_reductions.benefit_price_escalation_real"
           }
         },
         "subsections": {
-          "greenfield_congestion_curtailment_reductions": {
+          "greenfield_congestion_reductions": {
             "type": "object",
             "fields": {},
             "subsections": {
@@ -13333,84 +13340,21 @@
                     "default": 0,
                     "units": null,
                     "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.flow_factor"
+                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor"
                   },
                   "constrained_hours": {
                     "type": "int",
                     "default": 0,
                     "units": null,
                     "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.constrained_hours"
+                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.constrained_hours"
                   },
                   "average_exceedance": {
                     "type": "int",
                     "default": 0,
                     "units": null,
                     "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.average_exceedance"
-                  },
-                  "congestion_fraction": {
-                    "type": "float",
-                    "default": 0.5,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.congestion_fraction"
-                  }
-                },
-                "subsections": {},
-                "field_count": 4
-              },
-              "prices": {
-                "type": "object",
-                "fields": {
-                  "average_congestion_price": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_congestion_price"
-                  },
-                  "average_curtailment_price": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_curtailment_price"
-                  }
-                },
-                "subsections": {},
-                "field_count": 2
-              }
-            },
-            "field_count": 6
-          },
-          "reconductoring_congestion_curtailment_reductions": {
-            "type": "object",
-            "fields": {},
-            "subsections": {
-              "constraints": {
-                "type": "object",
-                "fields": {
-                  "constrained_hours": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.constrained_hours"
-                  },
-                  "average_exceedance": {
-                    "type": "int",
-                    "default": 0,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.average_exceedance"
-                  },
-                  "congestion_fraction": {
-                    "type": "float",
-                    "default": 0.5,
-                    "units": null,
-                    "description": "",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.congestion_fraction"
+                    "path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance"
                   }
                 },
                 "subsections": {},
@@ -13424,30 +13368,65 @@
                     "default": 0,
                     "units": null,
                     "description": "",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_congestion_price"
-                  },
-                  "average_curtailment_price": {
+                    "path": "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price"
+                  }
+                },
+                "subsections": {},
+                "field_count": 1
+              }
+            },
+            "field_count": 4
+          },
+          "incremental_congestion_reductions": {
+            "type": "object",
+            "fields": {},
+            "subsections": {
+              "constraints": {
+                "type": "object",
+                "fields": {
+                  "constrained_hours": {
                     "type": "int",
                     "default": 0,
                     "units": null,
                     "description": "",
-                    "path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_curtailment_price"
+                    "path": "17_congestion_reductions.incremental_congestion_reductions.constraints.constrained_hours"
+                  },
+                  "average_exceedance": {
+                    "type": "int",
+                    "default": 0,
+                    "units": null,
+                    "description": "",
+                    "path": "17_congestion_reductions.incremental_congestion_reductions.constraints.average_exceedance"
                   }
                 },
                 "subsections": {},
                 "field_count": 2
+              },
+              "prices": {
+                "type": "object",
+                "fields": {
+                  "average_congestion_price": {
+                    "type": "int",
+                    "default": 0,
+                    "units": null,
+                    "description": "",
+                    "path": "17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price"
+                  }
+                },
+                "subsections": {},
+                "field_count": 1
               }
             },
-            "field_count": 5
+            "field_count": 3
           }
         },
-        "field_count": 12
+        "field_count": 8
       },
-      "field_count": 12,
+      "field_count": 8,
       "comments": {
         "benefit_price_escalation_real": "At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible)."
       },
-      "raw_content": "# Congestion and Curtailment Reductions — Single-constraint, two-price decomposition\n# Single-constraint, two-price decomposition.\n# B_cong = H * f * min(delta_C_eff, X) * gamma_cong\n# B_curt = H * (1-f) * min(delta_C_eff, X) * gamma_curt\n\n# Real annual benefit price escalation rate applied to all benefit streams.\n# At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).\nbenefit_price_escalation_real: 0.01\n\ngreenfield_congestion_curtailment_reductions:\n  constraints:\n    flow_factor: 0          # deliverability to the targeted constraint [0,1]\n    constrained_hours: 0    # H: total hours/yr the constraint binds (>= 0)\n    average_exceedance: 0   # X: average MW exceedance during constrained hours (>= 0)\n    congestion_fraction: 0.5  # f: fraction of constrained hours where consequence is redispatch (0-1; rest is curtailment)\n  prices:\n    average_congestion_price: 0    # gamma_cong: $/MWh redispatch cost\n    average_curtailment_price: 0   # gamma_curt: $/MWh foregone energy value\n\nreconductoring_congestion_curtailment_reductions:\n  constraints:\n    constrained_hours: 0\n    average_exceedance: 0\n    congestion_fraction: 0.5\n  prices:\n    average_congestion_price: 0\n    average_curtailment_price: 0\n"
+      "raw_content": "# Congestion Reductions — single-constraint congestion relief\n# B_cong = H * min(delta_C_eff, X) * gamma_cong\n\n# Real annual benefit price escalation rate applied to all benefit streams.\n# At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).\nbenefit_price_escalation_real: 0.01\n\ngreenfield_congestion_reductions:\n  constraints:\n    flow_factor: 0          # deliverability to the targeted constraint [0,1]\n    constrained_hours: 0    # H: total hours/yr the constraint binds (>= 0)\n    average_exceedance: 0   # X: average MW exceedance during constrained hours (>= 0)\n  prices:\n    average_congestion_price: 0    # gamma_cong: $/MWh redispatch cost\n\nincremental_congestion_reductions:\n  constraints:\n    constrained_hours: 0\n    average_exceedance: 0\n  prices:\n    average_congestion_price: 0\n"
     },
     "18_energy_source_mix.yaml": {
       "filename": "18_energy_source_mix.yaml",
@@ -31934,12 +31913,12 @@
       "default": 0,
       "description": ""
     },
-    "01_project_technical_details.project.reconductoring": {
+    "01_project_technical_details.project.project_type": {
       "yaml_file": "01_project_technical_details",
-      "field_name": "reconductoring",
-      "full_path": "01_project_technical_details.project.reconductoring",
-      "type": "bool",
-      "default": false,
+      "field_name": "project_type",
+      "full_path": "01_project_technical_details.project.project_type",
+      "type": "str",
+      "default": "greenfield",
       "description": ""
     },
     "01_project_technical_details.project.uses_existing_row": {
@@ -32581,6 +32560,14 @@
       "full_path": "09_environmental_mitigation.environmental_mitigation.marine_env_mitigation_pct_capex",
       "type": "float",
       "default": 0.03,
+      "description": ""
+    },
+    "09_environmental_mitigation.environmental_mitigation.rebuild_env_mitigation_fraction": {
+      "yaml_file": "09_environmental_mitigation",
+      "field_name": "rebuild_env_mitigation_fraction",
+      "full_path": "09_environmental_mitigation.environmental_mitigation.rebuild_env_mitigation_fraction",
+      "type": "float",
+      "default": 0.5,
       "description": ""
     },
     "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.forested": {
@@ -44751,98 +44738,66 @@
       "default": 143,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.benefit_price_escalation_real": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.benefit_price_escalation_real": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "benefit_price_escalation_real",
-      "full_path": "17_congestion_curtailment_reductions.benefit_price_escalation_real",
+      "full_path": "17_congestion_reductions.benefit_price_escalation_real",
       "type": "float",
       "default": 0.01,
       "description": "At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible)."
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.flow_factor": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "flow_factor",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.flow_factor",
+      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.constrained_hours": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.constrained_hours": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "constrained_hours",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.constrained_hours",
+      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.constrained_hours",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.average_exceedance": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "average_exceedance",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.average_exceedance",
+      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.congestion_fraction": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "congestion_fraction",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.constraints.congestion_fraction",
-      "type": "float",
-      "default": 0.5,
-      "description": ""
-    },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_congestion_price": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "average_congestion_price",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_congestion_price",
+      "full_path": "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_curtailment_price": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "average_curtailment_price",
-      "full_path": "17_congestion_curtailment_reductions.greenfield_congestion_curtailment_reductions.prices.average_curtailment_price",
-      "type": "int",
-      "default": 0,
-      "description": ""
-    },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.constrained_hours": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.incremental_congestion_reductions.constraints.constrained_hours": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "constrained_hours",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.constrained_hours",
+      "full_path": "17_congestion_reductions.incremental_congestion_reductions.constraints.constrained_hours",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.average_exceedance": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.incremental_congestion_reductions.constraints.average_exceedance": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "average_exceedance",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.average_exceedance",
+      "full_path": "17_congestion_reductions.incremental_congestion_reductions.constraints.average_exceedance",
       "type": "int",
       "default": 0,
       "description": ""
     },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.congestion_fraction": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "congestion_fraction",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.constraints.congestion_fraction",
-      "type": "float",
-      "default": 0.5,
-      "description": ""
-    },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_congestion_price": {
-      "yaml_file": "17_congestion_curtailment_reductions",
+    "17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price": {
+      "yaml_file": "17_congestion_reductions",
       "field_name": "average_congestion_price",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_congestion_price",
-      "type": "int",
-      "default": 0,
-      "description": ""
-    },
-    "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_curtailment_price": {
-      "yaml_file": "17_congestion_curtailment_reductions",
-      "field_name": "average_curtailment_price",
-      "full_path": "17_congestion_curtailment_reductions.reconductoring_congestion_curtailment_reductions.prices.average_curtailment_price",
+      "full_path": "17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price",
       "type": "int",
       "default": 0,
       "description": ""
@@ -63396,7 +63351,7 @@
       "16_emissions_reductions.yaml"
     ],
     "Benefits": [
-      "17_congestion_curtailment_reductions.yaml"
+      "17_congestion_reductions.yaml"
     ],
     "Configurations": [
       "20_project_category_row_widths.yaml",

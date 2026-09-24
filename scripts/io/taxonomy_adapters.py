@@ -332,8 +332,8 @@ def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
     ]
 
 
-def adapt_congestion_curtailment(cc: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.congestion_curtailment -> 4 taxonomy items.
+def adapt_congestion(cc: dict) -> list[TaxonomyResult]:
+    """Adapt benefits.congestion -> 4 taxonomy items.
 
     Two benefits (congestion, delivered energy), capacity value benefit,
     and congestion delay cost.
@@ -408,7 +408,7 @@ def adapt_all_results(json_results: dict) -> list[TaxonomyResult]:
     results += adapt_emissions_comp(costs.get("emissions", {}))
     results += adapt_facilitated_emissions(benefits.get("facilitated_emissions", {}))
     results += adapt_displacement_delay_cost(costs.get("displacement_delay", {}))
-    results += adapt_congestion_curtailment(benefits.get("congestion_curtailment", {}))
+    results += adapt_congestion(benefits.get("congestion", {}))
     results += adapt_capital_recovery(benefits.get("capital_recovery", {}))
 
     for r in results:

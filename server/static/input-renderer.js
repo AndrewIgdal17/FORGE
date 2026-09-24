@@ -4151,8 +4151,8 @@ function renderConstraintsPanel(data) {
 
   const recon = isReconductoring();
   const prefix = recon ? 'rc' : 'gf';
-  const yamlRoot = recon ? 'reconductoring_congestion_curtailment_reductions' : 'greenfield_congestion_curtailment_reductions';
-  const yamlSection = '17_congestion_curtailment_reductions';
+  const yamlRoot = recon ? 'incremental_congestion_reductions' : 'greenfield_congestion_reductions';
+  const yamlSection = '17_congestion_reductions';
 
   const l4Bar = document.createElement('div');
   l4Bar.className = 'l4-tabs';

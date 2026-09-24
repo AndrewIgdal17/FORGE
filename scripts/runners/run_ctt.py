@@ -91,8 +91,8 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     row["zone_3"]["hold_cost"] = 3.67
 
     # --- 17: Congestion ---
-    cc = inputs["17_congestion_curtailment_reductions"]
-    gf = cc["greenfield_congestion_curtailment_reductions"]
+    cc = inputs["17_congestion_reductions"]
+    gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.50
     gf["constraints"]["constrained_hours"] = 1800
     gf["constraints"]["average_exceedance"] = 600
@@ -145,7 +145,7 @@ def print_results(results: dict, label: str):
     print(f"  Outage:                 {fmt(costs['outage']['pv_cost'])}")
     print(f"  Emissions (loss-comp):  {fmt(costs['emissions']['total_pv'])}")
 
-    cc = benefits["congestion_curtailment"]
+    cc = benefits["congestion"]
     fac = benefits.get("facilitated_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
@@ -219,8 +219,8 @@ def main():
     print(f"  Value of CREZ mandate (avoided delay cost): {fmt(delta_nb)}")
 
     # Delay-specific costs
-    cc_a = results_actual["benefits"]["congestion_curtailment"]
-    cc_b = results_cf["benefits"]["congestion_curtailment"]
+    cc_a = results_actual["benefits"]["congestion"]
+    cc_b = results_cf["benefits"]["congestion"]
     forgone_cong = cc_b["congestion_delay_cost_pv"] - cc_a["congestion_delay_cost_pv"]
     delay_cost_a = results_actual["costs"]["delay"]["total_pv"]
     delay_cost_b = results_cf["costs"]["delay"]["total_pv"]

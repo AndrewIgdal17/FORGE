@@ -2169,9 +2169,9 @@
         }
       }
     },
-    "17_congestion_curtailment_reductions": {
+    "17_congestion_reductions": {
       "benefit_price_escalation_real": 0.01,
-      "greenfield_congestion_curtailment_reductions": {
+      "greenfield_congestion_reductions": {
         "constraints": {
           "flow_factor": 1.0,
           "constrained_hours": 500,
@@ -2181,7 +2181,7 @@
           "average_congestion_price": 10
         }
       },
-      "incremental_congestion_curtailment_reductions": {
+      "incremental_congestion_reductions": {
         "constraints": {
           "constrained_hours": 0,
           "average_exceedance": 0
@@ -4708,13 +4708,10 @@
         "revenue_year_1": 140374482.89201784,
         "revenue_year_n": 63404440.8020669
       },
-      "congestion_curtailment": {
+      "congestion": {
         "congestion_benefit_annual": 1000000.0,
         "congestion_benefit_nominal": 34784891.5332906,
         "congestion_benefit_pv": 13204793.803499801,
-        "curtailment_benefit_annual": 0.0,
-        "curtailment_benefit_nominal": 0.0,
-        "curtailment_benefit_pv": 0.0,
         "delivered_benefit_annual": 174731515.20000005,
         "delivered_benefit_nominal": 6078016803.679521,
         "delivered_benefit_pv": 2307293629.189092,

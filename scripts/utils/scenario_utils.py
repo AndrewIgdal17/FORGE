@@ -30,7 +30,7 @@ _YAML_STEMS = [
     "14_category_om_structures",
     "15_category_om_converters",
     "16_emissions_reductions",
-    "17_congestion_curtailment_reductions",
+    "17_congestion_reductions",
     "18_energy_source_mix",
     "19_cost_timing_patterns",
     "20_project_category_row_widths",

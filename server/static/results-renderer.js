@@ -723,7 +723,7 @@ function deriveTaxonomyResultsFromLegacy(results) {
   const bcr = results.bcr || {};
   const costs = results.costs || {};
   const benefits = results.benefits || {};
-  const cc = benefits.congestion_curtailment || {};
+  const cc = benefits.congestion || {};
   const rev = benefits.revenue || {};
   const wf = costs.wildfire || {};
   const out = costs.outage || {};
@@ -975,7 +975,7 @@ function renderTransfersAndReporting(results) {
   }
 
   // Physical Metrics
-  const cc = results.benefits?.congestion_curtailment || {};
+  const cc = results.benefits?.congestion || {};
   const physGrid = document.createElement('div');
   physGrid.className = 'phys-metrics-grid';
   let hasPhys = false;
@@ -1390,7 +1390,7 @@ function renderBCRHeadline(results) {
 function renderPerspectivesTable(results) {
   const container = document.createElement('div');
   const bcr = results.bcr || {};
-  const cc = results.benefits?.congestion_curtailment || {};
+  const cc = results.benefits?.congestion || {};
 
   const grid = document.createElement('div');
   grid.className = 'persp-grid';

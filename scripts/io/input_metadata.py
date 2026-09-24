@@ -469,7 +469,7 @@ _TAB6: list[InputField] = [
        sub_tab="delay-costs",
        yaml_section="05_delays", field_path="annual_base_delay_cost",
        label="Annual Base Delay Cost",
-       help_text="Total direct out-of-pocket annual spend during the pre-construction/permitting period (legal, admin, PM, regulatory, etc.). Foregone congestion/curtailment benefits during delay are modeled separately.",
+       help_text="Total direct out-of-pocket annual spend during the pre-construction/permitting period (legal, admin, PM, regulatory, etc.). Foregone congestion benefits during delay are modeled separately.",
        unit="$/year",
        input_type="currency", tier="first-glance", display_order=1),
 ]
@@ -664,7 +664,7 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
     """Generate congestion constraint fields for greenfield or reconductoring."""
     fields: list[InputField] = []
     _has_flow = "greenfield" in yaml_root
-    _base = f"17_congestion_curtailment_reductions"
+    _base = f"17_congestion_reductions"
     # All fields are always_hidden — rendered via custom panels in renderConstraintsPanel()
     if _has_flow:
         fields.append(_f(
@@ -695,8 +695,8 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
     return fields
 
 _TAB9: list[InputField] = (
-    _cc_fields("gf", "Greenfield", "greenfield_congestion_curtailment_reductions")
-    + _cc_fields("rc", "Reconductoring", "reconductoring_congestion_curtailment_reductions")
+    _cc_fields("gf", "Greenfield", "greenfield_congestion_reductions")
+    + _cc_fields("rc", "Reconductoring", "incremental_congestion_reductions")
 )
 
 # ===================================================================
