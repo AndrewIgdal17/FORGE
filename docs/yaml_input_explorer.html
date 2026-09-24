@@ -709,7 +709,7 @@
               <div id="web-app-workflow"></div>
               <script type="text/mermaid" id="web-app-workflow-code">
                 flowchart TD
-                    Start["User opens Web UI<br/>index.html"] --> LoadConfig["Load JSON Config<br/>GET /api/final_combined"]
+                    Start["User opens Web UI<br/>workspace.html"] --> LoadConfig["Load JSON Config<br/>GET /api/final_combined"]
                     LoadConfig --> EditConfig["User edits JSON<br/>configuration in UI"]
                     EditConfig --> ClickCalculate["User clicks<br/>Calculate button"]
 
@@ -722,33 +722,29 @@
                     CallProcessor --> CheckFormat{"Check data format<br/>Full FORGE format?"}
                     CheckFormat -->|"Yes"| UseDirect["Use combined_data<br/>directly"]
                     CheckFormat -->|"No"| MergeTemplate["Merge with template<br/>final_combined.json"]
-                    UseDirect --> WriteTemp["Write temp JSON file<br/>forge_api_{id}_*.json"]
-                    MergeTemplate --> WriteTemp
+                    UseDirect --> CallForge["Call run_calculation(combined_data)<br/>in-process"]
+                    MergeTemplate --> CallForge
 
-                    WriteTemp --> SetEnvVars["Set Environment Variables<br/>FORGE_OUTPUT_MODE=json<br/>FORGE_SCENARIO_ID={id}"]
-
-                    SetEnvVars --> CallForge["Call run_calculation()<br/>in-process"]
-
-                    CallForge --> ForgeInit["run_calculation: Initialize<br/>Generate scenario ID<br/>Set env vars"]
+                    CallForge --> ForgeInit["run_calculation: Initialize<br/>RunContext + shared JSON aggregator<br/>FORGE_SCENARIO_ID, FORGE_OUTPUT_MODE"]
                     ForgeInit --> BuildScripts["Build script list<br/>scripts/calc/ modules"]
                     BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>scripts/utils/weighted_miles.py, scripts/calc/build_costs.py, etc."]
 
                     ExecuteLoop --> RunScript["For each script:<br/>importlib.import_module + main()"]
-                    RunScript --> ScriptInProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)"]
-                    ScriptInProcess --> ScriptLoadJSON["Script: Load Data<br/>via smart_loaders / json_loaders"]
-                    ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations"]
-                    ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via json_output_manager<br/>json_output_{id}_*.json"]
+                    RunScript --> ScriptInProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)<br/>shared JSON aggregator"]
+
+                    ScriptInProcess --> ScriptLoadJSON["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+                    ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
+                    ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via SmartOutputManager<br/>(JSON)"]
                     ScriptOutputJSON --> MoreScripts{"More scripts?"}
                     MoreScripts -->|"Yes"| RunScript
-                    MoreScripts -->|"No"| AggregateJSON
+                    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
 
-                    AggregateJSON --> AggregateOutputs["Aggregate JSON outputs<br/>from json_output_{id}_*.json"]
+                    CheckSuccess -->|"No"| EndError["End: Return error<br/>to frontend"]
+                    CheckSuccess -->|"Yes"| AggregateJSON["Read shared JSON aggregator<br/>in-process results"]
                     AggregateJSON --> CalcBCR["Calculate BCR from<br/>aggregated JSON data"]
-                    CalcBCR --> WriteFinal["Write final output<br/>forge_results_{id}.json"]
-
-                    WriteFinal --> ProcessorRead["Processor: Read<br/>forge_results_{id}.json"]
-                    ProcessorRead --> CleanupFiles["Processor: Cleanup<br/>Delete temp input file<br/>Delete output file"]
-                    CleanupFiles --> ReturnResponse["Processor: Return<br/>JSON response dict"]
+                    CalcBCR --> ReturnDict["Return results dict<br/>in-memory to processor"]
+                    ReturnDict --> ReturnResponse["Processor: Return<br/>JSON response dict"]
+                    EndError --> FastAPIResponse
 
                     ReturnResponse --> FastAPIResponse["FastAPI: Return<br/>JSONResponse to frontend"]
                     FastAPIResponse --> FrontendReceive["Frontend: Receive<br/>JSON response"]
