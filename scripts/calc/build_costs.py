@@ -18,8 +18,6 @@ from scripts.utils.smart_loaders import (
     load_physical_details,
     load_contingencies,
     load_financing_details,
-    load_cost_timing_patterns,
-    load_afudc_config,
     get_project_data_raw,
     get_financing_data_raw,
 )

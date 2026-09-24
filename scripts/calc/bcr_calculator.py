@@ -4,11 +4,8 @@
 
 from __future__ import annotations
 
-import csv
-import os
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Tuple
 
-from scripts.utils.path_config import OUTPUTS_DIR
 from scripts.io.taxonomy import TAXONOMY, ALL_BCR_DEFINITIONS, get_excluded_taxonomy_ids
 from scripts.io.taxonomy_adapters import TaxonomyResult, taxonomy_results_to_flat_keys
 
@@ -28,63 +25,6 @@ def format_bcr_viability(bcr_value: float) -> Tuple[str, str]:
         return ("✅", ">= 1.0: economically viable")
     else:
         return ("❌", "< 1.0: not economically viable")
-
-def load_scenario_data(
-    scenario_id: str, output_dir: str = str(OUTPUTS_DIR)
-) -> Optional[Dict[str, Any]]:
-    """Load scenario data from batch_summary.csv for the given scenario_id."""
-    batch_path = os.path.join(output_dir, "batch_summary.csv")
-
-    if not os.path.exists(batch_path):
-        print(f"Warning: batch_summary.csv not found at {batch_path}")
-        return None
-
-    def convert_row_to_numeric(row: Dict[str, str]) -> Dict[str, Any]:
-        converted = {}
-        for key, value in row.items():
-            if value and value != "":
-                try:
-                    converted[key] = float(value)
-                except (ValueError, TypeError):
-                    converted[key] = value
-        return converted
-
-    with open(batch_path, "r", newline="") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-
-        if len(rows) == 0:
-            print("Warning: batch_summary.csv is empty")
-            return None
-
-        for row in rows:
-            if row.get("scenario_id", "") == scenario_id:
-                return convert_row_to_numeric(row)
-
-        for row in rows:
-            row_scenario_id = str(row.get("scenario_id", ""))
-            if scenario_id in row_scenario_id or row_scenario_id in scenario_id:
-                print(
-                    f"Info: Using partial match for scenario_id '{scenario_id}' "
-                    f"(found '{row_scenario_id}')"
-                )
-                return convert_row_to_numeric(row)
-
-        scenario_prefix = (
-            scenario_id.split("_")[0] if "_" in scenario_id else scenario_id
-        )
-        for row in rows:
-            row_scenario_id = str(row.get("scenario_id", ""))
-            if row_scenario_id.startswith(scenario_prefix + "_"):
-                print(
-                    f"Info: Using prefix match for scenario_id '{scenario_id}' "
-                    f"(found '{row_scenario_id}')"
-                )
-                return convert_row_to_numeric(row)
-
-        print(f"Warning: scenario_id '{scenario_id}' not found in batch_summary.csv")
-        print("Info: Using last row as fallback")
-        return convert_row_to_numeric(rows[-1])
 
 # ---------------------------------------------------------------------------
 # Precomputed taxonomy ID sets for denominator/numerator resolution
@@ -270,24 +210,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             out["net_benefit_ratepayer_pv"] = net_benefit
 
     return out
-
-
-def compute_incremental_comparison(bcr_p: dict, bcr_b: dict) -> dict:
-    """Compute incremental comparison between project P and baseline B.
-
-    Appendix §Reporting L2025-2027:
-      ΔC = C^B - C^P  (avoided-cost: positive = P has lower cost)
-      ΔB = B^P - B^B  (positive = P has higher benefit)
-      ΔNB = ΔB + ΔC = NB^P - NB^B
-    """
-    delta_cost = bcr_b.get("total_costs_pv", 0) - bcr_p.get("total_costs_pv", 0)
-    delta_benefit = bcr_p.get("total_benefits_pv", 0) - bcr_b.get("total_benefits_pv", 0)
-    delta_net_benefit = delta_benefit + delta_cost
-    return {
-        "delta_cost_pv": delta_cost,
-        "delta_benefit_pv": delta_benefit,
-        "delta_net_benefit_pv": delta_net_benefit,
-    }
 
 
 # ---------------------------------------------------------------------------

@@ -14,14 +14,9 @@ from scripts.utils.smart_output import SmartOutputManager
 # Local utility imports
 from scripts.utils.smart_loaders import (
     load_project_technical_details,
-    load_physical_details,
     load_row_widths,
     load_environmental_mitigation,
     load_financing_details,
-    load_cost_timing_patterns,
-    load_afudc_config,
-    get_physical_data_raw,
-    get_financing_data_raw,
 )
 from scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 from scripts.utils.financial_utils import (

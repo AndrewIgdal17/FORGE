@@ -15,10 +15,7 @@ from scripts.utils.smart_output import SmartOutputManager
 from scripts.utils.constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERANCE
 from scripts.utils.smart_loaders import (
     load_project_technical_details,
-    load_physical_details,
-    load_financing_details,
     load_outage_costs,
-    get_physical_data_raw,
     get_financing_data_raw,
 )
 from scripts.utils.financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
