@@ -13,6 +13,31 @@ from typing import Any, Optional
 from scripts.utils.financial_utils import calculate_real_wacc
 
 FIDELITY_TOLERANCE = 0.01  # $0.01 — IEEE 754 floating-point accumulation only; no formula disagreement
+_RATIO_REL_TOLERANCE = 0.01  # 1% relative — per-ratio match vs bcr_calculator
+
+# Taxonomy BCR ids. Exclusion variants are stored on the calculator side as
+# legacy `bcr_excluding_{suffix}` keys, not these ids. Trajectory stores
+# outage+wildfire as `bcr_excl_wf_out`.
+_BCR_RATIO_KEYS = [
+    "bcr_societal", "bcr_utility", "bcr_ratepayer",
+    "bcr_excl_avoided_emissions", "bcr_excl_emissions_costs",
+    "bcr_excl_all_emissions", "bcr_excl_outage",
+    "bcr_excl_wildfire", "bcr_excl_outage_wildfire",
+]
+_BCR_CALC_KEYS = {
+    "bcr_societal": "bcr_societal",
+    "bcr_utility": "bcr_utility",
+    "bcr_ratepayer": "bcr_ratepayer",
+    "bcr_excl_avoided_emissions": "bcr_excluding_avoided_emissions",
+    "bcr_excl_emissions_costs": "bcr_excluding_emissions",
+    "bcr_excl_all_emissions": "bcr_excluding_avoided_emissions_and_emissions",
+    "bcr_excl_outage": "bcr_excluding_outage_risk",
+    "bcr_excl_wildfire": "bcr_excluding_wildfire_risk",
+    "bcr_excl_outage_wildfire": "bcr_excluding_wildfire_risk_and_outage_risk",
+}
+_TRAJ_RATIO_ALIASES = {
+    "bcr_excl_outage_wildfire": "bcr_excl_wf_out",
+}
 
 # Categories used internally to route each stream's PV contribution.
 _OUTPUT_COST_CATEGORIES = ("C_hard", "C_soft", "C_risk", "C_emissions")
@@ -186,6 +211,33 @@ def _build_array_streams(results: dict, social_discount_rate: float) -> list[Arr
         ArrayStreamSpec("displacement_annual_values", displacement_annual, social_discount_rate, "B_avoided_emissions"),
     ]
 
+def _as_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    return float(value)
+
+
+def _assert_per_ratio_fidelity(final: dict, bcr: dict) -> None:
+    """Assert trajectory final-year BCR ratios match bcr_calculator values.
+
+    Looks up calculator keys via `_BCR_CALC_KEYS` (legacy `bcr_excluding_*`
+    names) and trajectory keys via `_TRAJ_RATIO_ALIASES`. Skips a ratio when
+    the calculator value is near zero.
+    """
+    for key in _BCR_RATIO_KEYS:
+        traj_key = _TRAJ_RATIO_ALIASES.get(key, key)
+        traj_val = _as_float(final.get(traj_key, 0.0))
+        bcr_val = _as_float(bcr.get(_BCR_CALC_KEYS[key], 0.0))
+        if abs(bcr_val) > FIDELITY_TOLERANCE:
+            diff = abs(traj_val - bcr_val)
+            rel_diff = diff / abs(bcr_val)
+            assert rel_diff < _RATIO_REL_TOLERANCE, (
+                f"BCR trajectory fidelity check failed for {key}: "
+                f"trajectory={traj_val:.6f}, bcr_calculator={bcr_val:.6f}, "
+                f"relative diff={rel_diff:.4%}"
+            )
+
+
 def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     """Compute a year-by-year BCR/NPV trajectory from finished FORGE results.
 
@@ -201,9 +253,10 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
     Raises:
         AssertionError: if the final row's cumulative costs/benefits don't
-        match results["bcr"]["total_costs_pv"] / total_benefits_pv within $1.
-        This is a development assertion, kept intentionally strict — a
-        failure means a stream is missing or miscomputed.
+        match results["bcr"]["total_costs_pv"] / total_benefits_pv within
+        FIDELITY_TOLERANCE, or if any of the 9 BCR ratios diverges from
+        bcr_calculator by more than 1% relative. A failure means a stream
+        is missing or a per-ratio formula disagrees with the taxonomy.
     """
     project_details = inputs["01_project_technical_details"]
     timeline = project_details["timeline"]
@@ -450,5 +503,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     assert abs(final["cum_B_total"] - target_total_benefits_pv) < FIDELITY_TOLERANCE, (
         f"Benefit fidelity: {final['cum_B_total']} vs {target_total_benefits_pv}"
     )
+    _assert_per_ratio_fidelity(final, bcr)
 
     return trajectory
