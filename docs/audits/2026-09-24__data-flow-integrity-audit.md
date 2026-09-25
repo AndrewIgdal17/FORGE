@@ -1,7 +1,3 @@
----
-tags: [project/forge]
----
-
 # FORGE Data-Flow Integrity Audit
 
 **Date:** 2026-09-24
@@ -1641,5 +1637,4 @@ Ranked by (risk eliminated) × (how many findings the fix collapses), not by fil
 
 ## Related
 
-- [[Projects/FORGE/FORGE MOC]]
-- [[Projects/FORGE/PROJECT_MEMORY]]
+- Fix plan: `../../../docs/plans/2026-09-24__data-flow-fix-plan.md`
