@@ -114,7 +114,7 @@ papers/
 combined_data.json
 test_results.json
 testing/test_results.json
-outputs/ctcc_results_*.json
+outputs/forge_results_*.json
 outputs/json_output_*.json
 
 # Lock files
@@ -125,3 +125,6 @@ yamls.lock
 .claude/
 Generalized_CTCC_Equation.*
 Projects/
+
+# Vault audit artifacts (not shipped)
+docs/audits/
