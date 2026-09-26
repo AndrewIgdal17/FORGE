@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FORGE YAML Input Explorer</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --text-muted: #adb5bd;
+        --border-color: #dee2e6;
+        --accent-blue: #0d6efd;
+        --accent-green: #198754;
+        --accent-yellow: #ffc107;
+        --accent-red: #dc3545;
+        --accent-purple: #6f42c1;
+        --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      }
+
+      [data-theme="dark"] {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --bg-tertiary: #404040;
+        --text-primary: #ffffff;
+        --text-secondary: #b3b3b3;
+        --text-muted: #808080;
+        --border-color: #404040;
+        --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+        transition: all 0.3s ease;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .header {
+        background: linear-gradient(
+          135deg,
+          var(--accent-blue),
+          var(--accent-purple)
+        );
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      .stat-card {
+        background: var(--bg-secondary);
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-2px);
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .search-box {
+        flex: 1;
+        min-width: 300px;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+      }
+
+      .search-box:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+      }
+
+      .theme-toggle {
+        background: var(--accent-blue);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s ease;
+      }
+
+      .theme-toggle:hover {
+        background: #0b5ed7;
+      }
+
+      .category-filters {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .category-filter {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+      }
+
+      .category-filter.active {
+        background: var(--accent-blue);
+        color: white;
+        border-color: var(--accent-blue);
+      }
+
+      .tabs-container {
+        margin-bottom: 2rem;
+      }
+
+      .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 1.5rem;
+      }
+
+      .tab-button {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: -2px;
+      }
+
+      .tab-button:hover {
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+      }
+
+      .tab-button.active {
+        color: var(--accent-blue);
+        border-bottom-color: var(--accent-blue);
+        font-weight: 600;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .diagram-section {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+      }
+
+      .diagram-section h2 {
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+      }
+
+      .mermaid-diagram {
+        background: var(--bg-primary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        overflow-x: auto;
+        min-height: 400px;
+      }
+
+      .mermaid-diagram svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      [data-theme="dark"] .mermaid-diagram {
+        background: var(--bg-tertiary);
+      }
+
+      #d3-diagram {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        min-height: 500px;
+        max-height: 800px;
+        overflow: hidden;
+      }
+
+      #d3-svg {
+        width: 100%;
+        height: 100%;
+        min-height: 500px;
+      }
+
+      #zoom-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 5px;
+        z-index: 10;
+      }
+
+      #zoom-controls button {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--border-color);
+        background: var(--card-bg);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      #zoom-controls button:hover {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .d3-node {
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .d3-node:hover {
+        stroke-width: 3px;
+      }
+
+      .d3-link {
+        fill: none;
+        stroke: var(--border-color);
+        stroke-width: 2px;
+        transition: all 0.3s ease;
+      }
+
+      .d3-label {
+        font-size: 12px;
+        font-family: var(--font-family);
+        fill: var(--text-primary);
+        pointer-events: none;
+        text-anchor: middle;
+      }
+
+      .d3-tooltip {
+        position: absolute;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 12px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 1000;
+        box-shadow: var(--shadow);
+      }
+
+      [data-theme="dark"] #d3-diagram {
+        background: var(--bg-tertiary);
+      }
+
+      .details-section {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        max-height: 600px;
+        overflow-y: auto;
+      }
+
+      .details-section h2 {
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+      }
+
+      .yaml-tree {
+        font-family: "Monaco", "Menlo", monospace;
+        font-size: 0.9rem;
+      }
+
+      .yaml-item {
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .yaml-item:hover {
+        background: var(--bg-tertiary);
+      }
+
+      .yaml-item.expanded {
+        background: var(--bg-tertiary);
+      }
+
+      .yaml-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+      }
+
+      .yaml-icon {
+        width: 16px;
+        height: 16px;
+        opacity: 0.7;
+      }
+
+      .field-count {
+        background: var(--accent-blue);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-left: auto;
+      }
+
+      .field-details {
+        margin-left: 1rem;
+        margin-top: 0.5rem;
+        padding-left: 1rem;
+        border-left: 2px solid var(--border-color);
+      }
+
+      .field-item {
+        margin: 0.3rem 0;
+        padding: 0.3rem 0.5rem;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+
+      .field-name {
+        font-weight: 600;
+        color: var(--accent-blue);
+      }
+
+      .field-type {
+        color: var(--accent-green);
+        font-size: 0.8rem;
+      }
+
+      .field-description {
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-top: 0.2rem;
+      }
+
+      .configurations-section {
+        grid-column: 1 / -1;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-top: 2rem;
+      }
+
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .config-card {
+        background: var(--bg-primary);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
+
+      .config-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--accent-blue);
+      }
+
+      .config-details {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .export-section {
+        margin-top: 2rem;
+        text-align: center;
+      }
+
+      .export-btn {
+        background: var(--accent-green);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s ease;
+      }
+
+      .export-btn:hover {
+        background: #157347;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .fade-in {
+        animation: fadeIn 0.3s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .search-box {
+          min-width: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>🔧 FORGE YAML Input Explorer</h1>
+        <p>
+          Interactive documentation for all Transmission Cost Calculator input
+          parameters
+        </p>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="total-yamls">21</div>
+          <div class="stat-label">YAML Files</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="total-fields">4,922</div>
+          <div class="stat-label">Input Fields</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="total-configs">128</div>
+          <div class="stat-label">Project Configurations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="total-categories">7</div>
+          <div class="stat-label">Categories</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input
+          type="text"
+          class="search-box"
+          id="search-box"
+          placeholder="Search fields, descriptions, or YAML files..."
+        />
+        <button class="theme-toggle" id="theme-toggle">🌙 Dark Mode</button>
+        <div class="category-filters" id="category-filters">
+          <div class="category-filter active" data-category="all">All</div>
+          <div class="category-filter" data-category="Technical">Technical</div>
+          <div class="category-filter" data-category="Physical">Physical</div>
+          <div class="category-filter" data-category="Financial">Financial</div>
+          <div class="category-filter" data-category="Operations">
+            Operations
+          </div>
+          <div class="category-filter" data-category="Environmental">
+            Environmental
+          </div>
+          <div class="category-filter" data-category="Benefits">Benefits</div>
+          <div class="category-filter" data-category="Configurations">
+            Configurations
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs-container">
+        <div class="tabs-nav">
+          <button class="tab-button active" data-tab="input-structure">
+            📊 Input Structure
+          </button>
+          <button class="tab-button" data-tab="execution-workflow">
+            ⚙️ Execution Workflow
+          </button>
+          <button class="tab-button" data-tab="web-app-workflow">
+            🌐 Web App Workflow
+          </button>
+        </div>
+
+        <div class="tab-content active" id="tab-input-structure">
+          <div class="main-content">
+            <div class="diagram-section">
+              <h2>📊 System Overview</h2>
+              <div id="d3-diagram">
+                <svg id="d3-svg"></svg>
+                <div id="zoom-controls">
+                  <button id="zoom-in">+</button>
+                  <button id="zoom-out">-</button>
+                  <button id="reset-zoom">⌂</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-section">
+              <h2>🔍 Field Explorer</h2>
+              <div class="yaml-tree" id="yaml-tree">
+                <!-- YAML tree will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-execution-workflow">
+          <div class="diagram-section" style="max-width: 100%">
+            <h2>⚙️ Execution Workflow</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+              Visual representation of what happens when you run
+              <code>python forge.py</code>
+            </p>
+            <div class="mermaid-diagram">
+              <div id="execution-workflow"></div>
+              <script type="text/mermaid" id="execution-workflow-code">
+                flowchart TD
+                    Start["python forge.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--no_wildfire, --simple, --capital_only, etc."]
+
+                    ParseArgs --> LoadYAML{"Load YAML Config<br/>Primary BCR Settings"}
+                    LoadYAML -->|"Config exists"| MergeFlags["Merge YAML config with CLI flags<br/>YAML overrides CLI"]
+                    LoadYAML -->|"No config"| SetEnvVars
+                    MergeFlags --> SetEnvVars["Set Environment Variables<br/>FORGE_INPUT_MODE, FORGE_OUTPUT_MODE<br/>FORGE_JSON_DATA_FILE, FORGE_SCENARIO_ID<br/>FORGE_NO_WILDFIRE, etc."]
+
+                    SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
+
+                    GenScenarioID --> CheckCapitalOnly{"--capital_only flag?"}
+
+                    CheckCapitalOnly -->|"Yes"| CapitalScripts["Build Capital-Only Script List"]
+                    CheckCapitalOnly -->|"No"| FullScripts["Build Full Script List"]
+
+                    CapitalScripts --> ScriptList1["Scripts: scripts/utils/weighted_miles.py<br/>scripts/calc/build_costs.py<br/>scripts/calc/row_costs.py<br/>scripts/calc/environmental_mitigation.py"]
+
+                    FullScripts --> ScriptList2["Always: scripts/utils/weighted_miles.py<br/>scripts/calc/build_costs.py<br/>scripts/calc/row_costs.py<br/>scripts/calc/environmental_mitigation.py<br/>scripts/calc/revenue.py"]
+
+                    ScriptList2 --> Conditional1{"--no_insurance?"}
+                    Conditional1 -->|"No"| AddInsurance["Add: scripts/calc/insurance_costs.py"]
+                    Conditional1 -->|"Yes"| Conditional2
+                    AddInsurance --> Conditional2{"--no_delay_costs?"}
+                    Conditional2 -->|"No"| AddDelay["Add: scripts/calc/delay_costs.py"]
+                    Conditional2 -->|"Yes"| Conditional3
+                    AddDelay --> Conditional3{"--no_wildfire?"}
+                    Conditional3 -->|"No"| AddWildfire["Add: scripts/calc/wildfire_costs.py"]
+                    Conditional3 -->|"Yes"| Conditional4
+                    AddWildfire --> Conditional4{"--no_outages?"}
+                    Conditional4 -->|"No"| AddOutage["Add: scripts/calc/outage_costs.py"]
+                    Conditional4 -->|"Yes"| AlwaysBenefits
+                    AddOutage --> AlwaysBenefits["Always: scripts/calc/congestion_reduction.py"]
+
+                    AlwaysBenefits --> AlwaysEnergy["Always: scripts/calc/energy_losses.py"]
+
+                    AlwaysEnergy --> Conditional5{"--no_oandm?"}
+                    Conditional5 -->|"No"| AddOandM["Add: scripts/calc/oandm.py"]
+                    Conditional5 -->|"Yes"| Conditional6
+                    AddOandM --> Conditional6{"--no_emissions?"}
+                    Conditional6 -->|"No"| AddEmissions["Add: scripts/calc/emissions.py"]
+                    Conditional6 -->|"Yes"| Conditional7
+                    AddEmissions --> Conditional7{"--no_linelosses?"}
+                    Conditional7 -->|"No"| AddLineLosses["Add: scripts/calc/line_loss_costs.py"]
+                    Conditional7 -->|"Yes"| ExecuteLoop
+
+                    ScriptList1 --> ExecuteLoop["Execute Scripts Sequentially"]
+
+                    ExecuteLoop --> RunScript["For each script:<br/>importlib.import_module + main()"]
+
+                    RunScript --> InProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)<br/>shared JSON aggregator"]
+
+                    InProcess --> ScriptLoad["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+
+                    ScriptLoad --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
+
+                    ScriptCalc --> ScriptOutput["Script: Write Output<br/>via SmartOutputManager<br/>(JSON)"]
+
+                    ScriptOutput --> MoreScripts{"More scripts?"}
+                    MoreScripts -->|"Yes"| RunScript
+                    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
+
+                    CheckSuccess -->|"No"| EndError["End: Show error message"]
+                    CheckSuccess -->|"Yes"| AggregateJSON["Read shared JSON aggregator<br/>in-process results"]
+                    AggregateJSON --> CalcBCR_JSON["Calculate BCR from<br/>aggregated JSON data"]
+                    CalcBCR_JSON --> WriteFinalJSON["Write final output:<br/>forge_results_{id}.json"]
+                    WriteFinalJSON --> EndJSON["End: JSON results"]
+
+                    EndJSON --> End
+                    EndError --> End["Complete"]
+              </script>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-web-app-workflow">
+          <div class="diagram-section" style="max-width: 100%">
+            <h2>🌐 Web App Workflow</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary)">
+              Visual representation of what happens when you use the web
+              application (JSON→JSON mode only)
+            </p>
+            <div class="mermaid-diagram">
+              <div id="web-app-workflow"></div>
+              <script type="text/mermaid" id="web-app-workflow-code">
+                flowchart TD
+                    Start["User opens Web UI<br/>workspace.html"] --> LoadConfig["Load JSON Config<br/>GET /api/final_combined"]
+                    LoadConfig --> EditConfig["User edits JSON<br/>configuration in UI"]
+                    EditConfig --> ClickCalculate["User clicks<br/>Calculate button"]
+
+                    ClickCalculate --> CollectData["Frontend: Collect<br/>edited JSON data"]
+                    CollectData --> SendRequest["Frontend: POST request<br/>/api/forge/calculate<br/>with combined_data"]
+
+                    SendRequest --> APIEndpoint["FastAPI: calculate_forge<br/>endpoint receives request"]
+                    APIEndpoint --> CallProcessor["Call run_forge_calculation<br/>forge_processor.py"]
+
+                    CallProcessor --> CheckFormat{"Check data format<br/>Full FORGE format?"}
+                    CheckFormat -->|"Yes"| UseDirect["Use combined_data<br/>directly"]
+                    CheckFormat -->|"No"| MergeTemplate["Merge with template<br/>final_combined.json"]
+                    UseDirect --> CallForge["Call run_calculation(combined_data)<br/>in-process"]
+                    MergeTemplate --> CallForge
+
+                    CallForge --> ForgeInit["run_calculation: Initialize<br/>RunContext + shared JSON aggregator<br/>FORGE_SCENARIO_ID, FORGE_OUTPUT_MODE"]
+                    ForgeInit --> BuildScripts["Build script list<br/>scripts/calc/ modules"]
+                    BuildScripts --> ExecuteLoop["Execute Scripts Sequentially<br/>scripts/utils/weighted_miles.py, scripts/calc/build_costs.py, etc."]
+
+                    ExecuteLoop --> RunScript["For each script:<br/>importlib.import_module + main()"]
+                    RunScript --> ScriptInProcess["Run in-process<br/>scripts/calc/ (and scripts/utils/)<br/>shared JSON aggregator"]
+
+                    ScriptInProcess --> ScriptLoadJSON["Script: Load Data<br/>via smart_loaders<br/>(YAML or JSON)"]
+                    ScriptLoadJSON --> ScriptCalc["Script: Perform Calculations<br/>Cost/Benefit computations"]
+                    ScriptCalc --> ScriptOutputJSON["Script: Write Output<br/>via SmartOutputManager<br/>(JSON)"]
+                    ScriptOutputJSON --> MoreScripts{"More scripts?"}
+                    MoreScripts -->|"Yes"| RunScript
+                    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
+
+                    CheckSuccess -->|"No"| EndError["End: Return error<br/>to frontend"]
+                    CheckSuccess -->|"Yes"| AggregateJSON["Read shared JSON aggregator<br/>in-process results"]
+                    AggregateJSON --> CalcBCR["Calculate BCR from<br/>aggregated JSON data"]
+                    CalcBCR --> ReturnDict["Return results dict<br/>in-memory to processor"]
+                    ReturnDict --> ReturnResponse["Processor: Return<br/>JSON response dict"]
+                    EndError --> FastAPIResponse
+
+                    ReturnResponse --> FastAPIResponse["FastAPI: Return<br/>JSONResponse to frontend"]
+                    FastAPIResponse --> FrontendReceive["Frontend: Receive<br/>JSON response"]
+                    FrontendReceive --> RenderResults["Frontend: Render results<br/>Structured display in UI"]
+                    RenderResults --> End["Complete"]
+              </script>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="configurations-section">
+        <h2>⚙️ Project Configurations</h2>
+        <p>
+          128 different transmission line configurations covering various
+          installation methods, capacities, and technologies.
+        </p>
+        <div class="config-grid" id="config-grid">
+          <!-- Configuration cards will be populated here -->
+        </div>
+      </div>
+
+      <div class="export-section">
+        <button class="export-btn" id="export-btn">
+          📥 Export Field List as CSV
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Data will be loaded from the generated JSON
+      let yamlData = null;
+      let currentTheme = "light";
+      let currentCategory = "all";
+      let searchTerm = "";
+
+      // Initialize the application
+      async function init() {
+        try {
+          // Wait for Mermaid to be loaded
+          if (typeof mermaid === "undefined") {
+            console.warn("Mermaid not loaded yet, waiting...");
+            await new Promise((resolve) => {
+              const checkMermaid = setInterval(() => {
+                if (typeof mermaid !== "undefined") {
+                  clearInterval(checkMermaid);
+                  resolve();
+                }
+              }, 100);
+            });
+          }
+
+          // Load YAML data
+          const response = await fetch("yaml_structure.json");
+          const jsonText = await response.text();
+          // Fix Infinity values in JSON (replace with null or large number)
+          const fixedJsonText = jsonText.replace(
+            /:\s*Infinity\s*([,}])/g,
+            ": null$1"
+          );
+          yamlData = JSON.parse(fixedJsonText);
+
+          // Initialize UI
+          initializeStats();
+          initializeD3Diagram();
+          await initializeMermaidDiagram();
+          initializeYamlTree();
+          initializeConfigurations();
+          initializeEventListeners();
+
+          console.log("FORGE YAML Explorer initialized successfully!");
+        } catch (error) {
+          console.error("Error initializing application:", error);
+          // Fallback data for demo purposes
+          initializeFallbackData();
+        }
+      }
+
+      function initializeStats() {
+        if (yamlData) {
+          document.getElementById("total-yamls").textContent =
+            yamlData.metadata.total_yamls;
+          document.getElementById("total-fields").textContent =
+            yamlData.metadata.total_fields.toLocaleString();
+          document.getElementById("total-configs").textContent =
+            yamlData.metadata.total_configurations || 128;
+          document.getElementById("total-categories").textContent = Object.keys(
+            yamlData.metadata.categories
+          ).length;
+        }
+      }
+
+      function initializeD3Diagram() {
+        if (!yamlData) return;
+
+        const container = document.getElementById("d3-diagram");
+        const svg = d3.select("#d3-svg");
+
+        // Clear previous content
+        svg.selectAll("*").remove();
+
+        // Set up dimensions
+        const width = container.clientWidth - 40;
+        const height = Math.max(500, container.clientHeight - 40);
+
+        svg.attr("width", width).attr("height", height);
+
+        // Create tooltip
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "d3-tooltip")
+          .style("opacity", 0);
+
+        // Set up zoom behavior
+        const zoom = d3
+          .zoom()
+          .scaleExtent([0.1, 4])
+          .on("zoom", (event) => {
+            g.attr("transform", event.transform);
+          });
+
+        svg.call(zoom);
+
+        // Create main group
+        const g = svg.append("g");
+
+        // Transform data for D3
+        const root = transformDataForD3(yamlData);
+
+        // Create hierarchy
+        const hierarchy = d3.hierarchy(root);
+
+        // Create radial tree layout with maximum spacing
+        const tree = d3
+          .tree()
+          .size([2 * Math.PI, Math.min(width, height) / 2 - 40])
+          .separation((a, b) => {
+            if (a.parent == b.parent) {
+              return 4 / a.depth;
+            }
+            return 5 / a.depth;
+          });
+
+        const treeData = tree(hierarchy);
+
+        // Adjust node positions to increase spacing
+        treeData.descendants().forEach((d) => {
+          if (d.depth === 1) {
+            // Push category nodes much further out
+            d.y = Math.max(d.y, 180);
+          } else if (d.depth === 2) {
+            // Push file nodes even further out
+            d.y = Math.max(d.y, 280);
+          }
+        });
+
+        // Color scale for categories
+        const colorScale = d3
+          .scaleOrdinal()
+          .domain([
+            "Technical",
+            "Physical",
+            "Financial",
+            "Operations",
+            "Environmental",
+            "Benefits",
+            "Configurations",
+          ])
+          .range([
+            "#e74c3c",
+            "#3498db",
+            "#f39c12",
+            "#2ecc71",
+            "#9b59b6",
+            "#1abc9c",
+            "#34495e",
+          ]);
+
+        // Draw links
+        const links = g
+          .selectAll(".d3-link")
+          .data(treeData.links())
+          .enter()
+          .append("path")
+          .attr("class", "d3-link")
+          .attr(
+            "d",
+            d3
+              .linkRadial()
+              .angle((d) => d.x)
+              .radius((d) => d.y)
+          )
+          .style("stroke", (d) => {
+            if (d.target.depth === 1) return colorScale(d.target.data.name);
+            return "#ccc";
+          });
+
+        // Draw nodes
+        const nodes = g
+          .selectAll(".d3-node")
+          .data(treeData.descendants())
+          .enter()
+          .append("g")
+          .attr("class", "d3-node")
+          .attr(
+            "transform",
+            (d) => `rotate(${(d.x * 180) / Math.PI - 90}) translate(${d.y},0)`
+          )
+          .on("click", (event, d) => {
+            if (d.children) {
+              d._children = d.children;
+              d.children = null;
+            } else {
+              d.children = d._children;
+              d._children = null;
+            }
+            update();
+          })
+          .on("mouseover", (event, d) => {
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip
+              .html(
+                `
+              <strong>${d.data.name}</strong><br/>
+              ${d.data.field_count ? `Fields: ${d.data.field_count}` : ""}
+              ${d.data.description ? `<br/>${d.data.description}` : ""}
+            `
+              )
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 28 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.transition().duration(500).style("opacity", 0);
+          });
+
+        // Add circles
+        nodes
+          .append("circle")
+          .attr("r", (d) => {
+            if (d.depth === 0) return 8;
+            if (d.depth === 1) return 6;
+            return 4;
+          })
+          .style("fill", (d) => {
+            if (d.depth === 0) return "#2c3e50";
+            if (d.depth === 1) return colorScale(d.data.name);
+            return "#95a5a6";
+          })
+          .style("stroke", (d) => {
+            if (d.depth === 0) return "#2c3e50";
+            if (d.depth === 1) return colorScale(d.data.name);
+            return "#7f8c8d";
+          })
+          .style("stroke-width", 2);
+
+        // Add labels
+        nodes
+          .append("text")
+          .attr("class", "d3-label")
+          .attr("dy", "0.35em")
+          .attr("x", (d) => {
+            if (d.depth === 0) return 0; // Center root label
+            if (d.depth === 1) return d.children ? -15 : 15; // Category labels
+            return d.children ? -12 : 12; // File labels
+          })
+          .style("text-anchor", (d) => {
+            if (d.depth === 0) return "middle";
+            return d.children ? "end" : "start";
+          })
+          .text((d) => {
+            if (d.depth === 0) return "FORGE";
+            if (d.depth === 1) return d.data.name;
+            // Shorten long filenames to prevent overlap
+            const name = d.data.name.replace(".yaml", "").replace(/_/g, " ");
+            return name.length > 20 ? name.substring(0, 17) + "..." : name;
+          })
+          .style("font-size", (d) => {
+            if (d.depth === 0) return "16px";
+            if (d.depth === 1) return "13px";
+            return "9px";
+          })
+          .style("font-weight", (d) => {
+            if (d.depth === 0) return "bold";
+            if (d.depth === 1) return "600";
+            return "normal";
+          });
+
+        // Center the diagram
+        const bounds = g.node().getBBox();
+        const fullWidth = bounds.width;
+        const fullHeight = bounds.height;
+        const midX = -bounds.x - fullWidth / 2;
+        const midY = -bounds.y - fullHeight / 2;
+
+        g.attr(
+          "transform",
+          `translate(${width / 2 + midX}, ${height / 2 + midY})`
+        );
+
+        // Update function for collapsing/expanding
+        function update() {
+          const treeData = tree(hierarchy);
+
+          // Adjust node positions to increase spacing
+          treeData.descendants().forEach((d) => {
+            if (d.depth === 1) {
+              // Push category nodes much further out
+              d.y = Math.max(d.y, 180);
+            } else if (d.depth === 2) {
+              // Push file nodes even further out
+              d.y = Math.max(d.y, 280);
+            }
+          });
+
+          // Update links
+          const links = g.selectAll(".d3-link").data(treeData.links());
+
+          links.exit().remove();
+
+          links
+            .enter()
+            .append("path")
+            .attr("class", "d3-link")
+            .merge(links)
+            .attr(
+              "d",
+              d3
+                .linkRadial()
+                .angle((d) => d.x)
+                .radius((d) => d.y)
+            )
+            .style("stroke", (d) => {
+              if (d.target.depth === 1) return colorScale(d.target.data.name);
+              return "#ccc";
+            });
+
+          // Update nodes
+          const nodes = g.selectAll(".d3-node").data(treeData.descendants());
+
+          nodes.exit().remove();
+
+          const nodeEnter = nodes
+            .enter()
+            .append("g")
+            .attr("class", "d3-node")
+            .on("click", (event, d) => {
+              if (d.children) {
+                d._children = d.children;
+                d.children = null;
+              } else {
+                d.children = d._children;
+                d._children = null;
+              }
+              update();
+            })
+            .on("mouseover", (event, d) => {
+              tooltip.transition().duration(200).style("opacity", 0.9);
+              tooltip
+                .html(
+                  `
+                <strong>${d.data.name}</strong><br/>
+                ${d.data.field_count ? `Fields: ${d.data.field_count}` : ""}
+                ${d.data.description ? `<br/>${d.data.description}` : ""}
+              `
+                )
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
+            .on("mouseout", () => {
+              tooltip.transition().duration(500).style("opacity", 0);
+            });
+
+          nodeEnter
+            .append("circle")
+            .attr("r", (d) => {
+              if (d.depth === 0) return 8;
+              if (d.depth === 1) return 6;
+              return 4;
+            })
+            .style("fill", (d) => {
+              if (d.depth === 0) return "#2c3e50";
+              if (d.depth === 1) return colorScale(d.data.name);
+              return "#95a5a6";
+            })
+            .style("stroke", (d) => {
+              if (d.depth === 0) return "#2c3e50";
+              if (d.depth === 1) return colorScale(d.data.name);
+              return "#7f8c8d";
+            })
+            .style("stroke-width", 2);
+
+          nodeEnter
+            .append("text")
+            .attr("class", "d3-label")
+            .attr("dy", "0.35em")
+            .attr("x", (d) => {
+              if (d.depth === 0) return 0; // Center root label
+              if (d.depth === 1) return d.children ? -15 : 15; // Category labels
+              return d.children ? -12 : 12; // File labels
+            })
+            .style("text-anchor", (d) => {
+              if (d.depth === 0) return "middle";
+              return d.children ? "end" : "start";
+            })
+            .text((d) => {
+              if (d.depth === 0) return "FORGE";
+              if (d.depth === 1) return d.data.name;
+              // Shorten long filenames to prevent overlap
+              const name = d.data.name.replace(".yaml", "").replace(/_/g, " ");
+              return name.length > 20 ? name.substring(0, 17) + "..." : name;
+            })
+            .style("font-size", (d) => {
+              if (d.depth === 0) return "16px";
+              if (d.depth === 1) return "13px";
+              return "9px";
+            })
+            .style("font-weight", (d) => {
+              if (d.depth === 0) return "bold";
+              if (d.depth === 1) return "600";
+              return "normal";
+            });
+
+          nodes
+            .merge(nodeEnter)
+            .transition()
+            .duration(750)
+            .attr(
+              "transform",
+              (d) => `rotate(${(d.x * 180) / Math.PI - 90}) translate(${d.y},0)`
+            );
+        }
+
+        // Add zoom controls
+        d3.select("#zoom-in").on("click", () => {
+          svg.transition().call(zoom.scaleBy, 1.5);
+        });
+
+        d3.select("#zoom-out").on("click", () => {
+          svg.transition().call(zoom.scaleBy, 1 / 1.5);
+        });
+
+        d3.select("#reset-zoom").on("click", () => {
+          svg.transition().call(zoom.transform, d3.zoomIdentity);
+        });
+      }
+
+      function transformDataForD3(yamlData) {
+        const root = {
+          name: "FORGE Input Parameters",
+          field_count: yamlData.metadata.total_fields,
+          children: [],
+        };
+
+        // Group YAMLs by category
+        const yamlsByCategory = {};
+        Object.entries(yamlData.yamls).forEach(([filename, data]) => {
+          if (!yamlsByCategory[data.category]) {
+            yamlsByCategory[data.category] = [];
+          }
+          yamlsByCategory[data.category].push({
+            name: filename,
+            field_count: data.field_count,
+            description: data.description || "",
+          });
+        });
+
+        // Create category nodes
+        Object.entries(yamlsByCategory).forEach(([categoryName, yamls]) => {
+          const categoryNode = {
+            name: categoryName,
+            field_count: yamls.reduce((sum, yaml) => sum + yaml.field_count, 0),
+            children: yamls.map((yaml) => ({
+              name: yaml.name,
+              field_count: yaml.field_count,
+              description: yaml.description,
+            })),
+          };
+          root.children.push(categoryNode);
+        });
+
+        return root;
+      }
+
+      async function renderMermaidDiagram(
+        elementId,
+        codeElementId,
+        renderIdPrefix
+      ) {
+        const workflowElement = document.getElementById(elementId);
+        const codeElement = document.getElementById(codeElementId);
+
+        if (!workflowElement || !codeElement) {
+          return; // Silently skip if elements don't exist
+        }
+
+        try {
+          // Clear any previously rendered content
+          workflowElement.innerHTML = "";
+
+          // Get the mermaid code from the script tag
+          const mermaidCode = codeElement.textContent.trim();
+
+          if (!mermaidCode.startsWith("flowchart")) {
+            console.error(
+              `Mermaid code doesn't start with 'flowchart' for ${elementId}`,
+              mermaidCode.substring(0, 50)
+            );
+            return;
+          }
+
+          // Generate unique ID for this render
+          const renderId = `${renderIdPrefix}-${Date.now()}`;
+
+          // Render using mermaid.render
+          const { svg } = await mermaid.render(renderId, mermaidCode);
+          workflowElement.innerHTML = svg;
+        } catch (err) {
+          console.error(`Error rendering Mermaid diagram ${elementId}:`, err);
+          workflowElement.innerHTML =
+            "<div style='color: var(--text-secondary); padding: 2rem; text-align: center;'>" +
+            "<p><strong>Error rendering diagram</strong></p>" +
+            "<p style='font-size: 0.9em; margin-top: 0.5rem;'>" +
+            err.message +
+            "</p>" +
+            "<p style='font-size: 0.8em; margin-top: 0.5rem; color: var(--text-muted);'>Please check the browser console for details.</p>" +
+            "</div>";
+        }
+      }
+
+      async function initializeMermaidDiagram() {
+        // Wait for Mermaid to be available
+        if (typeof mermaid === "undefined") {
+          console.error("Mermaid library not loaded");
+          return;
+        }
+
+        // Initialize Mermaid with theme
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: currentTheme === "dark" ? "dark" : "default",
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: "basis",
+          },
+        });
+
+        // Render both diagrams
+        await renderMermaidDiagram(
+          "execution-workflow",
+          "execution-workflow-code",
+          "execution-workflow"
+        );
+        await renderMermaidDiagram(
+          "web-app-workflow",
+          "web-app-workflow-code",
+          "web-app-workflow"
+        );
+      }
+
+      function initializeYamlTree() {
+        if (!yamlData) {
+          console.log("No yamlData available");
+          return;
+        }
+
+        const treeContainer = document.getElementById("yaml-tree");
+        treeContainer.innerHTML = "";
+
+        let displayedCount = 0;
+
+        Object.entries(yamlData.yamls).forEach(([filename, data]) => {
+          // Apply category filter
+          if (currentCategory !== "all" && data.category !== currentCategory) {
+            return;
+          }
+
+          // Apply search filter
+          if (searchTerm && !matchesSearch(filename, data)) {
+            return;
+          }
+
+          const yamlItem = createYamlItem(filename, data);
+          treeContainer.appendChild(yamlItem);
+          displayedCount++;
+        });
+
+        console.log(
+          `Displayed ${displayedCount} of ${
+            Object.keys(yamlData.yamls).length
+          } YAMLs`
+        );
+
+        if (displayedCount === 0) {
+          treeContainer.innerHTML =
+            '<p style="color: var(--text-secondary); padding: 1rem;">No YAML files match your filters.</p>';
+        }
+      }
+
+      function createYamlItem(filename, data) {
+        const item = document.createElement("div");
+        item.className = "yaml-item";
+        item.innerHTML = `
+                <div class="yaml-header">
+                    <span class="yaml-icon">📄</span>
+                    <span>${filename}</span>
+                    <span class="field-count">${data.field_count}</span>
+                </div>
+            `;
+
+        // Add click handler to expand/collapse
+        item.addEventListener("click", () => {
+          item.classList.toggle("expanded");
+          const details = item.querySelector(".field-details");
+          if (details) {
+            details.remove();
+          } else {
+            const fieldDetails = createFieldDetails(data);
+            item.appendChild(fieldDetails);
+          }
+        });
+
+        return item;
+      }
+
+      function createFieldDetails(data) {
+        const details = document.createElement("div");
+        details.className = "field-details";
+
+        // Add fields from root level
+        Object.entries(data.structure.fields || {}).forEach(
+          ([fieldName, fieldData]) => {
+            const fieldItem = document.createElement("div");
+            fieldItem.className = "field-item";
+            fieldItem.innerHTML = `
+                     <div class="field-name">${fieldName}</div>
+                     <div class="field-type">${fieldData.type}</div>
+                     ${
+                       fieldData.description
+                         ? `<div class="field-description">${fieldData.description}</div>`
+                         : ""
+                     }
+                 `;
+            details.appendChild(fieldItem);
+          }
+        );
+
+        // Add subsections with their fields
+        Object.entries(data.structure.subsections || {}).forEach(
+          ([subsectionName, subsectionData]) => {
+            const subsectionItem = document.createElement("div");
+            subsectionItem.className = "field-item";
+            subsectionItem.innerHTML = `
+                     <div class="field-name">📁 ${subsectionName} (${subsectionData.field_count} fields)</div>
+                 `;
+            details.appendChild(subsectionItem);
+
+            // Add fields from this subsection
+            Object.entries(subsectionData.fields || {}).forEach(
+              ([fieldName, fieldData]) => {
+                const fieldItem = document.createElement("div");
+                fieldItem.className = "field-item";
+                fieldItem.style.marginLeft = "1rem";
+                fieldItem.innerHTML = `
+                         <div class="field-name">${fieldName}</div>
+                         <div class="field-type">${fieldData.type}</div>
+                         ${
+                           fieldData.description
+                             ? `<div class="field-description">${fieldData.description}</div>`
+                             : ""
+                         }
+                     `;
+                details.appendChild(fieldItem);
+              }
+            );
+
+            // Add nested subsections
+            Object.entries(subsectionData.subsections || {}).forEach(
+              ([nestedSubsectionName, nestedSubsectionData]) => {
+                const nestedSubsectionItem = document.createElement("div");
+                nestedSubsectionItem.className = "field-item";
+                nestedSubsectionItem.style.marginLeft = "1rem";
+                nestedSubsectionItem.innerHTML = `
+                         <div class="field-name">📁 ${nestedSubsectionName} (${nestedSubsectionData.field_count} fields)</div>
+                     `;
+                details.appendChild(nestedSubsectionItem);
+
+                // Add fields from nested subsection
+                Object.entries(nestedSubsectionData.fields || {}).forEach(
+                  ([fieldName, fieldData]) => {
+                    const fieldItem = document.createElement("div");
+                    fieldItem.className = "field-item";
+                    fieldItem.style.marginLeft = "2rem";
+                    fieldItem.innerHTML = `
+                             <div class="field-name">${fieldName}</div>
+                             <div class="field-type">${fieldData.type}</div>
+                             ${
+                               fieldData.description
+                                 ? `<div class="field-description">${fieldData.description}</div>`
+                                 : ""
+                             }
+                         `;
+                    details.appendChild(fieldItem);
+                  }
+                );
+              }
+            );
+          }
+        );
+
+        return details;
+      }
+
+      function initializeConfigurations() {
+        const configGrid = document.getElementById("config-grid");
+        configGrid.innerHTML = "";
+
+        // Create sample configuration cards
+        const configs = [
+          {
+            title: "Overhead AC",
+            count: 16,
+            desc: "Standard overhead AC transmission lines",
+          },
+          {
+            title: "Overhead DC",
+            count: 20,
+            desc: "High-voltage DC transmission lines",
+          },
+          {
+            title: "Underground AC",
+            count: 8,
+            desc: "Underground AC transmission lines",
+          },
+          {
+            title: "Underground DC",
+            count: 10,
+            desc: "Underground DC transmission lines",
+          },
+          {
+            title: "Subsea AC",
+            count: 8,
+            desc: "Subsea AC transmission lines",
+          },
+          {
+            title: "Subsea DC",
+            count: 10,
+            desc: "Subsea DC transmission lines",
+          },
+          {
+            title: "Tunnel AC",
+            count: 8,
+            desc: "Tunnel AC transmission lines",
+          },
+          {
+            title: "Tunnel DC",
+            count: 10,
+            desc: "Tunnel DC transmission lines",
+          },
+        ];
+
+        configs.forEach((config) => {
+          const card = document.createElement("div");
+          card.className = "config-card";
+          card.innerHTML = `
+                    <div class="config-title">${config.title}</div>
+                    <div class="config-details">${config.count} configurations - ${config.desc}</div>
+                `;
+          configGrid.appendChild(card);
+        });
+      }
+
+      function initializeEventListeners() {
+        // Tab switching
+        const tabButtons = document.querySelectorAll(".tab-button");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const targetTab = button.getAttribute("data-tab");
+
+            // Remove active class from all buttons and contents
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabContents.forEach((content) =>
+              content.classList.remove("active")
+            );
+
+            // Add active class to clicked button and corresponding content
+            button.classList.add("active");
+            const targetContent = document.getElementById(`tab-${targetTab}`);
+            if (targetContent) {
+              targetContent.classList.add("active");
+            }
+          });
+        });
+        // Theme toggle
+        document
+          .getElementById("theme-toggle")
+          .addEventListener("click", toggleTheme);
+
+        // Search functionality
+        document.getElementById("search-box").addEventListener("input", (e) => {
+          searchTerm = e.target.value.toLowerCase();
+          initializeYamlTree();
+        });
+
+        // Category filters
+        document.querySelectorAll(".category-filter").forEach((filter) => {
+          filter.addEventListener("click", (e) => {
+            document
+              .querySelectorAll(".category-filter")
+              .forEach((f) => f.classList.remove("active"));
+            e.target.classList.add("active");
+            currentCategory = e.target.dataset.category;
+            initializeYamlTree();
+          });
+        });
+
+        // Export functionality
+        document
+          .getElementById("export-btn")
+          .addEventListener("click", exportToCSV);
+      }
+
+      function toggleTheme() {
+        currentTheme = currentTheme === "light" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", currentTheme);
+
+        const button = document.getElementById("theme-toggle");
+        button.textContent =
+          currentTheme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode";
+
+        // Re-render D3 diagram with new theme
+        initializeD3Diagram();
+
+        // Re-render Mermaid diagram with new theme
+        initializeMermaidDiagram();
+
+        // Save preference
+        localStorage.setItem("theme", currentTheme);
+      }
+
+      function matchesSearch(filename, data) {
+        const searchableText = `${filename} ${JSON.stringify(
+          data
+        )}`.toLowerCase();
+        return searchableText.includes(searchTerm);
+      }
+
+      function exportToCSV() {
+        if (!yamlData) return;
+
+        let csv =
+          "YAML File,Section,Field Name,Type,Description,Default Value\n";
+
+        Object.entries(yamlData.yamls).forEach(([filename, data]) => {
+          // Add root level fields
+          Object.entries(data.structure.fields || {}).forEach(
+            ([fieldName, fieldData]) => {
+              csv += `"${filename}","root","${fieldName}","${
+                fieldData.type
+              }","${fieldData.description || ""}","${
+                fieldData.default || ""
+              }"\n`;
+            }
+          );
+
+          // Add subsection fields
+          Object.entries(data.structure.subsections || {}).forEach(
+            ([subsectionName, subsectionData]) => {
+              Object.entries(subsectionData.fields || {}).forEach(
+                ([fieldName, fieldData]) => {
+                  csv += `"${filename}","${subsectionName}","${fieldName}","${
+                    fieldData.type
+                  }","${fieldData.description || ""}","${
+                    fieldData.default || ""
+                  }"\n`;
+                }
+              );
+
+              // Add nested subsection fields
+              Object.entries(subsectionData.subsections || {}).forEach(
+                ([nestedSubsectionName, nestedSubsectionData]) => {
+                  Object.entries(nestedSubsectionData.fields || {}).forEach(
+                    ([fieldName, fieldData]) => {
+                      csv += `"${filename}","${subsectionName}.${nestedSubsectionName}","${fieldName}","${
+                        fieldData.type
+                      }","${fieldData.description || ""}","${
+                        fieldData.default || ""
+                      }"\n`;
+                    }
+                  );
+                }
+              );
+            }
+          );
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "forge_yaml_fields.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      function initializeFallbackData() {
+        // Fallback data for demo purposes
+        yamlData = {
+          metadata: {
+            total_yamls: 21,
+            total_fields: 4922,
+            total_configurations: 128,
+            categories: {
+              Technical: { file_count: 2, field_count: 70 },
+              Physical: { file_count: 1, field_count: 18 },
+              Financial: { file_count: 3, field_count: 14 },
+              Operations: { file_count: 5, field_count: 2604 },
+              Environmental: { file_count: 4, field_count: 121 },
+              Benefits: { file_count: 3, field_count: 25 },
+              Configurations: { file_count: 3, field_count: 2070 },
+            },
+          },
+          yamls: {
+            "01_project_technical_details.yaml": {
+              category: "Technical",
+              field_count: 35,
+              structure: {
+                fields: {
+                  name: {
+                    type: "str",
+                    description: "Project name",
+                    default: "",
+                  },
+                  construction_type: {
+                    type: "str",
+                    description:
+                      "Overhead, Underground Direct-Buried, Underground Tunnel, Subsea, Reconductoring",
+                    default: "",
+                  },
+                  ac_dc: { type: "str", description: "AC or DC", default: "" },
+                  capacity_mw: { type: "int", description: "MW", default: 0 },
+                },
+              },
+            },
+          },
+        };
+
+        initializeStats();
+        initializeD3Diagram();
+        initializeYamlTree();
+        initializeConfigurations();
+        initializeEventListeners();
+      }
+
+      // Load saved theme
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) {
+        currentTheme = savedTheme;
+        document.documentElement.setAttribute("data-theme", currentTheme);
+        document.getElementById("theme-toggle").textContent =
+          currentTheme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode";
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>

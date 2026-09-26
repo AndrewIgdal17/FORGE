@@ -1,0 +1,21 @@
+# Congestion Reductions — single-constraint congestion relief
+# B_cong = H * min(delta_C_eff, X) * gamma_cong
+
+# Real annual benefit price escalation rate applied to all benefit streams.
+# At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).
+benefit_price_escalation_real: 0.0
+
+greenfield_congestion_reductions:
+  constraints:
+    flow_factor: 0          # deliverability to the targeted constraint [0,1]
+    constrained_hours: 0    # H: total hours/yr the constraint binds (>= 0)
+    average_exceedance: 0   # X: average MW exceedance during constrained hours (>= 0)
+  prices:
+    average_congestion_price: 0    # gamma_cong: $/MWh redispatch cost
+
+incremental_congestion_reductions:
+  constraints:
+    constrained_hours: 0
+    average_exceedance: 0
+  prices:
+    average_congestion_price: 0

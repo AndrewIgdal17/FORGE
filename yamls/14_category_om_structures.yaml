@@ -1,0 +1,28 @@
+# Project Category O&M — Structures (Overhead) & Line O&M Rates (Non-Overhead)
+#
+# Overhead: flat base O&M rate per mile (excludes vegetation management, modeled separately in YAML 12).
+# Non-overhead: total line O&M as % of line CAPEX per year (replaces conductor + structure decomposition).
+# Line CAPEX = total build cost minus converter cost (conductor_cost + structure_cost from build costs module).
+
+project_categories_om_structures:
+  # OVERHEAD CONFIGURATIONS
+  # Single base O&M rate per mile (excludes vegetation management, modeled separately in YAML 12).
+
+  "Overhead":
+    base_om_per_mile_year: 19090  # $/mile/year, 2025$. CT Siting Council (2022) $29,636/circuit-mile total (FERC Form 1, 2017–2021 mean, ~2019$) escalated to 2025$ at 2%/yr CAGR (×1.126 → $33,370) minus separately modeled vegetation management ($14,000 forested → $14,280 at 2025$). Covers conductor inspection, structure maintenance, patrol, and all non-VM line O&M.
+
+  # NON-OVERHEAD CONFIGURATIONS
+  # O&M as % of line CAPEX per year. Covers all non-converter maintenance:
+  # cable monitoring, joint testing, civil infrastructure, surveys, repair provisioning.
+
+  "Underground direct-buried":
+    om_pct_of_line_capex: 0.0015  # 0.15% of line CAPEX/yr. Source: CIET/Powerlink (2023). Cross-check: CT Siting Council (2023) reports $22,937/circuit-mile from FERC Form 1 on $16–21M/mi CAPEX ≈ 0.11–0.14%.
+
+  "Underground tunnel":
+    om_pct_of_line_capex: 0.004   # 0.4% of line CAPEX/yr. Source: IET and Mott MacDonald (2025), "Electricity Transmission Costing Study," standard onshore O&M (SSM factor).
+
+  "Subsea":
+    om_pct_of_line_capex: 0.025   # 2.5% of cable system CAPEX/yr. Source: NeoMarketData (2025). Cross-check: Ofgem PCR data — Viking Link (2025), NSL (2023), IFA2 (2022) show 5.3–5.6% total system opex; cable-only portion ≈ 2.5%.
+
+# Real O&M cost escalation (applies to all construction types, line + converter O&M)
+om_real_escalation_rate: 0.02 # 2.0% real/yr. CT Siting Council (2022) official 40-yr lifecycle CAGR. Cross-check: LBNL FERC Form 1 data (2021) 0.5-2.0% real CAGR (117 IOUs); MCR Group/MISO (2024) 1.7% nominal.

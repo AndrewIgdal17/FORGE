@@ -1,0 +1,23 @@
+# Wildfire Risk Cost Parameters
+# Expected wildfire costs based on ignition rates and severity
+
+wildfire:
+  # Event severity (consequence)
+  severity_per_event: 8328765 # Mean loss per wildfire event ($/event), 2025$ (CPI-U from ~2023.5$, ×1.0411). Eagleston et al. 2025 size-class decomposition. (>= 0)
+
+  # Risk growth (wildfire risk increases over time)
+  risk_growth_rate: 0.015 # Annual increase in ignition probability (>= 0) (1.5%/yr, Warner/Callaway/Fowlie 2025)
+
+  # Base ignition rate (overhead baseline, line-level)
+  # Units: events per mile per year (>= 0)
+  base_ignition_rate: 0.002 # PG&E SOM Metric 3.16 + Johnson/SDG&E 2014
+
+  # Ignition rate multiplier by construction type
+  # Effective rate = base_ignition_rate × multiplier
+  # All multipliers (>= 0)
+  ignition_rate_multiplier:
+    overhead: 1.0 # Baseline (100% of overhead risk) (>= 0)
+    underground: 0.01 # 99% reduction per PG&E VP Undergrounding Jamie Martin (CBS News, 2024). (>= 0)
+    underground_direct_buried: 0.0 # No wildfire risk (non-overhead) (>= 0)
+    underground_tunnel: 0.0 # No wildfire risk (non-overhead) (>= 0)
+    subsea: 0.0 # No wildfire risk (>= 0)

@@ -1,0 +1,9 @@
+# Delay Costs
+# Direct out-of-pocket annual expenditure during the pre-construction/permitting period.
+# This single field replaces the prior 8-category decomposition (legal, admin, labor,
+# material_and_equipment, regulatory, public_relations, project_management, miscellaneous)
+# which had no published source for individual category rates.
+# Users should input their project-specific total annual pre-construction spend.
+# Foregone congestion benefits during delay are modeled separately.
+
+annual_base_delay_cost: 0 # $/year. Total direct out-of-pocket spend during delay. Default 0 (project-specific; no published benchmark exists).

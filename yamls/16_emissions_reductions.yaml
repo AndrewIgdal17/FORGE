@@ -1,0 +1,43 @@
+# Emissions Reductions
+# Environmental benefits from emissions reductions
+# Energy source mix lives in 18_energy_source_mix.yaml (merged at load for emissions.py).
+
+emissions_reductions:
+  compensation_percent: 1.0 # [0,1]
+
+  # User Inputs - Emission Intensities (Blue)
+  emission_intensities:
+    co2_intensity_kg_per_mwh:
+      coal: 820
+      oil: 650
+      natural_gas: 490
+      solar: 48
+      wind: 11
+      hydro: 24 # IPCC AR5 WG3 Ch7, Table A.III.2 lifecycle median (Bruckner et al., 2014). Prior value (4) was infrastructure-only per Dones et al. (2007).
+      nuclear: 12
+      other: 0
+    sox_intensity_kg_per_mwh:
+      coal: 13
+      oil: 10
+      natural_gas: 0.1
+      solar: 0
+      wind: 0
+      hydro: 0
+      nuclear: 0
+      other: 0
+    nox_intensity_kg_per_mwh:
+      coal: 4
+      oil: 3.5
+      natural_gas: 0.2
+      solar: 0
+      wind: 0
+      hydro: 0
+      nuclear: 0
+      other: 0
+
+  # User Inputs - Societal Costs (Yellow)
+  societal_costs_per_kg:
+    co2_cost_per_kg: 0.236 # $/kg CO2 = $236/tCO2. EPA SC-GHG 2023, 2025$ (CPI-U from 2020$, ×1.2438). 2% Ramsey rate.
+    co2_cost_annual_growth: 0.02 # real annual escalation (Rennert et al. 2022)
+    sox_cost_per_kg: 76  # $/kg SOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related).
+    nox_cost_per_kg: 143 # $/kg NOx, 2025$ (CPI-U from 2020$, ×1.2438). EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone).

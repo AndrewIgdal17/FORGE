@@ -1,0 +1,68 @@
+flowchart TD
+    Start["python forge.py"] --> ParseArgs["Parse Command-Line Arguments<br/>--simple, --capital_only, --no_emissions,<br/>--no_linelosses, --no_oandm, --no_insurance,<br/>--no_delay_costs, --no_wildfire, --no_outages,<br/>--no_congestion"]
+
+    ParseArgs --> SetEnvVars["Set Environment Variables<br/>FORGE_OUTPUT_MODE=json<br/>FORGE_SCENARIO_ID<br/>FORGE_NO_CONGESTION if --no_congestion"]
+
+    SetEnvVars --> GenScenarioID["Generate Scenario ID<br/>YYYYMMDD_HHMMSS_microseconds"]
+
+    GenScenarioID --> InitRun["JSONOutputManager + RunContext<br/>shared in-process aggregator"]
+
+    InitRun --> CheckCapitalOnly{"--capital_only flag?"}
+
+    CheckCapitalOnly -->|"Yes"| CapitalScripts["Build Capital-Only Script List"]
+    CheckCapitalOnly -->|"No"| FullScripts["Build Full Script List"]
+
+    CapitalScripts --> ScriptList1["Modules: scripts.utils.weighted_miles<br/>scripts.calc.build_costs<br/>scripts.calc.row_costs<br/>scripts.calc.environmental_mitigation"]
+
+    FullScripts --> ScriptList2["Always: scripts.utils.weighted_miles<br/>scripts.calc.build_costs<br/>scripts.calc.row_costs<br/>scripts.calc.environmental_mitigation<br/>scripts.calc.revenue"]
+
+    ScriptList2 --> Conditional1{"--no_insurance?"}
+    Conditional1 -->|"No"| AddInsurance["Add: scripts.calc.insurance_costs"]
+    Conditional1 -->|"Yes"| Conditional2
+    AddInsurance --> Conditional2{"--no_delay_costs?"}
+    Conditional2 -->|"No"| AddDelay["Add: scripts.calc.delay_costs"]
+    Conditional2 -->|"Yes"| Conditional3
+    AddDelay --> Conditional3{"--no_wildfire?"}
+    Conditional3 -->|"No"| AddWildfire["Add: scripts.calc.wildfire_costs"]
+    Conditional3 -->|"Yes"| Conditional4
+    AddWildfire --> Conditional4{"--no_outages?"}
+    Conditional4 -->|"No"| AddOutage["Add: scripts.calc.outage_costs"]
+    Conditional4 -->|"Yes"| AlwaysBenefits
+    AddOutage --> AlwaysBenefits["Always: scripts.calc.congestion_reduction"]
+
+    AlwaysBenefits --> AlwaysEnergy["Always: scripts.calc.energy_losses"]
+
+    AlwaysEnergy --> Conditional5{"--no_oandm?"}
+    Conditional5 -->|"No"| AddOandM["Add: scripts.calc.oandm"]
+    Conditional5 -->|"Yes"| Conditional6
+    AddOandM --> Conditional6{"--no_emissions?"}
+    Conditional6 -->|"No"| AddEmissions["Add: scripts.calc.emissions<br/>scripts.calc.facilitated_emissions<br/>scripts.calc.displacement_delay_cost"]
+    Conditional6 -->|"Yes"| Conditional7
+    AddEmissions --> Conditional7{"--no_linelosses?"}
+    Conditional7 -->|"No"| AddLineLosses["Add: scripts.calc.line_loss_costs"]
+    Conditional7 -->|"Yes"| ExecuteLoop
+
+    ScriptList1 --> ExecuteLoop["Execute Modules Sequentially"]
+
+    ExecuteLoop --> RunScript["For each module:<br/>importlib.import_module(script)<br/>mod.main()"]
+
+    RunScript --> ScriptLoad["Module: Load Data<br/>via smart_loaders YAML"]
+
+    ScriptLoad --> ScriptCalc["Module: Perform Calculations<br/>Cost/Benefit computations"]
+
+    ScriptCalc --> ScriptOutput["Module: Write Output<br/>via smart_output into<br/>shared JSONOutputManager"]
+
+    ScriptOutput --> MoreScripts{"More modules?"}
+    MoreScripts -->|"Yes"| RunScript
+    MoreScripts -->|"No"| CheckSuccess{"Any successful runs?"}
+
+    CheckSuccess -->|"No"| EndError["End: Show error message"]
+    CheckSuccess -->|"Yes"| AdaptResults["adapt_all_results()"]
+
+    AdaptResults --> ComputeBCRs["compute_all_bcrs()"]
+    ComputeBCRs --> BuildCsvEq["build_csv_equivalent()"]
+    BuildCsvEq --> BuildSummary["build_summary_from_csv_equivalent()"]
+    BuildSummary --> ComputeTraj["compute_trajectory()"]
+    ComputeTraj --> WriteJSON["Write forge_results_{scenario_id}.json"]
+    WriteJSON --> Complete["Complete"]
+    EndError --> Complete

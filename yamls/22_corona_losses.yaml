@@ -1,0 +1,13 @@
+# Corona Loss Parameters (AC overhead only)
+# Annual average corona loss by voltage class, sea level, ~20/2/78% rain/snow/fair weather mix.
+# Additive to I^2R losses (voltage-dependent, load-independent). DC and non-overhead: 0.
+corona:
+  voltage_class_tiers:
+    - max_kv: 230
+      kw_per_mile: 0    # ≤230 kV: negligible
+    - max_kv: 345
+      kw_per_mile: 6    # 345 kV
+    - max_kv: 500
+      kw_per_mile: 16   # 500 kV
+    - max_kv: .inf
+      kw_per_mile: 44   # 765 kV

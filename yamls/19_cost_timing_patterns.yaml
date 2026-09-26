@@ -1,0 +1,76 @@
+# Cost Incurrence Timing for AFUDC Capitalization
+# Defines when costs hit CWIP (Account 107) during project lifecycle
+# Per FERC USoA: AFUDC applies when (i) capex incurred AND (ii) activities in progress
+
+cost_timing_patterns:
+  # Build costs (conductor, structure, converter)
+  build_costs:
+    during_delay: 0.0 # % of cost incurred during delay (typically 0)
+    during_construction: 1.0 # % spread uniformly over construction period
+    afudc_eligible: true # Qualifies for AFUDC (in CWIP Account 107)
+
+  # ROW acquisition costs
+  row_acquisition:
+    during_delay: 0.0
+    during_construction: 1.0
+    afudc_eligible: true
+
+  # ROW holding costs (annual cost during delay)
+  row_holding:
+    during_delay: 1.0 # Holding costs occur only during delay period
+    during_construction: 0.0 # No holding costs once construction starts
+    afudc_eligible: false # Operating expense, not capitalized to CWIP
+
+  # ROW rent costs (annual cost during operation)
+  row_rent:
+    during_delay: 0.0 # No rent during delay
+    during_construction: 0.0 # No rent during construction
+    afudc_eligible: false # Operational expense, not in CWIP
+
+  # Environmental mitigation - base restoration
+  environmental_mitigation_base:
+    during_delay: 0.0 # Restoration happens during construction
+    during_construction: 1.0 # Spread over construction period
+    afudc_eligible: true # Necessary for plant to be ready for service
+
+  # Environmental mitigation - credit purchases
+  environmental_mitigation_credits:
+    during_delay: 0.0
+    during_construction: 1.0
+    afudc_eligible: true
+
+  # Delay costs (regulatory/legal expenses)
+  delay_costs:
+    during_delay: 1.0 # By definition, occur during delay period
+    during_construction: 0.0
+    afudc_eligible: false # Typically expensed, not capitalized
+
+  # O&M costs (operational period)
+  operations_and_maintenance:
+    during_delay: 0.0
+    during_construction: 0.0 # O&M begins after COD
+    afudc_eligible: false # Operating expenses
+
+  # Insurance during construction
+  construction_insurance: # THIS isnt not implemented yet but could be if I want to
+    during_delay: 0.0
+    during_construction: 1.0 # Spread over construction period
+    afudc_eligible: true # Part of construction cost (can be capitalized)
+
+# Construction spending profiles (S-curve)
+# Year-by-year disbursement weights for how construction costs are spent across
+# the construction period. Used for year-by-year AFUDC compounding.
+#
+# Source: MISO, Transmission Cost Estimation Guide for MTEP25, Table 5-1.
+# URL: https://cdn.misoenergy.org/MISO%20Transmission%20Cost%20Estimation%20Guide%20for%20MTEP25337433.pdf
+#
+# These 4 reference profiles are pooled into a normalized cumulative S-curve
+# and resampled to fit any construction_years value (see financial_utils.py).
+# Delay-period spending uses uniform distribution (not S-curve).
+
+construction_spending_profiles:
+  "5": [0.01, 0.04, 0.35, 0.35, 0.25]
+  "6": [0.01, 0.04, 0.10, 0.30, 0.35, 0.20]
+  "7": [0.01, 0.01, 0.03, 0.15, 0.30, 0.30, 0.20]
+  "8": [0.01, 0.01, 0.03, 0.05, 0.15, 0.25, 0.30, 0.20]
+

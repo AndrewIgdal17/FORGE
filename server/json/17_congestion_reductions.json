@@ -1,0 +1,22 @@
+{
+  "benefit_price_escalation_real": 0.01,
+  "greenfield_congestion_reductions": {
+    "constraints": {
+      "flow_factor": 0,
+      "constrained_hours": 0,
+      "average_exceedance": 0
+    },
+    "prices": {
+      "average_congestion_price": 0
+    }
+  },
+  "incremental_congestion_reductions": {
+    "constraints": {
+      "constrained_hours": 0,
+      "average_exceedance": 0
+    },
+    "prices": {
+      "average_congestion_price": 0
+    }
+  }
+}

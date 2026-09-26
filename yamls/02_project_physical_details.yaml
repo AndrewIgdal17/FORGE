@@ -1,0 +1,25 @@
+# Project Physical Details
+# Physical characteristics and terrain information
+
+terrain:
+  terrain_miles: # miles by terrain type (>= 0)
+    forested: 0 # miles (>= 0)
+    scrubbed_flat: 0 # miles (>= 0)
+    wetland: 0 # miles (>= 0)
+    farmland: 0 # miles (>= 0)
+    desert_barren: 0 # miles (>= 0)
+    urban: 0 # miles (>= 0)
+    rolling_hills: 0 # miles (>= 0)
+    mountain: 0 # miles (>= 0)
+    subsea: 0 # miles (>= 0)
+
+  terrain_multipliers: # Construction cost multipliers by terrain type
+    forested: 2.25     # WECC 2014 (Black & Veatch, Rawlins et al.)
+    scrubbed_flat: 1   # WECC 2014 (baseline terrain)
+    wetland: 2.0       # MISO MTEP25 Table 2.2-9 matting+construction-difficulty adder ($64,027/acre → ~2.0× at 150-175 ft ROW). Supersedes WECC 2014 (1.20, thin CA-only data point).
+    farmland: 1        # WECC 2014 (baseline terrain)
+    desert_barren: 1.05  # WECC 2014
+    urban: 1.59        # WECC 2014
+    rolling_hills: 1.4  # WECC 2014
+    mountain: 1.75     # WECC 2014
+    subsea: 1          # Marine costs handled separately (not terrain-multiplied)
