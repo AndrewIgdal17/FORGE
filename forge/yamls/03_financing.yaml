@@ -1,0 +1,27 @@
+# Financing Parameters
+financial:
+  inflation_rate: 0.03
+  base_year: 2025
+  wacc_nominal: 0.075
+  social_discount_rate: 0.02 # OMB Circular A-4 (Nov 2023 revision), Ramsey framework, 2% near-term rate. Supported by Rennert et al. (2022), Nature 610:687-692.
+  construction_cost_escalation_rate: 0.04  # 4%/yr nominal. MISO MTEP25 planning methodology.
+
+  contingencies:
+    conductor_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
+    structure_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
+    converter_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
+
+
+  # AFUDC configuration
+  afudc:
+    apply_afudc: true # Toggle AFUDC calculations on/off
+    # Cost-specific AFUDC application during delay period
+    # true = AFUDC accrues if active work continues (permitting, design, CWIP-eligible costs)
+    # false = AFUDC suspended during delay (conservative default per FERC)
+    delay_period_active_work: false
+
+  # Revenue structures (firm perspective)
+  revenue:
+    # Rate-based revenue requirement (return on rate base)
+    rate_based:
+      enabled: true # Toggle rate-based revenue calculation

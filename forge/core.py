@@ -1,0 +1,775 @@
+# Date: 2025-10-21
+# Description: Framework for Open Reproducible Grid Economics (FORGE) - Main Script
+#              Orchestrates all individual cost calculation modules
+
+from __future__ import annotations
+
+import importlib
+import shutil
+import sys
+import os
+import argparse
+import json
+import tempfile
+import threading
+import time as _time
+import traceback
+from pathlib import Path
+from typing import Any
+from datetime import datetime
+
+import yaml
+
+from forge.scripts.io.csv_output_manager import BATCH_SUMMARY_FIELDS
+from forge.scripts.utils.run_context import (
+    set_output_manager, get_output_manager, clear_output_manager,
+    RunContext, set_run_context, get_run_context, clear_run_context,
+    add_derived,
+)
+
+_PRELOAD_MODULES = [
+    "forge.scripts.utils.weighted_miles",
+    "forge.scripts.calc.build_costs",
+    "forge.scripts.calc.row_costs",
+    "forge.scripts.calc.environmental_mitigation",
+    "forge.scripts.calc.revenue",
+    "forge.scripts.calc.insurance_costs",
+    "forge.scripts.calc.delay_costs",
+    "forge.scripts.calc.wildfire_costs",
+    "forge.scripts.calc.outage_costs",
+    "forge.scripts.calc.congestion_reduction",
+    "forge.scripts.calc.energy_losses",
+    "forge.scripts.calc.oandm",
+    "forge.scripts.calc.emissions",
+    "forge.scripts.calc.facilitated_emissions",
+    "forge.scripts.calc.displacement_delay_cost",
+    "forge.scripts.calc.line_loss_costs",
+    "forge.scripts.io.taxonomy_adapters",
+    "forge.scripts.calc.bcr_calculator",
+]
+for _mod_name in _PRELOAD_MODULES:
+    importlib.import_module(_mod_name)
+
+_calculation_lock = threading.Lock()
+
+
+def _set_yamls_dir(new_path: Path) -> None:
+    """Patch YAMLS_DIR across path_config and all modules that cached it at import time."""
+    os.environ["FORGE_YAMLS_DIR"] = str(new_path)
+    from forge.scripts.utils import path_config
+    path_config.YAMLS_DIR = new_path
+    for mod in sys.modules.values():
+        if mod and hasattr(mod, "YAMLS_DIR") and mod is not path_config:
+            mod.YAMLS_DIR = new_path
+
+
+def build_csv_equivalent(
+    json_results: dict,
+    bcr_results: dict | None,
+    bcr_data: dict | None,
+) -> dict:
+    """Build a flat CSV-equivalent dict using current CSV schema."""
+    technical = json_results.get("technical_parameters", {}) or {}
+    base_fields = {
+        "project_name": technical.get("project_name", ""),
+        "scenario_id": json_results.get("scenario_id", ""),
+        "timestamp": json_results.get("timestamp", ""),
+        "capacity_mw": technical.get("capacity_mw", 0) or 0,
+        "line_length_miles": technical.get("line_length_miles", 0) or 0,
+        "construction_type": technical.get("construction_type", ""),
+        "ac_dc": technical.get("ac_dc", ""),
+        "social_discount_rate": technical.get("social_discount_rate", 0) or 0,
+    }
+
+    merged = {**base_fields}
+    if bcr_data is not None:
+        merged.update(
+            bcr_data.model_dump() if hasattr(bcr_data, "model_dump") else bcr_data
+        )
+    if bcr_results:
+        merged.update(bcr_results)
+
+    return {field: merged.get(field, 0) for field in BATCH_SUMMARY_FIELDS}
+
+
+def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
+    """Create a minimal summary aligned with CSV/BCR totals and appendix categories."""
+    return {
+        # Pipeline groupings (cost/benefit category subtotals for the summary dict)
+        "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
+        "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
+        "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),
+        "total_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
+        "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
+        "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
+        "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
+        # Appendix-aligned cost categories (C_hard + C_soft + C_risk + C_emissions)
+        "reporting_category_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
+        "reporting_category_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
+        "reporting_category_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
+        "reporting_category_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
+        # Facilitated emissions + displacement (reporting)
+        "fac_emissions_project_pv": csv_equivalent.get("fac_emissions_project_pv", 0),
+        "displacement_avoided_benefit_pv": csv_equivalent.get("displacement_avoided_benefit_pv", 0),
+        # Appendix-aligned benefit categories (B_remedial + B_enabling)
+        "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
+        "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
+    }
+
+
+_TRAJECTORY_ARRAY_KEYS = {
+    ("costs", "emissions"): ["emissions_comp_annual_values"],
+    ("benefits", "facilitated_emissions"): [
+        "fac_emissions_withline_annual_values",
+        "fac_emissions_noline_annual_values",
+        "displacement_annual_values",
+    ],
+}
+
+
+def _hoist_trajectory_arrays(results: dict) -> None:
+    """Copy year-by-year annual-value arrays up to the top level of `results`.
+
+    emissions.py and facilitated_emissions.py nest their results under
+    costs["emissions"] / benefits["facilitated_emissions"]. The (future) BCR
+    trajectory module consumes these arrays directly off the top-level results
+    dict; see BCR trajectory module. Hoist them here
+    rather than duplicating the year-by-year loops elsewhere.
+    """
+    for (category, module_key), array_keys in _TRAJECTORY_ARRAY_KEYS.items():
+        module_results = results.get(category, {}).get(module_key, {})
+        for array_key in array_keys:
+            if array_key in module_results:
+                results[array_key] = module_results[array_key]
+
+
+def write_final_json_output(
+    aggregator,
+    bcr_results: dict | None,
+    scenario_id: str,
+    output_dir: str = "outputs",
+    csv_equivalent: dict | None = None,
+    summary_override: dict | None = None,
+    taxonomy_results_json: list | None = None,
+    simple: bool = False,
+):
+    """
+    Write the final aggregated JSON output file.
+
+    Args:
+        aggregator: JSONOutputManager with aggregated results
+        bcr_results: BCR calculation results
+        scenario_id: The scenario ID
+        output_dir: Directory to write the output file
+        csv_equivalent: Flat dict aligned with CSV schema
+        summary_override: Summary aligned with CSV/BCR totals
+        taxonomy_results_json: Taxonomy-adapted results for the JSON payload
+        simple: If True, suppress trajectory-failure warnings (CLI --simple)
+    """
+    # Add BCR results if available
+    if bcr_results:
+        aggregator.add_bcr_metrics(bcr_results)
+
+    # Calculate summary
+    aggregator.calculate_summary()
+
+    # Get the final results
+    results = aggregator.get_json_results()
+    _hoist_trajectory_arrays(results)
+    if csv_equivalent is not None:
+        results["csv_equivalent"] = csv_equivalent
+    if summary_override is not None:
+        results["summary"] = summary_override
+    if taxonomy_results_json is not None:
+        results["taxonomy_results"] = taxonomy_results_json
+
+    # Compute BCR trajectory (year-by-year reconstruction). CLI has no
+    # in-memory combined_data, so rebuild it from the YAML files on disk.
+    if bcr_results:
+        try:
+            from forge.scripts.calc.bcr_trajectory import compute_trajectory
+            from forge.scripts.utils.path_config import YAMLS_DIR
+            combined_data = {}
+            for yaml_file in YAMLS_DIR.glob("*.yaml"):
+                key = yaml_file.stem
+                with open(yaml_file) as _f:
+                    combined_data[key] = yaml.safe_load(_f) or {}
+            results["trajectory"] = compute_trajectory(results, combined_data)
+        except Exception as e:
+            if not simple:
+                print(f"⚠️  BCR trajectory computation failed: {e}", file=sys.stderr)
+
+    _ctx = get_run_context()
+    if _ctx is not None and _ctx.derived_parameters:
+        results["derived_parameters"] = _ctx.derived_parameters
+
+    # Write to final output file
+    output_file = os.path.join(output_dir, f"forge_results_{scenario_id}.json")
+    os.makedirs(output_dir, exist_ok=True)
+
+    with open(output_file, "w") as f:
+        json.dump(results, f, indent=2)
+
+    return output_file
+
+
+def _build_scripts_list(
+    *,
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    no_insurance: bool = False,
+    no_delay_costs: bool = False,
+    no_wildfire: bool = False,
+    no_outages: bool = False,
+    no_oandm: bool = False,
+    capital_only: bool = False,
+) -> list[str]:
+    """Build the ordered list of calculator module dotted paths to run."""
+    if capital_only:
+        return [
+            "forge.scripts.utils.weighted_miles",
+            "forge.scripts.calc.build_costs",
+            "forge.scripts.calc.row_costs",
+            "forge.scripts.calc.environmental_mitigation",
+        ]
+    scripts = [
+        "forge.scripts.utils.weighted_miles",
+        "forge.scripts.calc.build_costs",
+        "forge.scripts.calc.row_costs",
+        "forge.scripts.calc.environmental_mitigation",
+        "forge.scripts.calc.revenue",
+    ]
+    if not no_insurance:
+        scripts.append("forge.scripts.calc.insurance_costs")
+    if not no_delay_costs:
+        scripts.append("forge.scripts.calc.delay_costs")
+    if not no_wildfire:
+        scripts.append("forge.scripts.calc.wildfire_costs")
+    if not no_outages:
+        scripts.append("forge.scripts.calc.outage_costs")
+    scripts.append("forge.scripts.calc.congestion_reduction")
+    scripts.append("forge.scripts.calc.energy_losses")
+    if not no_oandm:
+        scripts.append("forge.scripts.calc.oandm")
+    if not no_emissions:
+        scripts.append("forge.scripts.calc.emissions")
+        scripts.append("forge.scripts.calc.facilitated_emissions")
+        scripts.append("forge.scripts.calc.displacement_delay_cost")
+    if not no_linelosses:
+        scripts.append("forge.scripts.calc.line_loss_costs")
+    return scripts
+
+
+def _bootstrap_run_context() -> "RunContext":
+    """Load YAML data once and populate the shared RunContext.
+
+    Called by both run_calculation() and main(). Returns the populated
+    RunContext; also calls set_run_context() and add_derived() as side effects.
+    """
+    from forge.scripts.utils.smart_loaders import get_physical_data_raw
+    from forge.scripts.io.yaml_loaders import (
+        load_project_technical_details, load_financing_details,
+        load_contingencies, load_row_widths,
+    )
+    from forge.scripts.utils.calculation_utils import build_category_string
+    from forge.scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
+    from forge.scripts.utils.financial_utils import (
+        calculate_afudc_rate, calculate_cod_year, calculate_construction_start_year,
+    )
+    from forge.scripts.utils.smart_loaders import get_financing_data_raw
+
+    project_details = load_project_technical_details()
+    capacity_mw = getattr(project_details, "capacity_mw", None)
+    if capacity_mw is None or capacity_mw == 0:
+        raise ValueError(
+            f"capacity_mw is required and must be > 0 (got {capacity_mw}). "
+            "Set a valid line capacity in MW."
+        )
+    financing = load_financing_details()
+    contingencies = load_contingencies()
+    physical_raw = get_physical_data_raw()
+    terrain_miles = physical_raw["terrain"]["terrain_miles"]
+    terrain_multipliers = physical_raw["terrain"]["terrain_multipliers"]
+    total_miles = sum(v for v in terrain_miles.values() if v is not None)
+    category_string = build_category_string(project_details=project_details)
+    row_width_feet = load_row_widths(category_string)
+    weighted_miles, avg_terrain_mult = _calc_wm()
+
+    fin_raw = get_financing_data_raw()
+    afudc_rate, afudc_source = calculate_afudc_rate(fin_raw)
+    cod_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
+    construction_start_year = calculate_construction_start_year(project_details.delay_years)
+
+    ctx = RunContext(
+        project_details=project_details,
+        terrain_miles=terrain_miles,
+        terrain_multipliers=terrain_multipliers,
+        total_miles=total_miles,
+        financing=financing,
+        contingencies=contingencies,
+        category_string=category_string,
+        row_width_feet=row_width_feet,
+        weighted_miles=weighted_miles,
+        average_terrain_multiplier=avg_terrain_mult,
+        number_of_converters=project_details.number_of_converters,
+        social_discount_rate=fin_raw["financial"].get("social_discount_rate", 0),
+        afudc_rate=afudc_rate,
+        afudc_source=afudc_source,
+        cod_year=cod_year,
+        construction_start_year=construction_start_year,
+    )
+    set_run_context(ctx)
+
+    add_derived({
+        "category_string": category_string,
+        "row_width_feet": row_width_feet,
+        "weighted_miles": weighted_miles,
+        "average_terrain_multiplier": avg_terrain_mult,
+        "total_miles": total_miles,
+        "terrain_miles": terrain_miles,
+        "terrain_multipliers": terrain_multipliers,
+        "wacc_real": financing.wacc_real,
+        "wacc_nominal": financing.wacc_nominal,
+        "inflation_rate": financing.inflation_rate,
+        "social_discount_rate": fin_raw["financial"].get("social_discount_rate", 0),
+        "afudc_rate": afudc_rate,
+        "afudc_source": afudc_source,
+        "cod_year": cod_year,
+        "construction_start_year": construction_start_year,
+        "contingencies": contingencies,
+    })
+
+    return ctx
+
+
+def run_calculation(
+    combined_data: dict[str, Any],
+    scenario_id: str,
+    *,
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    no_insurance: bool = False,
+    no_delay_costs: bool = False,
+    no_wildfire: bool = False,
+    no_outages: bool = False,
+    no_oandm: bool = False,
+    capital_only: bool = False,
+    quiet: bool = True,
+) -> dict[str, Any]:
+    """Run the full FORGE calculation pipeline in-process.
+
+    Accepts a Python dict of inputs, returns a Python dict of results.
+    Thread-safe via _calculation_lock (env vars are process-global).
+    """
+    with _calculation_lock:
+        from forge.scripts.utils import path_config
+        saved_yamls_dir = path_config.YAMLS_DIR
+        saved_env = {
+            k: os.environ.get(k)
+            for k in ("FORGE_YAMLS_DIR", "FORGE_SCENARIO_ID", "FORGE_OUTPUT_MODE")
+        }
+        temp_yaml_dir = None
+        try:
+            temp_yaml_dir = tempfile.mkdtemp(prefix=f"forge_yaml_{scenario_id}_")
+            for key, value in combined_data.items():
+                yaml_path = os.path.join(temp_yaml_dir, f"{key}.yaml")
+                with open(yaml_path, "w") as f:
+                    yaml.dump(value, f, default_flow_style=False, sort_keys=False)
+
+            _set_yamls_dir(Path(temp_yaml_dir))
+            os.environ["FORGE_SCENARIO_ID"] = scenario_id
+            os.environ["FORGE_OUTPUT_MODE"] = "json"
+
+            from forge.scripts.io.json_output_manager import JSONOutputManager
+            aggregator = JSONOutputManager(scenario_id=scenario_id)
+            set_output_manager(aggregator)
+
+            # Populate RunContext: load shared data once for the entire run
+            _bootstrap_run_context()
+
+            scripts = _build_scripts_list(
+                no_emissions=no_emissions,
+                no_linelosses=no_linelosses,
+                no_insurance=no_insurance,
+                no_delay_costs=no_delay_costs,
+                no_wildfire=no_wildfire,
+                no_outages=no_outages,
+                no_oandm=no_oandm,
+                capital_only=capital_only,
+            )
+
+            module_timings: list[tuple[str, float]] = []
+            failed_scripts: list[str] = []
+
+            saved_stdout = sys.stdout
+            if quiet:
+                sys.stdout = open(os.devnull, "w")
+            try:
+                for script in scripts:
+                    try:
+                        mod = importlib.import_module(script)
+                        t0 = _time.perf_counter()
+                        mod.main()
+                        module_timings.append((script, (_time.perf_counter() - t0) * 1000))
+                    except Exception:
+                        failed_scripts.append(script)
+                        if not quiet:
+                            traceback.print_exc()
+            finally:
+                if quiet:
+                    sys.stdout.close()
+                    sys.stdout = saved_stdout
+
+            json_results = aggregator.get_json_results()
+            bcr_results = None
+            csv_equivalent = None
+            summary_override = None
+            taxonomy_results_json = None
+            try:
+                from forge.scripts.io.taxonomy_adapters import (
+                    adapt_all_results,
+                    taxonomy_results_to_json_list,
+                )
+                from forge.scripts.calc.bcr_calculator import compute_all_bcrs
+
+                t0 = _time.perf_counter()
+                taxonomy_results = adapt_all_results(json_results)
+                taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
+                bcr_results = compute_all_bcrs(taxonomy_results)
+                csv_equivalent = build_csv_equivalent(
+                    json_results, bcr_results, bcr_results
+                )
+                summary_override = build_summary_from_csv_equivalent(csv_equivalent)
+                module_timings.append(("taxonomy+bcr", (_time.perf_counter() - t0) * 1000))
+            except Exception:
+                if not quiet:
+                    traceback.print_exc()
+
+            if module_timings:
+                print("\n--- Module Timings ---", file=sys.stderr)
+                for name, ms in sorted(module_timings, key=lambda x: -x[1]):
+                    print(f"  {ms:7.1f} ms  {name}", file=sys.stderr)
+                total_time = sum(ms for _, ms in module_timings)
+                print(f"  {'─' * 20}", file=sys.stderr)
+                print(f"  {total_time:7.1f} ms  TOTAL", file=sys.stderr)
+
+            if bcr_results:
+                aggregator.add_bcr_metrics(bcr_results)
+            aggregator.calculate_summary()
+            results = aggregator.get_json_results()
+            _hoist_trajectory_arrays(results)
+            if csv_equivalent is not None:
+                results["csv_equivalent"] = csv_equivalent
+            if summary_override is not None:
+                results["summary"] = summary_override
+            if taxonomy_results_json is not None:
+                results["taxonomy_results"] = taxonomy_results_json
+
+            if results.get("bcr"):
+                from forge.scripts.calc.bcr_trajectory import compute_trajectory
+                results["trajectory"] = compute_trajectory(results, combined_data)
+
+            _ctx = get_run_context()
+            if _ctx is not None and _ctx.derived_parameters:
+                results["derived_parameters"] = _ctx.derived_parameters
+
+            if failed_scripts:
+                results["_warnings"] = [f"Module failed: {s}" for s in failed_scripts]
+                results["_partial"] = True
+
+            return results
+
+        finally:
+            clear_run_context()
+            clear_output_manager()
+            if temp_yaml_dir and os.path.exists(temp_yaml_dir):
+                shutil.rmtree(temp_yaml_dir, ignore_errors=True)
+            _set_yamls_dir(saved_yamls_dir)
+            for k, v in saved_env.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
+def main() -> None:
+    """
+    Main function to run all cost calculation scripts (CLI entry point).
+    """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="Framework for Open Reproducible Grid Economics (FORGE)"
+    )
+    parser.add_argument(
+        "--simple",
+        action="store_true",
+        help="Simple output mode: only show BCR analysis (suppress intermediate outputs)",
+    )
+    parser.add_argument(
+        "--no_emissions",
+        action="store_true",
+        help="Skip emissions cost calculations",
+    )
+    parser.add_argument(
+        "--no_linelosses",
+        action="store_true",
+        help="Skip line loss cost calculations",
+    )
+    parser.add_argument(
+        "--capital_only",
+        action="store_true",
+        help="Run only capital cost scripts (build, ROW, environmental mitigation) plus prerequisites",
+    )
+    parser.add_argument(
+        "--no_oandm",
+        action="store_true",
+        help="Skip O&M cost calculations",
+    )
+    parser.add_argument(
+        "--no_insurance",
+        action="store_true",
+        help="Skip general insurance cost calculations",
+    )
+    parser.add_argument(
+        "--no_delay_costs",
+        action="store_true",
+        help="Skip delay cost calculations",
+    )
+    parser.add_argument(
+        "--no_wildfire",
+        action="store_true",
+        help="Skip wildfire risk costs (expected wildfire cost)",
+    )
+    parser.add_argument(
+        "--no_outages",
+        action="store_true",
+        help="Skip outage risk costs",
+    )
+    parser.add_argument(
+        "--no_congestion",
+        action="store_true",
+        help="Skip congestion benefit calculations",
+    )
+    args = parser.parse_args()
+
+    # Set environment variables for congestion-reduction script
+    if args.no_congestion:
+        os.environ["FORGE_NO_CONGESTION"] = "1"
+
+    if not args.simple:
+        print("=" * 80)
+        print("FRAMEWORK FOR OPEN REPRODUCIBLE GRID ECONOMICS (FORGE)")
+        print("=" * 80)
+        if args.no_wildfire:
+            print("⚠️  Wildfire risk costs disabled (--no_wildfire flag set)")
+            print("   Skipping: wildfire_costs.py")
+            print("=" * 80)
+        if args.no_outages:
+            print("⚠️  Outage risk costs disabled (--no_outages flag set)")
+            print("   Skipping: outage_costs.py")
+            print("=" * 80)
+        if args.no_oandm:
+            print("⚠️  O&M costs disabled (--no_oandm flag set)")
+            print("   Skipping: oandm.py")
+            print("=" * 80)
+        if args.no_insurance:
+            print("⚠️  Insurance costs disabled (--no_insurance flag set)")
+            print("   Skipping: insurance_costs.py")
+            print("=" * 80)
+        if args.no_delay_costs:
+            print("⚠️  Delay costs disabled (--no_delay_costs flag set)")
+            print("   Skipping: delay_costs.py")
+            print("=" * 80)
+        if args.no_congestion:
+            print("⚠️  Congestion benefits disabled (--no_congestion flag set)")
+            print(
+                "   Congestion portion of congestion_reduction.py will be skipped"
+            )
+            print("=" * 80)
+        if args.no_emissions:
+            print("⚠️  Emissions costs disabled (--no_emissions flag set)")
+            print("   Skipping: emissions.py")
+            print("=" * 80)
+        if args.no_linelosses:
+            print("⚠️  Line loss costs disabled (--no_linelosses flag set)")
+            print("   Skipping: line_loss_costs.py")
+            print("=" * 80)
+        if args.capital_only:
+            print("⚠️  Capital-only mode enabled (--capital_only flag set)")
+            print(
+                "   Running only: weighted_miles.py, build_costs.py, row_costs.py, environmental_mitigation.py"
+            )
+            print("=" * 80)
+
+    # Generate a single scenario_id for this entire run
+    # Only generate if not already set (for parallel sensitivity analysis)
+    # Use microseconds to ensure uniqueness even if runs happen in the same second
+    if "FORGE_SCENARIO_ID" not in os.environ:
+        scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        os.environ["FORGE_SCENARIO_ID"] = scenario_id
+    else:
+        scenario_id = os.environ["FORGE_SCENARIO_ID"]
+
+    if not args.simple:
+        print(f"\n📋 Scenario ID: {scenario_id}\n")
+
+    # Calculator is JSON-out only; always use JSON aggregator
+    from forge.scripts.io.json_output_manager import JSONOutputManager
+    aggregator = JSONOutputManager(scenario_id=scenario_id)
+    set_output_manager(aggregator)
+
+    # Populate RunContext: load shared data once for the entire run
+    _bootstrap_run_context()
+
+    os.environ["FORGE_OUTPUT_MODE"] = "json"
+
+    scripts = _build_scripts_list(
+        no_emissions=args.no_emissions,
+        no_linelosses=args.no_linelosses,
+        no_insurance=args.no_insurance,
+        no_delay_costs=args.no_delay_costs,
+        no_wildfire=args.no_wildfire,
+        no_outages=args.no_outages,
+        no_oandm=args.no_oandm,
+        capital_only=args.capital_only,
+    )
+
+    successful_runs = 0
+    total_runs = len(scripts)
+    failed_scripts = []
+    module_timings: list[tuple[str, float]] = []
+
+    # Debug: Log which scripts will be run
+    if not args.simple:
+        print(f"DEBUG: Scripts to run ({total_runs}): {scripts}", file=sys.stderr)
+        if "forge.scripts.calc.line_loss_costs" in scripts:
+            print("DEBUG: line_loss_costs IS in the scripts list", file=sys.stderr)
+        else:
+            print(
+                "DEBUG: line_loss_costs is NOT in the scripts list!", file=sys.stderr
+            )
+
+    for script in scripts:
+        if not args.simple:
+            print(f"\n🔄 Running {script}...")
+
+        try:
+            mod = importlib.import_module(script)
+            t0 = _time.perf_counter()
+            mod.main()
+            elapsed_ms = (_time.perf_counter() - t0) * 1000
+            module_timings.append((script, elapsed_ms))
+            success = True
+        except Exception as e:
+            success = False
+            if not args.simple:
+                print(f"❌ {script} failed with error:", file=sys.stderr)
+                traceback.print_exc()
+            else:
+                print(f"❌ Error running {script}: {e}", file=sys.stderr)
+
+        if success:
+            successful_runs += 1
+        else:
+            failed_scripts.append(script)
+        if not args.simple:
+            print("-" * 60)
+
+    if not args.simple:
+        print(
+            f"\n📊 SUMMARY: {successful_runs}/{total_runs} scripts completed successfully"
+        )
+
+    # Calculate and display BCR metrics (even if some scripts failed)
+    if successful_runs > 0:
+        if successful_runs == total_runs:
+            if not args.simple:
+                print("🎉 All calculations completed successfully!")
+
+        # Calculate and display BCR metrics
+        if not args.simple:
+            print("\n" + "=" * 80)
+            print("CALCULATING BENEFIT-COST RATIOS...")
+            print("=" * 80)
+        else:
+            # In simple mode, just print the BCR analysis header
+            print("=" * 80)
+
+        # Compute BCR from in-process aggregator (calculator is JSON-out only)
+        bcr_results = None
+        try:
+            csv_equivalent = None
+            summary_override = None
+            taxonomy_results_json = None
+            json_results = aggregator.get_json_results()
+            try:
+                from forge.scripts.io.taxonomy_adapters import (
+                    adapt_all_results,
+                    taxonomy_results_to_json_list,
+                )
+                from forge.scripts.calc.bcr_calculator import compute_all_bcrs, print_bcr_summary
+
+                t0 = _time.perf_counter()
+                taxonomy_results = adapt_all_results(json_results)
+                taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
+                bcr_results = compute_all_bcrs(taxonomy_results)
+                csv_equivalent = build_csv_equivalent(
+                    json_results, bcr_results, bcr_results
+                )
+                summary_override = build_summary_from_csv_equivalent(csv_equivalent)
+                module_timings.append(("taxonomy+bcr", (_time.perf_counter() - t0) * 1000))
+
+                if not args.simple:
+                    print_bcr_summary(bcr_results)
+            except Exception as e:
+                if not args.simple:
+                    print(f"⚠️  BCR calculation failed: {e}")
+                    traceback.print_exc()
+                bcr_results = None
+
+            output_file = write_final_json_output(
+                aggregator,
+                bcr_results,
+                scenario_id,
+                output_dir="outputs",
+                csv_equivalent=csv_equivalent,
+                summary_override=summary_override,
+                taxonomy_results_json=taxonomy_results_json,
+                simple=args.simple,
+            )
+
+            if not args.simple:
+                print(f"✅ JSON results written to {output_file}")
+            clear_run_context()
+            clear_output_manager()
+        except Exception as e:
+            clear_run_context()
+            clear_output_manager()
+            if not args.simple:
+                print(f"⚠️  JSON output aggregation failed: {e}")
+                traceback.print_exc()
+            else:
+                print(f"⚠️  JSON output aggregation failed: {e}")
+    else:
+        clear_run_context()
+        clear_output_manager()
+        if not args.simple:
+            print("⚠️  Some calculations failed. Check the output above.")
+        else:
+            # In simple mode, show error even if quiet
+            print("⚠️  Some calculations failed. BCR analysis may be incomplete.")
+
+    if module_timings:
+        print("\n--- Module Timings ---", file=sys.stderr)
+        for name, ms in sorted(module_timings, key=lambda x: -x[1]):
+            print(f"  {ms:7.1f} ms  {name}", file=sys.stderr)
+        total_time = sum(ms for _, ms in module_timings)
+        print(f"  {'─' * 20}", file=sys.stderr)
+        print(f"  {total_time:7.1f} ms  TOTAL", file=sys.stderr)
+
+    if failed_scripts:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

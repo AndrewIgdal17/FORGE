@@ -1,0 +1,1626 @@
+# FORGE Methodology
+
+> This document describes the FORGE methodology and equation reference for developers working on the calculator.
+
+**Purpose (for editors and readers):** This document captures the **logic and method** of the FORGE — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
+
+---
+
+This document covers the methodology for the Framework for Open Reproducible Grid Economics (FORGE): variables, parameters, equations, and notation for preprocessing (weighted miles), financial parameters, all cost categories (capital, operational, energy/emissions, risk, delay), benefits (congestion reduction, delivered energy, capacity value, avoided emissions), revenue, and benefit-cost ratios.
+
+---
+
+## Table of contents
+
+- [Weighted miles](#weighted-miles)
+- [Financial parameters](#financial-parameters)
+- [Capital Costs](#capital-costs)
+  - [Build Costs](#build-costs)
+  - [Capital ROW costs (acquisition, holding)](#capital-row-costs-acquisition-holding)
+  - [Environmental mitigation (1.c)](#environmental-mitigation-1c)
+- [Operational Costs](#operational-costs)
+  - [O&M (2.a)](#om-2a)
+  - [Operational insurance (2.b)](#operational-insurance-2b)
+  - [Operational ROW rent (2.c)](#operational-row-rent-2c)
+- [Energy/Emissions](#energyemissions)
+  - [Energy losses](#energy-losses)
+  - [Thermal line loss costs (3.a)](#thermal-line-loss-costs-3a)
+  - [Emissions costs (3.b)](#emissions-costs-3b)
+  - [Residual exceedance cost (3.c)](#residual-exceedance-cost-3c)
+  - [Facilitated emissions and avoided-emissions benefit](#facilitated-emissions-and-avoided-emissions-benefit)
+- [Risk costs](#risk-costs)
+  - [Expected cost of wildfires (4.a)](#expected-cost-of-wildfires-4a)
+  - [Expected cost of outages (4.b)](#expected-cost-of-outages-4b)
+- [Delay costs](#delay-costs)
+  - [Base delay costs (5.a)](#base-delay-costs-5a)
+  - [Congestion delay costs (5.b)](#congestion-delay-costs-5b)
+  - [Displacement delay cost (5.c)](#displacement-delay-cost-5c)
+- [Benefits](#benefits)
+  - [Congestion Reduction Benefits](#congestion-reduction-benefits)
+  - [Benefit of Delivered Energy](#benefit-of-delivered-energy)
+- [Revenue (Benefit to Utility / Cost to Ratepayers)](#revenue-benefit-to-utility--cost-to-ratepayers)
+- [Benefit-cost ratios](#benefit-cost-ratios)
+
+---
+
+## Weighted miles
+
+Weighted miles are difficulty-adjusted line miles used for build costs (and other modules that use terrain-adjusted distance). Each terrain type has a cost multiplier $\lambda_{terrain} \ge 1$; weighted miles for that terrain are terrain miles × multiplier. Total weighted miles is the sum across terrains. (In this section $\lambda_{terrain}$ denotes the terrain cost multiplier; in Risk costs, $\lambda$ denotes event rates.)
+
+**Variables**
+
+| Variable               | Meaning / units                                      | Notes                                                                                                           |
+| ---------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| $M_{terrain}$          | Miles of a specific terrain type, miles              | Terrains: Forested, Scrubbed Flat, Wetland, Farmland, Desert/Barren, Urban, Rolling Hills, Mountain, Subsea.    |
+| $\lambda_{terrain}$    | Cost multiplier by terrain type, $\ge 1$              | Same terrain list as $M_{terrain}$. |
+| $M_{total}$            | Total (raw) miles, miles                             | Sum of $M_{terrain}$ over all terrains.                                                                          |
+| $M_{weighted,terrain}$ | Weighted miles for that terrain type, miles          | $M_{weighted,terrain} = M_{terrain} \times \lambda_{terrain}$ for that terrain.                                 |
+| $M_{weighted,total}$   | Total weighted miles across all terrain types, miles | Used in Build costs (1.a) for conductor/structure/converter variable costs.                                     |
+| $\lambda_{average}$    | Average terrain multiplier for the project           | $\lambda_{average} = M_{weighted,total} / M_{total}$ when $M_{total} > 0$.                                      |
+
+**Equations**
+
+1. Weighted miles for each terrain type
+
+$$
+M_{weighted,terrain} = M_{terrain} \times \lambda_{terrain} \quad \text{for that terrain type}.
+
+
+$$
+
+2. Total weighted miles
+
+$$
+M_{weighted,total} = \sum_{terrain} M_{weighted,terrain}.
+
+
+$$
+
+3. Total (raw) miles
+
+$$
+M_{total} = \sum_{terrain} M_{terrain}.
+
+
+$$
+
+4. Average terrain multiplier
+
+$$
+\lambda_{average} = \frac{M_{weighted,total}}{M_{total}} \quad (M_{total} > 0).
+
+
+$$
+
+---
+
+## Financial parameters
+
+This section defines discount rates, inflation, and base year used across FORGE. It also summarizes the link to real WACC (Fisher).
+
+**Variables**
+
+| Symbol             | Meaning / units                                   | Notes                                                                                 |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| $\pi$              | Annual inflation rate, decimal                    | Used in Fisher link for real WACC.                                                    |
+| $Y_{base}$         | Base (reference) year                             | Reference year for all present values; PV is in base-year dollars.                    |
+| $r_{WACC,nom}$     | Nominal weighted average cost of capital, decimal | Direct input. Used for AFUDC/utility perspective.                  |
+| $r_{WACC,real}$    | Real weighted average cost of capital, decimal    | Used for societal PV of costs and benefits. Calculated via Fisher link.             |
+| $r_{social}$       | Social discount rate, decimal                     | Used for externality costs (emissions, expected wildfire cost, expected outage cost). |
+
+**Equations**
+
+1. Real WACC (Fisher link)
+
+$$
+r_{WACC,real} = \frac{1 + r_{WACC,nom}}{1 + \pi} - 1.
+
+
+$$
+
+**When each rate is used**
+
+- **$r_{WACC,nom}$:** Utility/regulatory perspective (e.g. AFUDC rate when applicable).
+- **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, energy loss costs, benefits, revenue; delay and congestion delay costs.
+- **$r_{social}$:** Societal PV of externality costs: loss-compensation emissions, facilitated emissions, expected wildfire cost, expected outage cost.
+
+**Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
+
+---
+
+## Capital Costs
+
+### Build Costs
+
+| Variable                    | Meaning / units                                                 | Notes                                                                                     |
+| --------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| $C_{conductor}$             | Conductor cost ($)                                              | Not terrain adjusted, no contingency applied                                              |
+| $C_{structure}$             | Structure cost ($)                                              | Not terrain adjusted, no contingency applied                                              |
+| $C_{converter}$             | Converter cost (if DC) ($)                                      | Not terrain adjusted, no contingency applied                                              |
+| $C_{adj,conductor}$         | Conductor cost ($)                                              | Terrain adjusted, no contingency applied                                                  |
+| $C_{adj,structure}$         | Structure cost ($)                                              | Terrain adjusted, no contingency applied                                                  |
+| $C_{adj,converter}$         | Converter cost (if DC) ($)                                      | Terrain adjusted, no contingency applied                                                  |
+| $C_{adj,cont,conductor}$    | Conductor cost ($)                                              | Terrain adjusted, contingency applied                                                     |
+| $C_{adj,cont,structure}$    | Structure cost ($)                                              | Terrain adjusted, contingency applied                                                     |
+| $C_{adj,cont,converter}$    | Converter cost (if DC) ($)                                      | Terrain adjusted, contingency applied                                                     |
+| $F_{conductor}$             | Fixed conductor costs ($)                                       | Conductors have both fixed and variable costs                                             |
+| $F_{structure}$             | Fixed structure costs ($)                                       | Currently, structures have no fixed costs in the FORGE                                     |
+| $F_{converter}$             | Fixed converter costs ($)                                       | Converters only have fixed costs                                                          |
+| $V_{conductor}$             | Variable conductor costs ($/mi)                                 | Conductors have both fixed and variable costs. The miles used are terrain adjusted miles. |
+| $V_{structure}$             | Variable structure costs ($/mi)                                 | Structures only have variable costs currently. The miles used are terrain adjusted miles. |
+| $V_{converter}$             | Variable converter costs ($/mi)                                 | Converters currently have no variable costs — only fixed costs.                           |
+| $M_{weighted,total}$        | Total weighted miles across all terrain types (miles)           | From terrain miles × terrain multipliers.                                                 |
+| $r_{contingency,conductor}$ | Contingency multiplier for conductors [0,1]                     |                                                                                           |
+| $r_{contingency,structure}$ | Contingency multiplier for structures [0,1]                     |                                                                                           |
+| $r_{contingency,converter}$ | Contingency multiplier for converter [0,1] (if DC)              |                                                                                           |
+| $C_{build}$                 | Terrain adjusted, contingency applied, total build cost         |                                                                                           |
+| $\xi_{DC}$                  | Binary for DC projects (1 if DC, 0 if not)                      |                                                                                           |
+| $\xi_{reconductoring}$      | Binary for reconductoring projects (0 if reconductor, 1 if not) |                                                                                           |
+
+Technically
+
+$$
+C_{conductor} = V_{conductor} \cdot M_{total} + F_{conductor},\quad C_{structure} = V_{structure} \cdot M_{total} + F_{structure},\quad C_{converter} = V_{converter} \cdot M_{total} + F_{converter}.
+
+
+$$
+
+As of 2026-02-17, $F_{structure} = 0$ and $V_{converter} = 0$. The FORGE uses difficulty-adjusted terrain miles (weighted miles) rather than raw miles:
+
+$$
+C_{adj,conductor} = V_{conductor} \cdot M_{weighted,total} + F_{conductor},\quad C_{adj,structure} = V_{structure} \cdot M_{weighted,total},\quad C_{adj,converter} = F_{converter}.
+
+
+$$
+
+Contingencies:
+
+$$
+C_{adj,cont,conductor} = (1 + r_{contingency,conductor}) \cdot C_{adj,conductor},
+
+
+$$
+
+$$
+C_{adj,cont,structure} = (1 + r_{contingency,structure}) \cdot C_{adj,structure},
+
+
+$$
+
+$$
+C_{adj,cont,converter} = (1 + r_{contingency,converter}) \cdot C_{adj,converter}.
+
+
+$$
+
+Total build cost:
+
+$$
+C_{build} = C_{adj,cont,conductor} + \xi_{reconductoring} \cdot C_{adj,cont,structure} + \xi_{reconductoring} \cdot \xi_{DC} \cdot C_{adj,cont,converter}.
+
+
+$$
+
+(When $\xi_{reconductoring} = 0$ the project is reconductoring and structure/converter costs are excluded; when $\xi_{reconductoring} = 1$ they are included. Converter cost is included only when $\xi_{DC} = 1$ (DC); $\xi_{DC}$ encodes DC vs AC in the formalism so that AC projects do not include converter cost.)
+
+---
+
+### Capital ROW costs (acquisition, holding)
+
+**NOTE:** ROW rent costs are not a capital cost! They are an operational cost (see 2.c).
+
+| Variable                  | Meaning / units                                     | Notes                                                                           |
+| ------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+| $z$                       | Zone index                                          | ROW split into zones (1–15). In calculations we use only zones where $M_z > 0$.  |
+| $M_z$                     | Miles in zone $z$                                    | miles.                                                                          |
+| $W_{ROW}$                 | ROW width                                           | ft. Contingent on the selected tech (project category).                         |
+| $A_z$                     | Area of ROW of zone $z$                              | acres.                                                                          |
+| $p_{acquisition,z}$       | Acquisition cost per acre, zone $z$                  | $/acre (one-time).                                                              |
+| $p_{hold,z}$              | Holding (option fee) per acre per year, zone $z$     | $/acre/year.                                                                    |
+| $p_{rent,z}$              | Rent per acre per year, zone $z$                     | $/acre/year. Operational only (2.c).                                            |
+| $C_{acquisition}$         | Total one-time acquisition cost ($)                 | From zone sum; see equations below.                                             |
+| $C_{hold,annual}$         | Total annual holding cost ($/year)                  | The years here are the permitting/delay years.                                  |
+| $T_{delay}$               | Delay years                                         | years. Used for holding.                                                        |
+| $C_{hold,total}$          | Total holding cost over delay ($)                   | Option fee over full delay period.                                              |
+| $\xi_{acquisition}$       | Binary: acquisition counts toward capital ROW       | 1 if acquisition applies, 0 if not (e.g. lease/license). Set by agreement type. |
+| $\xi_{holding}$           | Binary: holding counts toward capital ROW           | 1 if holding applies, 0 if not. Set by agreement type.                          |
+| $C_{acquisition,real}$    | Real (present) value of acquisition cost ($)        | Societal perspective; discounted at $r_{WACC,real}$.                             |
+| $C_{hold,real}$           | Real (present) value of holding cost ($)            | Societal perspective; discounted at $r_{WACC,real}$.                             |
+| $r_{WACC,real}$           | Real weighted average cost of capital               | decimal. Societal discount rate.                                                |
+| $C_{ROW,capital,nominal}$ | Total ROW capital costs in nominal terms ($)        |                                                                                 |
+| $C_{ROW,capital,real}$    | Total real (present) value of ROW capital costs ($) | Societal perspective.                                                           |
+
+**Agreement type table**
+
+| Agreement type         | Acquisition                 | Holding                 | Rent (operational) |
+| ---------------------- | --------------------------- | ----------------------- | ------------------ |
+| New Permanent Easement | Yes ($\xi_{acquisition}=1$) | Yes ($\xi_{holding}=1$) | No                 |
+| Simple Fee             | Yes ($\xi_{acquisition}=1$) | Yes ($\xi_{holding}=1$) | No                 |
+| Existing Lease/License | No ($\xi_{acquisition}=0$)  | No ($\xi_{holding}=0$)  | Yes                |
+| Federal Hybrid         | Yes ($\xi_{acquisition}=1$) | Yes ($\xi_{holding}=1$) | Yes                |
+
+NOTE: Reconductoring or existing ROW → Existing Lease/License; else New Permanent Easement.
+
+**Equations**
+
+Area of ROW per zone:
+
+$$
+A_z = \frac{M_z \times 5280 \times W_{ROW}}{43560}.
+
+
+$$
+
+Total acquisition cost:
+
+$$
+C_{acquisition} = \sum_{z \,:\, M_z > 0} A_z \, p_{acquisition,z}.
+
+
+$$
+
+Annual holding cost (for each delay year):
+
+$$
+C_{hold,annual} = \sum_{z \,:\, M_z > 0} A_z \, p_{hold,z}.
+
+
+$$
+
+Total holding cost over the delay:
+
+$$
+C_{hold,total} = C_{hold,annual} \times T_{delay}.
+
+
+$$
+
+Total nominal ROW capital cost:
+
+$$
+C_{ROW,capital,nominal} = \xi_{acquisition}\, C_{acquisition} + \xi_{holding}\, C_{hold,total}.
+
+
+$$
+
+**Regulatory perspective (AFUDC)**
+Only acquisition is AFUDC-eligible and enters rate base. A timing pattern is applied to $C_{acquisition}$ and AFUDC is compounded to COD, as for other capital costs. Holding is a FERC Account 567 operating expense during the delay period: it is not capitalized, not AFUDC-eligible, and does not enter rate base.
+
+**Societal perspective**
+Discount at real WACC (real = present value):
+
+$$
+C_{acquisition,real} = \frac{C_{acquisition}}{(1+r_{WACC,real})^{T_{delay}}},
+
+
+$$
+
+$$
+C_{hold,real} = \sum_{t=1}^{T_{delay}} \frac{C_{hold,annual}}{(1+r_{WACC,real})^t}.
+
+
+$$
+
+Total real (present) value of ROW capital costs:
+
+$$
+C_{ROW,capital,real} = \xi_{acquisition}\, C_{acquisition,real} + \xi_{holding}\, C_{hold,real}.
+
+
+$$
+
+---
+
+### Environmental mitigation (1.c)
+
+Environmental mitigation has **base** costs (construction/restoration per effective acre by terrain and construction type) and **credit** costs (wetland and habitat off-site mitigation). For **reconductoring** projects, wetland and habitat credits are set to zero (existing ROW, no new permanent impacts).
+
+| Variable                                 | Meaning / units                                            | Notes                                                                                                                                                                                                                                               |
+| ---------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| $M_{terrain}$                            | Miles of a specific terrain type                           | Terrains: Forested, Scrubbed Flat, Wetland, Farmland, Desert/Barren, Urban, Rolling Hills, Mountain, Subsea. Only terrains with $M_{terrain} > 0$ are used. |
+| $W_{ROW}$                                | ROW width                                                  | ft. Contingent on project category.                                                                                                                                                                                                                 |
+| $A_{terrain}$                            | Base ROW area in terrain                                   | acres. $A_{terrain} = (M_{terrain} \times 5280 \times W_{ROW})/43560$.                                                                                                                                                                               |
+| $u_{mitigation}$                         | Mitigation uplift factor                                   | Dimensionless (e.g. 1.25). Accounts for construction width beyond ROW (TCE).                                                                                                                                                                        |
+| $A^{effective}_{terrain}$                | Effective acres for mitigation in terrain                  | acres. $A^{effective}_{terrain} = A_{terrain} \times u_{mitigation}$.                                                                                                                                                                                |
+| $CT$                                     | Construction type                                          | From project category (overhead, underground direct buried, underground tunnel, subsea).                                                                                                                                                            |
+| $c_{base,peracre}(terrain, CT)$          | Base mitigation cost per acre for terrain ($/acre)         | Depends on terrain and construction type.                                                                                                                                                                                                            |
+| $C_{base,total}$                         | Total base mitigation/restoration cost                     | $. Sum over terrains (with $M_{terrain} > 0$) of $c_{base,peracre}(terrain, CT) \times A^{effective}_{terrain}$.                                                                                                                                    |
+| $A^{effective impact}_{wetland}$         | Wetland impact acres (effective)                           | acres. Wetland terrain only: $A^{effective impact}_{wetland} = A_{wetland} \times u_{mitigation}$.                                                                                                                                                   |
+| $A^{effective impact}_{habitat}$         | Habitat impact acres (effective), total                    | acres. Sum over habitat terrains: $A^{effective impact}_{habitat} = \bigl(\sum_{terrain \in habitat} A_{terrain}\bigr) \times u_{mitigation}$. Habitat = forested, scrubbed flat, desert barren, rolling hills, mountain.                            |
+| $A^{effective impact}_{terrain,habitat}$ | Effective acres of habitat impacted for that terrain       | acres. For a given habitat terrain: $A^{effective impact}_{terrain,habitat} = A_{terrain} \times u_{mitigation}$ (that terrain only, not the total). Used per term in $C_{credits,habitat}$.                                                         |
+| $p_{wetland}$                            | Wetland credit cost per acre                               | $/acre. Single rate for all wetland acres. |
+| $p_{habitat}(terrain)$                   | Habitat credit cost per acre, by terrain                   | $/acre. Per terrain; explicit value for each habitat terrain. |
+| $C_{credits,wetlands}$                   | Wetland credit cost                                        | $.                                                                                                                                                                                                                                                  |
+| $C_{credits,habitat}$                    | Habitat credit cost                                        | $. Sum over habitat terrains (with $M_{terrain} > 0$) of $p_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}$.                                                                                          |
+| $\xi_{reconductoring}$                   | Binary: project is not reconductoring                      | 1 if not reconductoring, 0 if reconductoring. When 0, wetland and habitat credits are set to zero.                                                                                                                                                  |
+| $C_{credits,total}$                      | Total credit cost (wetland + habitat)                      | $. After reconductoring rule.                                                                                                                                                                                                                       |
+| $T_{delay}$                              | Delay years                                                | years.                                                                                                                                                                                                                                              |
+| $T_{construction}$                       | Construction years                                         | years.                                                                                                                                                                                                                                              |
+| $t_{start}$                              | Construction start year                                    | $t_{start} = T_{delay} + 1$ (first year after delay; 1-based year indexing).                                                                                                                                                                        |
+| $r_{WACC,real}$                          | Real WACC                                                  | decimal. Societal discount rate.                                                                                                                                                                                                                    |
+| $C_{env.mit,nominal}$                    | Total environmental mitigation cost (nominal)              | $.                                                                                                                                                                                                                                                  |
+| $B_{env.mit,annual}$                     | Annual base for env. mitigation (PV calculation)           | $/year over construction years.                                                                                                                                                                                                                     |
+| $C_{credits,real}$                       | Real (present) value of credits                            | $.                                                                                                                                                                                                                                                  |
+| $C_{env.mit,real}$                       | Total environmental mitigation cost (real / present value) | $.                                                                                                                                                                                                                                                  |
+
+**Equations**
+
+Base area per terrain (only terrains with $M_{terrain} > 0$):
+
+$$
+A_{terrain} = \frac{M_{terrain} \times 5280 \times W_{ROW}}{43560}.
+
+
+$$
+
+Effective acres (uplift for TCE):
+
+$$
+A^{effective}_{terrain} = A_{terrain} \times u_{mitigation}.
+
+
+$$
+
+Total base mitigation cost:
+
+$$
+C_{base,total} = \sum_{terrain \,:\, M_{terrain} > 0} c_{base,peracre}(terrain, CT) \times A^{effective}_{terrain}.
+
+
+$$
+
+Wetland impact acres (wetland terrain only):
+
+$$
+A^{effective impact}_{wetland} = A_{wetland} \times u_{mitigation}.
+
+
+$$
+
+Habitat impact acres, total (habitat = forested, scrubbed flat, desert barren, rolling hills, mountain):
+
+$$
+A^{effective impact}_{habitat} = \left( \sum_{terrain \in habitat} A_{terrain} \right) \times u_{mitigation}.
+
+
+$$
+
+Wetland credit cost:
+
+$$
+C_{credits,wetlands} = p_{wetland} \times A^{effective impact}_{wetland}.
+
+
+$$
+
+Habitat credit cost (per-terrain effective acres $A^{effective impact}_{terrain,habitat}$ for that habitat terrain):
+
+$$
+C_{credits,habitat} = \sum_{\substack{terrain \in habitat \\ M_{terrain} > 0}} p_{habitat}(terrain) \times A^{effective impact}_{terrain,habitat}.
+
+
+$$
+
+(For each habitat terrain, $A^{effective impact}_{terrain,habitat} = A_{terrain} \times u_{mitigation}$.)
+
+Total credit cost (reconductoring zeros out credits when $\xi_{reconductoring} = 0$):
+
+$$
+C_{credits,total} = \xi_{reconductoring} \times (C_{credits,wetlands} + C_{credits,habitat}).
+
+
+$$
+
+Total nominal environmental mitigation cost:
+
+$$
+C_{env.mit,nominal} = C_{base,total} + C_{credits,total}.
+
+
+$$
+
+**Regulatory perspective (AFUDC)**
+
+- Base mitigation: AFUDC-eligible; timing for environmental_mitigation_base (e.g. 0% during delay, 100% during construction).
+- Credits: AFUDC-eligible; timing for environmental_mitigation_credits (e.g. 20% during delay, 80% during construction).
+- Same capitalization logic as other capital costs (compound to COD). Total capitalized = base capitalized + credits capitalized.
+
+**Societal perspective**
+Base mitigation spread evenly over $T_{construction}$ starting at $t_{start}$. For $T_{construction} > 0$:
+
+$$
+B_{env.mit,annual} = \frac{C_{base,total}}{T_{construction}}, \qquad
+C_{base,real} = \sum_{t=t_{start}}^{t_{start}+T_{construction}-1} \frac{B_{env.mit,annual}}{(1+r_{WACC,real})^t}.
+
+
+$$
+
+If $T_{construction} = 0$, base is one-time at $t_{start}$: $C_{base,real} = C_{base,total} / (1+r_{WACC,real})^{t_{start}}$.
+
+Credits one-time at construction start (year $t_{start}$):
+
+$$
+C_{credits,real} = \frac{C_{credits,total}}{(1+r_{WACC,real})^{t_{start}}}.
+
+
+$$
+
+Total real (present) value of environmental mitigation:
+
+$$
+C_{env.mit,real} = C_{base,real} + C_{credits,real}.
+
+
+$$
+
+---
+
+## Operational Costs
+
+### O&M (2.a)
+
+O&M is operational only: it is not AFUDC-eligible (no regulatory capitalization). It is:
+
+- **Nominal:** undiscounted sum of annual O&M over project lifetime.
+- **Real (societal):** present value of that annual stream from COD to end of life, discounted at real WACC.
+
+| Variable                 | Meaning / units                  | Notes                                                                                                                                                    |
+| ------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| $M_{total}$              | Total line length                | miles. From physical details.                                                                                                                            |
+| $M_{terrain}$            | Miles in terrain type            | forested, scrubbed_flat, wetland, farmland, desert_barren, urban, rolling_hills, mountain, subsea.                                                       |
+| $T_{delay}$              | Delay years                      | before construction.                                                                                                                                     |
+| $T_{construction}$       | Construction years               |                                                                                                                                                          |
+| $T_{lifetime}$           | Project lifetime                 | years of operation (O&M accrues over this).                                                                                                              |
+| $T_{COD}$                | Commercial operation date (year) | $T_{COD} = T_{delay} + T_{construction} + 1$ (1-based; first year of O&M).                                                                               |
+| $r_{WACC,real}$          | Real WACC                        | decimal; used to discount O&M.                                                                                                                           |
+| $CT$                     | Construction type                | Overhead, Underground direct-buried, Underground tunnel, Subsea.                                                                                         |
+| $c_{conductor}$          | Conductor O&M                    | $/mile/year. By category (construction, AC/DC, capacity, conductor, converter). |
+| $c_{converter}$          | Converter O&M                    | $/mile/year. By category. |
+| $\xi_{DC}$               | Binary for DC projects           | 1 if DC, 0 if AC. Gates converter O&M (Build costs). |
+| $n_{structure}(terrain)$ | Structures per mile              | By terrain. Overhead only. |
+| $N_{structure}$          | Total structures                 | Overhead: $N_{structure} = \sum_{terrain} M_{terrain} \times n_{structure}(terrain)$. Non-overhead: not used. |
+| $c_{structure}$          | Cost per structure per year      | $/structure/year. Overhead only. |
+| $K_{line}$               | Line CAPEX                       | $. Post-contingency conductor + structure CAPEX (excludes converter stations). From build costs. |
+| $r_{om,line}(CT)$        | Non-overhead line O&M rate       | Fraction of $K_{line}$ per year. Underground direct-buried 0.15%; underground tunnel 0.4%; subsea 2.5%. |
+| $c_{veg}(terrain)$       | Vegetation management            | $/mile/year by terrain. Overhead only. |
+| $C_{O\&M,annual}$        | Total annual O&M                 | $/year. Sum of conductor + converter + structure + vegetation.                                                                                           |
+| $C_{O\&M,nominal}$       | O&M cost (nominal)               | Undiscounted lifetime O&M.                                                                                                                               |
+| $C_{O\&M,real}$          | O&M cost (real / PV)             | Present value of O&M from $T_{COD}$ over $T_{lifetime}$.                                                                                                  |
+
+**Equations**
+
+1. COD (first year of O&M)
+
+$$
+T_{COD} = T_{delay} + T_{construction} + 1
+
+
+$$
+
+(1-based; first year of operation.)
+
+2. Conductor (annual; overhead)
+
+$$
+C_{conductor,annual} = c_{conductor} \times M_{total}
+
+
+$$
+
+For non-overhead, conductor O&M is not a separate $/mile term; it is included in the line-CAPEX percentage (equation 4).
+
+3. Converter (annual; DC only)
+
+$$
+C_{converter,annual} = \xi_{DC} \times c_{converter} \times M_{total}
+
+
+$$
+
+($\xi_{DC}$ encodes DC vs AC in the formalism; converter O&M is included only when $\xi_{DC} = 1$ (DC).)
+
+4. Structure / line (annual, piecewise)
+
+$$
+C_{structure,annual} = \begin{cases}
+c_{structure} \times N_{structure} & \text{if overhead} \\
+r_{om,line}(CT) \times K_{line} & \text{if non-overhead}
+\end{cases}
+
+
+$$
+
+Non-overhead line O&M is a percentage of line CAPEX $K_{line} = C_{adj,cont,conductor} + C_{adj,cont,structure}$ (post-contingency, excluding converter stations): 0.15% underground direct-buried, 0.4% underground tunnel, 2.5% subsea. For non-overhead this term is the total line O&M (conductor + structure), not a $/mile structure rate.
+
+Overhead: total structures
+
+$$
+N_{structure} = \sum_{terrain} M_{terrain} \times n_{structure}(terrain)
+
+
+$$
+
+5. Vegetation management (annual)
+
+$$
+C_{veg,annual} = \sum_{terrain} M_{terrain} \times c_{veg}(terrain)
+
+
+$$
+
+Overhead only in practice (non-overhead construction types have $c_{veg}(terrain) = 0$). For non-overhead, $C_{veg,annual} = 0$.
+
+6. Total annual O&M
+
+Overhead:
+
+$$
+C_{O\&M,annual} = C_{conductor,annual} + C_{converter,annual} + C_{structure,annual} + C_{veg,annual}
+
+
+$$
+
+Non-overhead (line O&M already includes conductor + structure; vegetation is zero):
+
+$$
+C_{O\&M,annual} = C_{structure,annual} + C_{converter,annual}
+
+
+$$
+
+7. Nominal (undiscounted) lifetime O&M
+
+$$
+C_{O\&M,nominal} = C_{O\&M,annual} \times T_{lifetime}
+
+
+$$
+
+8. Real (present value) O&M
+
+$$
+C_{O\&M,real} = \sum_{t=T_{COD}}^{T_{COD}+T_{lifetime}-1} \frac{C_{O\&M,annual}}{(1+r_{WACC,real})^t}
+
+
+$$
+
+**Regulatory perspective (AFUDC)**
+O&M is not capitalized; there is no $C_{O\&M,AFUDC}$. O&M does not enter rate base.
+
+---
+
+### Operational insurance (2.b)
+
+Operational insurance is operational only: not AFUDC-eligible. Premiums are paid annually on insurable asset value from COD to end of life.
+
+| Variable                 | Meaning / units                        | Notes                                                                    |
+| ------------------------ | -------------------------------------- | ------------------------------------------------------------------------ |
+| $C_{adj,cont,conductor}$ | Conductor build cost ($)               | Terrain-adjusted, contingency applied. From Build (1.a).                 |
+| $C_{adj,cont,structure}$ | Structure build cost ($)               | Terrain-adjusted, contingency applied. From Build (1.a).                 |
+| $C_{adj,cont,converter}$ | Converter build cost ($)               | Terrain-adjusted, contingency applied; 0 for AC. From Build (1.a).       |
+| $\xi_{ins,conductor}$    | Include conductors in insurable value  | 1 if insured, 0 if not.                                                  |
+| $\xi_{ins,structure}$    | Include structures in insurable value  | 1 if insured, 0 if not.                                                  |
+| $\xi_{ins,converter}$    | Include converters in insurable value  | 1 if insured, 0 if not.                                                  |
+| $V_{insurable}$          | Insurable asset value ($)              | Sum of included build-cost components (with contingencies).              |
+| $CT$                     | Construction type                      | Overhead, Underground direct-buried, Underground tunnel, Subsea.         |
+| $r_{premium}(CT)$        | Premium rate (decimal)                 | Annual premium as fraction of insurable value. Can depend on $CT$.        |
+| $r_{premium,default}$    | Default premium rate                   | Used when no type-specific rate is defined for $CT$.                      |
+| $C_{insurance,annual}$   | Annual operational insurance premium   | $/year.                                                                  |
+| $T_{lifetime}$           | Project lifetime                       | years.                                                                   |
+| $T_{COD}$                | Commercial operation date (year)       | First year premium is paid. $T_{COD} = T_{delay} + T_{construction} + 1$. |
+| $r_{WACC,real}$          | Real WACC                              | decimal; used to discount premiums.                                      |
+| $C_{insurance,nominal}$  | Operational insurance cost (nominal)   | Undiscounted sum of premiums over project lifetime.                      |
+| $C_{insurance,real}$     | Operational insurance cost (real / PV) | Present value of premium stream from $T_{COD}$ over $T_{lifetime}$.       |
+
+**Equations**
+
+1. Insurable asset value (only components with $\xi = 1$ are included):
+
+$$
+V_{insurable} = \xi_{ins,conductor}\, C_{adj,cont,conductor} + \xi_{ins,structure}\, C_{adj,cont,structure} + \xi_{ins,converter}\, C_{adj,cont,converter}
+
+
+$$
+
+2. Premium rate (can depend on construction type; otherwise use default):
+
+$$
+r_{premium}(CT) = \begin{cases}
+r_{premium,CT} & \text{if a rate is specified for construction type } CT \\
+r_{premium,default} & \text{otherwise}
+\end{cases}
+
+
+$$
+
+Here $r_{premium,CT}$ denotes the type-specific rate when defined.
+
+3. Annual premium:
+
+$$
+C_{insurance,annual} = V_{insurable} \times r_{premium}(CT)
+
+
+$$
+
+4. Nominal (undiscounted) lifetime cost:
+
+$$
+C_{insurance,nominal} = C_{insurance,annual} \times T_{lifetime}
+
+
+$$
+
+5. Real (present value) cost. Premiums at the start of each year from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{WACC,real}$:
+
+$$
+C_{insurance,real} = \sum_{t=T_{COD}}^{T_{COD}+T_{lifetime}-1} \frac{C_{insurance,annual}}{(1+r_{WACC,real})^t}
+
+
+$$
+
+**Regulatory perspective (AFUDC)**
+Operational insurance is not capitalized; there is no $C_{insurance,AFUDC}$. It does not enter rate base.
+
+---
+
+### Operational ROW rent (2.c)
+
+ROW rent is operational only: not AFUDC-eligible. It is the annual payment for use of the right-of-way in zones where the line is built. Same zones, areas, and per-acre rent as in Capital ROW; agreement type determines whether rent applies and over which years it is paid.
+
+| Variable                 | Meaning / units                 | Notes                                                                                                             |
+| ------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| $z$                      | Zone index                      | Same zones as Capital ROW; only $M_z \gt 0$ used.                                                                  |
+| $M_z$                    | Miles in zone $z$                | miles.                                                                                                            |
+| $W_{ROW}$                | ROW width                       | ft. Same as Capital ROW (project category).                                                                       |
+| $A_z$                    | Area of ROW of zone $z$          | acres. $A_z = (M_z \times 5280 \times W_{ROW})/43560$.                                                             |
+| $p_{rent,z}$             | Rent per acre per year, zone $z$ | $/acre/year.                                                                                                      |
+| $C_{rent,annual}$        | Total annual ROW rent           | $/year. Sum over zones with $M_z \gt 0$.                                                                          |
+| $\xi_{rent}$             | Binary: rent applies            | 1 for Existing Lease/License or Federal Hybrid; 0 for New Permanent Easement or Simple Fee (see agreement table). |
+| $T_{delay}$              | Delay years                     | years.                                                                                                            |
+| $T_{construction}$       | Construction years              | years.                                                                                                            |
+| $T_{lifetime}$           | Project lifetime                | years of operation.                                                                                               |
+| $t_{rent,start}$         | First year rent is paid         | Agreement-dependent (see below).                                                                                  |
+| $T_{rent}$               | Number of years rent is paid    | Agreement-dependent (see below).                                                                                  |
+| $r_{WACC,real}$          | Real WACC                       | decimal; used to discount rent.                                                                                   |
+| $C_{rent,total,nominal}$ | ROW rent cost (nominal)         | Undiscounted sum of rent over all years it is paid.                                                               |
+| $C_{rent,total,real}$    | ROW rent cost (real / PV)       | Present value of rent stream.                                                                                     |
+
+**When rent applies (from agreement type)**
+
+| Agreement type         | Rent?                | $t_{rent,start}$ | $T_{rent}$                                    |
+| ---------------------- | -------------------- | ---------------- | --------------------------------------------- |
+| New Permanent Easement | No ($\xi_{rent}=0$)  | —                | —                                             |
+| Simple Fee             | No ($\xi_{rent}=0$)  | —                | —                                             |
+| Existing Lease/License | Yes ($\xi_{rent}=1$) | 1                | $T_{delay} + T_{construction} + T_{lifetime}$ |
+| Federal Hybrid         | Yes ($\xi_{rent}=1$) | $T_{delay} + 1$  | $T_{construction} + T_{lifetime}$             |
+
+Lease/License: rent from year 1 through delay, construction, and lifetime. Federal Hybrid: rent from start of construction ($T_{delay}+1$) through construction and lifetime only.
+
+**Equations**
+
+1. Area of ROW per zone (same as Capital ROW)
+
+$$
+A_z = \frac{M_z \times 5280 \times W_{ROW}}{43560}
+
+
+$$
+
+Only zones with $M_z \gt 0$ are included in sums.
+
+2. Annual ROW rent
+
+$$
+C_{rent,annual} = \sum_{z \,:\, M_z \gt 0} A_z \, p_{rent,z}
+
+
+$$
+
+3. Nominal (undiscounted) ROW rent cost
+
+Rent is paid only when $\xi_{rent}=1$, over $T_{rent}$ years:
+
+$$
+C_{rent,total,nominal} = \xi_{rent} \times C_{rent,annual} \times T_{rent}
+
+
+$$
+
+With $T_{rent}$ and $t_{rent,start}$ as in the table above (by agreement type).
+
+4. Real (present value) ROW rent cost
+
+Rent stream from $t_{rent,start}$ for $T_{rent}$ years, discounted at $r_{WACC,real}$:
+
+$$
+C_{rent,total,real} = \xi_{rent} \times \sum_{t=t_{rent,start}}^{t_{rent,start} + T_{rent} - 1} \frac{C_{rent,annual}}{(1+r_{WACC,real})^t}
+
+
+$$
+
+**Regulatory perspective (AFUDC)**
+ROW rent is not capitalized; there is no $C_{rent,AFUDC}$. It does not enter rate base.
+
+**Agreement type (reminder)**
+Same as Capital ROW: Reconductoring or existing ROW → Existing Lease/License (rent only); otherwise New Permanent Easement (or Simple Fee / Federal Hybrid per project). Rent is the operational row in the Capital ROW agreement table.
+
+---
+
+## Energy/Emissions
+
+The FORGE calculates the thermal losses on a line. Energy losses are the physical quantity of energy lost on the transmission path (line and, for DC, converters). We calculate it to estimate energy loss costs and emissions costs.
+
+### Energy losses
+
+**Variables**
+
+| Variable                      | Meaning / units                    | Notes                                                                                                                       |
+| ----------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| $C_{new}$                     | New line capacity                  | MW. Nameplate capacity. (Applies for both reconductoring and greenfield.)                                                   |
+| $V$                           | Line voltage                       | kV. For reconductoring, voltage from existing (old) configuration; for greenfield, from new configuration.                  |
+| $L$                           | Line length                        | miles. Total line length.                                                                                                   |
+| $u$                           | Line utilization                   | Dimensionless,$0 \le u \le 1$. Average fraction of capacity used (annual or representative).                                |
+| $n_{phases}$                  | Number of phases                   | 3 for AC; 2 for DC (poles).                                                                                                 |
+| $n_{circuits}$                | Number of circuits / poles         | Number of parallel circuits (AC) or poles (DC).                                                                             |
+| $n_{conductorsperphase}$      | Conductors per phase (or per pole) | Conductors in parallel per phase/pole.                                                                                      |
+| $R_{mi}$                      | Resistance per mile                | $\Omega$/mile. AC: resistance at 75°C; DC: resistance at 20°C. Depends on conductor and circuit.                            |
+| $I$                           | Phase current                      | A. RMS phase current at full capacity and nominal voltage.                                                                  |
+| $\phi_{AC}$                   | AC power factor                    | Dimensionless (e.g. 0.95). Used only for AC. Not the same as the flow factor $\phi$ used for congestion relief. |
+| $f_{load}$                    | Full-load adjustment factor        | Dimensionless. Converts “full-load” loss to an average over the utilization profile; function of $u$.                        |
+| $H$                           | Hours per year                     | h/year (e.g. 8760).                                                                                                         |
+| $T_{lifetime}$                | Project lifetime                   | years.                                                                                                                      |
+| $\xi_{DC}$                    | DC indicator                       | 1 if DC, 0 if AC.                                                                                                           |
+| $N_{conv}$                    | Number of converter stations       | 0 for AC; typically 2 for DC (rectifier + inverter).                                                                        |
+| $\lambda_{conv}$              | Converter loss fraction            | Dimensionless (e.g. 0.0075 LCC, 0.01 VSC). Fraction of through-power lost per station.                                      |
+| $P_{lineloss,MW}$             | Line loss (power)                  | MW. Total resistive line loss (average power).                                                                              |
+| $E_{lineloss,MW,annual}$      | Line energy losses (annual)        | MWh/year.                                                                                                                   |
+| $E_{lineloss,lifetime}$       | Line energy losses (lifetime)      | MWh.                                                                                                                        |
+| $P_{converterloss,MW}$        | Converter loss (power)             | MW. Total converter loss (DC only).                                                                                         |
+| $E_{converterloss,MW,annual}$ | Converter energy losses (annual)   | MWh/year.                                                                                                                   |
+| $E_{loss}$                    | Total energy losses (annual)       | MWh/year. Line + converter.                                                                                                 |
+| $E_{totalloss,lifetime}$      | Total energy losses (lifetime)     | MWh.                                                                                                                        |
+
+**Equations**
+
+1. Phase current (from capacity and voltage)
+
+AC (three-phase, with power factor):
+
+$$
+I = \frac{C_{new} \times 1000}{\phi_{AC} \times V \times \sqrt{n_{phases}} \times n_{circuits}} \quad \text{(AC)}
+
+
+$$
+
+DC:
+
+$$
+I = \frac{C_{new} \times 1000}{V \times \sqrt{n_{phases}} \times n_{circuits}} \quad \text{(DC)}
+
+
+$$
+
+($C_{new}$ in MW, $V$ in kV; factor 1000 for kW/kV → A.)
+
+2. Full-load adjustment (utilization)
+
+$$
+f_{load} = \frac{u + u^2}{2}
+
+
+$$
+
+3. Line loss (power)
+
+Total resistive (I²R) line loss, average power in MW:
+
+$$
+P_{lineloss,MW} = \left( \frac{I}{n_{conductorsperphase}} \right)^2 \times \bigl( n_{conductorsperphase} \times n_{phases} \times n_{circuits} \bigr) \times R_{mi} \times L \times \frac{f_{load}}{10^6}
+
+
+$$
+
+The factor $10^6$ converts watts to MW.
+
+4. Line energy losses (annual and lifetime)
+
+$$
+E_{lineloss,MW,annual} = P_{lineloss,MW} \times H
+
+
+$$
+
+$$
+E_{lineloss,lifetime} = E_{lineloss,MW,annual} \times T_{lifetime}
+
+
+$$
+
+5. Converter loss (DC only)
+
+$$
+P_{converterloss,MW} = \xi_{DC} \times N_{conv} \times \lambda_{conv} \times u \times C_{new}
+
+
+$$
+
+$$
+E_{converterloss,MW,annual} = P_{converterloss,MW} \times H
+
+
+$$
+
+For AC, $\xi_{DC}=0$ (or $N_{conv}=0$), so $P_{converterloss,MW}=0$ and $E_{converterloss,MW,annual}=0$.
+
+6. Total energy losses
+
+$$
+E_{loss} = E_{lineloss,MW,annual} + E_{converterloss,MW,annual}
+
+
+$$
+
+$$
+E_{totalloss,lifetime} = E_{loss} \times T_{lifetime} = E_{lineloss,lifetime} + E_{converterloss,MW,annual} \times T_{lifetime}
+
+
+$$
+
+**Reconductoring**
+For reconductoring: voltage $V$ from existing (old) configuration; resistance $R_{mi}$ from new conductors. $C_{new}$ is the new line capacity in both cases.
+
+**Conceptual note**
+$P_{lineloss,MW}$ and $P_{converterloss,MW}$ are average power losses (MW) over the year. Annual energy loss (MWh) = that average MW × 8760 h.
+
+---
+
+### Thermal line loss costs (3.a)
+
+Thermal line loss cost is the cost of the energy lost on the transmission path (line and, for DC, converters). It takes the energy losses from the Energy losses section and values them at the value of load---the demand-side marginal value of the energy that would have been delivered. It is an operational/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the real WACC.
+
+**Variables**
+
+| Variable                      | Meaning / units                           | Notes                                                  |
+| ----------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| $E_{loss}$                    | Total energy losses (annual), MWh/yr      | From Energy losses (line + converter).                 |
+| $E_{lineloss,MW,annual}$      | Line energy losses (annual), MWh/yr       | Conductor only.                                        |
+| $E_{converterloss,MW,annual}$ | Converter energy losses (annual), MWh/yr  | DC only; 0 for AC.                                     |
+| $v_{load}$        | Value of load, $/MWh                  | Marginal value of energy to end-use load. The value of electricity derives from the services load performs with it, making demand-side valuation the correct welfare measure.                         |
+| $T_{lifetime}$                | Project lifetime, years                   |                                                        |
+| $T_{COD}$                     | Commercial operation date, year           | First year of operation.                               |
+| $r_{WACC,real}$               | Real WACC, decimal                        | Used to discount this cost (market-tracked).           |
+| $C_{loss,annual}$             | Total thermal loss cost (annual), $/yr    | Line + converter.                                      |
+| $C_{loss,nominal}$            | Total thermal loss cost (nominal), $      | Undiscounted sum over lifetime.                        |
+| $C_{loss,real}$               | Total thermal loss cost (real / PV), $    | PV of annual stream from $T_{COD}$ over $T_{lifetime}$. |
+| $C_{lineloss,annual}$         | Line (conductor) loss cost (annual), $/yr | Cost of line losses only.                              |
+| $C_{converterloss,annual}$    | Converter loss cost (annual), $/yr        | Cost of converter losses only; 0 for AC.               |
+
+**Equations**
+
+1. Component costs (line and converter)
+
+$$
+C_{lineloss,annual} = E_{lineloss,MW,annual} \times v_{load}
+
+
+$$
+
+$$
+C_{converterloss,annual} = E_{converterloss,MW,annual} \times v_{load}
+
+
+$$
+
+2. Total annual thermal loss cost
+
+$$
+C_{loss,annual} = E_{loss} \times v_{load} = C_{lineloss,annual} + C_{converterloss,annual}
+
+
+$$
+
+3. Nominal (undiscounted) lifetime cost
+
+$$
+C_{loss,nominal} = C_{loss,annual} \times T_{lifetime}
+
+
+$$
+
+4. Real (present value) cost
+
+Annual costs at the start of each year from $T_{COD}$ for $T_{lifetime}$ years, discounted at real WACC:
+
+$$
+C_{loss,real} = \sum_{t=T_{COD}}^{T_{COD} + T_{lifetime} - 1} \frac{C_{loss,annual}}{(1 + r_{WACC,real})^t}
+
+
+$$
+
+---
+
+**Regulatory perspective (AFUDC)**
+Thermal loss cost is not capitalized; there is no AFUDC term. It does not enter rate base.
+
+**Societal perspective**
+The relevant measure is real (present value) total thermal loss cost, $C_{loss,real}$, using $r_{WACC,real}$. Externality-related costs (e.g. emissions, wildfire risk, outage) use the social discount rate; this cost does not.
+
+**Link to Energy losses**
+$E_{loss}$, $E_{lineloss,MW,annual}$, and $E_{converterloss,MW,annual}$ are defined in the Energy losses section. Thermal line loss cost (3.a) is the monetary value of those losses at $v_{load}$: total $C_{loss,annual} = E_{loss} \times v_{load}$, with line and converter components $C_{lineloss,annual}$ and $C_{converterloss,annual}$.
+
+---
+
+### Emissions costs (3.b)
+
+Emissions cost is the societal cost of emissions (CO₂, SOₓ, NOₓ) from the extra generation used to compensate for transmission energy losses. Only a fraction of losses may be assumed to be met by additional generation; that energy is allocated across sources via an energy source mix (with optional growth/decay by year). **Configuration:** the mix is stored in **`18_energy_source_mix.yaml`** (top-level key `18_energy_source_mix` in merged JSON / `combined_data`); it is **merged at load** with `16_emissions_reductions.yaml` in `yaml_loaders` / `json_loaders` so `emissions.py` still consumes one in-memory `energy_source_mix` dict. Legacy files may still carry mix under `16_emissions_reductions`; loaders fall back there if `18` is absent. Emissions are computed from emission intensities by source and pollutant, then valued at societal cost per kg. It is an externality/societal cost (no AFUDC): incurred each year over the project's operating life and discounted at the social discount rate.
+
+**Variables**
+
+| Variable                | Meaning / units                                                            | Notes                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| $E_{loss}$              | Total energy losses (annual), MWh/yr                                       | From Energy losses (line + converter).                                                             |
+| $\alpha$                | Compensation share, dimensionless                                          | Fraction of $E_{loss}$ assumed compensated by additional generation; in [0, 1].                     |
+| $TEC$                   | Total energy compensated (annual), MWh/yr                                  | $TEC = \alpha \times E_{loss}$.                                                                    |
+| $j$                     | Energy source index                                                        | e.g. coal, oil, natural gas, solar, wind, hydro, nuclear, other.                                   |
+| $p_{j}(\tau)$           | Share of generation from source $j$ in operating year $\tau$, dimensionless | From initial mix and per-source growth/decay rates; normalized so $\sum_j p_j(\tau) = 1$ each year. |
+| $I_{j,k}$               | Emission intensity, kg/MWh                                                 | Emissions of pollutant $k$ per MWh from source $j$.                                                 |
+| $k$                     | Pollutant index                                                            | CO₂, SOₓ, NOₓ.                                                                                     |
+| $E_{k,\tau}$            | Emissions of pollutant $k$ in operating year $\tau$, kg                     | From compensated energy and mix in that year.                                                      |
+| $c_k$                   | Societal cost per kg of pollutant $k$, $/kg                                 | Externality value.                                                                                 |
+| $C_{k,\tau}$            | Cost of pollutant $k$ in operating year $\tau$, $                           | Monetization of $E_{k,\tau}$.                                                                       |
+| $C_{\tau}$              | Total emissions cost in operating year $\tau$, $/yr                         | Sum over pollutants.                                                                               |
+| $T_{lifetime}$          | Project lifetime, years                                                    |                                                                                                    |
+| $T_{COD}$               | Commercial operation date, year                                            | First year of operation.                                                                           |
+| $r_{social}$            | Social discount rate, decimal                                              | Used to discount this externality cost.                                                            |
+| $C_{emissions,nominal}$ | Total emissions cost (nominal), $                                          | Undiscounted sum over lifetime.                                                                    |
+| $C_{emissions,real}$    | Total emissions cost (real / PV), $                                        | PV of annual cost stream from $T_{COD}$ over $T_{lifetime}$.                                        |
+
+**Equations**
+
+1. Total energy compensated (annual)
+
+$$
+TEC = \alpha \times E_{loss}
+
+
+$$
+
+2. Energy mix by operating year
+
+For each operating year $\tau = 1, \ldots, T_{lifetime}$, the share $p_j(\tau)$ for each source $j$ is obtained from the initial mix and per-source growth/decay rates, then normalized so that $\sum_j p_j(\tau) = 1$.
+
+3. Emissions in operating year $\tau$ (by pollutant)
+
+$$
+E_{k,\tau} = TEC \times \sum_j p_j(\tau) \times I_{j,k}
+
+
+$$
+
+4. Cost in operating year $\tau$ (by pollutant)
+
+$$
+C_{k,\tau} = E_{k,\tau} \times c_k
+
+
+$$
+
+5. Total emissions cost in operating year $\tau$
+
+$$
+C_{\tau} = \sum_k C_{k,\tau}
+
+
+$$
+
+6. Nominal (undiscounted) lifetime cost
+
+$$
+C_{emissions,nominal} = \sum_{\tau=1}^{T_{lifetime}} C_{\tau}
+
+
+$$
+
+7. Real (present value) cost
+
+Annual costs at the start of each operating year from $T_{COD}$ for $T_{lifetime}$ years, discounted at the social discount rate:
+
+$$
+C_{emissions,real} = \sum_{\tau=1}^{T_{lifetime}} \frac{C_{\tau}}{(1 + r_{social})^{T_{COD} + \tau - 1}}
+
+
+$$
+
+---
+
+**Regulatory perspective (AFUDC)**
+Emissions cost is not capitalized; there is no AFUDC term. It does not enter rate base.
+
+**Societal perspective**
+The relevant measure is real (present value) total emissions cost, $C_{emissions,real}$, using $r_{social}$. This is an externality cost; unlike market-tracked costs (e.g. thermal line loss cost 3.a), it is discounted at the social discount rate. Facilitated (generation-mix / delivered-energy) emissions PV is also discounted at $r_{social}$, the same externality treatment as loss-compensation emissions.
+
+**Link to Energy losses**
+$E_{loss}$ is defined in the Energy losses section. Emissions cost (3.b) uses the share $\alpha$ of that loss assumed to be compensated by additional generation ($TEC = \alpha \times E_{loss}$), then applies the energy mix, emission intensities, and societal costs per kg to obtain $C_{\tau}$ and hence $C_{emissions,nominal}$ and $C_{emissions,real}$.
+
+**Limitation**
+Emissions from line-loss compensation are calculated using an average energy source mix. Incremental emissions could in principle use a marginal emission factor. This is something to be improved after the first paper.
+
+---
+
+### Residual exceedance cost (3.c)
+
+If the project does not fully relieve the constraint ($X_{congestion} > \Delta C_{effective}$), the remaining congestion energy is valued at the congestion price $\gamma_{congestion}$:
+
+$$
+E_{residual} = H_{congestion} \times \max(0,\, X_{congestion} - \Delta C_{effective})
+$$
+
+$$
+C_{residual,annual} = E_{residual} \times \gamma_{congestion}
+$$
+
+$C_{residual,nominal}$ and $C_{residual,real}$ (PV) follow the same discounting convention as thermal loss costs (level annuity from $T_{COD}$ over $T_{lifetime}$, discounted at $r_{WACC,real}$). Residual exceedance cost is not capitalized (no AFUDC), does not enter rate base, and is grouped under Energy/Emissions as a system/societal cost only.
+
+---
+
+### Facilitated emissions and avoided-emissions benefit
+
+`facilitated_emissions.py` computes operational displacement avoided emissions $B_{\text{avoided,emissions}}$. It compares two generation-mix trajectories over delivered energy $E_{\text{delivered,annual}}$, both starting from the same grid state at COD, discounted at $r_{social}$:
+
+- **No-line:** mix evolves at the without-line rate.
+- **Project-line:** mix evolves at the with-line rate.
+
+$B_{\text{avoided,emissions}} = C_{\text{fac,noline}} - C_{\text{fac,withline}}$. Facilitated emissions on the project path is an intermediate (reporting-only) quantity, not a BCR cost. Loss-compensation emissions (3.b) remain a separate cost stream.
+
+---
+
+## Risk costs
+
+### Expected cost of wildfires (4.a)
+
+Expected cost of wildfires is the expected annual loss (EAL) from wildfire events over the project's operating life, valued at expected loss per event (severity). It uses a line-level base ignition rate scaled by construction type, multiplied by severity ($ per event), with optional risk growth over the lifetime. It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
+
+**Variables**
+
+| Variable            | Meaning / units                                                 | Notes                                                                                              |
+| ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| $L$                 | Total line length, miles                                        | Sum of all terrain segment lengths from physical details.                                          |
+| $f$                 | Base ignition rate, events/(mi·yr)                              | Overhead baseline; line-level scalar.                                                              |
+| $k_t$               | Construction-type multiplier, dimensionless                     | Overhead 1; underground &lt; 1; subsea 0.                                                         |
+| $f_t$               | Effective ignition rate for type $t$, events/(mi·yr)            | $f_t = f \times k_t$.                                                                             |
+| $\lambda$           | Total annual event rate, events/yr                              | $\lambda = L \times f_t$.                                                                         |
+| $S$                 | Severity (expected loss per event), $                           | Expected loss per wildfire event.                                                                  |
+| $EAL$               | Expected annual loss, $/yr                                      | $EAL=\lambda \times S$.                                                                            |
+| $g_{wf}$            | Wildfire risk growth rate, decimal                              | Annual increase in expected loss (e.g. escalation of risk).                                        |
+| $T_{lifetime}$      | Project lifetime, years                                         |                                                                                                    |
+| $T_{COD}$           | Commercial operation date (year index), years                   | First year of operation; cost stream starts here.                                                  |
+| $r_{social}$        | Social discount rate, decimal                                   | Used to discount this externality cost (societal perspective).                                     |
+| $C_{wf,nominal}$    | Expected wildfire cost (nominal), $                             | Sum of growing annual EAL over lifetime; undiscounted.                                             |
+| $C_{wf,real}$       | Expected wildfire cost (real / PV), $                           | PV of growing EAL stream from $T_{COD}$ over $T_{lifetime}$; discounted for delay and construction. |
+
+**Equations**
+
+1. Effective ignition rate (construction type)
+
+$$
+f_t = f \times k_t
+
+
+$$
+
+2. Total annual event rate
+
+$$
+\lambda = L \times f_t
+
+
+$$
+
+3. Expected annual loss
+
+$$
+EAL = \lambda \times S
+
+
+$$
+
+4. Nominal (undiscounted) total cost
+
+Growing annual loss at rate $g_{wf}$ over $T_{lifetime}$ years (first year EAL, then EAL$(1+g_{wf})$, …):
+
+$$
+C_{wf,nominal} = EAL \times \frac{(1+g_{wf})^{T_{lifetime}} - 1}{g_{wf}} \quad (g_{wf} \neq 0); \qquad C_{wf,nominal} = EAL \times T_{lifetime} \quad (g_{wf} = 0)
+
+
+$$
+
+5. Real (present value) cost
+
+Growing annuity: amounts at start of each year from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{social}$. With delay and construction, the annuity is discounted so it starts at COD:
+
+$$
+C_{wf,real} = \frac{EAL \times \frac{1 - \left(\frac{1+g_{wf}}{1+r_{social}}\right)^{T_{lifetime}}}{r_{social} - g_{wf}}}{(1+r_{social})^{T_{delay} + T_{construction}}} \quad (r_{social} \neq g_{wf})
+
+
+$$
+
+(If $r_{social} = g_{wf}$, the growing-annuity factor is $T_{lifetime}$; if $g_{wf} = 0$, it reduces to a level annuity.)
+
+---
+
+**Regulatory perspective (AFUDC)**
+Expected wildfire cost is not capitalized; there is no AFUDC term. It does not enter rate base. It is an expected future loss (societal/externality).
+
+**Societal perspective**
+The relevant measure is real (present value) expected wildfire cost, $C_{wf,real}$, using $r_{social}$. This is an externality cost; the discount rate is typically the social discount rate.
+
+---
+
+### Expected cost of outages (4.b)
+
+Expected cost of outages is the expected annual loss (`expected_annual_loss`) from transmission outages over the project's operating life. It uses a line-level outage rate by construction type, a base duration with construction-type multiplier, capacity at risk (fraction of line capacity lost per event), and value of lost load (VoLL)—piecewise by duration (e.g. 0–4 h, 4–24 h, 24+ h). It is an externality/societal cost (no AFUDC): not capitalized, not in rate base. Present value is a growing annuity from COD, typically discounted at the social discount rate. The cost stream starts at COD (after delay and construction).
+
+**Variables**
+
+| Variable             | Meaning / units                                              | Notes                                                                                              |
+| -------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| $t$                  | Construction type index                                      | e.g. overhead, underground, subsea.                                                                |
+| $L$                  | Total line length, miles                                     | Sum of all terrain segment lengths from physical details.                                          |
+| $r_t$                | Outage rate for construction type $t$, events/(mi·yr)        | Line-level outages per mile per year.                                                              |
+| $\lambda$            | Total annual outage rate, events/yr                          | $\lambda = L \times r_t$.                                                                         |
+| $H_{base}$           | Base outage duration, h/event                                | Hours per outage event; line-level scalar.                                                         |
+| $k_t$                | Duration multiplier for construction type $t$, dimensionless | Overhead 1; underground, subsea can be &gt; 1.                                                     |
+| $H_{eff}$            | Effective outage duration, h/event                           | $H_{eff} = H_{base} \times k_t$.                                                                  |
+| $\phi$               | Capacity-at-risk factor, dimensionless                       | Fraction of line capacity lost per event; e.g. 1 = radial.                                         |
+| $C$                  | Line capacity, MW                                            | Project capacity.                                                                                  |
+| $MW_{lost}$          | MW lost per event, MW                                        | $MW_{lost} = \phi \times C$.                                                                       |
+| $U$                  | Unserved energy per event, MWh/event                         | $U = H_{eff} \times MW_{lost}$.                                                                   |
+| $v(h)$               | Value of lost load (VoLL), $/MWh                             | Piecewise by duration (e.g. tier 1: 0–4 h, tier 2: 4–24 h, tier 3: 24+ h).                         |
+| $C_{event}$          | Cost per outage event, $/event                               | Piecewise VoLL over $U$ (unserved MWh valued at $v(h)$ by duration tier).                          |
+| $\textit{expected\_annual\_loss}$ | Expected annual loss, $/yr                          | $\textit{expected\_annual\_loss} = \lambda \times C_{event}$. |
+| $g_{outages}$        | Outage risk growth rate, decimal                             | Annual increase in expected cost (optional).                                                       |
+| $T_{lifetime}$       | Project lifetime, years                                      |                                                                                                    |
+| $T_{COD}$            | Commercial operation date (year index), years                | First year of operation; cost stream starts here.                                                  |
+| $r_{social}$         | Social discount rate, decimal                                | Used to discount this externality cost (societal perspective).                                     |
+| $C_{outage,nominal}$ | Expected outage cost (nominal), $                            | Sum of growing annual expected_annual_loss over lifetime; undiscounted.                            |
+| $C_{outage,real}$    | Expected outage cost (real / PV), $                          | PV of growing expected_annual_loss stream from $T_{COD}$ over $T_{lifetime}$; discounted for delay and construction. |
+
+**Equations**
+
+1. Outage rate and effective duration (by construction type)
+
+$$
+\lambda = L \times r_t, \qquad H_{eff} = H_{base} \times k_t
+
+
+$$
+
+2. MW lost and unserved energy per event
+
+$$
+MW_{lost} = \phi \times C, \qquad U = H_{eff} \times MW_{lost}
+
+
+$$
+
+3. Cost per event (piecewise VoLL)
+
+Cost per event is the piecewise VoLL applied to unserved energy: duration is split into tiers (e.g. 0–4 h at $v_1$ $/MWh$, 4–24 h at $v_2$ $/MWh$, 24+ h at $v_3$ $/MWh$). Total cost = $\sum_{tiers} (\text{hours in tier}) \times MW_{lost} \times v_{tier}$. Denote this $C_{event}$.
+
+4. Expected annual loss
+
+$$
+\textit{expected\_annual\_loss} = \lambda \times C_{event}
+
+
+$$
+
+5. Nominal (undiscounted) total cost
+
+Growing annual cost at rate $g_{outages}$ over $T_{lifetime}$ years:
+
+$$
+C_{outage,nominal} = \textit{expected\_annual\_loss} \times \frac{(1+g_{outages})^{T_{lifetime}} - 1}{g_{outages}} \quad (g_{outages} \neq 0); \qquad C_{outage,nominal} = \textit{expected\_annual\_loss} \times T_{lifetime} \quad (g_{outages} = 0)
+
+
+$$
+
+7. Real (present value) cost
+
+Growing annuity from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{social}$, with delay and construction period discounting:
+
+$$
+C_{outage,real} = \frac{\textit{expected\_annual\_loss} \times \frac{1 - \left(\frac{1+g_{outages}}{1+r_{social}}\right)^{T_{lifetime}}}{r_{social} - g_{outages}}}{(1+r_{social})^{T_{delay} + T_{construction}}} \quad (r_{social} \neq g_{outages})
+
+
+$$
+
+(If $r_{social} = g_{outages}$, the growing-annuity factor is $T_{lifetime}$; if $g_{outages} = 0$, it reduces to a level annuity.)
+
+---
+
+**Regulatory perspective (AFUDC)**
+Expected outage cost is not capitalized; there is no AFUDC term. It does not enter rate base. It is an expected future loss (societal/externality).
+
+**Societal perspective**
+The relevant measure is real (present value) expected outage cost, $C_{outage,real}$, using $r_{social}$. This is an externality cost; the discount rate is typically the social discount rate.
+
+**Note on VoLL**
+Value of lost load (VoLL) is the economic value placed on unserved energy ($/MWh). Tiered VoLL reflects higher marginal value for longer outages (e.g. short 0–4 h, medium 4–24 h, long 24+ h). Capacity at risk $\phi$ (e.g. 1 for radial, &lt; 1 for meshed/redundant) is the fraction of line capacity assumed lost per outage event.
+
+---
+
+## Delay costs
+
+### Base delay costs (5.a)
+
+Base delay costs are the annual costs incurred during the delay (permitting and pre-construction) period—legal, administrative, labor, materials and equipment, regulatory, public relations, project management, and miscellaneous. They are expressed as a constant annual cost for each delay year. Total nominal cost is that annual cost times the number of delay years. Present value is a level annuity over the delay period, discounted at real WACC. Base delay costs are not AFUDC-eligible and do not enter rate base; they are expensed (societal/regulatory perspective uses PV).
+
+**Variables**
+
+| Variable                                                                                    | Meaning / units                      | Notes                                                                                                         |
+| ------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| $C_{legal}$, $C_{admin}$, $C_{labor}$, $C_{mat}$, $C_{reg}$, $C_{PR}$, $C_{PM}$, $C_{misc}$ | Annual delay cost by category, $/yr  | Legal, admin, labor, material and equipment, regulatory, public relations, project management, miscellaneous. |
+| $C_{delay,annual}$                                                                          | Total annual delay cost, $/yr        | $C_{delay,annual} = \sum \text{(categories above)}$.                                                          |
+| $T_{delay}$                                                                                 | Delay years                          | From project technical details; permitting/pre-construction period.                                           |
+| $r_{WACC,real}$                                                                             | Real WACC, decimal                   | Used to discount the delay cost stream (societal/regulatory).                                                 |
+| $C_{delay,nominal}$                                                                         | Total base delay cost (nominal), $   | $C_{delay,nominal} = C_{delay,annual} \times T_{delay}$.                                                      |
+| $C_{delay,real}$                                                                            | Total base delay cost (real / PV), $ | PV of level annuity over $T_{delay}$ years at $r_{WACC,real}$.                                                 |
+
+**Equations**
+
+1. Total annual delay cost
+
+$$
+C_{delay,annual} = C_{legal} + C_{admin} + C_{labor} + C_{mat} + C_{reg} + C_{PR} + C_{PM} + C_{misc}
+
+
+$$
+
+2. Nominal total base delay cost
+
+$$
+C_{delay,nominal} = C_{delay,annual} \times T_{delay}
+
+
+$$
+
+3. Real (present value) base delay cost
+
+Level annuity: payments at the start of each year $t = 1, \ldots, T_{delay}$, discounted at real WACC $r_{WACC,real}$:
+
+$$
+C_{delay,real} = \sum_{t=1}^{T_{delay}} \frac{C_{delay,annual}}{(1+r_{WACC,real})^t} = C_{delay,annual} \times \frac{1 - (1+r_{WACC,real})^{-T_{delay}}}{r_{WACC,real}} \quad (r_{WACC,real} \neq 0)
+
+
+$$
+
+(If $r_{WACC,real} = 0$, $C_{delay,real} = C_{delay,annual} \times T_{delay}$.)
+
+---
+
+**Regulatory perspective (AFUDC)**
+Base delay costs are not capitalized; there is no AFUDC term. They do not enter rate base. They are expensed during the delay period.
+
+**Societal perspective**
+The relevant measure is real (present value) base delay cost, $C_{delay,real}$, using $r_{WACC,real}$ (from financing details). This aligns with the PV of capital and other cost streams in FORGE.
+
+**Link to other delay cost categories**
+5.b (congestion delay costs) is the opportunity cost of foregone congestion relief during delay and construction; see that section. 5.c (displacement delay cost) is the opportunity cost of foregone emissions displacement during delay.
+
+---
+
+### Congestion delay costs (5.b)
+
+Congestion delay costs are the **opportunity cost** of congestion that is not relieved while the project is in the delay and construction period. In each of those years, the same congestion relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** congestion delay cost equals the **annual congestion reduction benefit**. The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Congestion delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
+
+**Conceptually**
+This cost answers: "What congestion benefit do we give up each year we are delayed?" Effective capacity relief is the same as in the Congestion Reduction Benefits section. The same annual $ amount is used as the raw congestion benefit, so there is no double-count with post-COD benefits.
+
+**Variables**
+
+| Variable                      | Meaning / units                                 | Notes                                                                                                                                                   |
+| ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| $B_{congestion,annual}$ | Annual congestion reduction benefit, $/yr | Same formula as in Congestion Reduction Benefits: congestion relief MWh/yr × $\gamma_{congestion}$. |
+| $C_{cong,delay,annual}$       | Congestion delay cost (annual), $/yr            | $C_{cong,delay,annual} = B_{congestion,annual}\text{ (raw)}$.                                                                                           |
+| $T_{delay}$                   | Delay years                                     | From project technical details.                                                                                                                         |
+| $T_{construction}$            | Construction years                              | From project technical details.                                                                                                                         |
+| $r_{WACC,real}$               | Real WACC, decimal                              | Used to discount the delay cost stream.                                                                                                                 |
+| $C_{cong,delay,nominal}$      | Congestion delay cost (nominal), $              | Total over delay + construction; undiscounted.                                                                                                          |
+| $C_{cong,delay,real}$         | Congestion delay cost (real / PV), $            | PV of level annuity over $T_{delay} + T_{construction}$ years at $r_{WACC,real}$, starting at year 1.                                                    |
+
+**Equations**
+
+1. Annual congestion delay cost
+
+The annual opportunity cost is the same as the raw annual congestion reduction benefit (congestion relief × $\gamma_{congestion}$; see Congestion Reduction Benefits):
+
+$$
+C_{cong,delay,annual} = B_{congestion,annual}\text{ (raw)}.
+
+
+$$
+
+2. Nominal total congestion delay cost
+
+$$
+C_{cong,delay,nominal} = C_{cong,delay,annual} \times (T_{delay} + T_{construction}).
+
+
+$$
+
+3. Real (present value) congestion delay cost
+
+Level annuity over years $t = 1, \ldots, T_{delay} + T_{construction}$, discounted at $r_{WACC,real}$:
+
+$$
+C_{cong,delay,real} = \sum_{t=1}^{T_{delay} + T_{construction}} \frac{C_{cong,delay,annual}}{(1+r_{WACC,real})^t} = C_{cong,delay,annual} \times \frac{1 - (1+r_{WACC,real})^{-(T_{delay} + T_{construction})}}{r_{WACC,real}} \quad (r_{WACC,real} \neq 0).
+
+
+$$
+
+(If $r_{WACC,real} = 0$, $C_{cong,delay,real} = C_{cong,delay,annual} \times (T_{delay} + T_{construction})$.)
+
+---
+
+**Regulatory perspective (AFUDC)**
+Congestion delay costs are not capitalized; there is no AFUDC term. They do not enter rate base.
+
+**Societal perspective**
+The relevant measure is real (present value) congestion delay cost, $C_{cong,delay,real}$, using $r_{WACC,real}$. This is the PV of foregone congestion relief during delay and construction.
+
+**Link to Congestion Reduction Benefits**
+The same effective capacity relief defines $B_{congestion,annual}$. 5.b uses that annual value (raw) as the cost per year of delay/construction, so benefits (post-COD) and congestion delay cost (during delay/construction) are consistent and not double-counted.
+
+**Link to Base delay costs (5.a)**
+5.a is out-of-pocket delay costs (legal, admin, etc.). 5.b is the opportunity cost of foregone congestion relief during the same period. Both use $T_{delay}$; 5.b uses $T_{delay} + T_{construction}$ as the cost duration and $r_{WACC,real}$ for PV.
+
+---
+
+### Displacement delay cost (5.c)
+
+`displacement_delay_cost.py` computes the displacement delay cost during the pre-COD delay period: every delay year is a year in which dirtier generation runs instead of being displaced by the project's cleaner mix. Both trajectories start from the same initial grid mix at year 0 (without-line at the pre-COD rate; hypothetical with-line at the post-COD rate). The year-by-year emissions difference is valued at year-specific social costs and discounted at $r_{social}$. The cost is not AFUDC-eligible and does not enter rate base.
+
+## Reporting framework
+
+Total costs are organized into **four reporting categories** for the appendix and results presentation:
+
+| Category | Definition | Components |
+|--------|-----------|-----------|
+| $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
+| $C_{\text{soft}}$ | Operational + energy losses + delay | O&M + insurance + rent + line losses + residual exceedance + base delay + congestion delay + displacement delay |
+| $C_{\text{risk}}$ | Expected losses from uncertain events | $C_{\text{wf}} + C_{\text{outage}}$ |
+| $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions |
+
+$$C^P = C_{\text{hard}}^P + C_{\text{soft}}^P + C_{\text{risk}}^P + C_{\text{emissions}}^P$$
+
+Total benefits are organized into **three categories**:
+
+| Category | Definition | Components |
+|--------|-----------|-----------|
+| $B_{\text{remedial}}$ | Relief of existing system inefficiencies | Congestion relief |
+| $B_{\text{enabling}}$ | New productive value the line creates | Delivered energy + capacity value |
+| $B_{\text{avoided,emissions}}$ | Cleaner generation mix vs no-line | $B_{\text{avoided,emissions}}$ |
+
+$$B^P = B_{\text{remedial}}^P + B_{\text{enabling}}^P + B_{\text{avoided,emissions}}^P$$
+
+$$NB^P = B^P - C^P$$
+
+Revenue ($R_{\text{PV}}$) is a transfer (utility benefit = ratepayer cost); excluded from societal net benefit and BCR.
+
+---
+
+## Benefits
+
+### Congestion Reduction Benefits
+
+Transmission congestion is when the grid is short of capacity and can't deliver all the power that's wanted, so some value is lost (e.g. higher prices, redispatch). Constraint relief is valued as congestion; throughput is valued as delivered energy.
+
+**Effective relief**
+The project doesn't necessarily relieve capacity equal to its nameplate. For a greenfield line, only a fraction of nameplate effectively relieves the constraint (flow factor $\phi$). For reconductoring, relief is the increase in capacity (new minus old). That effective relief, $\Delta C_{effective}$, is the MW available each hour to reduce congestion.
+
+**Variables**
+
+| Variable                          | Meaning / units                                    | Notes                                              |
+| --------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| $\Delta C_{effective}$            | Effective capacity relief, MW                      |                                                    |
+| $\phi$                            | Flow factor, dimensionless [0,1]                   | Greenfield only.                                   |
+| $H$                               | Hours of congestion per year, h/yr                 |                                                    |
+| $\gamma_{congestion}$             | Value of congestion, $/MWh                         |                                                    |
+| $X$                               | MW of congestion (exceedance), MW                  |                                                    |
+| $C_{new}$                         | New line capacity, MW                              | Greenfield and reconductoring.                     |
+| $C_{old}$                         | Old line capacity, MW                              | Reconductoring only.                               |
+| $B_{congestion,annual}$           | Annual benefit from congestion reduction, $/yr     |                                                    |
+| $B_{congestion,lifetime,nominal}$ | Nominal lifetime benefit from congestion reduction, $ |                                                |
+| $B_{congestion,lifetime,real}$    | Real (PV) lifetime benefit from congestion reduction, $ |                                              |
+| $T_{lifetime}$                    | Project lifetime, years                            |                                                    |
+| $T_{COD}$                         | Commercial operation date (year index), years      | Sum of delay and construction years.               |
+| $r_{WACC,real}$                   | Real WACC, decimal                                 | Used to discount benefits.                         |
+
+**Equations**
+
+1. Effective relief
+
+$$
+\Delta C_{effective} = \begin{cases} \phi \times C_{new} & \text{if greenfield} \\ C_{new} - C_{old} & \text{otherwise} \end{cases}
+
+
+$$
+
+2. Annual congestion benefit
+
+$$
+B_{congestion,annual} = H \times \min(\Delta C_{effective},\, X) \times \gamma_{congestion}
+
+
+$$
+
+3. Nominal lifetime benefit
+
+$$
+B_{congestion,lifetime,nominal} = B_{congestion,annual} \times T_{lifetime}
+
+
+$$
+
+4. Present value (real) lifetime benefit
+
+$$
+B_{congestion,lifetime,PV} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{congestion,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}
+
+
+$$
+
+### Benefit of Delivered Energy
+
+The benefit of delivered energy is the societal value of the energy the project enables to be delivered each year. For greenfield, deliverable capacity equals effective capacity ($\Delta C_{effective} = \phi \times C_{new}$). For reconductoring, deliverable capacity is the additional capacity the upgrade enables ($C_{new} - C_{old}$, same as $\Delta C_{effective}$ for reconductoring), including any headroom beyond clearing the constraint. Deliverable energy per year is deliverable capacity × line utilization × hours per year (MWh/year), valued at value of load $v_{load}$ (\$/MWh). Level annual benefit from COD, discounted at real WACC. This benefit is not double-counted with congestion (congestion values constraint relief; this values throughput). The appendix is the source of truth for notation and full definitions.
+
+**Variables**
+
+| Variable | Meaning / units | Notes |
+| -------- | --------------- | ----- |
+| $\Delta C_{effective}$ | Effective capacity relief, MW | From system constraints. Greenfield: $\phi C_{new}$; reconductoring: $C_{new} - C_{old}$. |
+| $u$ | Line utilization, dimensionless | $0 \le u \le 1$. |
+| $H$ | Hours per year, h/yr | e.g. 8760. |
+| $v_{load}$ | Value of load, \$/MWh | Marginal value of energy to end-use load. From thermal loss costs section. |
+| $E_{delivered,annual}$ | Deliverable energy per year, MWh/yr | |
+| $B_{delivered,annual}$ | Annual benefit from delivered energy, \$/yr | |
+| $T_{lifetime}$ | Project lifetime, years | |
+| $T_{COD}$ | Commercial operation date (year index), years | First year of operation; benefit stream starts here. |
+| $r_{WACC,real}$ | Real WACC, decimal | Used to discount benefits. |
+| $B_{delivered,lifetime,nominal}$ | Nominal lifetime benefit from delivered energy, $ | |
+| $B_{delivered,lifetime,real}$ | Real (PV) lifetime benefit from delivered energy, $ | |
+
+**Equations**
+
+1. Deliverable energy (annual): $E_{delivered,annual} = \Delta C_{effective} \times u \times H$.
+
+2. Annual benefit: $B_{delivered,annual} = E_{delivered,annual} \times v_{load}$.
+
+3. Nominal lifetime benefit: $B_{delivered,lifetime,nominal} = B_{delivered,annual} \times T_{lifetime}$.
+
+4. Real (PV) lifetime benefit: level annual benefit from $T_{COD}$ for $T_{lifetime}$ years, discounted at $r_{WACC,real}$:
+$$
+B_{delivered,lifetime,real} = \sum_{t=0}^{T_{lifetime}-1} \frac{B_{delivered,annual}}{(1+r_{WACC,real})^{T_{COD}+t}}.
+$$
+
+---
+
+## Revenue (Benefit to Utility / Cost to Ratepayers)
+
+Revenue to the utility from rate base is a transfer: benefit to the utility = cost to ratepayers. It is not a cost or benefit to society.
+
+**Variables**
+
+| Variable           | Meaning / units                                    | Notes                                                                                                                   |
+| ------------------ | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| $RB_{nominal}$     | Nominal rate base at COD, $                        | AFUDC capital at COD. Sum of build, ROW capital, env. mitigation.                                                       |
+| $C^{cap}$          | Total capital in rate base at COD, $               | $RB_{nominal} = C^{cap}$. Same as rate base.                                                                            |
+| $C^{cap}_{build}$  | Capitalized build cost, $                          | Nominal spending capitalized to COD via AFUDC.                                                                          |
+| $C^{cap}_{ROW}$    | Capitalized ROW capital cost, $                    | Acquisition only, capitalized to COD via AFUDC. Holding is not AFUDC-eligible.                                          |
+| $C^{cap}_{envmit}$ | Capitalized environmental mitigation cost, $       | Nominal spending capitalized to COD via AFUDC.                                                                          |
+| $C^{nom}_i$        | Nominal spending (pre-AFUDC) for component $i$, $   | Same timing as for AFUDC. $C^{cap}_i = C^{nom}_i + AFUDC_i$.                                                             |
+| $\pi$              | Inflation rate, decimal                            |                                                                                                                         |
+| $RB_{real}$        | Real rate base in base-year dollars, $             | $RB_{real} = RB_{nominal}/(1+\pi)^{T_{COD}}$.                                                                           |
+| $\rho$             | Allowed return rate (real), decimal                |                                                                                                                         |
+| $R_{annual,real}$  | Annual revenue in real terms, $/yr                 |                                                                                                                         |
+| $T_{lifetime}$     | Project lifetime, years                            |                                                                                                                         |
+| $R_{total,real}$   | Total revenue over lifetime, undiscounted, real, $ | Sum of real revenue over lifetime, ignoring timing. Use for communication; not for economic comparison (no time value). |
+| $r_{WACC,real}$    | Real WACC, decimal                                 | Used to discount the revenue stream.                                                                                    |
+| $R_{PV}$           | Present value of revenue, $                        | Benefit to utility and cost to ratepayers in PV terms. Use when comparing to other PV amounts (e.g. BCR).               |
+| $T_{COD}$          | Commercial operation date (year index), years      | Years from base year to first year of operation.                                                                        |
+
+**Equations**
+
+1. Rate base (nominal at COD)
+
+$$
+RB_{nominal} = C^{cap} = C^{cap}_{build} + C^{cap}_{ROW} + C^{cap}_{envmit}.
+
+
+$$
+
+Each $C^{cap}_i$ is AFUDC capital at COD: $C^{cap}_i = C^{nom}_i + AFUDC_i$, so the sum is the rate base.
+
+2. COD (year index from base year)
+
+$$
+T_{COD} = T_{delay} + T_{construction} + 1.
+
+
+$$
+
+3. Real rate base (deflate to base year)
+
+$$
+RB_{real} = \frac{RB_{nominal}}{(1+\pi)^{T_{COD}}}.
+
+
+$$
+
+4. Real annual revenue (constant in base-year $/yr)
+
+$$
+R_{annual,real} = RB_{real} \times \rho.
+
+
+$$
+
+5. Total revenue over lifetime (real, undiscounted)
+
+$$
+R_{total,real} = R_{annual,real} \times T_{lifetime}.
+
+
+$$
+
+6. Present value of revenue (benefit to utility / cost to ratepayers)
+
+Revenue starts at $T_{COD}$ and runs for $T_{lifetime}$ years; discount at real WACC:
+
+$$
+R_{PV} = \sum_{t=0}^{T_{lifetime}-1} \frac{R_{annual,real}}{(1 + r_{WACC,real})^{T_{COD} + t}}.
+
+
+$$
+
+So $B_{utility} = R_{PV}$ and $C_{ratepayers} = B_{utility} = R_{PV}$.
+
+**Capital: utility vs society**
+
+Both use the same capital spending: same nominal amounts ($C^{nom}$ for build, ROW capital, environmental mitigation) and same timing over delay and construction.
+
+- **Utility (regulatory):** "What goes in rate base at COD?" Nominal spending is in CWIP; cost of capital on CWIP is capitalized as AFUDC (compound at nominal AFUDC rate to COD). So $C^{cap}_i = C^{nom}_i + AFUDC_i$ at COD for each of build, ROW, and env. mitigation. Rate base is $RB_{nominal} = C^{cap}_{build} + C^{cap}_{ROW} + C^{cap}_{envmit}$ — one number, at COD, in nominal (COD-year) dollars.
+- **Society:** "What is the opportunity cost in today's dollars?" Same nominal spending stream, discounted to base year at real WACC. Result: PV of capital = build_cost_pv + row_capital_pv + env_mitigation_pv. AFUDC does not appear in the societal capital cost.
+
+**Why they're consistent**
+
+1. Same inputs: same $C^{nom}_i$ and same timing for each component (build, ROW, env. mitigation).
+2. Same idea of time value: utility compounds to COD (AFUDC); society discounts to base year (real WACC).
+3. Different purpose: utility number = rate base $RB_{nominal}$; society number = PV of spending.
+
+AFUDC only affects the utility view: it is the allowance that, added to $C^{nom}_i$, gives $C^{cap}_i$ and thus $RB_{nominal}$. Same underlying spending; two consistent views. ROW AFUDC applies to acquisition only; holding is not in rate base.
+
+---
+
+## Benefit-cost ratios
+
+FORGE reports nine BCR perspectives: three core and six exclusion variants. All values are present-value. Revenue is a transfer and is excluded from the societal BCR. ATRR is the utility revenue requirement (capital recovery + O&M + insurance + ROW rent).
+
+**Core**
+
+- `bcr_societal` $= B^P / C^P$ (all benefits / all costs).
+- `bcr_utility` $= \text{ATRR} / (\text{ATRR} + C_{\text{base delay}})$.
+- `bcr_ratepayer` $= (B_{\text{remedial}} + B_{\text{enabling}}) / (\text{ATRR} + C_{\text{loss}})$. Ratepayer numerator excludes $B_{\text{avoided,emissions}}$.
+
+**Exclusion variants** (societal BCR with named terms removed)
+
+- `bcr_excl_avoided_emissions`: $(B^P - B_{\text{avoided,emissions}}) / C^P$
+- `bcr_excl_emissions_costs`: $B^P / (C^P - C_{\text{emissions}})$
+- `bcr_excl_all_emissions`: $(B^P - B_{\text{avoided,emissions}}) / (C^P - C_{\text{emissions}})$
+- `bcr_excl_outage`: $B^P / (C^P - C_{\text{outage}})$
+- `bcr_excl_wildfire`: $B^P / (C^P - C_{\text{wf}})$
+- `bcr_excl_outage_wildfire`: $B^P / (C^P - C_{\text{wf}} - C_{\text{outage}})$
+
+

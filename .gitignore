@@ -1,0 +1,127 @@
+# Server logs and generated JSON files
+server/logs/
+server/json/
+
+# Python bytecache
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.synctex(busy)
+*.fdb_latexmk
+*.fls
+*.bcf
+*.run.xml
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.idx
+*.ilg
+*.ind
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.auxlock
+
+# LaTeX generated PDFs (uncomment if you want to ignore all PDFs)
+# *.pdf
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+.curso[r]/
+*.swp
+*.swo
+*~
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+env.bak/
+venv.bak/
+.env
+.env.local
+
+# Output directories (if they contain generated files)
+outputs/
+oat_results/
+sensitivity_results/
+orgnotes/
+# Papers directory
+papers/
+
+# Root-only free-floating docs (do not track on GitHub)
+/*.tex
+/*.pdf
+/*.docx
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Temporary files
+*.tmp
+*.temp
+
+# Generated data files
+combined_data.json
+test_results.json
+testing/test_results.json
+outputs/forge_results_*.json
+outputs/json_output_*.json
+
+# Lock files
+yamls.lock
+
+# Local agent / scratch artifacts
+.superpower[s]/
+.claude/
+Generalized_FORGE_Equation.*
+Projects/

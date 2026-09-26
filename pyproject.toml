@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forge-calc"
+version = "1.0.0"
+description = "Framework for Open Reproducible Grid Economics — calculator"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0.0",
+    "pandas",
+    "numpy",
+]
+
+[project.scripts]
+forge = "forge.core:main"
+
+[tool.setuptools.packages.find]
+include = ["forge*"]
+
+[tool.setuptools.package-data]
+forge = [
+    "yamls/**/*.yaml",
+    "yamls/**/*.yml",
+    "scenarios/**/*.forge",
+    "scenarios/**/*.yaml",
+]

@@ -1,0 +1,37 @@
+# Grid mix — single-trajectory model.
+# One regional grid, starting from `initial`, evolving under two rate regimes:
+#   rate_pre_cod  — how the grid evolves WITHOUT the line (continuous from year 0)
+#   rate_post_cod — how the grid evolves WITH the line's influence (from COD onward;
+#                   also used hypothetically during the delay period)
+# See appendix sec:app-emissions-fac and sec:app-displacement for the COD handoff.
+
+grid_mix:
+  initial:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0
+
+  rate_pre_cod:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0
+
+  rate_post_cod:
+    coal: 0
+    oil: 0
+    natural_gas: 0
+    solar: 0
+    wind: 0
+    hydro: 0
+    nuclear: 0
+    other: 0

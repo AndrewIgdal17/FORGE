@@ -1,0 +1,35 @@
+# Project Technical Details
+# Core technical specifications for the transmission project
+
+project:
+  construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel, Subsea
+  ac_dc: "AC" # AC or DC
+  number_of_converters: 0 # 1 or 2
+  capacity_mw: 0 # MW
+  conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
+  converter_type: "NA" # LCC Converter or VSC Converter
+  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)
+
+  line_utilization: 0.70 # % [0,1]
+
+  value_of_load_per_mwh: 0 # $/MWh (>= 0)
+
+  project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
+  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
+  old_capacity_mw: null # MW
+  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
+  old_ac_dc: null # AC or DC
+
+  # Design comparison fields (set via Design Comparison subtab, not Project tab)
+  greenfield_comparison_capacity_mw: null
+  greenfield_comparison_conductor_type: null
+
+timeline:
+  construction_years: 1 # years (> 0)
+  delay_years: 0 # years (>= 0)
+  project_lifetime: 40 # years (> 0)
+
+
+### DEFINITIONS:
+# 1) Electricity price: $/MWh
+#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.
