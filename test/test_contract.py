@@ -3,7 +3,10 @@ import json
 import math
 from pathlib import Path
 
+import pytest
+
 import forge
+import forge.contract
 from forge.contract import canonical_dumps
 from forge.errors import UnknownInputPath
 
@@ -93,6 +96,28 @@ def _assert_present_leaves_match(template_node, resolved_node, input_node):
             _assert_present_leaves_match(child, resolved_node[index], input_node[index])
         return
     assert forge.canonical_dumps(resolved_node) == forge.canonical_dumps(input_node)
+
+
+def test_diff_changes_raises_on_present_value_type_mismatches(monkeypatch):
+    tiny_template = {
+        "section": {
+            "nested": {"leaf": 1},
+            "items": [1, 2],
+        }
+    }
+    monkeypatch.setattr(forge.contract, "get_defaults_template", lambda: tiny_template)
+
+    with pytest.raises(UnknownInputPath) as exc:
+        forge.diff_changes({"section": {"nested": 5, "items": [1, 2]}})
+    assert exc.value.paths == ["section.nested"]
+
+    with pytest.raises(UnknownInputPath) as exc:
+        forge.diff_changes({"section": {"nested": {"leaf": 1}, "items": "oops"}})
+    assert exc.value.paths == ["section.items"]
+
+    with pytest.raises(UnknownInputPath) as exc:
+        forge.diff_changes({"section": {"nested": {"leaf": 1}, "items": [1]}})
+    assert exc.value.paths == ["section.items"]
 
 
 def test_each_case_study_round_trips_through_changes():
