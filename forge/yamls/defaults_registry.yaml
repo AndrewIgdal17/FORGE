@@ -195,6 +195,11 @@ hard_costs:
 
   # --- ROW Acquisition ---
   row:
+    # Note: the 0.10 hold-cost ratio is not a template leaf and has no entry
+    # here. The template stores each zone's hold cost directly
+    # (hold_cost_per_acre_yr below); the registry only points at template
+    # nodes, so a ratio that is never read at runtime isn't registered.
+
     # BLM Per-Acre Linear Rent Schedule (15 zones, CY 2026 deflated to 2025$)
     blm_zone_1:
       acquisition_cost_per_acre: 299
