@@ -120,6 +120,15 @@ def test_diff_changes_raises_on_present_value_type_mismatches(monkeypatch):
     assert exc.value.paths == ["section.items"]
 
 
+def test_grid_mix_presets_exclude_the_false_default():
+    presets = forge.get_grid_mix_presets()
+    ids = [item["id"] for item in presets]
+    assert ids == ["illustrative_high_renewables"]
+    mix = presets[0]["grid_mix"]["initial"]
+    assert set(mix) == {"coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other"}
+    assert abs(sum(mix.values()) - 100) < 1e-9
+
+
 def test_each_case_study_round_trips_through_changes():
     template = forge.get_defaults_template()
     scenarios = Path(forge.get_scenarios_path())

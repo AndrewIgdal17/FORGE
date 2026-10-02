@@ -25,4 +25,5 @@ forge = [
     "yamls/**/*.yml",
     "scenarios/**/*.forge",
     "scenarios/**/*.yaml",
+    "presets/**/*.yaml",
 ]
