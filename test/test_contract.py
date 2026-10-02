@@ -1,5 +1,8 @@
+import math
+
 import forge
 from forge.contract import canonical_dumps
+from forge.errors import UnknownInputPath
 
 
 def test_defaults_id_is_stable_and_skips_the_registry():
@@ -29,3 +32,23 @@ def test_template_has_the_missing_leaves():
     fields = input_metadata_to_dict()
     premium = next(field for field in fields if field["id"] == "insurance_premium_rate")
     assert premium["field_path"] == "insurance.premium_rate_default"
+
+
+def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
+    assert forge.resolve_inputs({}) == forge.get_defaults_template()
+    resolved = forge.resolve_inputs({
+        "01_project_technical_details.project.capacity_mw": 1792,
+        "07_outage_costs.outage.value_of_lost_load.tiers[9].max_hours": "Infinity",
+    })
+    assert resolved["01_project_technical_details"]["project"]["capacity_mw"] == 1792
+    assert math.isinf(resolved["07_outage_costs"]["outage"]["value_of_lost_load"]["tiers"][9]["max_hours"])
+    try:
+        forge.resolve_inputs({
+            "no.such.path": 1,
+            "01_project_technical_details.project.capacity_mw": {"nested": True},
+        })
+    except UnknownInputPath as exc:
+        assert "no.such.path" in exc.paths
+        assert "01_project_technical_details.project.capacity_mw" in exc.paths
+    else:
+        raise AssertionError("expected UnknownInputPath")
