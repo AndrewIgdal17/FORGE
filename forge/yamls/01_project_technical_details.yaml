@@ -19,6 +19,7 @@ project:
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   old_ac_dc: null # AC or DC
+  old_converter_type: null
 
   # Design comparison fields (set via Design Comparison subtab, not Project tab)
   greenfield_comparison_capacity_mw: null
