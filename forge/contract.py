@@ -23,6 +23,8 @@ def _encode(value: Any) -> Any:
         return [_encode(item) for item in value]
     if isinstance(value, float) and math.isinf(value):
         return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, float) and math.isnan(value):
+        return "NaN"
     return value
 
 
@@ -86,6 +88,8 @@ def _decode(value: Any) -> Any:
         return float("inf")
     if value == "-Infinity":
         return float("-inf")
+    if value == "NaN":
+        return float("nan")
     return value
 
 

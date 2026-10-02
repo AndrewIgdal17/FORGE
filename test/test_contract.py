@@ -21,6 +21,7 @@ def test_defaults_id_is_stable_and_skips_the_registry():
     assert "project_category_template" not in template
     assert canonical_dumps(float("inf")) == '"Infinity"'
     assert canonical_dumps(float("-inf")) == '"-Infinity"'
+    assert canonical_dumps(float("nan")) == '"NaN"'
 
 
 def test_template_has_the_missing_leaves():
@@ -45,9 +46,11 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
     resolved = forge.resolve_inputs({
         "01_project_technical_details.project.capacity_mw": 1792,
         "07_outage_costs.outage.value_of_lost_load.tiers[9].max_hours": "Infinity",
+        "01_project_technical_details.project.old_converter_type": "NaN",
     })
     assert resolved["01_project_technical_details"]["project"]["capacity_mw"] == 1792
     assert math.isinf(resolved["07_outage_costs"]["outage"]["value_of_lost_load"]["tiers"][9]["max_hours"])
+    assert math.isnan(resolved["01_project_technical_details"]["project"]["old_converter_type"])
     try:
         forge.resolve_inputs({
             "no.such.path": 1,
