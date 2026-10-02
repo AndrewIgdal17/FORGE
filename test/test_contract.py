@@ -1,3 +1,4 @@
+import hashlib
 import math
 
 import forge
@@ -52,3 +53,18 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
         assert "01_project_technical_details.project.capacity_mw" in exc.paths
     else:
         raise AssertionError("expected UnknownInputPath")
+
+
+def test_calculator_info_and_provenance():
+    info = forge.calculator_info()
+    assert info["package"] == "forge-calc"
+    assert info["version"]
+    assert info["defaults_id"] == forge.get_defaults_id()
+    assert "commit" in info
+    inputs = forge.resolve_inputs({"01_project_technical_details.project.capacity_mw": 1792})
+    results = forge.run_calculation(inputs, scenario_id="prov-test")
+    provenance = results["provenance"]
+    assert provenance["defaults_id"] == info["defaults_id"]
+    assert provenance["inputs_id"] == "sha256:" + hashlib.sha256(
+        canonical_dumps(inputs).encode("utf-8")
+    ).hexdigest()

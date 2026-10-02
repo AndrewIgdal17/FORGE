@@ -6,6 +6,7 @@ import json
 import math
 import re
 from collections.abc import Mapping
+from importlib.metadata import PackageNotFoundError, distribution, version
 from typing import Any
 
 from forge.data import get_defaults_template
@@ -37,6 +38,27 @@ def canonical_dumps(value: Any) -> str:
 def get_defaults_id() -> str:
     digest = hashlib.sha256(canonical_dumps(get_defaults_template()).encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
+
+
+def calculator_info() -> dict:
+    try:
+        package_version = version("forge-calc")
+    except PackageNotFoundError:
+        package_version = "0.0.0"
+    commit = None
+    try:
+        raw = distribution("forge-calc").read_text("direct_url.json")
+    except (PackageNotFoundError, FileNotFoundError):
+        raw = None
+    if raw:
+        url_info = json.loads(raw)
+        commit = (url_info.get("vcs_info") or {}).get("commit_id")
+    return {
+        "package": "forge-calc",
+        "version": package_version,
+        "commit": commit,
+        "defaults_id": get_defaults_id(),
+    }
 
 
 def _walk(root: dict, path: str):

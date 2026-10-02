@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib
 import shutil
 import sys
@@ -20,6 +21,7 @@ from datetime import datetime
 
 import yaml
 
+from forge.contract import calculator_info, canonical_dumps
 from forge.scripts.io.csv_output_manager import BATCH_SUMMARY_FIELDS
 from forge.scripts.utils.run_context import (
     set_output_manager, get_output_manager, clear_output_manager,
@@ -476,6 +478,12 @@ def run_calculation(
             if failed_scripts:
                 results["_warnings"] = [f"Module failed: {s}" for s in failed_scripts]
                 results["_partial"] = True
+
+            provenance = calculator_info()
+            provenance["inputs_id"] = "sha256:" + hashlib.sha256(
+                canonical_dumps(combined_data).encode("utf-8")
+            ).hexdigest()
+            results["provenance"] = provenance
 
             return results
 
