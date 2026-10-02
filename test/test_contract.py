@@ -1,5 +1,7 @@
 import hashlib
+import json
 import math
+from pathlib import Path
 
 import forge
 from forge.contract import canonical_dumps
@@ -68,3 +70,39 @@ def test_calculator_info_and_provenance():
     assert provenance["inputs_id"] == "sha256:" + hashlib.sha256(
         canonical_dumps(inputs).encode("utf-8")
     ).hexdigest()
+
+
+def _assert_present_leaves_match(template_node, resolved_node, input_node):
+    """Compare resolved_node against input_node for every leaf present in input_node.
+
+    Walks template_node to find the shape. A key/index missing from input_node
+    (template default was used, no case-study value to check) is skipped. A
+    whole missing dict or list is skipped entirely.
+    """
+    if isinstance(template_node, dict):
+        if not isinstance(input_node, dict):
+            return
+        for key, child in template_node.items():
+            if key in input_node:
+                _assert_present_leaves_match(child, resolved_node[key], input_node[key])
+        return
+    if isinstance(template_node, list):
+        if not isinstance(input_node, list) or len(input_node) != len(template_node):
+            return
+        for index, child in enumerate(template_node):
+            _assert_present_leaves_match(child, resolved_node[index], input_node[index])
+        return
+    assert forge.canonical_dumps(resolved_node) == forge.canonical_dumps(input_node)
+
+
+def test_each_case_study_round_trips_through_changes():
+    template = forge.get_defaults_template()
+    scenarios = Path(forge.get_scenarios_path())
+    names = sorted(path.name for path in scenarios.glob("*.forge"))
+    assert len(names) == 8
+    for name in names:
+        document = json.loads((scenarios / name).read_text())
+        inputs = document["inputs"]
+        changes = forge.diff_changes(inputs)
+        resolved = forge.resolve_inputs(changes)
+        _assert_present_leaves_match(template, resolved, inputs)

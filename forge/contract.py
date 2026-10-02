@@ -109,3 +109,42 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     if bad:
         raise UnknownInputPath(bad)
     return resolved
+
+
+_MISSING = object()
+
+
+def diff_changes(full_inputs: Mapping) -> dict[str, Any]:
+    """Diff a full input document down to the leaves that differ from the template.
+
+    A template key absent from ``full_inputs`` (at any depth, including a whole
+    missing dict or list) means "use the template default": no change is
+    recorded and no error is raised. A document key with no template slot is
+    ignored, including nested keys, matching the template's own extra-key
+    behavior. ``UnknownInputPath`` is only raised when a present value sits
+    where the template expects a dict or list, or a list's length differs.
+    """
+    template = get_defaults_template()
+    changes: dict[str, Any] = {}
+
+    def walk(template_node, input_node, prefix: str) -> None:
+        if input_node is _MISSING:
+            return
+        if isinstance(template_node, dict):
+            if not isinstance(input_node, dict):
+                raise UnknownInputPath([prefix])
+            for key, child in template_node.items():
+                path = f"{prefix}.{key}" if prefix else key
+                walk(child, input_node.get(key, _MISSING), path)
+            return
+        if isinstance(template_node, list):
+            if not isinstance(input_node, list) or len(input_node) != len(template_node):
+                raise UnknownInputPath([prefix])
+            for index, child in enumerate(template_node):
+                walk(child, input_node[index], f"{prefix}[{index}]")
+            return
+        if canonical_dumps(template_node) != canonical_dumps(input_node):
+            changes[prefix] = _encode(input_node)
+
+    walk(template, full_inputs, "")
+    return changes
