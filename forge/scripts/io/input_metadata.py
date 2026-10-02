@@ -419,7 +419,7 @@ _TAB4.append(_f(
 
 _TAB5: list[InputField] = [
     _f("insurance_premium_rate", taxonomy_id="insurance", input_tab="operating",
-       yaml_section="04_insurance", field_path="insurance.premium_rate",
+       yaml_section="04_insurance", field_path="insurance.premium_rate_default",
        label="Premium Rate", help_text="Annual insurance premium as % of insurable value",
        input_type="percent", condition="always_hidden", tier="working", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.001, "pct": True},

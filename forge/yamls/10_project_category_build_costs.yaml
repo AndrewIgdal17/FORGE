@@ -1019,3 +1019,9 @@ project_categories_build_costs:
     fixed_conductor_cost: 54768435
     variable_structure_cost_per_mile: 0
     fixed_converter_cost: 642127617
+
+overrides:
+  variable_conductor_cost_per_mile: null
+  fixed_conductor_cost: null
+  variable_structure_cost_per_mile: null
+  fixed_converter_cost: null

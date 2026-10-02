@@ -2,6 +2,9 @@
 
 from forge.core import run_calculation, write_final_json_output, main, _bootstrap_run_context
 from forge.data import get_yamls_path, get_scenarios_path, get_defaults_template
+from forge.contract import calculator_info, canonical_dumps, diff_changes, get_defaults_id, resolve_inputs
+from forge.errors import UnknownInputPath
+from forge.presets import get_grid_mix_presets
 
 __all__ = [
     "run_calculation",
@@ -11,4 +14,11 @@ __all__ = [
     "get_yamls_path",
     "get_scenarios_path",
     "get_defaults_template",
+    "canonical_dumps",
+    "get_defaults_id",
+    "resolve_inputs",
+    "diff_changes",
+    "calculator_info",
+    "get_grid_mix_presets",
+    "UnknownInputPath",
 ]

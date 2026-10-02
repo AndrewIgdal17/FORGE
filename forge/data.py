@@ -16,15 +16,17 @@ def get_scenarios_path() -> Path:
     return Path(str(files("forge") / "scenarios"))
 
 
+_SKIP_STEMS = {"project_category_template", "defaults_registry"}
+
+
 def get_defaults_template() -> dict[str, Any]:
     """Load and merge all YAML templates into a combined defaults dict."""
     import yaml
 
     combined: dict[str, Any] = {}
-    yamls_dir = get_yamls_path()
-    for yaml_file in sorted(yamls_dir.glob("*.yaml")):
-        if yaml_file.stem == "project_category_template":
+    for yaml_file in sorted(get_yamls_path().glob("*.yaml")):
+        if yaml_file.stem in _SKIP_STEMS:
             continue
-        with yaml_file.open() as f:
-            combined[yaml_file.stem] = yaml.safe_load(f)
+        with yaml_file.open() as handle:
+            combined[yaml_file.stem] = yaml.safe_load(handle)
     return combined
