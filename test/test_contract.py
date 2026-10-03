@@ -7,8 +7,70 @@ import pytest
 
 import forge
 import forge.contract
-from forge.contract import canonical_dumps
+from forge.contract import canonical_dumps, validate_changes
 from forge.errors import UnknownInputPath
+
+
+def test_validate_changes_catches_bad_values():
+    errors = validate_changes({
+        "01_project_technical_details.project.capacity_mw": "not a number",
+        "01_project_technical_details.project.capacity_mw": -100,
+    })
+    assert len(errors) >= 1
+    assert all("path" in e and "message" in e for e in errors)
+
+    errors = validate_changes({
+        "01_project_technical_details.project.construction_type": "InvalidType",
+    })
+    assert len(errors) == 1
+    assert "InvalidType" in errors[0]["message"] or "options" in errors[0]["message"]
+
+    # A string over 200 characters
+    errors = validate_changes({
+        "01_project_technical_details.project.construction_type": "x" * 201,
+    })
+    assert len(errors) == 1
+
+    # Valid changes pass
+    errors = validate_changes({
+        "01_project_technical_details.project.capacity_mw": 500,
+    })
+    assert errors == []
+
+
+def test_resolve_inputs_calls_validate():
+    import forge
+    from forge.errors import UnknownInputPath
+    try:
+        forge.resolve_inputs({"01_project_technical_details.project.capacity_mw": "bad"})
+    except UnknownInputPath:
+        pass  # resolve_inputs should raise when validate returns errors
+    else:
+        raise AssertionError("expected UnknownInputPath for invalid value type")
+
+
+def test_validate_changes_rejects_null_on_an_unknown_path():
+    errors = validate_changes({"totally.bogus.path": None})
+    assert len(errors) == 1
+    assert errors[0]["path"] == "totally.bogus.path"
+
+
+def test_validate_changes_rejects_null_into_a_non_scalar_section():
+    errors = validate_changes({"01_project_technical_details": None})
+    assert len(errors) == 1
+
+    # A null replacing an already-null scalar leaf stays valid.
+    errors = validate_changes({
+        "01_project_technical_details.project.old_converter_type": None,
+    })
+    assert errors == []
+
+    try:
+        forge.resolve_inputs({"totally.bogus.path": None})
+    except UnknownInputPath as exc:
+        assert "totally.bogus.path" in exc.paths
+    else:
+        raise AssertionError("expected UnknownInputPath for an unknown path set to null")
 
 
 def test_defaults_id_is_stable_and_skips_the_registry():

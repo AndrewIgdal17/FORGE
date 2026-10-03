@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forge-calc"
-version = "1.1.1"
+version = "1.2.0"
 description = "Framework for Open Reproducible Grid Economics — calculator"
 requires-python = ">=3.11"
 dependencies = [
