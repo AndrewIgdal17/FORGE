@@ -6,14 +6,18 @@ import json
 import math
 import re
 from collections.abc import Mapping
+from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, distribution, version
 from typing import Any
 
 from forge.data import get_defaults_template
 from forge.errors import UnknownInputPath
+from forge.scripts.io.input_metadata import input_metadata_to_dict
 
 _INDEX = re.compile(r"\[(\d+)\]")
 _SCALAR = (int, float, str, bool, type(None))
+_MAX_STRING_LENGTH = 200
+_NUMERIC_INPUT_TYPES = ("number", "currency", "percent")
 
 
 def _encode(value: Any) -> Any:
@@ -93,25 +97,141 @@ def _decode(value: Any) -> Any:
     return value
 
 
-def resolve_inputs(changes: Mapping[str, Any]) -> dict:
-    resolved = copy.deepcopy(get_defaults_template())
-    bad: list[str] = []
-    for path, value in changes.items():
-        decoded = _decode(value)
+@lru_cache(maxsize=1)
+def _metadata_by_path() -> dict[str, dict]:
+    return {
+        f"{field['yaml_section']}.{field['field_path']}": field
+        for field in input_metadata_to_dict()
+    }
+
+
+def _check_bounds(decoded: Any, validation: dict) -> str | None:
+    minimum = validation.get("min")
+    if minimum is not None and decoded < minimum:
+        return f"{decoded} is below the minimum of {minimum}"
+    maximum = validation.get("max")
+    if maximum is not None and decoded > maximum:
+        return f"{decoded} is above the maximum of {maximum}"
+    return None
+
+
+def _validate_against_metadata(path: str, decoded: Any, field: dict, template: dict) -> str | None:
+    input_type = field.get("input_type")
+    validation = field.get("validation") or {}
+
+    leaf_is_null = False
+    try:
+        parent, key = _walk(template, path)
+        leaf_is_null = parent[key] is None
+    except KeyError:
+        pass
+
+    if input_type in _NUMERIC_INPUT_TYPES:
+        if leaf_is_null:
+            # The default is null, so metadata's declared type can't be
+            # trusted as the ground truth (e.g. design-comparison fields
+            # that hold strings but default to the generic "number" type).
+            return None
+        if not isinstance(decoded, (int, float)) or isinstance(decoded, bool):
+            return "must be a number"
+        return _check_bounds(decoded, validation)
+
+    if input_type == "toggle":
+        if leaf_is_null:
+            return None
+        if not isinstance(decoded, bool):
+            return "must be a boolean"
+        return None
+
+    if input_type in ("dropdown", "dynamic_dropdown"):
+        options = validation.get("options")
+        if options is not None:
+            if decoded not in options:
+                return f"{decoded!r} is not one of the allowed options {options}"
+            return None
+        option_sets = validation.get("optionSets") or {}
+        pooled = [item for values in option_sets.values() for item in values]
+        is_numeric_pool = pooled and all(
+            isinstance(item, (int, float)) and not isinstance(item, bool) for item in pooled
+        )
+        if is_numeric_pool:
+            # The applicable option set depends on another field (dependsOn)
+            # that may not be present in this partial change set. Fall back
+            # to a plausible-range check across all option sets combined.
+            if not isinstance(decoded, (int, float)) or isinstance(decoded, bool):
+                return "must be a number"
+            return _check_bounds(decoded, {"min": min(pooled), "max": max(pooled)})
+        # Non-numeric dependsOn options can't be validated without knowing
+        # the dependent field's value; skip the enum check in that case.
+        return None
+
+    return _check_bounds(decoded, validation)
+
+
+def _validate_against_template(path: str, decoded: Any, template: dict) -> str | None:
+    try:
+        parent, key = _walk(template, path)
+    except KeyError:
+        return "unknown input path"
+    leaf = parent[key]
+    if leaf is None:
+        return None  # any value may replace a null default
+    if isinstance(leaf, bool):
+        if not isinstance(decoded, bool):
+            return "expected a boolean"
+        return None
+    if isinstance(leaf, (int, float)):
+        if not isinstance(decoded, (int, float)) or isinstance(decoded, bool):
+            return "expected a number"
+        return None
+    if isinstance(leaf, str):
+        if not isinstance(decoded, str):
+            return "expected a string"
+        return None
+    return "does not refer to a scalar leaf"
+
+
+def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
+    """Validate proposed input changes before they are applied.
+
+    Returns a list of ``{"path": ..., "message": ...}`` entries, one per
+    invalid path. An empty list means every change is valid.
+    """
+    metadata = _metadata_by_path()
+    template = get_defaults_template()
+    errors: list[dict] = []
+    for path, raw_value in changes.items():
+        decoded = _decode(raw_value)
         if not isinstance(decoded, _SCALAR):
-            bad.append(path)
+            errors.append({"path": path, "message": "value must be a scalar (not a dict or list)"})
             continue
-        try:
-            parent, key = _walk(resolved, path)
-        except KeyError:
-            bad.append(path)
+        if decoded is None:
+            # Null always resets a field to its template default.
             continue
-        if isinstance(parent[key], (dict, list)):
-            bad.append(path)
+        if isinstance(decoded, str) and len(decoded) > _MAX_STRING_LENGTH:
+            errors.append({
+                "path": path,
+                "message": f"string exceeds {_MAX_STRING_LENGTH} characters",
+            })
             continue
-        parent[key] = decoded
-    if bad:
-        raise UnknownInputPath(bad)
+        field = metadata.get(path)
+        if field is not None:
+            message = _validate_against_metadata(path, decoded, field, template)
+        else:
+            message = _validate_against_template(path, decoded, template)
+        if message:
+            errors.append({"path": path, "message": message})
+    return errors
+
+
+def resolve_inputs(changes: Mapping[str, Any]) -> dict:
+    errors = validate_changes(changes)
+    if errors:
+        raise UnknownInputPath([error["path"] for error in errors])
+    resolved = copy.deepcopy(get_defaults_template())
+    for path, value in changes.items():
+        parent, key = _walk(resolved, path)
+        parent[key] = _decode(value)
     return resolved
 
 

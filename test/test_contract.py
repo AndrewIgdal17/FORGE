@@ -7,8 +7,46 @@ import pytest
 
 import forge
 import forge.contract
-from forge.contract import canonical_dumps
+from forge.contract import canonical_dumps, validate_changes
 from forge.errors import UnknownInputPath
+
+
+def test_validate_changes_catches_bad_values():
+    errors = validate_changes({
+        "01_project_technical_details.project.capacity_mw": "not a number",
+        "01_project_technical_details.project.capacity_mw": -100,
+    })
+    assert len(errors) >= 1
+    assert all("path" in e and "message" in e for e in errors)
+
+    errors = validate_changes({
+        "01_project_technical_details.project.construction_type": "InvalidType",
+    })
+    assert len(errors) == 1
+    assert "InvalidType" in errors[0]["message"] or "options" in errors[0]["message"]
+
+    # A string over 200 characters
+    errors = validate_changes({
+        "01_project_technical_details.project.construction_type": "x" * 201,
+    })
+    assert len(errors) == 1
+
+    # Valid changes pass
+    errors = validate_changes({
+        "01_project_technical_details.project.capacity_mw": 500,
+    })
+    assert errors == []
+
+
+def test_resolve_inputs_calls_validate():
+    import forge
+    from forge.errors import UnknownInputPath
+    try:
+        forge.resolve_inputs({"01_project_technical_details.project.capacity_mw": "bad"})
+    except UnknownInputPath:
+        pass  # resolve_inputs should raise when validate returns errors
+    else:
+        raise AssertionError("expected UnknownInputPath for invalid value type")
 
 
 def test_defaults_id_is_stable_and_skips_the_registry():
