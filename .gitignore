@@ -1,7 +1,3 @@
-# Server logs and generated JSON files
-server/logs/
-server/json/
-
 # Python bytecache
 __pycache__/
 *.pyc
@@ -113,7 +109,6 @@ papers/
 # Generated data files
 combined_data.json
 test_results.json
-testing/test_results.json
 outputs/forge_results_*.json
 outputs/json_output_*.json
 

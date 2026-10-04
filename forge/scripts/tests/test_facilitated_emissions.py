@@ -93,7 +93,7 @@ def test_hand_calculated():
         print("  FAIL displacement should be positive (cleaner with-line trajectory)")
         ok = False
 
-    return ok
+    assert ok
 
 def test_zero_displacement():
     """Test 2: identical rate_pre_cod/rate_post_cod -> displacement exactly 0.
@@ -122,7 +122,7 @@ def test_zero_displacement():
     ok &= assert_close(r.displacement_avoided_benefit_nominal, 0.0, "displacement_nom")
     ok &= assert_close(r.fac_emissions_project_pv, r.fac_emissions_noline_pv, "withline_pv == noline_pv")
 
-    return ok
+    assert ok
 
 def test_discount_sanity():
     """Test 3: with positive discount rate, PV < nominal; displacement positive."""
@@ -160,7 +160,7 @@ def test_discount_sanity():
     else:
         print(f"  OK   displacement positive: ${r.displacement_avoided_benefit_pv:.2f}")
 
-    return ok
+    assert ok
 
 def test_cod_handoff():
     """Test 4: with a nonzero rate_pre_cod, delay changes the COD starting point.
@@ -197,22 +197,26 @@ def test_cod_handoff():
             f"{r_delay.fac_emissions_noline_pv:.2f} (12yr COD)"
         )
 
-    return ok
+    assert ok
 
 def main():
-    results = []
-    results.append(("Hand-calculated", test_hand_calculated()))
-    results.append(("Zero displacement", test_zero_displacement()))
-    results.append(("Discount sanity", test_discount_sanity()))
-    results.append(("COD handoff", test_cod_handoff()))
+    tests = [
+        ("Hand-calculated", test_hand_calculated),
+        ("Zero displacement", test_zero_displacement),
+        ("Discount sanity", test_discount_sanity),
+        ("COD handoff", test_cod_handoff),
+    ]
 
     print("\n" + "=" * 50)
     all_pass = True
-    for name, passed in results:
-        status = "PASS" if passed else "FAIL"
-        print(f"  {status}: {name}")
-        if not passed:
+    for name, fn in tests:
+        try:
+            fn()
+        except AssertionError:
+            print(f"  FAIL: {name}")
             all_pass = False
+        else:
+            print(f"  PASS: {name}")
 
     if all_pass:
         print("\nAll tests passed.")

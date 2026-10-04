@@ -9,8 +9,8 @@ description = "Framework for Open Reproducible Grid Economics — calculator"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0.0",
-    "pandas",
-    "numpy",
+    "pandas>=3",
+    "numpy>=2",
 ]
 
 [project.optional-dependencies]
@@ -30,3 +30,7 @@ forge = [
     "scenarios/**/*.yaml",
     "presets/**/*.yaml",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["test", "forge/scripts/tests"]
+filterwarnings = ["error::pytest.PytestReturnNotNoneWarning"]
