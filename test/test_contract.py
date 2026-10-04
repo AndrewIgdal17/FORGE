@@ -125,6 +125,23 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
         raise AssertionError("expected UnknownInputPath")
 
 
+def test_run_calculation_does_not_reread_bundled_yaml(monkeypatch):
+    inputs = forge.resolve_inputs({
+        "01_project_technical_details.project.capacity_mw": 1792,
+    })
+    opened: list[str] = []
+    real_open = Path.open
+
+    def tracking_open(self, *args, **kwargs):
+        opened.append(str(self))
+        return real_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", tracking_open)
+    forge.run_calculation(inputs, scenario_id="no-yaml-reread")
+    yaml_reads = [path for path in opened if path.endswith((".yaml", ".yml"))]
+    assert yaml_reads == []
+
+
 def test_calculator_info_and_provenance():
     info = forge.calculator_info()
     assert info["package"] == "forge-calc"

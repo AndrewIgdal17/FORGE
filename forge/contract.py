@@ -41,9 +41,18 @@ def canonical_dumps(value: Any) -> str:
     )
 
 
-def get_defaults_id() -> str:
+def _compute_defaults_id() -> str:
     digest = hashlib.sha256(canonical_dumps(get_defaults_template()).encode("utf-8")).hexdigest()
     return f"sha256:{digest}"
+
+
+# Bundled YAML is package data and does not change during a process.
+# Hash it at import so calculator_info() does not reread every template.
+_DEFAULTS_ID = _compute_defaults_id()
+
+
+def get_defaults_id() -> str:
+    return _DEFAULTS_ID
 
 
 def calculator_info() -> dict:
