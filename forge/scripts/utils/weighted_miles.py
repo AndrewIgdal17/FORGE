@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 import pandas as pd
-import yaml
 import numpy as np
 import argparse
 from typing import Tuple
-from .path_config import YAMLS_DIR
+from forge.scripts.utils.inputs import section
 from .run_context import get_run_context
 
 
@@ -27,20 +26,9 @@ def calculate_weighted_miles() -> Tuple[float, float]:
     if ctx is not None:
         return ctx.weighted_miles, ctx.average_terrain_multiplier
 
-    # From yaml 02_project_physical_details.yaml, get the miles of the transmission line in each terrain type
-    try:
-        with open(
-            YAMLS_DIR / "02_project_physical_details.yaml", "r"
-        ) as project_physical_details_file:
-            project_physical_details_df = yaml.safe_load(project_physical_details_file)
-        if not project_physical_details_df:
-            raise ValueError("Physical details YAML file is empty or invalid")
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing physical details YAML: {e}")
+    project_physical_details_df = section("02_project_physical_details")
+    if not project_physical_details_df:
+        raise ValueError("Physical details YAML file is empty or invalid")
 
     # terrain_miles and terrain_multipliers are in project_physical_details_df, both contained under terrain.
     # To get weighted miles, multiply terrain_miles[terrain_type] by terrain_multipliers[terrain_type]

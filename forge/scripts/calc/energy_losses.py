@@ -17,7 +17,6 @@ from forge.scripts.utils.calculation_utils import (
     calculate_converter_losses,
     to_percent,
 )
-from forge.scripts.utils.path_config import YAMLS_DIR
 from forge.scripts.utils.run_context import get_run_context
 
 def get_total_energy_losses() -> dict:

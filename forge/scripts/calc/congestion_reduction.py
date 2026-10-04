@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pandas as pd
-import yaml
 import numpy as np
 import argparse
 import math
@@ -360,12 +359,8 @@ def main() -> None:
     # ========================================================================
     # Capacity value benefit
     # ========================================================================
-    from forge.scripts.utils.path_config import YAMLS_DIR
-    cap_yaml_path = YAMLS_DIR / "20_capacity_value.yaml"
-    cap_params: dict = {}
-    if cap_yaml_path.exists():
-        with open(cap_yaml_path) as _f:
-            cap_params = yaml.safe_load(_f) or {}
+    from forge.scripts.utils.run_context import get_run_state
+    cap_params = get_run_state().inputs.get("20_capacity_value") or {}
 
     cap_results = calculate_capacity_value_benefit(
         delta_c_effective=delta_c_effective,

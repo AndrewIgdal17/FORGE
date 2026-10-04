@@ -20,7 +20,6 @@ from forge.scripts.utils.smart_loaders import (
 from forge.scripts.utils.financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
-from forge.scripts.utils.path_config import YAMLS_DIR
 from forge.scripts.utils.run_context import get_run_context
 
 def calculate_insurance_costs(

@@ -21,7 +21,7 @@ class SmartOutputManager:
     """
 
     def __init__(self):
-        """Initialize: use shared output manager if set, else JSONOutputManager."""
+        """Initialize from the shared output manager on the active run."""
         self.output_mode = "json"
         self.script_name = None
         self._using_shared = False
@@ -32,9 +32,9 @@ class SmartOutputManager:
             self._using_shared = True
             return
 
-        from forge.scripts.io.json_output_manager import JSONOutputManager
-        scenario_id = os.environ.get('FORGE_SCENARIO_ID', 'default')
-        self._manager = JSONOutputManager(scenario_id=scenario_id)
+        raise RuntimeError(
+            "No shared output manager set. Modules must run inside run_calculation()."
+        )
 
     def write_batch_summary(self):
         """

@@ -1,14 +1,19 @@
-"""Shared RunContext bootstrap must live in one helper used by both entry points."""
+"""Shared RunContext bootstrap must live in one helper used by run_calculation."""
 import inspect
 from types import SimpleNamespace
 
 import pytest
 
-from forge.scripts.utils.run_context import clear_run_context, get_run_context
+from forge.scripts.utils.run_context import (
+    RunState,
+    get_run_context,
+    reset_run_state,
+    set_run_state,
+)
 
 
 def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
-    from forge import _bootstrap_run_context
+    from forge.core import _bootstrap_run_context
 
     project = SimpleNamespace(
         number_of_converters=2,
@@ -69,7 +74,8 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         lambda delay: 2027.0,
     )
 
-    clear_run_context()
+    state = RunState(inputs={}, scenario_id="test")
+    token = set_run_state(state)
     try:
         ctx = _bootstrap_run_context()
         assert ctx is get_run_context()
@@ -101,11 +107,11 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         assert derived["contingencies"] == contingencies
         assert derived["total_miles"] == 15.0
     finally:
-        clear_run_context()
+        reset_run_state(token)
 
 
 def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
-    from forge import _bootstrap_run_context
+    from forge.core import _bootstrap_run_context
 
     project = SimpleNamespace(
         number_of_converters=0,
@@ -117,24 +123,21 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
         "forge.scripts.io.yaml_loaders.load_project_technical_details", lambda: project
     )
 
-    clear_run_context()
+    state = RunState(inputs={}, scenario_id="test")
+    token = set_run_state(state)
     try:
         with pytest.raises(ValueError, match="capacity_mw is required and must be > 0"):
             _bootstrap_run_context()
     finally:
-        clear_run_context()
+        reset_run_state(token)
 
 
 def test_run_calculation_and_main_share_bootstrap():
     import forge
 
-    helper_src = inspect.getsource(forge._bootstrap_run_context)
-    assert "set_run_context(" in helper_src
-    assert "add_derived(" in helper_src
+    # main() calls run_calculation(), which calls _bootstrap_run_context()
+    rc_src = inspect.getsource(forge.run_calculation)
+    assert "_bootstrap_run_context()" in rc_src
 
-    for fn in (forge.run_calculation, forge.main):
-        src = inspect.getsource(fn)
-        assert "_bootstrap_run_context()" in src
-        assert "load_project_technical_details()" not in src
-        assert "set_run_context(RunContext(" not in src
-        assert "add_derived({" not in src
+    main_src = inspect.getsource(forge.main)
+    assert "run_calculation(" in main_src

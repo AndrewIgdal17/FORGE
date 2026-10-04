@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
+import copy
 import logging
-import yaml
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
-from forge.scripts.utils.path_config import YAMLS_DIR
+from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
 from forge.scripts.utils.calculation_utils import normalize_capacity_mw
 from forge.scripts.utils.financial_utils import calculate_real_wacc, get_wacc_nominal
@@ -94,8 +94,7 @@ def load_financing_details() -> FinancingDetails:
     if ctx is not None:
         return ctx.financing
     try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
+        financing_data = section("03_financing")
         if not financing_data:
             raise ValueError("Financing YAML file is empty or invalid")
         if "financial" not in financing_data:
@@ -118,12 +117,6 @@ def load_financing_details() -> FinancingDetails:
             wacc_nominal=wacc_nominal,
             wacc_real=wacc_real,
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
@@ -154,8 +147,7 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
     if ctx is not None:
         return ctx.project_details
     try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as file:
-            project_details = yaml.safe_load(file)
+        project_details = section("01_project_technical_details")
         if not project_details:
             raise ValueError("Project technical details YAML file is empty or invalid")
         if "project" not in project_details:
@@ -245,12 +237,6 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             number_of_converters=n_conv,
             row_agreement_type=row_agreement_type,
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in project technical details YAML: {e}")
 
@@ -261,8 +247,7 @@ def load_physical_details() -> float:
     if ctx is not None:
         return ctx.total_miles
     try:
-        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
-            physical_details = yaml.safe_load(file)
+        physical_details = section("02_project_physical_details")
         if not physical_details:
             raise ValueError("Physical details YAML file is empty or invalid")
         if "terrain" not in physical_details:
@@ -274,12 +259,6 @@ def load_physical_details() -> float:
         terrain_miles = physical_details["terrain"]["terrain_miles"]
         # Handle None values by treating them as 0
         return sum(v if v is not None else 0 for v in terrain_miles.values())
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing physical details YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in physical details YAML: {e}")
 
@@ -289,10 +268,7 @@ def load_circuit_and_resistance_details(
 ) -> CircuitAndResistanceDetails:
     """Load circuit and resistance details for specified category."""
     try:
-        with open(
-            YAMLS_DIR / "21_project_category_circuit_and_resistance_detail.yaml", "r"
-        ) as file:
-            data = yaml.safe_load(file)
+        data = section("21_project_category_circuit_and_resistance_detail")
         if not data:
             raise ValueError(
                 "Circuit and resistance details YAML file is empty or invalid"
@@ -337,12 +313,6 @@ def load_circuit_and_resistance_details(
             material=circuit_resistance_details[category]["material"],
             alpha_20=circuit_resistance_details[category]["alpha_20"],
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Circuit and resistance details YAML not found at {YAMLS_DIR / '21_project_category_circuit_and_resistance_detail.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing circuit and resistance details YAML: {e}")
     except KeyError as e:
         raise KeyError(
             f"Missing required key in circuit and resistance details YAML: {e}"
@@ -352,10 +322,9 @@ def load_circuit_and_resistance_details(
 def load_corona_kw_per_mile(voltage_kv: float) -> float:
     """Look up annual-average AC overhead corona loss (kW/mile) for a voltage class."""
     try:
-        with open(YAMLS_DIR / "22_corona_losses.yaml", "r") as file:
-            data = yaml.safe_load(file)
+        data = section("22_corona_losses")
         tiers = data["corona"]["voltage_class_tiers"]
-    except (FileNotFoundError, KeyError, TypeError) as e:
+    except (KeyError, TypeError) as e:
         raise ValueError(f"Cannot load corona loss parameters: {e}")
     for tier in tiers:
         max_kv = float("inf") if tier["max_kv"] in (".inf", None) else tier["max_kv"]
@@ -370,8 +339,7 @@ def load_row_widths(category: str) -> float:
     if ctx is not None and category == ctx.category_string:
         return ctx.row_width_feet
     try:
-        with open(YAMLS_DIR / "20_project_category_row_widths.yaml", "r") as file:
-            row_widths = yaml.safe_load(file)
+        row_widths = section("20_project_category_row_widths")
         if not row_widths:
             raise ValueError("ROW widths YAML file is empty or invalid")
         if "project_categories_row_widths" not in row_widths:
@@ -388,12 +356,6 @@ def load_row_widths(category: str) -> float:
                 f"Missing 'row_width_feet' key for category '{category}' in ROW widths YAML"
             )
         return row_widths["project_categories_row_widths"][category]["row_width_feet"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"ROW widths YAML not found at {YAMLS_DIR / '20_project_category_row_widths.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing ROW widths YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in ROW widths YAML: {e}")
 
@@ -406,34 +368,18 @@ def load_row_details() -> Dict[str, Any]:
     alongside ``right_of_way``. Callers should read it via
     ``data["row_rent_escalation_real"]`` (required key in YAML).
     """
-    try:
-        with open(YAMLS_DIR / "11_project_row_details.yaml", "r") as file:
-            row_details = yaml.safe_load(file)
-        if not row_details:
-            raise ValueError("ROW details YAML file is empty or invalid")
-        return row_details
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"ROW details YAML not found at {YAMLS_DIR / '11_project_row_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing ROW details YAML: {e}")
+    row_details = section("11_project_row_details")
+    if not row_details:
+        raise ValueError("ROW details YAML file is empty or invalid")
+    return row_details
 
 
 def load_delay_costs() -> Dict[str, Any]:
     """Load delay costs from YAML."""
-    try:
-        with open(YAMLS_DIR / "05_delays.yaml", "r") as file:
-            delay_costs = yaml.safe_load(file)
-        if not delay_costs:
-            raise ValueError("Delay costs YAML file is empty or invalid")
-        return delay_costs
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Delay costs YAML not found at {YAMLS_DIR / '05_delays.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing delay costs YAML: {e}")
+    delay_costs = section("05_delays")
+    if not delay_costs:
+        raise ValueError("Delay costs YAML file is empty or invalid")
+    return delay_costs
 
 
 def load_grid_mix() -> Dict[str, Any]:
@@ -444,11 +390,7 @@ def load_grid_mix() -> Dict[str, Any]:
     fractional annual growth/decline rates). No backward compatibility: old
     'energy_source_mix' / 'counterfactual_energy_source_mix' keys are not recognized.
     """
-    path18 = YAMLS_DIR / "18_energy_source_mix.yaml"
-    if not path18.is_file():
-        raise FileNotFoundError(f"Energy source mix YAML not found at {path18}")
-    with open(path18, "r", encoding="utf-8") as file:
-        data = yaml.safe_load(file)
+    data = section("18_energy_source_mix")
     if not data or "grid_mix" not in data:
         raise KeyError("Missing 'grid_mix' key in 18_energy_source_mix.yaml")
     grid_mix = data["grid_mix"]
@@ -468,12 +410,8 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
     (facilitated_emissions.py, displacement_delay_cost.py, emissions.py) load it and
     derive the COD-state trajectory themselves.
     """
-    path16 = YAMLS_DIR / "16_emissions_reductions.yaml"
-    if not path16.is_file():
-        raise FileNotFoundError(f"Emissions reductions YAML not found at {path16}")
     try:
-        with open(path16, "r", encoding="utf-8") as file:
-            data = yaml.safe_load(file)
+        data = section("16_emissions_reductions")
         if not data:
             raise ValueError("Emissions reductions YAML file is empty or invalid")
         if "emissions_reductions" not in data:
@@ -494,8 +432,6 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
             emissions_reductions_data["emission_intensities"],
             emissions_reductions_data["societal_costs_per_kg"],
         )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing emissions reductions YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 
@@ -507,15 +443,7 @@ def load_congestion_reductions() -> CongestionParams:
     Returns:
         CongestionParams: Dataclass containing congestion parameters
     """
-    try:
-        with open(YAMLS_DIR / "01_project_technical_details.yaml", "r") as project_file:
-            project_data = yaml.safe_load(project_file)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Project technical details YAML not found at {YAMLS_DIR / '01_project_technical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details YAML: {e}")
+    project_data = section("01_project_technical_details")
 
     if not project_data or "project" not in project_data:
         raise KeyError(
@@ -529,8 +457,8 @@ def load_congestion_reductions() -> CongestionParams:
     use_incremental = project_type in ("reconductoring", "rebuild")
 
     try:
-        with open(YAMLS_DIR / "17_congestion_reductions.yaml", "r") as file:
-            data = yaml.safe_load(file)
+        # Copy before .pop() so legacy-key cleanup does not mutate run inputs.
+        data = copy.deepcopy(section("17_congestion_reductions"))
         if not data:
             raise ValueError(
                 "Congestion reductions YAML file is empty or invalid"
@@ -577,12 +505,6 @@ def load_congestion_reductions() -> CongestionParams:
                 data["benefit_price_escalation_real"]
             ),
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Congestion reductions YAML not found at {YAMLS_DIR / '17_congestion_reductions.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing congestion reductions YAML: {e}")
     except KeyError as e:
         raise KeyError(
             f"Missing required key in congestion reductions YAML: {e}"
@@ -599,8 +521,7 @@ def load_contingencies() -> Dict[str, float]:
     if ctx is not None:
         return ctx.contingencies
     try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
+        financing_data = section("03_financing")
         if not financing_data:
             raise ValueError("Financing YAML file is empty or invalid")
         if "financial" not in financing_data:
@@ -610,12 +531,6 @@ def load_contingencies() -> Dict[str, float]:
                 "Missing 'contingencies' key in financial section of financing YAML"
             )
         return financing_data["financial"]["contingencies"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
@@ -623,8 +538,7 @@ def load_contingencies() -> Dict[str, float]:
 def load_financing_social_discount_rate() -> float:
     """Load social discount rate from financing YAML."""
     try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
+        financing_data = section("03_financing")
         if not financing_data:
             raise ValueError("Financing YAML file is empty or invalid")
         if "financial" not in financing_data:
@@ -634,12 +548,6 @@ def load_financing_social_discount_rate() -> float:
                 "Missing 'social_discount_rate' key in financial section of financing YAML"
             )
         return financing_data["financial"]["social_discount_rate"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
@@ -647,8 +555,7 @@ def load_financing_social_discount_rate() -> float:
 def load_physical_details_detailed() -> PhysicalDetailsDetailed:
     """Load physical project details - return detailed terrain breakdown."""
     try:
-        with open(YAMLS_DIR / "02_project_physical_details.yaml", "r") as file:
-            physical_details = yaml.safe_load(file)
+        physical_details = section("02_project_physical_details")
         if not physical_details:
             raise ValueError("Physical details YAML file is empty or invalid")
         if "terrain" not in physical_details:
@@ -672,53 +579,30 @@ def load_physical_details_detailed() -> PhysicalDetailsDetailed:
             mountain_miles=safe_get("mountain"),
             subsea_miles=safe_get("subsea"),
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Physical details YAML not found at {YAMLS_DIR / '02_project_physical_details.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing physical details YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in physical details YAML: {e}")
 
 
 def load_environmental_mitigation() -> Dict[str, Any]:
     """Load environmental mitigation parameters from YAML."""
-    try:
-        with open(YAMLS_DIR / "09_environmental_mitigation.yaml", "r") as file:
-            env_mitigation = yaml.safe_load(file)
-        if not env_mitigation:
-            raise ValueError("Environmental mitigation YAML file is empty or invalid")
-        return env_mitigation
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Environmental mitigation YAML not found at {YAMLS_DIR / '09_environmental_mitigation.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing environmental mitigation YAML: {e}")
+    env_mitigation = section("09_environmental_mitigation")
+    if not env_mitigation:
+        raise ValueError("Environmental mitigation YAML file is empty or invalid")
+    return env_mitigation
 
 
 def load_cost_timing_patterns() -> Dict[str, Any]:
     """Load cost timing patterns for AFUDC calculations."""
-    try:
-        with open(YAMLS_DIR / "19_cost_timing_patterns.yaml", "r") as file:
-            cost_timing = yaml.safe_load(file)
-        if not cost_timing:
-            raise ValueError("Cost timing patterns YAML file is empty or invalid")
-        return cost_timing
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Cost timing patterns YAML not found at {YAMLS_DIR / '19_cost_timing_patterns.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing cost timing patterns YAML: {e}")
+    cost_timing = section("19_cost_timing_patterns")
+    if not cost_timing:
+        raise ValueError("Cost timing patterns YAML file is empty or invalid")
+    return cost_timing
 
 
 def load_afudc_config() -> Tuple[bool, bool]:
     """Load AFUDC configuration from financing YAML."""
     try:
-        with open(YAMLS_DIR / "03_financing.yaml", "r") as file:
-            financing_data = yaml.safe_load(file)
+        financing_data = section("03_financing")
         if not financing_data:
             raise ValueError("Financing YAML file is empty or invalid")
         if "financial" not in financing_data:
@@ -728,60 +612,30 @@ def load_afudc_config() -> Tuple[bool, bool]:
             afudc_cfg.get("apply_afudc", False),
             afudc_cfg.get("delay_period_active_work", False),
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing YAML not found at {YAMLS_DIR / '03_financing.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in financing YAML: {e}")
 
 
 def load_insurance_details() -> Dict[str, Any]:
     """Load insurance parameters from YAML."""
-    try:
-        with open(YAMLS_DIR / "04_insurance.yaml", "r") as file:
-            insurance_data = yaml.safe_load(file)
-        if not insurance_data:
-            raise ValueError("Insurance YAML file is empty or invalid")
-        return insurance_data
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Insurance YAML not found at {YAMLS_DIR / '04_insurance.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing insurance YAML: {e}")
+    insurance_data = section("04_insurance")
+    if not insurance_data:
+        raise ValueError("Insurance YAML file is empty or invalid")
+    return insurance_data
 
 
 def load_wildfire_costs() -> Dict[str, Any]:
     """Load wildfire cost parameters from YAML."""
-    try:
-        with open(YAMLS_DIR / "06_wildfire_costs.yaml", "r") as file:
-            wildfire_data = yaml.safe_load(file)
-        if not wildfire_data:
-            raise ValueError("Wildfire costs YAML file is empty or invalid")
-        return wildfire_data
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Wildfire costs YAML not found at {YAMLS_DIR / '06_wildfire_costs.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing wildfire costs YAML: {e}")
+    wildfire_data = section("06_wildfire_costs")
+    if not wildfire_data:
+        raise ValueError("Wildfire costs YAML file is empty or invalid")
+    return wildfire_data
 
 
 def load_outage_costs() -> Dict[str, Any]:
     """Load outage cost parameters from YAML."""
-    try:
-        with open(YAMLS_DIR / "07_outage_costs.yaml", "r") as file:
-            outage_data = yaml.safe_load(file)
-        if not outage_data:
-            raise ValueError("Outage costs YAML file is empty or invalid")
-        return outage_data
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Outage costs YAML not found at {YAMLS_DIR / '07_outage_costs.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing outage costs YAML: {e}")
+    outage_data = section("07_outage_costs")
+    if not outage_data:
+        raise ValueError("Outage costs YAML file is empty or invalid")
+    return outage_data
 

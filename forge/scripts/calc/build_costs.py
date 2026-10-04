@@ -6,7 +6,6 @@ from __future__ import annotations
 
 # Standard library imports
 import math
-import yaml
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
@@ -28,7 +27,7 @@ from forge.scripts.utils.financial_utils import (
     calculate_construction_start_year,
 )
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
-from forge.scripts.utils.path_config import YAMLS_DIR
+from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
 
 @dataclass
@@ -72,8 +71,7 @@ def load_costs(
         selector-gated totals / `_with_contingencies` fields.
     """
     try:
-        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as file:
-            data = yaml.safe_load(file)
+        data = section("10_project_category_build_costs")
         if not data:
             raise ValueError("Build costs YAML file is empty or invalid")
         if "project_categories_build_costs" not in data:
@@ -94,12 +92,6 @@ def load_costs(
                 raise KeyError(
                     f"Missing '{key}' key for category '{category}' in build costs YAML"
                 )
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Build costs YAML not found at {YAMLS_DIR / '10_project_category_build_costs.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing build costs YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in build costs YAML: {e}")
 
@@ -199,14 +191,13 @@ def load_and_escalate_costs(
     """
     overrides = None
     try:
-        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as f:
-            raw = yaml.safe_load(f) or {}
+        raw = section("10_project_category_build_costs") or {}
         raw_ov = raw.get("overrides")
         if raw_ov and isinstance(raw_ov, dict):
             overrides = {k: v for k, v in raw_ov.items() if v is not None}
             if not overrides:
                 overrides = None
-    except (FileNotFoundError, KeyError, ValueError, yaml.YAMLError):
+    except KeyError:
         pass
 
     costs = load_costs(
@@ -260,8 +251,7 @@ def main() -> None:
     # Load user overrides from the build costs YAML (if present)
     build_cost_overrides = None
     try:
-        with open(YAMLS_DIR / "10_project_category_build_costs.yaml", "r") as f:
-            bc_data = yaml.safe_load(f) or {}
+        bc_data = section("10_project_category_build_costs") or {}
         raw_ov = bc_data.get("overrides")
         if raw_ov and isinstance(raw_ov, dict):
             build_cost_overrides = {k: v for k, v in raw_ov.items() if v is not None}

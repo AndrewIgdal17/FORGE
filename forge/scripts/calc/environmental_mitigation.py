@@ -26,7 +26,6 @@ from forge.scripts.utils.financial_utils import (
     validate_discount_rate,
     calculate_construction_start_year,
 )
-from forge.scripts.utils.path_config import YAMLS_DIR
 from forge.scripts.utils.run_context import get_run_context, add_derived
 
 def calculate_environmental_mitigation_costs(

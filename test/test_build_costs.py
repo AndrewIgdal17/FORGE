@@ -3,8 +3,10 @@ import inspect
 import textwrap
 
 import pytest
+import yaml
 
 from forge.scripts.calc.build_costs import load_costs
+from forge.scripts.utils.run_context import RunState, reset_run_state, set_run_state
 
 
 def test_load_costs_has_no_total_miles_parameter():
@@ -13,39 +15,48 @@ def test_load_costs_has_no_total_miles_parameter():
     assert "total_miles" not in params
 
 
-def _write_build_yaml(tmp_path):
-    (tmp_path / "10_project_category_build_costs.yaml").write_text(
-        textwrap.dedent(
-            """\
-            soft_cost_multiplier: 0.10
-            project_categories_build_costs:
-              test_cat:
-                variable_conductor_cost_per_mile: 1000.0
-                fixed_conductor_cost: 100.0
-                variable_structure_cost_per_mile: 500.0
-                fixed_converter_cost: 2000.0
-            """
-        )
+_BUILD_YAML = textwrap.dedent(
+    """\
+    soft_cost_multiplier: 0.10
+    project_categories_build_costs:
+      test_cat:
+        variable_conductor_cost_per_mile: 1000.0
+        fixed_conductor_cost: 100.0
+        variable_structure_cost_per_mile: 500.0
+        fixed_converter_cost: 2000.0
+    """
+)
+
+
+def _activate_build_inputs(monkeypatch, yaml_text):
+    build_data = yaml.safe_load(yaml_text)
+    state = RunState(
+        inputs={"10_project_category_build_costs": build_data},
+        scenario_id="test",
     )
-
-
-def _load(tmp_path, monkeypatch, project_type, number_of_converters):
-    _write_build_yaml(tmp_path)
-    monkeypatch.setattr("forge.scripts.calc.build_costs.YAMLS_DIR", tmp_path)
+    token = set_run_state(state)
     monkeypatch.setattr(
         "forge.scripts.calc.build_costs.calculate_weighted_miles",
         lambda: (10.0, 1.2),
     )
-    return load_costs(
-        category="test_cat",
-        number_of_converters=number_of_converters,
-        contingencies={
-            "conductor_contingency": 0.10,
-            "structure_contingency": 0.20,
-            "converter_contingency": 0.15,
-        },
-        project_type=project_type,
-    )
+    return token
+
+
+def _load(tmp_path, monkeypatch, project_type, number_of_converters):
+    token = _activate_build_inputs(monkeypatch, _BUILD_YAML)
+    try:
+        return load_costs(
+            category="test_cat",
+            number_of_converters=number_of_converters,
+            contingencies={
+                "conductor_contingency": 0.10,
+                "structure_contingency": 0.20,
+                "converter_contingency": 0.15,
+            },
+            project_type=project_type,
+        )
+    finally:
+        reset_run_state(token)
 
 
 def test_reconductoring_keeps_ungated_components_and_gates_contingencies(
@@ -110,29 +121,14 @@ class _FakeProjectDetails:
 
 
 def _patch_load_and_escalate(tmp_path, monkeypatch, delay_years=0, escalation_rate=0.0, extra_yaml=""):
-    yaml_text = textwrap.dedent(
-        """\
-        soft_cost_multiplier: 0.10
-        project_categories_build_costs:
-          test_cat:
-            variable_conductor_cost_per_mile: 1000.0
-            fixed_conductor_cost: 100.0
-            variable_structure_cost_per_mile: 500.0
-            fixed_converter_cost: 2000.0
-        """
-    ) + extra_yaml
-    (tmp_path / "10_project_category_build_costs.yaml").write_text(yaml_text)
-    monkeypatch.setattr("forge.scripts.calc.build_costs.YAMLS_DIR", tmp_path)
-    monkeypatch.setattr(
-        "forge.scripts.calc.build_costs.calculate_weighted_miles",
-        lambda: (10.0, 1.2),
-    )
+    token = _activate_build_inputs(monkeypatch, _BUILD_YAML + extra_yaml)
     monkeypatch.setattr(
         "forge.scripts.utils.smart_loaders.get_financing_data_raw",
         lambda: {"financial": {"construction_cost_escalation_rate": escalation_rate}},
     )
     details = _FakeProjectDetails()
     details.delay_years = delay_years
+    details._run_token = token
     return details
 
 
@@ -149,10 +145,13 @@ def test_load_and_escalate_costs_escalates_contingency_fields(tmp_path, monkeypa
     details = _patch_load_and_escalate(
         tmp_path, monkeypatch, delay_years=2, escalation_rate=0.05
     )
-    unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
-    escalated = load_and_escalate_costs(
-        "test_cat", 2, _CONTINGENCIES, "greenfield", details
-    )
+    try:
+        unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+        escalated = load_and_escalate_costs(
+            "test_cat", 2, _CONTINGENCIES, "greenfield", details
+        )
+    finally:
+        reset_run_state(details._run_token)
 
     factor = (1.05) ** 2
     assert escalated.conductor_cost == unescalated.conductor_cost
@@ -185,10 +184,13 @@ def test_load_and_escalate_costs_skips_escalation_when_delay_zero(tmp_path, monk
     details = _patch_load_and_escalate(
         tmp_path, monkeypatch, delay_years=0, escalation_rate=0.05
     )
-    unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
-    result = load_and_escalate_costs(
-        "test_cat", 2, _CONTINGENCIES, "greenfield", details
-    )
+    try:
+        unescalated = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+        result = load_and_escalate_costs(
+            "test_cat", 2, _CONTINGENCIES, "greenfield", details
+        )
+    finally:
+        reset_run_state(details._run_token)
     assert result.total_cost_with_contingencies == unescalated.total_cost_with_contingencies
 
 
@@ -207,29 +209,29 @@ def test_load_and_escalate_costs_applies_overrides(tmp_path, monkeypatch):
             """
         ),
     )
-    without_overrides = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
-    with_overrides = load_and_escalate_costs(
-        "test_cat", 2, _CONTINGENCIES, "greenfield", details
-    )
+    try:
+        without_overrides = load_costs("test_cat", 2, _CONTINGENCIES, "greenfield")
+        with_overrides = load_and_escalate_costs(
+            "test_cat", 2, _CONTINGENCIES, "greenfield", details
+        )
+    finally:
+        reset_run_state(details._run_token)
     assert without_overrides.converter_cost == 4_000.0
     assert with_overrides.converter_cost == 19_998.0  # 9999 * 2 converters
 
 
 def test_load_and_escalate_costs_does_not_swallow_unexpected_errors(tmp_path, monkeypatch):
-    """Override YAML I/O may skip missing files; unexpected errors must propagate."""
-    import yaml as _yaml
+    """A missing overrides key may be skipped; unexpected errors must propagate."""
     from forge.scripts.calc.build_costs import load_and_escalate_costs
 
     details = _patch_load_and_escalate(tmp_path, monkeypatch)
-    real_safe_load = _yaml.safe_load
-    calls = {"n": 0}
 
-    def _maybe_explode(stream):
-        calls["n"] += 1
-        if calls["n"] == 1:
-            raise RuntimeError("yaml exploded")
-        return real_safe_load(stream)
+    def _explode(name):
+        raise RuntimeError("section exploded")
 
-    monkeypatch.setattr("forge.scripts.calc.build_costs.yaml.safe_load", _maybe_explode)
-    with pytest.raises(RuntimeError, match="yaml exploded"):
-        load_and_escalate_costs("test_cat", 2, _CONTINGENCIES, "greenfield", details)
+    monkeypatch.setattr("forge.scripts.calc.build_costs.section", _explode)
+    try:
+        with pytest.raises(RuntimeError, match="section exploded"):
+            load_and_escalate_costs("test_cat", 2, _CONTINGENCIES, "greenfield", details)
+    finally:
+        reset_run_state(details._run_token)

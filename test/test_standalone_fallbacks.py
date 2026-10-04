@@ -3,9 +3,17 @@ import inspect
 from unittest.mock import MagicMock
 
 import pytest
+import yaml
 
+from forge.data import get_yamls_path
 from forge.scripts.calc.build_costs import BuildCosts
-from forge.scripts.utils.run_context import clear_run_context, set_run_context
+from forge.scripts.utils.run_context import (
+    RunState,
+    clear_run_context,
+    reset_run_state,
+    set_run_context,
+    set_run_state,
+)
 
 
 _FAKE_COSTS = BuildCosts(
@@ -78,10 +86,19 @@ def test_oandm_line_om_raises_without_run_context():
         )
 
 
+def _section_from_yaml(stem: str) -> dict:
+    return yaml.safe_load((get_yamls_path() / f"{stem}.yaml").read_text())
+
+
 def test_oandm_converter_reads_ctx_build_costs(monkeypatch):
     """In-pipeline RunContext.build_costs is used when present (no reload)."""
     from forge.scripts.calc import oandm
 
+    state = RunState(
+        inputs={"15_category_om_converters": _section_from_yaml("15_category_om_converters")},
+        scenario_id="test",
+    )
+    token = set_run_state(state)
     ctx = MagicMock()
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
@@ -101,12 +118,17 @@ def test_oandm_converter_reads_ctx_build_costs(monkeypatch):
         )
         assert abs(result - 10_000.0) < 1e-9
     finally:
-        clear_run_context()
+        reset_run_state(token)
 
 
 def test_oandm_line_om_reads_ctx_build_costs(monkeypatch):
     from forge.scripts.calc import oandm
 
+    state = RunState(
+        inputs={"14_category_om_structures": _section_from_yaml("14_category_om_structures")},
+        scenario_id="test",
+    )
+    token = set_run_state(state)
     ctx = MagicMock()
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
@@ -120,4 +142,4 @@ def test_oandm_line_om_reads_ctx_build_costs(monkeypatch):
         )
         assert abs(result - 37_500.0) < 1e-9
     finally:
-        clear_run_context()
+        reset_run_state(token)

@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 # Standard library imports
-import yaml
 from typing import Dict
 
 from forge.scripts.utils.smart_output import SmartOutputManager
@@ -17,11 +16,11 @@ from forge.scripts.io.yaml_loaders import (
     load_physical_details_detailed,
 )
 from forge.scripts.utils.financial_utils import calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
-from forge.scripts.utils.path_config import YAMLS_DIR
+from forge.scripts.utils.inputs import section
 from forge.scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
 from forge.scripts.utils.run_context import get_run_context, add_derived
 
-# All four O&M rate tables (12-15) read through the scenario-aware YAMLS_DIR.
+# All four O&M rate tables (12-15) read through the active run's input sections.
 # API-mode scenario customizations to conductor/structure/converter rates
 # now take effect the same way vegetation management customizations do.
 
@@ -36,8 +35,7 @@ def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, flo
         float: Variable vegetation management cost per mile per year
     """
     try:
-        with open(YAMLS_DIR / "12_project_om_vegetation_management.yaml", "r") as file:
-            data = yaml.safe_load(file)
+        data = section("12_project_om_vegetation_management")
         if not data:
             raise ValueError("Vegetation management O&M YAML file is empty or invalid")
         if "vegetation_management_om_costs" not in data:
@@ -48,12 +46,6 @@ def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, flo
                 f"Construction type '{construction_type}' not found in vegetation management O&M YAML"
             )
         return vegetation_management_om_costs[construction_type]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Vegetation management O&M YAML not found at {YAMLS_DIR / '12_project_om_vegetation_management.yaml'}"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing vegetation management O&M YAML: {e}")
     except KeyError as e:
         raise KeyError(f"Missing required key in vegetation management O&M YAML: {e}")
 
@@ -86,26 +78,20 @@ def load_converter_om_costs(
     xi_dc = 1.0 if ac_dc == "DC" else 0.0
 
     # Load converter O&M rate by technology type
-    try:
-        with open(YAMLS_DIR / "15_category_om_converters.yaml", "r") as file:
-            data = yaml.safe_load(file)
-        if not data or "converter_om_rate" not in data:
-            raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
-        rates = data["converter_om_rate"]
-        if converter_type not in rates:
-            if xi_dc == 0.0:
-                om_rate = 0.0
-            else:
-                raise KeyError(
-                    f"Converter type '{converter_type}' not found in converter_om_rate. "
-                    f"Available: {list(rates.keys())}"
-                )
+    data = section("15_category_om_converters")
+    if not data or "converter_om_rate" not in data:
+        raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
+    rates = data["converter_om_rate"]
+    if converter_type not in rates:
+        if xi_dc == 0.0:
+            om_rate = 0.0
         else:
-            om_rate = rates[converter_type]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Converter O&M YAML not found at {YAMLS_DIR / '15_category_om_converters.yaml'}"
-        )
+            raise KeyError(
+                f"Converter type '{converter_type}' not found in converter_om_rate. "
+                f"Available: {list(rates.keys())}"
+            )
+    else:
+        om_rate = rates[converter_type]
 
     return converter_capex * om_rate * xi_dc
 
@@ -126,32 +112,26 @@ def load_nonoverhead_line_om(
     Returns:
         float: Total annual line O&M cost ($/year).
     """
-    # Load O&M rate for this construction type
-    try:
-        with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
-            data = yaml.safe_load(file)
-        if not data or "project_categories_om_structures" not in data:
-            raise ValueError("Missing 'project_categories_om_structures' in structure O&M YAML")
-        entry = data["project_categories_om_structures"].get(construction_type)
-        if entry is None:
-            raise KeyError(f"Construction type '{construction_type}' not found in structure O&M YAML")
-        if "om_pct_of_line_capex" not in entry:
-            raise KeyError(
-                f"Construction type '{construction_type}' missing 'om_pct_of_line_capex' — "
-                "expected non-overhead type"
-            )
-        om_rate = entry["om_pct_of_line_capex"]
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Structure O&M YAML not found at {YAMLS_DIR / '14_category_om_structures.yaml'}"
-        )
-
     ctx = get_run_context()
     if ctx is None or ctx.build_costs is None:
         raise RuntimeError(
             f"{__name__} requires a RunContext. Run via forge.py or set up "
             "RunContext in your test fixture."
         )
+
+    data = section("14_category_om_structures")
+    if not data or "project_categories_om_structures" not in data:
+        raise ValueError("Missing 'project_categories_om_structures' in structure O&M YAML")
+    entry = data["project_categories_om_structures"].get(construction_type)
+    if entry is None:
+        raise KeyError(f"Construction type '{construction_type}' not found in structure O&M YAML")
+    if "om_pct_of_line_capex" not in entry:
+        raise KeyError(
+            f"Construction type '{construction_type}' missing 'om_pct_of_line_capex' — "
+            "expected non-overhead type"
+        )
+    om_rate = entry["om_pct_of_line_capex"]
+
     line_capex = (
         ctx.build_costs.conductor_cost_with_contingencies
         + ctx.build_costs.structure_cost_with_contingencies
@@ -175,11 +155,10 @@ def main() -> None:
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         # Overhead: base O&M rate (flat $/mile) + vegetation management (terrain-specific)
         try:
-            with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
-                struct_data = yaml.safe_load(file)
+            struct_data = section("14_category_om_structures")
             oh_entry = struct_data["project_categories_om_structures"]["Overhead"]
             base_om_per_mile_year = oh_entry["base_om_per_mile_year"]
-        except (FileNotFoundError, KeyError, TypeError) as e:
+        except (KeyError, TypeError) as e:
             raise ValueError(f"Cannot load overhead base O&M rate: {e}")
 
         om_real_escalation_rate = struct_data["om_real_escalation_rate"]
@@ -224,8 +203,7 @@ def main() -> None:
         total_vegetation_management_cost_per_year = 0.0
         structure_dict = {}
 
-        with open(YAMLS_DIR / "14_category_om_structures.yaml", "r") as file:
-            struct_data = yaml.safe_load(file)
+        struct_data = section("14_category_om_structures")
         om_real_escalation_rate = struct_data["om_real_escalation_rate"]
 
     # Calculate lifetime costs (nominal, with real escalation)

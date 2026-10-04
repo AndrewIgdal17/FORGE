@@ -1,10 +1,17 @@
-"""O&M rate tables 14/15 must follow scenario-aware YAMLS_DIR, not STATIC_YAMLS_DIR."""
+"""O&M rate tables 14/15 must follow the active run's inputs, not a static YAML dir."""
 import inspect
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import yaml
+
 from forge.scripts.calc.build_costs import BuildCosts
-from forge.scripts.utils.run_context import clear_run_context, set_run_context
+from forge.scripts.utils.run_context import (
+    RunState,
+    reset_run_state,
+    set_run_context,
+    set_run_state,
+)
 
 _FAKE_COSTS = BuildCosts(
     total_cost=0.0,
@@ -20,16 +27,16 @@ _FAKE_COSTS = BuildCosts(
 )
 
 
-def _write_converter_yaml(tmp_path: Path, vsc_rate: float) -> None:
-    (tmp_path / "15_category_om_converters.yaml").write_text(
+def _converter_inputs(vsc_rate: float) -> dict:
+    return yaml.safe_load(
         "converter_om_rate:\n"
         f"  VSC Converter: {vsc_rate}\n"
         "  LCC Converter: 0.005\n"
     )
 
 
-def _write_structure_yaml(tmp_path: Path, subsea_rate: float) -> None:
-    (tmp_path / "14_category_om_structures.yaml").write_text(
+def _structure_inputs(subsea_rate: float) -> dict:
+    return yaml.safe_load(
         "project_categories_om_structures:\n"
         "  Overhead:\n"
         "    base_om_per_mile_year: 19090\n"
@@ -39,13 +46,15 @@ def _write_structure_yaml(tmp_path: Path, subsea_rate: float) -> None:
     )
 
 
-def test_converter_om_uses_yamls_dir_not_canonical_rates(tmp_path, monkeypatch):
-    """Custom converter rates in YAMLS_DIR take effect (API-mode scenario override)."""
+def test_converter_om_uses_run_inputs_not_canonical_rates():
+    """Custom converter rates on the active run take effect."""
     from forge.scripts.calc import oandm
 
-    _write_converter_yaml(tmp_path, vsc_rate=0.01)
-    monkeypatch.setattr(oandm, "YAMLS_DIR", tmp_path)
-
+    state = RunState(
+        inputs={"15_category_om_converters": _converter_inputs(0.01)},
+        scenario_id="test",
+    )
+    token = set_run_state(state)
     ctx = MagicMock()
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
@@ -60,16 +69,18 @@ def test_converter_om_uses_yamls_dir_not_canonical_rates(tmp_path, monkeypatch):
         # 2_000_000 * 0.01 custom rate. Canonical YAML is 0.005 → 10_000.
         assert abs(result - 20_000.0) < 1e-9
     finally:
-        clear_run_context()
+        reset_run_state(token)
 
 
-def test_nonoverhead_line_om_uses_yamls_dir_not_canonical_rates(tmp_path, monkeypatch):
-    """Custom structure/line rates in YAMLS_DIR take effect (API-mode scenario override)."""
+def test_nonoverhead_line_om_uses_run_inputs_not_canonical_rates():
+    """Custom structure/line rates on the active run take effect."""
     from forge.scripts.calc import oandm
 
-    _write_structure_yaml(tmp_path, subsea_rate=0.05)
-    monkeypatch.setattr(oandm, "YAMLS_DIR", tmp_path)
-
+    state = RunState(
+        inputs={"14_category_om_structures": _structure_inputs(0.05)},
+        scenario_id="test",
+    )
+    token = set_run_state(state)
     ctx = MagicMock()
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
@@ -84,15 +95,16 @@ def test_nonoverhead_line_om_uses_yamls_dir_not_canonical_rates(tmp_path, monkey
         # (1_000_000 + 500_000) * 0.05 custom rate. Canonical YAML is 0.025 → 37_500.
         assert abs(result - 75_000.0) < 1e-9
     finally:
-        clear_run_context()
+        reset_run_state(token)
 
 
-def test_live_oandm_paths_read_yamls_dir_not_static():
-    """Remaining live O&M loaders and main() must not use STATIC_YAMLS_DIR."""
+def test_live_oandm_paths_read_section_not_static():
+    """Remaining live O&M loaders and main() must read section(), not STATIC_YAMLS_DIR."""
     from forge.scripts.calc import oandm
 
     module_source = Path(oandm.__file__).read_text()
     assert "STATIC_YAMLS_DIR" not in module_source
+    assert "YAMLS_DIR" not in module_source
 
     for fn in (
         oandm.load_vegetation_management_om_costs,
@@ -101,7 +113,8 @@ def test_live_oandm_paths_read_yamls_dir_not_static():
         oandm.main,
     ):
         source = inspect.getsource(fn)
-        assert "YAMLS_DIR" in source
+        assert "section(" in source
         assert "STATIC_YAMLS_DIR" not in source
+        assert "YAMLS_DIR" not in source
         if fn is not oandm.load_vegetation_management_om_costs:
-            assert "14_category_om_structures.yaml" in source or "15_category_om_converters.yaml" in source
+            assert "14_category_om_structures" in source or "15_category_om_converters" in source

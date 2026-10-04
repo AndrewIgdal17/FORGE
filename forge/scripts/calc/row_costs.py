@@ -33,8 +33,6 @@ from forge.scripts.utils.financial_utils import (
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
 )
-from forge.scripts.utils.path_config import YAMLS_DIR
-
 def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, float]:
     """
     Calculate right-of-way (ROW) costs aggregated across all zones.

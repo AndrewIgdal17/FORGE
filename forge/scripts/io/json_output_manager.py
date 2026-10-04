@@ -58,103 +58,85 @@ class JSONOutputManager:
         self.bcr = {}
 
     def load_technical_details(self) -> Dict[str, Any]:
-        """
-        Load technical parameters from YAML data source via smart_loaders.
+        """Load technical parameters from the active run's inputs."""
+        from forge.scripts.utils.smart_loaders import (
+            load_project_technical_details,
+            load_physical_details,
+            get_project_data_raw,
+            get_financing_data_raw,
+        )
 
-        Returns:
-            Dictionary of technical parameters
-        """
-        try:
-            from forge.scripts.utils.smart_loaders import (
-                load_project_technical_details,
-                load_physical_details,
-                get_project_data_raw,
-                get_financing_data_raw,
-            )
+        project_details = load_project_technical_details()
 
-            project_details = load_project_technical_details()
+        construction_type = project_details.construction_type
+        ac_dc = project_details.ac_dc
+        capacity_mw = project_details.capacity_mw
+        conductor_type = project_details.conductor_type
+        converter_type = project_details.converter_type
+        line_utilization = project_details.line_utilization
+        project_type = project_details.project_type
+        is_reconductoring_or_rebuild = project_type in ("reconductoring", "rebuild")
+        uses_existing_row = project_details.uses_existing_row
+        delay_years = project_details.delay_years
+        construction_years = project_details.construction_years
+        project_lifetime = project_details.project_lifetime
+        converter_loss_percentage = project_details.converter_loss_percentage
 
-            construction_type = project_details.construction_type
-            ac_dc = project_details.ac_dc
-            capacity_mw = project_details.capacity_mw
-            conductor_type = project_details.conductor_type
-            converter_type = project_details.converter_type
-            line_utilization = project_details.line_utilization
-            project_type = project_details.project_type
-            is_reconductoring_or_rebuild = project_type in ("reconductoring", "rebuild")
-            uses_existing_row = project_details.uses_existing_row
-            delay_years = project_details.delay_years
-            construction_years = project_details.construction_years
-            project_lifetime = project_details.project_lifetime
-            converter_loss_percentage = project_details.converter_loss_percentage
+        total_line_length = load_physical_details()
 
-            total_line_length = load_physical_details()
+        # Get additional details for reconductoring/rebuild
+        tech_data = get_project_data_raw()
+        project = tech_data.get("project", {})
 
-            # Get additional details for reconductoring/rebuild
-            tech_data = get_project_data_raw()
-            project = tech_data.get("project", {})
+        # Get financial parameters
+        financing_data = get_financing_data_raw()
 
-            # Get financial parameters
-            financing_data = get_financing_data_raw()
-
-            technical_details = {
-                # Project identification
-                "project_name": project.get("name", ""),
-                # Core technical specs
-                "construction_type": construction_type,
-                "ac_dc": ac_dc,
-                "capacity_mw": capacity_mw,
-                "conductor_type": conductor_type,
-                "line_length_miles": total_line_length,
-                "line_utilization": line_utilization,
-                "uses_existing_row": uses_existing_row,
-                # Converter details (for DC projects)
-                "converter_type": converter_type,
-                "number_of_converters": (
-                    project.get("number_of_converters", 0) if ac_dc == "DC" else 0
-                ),
-                "converter_loss_percentage": converter_loss_percentage,
-                # Project type / legacy reconductoring-or-rebuild details
-                "project_type": project_type,
-                "old_capacity_mw": (
-                    _require_when_reconductoring(
-                        project, "old_capacity_mw", is_reconductoring_or_rebuild, 0
-                    )
-                ),
-                "old_conductor_type": (
-                    _require_when_reconductoring(
-                        project, "old_conductor_type", is_reconductoring_or_rebuild, ""
-                    )
-                ),
-                "old_ac_dc": (
-                    _require_when_reconductoring(
-                        project, "old_ac_dc", is_reconductoring_or_rebuild, ""
-                    )
-                ),
-                # Financial parameters
-                "value_of_load_per_mwh": project.get(
-                    "value_of_load_per_mwh", 0
-                ),
-                "social_discount_rate": financing_data["financial"].get(
-                    "social_discount_rate", 0
-                ),
-                # Timeline
-                "construction_years": construction_years,
-                "delay_years": delay_years,
-                "project_lifetime_years": project_lifetime,
-            }
-
-            return technical_details
-
-        except Exception as e:
-            # Return minimal technical details if loading fails
-            return {
-                "project_name": "",
-                "construction_type": "Unknown",
-                "ac_dc": "Unknown",
-                "capacity_mw": 0,
-                "error": f"Failed to load technical details: {str(e)}",
-            }
+        return {
+            # Project identification
+            "project_name": project.get("name", ""),
+            # Core technical specs
+            "construction_type": construction_type,
+            "ac_dc": ac_dc,
+            "capacity_mw": capacity_mw,
+            "conductor_type": conductor_type,
+            "line_length_miles": total_line_length,
+            "line_utilization": line_utilization,
+            "uses_existing_row": uses_existing_row,
+            # Converter details (for DC projects)
+            "converter_type": converter_type,
+            "number_of_converters": (
+                project.get("number_of_converters", 0) if ac_dc == "DC" else 0
+            ),
+            "converter_loss_percentage": converter_loss_percentage,
+            # Project type / legacy reconductoring-or-rebuild details
+            "project_type": project_type,
+            "old_capacity_mw": (
+                _require_when_reconductoring(
+                    project, "old_capacity_mw", is_reconductoring_or_rebuild, 0
+                )
+            ),
+            "old_conductor_type": (
+                _require_when_reconductoring(
+                    project, "old_conductor_type", is_reconductoring_or_rebuild, ""
+                )
+            ),
+            "old_ac_dc": (
+                _require_when_reconductoring(
+                    project, "old_ac_dc", is_reconductoring_or_rebuild, ""
+                )
+            ),
+            # Financial parameters
+            "value_of_load_per_mwh": project.get(
+                "value_of_load_per_mwh", 0
+            ),
+            "social_discount_rate": financing_data["financial"].get(
+                "social_discount_rate", 0
+            ),
+            # Timeline
+            "construction_years": construction_years,
+            "delay_years": delay_years,
+            "project_lifetime_years": project_lifetime,
+        }
 
     def add_build_costs(self, results: Dict[str, Any]):
         """Add build cost results."""
