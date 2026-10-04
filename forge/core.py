@@ -15,6 +15,7 @@ from typing import Any
 from datetime import datetime
 
 from forge.contract import calculator_info, canonical_dumps
+from forge.errors import InvalidInputs, CalculationError
 from forge.scripts.io.csv_output_manager import BATCH_SUMMARY_FIELDS
 from forge.scripts.utils.run_context import (
     RunState,
@@ -208,7 +209,7 @@ def _bootstrap_run_context() -> "RunContext":
     project_details = load_project_technical_details()
     capacity_mw = getattr(project_details, "capacity_mw", None)
     if capacity_mw is None or capacity_mw == 0:
-        raise ValueError(
+        raise InvalidInputs(
             f"capacity_mw is required and must be > 0 (got {capacity_mw}). "
             "Set a valid line capacity in MW."
         )
@@ -313,13 +314,14 @@ def run_calculation(
             capital_only=capital_only,
         )
 
-        failed_scripts: list[str] = []
         for script in scripts:
             try:
                 mod = importlib.import_module(script)
                 mod.main()
-            except Exception:
-                failed_scripts.append(script)
+            except InvalidInputs:
+                raise
+            except Exception as exc:
+                raise CalculationError(script, exc) from exc
 
         json_results = aggregator.get_json_results()
         bcr_results = None
@@ -338,8 +340,10 @@ def run_calculation(
             bcr_results = compute_all_bcrs(taxonomy_results)
             csv_equivalent = build_csv_equivalent(json_results, bcr_results, bcr_results)
             summary_override = build_summary_from_csv_equivalent(csv_equivalent)
-        except Exception:
-            pass
+        except InvalidInputs:
+            raise
+        except Exception as exc:
+            raise CalculationError("taxonomy+bcr", exc) from exc
 
         if bcr_results:
             aggregator.add_bcr_metrics(bcr_results)
@@ -354,16 +358,17 @@ def run_calculation(
             results["taxonomy_results"] = taxonomy_results_json
 
         if results.get("bcr"):
-            from forge.scripts.calc.bcr_trajectory import compute_trajectory
-            results["trajectory"] = compute_trajectory(results, inputs)
+            try:
+                from forge.scripts.calc.bcr_trajectory import compute_trajectory
+                results["trajectory"] = compute_trajectory(results, inputs)
+            except InvalidInputs:
+                raise
+            except Exception as exc:
+                raise CalculationError("bcr_trajectory", exc) from exc
 
         ctx = get_run_context()
         if ctx is not None and ctx.derived_parameters:
             results["derived_parameters"] = ctx.derived_parameters
-
-        if failed_scripts:
-            results["_warnings"] = [f"Module failed: {s}" for s in failed_scripts]
-            results["_partial"] = True
 
         provenance = calculator_info()
         provenance["inputs_id"] = "sha256:" + hashlib.sha256(
@@ -406,18 +411,25 @@ def main() -> None:
     if not args.simple:
         print(f"\n📋 Scenario ID: {scenario_id}\n")
 
-    results = run_calculation(
-        combined_data,
-        scenario_id=scenario_id,
-        no_emissions=args.no_emissions,
-        no_linelosses=args.no_linelosses,
-        no_insurance=args.no_insurance,
-        no_delay_costs=args.no_delay_costs,
-        no_wildfire=args.no_wildfire,
-        no_outages=args.no_outages,
-        no_oandm=args.no_oandm,
-        capital_only=args.capital_only,
-    )
+    try:
+        results = run_calculation(
+            combined_data,
+            scenario_id=scenario_id,
+            no_emissions=args.no_emissions,
+            no_linelosses=args.no_linelosses,
+            no_insurance=args.no_insurance,
+            no_delay_costs=args.no_delay_costs,
+            no_wildfire=args.no_wildfire,
+            no_outages=args.no_outages,
+            no_oandm=args.no_oandm,
+            capital_only=args.capital_only,
+        )
+    except InvalidInputs as exc:
+        print(f"❌ Invalid inputs: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except CalculationError as exc:
+        print(f"❌ {exc}", file=sys.stderr)
+        sys.exit(1)
 
     if results.get("bcr") and not args.simple:
         from forge.scripts.calc.bcr_calculator import print_bcr_summary
@@ -427,9 +439,6 @@ def main() -> None:
 
     if not args.simple:
         print(f"✅ JSON results written to {output_file}")
-
-    if results.get("_partial"):
-        sys.exit(1)
 
 
 if __name__ == "__main__":

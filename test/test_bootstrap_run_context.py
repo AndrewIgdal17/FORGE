@@ -112,6 +112,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
 
 def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
     from forge.core import _bootstrap_run_context
+    from forge.errors import InvalidInputs
 
     project = SimpleNamespace(
         number_of_converters=0,
@@ -126,7 +127,7 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
     state = RunState(inputs={}, scenario_id="test")
     token = set_run_state(state)
     try:
-        with pytest.raises(ValueError, match="capacity_mw is required and must be > 0"):
+        with pytest.raises(InvalidInputs, match="capacity_mw is required and must be > 0"):
             _bootstrap_run_context()
     finally:
         reset_run_state(token)

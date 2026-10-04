@@ -10,7 +10,7 @@ from forge.contract import (
     resolve_inputs,
     validate_changes,
 )
-from forge.errors import UnknownInputPath
+from forge.errors import UnknownInputPath, InvalidInputs, CalculationError
 from forge.presets import get_grid_mix_presets
 
 __all__ = [
@@ -28,4 +28,6 @@ __all__ = [
     "calculator_info",
     "get_grid_mix_presets",
     "UnknownInputPath",
+    "InvalidInputs",
+    "CalculationError",
 ]
