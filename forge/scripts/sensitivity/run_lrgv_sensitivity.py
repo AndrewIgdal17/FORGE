@@ -37,7 +37,6 @@ def run_with_lifetime(inputs: dict, lifetime: int, scenario_id: str) -> dict:
     return run_calculation(
         combined_data=patched,
         scenario_id=f"{scenario_id}_L{lifetime}",
-        quiet=True,
     )
 
 def run_with_discount_rate(inputs: dict, rate: float, scenario_id: str) -> dict:
@@ -46,7 +45,6 @@ def run_with_discount_rate(inputs: dict, rate: float, scenario_id: str) -> dict:
     return run_calculation(
         combined_data=patched,
         scenario_id=f"{scenario_id}_dr{int(rate*100)}",
-        quiet=True,
     )
 
 def fmt(val, prefix="$"):

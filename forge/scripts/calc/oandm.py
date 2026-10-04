@@ -379,6 +379,3 @@ def main() -> None:
     # Write to CSV
     csv_manager.add_oandm_costs(results)
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

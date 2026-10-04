@@ -2,60 +2,27 @@
 
 from __future__ import annotations
 
-import logging
-
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+from forge.data import get_defaults_template
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-YAMLS_DIR = REPO_ROOT / "yamls"
 SCENARIOS_DIR = REPO_ROOT / "scenarios"
-
-_YAML_STEMS = [
-    "01_project_technical_details",
-    "02_project_physical_details",
-    "03_financing",
-    "04_insurance",
-    "05_delays",
-    "06_wildfire_costs",
-    "07_outage_costs",
-    "08_environmental_reporting(couldbeuseless)",
-    "09_environmental_mitigation",
-    "10_project_category_build_costs",
-    "11_project_row_details",
-    "12_project_om_vegetation_management",
-    "13_category_om_conductors",
-    "14_category_om_structures",
-    "15_category_om_converters",
-    "16_emissions_reductions",
-    "17_congestion_reductions",
-    "18_energy_source_mix",
-    "19_cost_timing_patterns",
-    "20_project_category_row_widths",
-    "21_project_category_circuit_and_resistance_detail",
-    "22_corona_losses",
-    "20_capacity_value",
-]
 
 logger = logging.getLogger(__name__)
 
 
 def build_default_inputs() -> dict[str, Any]:
-    """Build a complete FORGE input dict from the canonical repo YAML defaults.
+    """Return the canonical defaults template.
 
-    Returns the same dict structure that a .forge file's "inputs" key contains:
-    keys are YAML filenames without extension, values are the parsed YAML content.
+    Same dict shape as a .forge file's ``inputs`` key: YAML stems mapped to
+    their parsed contents.
     """
-    inputs: dict[str, Any] = {}
-    for stem in _YAML_STEMS:
-        yaml_path = YAMLS_DIR / f"{stem}.yaml"
-        with open(yaml_path) as f:
-            inputs[stem] = yaml.safe_load(f)
-    return inputs
+    return get_defaults_template()
 
 
 def run_scenario(inputs: dict, scenario_id: str) -> dict:
@@ -65,7 +32,6 @@ def run_scenario(inputs: dict, scenario_id: str) -> dict:
     return run_calculation(
         combined_data=inputs,
         scenario_id=scenario_id,
-        quiet=True,
     )
 
 

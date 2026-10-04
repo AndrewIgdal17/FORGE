@@ -22,7 +22,7 @@ def load_scenario(name: str) -> dict:
 def run_with_lifetime(inputs: dict, lifetime: int, scenario_id: str) -> dict:
     patched = copy.deepcopy(inputs)
     patched["01_project_technical_details"]["timeline"]["project_lifetime"] = lifetime
-    return run_calculation(combined_data=patched, scenario_id=scenario_id, quiet=True)
+    return run_calculation(combined_data=patched, scenario_id=scenario_id)
 
 def fmt_b(val):
     return f"${val/1e9:.2f}B"

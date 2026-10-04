@@ -7,12 +7,9 @@ Read-only reference data; importable by any module without circular imports.
 
 from __future__ import annotations
 
-import json
-import os
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from functools import lru_cache
-from pathlib import Path
 from typing import Literal
 
 # ---------------------------------------------------------------------------
@@ -479,90 +476,3 @@ def taxonomy_to_dict() -> dict:
             for did, d in ALL_BCR_DEFINITIONS.items()
         },
     }
-
-
-# ---------------------------------------------------------------------------
-# Verification + JSON export when run directly
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    # 8a. Item count
-    assert len(TAXONOMY) == 34, f"Expected 34 items, got {len(TAXONOMY)}"
-
-    # 8b. Category membership
-    _side_category_rules: dict[str, set[str]] = {
-        "cost": {"hard", "soft", "risk", "emissions"},
-        "benefit": {"remedial", "enabling", "avoided_emissions"},
-        "transfer": {"transfer"},
-        "reporting_only": {"reporting"},
-        "utility": {"project", "route", "financial"},
-    }
-    for _item in TAXONOMY_ITEMS:
-        _allowed = _side_category_rules[_item.side]
-        assert _item.category in _allowed, (
-            f"{_item.id}: side={_item.side!r} requires category in {_allowed}, "
-            f"got {_item.category!r}"
-        )
-
-    # 8c. Discount rate
-    _expected_social = {"wildfire_eac", "outage_eac", "emissions_comp",
-                        "emissions_fac", "avoided_emissions_benefit",
-                        "emissions_displacement_delay"}
-    _actual_social = {item.id for item in TAXONOMY_ITEMS if item.discount_rate == "social"}
-    assert _actual_social == _expected_social, (
-        f"Social discount rate mismatch: expected {_expected_social}, got {_actual_social}"
-    )
-    _expected_null_dr = {item.id for item in TAXONOMY_ITEMS if item.side == "utility"}
-    _actual_null_dr = {item.id for item in TAXONOMY_ITEMS if item.discount_rate is None}
-    assert _actual_null_dr == _expected_null_dr, (
-        f"NULL discount_rate mismatch: expected {_expected_null_dr}, got {_actual_null_dr}"
-    )
-    _actual_wacc = {item.id for item in TAXONOMY_ITEMS if item.discount_rate == "wacc_real"}
-    assert _actual_wacc == set(TAXONOMY) - _expected_social - _expected_null_dr, (
-        "Some items have unexpected discount_rate"
-    )
-
-    # 8d. BCR coverage
-    assert len(BCR_DEFINITIONS) == 3, (
-        f"Expected 3 core BCR definitions, got {len(BCR_DEFINITIONS)}"
-    )
-    assert len(BCR_EXCLUSION_VARIANTS) == 6, (
-        f"Expected 6 exclusion variants, got {len(BCR_EXCLUSION_VARIANTS)}"
-    )
-    assert len(ALL_BCR_DEFINITIONS) == 9, (
-        f"Expected 9 total BCR definitions, got {len(ALL_BCR_DEFINITIONS)}"
-    )
-
-    # 8e. Excludable groups
-    assert len(EXCLUDABLE_GROUPS) == 5, (
-        f"Expected 5 excludable groups, got {len(EXCLUDABLE_GROUPS)}"
-    )
-    _all_excl_ids: set[str] = set()
-    for _g in EXCLUDABLE_GROUPS.values():
-        for _tid in _g.taxonomy_ids:
-            assert _tid in TAXONOMY, (
-                f"Excludable group {_g.id!r} references unknown taxonomy_id: {_tid!r}"
-            )
-            _all_excl_ids.add(_tid)
-    assert len(_all_excl_ids) == 6, (
-        f"Expected 6 total excludable taxonomy_ids, got {len(_all_excl_ids)}"
-    )
-
-    # 8f. Calculator key mapping
-    assert len(TAXONOMY_TO_CALCULATOR_KEY) == 23, (
-        f"Expected 23 calculator key mappings, got {len(TAXONOMY_TO_CALCULATOR_KEY)}"
-    )
-    for _tid in TAXONOMY_TO_CALCULATOR_KEY:
-        assert _tid in TAXONOMY, (
-            f"Calculator key mapping references unknown taxonomy_id: {_tid!r}"
-        )
-
-    print("Taxonomy verification passed: 34 items, 9 BCR definitions, 5 excludable groups")
-
-    # Write JSON export
-    _json_path = Path(os.environ.get(
-        "FORGE_JSON_DIR",
-        str(Path(__file__).resolve().parent.parent.parent.parent / "server" / "json"),
-    )) / "taxonomy.json"
-    _json_path.write_text(json.dumps(taxonomy_to_dict(), indent=2) + "\n")
-    print(f"Wrote {_json_path}")

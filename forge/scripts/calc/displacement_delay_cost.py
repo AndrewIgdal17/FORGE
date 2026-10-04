@@ -24,8 +24,6 @@ Appendix: sec:app-displacement-delay.
 from __future__ import annotations
 
 import logging
-
-import os
 from dataclasses import dataclass, field
 from typing import Dict, Any
 
@@ -160,24 +158,6 @@ def main() -> None:
         cc_results = actual_manager.benefits.get("congestion", {})
         energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
 
-    # Subprocess fallback: load energy_delivered from congestion JSON on disk
-    if energy_delivered_annual_mwh <= 0 and not getattr(output_manager, '_using_shared', False):
-        import glob
-        import json as _json_loader
-        scenario_id = os.environ.get("FORGE_SCENARIO_ID", "")
-        pattern = os.path.join("outputs", f"json_output_{scenario_id}_congestion_reduction.json")
-        candidates = glob.glob(pattern) or glob.glob(os.path.join("..", pattern))
-        for fpath in candidates:
-            try:
-                with open(fpath) as _f:
-                    disk_data = _json_loader.load(_f)
-                disk_benefits = disk_data.get("benefits", {}).get("congestion", {})
-                val = disk_benefits.get("energy_delivered_annual_mwh_yr", 0.0)
-                if val > 0:
-                    energy_delivered_annual_mwh = val
-                    break
-            except (OSError, ValueError):
-                pass
 
     if project_details.delay_years <= 0:
         logger.info("ℹ️  delay_years is 0 — no displacement delay period, cost is zero.")
@@ -207,6 +187,3 @@ def main() -> None:
     }
     output_manager.add_displacement_delay_cost(output_results)
     output_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

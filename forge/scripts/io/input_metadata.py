@@ -713,28 +713,3 @@ def input_metadata_to_dict() -> list[dict]:
     """Serialize all input metadata entries for the browser."""
     from dataclasses import asdict
     return [asdict(f) for f in _ALL_FIELDS]
-
-
-if __name__ == "__main__":
-    tabs: dict[str, int] = {}
-    for f in _ALL_FIELDS:
-        tabs[f.input_tab] = tabs.get(f.input_tab, 0) + 1
-    hidden = sum(1 for f in _ALL_FIELDS if f.condition == "always_hidden")
-
-    print(f"Input metadata: {len(INPUT_METADATA)} fields ({hidden} always_hidden)")
-    for tab, count in sorted(tabs.items()):
-        print(f"  {tab}: {count}")
-    print(f"Tabs with entries: {len(tabs)}")
-
-    from .taxonomy import TAXONOMY
-    bad_refs = [f.id for f in _ALL_FIELDS if f.taxonomy_id not in TAXONOMY]
-    if bad_refs:
-        print(f"ERROR: {len(bad_refs)} fields reference unknown taxonomy_ids: {bad_refs[:5]}")
-    else:
-        print("All taxonomy_id references valid")
-
-    dupes = len(_ALL_FIELDS) - len(INPUT_METADATA)
-    if dupes:
-        print(f"ERROR: {dupes} duplicate field IDs")
-    else:
-        print("No duplicate field IDs")

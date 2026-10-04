@@ -114,7 +114,6 @@ def run_forge_calculation(payload: Dict[str, Any]) -> Dict[str, Any]:
         results = run_calculation(
             combined_data=combined_data or {},
             scenario_id=scenario_id,
-            quiet=True,
         )
         return {
             "success": True,

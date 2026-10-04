@@ -1,7 +1,7 @@
 """Input section accessor for the active run.
 
 ``section(name)`` returns the named section of the current run's inputs dict.
-Every loader that previously opened a YAML file under ``YAMLS_DIR`` calls this
+Every loader that previously opened a defaults YAML file calls this
 instead. The function is intentionally minimal — it reads from the RunState
 that ``run_calculation`` sets before any module runs.
 """

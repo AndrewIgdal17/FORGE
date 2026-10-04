@@ -318,6 +318,3 @@ def main() -> None:
         loss_data["losses_mwh_per_year"],
         loss_data["total_lifetime_losses_mwh"],
     )
-
-if __name__ == "__main__":
-    main()

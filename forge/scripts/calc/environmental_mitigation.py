@@ -364,6 +364,3 @@ def main() -> None:
     # Write to CSV
     csv_manager.add_environmental_mitigation(csv_results)
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

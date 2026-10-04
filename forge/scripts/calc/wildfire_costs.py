@@ -191,6 +191,3 @@ def main() -> None:
     csv_manager = SmartOutputManager()
     csv_manager.add_wildfire_costs(results)
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

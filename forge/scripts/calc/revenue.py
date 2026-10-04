@@ -10,7 +10,6 @@ import logging
 
 # Standard library imports
 import yaml
-import os
 from typing import Tuple, Dict, Any
 
 from forge.scripts.utils.smart_output import SmartOutputManager
@@ -22,7 +21,6 @@ from forge.scripts.utils.smart_loaders import (
     get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import calculate_cod_year
-from forge.scripts.utils.path_config import OUTPUTS_DIR
 
 try:
     from forge.scripts.utils.run_context import get_output_manager
@@ -71,7 +69,7 @@ def load_project_technical_details() -> Tuple[float, int, int]:
 
 def get_rate_base() -> float:
     """
-    Get rate base (AFUDC capital at COD) from shared aggregator or JSON output files.
+    Get rate base (AFUDC capital at COD) from the shared run aggregator.
 
     Rate base = build_cost_afudc + row_cost_afudc + env_mitigation_afudc.
     Rate base in real (base-year) dollars after AFUDC compounding at real WACC.
@@ -79,7 +77,6 @@ def get_rate_base() -> float:
     Returns:
         float: Rate base (real, AFUDC-capitalized), or 0 if not found
     """
-    scenario_id = os.environ.get("FORGE_SCENARIO_ID")
     try:
         shared = get_output_manager()
         if shared is not None and getattr(shared, "costs", None) is not None:
@@ -88,52 +85,7 @@ def get_rate_base() -> float:
             env_afudc = shared.require_upstream("costs", "environmental", "total_afudc")
             return build_afudc + row_afudc + env_afudc
     except KeyError as exc:
-        logger.warning(f"⚠️  Rate base lookup failed: {exc}")
-        # Fall through to disk-based fallback below
-
-    try:
-        if not scenario_id:
-            return 0.0
-
-        import json as json_lib
-        build_afudc = 0.0
-        row_afudc = 0.0
-        env_afudc = 0.0
-
-        build_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_build_costs.json"
-        row_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_row_costs.json"
-        env_json_path = OUTPUTS_DIR / f"json_output_{scenario_id}_environmental_mitigation.json"
-        if build_json_path.exists():
-            with open(build_json_path, "r") as f:
-                build_data = json_lib.load(f)
-                build_afudc = float(
-                    build_data.get("costs", {}).get("build", {}).get("total_afudc", 0)
-                    or 0
-                )
-        if row_json_path.exists():
-            with open(row_json_path, "r") as f:
-                row_data = json_lib.load(f)
-                row_afudc = float(
-                    row_data.get("costs", {}).get("row", {}).get("total_afudc", 0)
-                    or 0
-                )
-        if env_json_path.exists():
-            with open(env_json_path, "r") as f:
-                env_data = json_lib.load(f)
-                env_afudc = float(
-                    env_data.get("costs", {})
-                    .get("environmental", {})
-                    .get("total_afudc", 0)
-                    or 0
-                )
-
-        total = build_afudc + row_afudc + env_afudc
-        if total > 0:
-            return total
-    except Exception as e:
-        logger.warning(f"⚠️  Warning: Error reading AFUDC capital from JSON: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.warning("Rate base lookup failed: %s", exc)
     return 0.0
 
 def main() -> None:
@@ -246,6 +198,3 @@ def main() -> None:
     }
     csv_manager.add_revenue(results)
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

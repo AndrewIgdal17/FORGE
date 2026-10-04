@@ -213,6 +213,3 @@ def main() -> None:
     csv_manager.add_insurance_costs(csv_results)
 
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()

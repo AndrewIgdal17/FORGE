@@ -286,7 +286,6 @@ def run_calculation(
     no_outages: bool = False,
     no_oandm: bool = False,
     capital_only: bool = False,
-    quiet: bool = True,  # accepted but ignored; removed in Task 6
 ) -> dict[str, Any]:
     """Run the full FORGE calculation pipeline.
 

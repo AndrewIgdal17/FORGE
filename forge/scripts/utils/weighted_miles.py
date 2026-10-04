@@ -69,8 +69,6 @@ def main() -> None:
     logger.info(average_terrain_multiplier)
 
 
-if __name__ == "__main__":
-    main()
 
 
 # =============================================================================

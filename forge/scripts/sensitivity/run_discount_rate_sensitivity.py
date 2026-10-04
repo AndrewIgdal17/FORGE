@@ -45,7 +45,7 @@ def load_scenario(name: str) -> dict:
 def run_with_discount_rate(inputs: dict, rate: float, scenario_id: str) -> dict:
     patched = copy.deepcopy(inputs)
     patched["03_financing"]["financial"]["social_discount_rate"] = rate
-    return run_calculation(combined_data=patched, scenario_id=scenario_id, quiet=True)
+    return run_calculation(combined_data=patched, scenario_id=scenario_id)
 
 def fmt_dollar(val):
     if val is None:

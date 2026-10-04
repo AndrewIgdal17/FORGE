@@ -440,9 +440,3 @@ def calculate_capacity_value_benefit(
         "capacity_value_nominal": nominal,
         "capacity_value_pv": pv,
     }
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        raise

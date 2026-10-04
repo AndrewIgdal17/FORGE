@@ -556,6 +556,3 @@ def main() -> None:
     # Write to output manager (loss-compensation emissions)
     csv_manager.add_emissions_comp_costs(results)
     csv_manager.write_batch_summary()
-
-if __name__ == "__main__":
-    main()
