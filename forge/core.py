@@ -403,7 +403,6 @@ def main() -> None:
     parser.add_argument("--no_delay_costs", action="store_true")
     parser.add_argument("--no_wildfire", action="store_true")
     parser.add_argument("--no_outages", action="store_true")
-    parser.add_argument("--no_congestion", action="store_true")
     args = parser.parse_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
