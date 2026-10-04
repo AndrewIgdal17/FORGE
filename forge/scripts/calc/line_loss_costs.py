@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
 
@@ -42,6 +44,9 @@ from forge.scripts.utils.smart_loaders import (
     load_congestion_reductions,
 )
 from forge.scripts.utils.run_context import get_run_context
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LineLossProjectDetails:
@@ -403,14 +408,14 @@ def main() -> None:
 
     project_details = load_project_details()
 
-    print("=" * 70)
-    print("LINE LOSS COST CALCULATOR")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("LINE LOSS COST CALCULATOR")
+    logger.info("=" * 70)
+    logger.info("")
 
     if project_details.project_type == "greenfield":
-        print("Greenfield project detected - calculating line loss costs.")
-        print()
+        logger.info("Greenfield project detected - calculating line loss costs.")
+        logger.info("")
 
         comparison_capacity = project_details.greenfield_comparison_capacity_mw
         has_comparison = (
@@ -421,13 +426,13 @@ def main() -> None:
 
         if has_comparison:
             comparison_result = compute_design_comparison(project_details)
-            print("Design comparison computed — 3 methods.")
+            logger.info("Design comparison computed — 3 methods.")
             for name, method in comparison_result["methods"].items():
-                print(
+                logger.info(
                     f"  {name}: delta {method['delta_mwh_yr']:,.1f} MWh/yr, "
                     f"NPV ${method['npv']:,.0f}"
                 )
-            print()
+            logger.info("")
 
         g_benefit = project_details.benefit_price_escalation_real
 
@@ -527,22 +532,22 @@ def main() -> None:
     else:
         old_converter_type = project_details.converter_type
 
-    print(f"PROJECT CONFIGURATION")
-    print("-" * 70)
-    print(f"Construction Type: {project_details.construction_type}")
-    print(
+    logger.info(f"PROJECT CONFIGURATION")
+    logger.info("-" * 70)
+    logger.info(f"Construction Type: {project_details.construction_type}")
+    logger.info(
         f"Line Utilization: {to_percent(project_details.line_utilization_percent):.1f}%"
     )
-    print(f"Project Lifetime: {project_details.project_lifetime} years")
-    print(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
-    print()
+    logger.info(f"Project Lifetime: {project_details.project_lifetime} years")
+    logger.info(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
+    logger.info("")
 
-    print(f"BASELINE CONFIGURATION (Old)")
-    print("-" * 70)
-    print(f"Capacity: {old_capacity_mw} MW")
-    print(f"AC/DC: {old_ac_dc}")
-    print(f"Conductor Type: {old_conductor_type}")
-    print()
+    logger.info(f"BASELINE CONFIGURATION (Old)")
+    logger.info("-" * 70)
+    logger.info(f"Capacity: {old_capacity_mw} MW")
+    logger.info(f"AC/DC: {old_ac_dc}")
+    logger.info(f"Conductor Type: {old_conductor_type}")
+    logger.info("")
 
     # Calculate baseline losses (line only from configuration)
     baseline_losses_mwh_per_year, baseline_lifetime_losses_mwh = (
@@ -573,12 +578,12 @@ def main() -> None:
         baseline_losses_mwh_per_year + baseline_converter_losses_mwh
     )
 
-    print(f"NEW CONFIGURATION (After Reconductoring)")
-    print("-" * 70)
-    print(f"Capacity: {project_details.capacity_mw} MW")
-    print(f"AC/DC: {project_details.ac_dc}")
-    print(f"Conductor Type: {project_details.conductor_type}")
-    print()
+    logger.info(f"NEW CONFIGURATION (After Reconductoring)")
+    logger.info("-" * 70)
+    logger.info(f"Capacity: {project_details.capacity_mw} MW")
+    logger.info(f"AC/DC: {project_details.ac_dc}")
+    logger.info(f"Conductor Type: {project_details.conductor_type}")
+    logger.info("")
 
     # Look up old voltage (only relevant for reconductoring, where the physical
     # towers are unchanged; rebuild replaces structures, so the new configuration
@@ -720,75 +725,75 @@ def main() -> None:
     )
 
     # Print results
-    print("=" * 70)
-    print("LINE LOSS COST RESULTS")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("LINE LOSS COST RESULTS")
+    logger.info("=" * 70)
+    logger.info("")
 
-    print("LOSS COMPARISON:")
-    print("-" * 70)
-    print(f"Baseline (Old Config): {baseline_losses_mwh_per_year:,.2f} MWh/year")
-    print(f"  Capacity: {old_capacity_mw} MW | Loss Rate: {baseline_loss_percent:.2f}%")
-    print()
-    print(f"New Configuration: {new_losses_mwh_per_year:,.2f} MWh/year")
-    print(
+    logger.info("LOSS COMPARISON:")
+    logger.info("-" * 70)
+    logger.info(f"Baseline (Old Config): {baseline_losses_mwh_per_year:,.2f} MWh/year")
+    logger.info(f"  Capacity: {old_capacity_mw} MW | Loss Rate: {baseline_loss_percent:.2f}%")
+    logger.info("")
+    logger.info(f"New Configuration: {new_losses_mwh_per_year:,.2f} MWh/year")
+    logger.info(
         f"  Capacity: {project_details.capacity_mw} MW | Loss Rate: {new_loss_percent:.2f}%"
     )
-    print()
-    print(
+    logger.info("")
+    logger.info(
         f"Counterfactual (Old Conductor @ New Capacity): {counterfactual_baseline_losses_mwh_per_year:,.2f} MWh/year"
     )
-    print()
+    logger.info("")
 
-    print("=" * 70)
-    print("METHOD 1: DIRECT COMPARISON")
-    print("=" * 70)
-    print("Compares: Baseline losses @ old capacity vs. New losses @ new capacity")
-    print()
-    print("NOMINAL VALUES:")
-    print(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
-    print(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
-    print(f"  Lifetime Benefit: ${direct_lifetime_benefit:,.2f}")
-    print()
-    print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    print(f"  Start Year: {start_year:.1f} years")
-    print(f"  Net Present Value: ${direct_npv:,.2f}")
-    print()
+    logger.info("=" * 70)
+    logger.info("METHOD 1: DIRECT COMPARISON")
+    logger.info("=" * 70)
+    logger.info("Compares: Baseline losses @ old capacity vs. New losses @ new capacity")
+    logger.info("")
+    logger.info("NOMINAL VALUES:")
+    logger.info(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
+    logger.info(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
+    logger.info(f"  Lifetime Benefit: ${direct_lifetime_benefit:,.2f}")
+    logger.info("")
+    logger.info("DISCOUNTED VALUES (NPV):")
+    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
+    logger.info(f"  Start Year: {start_year:.1f} years")
+    logger.info(f"  Net Present Value: ${direct_npv:,.2f}")
+    logger.info("")
 
-    print("=" * 70)
-    print("METHOD 2: COUNTERFACTUAL COMPARISON")
-    print("=" * 70)
-    print("Compares: Old conductor @ new capacity vs. New conductor @ new capacity")
-    print()
-    print("NOMINAL VALUES:")
-    print(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
-    print(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
-    print(f"  Lifetime Benefit: ${counterfactual_lifetime_benefit:,.2f}")
-    print()
-    print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    print(f"  Start Year: {start_year:.1f} years")
-    print(f"  Net Present Value: ${counterfactual_npv:,.2f}")
-    print()
+    logger.info("=" * 70)
+    logger.info("METHOD 2: COUNTERFACTUAL COMPARISON")
+    logger.info("=" * 70)
+    logger.info("Compares: Old conductor @ new capacity vs. New conductor @ new capacity")
+    logger.info("")
+    logger.info("NOMINAL VALUES:")
+    logger.info(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
+    logger.info(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
+    logger.info(f"  Lifetime Benefit: ${counterfactual_lifetime_benefit:,.2f}")
+    logger.info("")
+    logger.info("DISCOUNTED VALUES (NPV):")
+    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
+    logger.info(f"  Start Year: {start_year:.1f} years")
+    logger.info(f"  Net Present Value: ${counterfactual_npv:,.2f}")
+    logger.info("")
 
-    print("=" * 70)
-    print("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
-    print("=" * 70)
-    print("Compares: Loss percentages weighted by delivered energy")
-    print()
-    print("NOMINAL VALUES:")
-    print(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
-    print(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
-    print(f"  Lifetime Benefit: ${normalized_lifetime_benefit:,.2f}")
-    print()
-    print("DISCOUNTED VALUES (NPV):")
-    print(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    print(f"  Start Year: {start_year:.1f} years")
-    print(f"  Net Present Value: ${normalized_npv:,.2f}")
-    print()
+    logger.info("=" * 70)
+    logger.info("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
+    logger.info("=" * 70)
+    logger.info("Compares: Loss percentages weighted by delivered energy")
+    logger.info("")
+    logger.info("NOMINAL VALUES:")
+    logger.info(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
+    logger.info(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
+    logger.info(f"  Lifetime Benefit: ${normalized_lifetime_benefit:,.2f}")
+    logger.info("")
+    logger.info("DISCOUNTED VALUES (NPV):")
+    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
+    logger.info(f"  Start Year: {start_year:.1f} years")
+    logger.info(f"  Net Present Value: ${normalized_npv:,.2f}")
+    logger.info("")
 
-    print("=" * 70)
+    logger.info("=" * 70)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

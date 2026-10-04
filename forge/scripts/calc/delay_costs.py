@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 
@@ -16,6 +18,9 @@ from forge.scripts.utils.smart_loaders import (
     load_project_technical_details as load_project_technical_details_centralized,
 )
 from forge.scripts.utils.financial_utils import calculate_present_value
+
+logger = logging.getLogger(__name__)
+
 
 def load_project_technical_details() -> float:
     """
@@ -51,20 +56,20 @@ def main() -> None:
         delay_year,
     )
 
-    print("=" * 60)
-    print("DELAY COST CALCULATION RESULTS")
-    print("=" * 60)
-    print(f"Delay year: {delay_year}")
-    print(f"Total yearly delay cost: ${total_yearly_delay_cost:,.2f}")
-    print(f"Total delay cost: ${total_delay_cost:,.2f}")
+    logger.info("=" * 60)
+    logger.info("DELAY COST CALCULATION RESULTS")
+    logger.info("=" * 60)
+    logger.info(f"Delay year: {delay_year}")
+    logger.info(f"Total yearly delay cost: ${total_yearly_delay_cost:,.2f}")
+    logger.info(f"Total delay cost: ${total_delay_cost:,.2f}")
 
-    print()
-    print(
+    logger.info("")
+    logger.info(
         f"PRESENT VALUES (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
     )
 
-    print(f"TOTAL PRESENT VALUE DELAY COST: ${total_delay_cost_pv:,.2f}")
-    print("=" * 60)
+    logger.info(f"TOTAL PRESENT VALUE DELAY COST: ${total_delay_cost_pv:,.2f}")
+    logger.info("=" * 60)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

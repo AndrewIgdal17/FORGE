@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Local utility imports
 from forge.scripts.utils.smart_loaders import (
     load_project_technical_details,
@@ -18,6 +20,9 @@ from forge.scripts.utils.calculation_utils import (
     to_percent,
 )
 from forge.scripts.utils.run_context import get_run_context
+
+logger = logging.getLogger(__name__)
+
 
 def get_total_energy_losses() -> dict:
     """
@@ -207,48 +212,48 @@ def print_results(
 ) -> None:
     """Print organized results in sections."""
     # System Configuration
-    print("=" * 60)
-    print("SYSTEM CONFIGURATION")
-    print("=" * 60)
-    print(f"Voltage: {voltage_kv} kV")
-    print(f"Conductors per phase/pole: {conductors_per_phase}")
-    print(f"Number of phases: {number_of_phases}")
-    print(f"Number of circuits/poles: {number_of_circuits_poles}")
-    print(f"Line utilization: {to_percent(line_utilization_percent):.1f}%")
-    print(f"Line length: {line_length:.2f} miles")
-    print(f"Phase current: {phase_current:,.2f} Amps")
-    print(f"Resistance: {resistance_per_mile} ohms/mile")
-    print(f"Full load adjustment: {full_load_adj:.4f}")
-    print()
+    logger.info("=" * 60)
+    logger.info("SYSTEM CONFIGURATION")
+    logger.info("=" * 60)
+    logger.info(f"Voltage: {voltage_kv} kV")
+    logger.info(f"Conductors per phase/pole: {conductors_per_phase}")
+    logger.info(f"Number of phases: {number_of_phases}")
+    logger.info(f"Number of circuits/poles: {number_of_circuits_poles}")
+    logger.info(f"Line utilization: {to_percent(line_utilization_percent):.1f}%")
+    logger.info(f"Line length: {line_length:.2f} miles")
+    logger.info(f"Phase current: {phase_current:,.2f} Amps")
+    logger.info(f"Resistance: {resistance_per_mile} ohms/mile")
+    logger.info(f"Full load adjustment: {full_load_adj:.4f}")
+    logger.info("")
 
     # Line Loss Results
-    print("=" * 60)
-    print("LINE LOSS RESULTS")
-    print("=" * 60)
-    print(f"Line loss: {losses_mw_per_mile:.6f} MW/mile")
-    print(f"Line loss per mile: {line_loss_per_mile_percent:.4f}%")
-    print(f"Total line loss: {total_line_loss_mw:.4f} MW")
-    print(f"Total line loss %: {total_line_loss_percent:.4f}%")
-    print(f"Line losses MWh/yr: {losses_mwh_per_year:,.2f}")
-    print()
+    logger.info("=" * 60)
+    logger.info("LINE LOSS RESULTS")
+    logger.info("=" * 60)
+    logger.info(f"Line loss: {losses_mw_per_mile:.6f} MW/mile")
+    logger.info(f"Line loss per mile: {line_loss_per_mile_percent:.4f}%")
+    logger.info(f"Total line loss: {total_line_loss_mw:.4f} MW")
+    logger.info(f"Total line loss %: {total_line_loss_percent:.4f}%")
+    logger.info(f"Line losses MWh/yr: {losses_mwh_per_year:,.2f}")
+    logger.info("")
 
     # Converter Loss Results
-    print("=" * 60)
-    print("CONVERTER LOSS RESULTS")
-    print("=" * 60)
-    print(f"Converter loss: {total_converter_losses_mw:.6f} MW")
-    print(f"Converter loss: {converter_loss_percent:.4f}%")
-    print(f"Converter loss MWh/yr: {total_converter_losses_mwh:,.2f}")
-    print()
+    logger.info("=" * 60)
+    logger.info("CONVERTER LOSS RESULTS")
+    logger.info("=" * 60)
+    logger.info(f"Converter loss: {total_converter_losses_mw:.6f} MW")
+    logger.info(f"Converter loss: {converter_loss_percent:.4f}%")
+    logger.info(f"Converter loss MWh/yr: {total_converter_losses_mwh:,.2f}")
+    logger.info("")
 
     # Summary
-    print("=" * 60)
-    print("SUMMARY")
-    print("=" * 60)
-    print(
+    logger.info("=" * 60)
+    logger.info("SUMMARY")
+    logger.info("=" * 60)
+    logger.info(
         f"Total losses MWh/yr: {losses_mwh_per_year + total_converter_losses_mwh:,.2f}"
     )
-    print(
+    logger.info(
         f"Total Lifetime losses MWh: {total_lifetime_losses_mwh:,.2f}"
     )
 

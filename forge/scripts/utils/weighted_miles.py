@@ -3,12 +3,16 @@
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 import numpy as np
 import argparse
 from typing import Tuple
 from forge.scripts.utils.inputs import section
 from .run_context import get_run_context
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_weighted_miles() -> Tuple[float, float]:
@@ -61,8 +65,8 @@ def calculate_weighted_miles() -> Tuple[float, float]:
 def main() -> None:
     """Entry point for orchestrator or standalone run."""
     weighted_miles, average_terrain_multiplier = calculate_weighted_miles()
-    print(weighted_miles)
-    print(average_terrain_multiplier)
+    logger.info(weighted_miles)
+    logger.info(average_terrain_multiplier)
 
 
 if __name__ == "__main__":

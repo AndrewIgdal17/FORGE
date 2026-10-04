@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 from dataclasses import dataclass
 from typing import Dict, Any, List, Tuple
@@ -34,6 +36,9 @@ GRID_SOURCES = [
     "nuclear",
     "other",
 ]
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LifetimeEmissionsResults:
@@ -356,18 +361,18 @@ def print_emissions_results(
 ) -> None:
     """Print organized emissions results."""
     # Compensation Configuration
-    print("=" * 60)
-    print("COMPENSATION CONFIGURATION")
-    print("=" * 60)
-    print(f"Compensation percentage (alpha): {alpha_compensation:.1%}")
-    print(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
-    print(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
-    print()
+    logger.info("=" * 60)
+    logger.info("COMPENSATION CONFIGURATION")
+    logger.info("=" * 60)
+    logger.info(f"Compensation percentage (alpha): {alpha_compensation:.1%}")
+    logger.info(f"Total energy losses: {total_losses_mwh_per_year:,.2f} MWh/yr")
+    logger.info(f"Total energy compensated (TEC): {total_energy_compensated_mwh:,.2f} MWh/yr")
+    logger.info("")
 
     # Energy Source Mix - Initial
-    print("=" * 60)
-    print("INITIAL ENERGY SOURCE MIX")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("INITIAL ENERGY SOURCE MIX")
+    logger.info("=" * 60)
     sources = [
         "coal",
         "oil",
@@ -381,60 +386,60 @@ def print_emissions_results(
     for source in sources:
         percentage = energy_source_mix_details.get(source, {}).get("percentage", 0.0)
         rate = energy_source_mix_details.get(source, {}).get("rate_of_change", 0.0)
-        print(f"{source.capitalize()}: {percentage:.2f}% (rate: {rate:.1%})")
-    print()
+        logger.info(f"{source.capitalize()}: {percentage:.2f}% (rate: {rate:.1%})")
+    logger.info("")
 
     # Average Annual Emissions
-    print("=" * 60)
-    print("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS")
-    print("=" * 60)
-    print(f"CO2: {avg_annual_emissions['co2']:,.2f} kg/yr")
-    print(f"SOx: {avg_annual_emissions['sox']:,.2f} kg/yr")
-    print(f"NOx: {avg_annual_emissions['nox']:,.2f} kg/yr")
-    print()
+    logger.info("=" * 60)
+    logger.info("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS")
+    logger.info("=" * 60)
+    logger.info(f"CO2: {avg_annual_emissions['co2']:,.2f} kg/yr")
+    logger.info(f"SOx: {avg_annual_emissions['sox']:,.2f} kg/yr")
+    logger.info(f"NOx: {avg_annual_emissions['nox']:,.2f} kg/yr")
+    logger.info("")
 
     # Societal Costs
-    print("=" * 60)
-    print("SOCIETAL COSTS")
-    print("=" * 60)
-    print(f"CO2 cost: ${societal_costs['co2_cost_per_kg']:.3f}/kg")
-    print(f"SOx cost: ${societal_costs['sox_cost_per_kg']:.1f}/kg")
-    print(f"NOx cost: ${societal_costs['nox_cost_per_kg']:.1f}/kg")
-    print()
+    logger.info("=" * 60)
+    logger.info("SOCIETAL COSTS")
+    logger.info("=" * 60)
+    logger.info(f"CO2 cost: ${societal_costs['co2_cost_per_kg']:.3f}/kg")
+    logger.info(f"SOx cost: ${societal_costs['sox_cost_per_kg']:.1f}/kg")
+    logger.info(f"NOx cost: ${societal_costs['nox_cost_per_kg']:.1f}/kg")
+    logger.info("")
 
     # Annual Emissions Cost
-    print("=" * 60)
-    print("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS COST")
-    print("=" * 60)
-    print(f"CO2 cost: ${avg_annual_costs_by_pollutant['co2']:,.2f}/yr")
-    print(f"SOx cost: ${avg_annual_costs_by_pollutant['sox']:,.2f}/yr")
-    print(f"NOx cost: ${avg_annual_costs_by_pollutant['nox']:,.2f}/yr")
-    print(f"Total average annual cost: ${avg_annual_costs:,.2f}/yr")
-    print()
+    logger.info("=" * 60)
+    logger.info("AVERAGE ANNUAL LOSS-COMPENSATION EMISSIONS COST")
+    logger.info("=" * 60)
+    logger.info(f"CO2 cost: ${avg_annual_costs_by_pollutant['co2']:,.2f}/yr")
+    logger.info(f"SOx cost: ${avg_annual_costs_by_pollutant['sox']:,.2f}/yr")
+    logger.info(f"NOx cost: ${avg_annual_costs_by_pollutant['nox']:,.2f}/yr")
+    logger.info(f"Total average annual cost: ${avg_annual_costs:,.2f}/yr")
+    logger.info("")
 
     # Lifetime Totals
-    print("=" * 60)
-    print("LIFETIME LOSS-COMPENSATION EMISSIONS TOTALS")
-    print("=" * 60)
-    print(f"Total CO2 emissions: {total_emissions['co2']:,.2f} kg")
-    print(f"Total SOx emissions: {total_emissions['sox']:,.2f} kg")
-    print(f"Total NOx emissions: {total_emissions['nox']:,.2f} kg")
-    print()
-    print(f"Total CO2 cost (nominal): ${total_costs_by_pollutant['co2']:,.2f}")
-    print(f"Total SOx cost (nominal): ${total_costs_by_pollutant['sox']:,.2f}")
-    print(f"Total NOx cost (nominal): ${total_costs_by_pollutant['nox']:,.2f}")
-    print()
-    print(f"Total lifetime emissions cost (nominal): ${lifetime_cost:,.2f}")
-    print()
-    print("=" * 60)
-    print("LIFETIME LOSS-COMPENSATION EMISSIONS COSTS (PRESENT VALUE)")
-    print("=" * 60)
-    print(f"Total CO2 cost (PV): ${total_costs_by_pollutant_pv['co2']:,.2f}")
-    print(f"Total SOx cost (PV): ${total_costs_by_pollutant_pv['sox']:,.2f}")
-    print(f"Total NOx cost (PV): ${total_costs_by_pollutant_pv['nox']:,.2f}")
-    print()
-    print(f"Total lifetime emissions cost (PV): ${lifetime_cost_pv:,.2f}")
-    print()
+    logger.info("=" * 60)
+    logger.info("LIFETIME LOSS-COMPENSATION EMISSIONS TOTALS")
+    logger.info("=" * 60)
+    logger.info(f"Total CO2 emissions: {total_emissions['co2']:,.2f} kg")
+    logger.info(f"Total SOx emissions: {total_emissions['sox']:,.2f} kg")
+    logger.info(f"Total NOx emissions: {total_emissions['nox']:,.2f} kg")
+    logger.info("")
+    logger.info(f"Total CO2 cost (nominal): ${total_costs_by_pollutant['co2']:,.2f}")
+    logger.info(f"Total SOx cost (nominal): ${total_costs_by_pollutant['sox']:,.2f}")
+    logger.info(f"Total NOx cost (nominal): ${total_costs_by_pollutant['nox']:,.2f}")
+    logger.info("")
+    logger.info(f"Total lifetime emissions cost (nominal): ${lifetime_cost:,.2f}")
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("LIFETIME LOSS-COMPENSATION EMISSIONS COSTS (PRESENT VALUE)")
+    logger.info("=" * 60)
+    logger.info(f"Total CO2 cost (PV): ${total_costs_by_pollutant_pv['co2']:,.2f}")
+    logger.info(f"Total SOx cost (PV): ${total_costs_by_pollutant_pv['sox']:,.2f}")
+    logger.info(f"Total NOx cost (PV): ${total_costs_by_pollutant_pv['nox']:,.2f}")
+    logger.info("")
+    logger.info(f"Total lifetime emissions cost (PV): ${lifetime_cost_pv:,.2f}")
+    logger.info("")
 
 def main() -> None:
     """

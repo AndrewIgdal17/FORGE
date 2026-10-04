@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 from typing import Tuple
@@ -33,6 +35,9 @@ from forge.scripts.utils.financial_utils import (
     calculate_afudc_capitalized_cost,
     validate_discount_rate,
 )
+
+logger = logging.getLogger(__name__)
+
 def calculate_zone_costs(row_width_feet: float) -> Tuple[float, float, float, float]:
     """
     Calculate right-of-way (ROW) costs aggregated across all zones.
@@ -231,63 +236,63 @@ def main() -> None:
     total_pv_cost = row_capital_pv + row_holding_pv + total_rent_cost_pv
 
     # Display results
-    print("=" * 80)
-    print("RIGHT-OF-WAY COST CALCULATION RESULTS")
-    print("=" * 80)
-    print(f"Project Category: {category}")
-    print(f"ROW Agreement Type: {agreement_type}")
-    print(f"Total Miles: {total_miles:.2f}")
-    print(f"Row Width: {row_width_feet:.1f} feet")
-    print(f"Total Acres: {total_acres:.2f}")
-    print()
+    logger.info("=" * 80)
+    logger.info("RIGHT-OF-WAY COST CALCULATION RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Project Category: {category}")
+    logger.info(f"ROW Agreement Type: {agreement_type}")
+    logger.info(f"Total Miles: {total_miles:.2f}")
+    logger.info(f"Row Width: {row_width_feet:.1f} feet")
+    logger.info(f"Total Acres: {total_acres:.2f}")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print(f"  Rent Escalation Rate (g_rent): {g_rent:.2%}/year (real)")
-    print(f"  Holding Cost (option fee): ${total_holding_cost:,.2f}")
-    print(
+    logger.info("[NOMINAL VALUES]")
+    logger.info(f"  Rent Escalation Rate (g_rent): {g_rent:.2%}/year (real)")
+    logger.info(f"  Holding Cost (option fee): ${total_holding_cost:,.2f}")
+    logger.info(
         f"    (Annual: ${xi_holding * yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))"
     )
-    print(f"  Acquisition Cost: ${acquisition_cost_used:,.2f}")
-    print(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
-    print(f"    (Annual: ${xi_rent * yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
-    print(f"  ---")
-    print(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
-    print()
+    logger.info(f"  Acquisition Cost: ${acquisition_cost_used:,.2f}")
+    logger.info(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
+    logger.info(f"    (Annual: ${xi_rent * yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
+    logger.info("")
 
     if afudc_setup.apply_afudc and acquisition_cost_used != 0:
-        print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(
+        logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+        logger.info(
             f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})"
         )
-        print(
+        logger.info(
             f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}"
         )
-        print()
-        print(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
-        print(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
-        print(f"  Holding Cost (operating expense): ${holding_capitalized:,.2f}")
-        print(f"    AFUDC on Holding: ${holding_afudc:,.2f} (not AFUDC-eligible)")
-        print(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
-        print(f"    (NOT AFUDC-eligible - operational period)")
-        print(f"  ---")
-        print(
+        logger.info("")
+        logger.info(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
+        logger.info(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
+        logger.info(f"  Holding Cost (operating expense): ${holding_capitalized:,.2f}")
+        logger.info(f"    AFUDC on Holding: ${holding_afudc:,.2f} (not AFUDC-eligible)")
+        logger.info(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
+        logger.info(f"    (NOT AFUDC-eligible - operational period)")
+        logger.info(f"  ---")
+        logger.info(
             f"  ROW Capital (at COD): ${row_capital_afudc:,.2f}"
         )
-        print(
+        logger.info(
             f"  TOTAL (Capital + annual ROW payment): ${row_capital_afudc + total_rent_cost:,.2f}"
         )
-        print()
+        logger.info("")
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {financing.base_year}")
-    print()
-    print(f"  Holding Cost PV: ${total_holding_cost_pv:,.2f}")
-    print(f"  Acquisition Cost PV: ${total_acquisition_cost_pv:,.2f}")
-    print(f"  Annual ROW Payment PV: ${total_rent_cost_pv:,.2f}")
-    print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE ROW COST: ${total_pv_cost:,.2f}")
-    print("=" * 80)
+    logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Base Year: {financing.base_year}")
+    logger.info("")
+    logger.info(f"  Holding Cost PV: ${total_holding_cost_pv:,.2f}")
+    logger.info(f"  Acquisition Cost PV: ${total_acquisition_cost_pv:,.2f}")
+    logger.info(f"  Annual ROW Payment PV: ${total_rent_cost_pv:,.2f}")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL PRESENT VALUE ROW COST: ${total_pv_cost:,.2f}")
+    logger.info("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

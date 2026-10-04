@@ -4,15 +4,17 @@
 
 from __future__ import annotations
 
+import argparse
 import copy
 import hashlib
 import importlib
-import sys
-import os
-import argparse
 import json
-from typing import Any
+import logging
+import os
+import sys
+import time
 from datetime import datetime
+from typing import Any
 
 from forge.contract import calculator_info, canonical_dumps
 from forge.errors import InvalidInputs, CalculationError
@@ -23,6 +25,8 @@ from forge.scripts.utils.run_context import (
     reset_run_state,
     set_run_state,
 )
+
+logger = logging.getLogger(__name__)
 
 _PRELOAD_MODULES = [
     "forge.scripts.utils.weighted_miles",
@@ -314,7 +318,9 @@ def run_calculation(
             capital_only=capital_only,
         )
 
+        module_timings: dict[str, float] = {}
         for script in scripts:
+            started = time.perf_counter()
             try:
                 mod = importlib.import_module(script)
                 mod.main()
@@ -322,6 +328,7 @@ def run_calculation(
                 raise
             except Exception as exc:
                 raise CalculationError(script, exc) from exc
+            module_timings[script] = time.perf_counter() - started
 
         json_results = aggregator.get_json_results()
         bcr_results = None
@@ -375,6 +382,7 @@ def run_calculation(
             canonical_dumps(combined_data).encode("utf-8")
         ).hexdigest()
         results["provenance"] = provenance
+        logger.debug("Module timings: %s", module_timings)
 
         return results
     finally:
@@ -387,6 +395,7 @@ def main() -> None:
         description="Framework for Open Reproducible Grid Economics (FORGE)"
     )
     parser.add_argument("--simple", action="store_true", help="Suppress intermediate outputs")
+    parser.add_argument("--verbose", action="store_true", help="Show DEBUG-level diagnostics")
     parser.add_argument("--no_emissions", action="store_true")
     parser.add_argument("--no_linelosses", action="store_true")
     parser.add_argument("--capital_only", action="store_true")
@@ -398,18 +407,25 @@ def main() -> None:
     parser.add_argument("--no_congestion", action="store_true")
     args = parser.parse_args()
 
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level,
+        format="%(message)s",
+        stream=sys.stdout,
+    )
+
     from forge.data import get_defaults_template
 
     if not args.simple:
-        print("=" * 80)
-        print("FRAMEWORK FOR OPEN REPRODUCIBLE GRID ECONOMICS (FORGE)")
-        print("=" * 80)
+        logger.info("=" * 80)
+        logger.info("FRAMEWORK FOR OPEN REPRODUCIBLE GRID ECONOMICS (FORGE)")
+        logger.info("=" * 80)
 
     combined_data = get_defaults_template()
     scenario_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     if not args.simple:
-        print(f"\n📋 Scenario ID: {scenario_id}\n")
+        logger.info(f"\n📋 Scenario ID: {scenario_id}\n")
 
     try:
         results = run_calculation(
@@ -425,10 +441,10 @@ def main() -> None:
             capital_only=args.capital_only,
         )
     except InvalidInputs as exc:
-        print(f"❌ Invalid inputs: {exc}", file=sys.stderr)
+        logger.error(f"❌ Invalid inputs: {exc}")
         sys.exit(1)
     except CalculationError as exc:
-        print(f"❌ {exc}", file=sys.stderr)
+        logger.error(f"❌ {exc}")
         sys.exit(1)
 
     if results.get("bcr") and not args.simple:
@@ -438,7 +454,7 @@ def main() -> None:
     output_file = write_final_json_output(results, scenario_id)
 
     if not args.simple:
-        print(f"✅ JSON results written to {output_file}")
+        logger.info(f"✅ JSON results written to {output_file}")
 
 
 if __name__ == "__main__":

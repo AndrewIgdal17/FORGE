@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 import numpy as np
 import argparse
@@ -21,6 +23,9 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_details,
     get_project_data_raw,
 )
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CongestionProjectDetails:
@@ -238,51 +243,51 @@ def main() -> None:
         params.benefit_price_escalation_real,
     )
 
-    print("=" * 60)
-    print("CONGESTION PHYSICAL RESULTS AND QUANTITIES")
-    print("=" * 60)
-    print(
+    logger.info("=" * 60)
+    logger.info("CONGESTION PHYSICAL RESULTS AND QUANTITIES")
+    logger.info("=" * 60)
+    logger.info(
         f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW"
     )
-    print(f"Constrained hours: {congestion_results.constrained_hours:,.0f} hrs/yr")
-    print(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
-    print(f"Relief MW (min of relief and exceedance): {congestion_results.relief_mw:,.2f} MW")
+    logger.info(f"Constrained hours: {congestion_results.constrained_hours:,.0f} hrs/yr")
+    logger.info(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
+    logger.info(f"Relief MW (min of relief and exceedance): {congestion_results.relief_mw:,.2f} MW")
 
-    print()
-    print("=" * 60)
-    print("CONGESTION REDUCTION BENEFIT RESULTS")
-    print("=" * 60)
-    print(f"Annual congestion benefit: ${congestion_results.annual_congestion_benefit:,.2f}")
-    print(
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("CONGESTION REDUCTION BENEFIT RESULTS")
+    logger.info("=" * 60)
+    logger.info(f"Annual congestion benefit: ${congestion_results.annual_congestion_benefit:,.2f}")
+    logger.info(
         f"Lifetime congestion benefit: ${congestion_results.lifetime_congestion_benefit:,.2f}"
     )
-    print(
+    logger.info(
         f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
     )
-    print(
+    logger.info(
         f"Lifetime congestion benefit PV: ${congestion_results.lifetime_congestion_benefit_pv:,.2f}"
     )
 
-    print()
-    print("=" * 60)
-    print("TOTAL REMEDIAL BENEFIT (CONGESTION)")
-    print("=" * 60)
-    print(f"Annual remedial benefit: ${congestion_results.annual_remedial_benefit:,.2f}")
-    print(
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("TOTAL REMEDIAL BENEFIT (CONGESTION)")
+    logger.info("=" * 60)
+    logger.info(f"Annual remedial benefit: ${congestion_results.annual_remedial_benefit:,.2f}")
+    logger.info(
         f"Lifetime remedial benefit PV: ${congestion_results.lifetime_remedial_benefit_pv:,.2f}"
     )
 
-    print()
-    print("=" * 60)
-    print("DELAY/CONSTRUCTION OPPORTUNITY COSTS")
-    print("=" * 60)
-    print(
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("DELAY/CONSTRUCTION OPPORTUNITY COSTS")
+    logger.info("=" * 60)
+    logger.info(
         f"Congestion delay cost (nominal): ${congestion_results.congestion_delay_cost_nominal:,.2f}"
     )
-    print(
+    logger.info(
         f"Congestion delay cost (PV): ${congestion_results.congestion_delay_cost_pv:,.2f}"
     )
-    print("=" * 60)
+    logger.info("=" * 60)
 
     # ========================================================================
     # Benefit of delivered energy
@@ -317,17 +322,17 @@ def main() -> None:
         construction_years=project_details_cc.construction_years,
     )
 
-    print()
-    print("=" * 60)
-    print("BENEFIT OF DELIVERED ENERGY")
-    print("=" * 60)
-    print(
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("BENEFIT OF DELIVERED ENERGY")
+    logger.info("=" * 60)
+    logger.info(
         f"Energy delivered (annual): {energy_delivered_annual_mwh_yr:,.2f} MWh/yr"
     )
-    print(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
-    print(f"Lifetime benefit (nominal): ${delivered_benefit_nominal:,.2f}")
-    print(f"Lifetime benefit (PV): ${delivered_benefit_pv:,.2f}")
-    print("=" * 60)
+    logger.info(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
+    logger.info(f"Lifetime benefit (nominal): ${delivered_benefit_nominal:,.2f}")
+    logger.info(f"Lifetime benefit (PV): ${delivered_benefit_pv:,.2f}")
+    logger.info("=" * 60)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
@@ -378,14 +383,14 @@ def main() -> None:
     results["capacity_value_nominal"] = cap_results["capacity_value_nominal"]
     results["capacity_value_pv"] = cap_results["capacity_value_pv"]
 
-    print()
-    print("=" * 60)
-    print("CAPACITY VALUE BENEFIT")
-    print("=" * 60)
-    print(f"Annual capacity value: ${cap_results['capacity_value_annual']:,.2f}")
-    print(f"Lifetime capacity value (nominal): ${cap_results['capacity_value_nominal']:,.2f}")
-    print(f"Lifetime capacity value (PV): ${cap_results['capacity_value_pv']:,.2f}")
-    print("=" * 60)
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("CAPACITY VALUE BENEFIT")
+    logger.info("=" * 60)
+    logger.info(f"Annual capacity value: ${cap_results['capacity_value_annual']:,.2f}")
+    logger.info(f"Lifetime capacity value (nominal): ${cap_results['capacity_value_nominal']:,.2f}")
+    logger.info(f"Lifetime capacity value (PV): ${cap_results['capacity_value_pv']:,.2f}")
+    logger.info("=" * 60)
 
     from forge.scripts.utils.run_context import add_derived
     add_derived({

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 from typing import Dict, Any
@@ -27,6 +29,9 @@ from forge.scripts.utils.financial_utils import (
     calculate_construction_start_year,
 )
 from forge.scripts.utils.run_context import get_run_context, add_derived
+
+logger = logging.getLogger(__name__)
+
 
 def calculate_environmental_mitigation_costs(
     em_yaml: Dict[str, Any],
@@ -285,58 +290,58 @@ def main() -> None:
     total_pv = base_cost_pv + total_credits_pv
 
     # Display results
-    print("=" * 80)
-    print("ENVIRONMENTAL MITIGATION COST CALCULATION RESULTS")
-    print("=" * 80)
-    print(f"Project Category: {category}")
-    print(f"ROW Width: {row_width_feet:.1f} feet")
-    print(f"Uplift Factor (TCE): {results['uplift_factor_applied']:.2f}x")
-    print()
+    logger.info("=" * 80)
+    logger.info("ENVIRONMENTAL MITIGATION COST CALCULATION RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Project Category: {category}")
+    logger.info(f"ROW Width: {row_width_feet:.1f} feet")
+    logger.info(f"Uplift Factor (TCE): {results['uplift_factor_applied']:.2f}x")
+    logger.info("")
 
-    print("ACREAGE SUMMARY:")
-    print(f"  Base ROW Acres: {results['total_base_acres']:,.2f}")
-    print(f"  Effective Acres (with uplift): {results['total_effective_acres']:,.2f}")
-    print(f"  Wetland Impacted Acres: {results['wetland_impacted_acres']:,.2f}")
-    print(f"  Habitat Impacted Acres: {results['habitat_impacted_acres']:,.2f}")
-    print()
+    logger.info("ACREAGE SUMMARY:")
+    logger.info(f"  Base ROW Acres: {results['total_base_acres']:,.2f}")
+    logger.info(f"  Effective Acres (with uplift): {results['total_effective_acres']:,.2f}")
+    logger.info(f"  Wetland Impacted Acres: {results['wetland_impacted_acres']:,.2f}")
+    logger.info(f"  Habitat Impacted Acres: {results['habitat_impacted_acres']:,.2f}")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print(f"  Base Mitigation/Restoration: ${results['base_cost']:,.2f}")
-    print(f"  Marine Environmental Mitigation: ${results['marine_cost']:,.2f}")
-    print(f"  Wetland Credits: ${results['wetlands_credits']:,.2f}")
-    print(f"  Habitat Credits: ${results['habitat_credits']:,.2f}")
-    print(f"  Total Credit Costs: ${results['total_credits']:,.2f}")
-    print(f"  ---")
-    print(f"  TOTAL NOMINAL COST: ${results['total']:,.2f}")
-    print()
+    logger.info("[NOMINAL VALUES]")
+    logger.info(f"  Base Mitigation/Restoration: ${results['base_cost']:,.2f}")
+    logger.info(f"  Marine Environmental Mitigation: ${results['marine_cost']:,.2f}")
+    logger.info(f"  Wetland Credits: ${results['wetlands_credits']:,.2f}")
+    logger.info(f"  Habitat Credits: ${results['habitat_credits']:,.2f}")
+    logger.info(f"  Total Credit Costs: ${results['total_credits']:,.2f}")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL NOMINAL COST: ${results['total']:,.2f}")
+    logger.info("")
 
     if afudc_setup.apply_afudc:
-        print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
-        print(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
-        print()
-        print(f"  Base Mitigation Capitalized: ${base_cap:,.2f}")
-        print(f"    AFUDC on Base: ${base_afudc:,.2f}")
-        print(f"  Credits Capitalized: ${credits_cap:,.2f}")
-        print(f"    AFUDC on Credits: ${credits_afudc:,.2f}")
-        print(f"  ---")
-        print(f"  TOTAL CAPITALIZED COST (at COD): ${total_capitalized:,.2f}")
-        print(f"  Total AFUDC Amount: ${total_afudc:,.2f}")
-        print()
+        logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+        logger.info(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
+        logger.info(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
+        logger.info("")
+        logger.info(f"  Base Mitigation Capitalized: ${base_cap:,.2f}")
+        logger.info(f"    AFUDC on Base: ${base_afudc:,.2f}")
+        logger.info(f"  Credits Capitalized: ${credits_cap:,.2f}")
+        logger.info(f"    AFUDC on Credits: ${credits_afudc:,.2f}")
+        logger.info(f"  ---")
+        logger.info(f"  TOTAL CAPITALIZED COST (at COD): ${total_capitalized:,.2f}")
+        logger.info(f"  Total AFUDC Amount: ${total_afudc:,.2f}")
+        logger.info("")
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {financing.base_year}")
-    print()
-    print(f"  Base Mitigation/Restoration PV: ${base_cost_pv:,.2f}")
-    print(f"    (Spread over {project_details.construction_years} year(s))")
-    print(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
-    print(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
-    print(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")
-    print(f"    (Payments start at year {construction_start_year:.1f})")
-    print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
-    print("=" * 80)
+    logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Base Year: {financing.base_year}")
+    logger.info("")
+    logger.info(f"  Base Mitigation/Restoration PV: ${base_cost_pv:,.2f}")
+    logger.info(f"    (Spread over {project_details.construction_years} year(s))")
+    logger.info(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
+    logger.info(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
+    logger.info(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")
+    logger.info(f"    (Payments start at year {construction_start_year:.1f})")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
+    logger.info("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

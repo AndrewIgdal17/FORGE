@@ -4,12 +4,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Dict, Tuple
 
 from forge.scripts.io.taxonomy import TAXONOMY, ALL_BCR_DEFINITIONS, get_excluded_taxonomy_ids
 from forge.scripts.io.taxonomy_adapters import TaxonomyResult, taxonomy_results_to_flat_keys
 
 BCR_VIABILITY_THRESHOLD = 1.0
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Utility functions (kept from legacy)
@@ -225,80 +228,80 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     def _g(key: str) -> float:
         return results.get(key, 0) or 0
 
-    print()
-    print("=" * 80)
-    print("BENEFIT-COST RATIO ANALYSIS")
-    print("=" * 80)
-    print()
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("BENEFIT-COST RATIO ANALYSIS")
+    logger.info("=" * 80)
+    logger.info("")
 
-    print("BENEFITS (Present Value):")
-    print(f"  Congestion Reduction:        ${_g('congestion_benefit_pv'):>15,.0f}")
+    logger.info("BENEFITS (Present Value):")
+    logger.info(f"  Congestion Reduction:        ${_g('congestion_benefit_pv'):>15,.0f}")
 
     if _g("capital_recovery_pv") > 0:
-        print(f"  Capital Recovery (Rate-Based): ${_g('capital_recovery_pv'):>15,.0f}")
+        logger.info(f"  Capital Recovery (Rate-Based): ${_g('capital_recovery_pv'):>15,.0f}")
 
-    print("  " + "-" * 78)
-    print(f"  Total Benefits:              ${_g('total_benefits_pv'):>15,.0f}")
-    print("  (societal; excludes revenue transfer)")
-    print()
+    logger.info("  " + "-" * 78)
+    logger.info(f"  Total Benefits:              ${_g('total_benefits_pv'):>15,.0f}")
+    logger.info("  (societal; excludes revenue transfer)")
+    logger.info("")
 
-    print("COSTS (Present Value):")
-    print("  Capital Costs:")
-    print(f"    Build:                     ${_g('build_cost_pv'):>15,.0f}")
-    print(f"    Right-of-Way (capital):    ${_g('row_capital_pv'):>15,.0f}")
-    print(f"    Environmental:             ${_g('env_mitigation_pv'):>15,.0f}")
-    print(f"    Subtotal:                  ${_g('capital_costs_pv'):>15,.0f}")
-    print()
-    print("  Operational Costs:")
-    print(f"    O&M:                       ${_g('oandm_pv'):>15,.0f}")
-    print(f"    Insurance (operational):  ${_g('insurance_pv'):>15,.0f}")
+    logger.info("COSTS (Present Value):")
+    logger.info("  Capital Costs:")
+    logger.info(f"    Build:                     ${_g('build_cost_pv'):>15,.0f}")
+    logger.info(f"    Right-of-Way (capital):    ${_g('row_capital_pv'):>15,.0f}")
+    logger.info(f"    Environmental:             ${_g('env_mitigation_pv'):>15,.0f}")
+    logger.info(f"    Subtotal:                  ${_g('capital_costs_pv'):>15,.0f}")
+    logger.info("")
+    logger.info("  Operational Costs:")
+    logger.info(f"    O&M:                       ${_g('oandm_pv'):>15,.0f}")
+    logger.info(f"    Insurance (operational):  ${_g('insurance_pv'):>15,.0f}")
     if _g("row_rent_pv") > 0:
-        print(f"    ROW rent (operational):    ${_g('row_rent_pv'):>15,.0f}")
-    print(f"    Subtotal:                  ${_g('operational_costs_pv'):>15,.0f}")
-    print()
-    print("  Energy & Emissions Costs:")
+        logger.info(f"    ROW rent (operational):    ${_g('row_rent_pv'):>15,.0f}")
+    logger.info(f"    Subtotal:                  ${_g('operational_costs_pv'):>15,.0f}")
+    logger.info("")
+    logger.info("  Energy & Emissions Costs:")
     if _g("converter_loss_pv") > 0:
-        print(f"    Converter Losses:          ${_g('converter_loss_pv'):>15,.0f}")
-        print(f"    Conductor Losses:          ${_g('conductor_loss_pv'):>15,.0f}")
+        logger.info(f"    Converter Losses:          ${_g('converter_loss_pv'):>15,.0f}")
+        logger.info(f"    Conductor Losses:          ${_g('conductor_loss_pv'):>15,.0f}")
     else:
-        print(f"    Energy Losses:             ${_g('energy_losses_pv'):>15,.0f}")
-    print(f"    Loss-Comp. Emissions:      ${_g('emissions_comp_cost_pv'):>15,.0f}")
-    print(f"    Subtotal:                  ${_g('energy_emissions_costs_pv'):>15,.0f}")
-    print()
-    print("  Risk Costs:")
-    print(f"    Wildfire:                  ${_g('wildfire_pv'):>15,.0f}")
-    print(f"    Outage:                    ${_g('outage_pv'):>15,.0f}")
-    print(f"    Subtotal:                  ${_g('risk_costs_pv'):>15,.0f}")
-    print()
-    print("  Delay Costs:")
-    print(f"    Construction Delay:        ${_g('delay_cost_pv'):>15,.0f}")
-    print(f"    Congestion Delay:          ${_g('congestion_delay_cost_pv'):>15,.0f}")
-    print(f"    Subtotal:                  ${_g('delay_costs_pv'):>15,.0f}")
-    print()
-    print("  " + "-" * 78)
-    print(f"  Total Costs:                 ${_g('total_costs_pv'):>15,.0f}")
-    print()
+        logger.info(f"    Energy Losses:             ${_g('energy_losses_pv'):>15,.0f}")
+    logger.info(f"    Loss-Comp. Emissions:      ${_g('emissions_comp_cost_pv'):>15,.0f}")
+    logger.info(f"    Subtotal:                  ${_g('energy_emissions_costs_pv'):>15,.0f}")
+    logger.info("")
+    logger.info("  Risk Costs:")
+    logger.info(f"    Wildfire:                  ${_g('wildfire_pv'):>15,.0f}")
+    logger.info(f"    Outage:                    ${_g('outage_pv'):>15,.0f}")
+    logger.info(f"    Subtotal:                  ${_g('risk_costs_pv'):>15,.0f}")
+    logger.info("")
+    logger.info("  Delay Costs:")
+    logger.info(f"    Construction Delay:        ${_g('delay_cost_pv'):>15,.0f}")
+    logger.info(f"    Congestion Delay:          ${_g('congestion_delay_cost_pv'):>15,.0f}")
+    logger.info(f"    Subtotal:                  ${_g('delay_costs_pv'):>15,.0f}")
+    logger.info("")
+    logger.info("  " + "-" * 78)
+    logger.info(f"  Total Costs:                 ${_g('total_costs_pv'):>15,.0f}")
+    logger.info("")
 
-    print("BENEFIT-COST RATIOS:")
+    logger.info("BENEFIT-COST RATIOS:")
     bcr_societal = _g("bcr_societal")
     viable_symbol, viable_text = format_bcr_viability(bcr_societal)
-    print(f"  Societal BCR:                {bcr_societal:>6.3f}  {viable_symbol} ({viable_text})")
-    print()
+    logger.info(f"  Societal BCR:                {bcr_societal:>6.3f}  {viable_symbol} ({viable_text})")
+    logger.info("")
 
     bcr_utility = _g("bcr_utility")
     us, ut = format_bcr_viability(bcr_utility)
-    print(f"  Utility/TSP BCR:             {bcr_utility:>6.3f}  {us} ({ut})")
+    logger.info(f"  Utility/TSP BCR:             {bcr_utility:>6.3f}  {us} ({ut})")
 
     bcr_ratepayer = _g("bcr_ratepayer")
     rs, rt = format_bcr_viability(bcr_ratepayer)
-    print(f"  Ratepayer BCR:               {bcr_ratepayer:>6.3f}  {rs} ({rt})")
-    print()
+    logger.info(f"  Ratepayer BCR:               {bcr_ratepayer:>6.3f}  {rs} ({rt})")
+    logger.info("")
 
-    print("NET BENEFITS:")
+    logger.info("NET BENEFITS:")
     nb = _g("net_benefit_pv")
     ns = "✅" if nb >= 0 else "❌"
     nt = "positive: benefits exceed costs" if nb >= 0 else "negative: costs exceed benefits"
-    print(f"  Net Benefit (PV):            ${nb:>15,.0f}  {ns} ({nt})")
-    print()
-    print("=" * 80)
-    print()
+    logger.info(f"  Net Benefit (PV):            ${nb:>15,.0f}  {ns} ({nt})")
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("")

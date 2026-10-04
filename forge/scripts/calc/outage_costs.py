@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 from typing import Dict, Any, Tuple, List
@@ -20,6 +22,9 @@ from forge.scripts.utils.smart_loaders import (
 )
 from forge.scripts.utils.financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
+
+logger = logging.getLogger(__name__)
+
 
 def calculate_voll_cost_piecewise(
     duration_hours: float, mw_lost: float, tiers: List[Dict[str, Any]]
@@ -235,64 +240,64 @@ def main() -> None:
         "construction_type_multiplier_outage_duration": results["duration_multiplier"],
     })
 
-    print("=" * 80)
-    print("EXPECTED OUTAGE COST CALCULATION RESULTS")
-    print("=" * 80)
-    print(f"Project Category: {category}")
-    print(f"Construction Type: {project_details.construction_type}")
-    print(f"Project Capacity: {project_details.capacity_mw} MW")
-    print(
+    logger.info("=" * 80)
+    logger.info("EXPECTED OUTAGE COST CALCULATION RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Project Category: {category}")
+    logger.info(f"Construction Type: {project_details.construction_type}")
+    logger.info(f"Project Capacity: {project_details.capacity_mw} MW")
+    logger.info(
         f"Capacity at Risk: {results['capacity_at_risk']*100:.1f}% (phi = {results['capacity_at_risk']:.2f})"
     )
-    print()
+    logger.info("")
 
-    print("[OUTAGE RELIABILITY ASSESSMENT]")
-    print()
-    print("OUTAGE EXPOSURE (LINE-LEVEL):")
-    print(f"  Total Line Length: {results['total_miles']:.1f} miles")
-    print(f"  Outage Rate: {results['outage_rate']:.4f} outages/mi/yr")
+    logger.info("[OUTAGE RELIABILITY ASSESSMENT]")
+    logger.info("")
+    logger.info("OUTAGE EXPOSURE (LINE-LEVEL):")
+    logger.info(f"  Total Line Length: {results['total_miles']:.1f} miles")
+    logger.info(f"  Outage Rate: {results['outage_rate']:.4f} outages/mi/yr")
     if results.get("lambda_terminal", 0) > 0:
-        print(f"  Model: decomposition (λ_terminal={results['lambda_terminal']:.2f} + λ_per_mile={results['lambda_per_mile']:.4f} × {results['total_miles']:.0f} mi)")
-    print(f"  Total Outages/Year: {results['lambda_total']:.4f} events/year")
-    print(f"  Base Duration: {results['outage_duration']:.1f}h")
-    print(f"  Duration Multiplier: {results['duration_multiplier']:.1f}x")
-    print(f"  Effective Duration: {results['duration_effective']:.1f}h")
-    print(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
-    print()
-    print("TWO-TIER COST PER EVENT:")
-    print(f"  Load-shed fraction (rho): {results['rho']:.2f} ({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})")
-    print(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
-    print(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
-    print(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
-    print(f"  Total cost/event: ${results['cost_per_event']:,.0f}")
-    print()
+        logger.info(f"  Model: decomposition (λ_terminal={results['lambda_terminal']:.2f} + λ_per_mile={results['lambda_per_mile']:.4f} × {results['total_miles']:.0f} mi)")
+    logger.info(f"  Total Outages/Year: {results['lambda_total']:.4f} events/year")
+    logger.info(f"  Base Duration: {results['outage_duration']:.1f}h")
+    logger.info(f"  Duration Multiplier: {results['duration_multiplier']:.1f}x")
+    logger.info(f"  Effective Duration: {results['duration_effective']:.1f}h")
+    logger.info(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
+    logger.info("")
+    logger.info("TWO-TIER COST PER EVENT:")
+    logger.info(f"  Load-shed fraction (rho): {results['rho']:.2f} ({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})")
+    logger.info(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
+    logger.info(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
+    logger.info(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
+    logger.info(f"  Total cost/event: ${results['cost_per_event']:,.0f}")
+    logger.info("")
 
-    print("EXPECTED ANNUAL LOSS:")
-    print(f"  expected_annual_loss: ${results['expected_annual_loss']:,.2f}/year")
-    print()
+    logger.info("EXPECTED ANNUAL LOSS:")
+    logger.info(f"  expected_annual_loss: ${results['expected_annual_loss']:,.2f}/year")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print(f"  Project Lifetime: {project_details.project_lifetime} years")
-    print(f"  Risk Growth Rate: {results['growth_rate']:.1%}/year")
-    print(f"  ---")
-    print(f"  TOTAL NOMINAL COST: ${results['nominal_total']:,.2f}")
-    print(f"    (Sum of growing annual costs, undiscounted)")
-    print()
+    logger.info("[NOMINAL VALUES]")
+    logger.info(f"  Project Lifetime: {project_details.project_lifetime} years")
+    logger.info(f"  Risk Growth Rate: {results['growth_rate']:.1%}/year")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL NOMINAL COST: ${results['nominal_total']:,.2f}")
+    logger.info(f"    (Sum of growing annual costs, undiscounted)")
+    logger.info("")
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {discount_rate:.2%} ({discount_source})")
-    print(f"  Growing Annuity Formula: Applied")
+    logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {discount_rate:.2%} ({discount_source})")
+    logger.info(f"  Growing Annuity Formula: Applied")
     if results["growth_rate"] > discount_rate:
-        print(
+        logger.warning(
             f"  ⚠️  WARNING: Risk growth rate ({results['growth_rate']:.2%}) > discount rate ({discount_rate:.2%})"
         )
-        print(f"      PV grows over time - risk is escalating faster than discounting!")
-    print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE: ${results['pv_cost']:,.2f}")
-    print()
-    print("NOTE: Outage costs are probabilistic future losses, not capital costs.")
-    print("      No AFUDC applies to expected loss calculations.")
-    print("=" * 80)
+        logger.info(f"      PV grows over time - risk is escalating faster than discounting!")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL PRESENT VALUE: ${results['pv_cost']:,.2f}")
+    logger.info("")
+    logger.info("NOTE: Outage costs are probabilistic future losses, not capital costs.")
+    logger.info("      No AFUDC applies to expected loss calculations.")
+    logger.info("=" * 80)
 
     csv_manager = SmartOutputManager()
     csv_manager.add_outage_costs(results)

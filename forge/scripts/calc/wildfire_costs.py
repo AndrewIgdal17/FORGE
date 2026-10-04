@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 from typing import Dict, Any, Tuple
@@ -20,6 +22,9 @@ from forge.scripts.utils.smart_loaders import (
 )
 from forge.scripts.utils.financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
+
+logger = logging.getLogger(__name__)
+
 
 def calculate_wildfire_costs(
     wildfire_yaml: Dict[str, Any],
@@ -135,53 +140,53 @@ def main() -> None:
         "construction_type_multiplier_wildfire": results["construction_multiplier"],
     })
 
-    print("=" * 80)
-    print("EXPECTED WILDFIRE COST CALCULATION RESULTS")
-    print("=" * 80)
-    print(f"Project Category: {category}")
-    print(f"Construction Type: {project_details.construction_type}")
-    print()
+    logger.info("=" * 80)
+    logger.info("EXPECTED WILDFIRE COST CALCULATION RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Project Category: {category}")
+    logger.info(f"Construction Type: {project_details.construction_type}")
+    logger.info("")
 
-    print("[WILDFIRE RISK ASSESSMENT]")
-    print()
-    print("IGNITION EXPOSURE (LINE-LEVEL):")
-    print(f"  Total Line Length: {results['total_miles']:.1f} miles")
-    print(f"  Base Ignition Rate: {results['base_ignition_rate']:.6f} events/mi/yr (overhead baseline)")
-    print(f"  Construction Multiplier: {results['construction_multiplier']:.2f}x")
-    print(f"  Effective Rate: {results['base_ignition_rate'] * results['construction_multiplier']:.6f} events/mi/yr")
-    print(f"  Total Annual Events: {results['lambda_total']:.6f} events/year")
-    print()
+    logger.info("[WILDFIRE RISK ASSESSMENT]")
+    logger.info("")
+    logger.info("IGNITION EXPOSURE (LINE-LEVEL):")
+    logger.info(f"  Total Line Length: {results['total_miles']:.1f} miles")
+    logger.info(f"  Base Ignition Rate: {results['base_ignition_rate']:.6f} events/mi/yr (overhead baseline)")
+    logger.info(f"  Construction Multiplier: {results['construction_multiplier']:.2f}x")
+    logger.info(f"  Effective Rate: {results['base_ignition_rate'] * results['construction_multiplier']:.6f} events/mi/yr")
+    logger.info(f"  Total Annual Events: {results['lambda_total']:.6f} events/year")
+    logger.info("")
 
-    print("EVENT SEVERITY:")
-    print(f"  Mean Loss per Event: ${results['severity']:,.0f}")
-    print()
+    logger.info("EVENT SEVERITY:")
+    logger.info(f"  Mean Loss per Event: ${results['severity']:,.0f}")
+    logger.info("")
 
-    print("EXPECTED ANNUAL LOSS:")
-    print(f"  EAL = lambda * S: ${results['EAL']:,.2f}/year")
-    print()
+    logger.info("EXPECTED ANNUAL LOSS:")
+    logger.info(f"  EAL = lambda * S: ${results['EAL']:,.2f}/year")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print(f"  Project Lifetime: {project_details.project_lifetime} years")
-    print(f"  Risk Growth Rate: {results['growth_rate']:.1%}/year")
-    print(f"  ---")
-    print(f"  TOTAL NOMINAL COST: ${results['nominal_total']:,.2f}")
-    print(f"    (Sum of growing annual costs, undiscounted)")
-    print()
+    logger.info("[NOMINAL VALUES]")
+    logger.info(f"  Project Lifetime: {project_details.project_lifetime} years")
+    logger.info(f"  Risk Growth Rate: {results['growth_rate']:.1%}/year")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL NOMINAL COST: ${results['nominal_total']:,.2f}")
+    logger.info(f"    (Sum of growing annual costs, undiscounted)")
+    logger.info("")
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {social_discount_rate:.2%} ({discount_source})")
-    print(f"  Growing Annuity Formula: Applied")
+    logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {social_discount_rate:.2%} ({discount_source})")
+    logger.info(f"  Growing Annuity Formula: Applied")
     if results["growth_rate"] > social_discount_rate:
-        print(
+        logger.warning(
             f"  ⚠️  WARNING: Risk growth rate ({results['growth_rate']:.2%}) > discount rate ({social_discount_rate:.2%})"
         )
-        print(f"      PV grows over time - risk is escalating faster than discounting!")
-    print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE: ${results['pv_cost']:,.2f}")
-    print()
-    print("NOTE: Wildfire costs are probabilistic future losses, not capital costs.")
-    print("      No AFUDC applies to expected loss calculations.")
-    print("=" * 80)
+        logger.info(f"      PV grows over time - risk is escalating faster than discounting!")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL PRESENT VALUE: ${results['pv_cost']:,.2f}")
+    logger.info("")
+    logger.info("NOTE: Wildfire costs are probabilistic future losses, not capital costs.")
+    logger.info("      No AFUDC applies to expected loss calculations.")
+    logger.info("=" * 80)
 
     csv_manager = SmartOutputManager()
     csv_manager.add_wildfire_costs(results)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -38,6 +40,8 @@ _YAML_STEMS = [
     "22_corona_losses",
     "20_capacity_value",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def build_default_inputs() -> dict[str, Any]:
@@ -83,7 +87,7 @@ def save_forge_file(
     out_path = SCENARIOS_DIR / f"{name}.forge"
     with open(out_path, "w") as f:
         json.dump(forge, f, indent=2, default=str)
-    print(f"  Saved: {out_path}")
+    logger.info(f"  Saved: {out_path}")
     return out_path
 
 

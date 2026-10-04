@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 from typing import Dict, Any
@@ -21,6 +23,9 @@ from forge.scripts.utils.financial_utils import calculate_present_value, calcula
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.run_context import get_run_context
+
+logger = logging.getLogger(__name__)
+
 
 def calculate_insurance_costs(
     insurance_yaml: Dict[str, Any],
@@ -152,43 +157,43 @@ def main() -> None:
     add_derived({"insurable_value": results["insurable_value"]})
 
     # Display results
-    print("=" * 80)
-    print("OPERATIONAL INSURANCE COST CALCULATION RESULTS")
-    print("=" * 80)
-    print(f"Project Category: {category}")
-    print(f"Construction Type: {project_details.construction_type}")
-    print()
+    logger.info("=" * 80)
+    logger.info("OPERATIONAL INSURANCE COST CALCULATION RESULTS")
+    logger.info("=" * 80)
+    logger.info(f"Project Category: {category}")
+    logger.info(f"Construction Type: {project_details.construction_type}")
+    logger.info("")
 
-    print("INSURABLE ASSET VALUE:")
+    logger.info("INSURABLE ASSET VALUE:")
     ins_components = insurance_yaml["insurance"]["insurable_components"]
     if ins_components["conductors"]:
-        print(f"  Conductor Costs: ${costs.conductor_cost_with_contingencies:,.2f}")
+        logger.info(f"  Conductor Costs: ${costs.conductor_cost_with_contingencies:,.2f}")
     if ins_components["structures"]:
-        print(f"  Structure Costs: ${costs.structure_cost_with_contingencies:,.2f}")
+        logger.info(f"  Structure Costs: ${costs.structure_cost_with_contingencies:,.2f}")
     if ins_components["converters"]:
-        print(f"  Converter Costs: ${costs.converter_cost_with_contingencies:,.2f}")
-    print(f"  ---")
-    print(f"  Total Insurable Value: ${results['insurable_value']:,.2f}")
-    print()
+        logger.info(f"  Converter Costs: ${costs.converter_cost_with_contingencies:,.2f}")
+    logger.info(f"  ---")
+    logger.info(f"  Total Insurable Value: ${results['insurable_value']:,.2f}")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print(f"  Line Rate ({results['line_rate']:.3%}) / Converter Rate ({results['converter_rate']:.3%})")
-    print(f"  Blended Premium Rate: {results['premium_rate']:.3%}")
-    print(f"  Annual Premium (Year 1): ${results['annual_premium']:,.2f}")
-    print(f"  Escalation Rate: {results['escalation_rate']:.1%} real/yr")
-    print(f"  Project Lifetime: {project_details.project_lifetime} years")
-    print(f"  ---")
-    print(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
-    print()
+    logger.info("[NOMINAL VALUES]")
+    logger.info(f"  Line Rate ({results['line_rate']:.3%}) / Converter Rate ({results['converter_rate']:.3%})")
+    logger.info(f"  Blended Premium Rate: {results['premium_rate']:.3%}")
+    logger.info(f"  Annual Premium (Year 1): ${results['annual_premium']:,.2f}")
+    logger.info(f"  Escalation Rate: {results['escalation_rate']:.1%} real/yr")
+    logger.info(f"  Project Lifetime: {project_details.project_lifetime} years")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
+    logger.info("")
 
-    print("[UTILITY PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {financing.base_year}")
-    print(f"  ---")
-    print(f"  TOTAL PRESENT VALUE: ${results['insurance_pv']:,.2f}")
-    print()
-    print("NOTE: Operational risk-bearing cost is not AFUDC-eligible (operating expense).")
-    print("=" * 80)
+    logger.info("[UTILITY PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Base Year: {financing.base_year}")
+    logger.info(f"  ---")
+    logger.info(f"  TOTAL PRESENT VALUE: ${results['insurance_pv']:,.2f}")
+    logger.info("")
+    logger.info("NOTE: Operational risk-bearing cost is not AFUDC-eligible (operating expense).")
+    logger.info("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

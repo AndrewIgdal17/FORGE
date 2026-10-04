@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import yaml
 import os
@@ -27,6 +29,9 @@ try:
 except ImportError:
     def get_output_manager():
         return None
+
+logger = logging.getLogger(__name__)
+
 
 def load_rate_based_revenue_parameters() -> bool:
     """
@@ -83,7 +88,7 @@ def get_rate_base() -> float:
             env_afudc = shared.require_upstream("costs", "environmental", "total_afudc")
             return build_afudc + row_afudc + env_afudc
     except KeyError as exc:
-        print(f"⚠️  Rate base lookup failed: {exc}", flush=True)
+        logger.warning(f"⚠️  Rate base lookup failed: {exc}")
         # Fall through to disk-based fallback below
 
     try:
@@ -126,7 +131,7 @@ def get_rate_base() -> float:
         if total > 0:
             return total
     except Exception as e:
-        print(f"⚠️  Warning: Error reading AFUDC capital from JSON: {e}")
+        logger.warning(f"⚠️  Warning: Error reading AFUDC capital from JSON: {e}")
         import traceback
         traceback.print_exc()
     return 0.0
@@ -142,10 +147,10 @@ def main() -> None:
     enabled = load_rate_based_revenue_parameters()
 
     if not enabled:
-        print("=" * 60)
-        print("RATE-BASED REVENUE CALCULATION SKIPPED")
-        print("(revenue.rate_based.enabled = false in financing.yaml)")
-        print("=" * 60)
+        logger.info("=" * 60)
+        logger.info("RATE-BASED REVENUE CALCULATION SKIPPED")
+        logger.info("(revenue.rate_based.enabled = false in financing.yaml)")
+        logger.info("=" * 60)
         # Still write zeros to CSV for consistency
         csv_manager = SmartOutputManager()
         results = {
@@ -172,11 +177,11 @@ def main() -> None:
     rate_base = get_rate_base()
 
     if rate_base == 0:
-        print("⚠️  Warning: Rate base (AFUDC capital) is zero. Revenue will be zero.")
-        print(
+        logger.warning("⚠️  Warning: Rate base (AFUDC capital) is zero. Revenue will be zero.")
+        logger.info(
             "   Make sure build_costs.py, row_costs.py, and environmental_mitigation.py"
         )
-        print("   have run before revenue.py")
+        logger.info("   have run before revenue.py")
 
     cod_year = calculate_cod_year(delay_years, construction_years)
     rate_base_real = rate_base
@@ -211,21 +216,21 @@ def main() -> None:
         f"NPV neutrality violated: capital_recovery_pv={capital_recovery_pv:.2f}, expected={expected_pv:.2f}"
     )
 
-    print("=" * 60)
-    print("RATE-BASED REVENUE REQUIREMENT CALCULATION (declining balance, real WACC)")
-    print("=" * 60)
-    print(f"Rate Base (real, AFUDC-capitalized): ${rate_base:,.2f}")
-    print(f"Real WACC:                      {r_wacc_real:.2%}")
-    print(f"Project Lifetime:                {n} years")
-    print(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")
-    print(f"Revenue Year {n} (real $/year):   ${revenue_year_n:,.2f}")
-    print(f"Undiscounted Total (real):      ${capital_recovery_real:,.2f}")
-    print()
-    print(
+    logger.info("=" * 60)
+    logger.info("RATE-BASED REVENUE REQUIREMENT CALCULATION (declining balance, real WACC)")
+    logger.info("=" * 60)
+    logger.info(f"Rate Base (real, AFUDC-capitalized): ${rate_base:,.2f}")
+    logger.info(f"Real WACC:                      {r_wacc_real:.2%}")
+    logger.info(f"Project Lifetime:                {n} years")
+    logger.info(f"Revenue Year 1 (real $/year):    ${revenue_year_1:,.2f}")
+    logger.info(f"Revenue Year {n} (real $/year):   ${revenue_year_n:,.2f}")
+    logger.info(f"Undiscounted Total (real):      ${capital_recovery_real:,.2f}")
+    logger.info("")
+    logger.info(
         f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%}):"
     )
-    print(f"Capital Recovery PV:            ${capital_recovery_pv:,.2f}")
-    print("=" * 60)
+    logger.info(f"Capital Recovery PV:            ${capital_recovery_pv:,.2f}")
+    logger.info("=" * 60)
 
     # CSV Output
     csv_manager = SmartOutputManager()

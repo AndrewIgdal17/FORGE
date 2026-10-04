@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 import math
 from dataclasses import dataclass
@@ -29,6 +31,9 @@ from forge.scripts.utils.financial_utils import (
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class BuildCosts:
@@ -347,64 +352,64 @@ def main() -> None:
         )
 
     # Format and display results
-    print("=" * 80)
-    print("TRANSMISSION LINE BUILD COSTS ANALYSIS")
-    print("=" * 80)
-    print()
-    print("Project Metrics:")
-    print(f"  Total Miles:              {total_miles:,.2f} miles")
-    print(f"  Weighted Miles:           {costs.weighted_miles:,.2f} miles")
-    print(f"  Terrain Multiplier:       {costs.average_terrain_multiplier:.2f}")
-    print()
+    logger.info("=" * 80)
+    logger.info("TRANSMISSION LINE BUILD COSTS ANALYSIS")
+    logger.info("=" * 80)
+    logger.info("")
+    logger.info("Project Metrics:")
+    logger.info(f"  Total Miles:              {total_miles:,.2f} miles")
+    logger.info(f"  Weighted Miles:           {costs.weighted_miles:,.2f} miles")
+    logger.info(f"  Terrain Multiplier:       {costs.average_terrain_multiplier:.2f}")
+    logger.info("")
 
-    print("[NOMINAL VALUES]")
-    print("Base Build Costs:")
-    print(f"  Conductor Costs:          ${costs.conductor_cost:,.2f}")
-    print(f"  Structure Costs:          ${costs.structure_cost:,.2f}")
-    print(f"  Converter Costs:          ${costs.converter_cost:,.2f}")
-    print("  " + "-" * 52)
-    print(f"  Total Base Cost:          ${costs.total_cost:,.2f}")
-    print()
-    print("Costs with Contingencies:")
-    print(f"  Conductor Costs:          ${costs.conductor_cost_with_contingencies:,.2f}")
-    print(f"  Structure Costs:          ${costs.structure_cost_with_contingencies:,.2f}")
-    print(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
-    print("  " + "-" * 52)
-    print(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
+    logger.info("[NOMINAL VALUES]")
+    logger.info("Base Build Costs:")
+    logger.info(f"  Conductor Costs:          ${costs.conductor_cost:,.2f}")
+    logger.info(f"  Structure Costs:          ${costs.structure_cost:,.2f}")
+    logger.info(f"  Converter Costs:          ${costs.converter_cost:,.2f}")
+    logger.info("  " + "-" * 52)
+    logger.info(f"  Total Base Cost:          ${costs.total_cost:,.2f}")
+    logger.info("")
+    logger.info("Costs with Contingencies:")
+    logger.info(f"  Conductor Costs:          ${costs.conductor_cost_with_contingencies:,.2f}")
+    logger.info(f"  Structure Costs:          ${costs.structure_cost_with_contingencies:,.2f}")
+    logger.info(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
+    logger.info("  " + "-" * 52)
+    logger.info(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
     if project_details.delay_years > 0 and construction_cost_escalation_rate > 0:
-        print(f"\n  Delay Escalation: {construction_cost_escalation_rate:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
-    print()
+        logger.info(f"\n  Delay Escalation: {construction_cost_escalation_rate:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
+    logger.info("")
 
     if afudc_setup.apply_afudc:
-        print("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        print(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
-        print(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
-        print()
-        print(
+        logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+        logger.info(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
+        logger.info(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
+        logger.info("")
+        logger.info(
             f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
         )
-        print(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
-        print(
+        logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
+        logger.info(
             f"    (Build costs incurred during {project_details.construction_years} year construction)"
         )
-        print()
+        logger.info("")
 
-    print("[SOCIETAL PERSPECTIVE - Present Value]")
-    print(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
-    print(f"  Base Year: {financing.base_year}")
-    print()
-    print("Build costs incurred during construction period:")
+    logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
+    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Base Year: {financing.base_year}")
+    logger.info("")
+    logger.info("Build costs incurred during construction period:")
     if project_details.construction_years > 0:
-        print(
+        logger.info(
             f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
         )
-        print(
+        logger.info(
             f"  Construction Period: Year {construction_start_year:.1f} to Year {construction_start_year + project_details.construction_years - 1:.1f}"
         )
     else:
-        print(f"  One-time cost at Year {construction_start_year:.1f}")
-    print(f"  Build Cost PV: ${build_cost_pv:,.2f}")
-    print("=" * 80)
+        logger.info(f"  One-time cost at Year {construction_start_year:.1f}")
+    logger.info(f"  Build Cost PV: ${build_cost_pv:,.2f}")
+    logger.info("=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV

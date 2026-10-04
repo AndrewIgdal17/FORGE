@@ -20,6 +20,8 @@ Appendix: sec:app-emissions-fac, sec:app-displacement.
 
 from __future__ import annotations
 
+import logging
+
 import os
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
@@ -39,6 +41,9 @@ from forge.scripts.utils.smart_loaders import (
 )
 from forge.scripts.calc.energy_losses import load_project_technical_details
 from forge.scripts.utils.financial_utils import calculate_cod_year
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class FacilitatedEmissionsResults:
@@ -172,33 +177,33 @@ def print_facilitated_emissions_results(
     energy_delivered_annual_mwh: float,
 ) -> None:
     """Print facilitated emissions and displacement results."""
-    print("=" * 60)
-    print("FACILITATED EMISSIONS (LAYER 1)")
-    print("=" * 60)
-    print(f"Scope: E_delivered_annual = {energy_delivered_annual_mwh:,.2f} MWh/yr")
-    print()
-    print("Project path:")
-    print(f"  Nominal: ${results.fac_emissions_project_nominal:,.2f}")
-    print(f"  PV:      ${results.fac_emissions_project_pv:,.2f}")
+    logger.info("=" * 60)
+    logger.info("FACILITATED EMISSIONS (LAYER 1)")
+    logger.info("=" * 60)
+    logger.info(f"Scope: E_delivered_annual = {energy_delivered_annual_mwh:,.2f} MWh/yr")
+    logger.info("")
+    logger.info("Project path:")
+    logger.info(f"  Nominal: ${results.fac_emissions_project_nominal:,.2f}")
+    logger.info(f"  PV:      ${results.fac_emissions_project_pv:,.2f}")
     for p, v in results.project_pv_by_pollutant.items():
-        print(f"    {p.upper()} PV: ${v:,.2f}")
-    print()
-    print("No-line (counterfactual):")
-    print(f"  Nominal: ${results.fac_emissions_noline_nominal:,.2f}")
-    print(f"  PV:      ${results.fac_emissions_noline_pv:,.2f}")
+        logger.info(f"    {p.upper()} PV: ${v:,.2f}")
+    logger.info("")
+    logger.info("No-line (counterfactual):")
+    logger.info(f"  Nominal: ${results.fac_emissions_noline_nominal:,.2f}")
+    logger.info(f"  PV:      ${results.fac_emissions_noline_pv:,.2f}")
     for p, v in results.noline_pv_by_pollutant.items():
-        print(f"    {p.upper()} PV: ${v:,.2f}")
-    print()
-    print("=" * 60)
-    print("DISPLACEMENT AVOIDED COST (LAYER 2)")
-    print("=" * 60)
-    print(f"  Nominal: ${results.displacement_avoided_benefit_nominal:,.2f}")
-    print(f"  PV:      ${results.displacement_avoided_benefit_pv:,.2f}")
+        logger.info(f"    {p.upper()} PV: ${v:,.2f}")
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("DISPLACEMENT AVOIDED COST (LAYER 2)")
+    logger.info("=" * 60)
+    logger.info(f"  Nominal: ${results.displacement_avoided_benefit_nominal:,.2f}")
+    logger.info(f"  PV:      ${results.displacement_avoided_benefit_pv:,.2f}")
     sign = "cleaner project" if results.displacement_avoided_benefit_pv > 0 else "dirtier project"
-    print(f"  Sign:    {sign}")
+    logger.info(f"  Sign:    {sign}")
     for p, v in results.displacement_pv_by_pollutant.items():
-        print(f"    {p.upper()} avoided PV: ${v:,.2f}")
-    print()
+        logger.info(f"    {p.upper()} avoided PV: ${v:,.2f}")
+    logger.info("")
 
 def main() -> None:
     """Entry point for the facilitated emissions pipeline step."""
@@ -223,7 +228,7 @@ def main() -> None:
                 "benefits", "congestion", "energy_delivered_annual_mwh_yr"
             )
         except KeyError as exc:
-            print(f"⚠️  {exc}", flush=True)
+            logger.warning(f"⚠️  {exc}")
     elif hasattr(actual_manager, 'benefits'):
         cc_results = actual_manager.benefits.get("congestion", {})
         energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
@@ -248,7 +253,7 @@ def main() -> None:
                 pass
 
     if energy_delivered_annual_mwh <= 0:
-        print("⚠️  E_delivered_annual is 0 or missing — skipping facilitated emissions.")
+        logger.warning("⚠️  E_delivered_annual is 0 or missing — skipping facilitated emissions.")
         return
 
     results = calculate_facilitated_emissions(

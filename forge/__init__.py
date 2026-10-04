@@ -31,3 +31,7 @@ __all__ = [
     "InvalidInputs",
     "CalculationError",
 ]
+
+import logging
+
+logging.getLogger("forge").addHandler(logging.NullHandler())

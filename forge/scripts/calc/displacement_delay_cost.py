@@ -23,6 +23,8 @@ Appendix: sec:app-displacement-delay.
 
 from __future__ import annotations
 
+import logging
+
 import os
 from dataclasses import dataclass, field
 from typing import Dict, Any
@@ -35,6 +37,9 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_social_discount_rate,
 )
 from forge.scripts.calc.energy_losses import load_project_technical_details
+
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class DisplacementDelayCostResults:
@@ -115,17 +120,17 @@ def print_displacement_delay_cost_results(
     delay_years: float,
 ) -> None:
     """Print displacement delay cost results."""
-    print("=" * 60)
-    print("DISPLACEMENT DELAY EMISSIONS COST")
-    print("=" * 60)
-    print(f"Delay years: {delay_years}")
-    print(f"Scope: E_delivered_annual = {energy_delivered_annual_mwh:,.2f} MWh/yr")
-    print()
-    print(f"  Nominal: ${results.displacement_delay_cost_nominal:,.2f}")
-    print(f"  PV:      ${results.displacement_delay_cost_pv:,.2f}")
+    logger.info("=" * 60)
+    logger.info("DISPLACEMENT DELAY EMISSIONS COST")
+    logger.info("=" * 60)
+    logger.info(f"Delay years: {delay_years}")
+    logger.info(f"Scope: E_delivered_annual = {energy_delivered_annual_mwh:,.2f} MWh/yr")
+    logger.info("")
+    logger.info(f"  Nominal: ${results.displacement_delay_cost_nominal:,.2f}")
+    logger.info(f"  PV:      ${results.displacement_delay_cost_pv:,.2f}")
     for p, v in results.pv_by_pollutant.items():
-        print(f"    {p.upper()} PV: ${v:,.2f}")
-    print()
+        logger.info(f"    {p.upper()} PV: ${v:,.2f}")
+    logger.info("")
 
 def main() -> None:
     """Entry point for the displacement delay cost pipeline step."""
@@ -150,7 +155,7 @@ def main() -> None:
                 "benefits", "congestion", "energy_delivered_annual_mwh_yr"
             )
         except KeyError as exc:
-            print(f"⚠️  {exc}", flush=True)
+            logger.warning(f"⚠️  {exc}")
     elif hasattr(actual_manager, 'benefits'):
         cc_results = actual_manager.benefits.get("congestion", {})
         energy_delivered_annual_mwh = cc_results.get("energy_delivered_annual_mwh_yr", 0.0)
@@ -175,9 +180,9 @@ def main() -> None:
                 pass
 
     if project_details.delay_years <= 0:
-        print("ℹ️  delay_years is 0 — no displacement delay period, cost is zero.")
+        logger.info("ℹ️  delay_years is 0 — no displacement delay period, cost is zero.")
     elif energy_delivered_annual_mwh <= 0:
-        print("⚠️  E_delivered_annual is 0 or missing — displacement delay cost is zero.")
+        logger.warning("⚠️  E_delivered_annual is 0 or missing — displacement delay cost is zero.")
 
     results = calculate_displacement_delay_cost(
         energy_delivered_annual_mwh=energy_delivered_annual_mwh,

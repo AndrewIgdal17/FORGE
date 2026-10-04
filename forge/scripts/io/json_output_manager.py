@@ -2,11 +2,13 @@
 # Description: JSON output manager for FORGE API calculations.
 #              Collects per-module results in memory as JSON.
 
+import json
+import logging
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional
-import json
-import os
-import sys
+
+logger = logging.getLogger(__name__)
 
 
 def _require_when_reconductoring(
@@ -484,9 +486,8 @@ class JSONOutputManager:
             for key, value in state["costs"].items():
                 # Debug: Log line_loss specifically
                 if key == "line_loss":
-                    print(
-                        f"DEBUG: Loading line_loss from {os.path.basename(json_file)}: {value}",
-                        file=sys.stderr,
+                    logger.debug(
+                        f"DEBUG: Loading line_loss from {os.path.basename(json_file)}: {value}"
                     )
                 # Update if value exists (allow zero values and empty dicts for line_loss)
                 if value is not None:

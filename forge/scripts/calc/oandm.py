@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import logging
+
 # Standard library imports
 from typing import Dict
 
@@ -19,6 +21,8 @@ from forge.scripts.utils.financial_utils import calculate_cod_year, calculate_gr
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
 from forge.scripts.utils.run_context import get_run_context, add_derived
+
+logger = logging.getLogger(__name__)
 
 # All four O&M rate tables (12-15) read through the active run's input sections.
 # API-mode scenario customizations to conductor/structure/converter rates
@@ -278,20 +282,20 @@ def main() -> None:
     })
 
     # Print results
-    print("\n" + "=" * 80)
-    print("O&M COST ANALYSIS")
-    print("=" * 80)
+    logger.info("\n" + "=" * 80)
+    logger.info("O&M COST ANALYSIS")
+    logger.info("=" * 80)
 
-    print("\n--- Project Overview ---")
-    print(f"Construction Type: {project_details.construction_type}")
-    print(f"Total Line Length: {physical_details.total_miles:.2f} miles")
-    print(f"Project Lifetime: {project_details.project_lifetime} years")
+    logger.info("\n--- Project Overview ---")
+    logger.info(f"Construction Type: {project_details.construction_type}")
+    logger.info(f"Total Line Length: {physical_details.total_miles:.2f} miles")
+    logger.info(f"Project Lifetime: {project_details.project_lifetime} years")
 
     # Print structure information for overhead projects
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD and structure_dict:
-        print("\n--- Structure Information ---")
-        print(f"Total Structures: {int(structure_dict['total'])}")
-        print("\nStructures by Terrain Type:")
+        logger.info("\n--- Structure Information ---")
+        logger.info(f"Total Structures: {int(structure_dict['total'])}")
+        logger.info("\nStructures by Terrain Type:")
         terrain_names = {
             "forested": "Forested",
             "scrubbed_flat": "Scrubbed Flat",
@@ -309,41 +313,41 @@ def main() -> None:
                 "forested",
                 "scrubbed_flat",
             ]:  # Show at least common terrains
-                print(f"  {label:20s}: {structures:6d}")
+                logger.info(f"  {label:20s}: {structures:6d}")
 
-    print("\n--- Unit Costs (per mile per year) ---")
-    print(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
-    print(f"Converter:  ${total_converter_cost_per_year:,.2f} (total $/year; % of station CAPEX)")
+    logger.info("\n--- Unit Costs (per mile per year) ---")
+    logger.info(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
+    logger.info(f"Converter:  ${total_converter_cost_per_year:,.2f} (total $/year; % of station CAPEX)")
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
-        print(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
+        logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
     else:
-        print(f"Structure:  ${variable_structure_cost_per_mile_year:,.2f}")
+        logger.info(f"Structure:  ${variable_structure_cost_per_mile_year:,.2f}")
 
-    print("\n--- Annual Total Costs ---")
-    print(f"Conductor:  ${total_conductor_cost_per_year:,.2f}")
-    print(f"Converter:  ${total_converter_cost_per_year:,.2f}")
-    print(f"Structure:  ${variable_structure_cost_per_year:,.2f}")
-    print(f"Vegetation Management:  ${total_vegetation_management_cost_per_year:,.2f}")
-    print(f"{'─' * 40}")
-    print(f"Total:      ${_total_annual_oandm:,.2f}")
+    logger.info("\n--- Annual Total Costs ---")
+    logger.info(f"Conductor:  ${total_conductor_cost_per_year:,.2f}")
+    logger.info(f"Converter:  ${total_converter_cost_per_year:,.2f}")
+    logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f}")
+    logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_per_year:,.2f}")
+    logger.info(f"{'─' * 40}")
+    logger.info(f"Total:      ${_total_annual_oandm:,.2f}")
 
-    print("\n--- Lifetime Total Costs (Undiscounted) ---")
-    print(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
-    print(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
-    print(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
-    print(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
-    print(f"{'─' * 40}")
-    print(f"Total:      ${_total_nominal_oandm:,.2f}")
+    logger.info("\n--- Lifetime Total Costs (Undiscounted) ---")
+    logger.info(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
+    logger.info(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
+    logger.info(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
+    logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
+    logger.info(f"{'─' * 40}")
+    logger.info(f"Total:      ${_total_nominal_oandm:,.2f}")
 
-    print("\n--- Present Value Calculations ---")
-    print(f"Real WACC: {financing.wacc_real:.4f}")
-    print(f"PV Conductor:  ${pv_conductor:,.2f}")
-    print(f"PV Converter:  ${pv_converter:,.2f}")
-    print(f"PV Structure:  ${pv_structure:,.2f}")
-    print(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
-    print(f"{'─' * 40}")
-    print(f"PV Total:      ${pv_total:,.2f}")
-    print("\n" + "=" * 80)
+    logger.info("\n--- Present Value Calculations ---")
+    logger.info(f"Real WACC: {financing.wacc_real:.4f}")
+    logger.info(f"PV Conductor:  ${pv_conductor:,.2f}")
+    logger.info(f"PV Converter:  ${pv_converter:,.2f}")
+    logger.info(f"PV Structure:  ${pv_structure:,.2f}")
+    logger.info(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
+    logger.info(f"{'─' * 40}")
+    logger.info(f"PV Total:      ${pv_total:,.2f}")
+    logger.info("\n" + "=" * 80)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
