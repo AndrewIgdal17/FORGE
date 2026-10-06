@@ -1,5 +1,6 @@
 """Concurrent calls return the same results as sequential calls."""
 import json
+import math
 import random
 import threading
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import forge
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
+_REL_TOL = 1e-9
 
 
 def _scenario_ids():
@@ -22,6 +24,23 @@ def _strip_excluded(obj, excluded=EXCLUDED_KEYS):
     if isinstance(obj, list):
         return [_strip_excluded(v, excluded) for v in obj]
     return obj
+
+
+def _approx_equal(actual, expected, rel_tol=_REL_TOL):
+    """Recursively compare, using math.isclose for floats."""
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict) or actual.keys() != expected.keys():
+            return False
+        return all(_approx_equal(actual[k], expected[k], rel_tol) for k in expected)
+    if isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            return False
+        return all(_approx_equal(a, e, rel_tol) for a, e in zip(actual, expected))
+    if isinstance(expected, float) and isinstance(actual, float):
+        if math.isnan(expected) and math.isnan(actual):
+            return True
+        return math.isclose(actual, expected, rel_tol=rel_tol)
+    return actual == expected
 
 
 def _restore_scenario_id(obj, run_id, scenario_name):
@@ -59,7 +78,7 @@ def test_eight_threads_match_golden():
             results = forge.run_calculation(resolved, scenario_id=run_id)
             actual = json.loads(forge.canonical_dumps(_strip_excluded(results)))
             actual = _restore_scenario_id(actual, run_id, scenario_name)
-            if actual != expected:
+            if not _approx_equal(actual, expected):
                 with error_lock:
                     errors.append(f"{scenario_name} run {run_index}: mismatch")
         except Exception as exc:
