@@ -356,6 +356,7 @@ def main() -> None:
         "total_afudc": total_capitalized if afudc_setup.apply_afudc else 0,
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
+        "base_cost_pv": base_cost_pv,
         "marine_cost_nominal": results["marine_cost"],
         "credits_nominal": results["total_credits"],
         "credits_pv": total_credits_pv,
