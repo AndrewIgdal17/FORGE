@@ -34,3 +34,9 @@ forge = [
 [tool.pytest.ini_options]
 testpaths = ["test", "forge/scripts/tests"]
 filterwarnings = ["error::pytest.PytestReturnNotNoneWarning"]
+
+[dependency-groups]
+dev = [
+    "asyncpg>=0.32.0",
+    "httpx>=0.28.1",
+]
