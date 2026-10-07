@@ -359,9 +359,9 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "build_conductor": "build_cost_pv",
     "build_structure": "build_cost_pv",
     "build_converter": "build_cost_pv",
-    # Hard costs — ROW items share aggregate key row_capital_pv
-    "row_acquisition": "row_capital_pv",
-    "row_holding": "row_capital_pv",
+    # Hard costs — ROW items share aggregate key acquisition_pv
+    "row_acquisition": "acquisition_pv",
+    "row_holding": "acquisition_pv",
     # Hard costs — individual keys
     "env_mitigation": "env_mitigation_pv",
     # Soft costs — operational

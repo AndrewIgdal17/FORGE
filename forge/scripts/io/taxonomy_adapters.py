@@ -97,8 +97,8 @@ def adapt_row(row: dict) -> list[TaxonomyResult]:
     """Adapt costs.row -> row_acquisition, row_holding, row_rent."""
     if not row:
         return []
-    cap_pv = _safe(row, "row_capital_pv")
-    cap_nom = _safe(row, "row_capital_nominal")
+    cap_pv = _safe(row, "acquisition_pv")
+    cap_nom = _safe(row, "acquisition_nominal_total")
     acq_nom = _safe(row, "acquisition_nominal")
     hold_nom = _safe(row, "holding_nominal")
     return [
@@ -451,8 +451,8 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "build_cost_nominal": build_nom,
         "row_cost_pv": row_cap_pv,
         "row_cost_nominal": row_cap_nom,
-        "row_capital_pv": row_cap_pv,
-        "row_capital_nominal": row_cap_nom,
+        "acquisition_pv": row_cap_pv,
+        "acquisition_nominal_total": row_cap_nom,
         "row_rent_pv": _pv("row_rent"),
         "row_rent_nominal": _nom("row_rent"),
         "env_mitigation_pv": _pv("env_mitigation"),

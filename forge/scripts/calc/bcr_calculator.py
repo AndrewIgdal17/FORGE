@@ -105,7 +105,7 @@ _GROUP_TO_SUFFIX: dict[str, str] = {
 # Canonical output keys included in the BCR results dict
 _BCR_OUTPUT_KEYS = frozenset({
     "build_cost_pv",
-    "row_cost_pv", "row_capital_pv", "row_capital_nominal",
+    "row_cost_pv", "acquisition_pv", "acquisition_nominal_total",
     "row_rent_pv", "row_rent_nominal",
     "env_mitigation_pv",
     "oandm_pv", "insurance_pv",
@@ -248,7 +248,7 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info("COSTS (Present Value):")
     logger.info("  Capital Costs:")
     logger.info(f"    Build:                     ${_g('build_cost_pv'):>15,.0f}")
-    logger.info(f"    Right-of-Way (capital):    ${_g('row_capital_pv'):>15,.0f}")
+    logger.info(f"    Right-of-Way (acquisition): ${_g('acquisition_pv'):>15,.0f}")
     logger.info(f"    Environmental:             ${_g('env_mitigation_pv'):>15,.0f}")
     logger.info(f"    Subtotal:                  ${_g('capital_costs_pv'):>15,.0f}")
     logger.info("")

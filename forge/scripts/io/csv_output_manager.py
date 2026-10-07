@@ -17,10 +17,10 @@ BATCH_SUMMARY_FIELDS = [
     # 3. Capital Costs PV (with breakdown)
     "build_cost_pv",
     "row_cost_pv",
-    "row_capital_pv",
+    "acquisition_pv",
     "row_rent_pv",
-    "row_capital_afudc",
-    "row_capital_nominal",
+    "acquisition_afudc",
+    "acquisition_nominal_total",
     "row_rent_nominal",
     "env_mitigation_pv",
     "capital_costs_pv",

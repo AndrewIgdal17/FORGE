@@ -296,7 +296,7 @@ class JSONOutputManager:
             # Capital costs (ROW = acquisition + holding only; rent is operational)
             "total_capital_nominal": (
                 build.get("total_nominal", 0)
-                + (row.get("row_capital_nominal", 0) or row.get("total_nominal", 0))
+                + (row.get("acquisition_nominal_total", 0) or row.get("total_nominal", 0))
                 + env.get("total_nominal", 0)
             ),
             "total_capital_afudc": (
@@ -306,7 +306,7 @@ class JSONOutputManager:
             ),
             "total_capital_pv": (
                 build.get("total_pv", 0)
-                + (row.get("row_capital_pv", 0) or row.get("total_pv", 0))
+                + (row.get("acquisition_pv", 0) or row.get("total_pv", 0))
                 + env.get("total_pv", 0)
             ),
             # Operational costs (O&M + insurance + ROW rent; residual exceedance is in energy/emissions)

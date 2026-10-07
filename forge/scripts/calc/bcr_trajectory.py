@@ -268,9 +268,9 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
     # --- Hard costs: distributed uniformly across construction years -------
     build_pv = bcr.get("build_cost_pv", 0.0)
-    row_capital_pv = bcr.get("row_capital_pv") or bcr.get("row_cost_pv", 0.0)
+    acquisition_pv = bcr.get("acquisition_pv") or bcr.get("row_cost_pv", 0.0)
     env_mit_pv = bcr.get("env_mitigation_pv", 0.0)
-    total_hard_pv = build_pv + row_capital_pv + env_mit_pv
+    total_hard_pv = build_pv + acquisition_pv + env_mit_pv
 
     # --- Delay costs: distributed uniformly across delay years -------------
     # (congestion delay opportunity cost, construction cost escalation during

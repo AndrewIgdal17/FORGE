@@ -177,7 +177,7 @@ def main() -> None:
 
     # Only acquisition is AFUDC-eligible (appendix L392–393, L475–476).
     if afudc_setup.apply_afudc and acquisition_cost_used != 0:
-        acquisition_capitalized, acquisition_afudc = (
+        acquisition_capitalized, afudc_on_acquisition = (
             calculate_afudc_capitalized_cost(
                 acquisition_cost_used,
                 afudc_setup.timing_patterns["row_acquisition"],
@@ -190,7 +190,7 @@ def main() -> None:
         )
     else:
         acquisition_capitalized = acquisition_cost_used
-        acquisition_afudc = 0.0
+        afudc_on_acquisition = 0.0
 
     # Holding is a real operating expense (FERC Account 567), not AFUDC-eligible.
     holding_capitalized = total_holding_cost
@@ -225,15 +225,17 @@ def main() -> None:
         construction_years=0.0,
     )
 
-    # Capital = acquisition only. Holding is operating expense, not capital.
-    row_capital_afudc = acquisition_capitalized
-    row_capital_pv = total_acquisition_cost_pv
+    # Acquisition only. Holding is operating expense, not capital.
+    # acquisition_afudc is the capitalized acquisition cost at COD.
+    # afudc_on_acquisition is the AFUDC increment alone.
+    acquisition_afudc = acquisition_capitalized
+    acquisition_pv = total_acquisition_cost_pv
     row_holding_pv = total_holding_cost_pv
-    row_capital_nominal = acquisition_cost_used + total_holding_cost
+    acquisition_nominal_total = acquisition_cost_used + total_holding_cost
     row_rent_pv = total_rent_cost_pv
     row_rent_nominal = total_rent_cost
-    total_afudc = row_capital_afudc
-    total_pv_cost = row_capital_pv + row_holding_pv + total_rent_cost_pv
+    total_afudc = acquisition_afudc
+    total_pv_cost = acquisition_pv + row_holding_pv + total_rent_cost_pv
 
     # Display results
     logger.info("=" * 80)
@@ -269,17 +271,17 @@ def main() -> None:
         )
         logger.info("")
         logger.info(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
-        logger.info(f"    AFUDC on Acquisition: ${acquisition_afudc:,.2f}")
+        logger.info(f"    AFUDC on Acquisition: ${afudc_on_acquisition:,.2f}")
         logger.info(f"  Holding Cost (operating expense): ${holding_capitalized:,.2f}")
         logger.info(f"    AFUDC on Holding: ${holding_afudc:,.2f} (not AFUDC-eligible)")
         logger.info(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
         logger.info(f"    (NOT AFUDC-eligible - operational period)")
         logger.info(f"  ---")
         logger.info(
-            f"  ROW Capital (at COD): ${row_capital_afudc:,.2f}"
+            f"  Acquisition (at COD): ${acquisition_afudc:,.2f}"
         )
         logger.info(
-            f"  TOTAL (Capital + annual ROW payment): ${row_capital_afudc + total_rent_cost:,.2f}"
+            f"  TOTAL (Acquisition at COD + annual ROW payment): ${acquisition_afudc + total_rent_cost:,.2f}"
         )
         logger.info("")
 
@@ -303,9 +305,9 @@ def main() -> None:
         "total_nominal": total_nominal_cost,
         "total_afudc": total_afudc,
         "total_pv": total_pv_cost,
-        "row_capital_pv": row_capital_pv,
-        "row_capital_afudc": row_capital_afudc,
-        "row_capital_nominal": row_capital_nominal,
+        "acquisition_pv": acquisition_pv,
+        "acquisition_afudc": acquisition_afudc,
+        "acquisition_nominal_total": acquisition_nominal_total,
         "row_holding_pv": row_holding_pv,
         "row_rent_pv": row_rent_pv,
         "row_rent_nominal": row_rent_nominal,

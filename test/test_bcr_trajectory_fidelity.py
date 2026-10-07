@@ -127,7 +127,7 @@ def test_bcr_utility_uses_atrr_excluding_line_losses_and_congestion_delay():
     results = {
         "bcr": {
             "build_cost_pv": 0.0,
-            "row_capital_pv": 0.0,
+            "acquisition_pv": 0.0,
             "env_mitigation_pv": 0.0,
             "delay_cost_pv": delay_pv,
             "congestion_delay_cost_pv": congestion_delay_pv,

@@ -152,7 +152,7 @@ def print_results(results: dict, label: str):
 
     print(f"\n  --- COSTS (PV) ---")
     print(f"  Build (capital):        {fmt(costs['build']['total_pv'])}")
-    print(f"  ROW (capital):          {fmt(costs['row']['row_capital_pv'])}")
+    print(f"  ROW (acquisition):      {fmt(costs['row']['acquisition_pv'])}")
     print(f"  Environmental:          {fmt(costs['environmental']['total_pv'])}")
     print(f"  Insurance:              {fmt(costs['insurance']['pv_total'])}")
     print(f"  O&M:                    {fmt(costs['oandm']['total_pv'])}")
