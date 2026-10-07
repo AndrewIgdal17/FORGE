@@ -42,7 +42,7 @@ class CongestionProjectDetails:
 class CongestionReductionResults:
     """Results from congestion reduction calculation."""
 
-    effective_capacity_relief: float
+    effective_capacity_mw: float
     constrained_hours: float
     average_exceedance: float
     relief_mw: float
@@ -164,7 +164,7 @@ def calculate_congestion_reduction_costs(
     """
     g = benefit_price_escalation_real
 
-    # Effective capacity relief
+    # Effective capacity
     if project_type == "greenfield":
         delta_C_eff = max(0.0, flow_factor * capacity_mw)
     else:
@@ -201,7 +201,7 @@ def calculate_congestion_reduction_costs(
     )
 
     return CongestionReductionResults(
-        effective_capacity_relief=delta_C_eff,
+        effective_capacity_mw=delta_C_eff,
         constrained_hours=H,
         average_exceedance=X,
         relief_mw=relief_mw,
@@ -247,7 +247,7 @@ def main() -> None:
     logger.info("CONGESTION PHYSICAL RESULTS AND QUANTITIES")
     logger.info("=" * 60)
     logger.info(
-        f"Effective capacity relief: {congestion_results.effective_capacity_relief:,.2f} MW"
+        f"Effective capacity: {congestion_results.effective_capacity_mw:,.2f} MW"
     )
     logger.info(f"Constrained hours: {congestion_results.constrained_hours:,.0f} hrs/yr")
     logger.info(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
@@ -298,7 +298,7 @@ def main() -> None:
     project = project_data["project"]
     line_utilization = float(project["line_utilization"])
     value_of_load_per_mwh = require_value_of_load_per_mwh(project)
-    delta_c_effective = congestion_results.effective_capacity_relief
+    delta_c_effective = congestion_results.effective_capacity_mw
     energy_delivered_annual_mwh_yr = (
         delta_c_effective * line_utilization * HOURS_PER_YEAR
     )
@@ -356,7 +356,7 @@ def main() -> None:
         "congestion_delay_cost_nominal": congestion_results.congestion_delay_cost_nominal,
         "congestion_delay_cost_pv": congestion_results.congestion_delay_cost_pv,
         # Physical metrics (for reference)
-        "effective_capacity_relief_mw": congestion_results.effective_capacity_relief,
+        "effective_capacity_mw": congestion_results.effective_capacity_mw,
         "constrained_hours": congestion_results.constrained_hours,
         "relief_mw": congestion_results.relief_mw,
     }
@@ -394,7 +394,7 @@ def main() -> None:
 
     from forge.scripts.utils.run_context import add_derived
     add_derived({
-        "effective_capacity_relief": congestion_results.effective_capacity_relief,
+        "effective_capacity_mw": congestion_results.effective_capacity_mw,
         "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
     })
 
