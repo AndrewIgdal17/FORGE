@@ -658,14 +658,16 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
 
 # ===================================================================
 # Tab 8 — Emissions (29 fields) + Energy Mix (32 fields)
-# All fields are condition="always_hidden" — rendered via custom tables, not renderTaxonomySections.
+# Most fields are condition="always_hidden" — rendered via custom tables, not renderTaxonomySections.
+# compensation_percent is visible (no always_hidden) so the Emissions page can bind it.
 # ===================================================================
 
 _TAB8: list[InputField] = [
     _f("compensation_percent", taxonomy_id="emissions_comp", input_tab="emissions",
        yaml_section="16_emissions_reductions", field_path="emissions_reductions.compensation_percent",
-       label="Loss Compensation Rate (\u03B1)", help_text="Fraction of line losses compensated by generation",
-       input_type="percent", condition="always_hidden", tier="first-glance", display_order=1,
+       label="Loss Compensation (%)",
+       help_text="Share of line losses replaced by additional generation. Default 100%. Stored as a decimal.",
+       input_type="percent", tier="first-glance", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="energy-emissions-emissions"),
 ]
