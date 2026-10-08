@@ -240,7 +240,7 @@ for _i, _t in enumerate(TERRAINS):
     ))
 
 # ===================================================================
-# Tab 3 — Financial (38 fields)
+# Tab 3 — Financial (43 fields)
 # ===================================================================
 
 _TAB3: list[InputField] = [
@@ -296,6 +296,50 @@ _TAB3: list[InputField] = [
        input_type="percent", condition="dc_only",
        tier="working", display_order=3,
        validation={"min": 0, "max": 0.5, "step": 0.01, "pct": True}),
+    _f("soft_cost_multiplier", taxonomy_id="financial_contingencies", input_tab="capital-costs",
+       sub_tab="conductor",
+       yaml_section="10_project_category_build_costs", field_path="soft_cost_multiplier",
+       label="Soft cost adder (%)",
+       help_text="Project management, engineering, and administrative costs, applied after contingency. Default 10%.",
+       input_type="percent", tier="working", display_order=4,
+       validation={"min": 0, "max": 1, "step": 0.01, "pct": True}),
+    _f("override_variable_conductor_cost_per_mile", taxonomy_id="build_conductor",
+       input_tab="capital-costs", sub_tab="conductor",
+       yaml_section="10_project_category_build_costs",
+       field_path="overrides.variable_conductor_cost_per_mile",
+       label="Conductor cost ($/mile)",
+       help_text="Blank uses the equipment catalog. A number replaces the catalog value.",
+       unit="$/mile", input_type="currency", section_label="Build cost overrides",
+       tier="working", display_order=5,
+       validation={"min": 0, "allowBlank": True}),
+    _f("override_fixed_conductor_cost", taxonomy_id="build_conductor",
+       input_tab="capital-costs", sub_tab="conductor",
+       yaml_section="10_project_category_build_costs",
+       field_path="overrides.fixed_conductor_cost",
+       label="Conductor fixed cost ($)",
+       help_text="Blank uses the equipment catalog. A number replaces the catalog value.",
+       unit="$", input_type="currency", section_label="Build cost overrides",
+       tier="working", display_order=6,
+       validation={"min": 0, "allowBlank": True}),
+    _f("override_variable_structure_cost_per_mile", taxonomy_id="build_structure",
+       input_tab="capital-costs", sub_tab="conductor",
+       yaml_section="10_project_category_build_costs",
+       field_path="overrides.variable_structure_cost_per_mile",
+       label="Structure cost ($/mile)",
+       help_text="Blank uses the equipment catalog. A number replaces the catalog value.",
+       unit="$/mile", input_type="currency", section_label="Build cost overrides",
+       tier="working", display_order=7,
+       validation={"min": 0, "allowBlank": True}),
+    _f("override_fixed_converter_cost", taxonomy_id="build_converter",
+       input_tab="capital-costs", sub_tab="conductor",
+       yaml_section="10_project_category_build_costs",
+       field_path="overrides.fixed_converter_cost",
+       label="Converter cost, one end ($)",
+       help_text="Blank uses the equipment catalog. A number replaces the catalog value.",
+       unit="$", input_type="currency", condition="dc_only",
+       section_label="Build cost overrides",
+       tier="working", display_order=8,
+       validation={"min": 0, "allowBlank": True}),
     # --- Revenue (Rates sub-tab, custom-rendered) ---
     _f("revenue_enabled", taxonomy_id="financial_revenue_config", input_tab="financial",
        sub_tab="rates", condition="always_hidden",
@@ -369,6 +413,15 @@ for _z in range(1, 16):
             tier="first-glance", display_order=(_z - 1) * 4 + _fi + 1,
             section_label=_zl, validation={"min": 0},
             sub_tab="rights-of-way"))
+
+_TAB2.append(_f(
+    "row_rent_escalation_real", taxonomy_id="row_rent", input_tab="routing",
+    yaml_section="11_project_row_details", field_path="row_rent_escalation_real",
+    label="ROW rent escalation (%/yr, real)",
+    help_text="Real growth of ROW rent. Holding stays flat. Default 0%/yr.",
+    input_type="percent", tier="working", display_order=61,
+    validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True},
+    sub_tab="rights-of-way"))
 
 # ===================================================================
 # Tab 4 — Environmental Costs (40 fields: 1 uplift + 31 base + 6 credits + 2 read-only displays)
@@ -461,7 +514,7 @@ _TAB4.append(_f(
     validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
 
 # ===================================================================
-# Tab 5 — Operating Costs (52 fields: 10 insurance + 36 veg + 4 structure + 2 converter)
+# Tab 5 — Operating Costs (53 fields: 10 insurance + 36 veg + 5 structure + 2 converter)
 # ===================================================================
 
 _TAB5: list[InputField] = [
@@ -588,6 +641,15 @@ _TAB5 += [
        input_type="percent", condition="always_hidden",
        tier="working", display_order=4,
        validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="structure-maintenance"),
+    _f("om_real_escalation_rate", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="14_category_om_structures",
+       field_path="om_real_escalation_rate",
+       label="O&M escalation (%/yr, real)",
+       help_text="Real growth of line, vegetation, and converter O&M. Default 2.0%/yr.",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=5,
+       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True},
        sub_tab="structure-maintenance"),
     _f("converter_om_lcc", taxonomy_id="oandm", input_tab="operating",
        yaml_section="15_category_om_converters",
