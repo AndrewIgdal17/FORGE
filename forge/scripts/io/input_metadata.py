@@ -276,6 +276,13 @@ _TAB3: list[InputField] = [
        help_text="Nominal annual escalation of capital cost during delay. Default 4%/yr. Source: MISO MTEP25 planning methodology (MISO2025CostGuide).",
        input_type="percent", tier="working", display_order=5,
        validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
+    _f("benefit_price_escalation_real", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
+       yaml_section="17_congestion_reductions", field_path="benefit_price_escalation_real",
+       label="Benefit price escalation (%/yr, real)",
+       help_text="Real annual growth of congestion prices, capacity prices, and the value of delivered energy and losses. Default 0%/yr.",
+       input_type="percent", tier="working", display_order=6,
+       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     # --- Contingencies ---
     _f("conductor_contingency", taxonomy_id="financial_contingencies", input_tab="capital-costs",
        sub_tab="conductor",
@@ -917,6 +924,31 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
 _TAB9: list[InputField] = (
     _cc_fields("gf", "Greenfield", "greenfield_congestion_reductions")
     + _cc_fields("rc", "Reconductoring", "incremental_congestion_reductions")
+    + [
+        _f("applicability_gate", taxonomy_id="capacity_value_benefit", input_tab="benefits",
+           sub_tab="system-constraints", condition="always_hidden",
+           yaml_section="20_capacity_value", field_path="applicability_gate",
+           label="Receiving region is capacity-short",
+           help_text="Capacity value stays zero unless this is on and credit and price are both positive.",
+           input_type="toggle", section_label="Capacity Value",
+           tier="working", display_order=5),
+        _f("capacity_credit", taxonomy_id="capacity_value_benefit", input_tab="benefits",
+           sub_tab="system-constraints", condition="always_hidden",
+           yaml_section="20_capacity_value", field_path="capacity_credit",
+           label="Capacity credit (%)",
+           help_text="ELCC share of effective transfer capacity. Default 0 (off).",
+           input_type="percent", section_label="Capacity Value",
+           tier="working", display_order=6,
+           validation={"min": 0, "max": 1, "step": 0.01, "pct": True}),
+        _f("capacity_price", taxonomy_id="capacity_value_benefit", input_tab="benefits",
+           sub_tab="system-constraints", condition="always_hidden",
+           yaml_section="20_capacity_value", field_path="capacity_price",
+           label="Capacity price ($/MW-year)",
+           help_text="Net CONE or clearing price. Default 0.",
+           unit="$/MW-year", input_type="currency", section_label="Capacity Value",
+           tier="working", display_order=7,
+           validation={"min": 0}),
+    ]
 )
 
 # ===================================================================
