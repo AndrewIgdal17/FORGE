@@ -405,6 +405,17 @@ for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
             sub_tab="base-mitigation"))
         _env_order += 1
 
+_TAB4.append(_f(
+    "env_marine_mitigation_pct", taxonomy_id="env_mitigation", input_tab="capital-costs",
+    yaml_section="09_environmental_mitigation",
+    field_path="environmental_mitigation.marine_env_mitigation_pct_capex",
+    label="Marine mitigation (% of subsea CAPEX)",
+    help_text="Added on subsea projects. Default 3% of subsea construction cost.",
+    input_type="percent", tier="working", display_order=_env_order,
+    validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
+    sub_tab="base-mitigation"))
+_env_order += 1
+
 # Credits: 1 wetland + 5 habitat = 6 fields
 _TAB4.append(_f(
     "env_credit_cost_wetland", taxonomy_id="env_mitigation", input_tab="capital-costs",
@@ -427,6 +438,17 @@ for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", 
         unit="$/acre", input_type="currency", tier="working", display_order=_env_order,
         sub_tab="credits"))
     _env_order += 1
+
+_TAB4.append(_f(
+    "env_mitigation_ratio", taxonomy_id="env_mitigation", input_tab="capital-costs",
+    yaml_section="09_environmental_mitigation",
+    field_path="environmental_mitigation.mitigation_ratio",
+    label="Compensatory mitigation ratio",
+    help_text="Credits required equal impacted acres times this ratio. Default 2.0.",
+    input_type="number", tier="working", display_order=_env_order,
+    validation={"min": 0, "step": 0.1},
+    sub_tab="credits"))
+_env_order += 1
 
 _TAB4.append(_f(
     "rebuild_env_mitigation_fraction", taxonomy_id="env_mitigation",
@@ -634,7 +656,7 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         condition="always_hidden", tier="working", display_order=20 + _ci,
         validation={"min": 0}, sub_tab="wildfire-risk"))
 
-# Outage (15 fields) — all always_hidden, custom rendered
+# Outage (16 fields) — all always_hidden, custom rendered
 _TAB7 += [
     _f("out_growth_rate", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
@@ -647,6 +669,13 @@ _TAB7 += [
        label="Capacity at risk (fraction of nameplate)", help_text="Fraction of capacity lost per outage. Default 'auto' = 1/N_poles from conductor table (1.0 for AC, 0.5 for DC bipole). Numeric override accepted.",
        input_type="number", condition="always_hidden", tier="working", display_order=3,
        validation={"min": 0, "max": 1, "step": 0.01},
+       sub_tab="outage-risk"),
+    _f("out_load_shed_fraction", taxonomy_id="outage_eac", input_tab="risk",
+       yaml_section="07_outage_costs", field_path="outage.load_shed_fraction",
+       label="Load-shed fraction (%)",
+       help_text="Share of lost megawatts priced at the value of lost load. The rest uses the redispatch cost. Auto is 5% for AC and 80% for DC.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=2,
+       validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="outage-risk"),
     _f("out_redispatch_cost", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.redispatch_cost_per_mwh",
