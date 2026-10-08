@@ -240,7 +240,7 @@ for _i, _t in enumerate(TERRAINS):
     ))
 
 # ===================================================================
-# Tab 3 — Financial (42 fields)
+# Tab 3 — Financial (38 fields)
 # ===================================================================
 
 _TAB3: list[InputField] = [
@@ -269,6 +269,13 @@ _TAB3: list[InputField] = [
        label="Social Discount Rate", help_text="Discount rate for social externalities (risk, emissions)",
        input_type="percent", tier="first-glance", display_order=4,
        validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True}),
+    _f("construction_cost_escalation_rate", taxonomy_id="financial_rates", input_tab="financial",
+       sub_tab="rates", condition="always_hidden",
+       yaml_section="03_financing", field_path="financial.construction_cost_escalation_rate",
+       label="Construction cost escalation (%/yr)",
+       help_text="Nominal annual escalation of capital cost during delay. Default 4%/yr. Source: MISO MTEP25 planning methodology (MISO2025CostGuide).",
+       input_type="percent", tier="working", display_order=5,
+       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     # --- Contingencies ---
     _f("conductor_contingency", taxonomy_id="financial_contingencies", input_tab="capital-costs",
        sub_tab="conductor",
@@ -432,7 +439,7 @@ _TAB4.append(_f(
     validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
 
 # ===================================================================
-# Tab 5 — Operating Costs (46 fields: 4 insurance + 36 veg + 4 structure + 2 converter)
+# Tab 5 — Operating Costs (52 fields: 10 insurance + 36 veg + 4 structure + 2 converter)
 # ===================================================================
 
 _TAB5: list[InputField] = [
@@ -457,6 +464,50 @@ _TAB5: list[InputField] = [
        yaml_section="04_insurance", field_path="insurance.insurable_components.converters",
        label="Converters", help_text="Include converter costs in insurable value",
        input_type="toggle", condition="always_hidden", tier="working", display_order=4,
+       sub_tab="operational-insurance"),
+    _f("insurance_premium_overhead", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance", field_path="insurance.premium_rate_by_type.overhead",
+       label="Overhead premium rate (% of insurable value)",
+       help_text="Annual self-insurance reserve. Default 0.20%. Commercial T&D coverage is generally unavailable.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=5,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="operational-insurance"),
+    _f("insurance_premium_underground_direct_buried", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance",
+       field_path="insurance.premium_rate_by_type.underground_direct_buried",
+       label="Direct-buried premium rate (% of insurable value)",
+       help_text="Same 0.20% reserve as overhead. Higher capital cost is captured in insurable value.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=6,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="operational-insurance"),
+    _f("insurance_premium_underground_tunnel", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance",
+       field_path="insurance.premium_rate_by_type.underground_tunnel",
+       label="Tunnel premium rate (% of insurable value)",
+       help_text="Same 0.20% reserve as direct-buried underground.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=7,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="operational-insurance"),
+    _f("insurance_premium_subsea", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance", field_path="insurance.premium_rate_by_type.subsea",
+       label="Subsea premium rate (% of insurable value)",
+       help_text="Commercial property-damage premium. Market range about 2–4%. Default 3.0%.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=8,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="operational-insurance"),
+    _f("insurance_premium_converter", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance", field_path="insurance.premium_rate_by_type.converter",
+       label="Converter premium rate (% of converter value)",
+       help_text="Commercial converter premium. Range about 0.4–1.0%. Default 0.70%. Independent of the line rate.",
+       input_type="percent", condition="always_hidden", tier="working", display_order=9,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="operational-insurance"),
+    _f("insurance_escalation_rate", taxonomy_id="insurance", input_tab="operating",
+       yaml_section="04_insurance", field_path="insurance.escalation_rate",
+       label="Insurance escalation (%/yr, real)",
+       help_text="Real annual growth of the premium. Default 2.0%/yr. Source: WTW (2025); Powerlink (2025).",
+       input_type="percent", condition="always_hidden", tier="working", display_order=10,
+       validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True},
        sub_tab="operational-insurance"),
 ]
 
