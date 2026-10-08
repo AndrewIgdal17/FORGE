@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass
-from typing import Dict, Any, Tuple, Optional
+from typing import Tuple, Optional
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 
@@ -66,16 +66,13 @@ class LineLossProjectDetails:
     delay_years: float
     construction_years: int
     project_lifetime: int
-    greenfield_comparison_capacity_mw: Optional[int]
-    greenfield_comparison_conductor_type: Optional[str]
 
 def load_project_details() -> LineLossProjectDetails:
     """
     Load project technical details with line_loss_costs specific fields.
 
     This function loads comprehensive project details from the technical details YAML file,
-    including both standard project specifications and optional fields used for line loss
-    cost calculations (such as greenfield comparison parameters).
+    including the standard project specifications used for line loss cost calculations.
 
     Args:
         None (reads from YAML file)
@@ -97,18 +94,11 @@ def load_project_details() -> LineLossProjectDetails:
             - delay_years: Number of years of project delay
             - construction_years: Number of years of construction
             - project_lifetime: Project operational lifetime in years
-            - greenfield_comparison_capacity_mw: Optional comparison capacity for greenfield projects
-            - greenfield_comparison_conductor_type: Optional comparison conductor type for greenfield projects
 
     Raises:
         FileNotFoundError: When project technical details YAML is not found
         ValueError: When YAML file is empty or invalid
         KeyError: When required keys are missing from the YAML structure
-
-    Note:
-        The last two tuple elements (greenfield_comparison_*) are optional and may be None
-        if not specified in the YAML file. These are used for comparing different greenfield
-        configurations in line loss cost calculations.
     """
     try:
         # Load from centralized loader (returns ProjectTechnicalDetails dataclass)
@@ -155,20 +145,6 @@ def load_project_details() -> LineLossProjectDetails:
                 "RunContext in your test fixture."
             )
         number_of_converters = ctx.number_of_converters
-
-        # Get greenfield comparison fields (optional, only for greenfield projects)
-        greenfield_comparison_capacity_mw = project.get(
-            "greenfield_comparison_capacity_mw", None
-        )
-        # Convert empty string to None
-        if greenfield_comparison_capacity_mw == "":
-            greenfield_comparison_capacity_mw = None
-        greenfield_comparison_conductor_type = project.get(
-            "greenfield_comparison_conductor_type", None
-        )
-        # Convert empty string to None
-        if greenfield_comparison_conductor_type == "":
-            greenfield_comparison_conductor_type = None
     except FileNotFoundError:
         raise FileNotFoundError(f"Project technical details not found")
     except yaml.YAMLError as e:
@@ -191,8 +167,6 @@ def load_project_details() -> LineLossProjectDetails:
         delay_years=delay_years,
         construction_years=construction_years,
         project_lifetime=project_lifetime,
-        greenfield_comparison_capacity_mw=greenfield_comparison_capacity_mw,
-        greenfield_comparison_conductor_type=greenfield_comparison_conductor_type,
     )
 
 def calculate_configuration_losses(
@@ -279,130 +253,6 @@ def calculate_configuration_losses(
 
     return losses_mwh_per_year, lifetime_losses_mwh
 
-def compute_design_comparison(
-    project_details: LineLossProjectDetails,
-) -> Dict[str, Any]:
-    """
-    Compare line losses between the primary project configuration and an
-    alternative (comparison) configuration using three methods.
-
-    Returns a structured dict with primary/comparison summaries and
-    direct/counterfactual/normalized comparison results.
-    """
-    primary_losses_mwh_yr, _ = calculate_configuration_losses(
-        project_details.construction_type,
-        project_details.ac_dc,
-        project_details.capacity_mw,
-        project_details.conductor_type,
-        project_details.converter_type,
-        project_details.line_utilization_percent,
-        project_details.project_lifetime,
-    )
-
-    comparison_losses_mwh_yr, _ = calculate_configuration_losses(
-        project_details.construction_type,
-        project_details.ac_dc,
-        project_details.greenfield_comparison_capacity_mw,
-        project_details.greenfield_comparison_conductor_type,
-        project_details.converter_type,
-        project_details.line_utilization_percent,
-        project_details.project_lifetime,
-    )
-
-    counterfactual_losses_mwh_yr, _ = calculate_configuration_losses(
-        project_details.construction_type,
-        project_details.ac_dc,
-        project_details.greenfield_comparison_capacity_mw,
-        project_details.conductor_type,
-        project_details.converter_type,
-        project_details.line_utilization_percent,
-        project_details.project_lifetime,
-    )
-
-    primary_delivered_mwh = (
-        project_details.capacity_mw
-        * project_details.line_utilization_percent
-        * HOURS_PER_YEAR
-    )
-    comparison_delivered_mwh = (
-        project_details.greenfield_comparison_capacity_mw
-        * project_details.line_utilization_percent
-        * HOURS_PER_YEAR
-    )
-
-    primary_loss_pct = to_percent(primary_losses_mwh_yr / primary_delivered_mwh)
-    comparison_loss_pct = to_percent(comparison_losses_mwh_yr / comparison_delivered_mwh)
-
-    price = project_details.value_of_load
-    lifetime = project_details.project_lifetime
-    g_benefit = project_details.benefit_price_escalation_real
-
-    def _method(delta_mwh: float) -> Dict[str, float]:
-        annual = delta_mwh * price
-        return {
-            "delta_mwh_yr": delta_mwh,
-            "annual_cost": annual,
-            "lifetime_nominal": calculate_nominal_growing_series(
-                annual, g_benefit, lifetime
-            ),
-            "npv": calculate_growing_annuity_pv(
-                annual,
-                g_benefit,
-                project_details.wacc_real,
-                lifetime,
-                delay_years=project_details.delay_years,
-                construction_years=project_details.construction_years,
-            ),
-        }
-
-    direct = _method(primary_losses_mwh_yr - comparison_losses_mwh_yr)
-    direct["description"] = (
-        "Compare absolute losses at each configuration's capacity"
-    )
-
-    counterfactual = _method(counterfactual_losses_mwh_yr - comparison_losses_mwh_yr)
-    counterfactual["description"] = (
-        "Compare conductors at the same (comparison) capacity"
-    )
-
-    normalized_delta_mwh = (
-        from_percent(primary_loss_pct - comparison_loss_pct)
-        * comparison_delivered_mwh
-    )
-    normalized = _method(normalized_delta_mwh)
-    normalized["description"] = (
-        "Compare loss rates, weighted by comparison delivered energy"
-    )
-
-    return {
-        "primary": {
-            "capacity_mw": project_details.capacity_mw,
-            "conductor_type": project_details.conductor_type,
-            "losses_mwh_yr": primary_losses_mwh_yr,
-            "loss_percent": primary_loss_pct,
-            "delivered_mwh_yr": primary_delivered_mwh,
-        },
-        "comparison": {
-            "capacity_mw": project_details.greenfield_comparison_capacity_mw,
-            "conductor_type": project_details.greenfield_comparison_conductor_type,
-            "losses_mwh_yr": comparison_losses_mwh_yr,
-            "loss_percent": comparison_loss_pct,
-            "delivered_mwh_yr": comparison_delivered_mwh,
-        },
-        "methods": {
-            "direct": direct,
-            "counterfactual": counterfactual,
-            "normalized": normalized,
-        },
-        "parameters": {
-            "value_of_load": price,
-            "wacc_real": project_details.wacc_real,
-            "project_lifetime": lifetime,
-            "construction_type": project_details.construction_type,
-            "ac_dc": project_details.ac_dc,
-        },
-    }
-
 def main() -> None:
     """Main function to calculate line loss costs for reconductoring projects."""
 
@@ -416,23 +266,6 @@ def main() -> None:
     if project_details.project_type == "greenfield":
         logger.info("Greenfield project detected - calculating line loss costs.")
         logger.info("")
-
-        comparison_capacity = project_details.greenfield_comparison_capacity_mw
-        has_comparison = (
-            comparison_capacity is not None
-            and comparison_capacity != 0
-            and comparison_capacity != ""
-        )
-
-        if has_comparison:
-            comparison_result = compute_design_comparison(project_details)
-            logger.info("Design comparison computed — 3 methods.")
-            for name, method in comparison_result["methods"].items():
-                logger.info(
-                    f"  {name}: delta {method['delta_mwh_yr']:,.1f} MWh/yr, "
-                    f"NPV ${method['npv']:,.0f}"
-                )
-            logger.info("")
 
         g_benefit = project_details.benefit_price_escalation_real
 
@@ -495,8 +328,6 @@ def main() -> None:
             ),
         }
         csv_manager.add_line_loss_costs(results)
-        if has_comparison:
-            csv_manager.add_design_comparison(comparison_result)
         csv_manager.write_batch_summary()
         return
 

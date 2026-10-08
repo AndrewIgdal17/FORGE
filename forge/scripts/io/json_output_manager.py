@@ -193,10 +193,6 @@ class JSONOutputManager:
         """Add line loss cost results."""
         self.costs["line_loss"] = results
 
-    def add_design_comparison(self, results: Dict[str, Any]):
-        """Add design comparison results (greenfield line-loss comparison)."""
-        self.costs["design_comparison"] = results
-
     def add_congestion(self, results: Dict[str, Any]):
         """Add congestion and delivered-energy benefits.
         results includes delivered_benefit_annual, delivered_benefit_nominal, delivered_benefit_pv as own keys."""

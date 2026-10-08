@@ -1,12 +1,12 @@
 {
   "metadata": {
     "total_yamls": 24,
-    "total_fields": 3924,
+    "total_fields": 3922,
     "total_configurations": 0,
     "categories": {
       "Technical": {
         "file_count": 7,
-        "field_count": 152
+        "field_count": 150
       },
       "Physical": {
         "file_count": 1,
@@ -147,24 +147,9 @@
                 "units": null,
                 "description": "",
                 "path": "01_project_technical_details.project.old_ac_dc"
-              },
-              "greenfield_comparison_capacity_mw": {
-                "type": "NoneType",
-                "default": null,
-                "units": null,
-                "description": "Design comparison fields (set via Design Comparison subtab, not Project tab)",
-                "path": "01_project_technical_details.project.greenfield_comparison_capacity_mw"
-              },
-              "greenfield_comparison_conductor_type": {
-                "type": "NoneType",
-                "default": null,
-                "units": null,
-                "description": "",
-                "path": "01_project_technical_details.project.greenfield_comparison_conductor_type"
-              }
-            },
+              }            },
             "subsections": {},
-            "field_count": 16
+            "field_count": 14
           },
           "timeline": {
             "type": "object",
@@ -195,13 +180,10 @@
             "field_count": 3
           }
         },
-        "field_count": 19
+        "field_count": 17
       },
-      "field_count": 19,
-      "comments": {
-        "greenfield_comparison_capacity_mw": "Design comparison fields (set via Design Comparison subtab, not Project tab)"
-      },
-      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 0 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  value_of_load_per_mwh: 0 # $/MWh (>= 0)\n\n  project_type: \"greenfield\" # \"greenfield\" | \"reconductoring\" | \"rebuild\"\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\n  # Design comparison fields (set via Design Comparison subtab, not Project tab)\n  greenfield_comparison_capacity_mw: null\n  greenfield_comparison_conductor_type: null\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 0 # years (>= 0)\n  project_lifetime: 40 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
+      "field_count": 17,
+      "raw_content": "# Project Technical Details\n# Core technical specifications for the transmission project\n\nproject:\n  construction_type: \"Overhead\" # Overhead, Underground direct-buried, Underground Tunnel, Subsea\n  ac_dc: \"AC\" # AC or DC\n  number_of_converters: 0 # 1 or 2\n  capacity_mw: 0 # MW\n  conductor_type: \"Standard Aluminum Conductor\" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  converter_type: \"NA\" # LCC Converter or VSC Converter\n  converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)\n\n  line_utilization: 0.70 # % [0,1]\n\n  value_of_load_per_mwh: 0 # $/MWh (>= 0)\n\n  project_type: \"greenfield\" # \"greenfield\" | \"reconductoring\" | \"rebuild\"\n  uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)\n  old_capacity_mw: null # MW\n  old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor\n  old_ac_dc: null # AC or DC\n\ntimeline:\n  construction_years: 1 # years (> 0)\n  delay_years: 0 # years (>= 0)\n  project_lifetime: 40 # years (> 0)\n\n\n### DEFINITIONS:\n# 1) Electricity price: $/MWh\n#    - The system marginal energy price at some reference point. Reperesents the marginal cost of serving an additonal MWh.\n"
     },
     "02_project_physical_details.yaml": {
       "filename": "02_project_physical_details.yaml",
@@ -31949,22 +31931,6 @@
       "yaml_file": "01_project_technical_details",
       "field_name": "old_ac_dc",
       "full_path": "01_project_technical_details.project.old_ac_dc",
-      "type": "NoneType",
-      "default": null,
-      "description": ""
-    },
-    "01_project_technical_details.project.greenfield_comparison_capacity_mw": {
-      "yaml_file": "01_project_technical_details",
-      "field_name": "greenfield_comparison_capacity_mw",
-      "full_path": "01_project_technical_details.project.greenfield_comparison_capacity_mw",
-      "type": "NoneType",
-      "default": null,
-      "description": "Design comparison fields (set via Design Comparison subtab, not Project tab)"
-    },
-    "01_project_technical_details.project.greenfield_comparison_conductor_type": {
-      "yaml_file": "01_project_technical_details",
-      "field_name": "greenfield_comparison_conductor_type",
-      "full_path": "01_project_technical_details.project.greenfield_comparison_conductor_type",
       "type": "NoneType",
       "default": null,
       "description": ""

@@ -18,8 +18,6 @@
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
-        "greenfield_comparison_capacity_mw": null,
-        "greenfield_comparison_conductor_type": null,
         "name": "TBC_400MW_SubseaCu_VSC"
       },
       "timeline": {

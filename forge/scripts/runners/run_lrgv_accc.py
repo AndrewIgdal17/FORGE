@@ -131,8 +131,6 @@ def patch_lrgv_accc(inputs: dict) -> dict:
     proj["project"]["old_capacity_mw"] = 1792
     proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
     proj["project"]["old_ac_dc"] = "AC"
-    proj["project"]["greenfield_comparison_capacity_mw"] = None
-    proj["project"]["greenfield_comparison_conductor_type"] = "Standard Aluminum Conductor"
     proj["timeline"]["construction_years"] = 3
     proj["timeline"]["delay_years"] = 1
     proj["timeline"]["project_lifetime"] = 50
@@ -162,8 +160,6 @@ def patch_lrgv_acsr_rebuild(inputs: dict) -> dict:
     proj["project"]["old_capacity_mw"] = 1792
     proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
     proj["project"]["old_ac_dc"] = "AC"
-    proj["project"]["greenfield_comparison_capacity_mw"] = None
-    proj["project"]["greenfield_comparison_conductor_type"] = "Standard Aluminum Conductor"
     proj["timeline"]["construction_years"] = 5
     proj["timeline"]["delay_years"] = 2
     proj["timeline"]["project_lifetime"] = 50

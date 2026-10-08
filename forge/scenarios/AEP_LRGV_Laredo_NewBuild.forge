@@ -18,8 +18,6 @@
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
-        "greenfield_comparison_capacity_mw": null,
-        "greenfield_comparison_conductor_type": "Standard Aluminum Conductor",
         "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC"
       },
       "timeline": {

@@ -22,10 +22,6 @@ project:
   old_ac_dc: null # AC or DC
   old_converter_type: null
 
-  # Design comparison fields (set via Design Comparison subtab, not Project tab)
-  greenfield_comparison_capacity_mw: null
-  greenfield_comparison_conductor_type: null
-
 timeline:
   construction_years: 1 # years (> 0)
   delay_years: 0 # years (>= 0)

@@ -18,8 +18,6 @@
         "old_capacity_mw": 1792,
         "old_conductor_type": "Standard Aluminum Conductor",
         "old_ac_dc": "AC",
-        "greenfield_comparison_capacity_mw": null,
-        "greenfield_comparison_conductor_type": "Standard Aluminum Conductor",
         "name": "AEP_LRGV_345kV_ACCC_Reconductoring"
       },
       "timeline": {

@@ -18,8 +18,6 @@
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
-        "greenfield_comparison_capacity_mw": null,
-        "greenfield_comparison_conductor_type": "Standard Aluminum Conductor",
         "name": "CTT_Panhandle_345kV_1792MW_AC"
       },
       "timeline": {

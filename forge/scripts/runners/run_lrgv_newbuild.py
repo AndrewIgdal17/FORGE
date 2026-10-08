@@ -36,8 +36,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     proj["project"]["old_capacity_mw"] = None
     proj["project"]["old_conductor_type"] = None
     proj["project"]["old_ac_dc"] = None
-    proj["project"]["greenfield_comparison_capacity_mw"] = None
-    proj["project"]["greenfield_comparison_conductor_type"] = "Standard Aluminum Conductor"
     proj["timeline"]["construction_years"] = 3
     proj["timeline"]["delay_years"] = 7
     proj["timeline"]["project_lifetime"] = 50
