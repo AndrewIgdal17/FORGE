@@ -425,11 +425,11 @@ _TAB4.append(_f(
     "rebuild_env_mitigation_fraction", taxonomy_id="env_mitigation",
     input_tab="capital-costs", yaml_section="09_environmental_mitigation",
     field_path="environmental_mitigation.rebuild_env_mitigation_fraction",
-    label="Rebuild Env. Mitigation Fraction",
-    help_text="Multiplier (0-1) on wetland/habitat credits for rebuild projects. Default 0.5. Only used when project_type = rebuild.",
-    input_type="number", tier="working", display_order=_env_order,
+    label="Rebuild credit share (%)",
+    help_text="Share of wetland and habitat credits kept on a rebuild. Default 50%. Reconductoring keeps none.",
+    input_type="percent", tier="working", display_order=_env_order,
     sub_tab="credits", condition="rebuild_only",
-    validation={"min": 0, "max": 1, "step": 0.01}))
+    validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
 
 # ===================================================================
 # Tab 5 — Operating Costs (40 fields: 4 insurance + 36 veg mgmt)
@@ -536,8 +536,8 @@ _TAB7 += [
        sub_tab="outage-risk"),
     _f("out_capacity_at_risk", taxonomy_id="outage_eac", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.capacity_at_risk_factor",
-       label="Capacity at Risk (\u03C6)", help_text="Fraction of capacity lost per outage. Default 'auto' = 1/N_poles from conductor table (1.0 for AC, 0.5 for DC bipole). Numeric override accepted.",
-       input_type="percent", condition="always_hidden", tier="working", display_order=3,
+       label="Capacity at risk (fraction of nameplate)", help_text="Fraction of capacity lost per outage. Default 'auto' = 1/N_poles from conductor table (1.0 for AC, 0.5 for DC bipole). Numeric override accepted.",
+       input_type="number", condition="always_hidden", tier="working", display_order=3,
        validation={"min": 0, "max": 1, "step": 0.01},
        sub_tab="outage-risk"),
     _f("out_redispatch_cost", taxonomy_id="outage_eac", input_tab="risk",
