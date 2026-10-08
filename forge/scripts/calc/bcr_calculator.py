@@ -208,9 +208,13 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         elif bcr_def.id == "bcr_utility":
             out["bcr_utility"] = bcr_value
             out["net_benefit_utility_pv"] = net_benefit
+            out["utility_costs_pv"] = denominator
+            out["utility_benefits_pv"] = numerator
         elif bcr_def.id == "bcr_ratepayer":
             out["bcr_ratepayer"] = bcr_value
             out["net_benefit_ratepayer_pv"] = net_benefit
+            out["ratepayer_costs_pv"] = denominator
+            out["ratepayer_benefits_pv"] = numerator
 
     return out
 
