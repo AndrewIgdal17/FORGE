@@ -449,6 +449,25 @@ for _duration, _years in (("5", 5), ("6", 6), ("7", 7), ("8", 8)):
             validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
         _spending_order += 1
 
+_TAB2.append(_f(
+    "row_agreement_type", taxonomy_id="row_acquisition", input_tab="routing",
+    yaml_section="01_project_technical_details", field_path="project.row_agreement_type",
+    label="ROW agreement",
+    help_text=(
+        "Lease drops acquisition and holding, keeps rent from year 1. "
+        "Permanent easement and fee simple keep acquisition and holding, drop rent. "
+        "Federal hybrid keeps all three. If unset, reconductoring/rebuild/existing-ROW "
+        "infers lease; otherwise permanent easement."
+    ),
+    input_type="dropdown", tier="working", display_order=0,
+    validation={"options": [
+        "permanent_easement_new",
+        "fee_simple",
+        "federal_hybrid",
+        "lease_license_existing",
+    ]},
+    sub_tab="rights-of-way"))
+
 # ROW zones (15 zones × 4 fields = 60) — rendered on Project Technical Details / Routing / Rights of Way
 for _z in range(1, 16):
     _zn = f"zone_{_z}"

@@ -16,6 +16,7 @@ project:
 
   project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
   uses_existing_row: False # True or False - uses existing ROW (zeroes acquisition/holding, includes delay in rent)
+  row_agreement_type: null # permanent_easement_new | fee_simple | federal_hybrid | lease_license_existing; null infers lease for reconductoring/rebuild/existing ROW, otherwise permanent easement
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor, Subsea Copper Conductor
   old_ac_dc: null # AC or DC
