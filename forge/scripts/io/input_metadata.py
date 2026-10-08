@@ -217,6 +217,31 @@ _TAB1: list[InputField] = [
        sub_tab="technology"),
 ]
 
+# Corona loss tiers (8 fields). Shown on Technology only for AC overhead.
+_CORONA_HELP = "Annual-average corona loss added to I²R losses."
+_CORONA_CEILINGS = ("230 kV", "345 kV", "500 kV", "open")
+for _tier, _ceiling in enumerate(_CORONA_CEILINGS):
+    _TAB1.append(_f(
+        f"corona_tier_{_tier}_max_kv", taxonomy_id="project_technology",
+        input_tab="project-identity", sub_tab="technology", condition="always_hidden",
+        yaml_section="22_corona_losses",
+        field_path=f"corona.voltage_class_tiers[{_tier}].max_kv",
+        label=f"Voltage ceiling (kV), {_ceiling}",
+        help_text=_CORONA_HELP, unit="kV", input_type="number",
+        section_label="Corona Losses (AC Overhead)",
+        tier="advanced", display_order=110 + _tier * 2,
+        validation={"min": 0}))
+    _TAB1.append(_f(
+        f"corona_tier_{_tier}_kw_per_mile", taxonomy_id="project_technology",
+        input_tab="project-identity", sub_tab="technology", condition="always_hidden",
+        yaml_section="22_corona_losses",
+        field_path=f"corona.voltage_class_tiers[{_tier}].kw_per_mile",
+        label=f"Corona loss (kW/mile), {_ceiling}",
+        help_text=_CORONA_HELP, unit="kW/mile", input_type="number",
+        section_label="Corona Losses (AC Overhead)",
+        tier="advanced", display_order=111 + _tier * 2,
+        validation={"min": 0}))
+
 # ===================================================================
 # Tab 2 — Routing (79 fields: 18 terrain + 60 ROW + 1 flag)
 # ===================================================================
@@ -367,6 +392,7 @@ _TAB3: list[InputField] = [
 ]
 
 # --- Cost timing patterns (27 fields: 9 categories × 3 fields) ---
+# Plus 26 construction spending-profile year weights, appended below.
 _TIMING_CATEGORIES = [
     ("build_costs", "Build Costs"), ("row_acquisition", "ROW Acquisition"),
     ("row_holding", "ROW Holding"), ("row_rent", "ROW Rent"),
@@ -400,6 +426,28 @@ for _ci, (_cat, _cat_label) in enumerate(_TIMING_CATEGORIES):
         label="AFUDC Eligible", help_text=f"Whether {_cat_label} costs are AFUDC-eligible (compounded to COD)",
         section_label=_cat_label, input_type="toggle",
         tier="advanced", display_order=_ci * 3 + 3))
+
+# Construction spending profiles (26 year-weights: 5 + 6 + 7 + 8).
+_SPENDING_HELP = (
+    "Share of construction spend in each year. The calculator pools these into "
+    "one S-curve and resamples to the construction duration. A 1-year project "
+    "ignores these weights."
+)
+_spending_order = 28
+for _duration, _years in (("5", 5), ("6", 6), ("7", 7), ("8", 8)):
+    for _year in range(_years):
+        _TAB3.append(_f(
+            f"spending_profile_{_duration}_year_{_year + 1}",
+            taxonomy_id="financial_timing_patterns", input_tab="financial",
+            sub_tab="afudc", condition="always_hidden",
+            yaml_section="19_cost_timing_patterns",
+            field_path=f"construction_spending_profiles.{_duration}[{_year}]",
+            label=f"{_duration}-year spending profile, year {_year + 1} (%)",
+            help_text=_SPENDING_HELP, input_type="percent",
+            section_label="Construction Spending Profiles",
+            tier="advanced", display_order=_spending_order,
+            validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
+        _spending_order += 1
 
 # ROW zones (15 zones × 4 fields = 60) — rendered on Project Technical Details / Routing / Rights of Way
 for _z in range(1, 16):
