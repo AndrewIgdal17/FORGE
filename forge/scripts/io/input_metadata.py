@@ -432,7 +432,7 @@ _TAB4.append(_f(
     validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
 
 # ===================================================================
-# Tab 5 — Operating Costs (40 fields: 4 insurance + 36 veg mgmt)
+# Tab 5 — Operating Costs (46 fields: 4 insurance + 36 veg + 4 structure + 2 converter)
 # ===================================================================
 
 _TAB5: list[InputField] = [
@@ -478,6 +478,63 @@ for _ct_key, _ct_label in _VEG_CT:
             tier="first-glance", display_order=_veg_order, validation={"min": 0},
             sub_tab="vegetation-management"))
         _veg_order += 1
+
+# Structure O&M rates (custom-rendered by StructureMaintenance)
+_TAB5 += [
+    _f("struct_om_overhead", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="14_category_om_structures",
+       field_path="project_categories_om_structures.Overhead.base_om_per_mile_year",
+       label="Base O&M ($/mile/year)",
+       help_text="Annual structure maintenance per mile, excluding vegetation management. Default $19,090/mile/year (2025$). Source: Connecticut Siting Council (2022) lifecycle analysis (CTSitingCouncil2022LCA).",
+       unit="$/mile/year", input_type="currency", condition="always_hidden",
+       tier="working", display_order=1, validation={"min": 0},
+       sub_tab="structure-maintenance"),
+    _f("struct_om_ug_direct_buried", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="14_category_om_structures",
+       field_path="project_categories_om_structures.Underground direct-buried.om_pct_of_line_capex",
+       label="O&M (% of line CAPEX/year)",
+       help_text="Annual line O&M as a percent of line capital cost. Default 0.15%/yr. Source: CIET/Powerlink (2023) (CIET2023).",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=2,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="structure-maintenance"),
+    _f("struct_om_ug_tunnel", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="14_category_om_structures",
+       field_path="project_categories_om_structures.Underground tunnel.om_pct_of_line_capex",
+       label="O&M (% of line CAPEX/year)",
+       help_text="Annual line O&M as a percent of line capital cost. Default 0.4%/yr. Source: IET and Mott MacDonald (2025) (IETMottMac2025).",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=3,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="structure-maintenance"),
+    _f("struct_om_subsea", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="14_category_om_structures",
+       field_path="project_categories_om_structures.Subsea.om_pct_of_line_capex",
+       label="O&M (% of line CAPEX/year)",
+       help_text="Annual line O&M as a percent of cable capital cost. Default 2.5%/yr. Source: NeoMarketData (2025) (NeoMarketData2025).",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=4,
+       validation={"min": 0, "max": 1, "step": 0.0001, "pct": True},
+       sub_tab="structure-maintenance"),
+    _f("converter_om_lcc", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="15_category_om_converters",
+       field_path="converter_om_rate.LCC Converter",
+       label="Annual converter O&M (% of station CAPEX)",
+       help_text="Annual converter O&M as a percent of station capital cost. Default 0.5%/yr. Source: UCLM (2023).",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=1,
+       validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
+       sub_tab="converter-maintenance"),
+    _f("converter_om_vsc", taxonomy_id="oandm", input_tab="operating",
+       yaml_section="15_category_om_converters",
+       field_path="converter_om_rate.VSC Converter",
+       label="Annual converter O&M (% of station CAPEX)",
+       help_text="Annual converter O&M as a percent of station capital cost. Default 0.5%/yr. Source: UCLM (2023).",
+       input_type="percent", condition="always_hidden",
+       tier="working", display_order=2,
+       validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
+       sub_tab="converter-maintenance"),
+]
 
 # ===================================================================
 # Tab 6 — Delay Costs (single field, merged into operating tab)
