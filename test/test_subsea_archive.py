@@ -1,6 +1,10 @@
+import re
 from pathlib import Path
 
 from forge.data import get_defaults_template, get_yamls_path
+from forge.scripts.io.input_metadata import input_metadata_to_dict
+
+_INDEX = re.compile(r"\[(\d+)\]")
 
 
 def _walk(node):
@@ -13,6 +17,30 @@ def _walk(node):
             yield from _walk(value)
     elif isinstance(node, str):
         yield node
+
+
+def _walk_path(root, path):
+    current = root
+    for part in path.split("."):
+        name, *indexes = _INDEX.split(part)
+        indexes = [piece for piece in indexes if piece != ""]
+        assert isinstance(current, dict) and name in current, path
+        current = current[name]
+        for raw in indexes:
+            index = int(raw)
+            assert isinstance(current, list) and index < len(current), path
+            current = current[index]
+    return current
+
+
+def test_metadata_paths_exist_and_omit_subsea():
+    template = get_defaults_template()
+    for field in input_metadata_to_dict():
+        field_path = field["field_path"]
+        field_id = field["id"]
+        assert "subsea" not in field_path.lower(), field_id
+        assert "subsea" not in field_id.lower(), field_id
+        _walk_path(template, f"{field['yaml_section']}.{field_path}")
 
 
 def test_live_template_has_no_subsea_value():
