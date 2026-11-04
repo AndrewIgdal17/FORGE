@@ -29,3 +29,11 @@ def test_explicit_zero_is_accepted_and_a_string_is_named():
     changes[PATHS[0]] = "nope"
     with pytest.raises(InvalidInputs, match=PATHS[0]):
         forge.resolve_inputs(changes)
+
+
+def test_negative_forested_acres_are_required():
+    changes = {path: 0 for path in PATHS}
+    changes[PATHS[0]] = -1
+    with pytest.raises(InvalidInputs) as exc:
+        forge.resolve_inputs(changes)
+    assert "02_project_physical_details.terrain.protected_area_acres.forested" in str(exc.value)

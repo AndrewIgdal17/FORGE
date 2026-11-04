@@ -266,7 +266,12 @@ def missing_protected_area_acres(document: Mapping[str, Any]) -> list[str]:
     for name in _ACRE_CLASSES:
         path = f"02_project_physical_details.terrain.protected_area_acres.{name}"
         value = acres.get(name, None)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or value < 0
+        ):
             missing.append(path)
     return missing
 
