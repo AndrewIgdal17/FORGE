@@ -163,6 +163,94 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
         reset_run_state(token)
 
 
+def test_bootstrap_rejects_zero_construction_years(monkeypatch):
+    from forge.core import _bootstrap_run_context
+    from forge.errors import InvalidInputs
+
+    project = SimpleNamespace(
+        number_of_converters=2,
+        delay_years=1.0,
+        construction_years=0,
+        construction_type="Overhead",
+        capacity_mw=500,
+    )
+    financing = SimpleNamespace(
+        wacc_real=0.04,
+        wacc_nominal=0.07,
+        inflation_rate=0.02,
+    )
+    terrain_miles = {"flat": 10.0, "mountain": 5.0}
+    terrain_multipliers = {"flat": 1.0, "mountain": 1.5}
+    physical_raw = {
+        "terrain": {
+            "terrain_miles": terrain_miles,
+            "terrain_multipliers": terrain_multipliers,
+        }
+    }
+    fin_raw = {"financial": {"social_discount_rate": 0.03}}
+    contingencies = {"conductor": 0.1}
+
+    monkeypatch.setattr(
+        "forge.scripts.io.yaml_loaders.load_project_technical_details", lambda: project
+    )
+    monkeypatch.setattr(
+        "forge.scripts.io.yaml_loaders.load_financing_details", lambda: financing
+    )
+    monkeypatch.setattr(
+        "forge.scripts.io.yaml_loaders.load_contingencies", lambda: contingencies
+    )
+    monkeypatch.setattr("forge.scripts.io.yaml_loaders.load_row_widths", lambda cat: 150.0)
+    monkeypatch.setattr(
+        "forge.scripts.utils.smart_loaders.get_physical_data_raw", lambda: physical_raw
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.smart_loaders.get_financing_data_raw", lambda: fin_raw
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.calculation_utils.build_category_string",
+        lambda **kw: "Overhead/AC/500MW/ACSR/NA",
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.weighted_miles.calculate_weighted_miles",
+        lambda: (12.5, 1.2),
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.financial_utils.calculate_afudc_rate",
+        lambda raw: (0.05, "calculated"),
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.financial_utils.calculate_cod_year",
+        lambda delay, construction: 2030.0,
+    )
+    monkeypatch.setattr(
+        "forge.scripts.utils.financial_utils.calculate_construction_start_year",
+        lambda delay: 2027.0,
+    )
+
+    state = RunState(
+        inputs={
+            "02_project_physical_details": {
+                "terrain": {
+                    "protected_area_acres": {
+                        "forested": 0.0,
+                        "scrubbed_flat": 0.0,
+                        "desert_barren": 0.0,
+                        "rolling_hills": 0.0,
+                        "mountain": 0.0,
+                    }
+                }
+            }
+        },
+        scenario_id="test",
+    )
+    token = set_run_state(state)
+    try:
+        with pytest.raises(InvalidInputs, match=r"construction_years must be >= 1 \(got 0\)"):
+            _bootstrap_run_context()
+    finally:
+        reset_run_state(token)
+
+
 def test_run_calculation_and_main_share_bootstrap():
     import forge
 

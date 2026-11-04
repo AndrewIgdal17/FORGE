@@ -390,6 +390,7 @@ def calculate_afudc_capitalized_cost(
     Raises:
         ValueError: If afudc_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
         ValueError: If AFUDC-eligible and during_delay + during_construction != 1.0 (within TIMING_PATTERN_TOLERANCE)
+        ValueError: If construction cost is positive and construction_years < 1
 
     For AFUDC-eligible patterns, during_delay and during_construction must sum to 1.0 (within TIMING_PATTERN_TOLERANCE).
     """
@@ -436,17 +437,19 @@ def calculate_afudc_capitalized_cost(
                 capitalized_cost += delay_cost
 
     # 2) Process construction period costs (year-by-year S-curve compounding)
-    if construction_cost > 0 and construction_years > 0:
+    if construction_cost > 0:
         n_years = int(construction_years)
-        if spending_profiles and n_years >= 1:
+        if n_years < 1:
+            raise ValueError(
+                f"construction_years must be >= 1, got {construction_years}"
+            )
+        if spending_profiles:
             weights = get_construction_spending_weights(n_years, spending_profiles)
         else:
-            weights = [1.0 / n_years] * n_years if n_years >= 1 else [1.0]
+            weights = [1.0 / n_years] * n_years
         for yr, w in enumerate(weights):
             years_to_cod = construction_years - (yr + 0.5)
             capitalized_cost += construction_cost * w * (1 + afudc_rate) ** years_to_cod
-    else:
-        capitalized_cost += construction_cost
 
     # Calculate AFUDC amount
     afudc_amount = capitalized_cost - nominal_cost

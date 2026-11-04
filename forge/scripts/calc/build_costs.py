@@ -25,7 +25,6 @@ from forge.scripts.utils.financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
-    validate_discount_rate,
     calculate_construction_start_year,
 )
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
@@ -338,18 +337,10 @@ def main() -> None:
     # Build costs: spread evenly over construction period
     # Annual cost during construction years
     construction_start_year = calculate_construction_start_year(project_details.delay_years)
-    if project_details.construction_years > 0:
-        annual_build_cost = costs.total_cost_with_contingencies / project_details.construction_years
-        build_cost_pv = calculate_present_value(
-            annual_build_cost, financing.wacc_real, project_details.construction_years, construction_start_year
-        )
-    else:
-        # Validate wacc_real before direct use to prevent division by zero
-        validate_discount_rate(financing.wacc_real, "wacc_real")
-        # If construction_years is 0, treat as one-time cost at construction_start_year
-        build_cost_pv = (
-            costs.total_cost_with_contingencies / (1 + financing.wacc_real) ** construction_start_year
-        )
+    annual_build_cost = costs.total_cost_with_contingencies / project_details.construction_years
+    build_cost_pv = calculate_present_value(
+        annual_build_cost, financing.wacc_real, project_details.construction_years, construction_start_year
+    )
 
     # Format and display results
     logger.info("=" * 80)
@@ -399,15 +390,12 @@ def main() -> None:
     logger.info(f"  Base Year: {financing.base_year}")
     logger.info("")
     logger.info("Build costs incurred during construction period:")
-    if project_details.construction_years > 0:
-        logger.info(
-            f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
-        )
-        logger.info(
-            f"  Construction Period: Year {construction_start_year:.1f} to Year {construction_start_year + project_details.construction_years - 1:.1f}"
-        )
-    else:
-        logger.info(f"  One-time cost at Year {construction_start_year:.1f}")
+    logger.info(
+        f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
+    )
+    logger.info(
+        f"  Construction Period: Year {construction_start_year:.1f} to Year {construction_start_year + project_details.construction_years - 1:.1f}"
+    )
     logger.info(f"  Build Cost PV: ${build_cost_pv:,.2f}")
     logger.info("=" * 80)
 

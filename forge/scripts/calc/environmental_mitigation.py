@@ -196,33 +196,25 @@ def main() -> None:
     validate_discount_rate(financing.wacc_real, "wacc_real")
 
     construction_start_year = calculate_construction_start_year(project_details.delay_years)
-    if project_details.construction_years > 0:
-        annual_total_credits = results["total_credits"] / project_details.construction_years
-        annual_wetlands = results["wetlands_credits"] / project_details.construction_years
-        annual_habitat = results["habitat_credits"] / project_details.construction_years
-        total_credits_pv = calculate_present_value(
-            annual_total_credits, financing.wacc_real, project_details.construction_years, construction_start_year
-        )
-        wetlands_credits_pv = calculate_present_value(
-            annual_wetlands, financing.wacc_real, project_details.construction_years, construction_start_year
-        )
-        habitat_credits_pv = calculate_present_value(
-            annual_habitat, financing.wacc_real, project_details.construction_years, construction_start_year
-        )
-    else:
-        total_credits_pv = results["total_credits"] / (1 + financing.wacc_real) ** construction_start_year
-        wetlands_credits_pv = results["wetlands_credits"] / (1 + financing.wacc_real) ** construction_start_year
-        habitat_credits_pv = results["habitat_credits"] / (1 + financing.wacc_real) ** construction_start_year
+    annual_total_credits = results["total_credits"] / project_details.construction_years
+    annual_wetlands = results["wetlands_credits"] / project_details.construction_years
+    annual_habitat = results["habitat_credits"] / project_details.construction_years
+    total_credits_pv = calculate_present_value(
+        annual_total_credits, financing.wacc_real, project_details.construction_years, construction_start_year
+    )
+    wetlands_credits_pv = calculate_present_value(
+        annual_wetlands, financing.wacc_real, project_details.construction_years, construction_start_year
+    )
+    habitat_credits_pv = calculate_present_value(
+        annual_habitat, financing.wacc_real, project_details.construction_years, construction_start_year
+    )
 
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years
-    if project_details.construction_years > 0:
-        annual_base_cost = results["base_cost"] / project_details.construction_years
-        base_cost_pv = calculate_present_value(
-            annual_base_cost, financing.wacc_real, project_details.construction_years, construction_start_year
-        )
-    else:
-        base_cost_pv = results["base_cost"] / (1 + financing.wacc_real) ** construction_start_year
+    annual_base_cost = results["base_cost"] / project_details.construction_years
+    base_cost_pv = calculate_present_value(
+        annual_base_cost, financing.wacc_real, project_details.construction_years, construction_start_year
+    )
 
     # Total PV
     total_pv = base_cost_pv + total_credits_pv

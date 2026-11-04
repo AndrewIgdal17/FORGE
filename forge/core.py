@@ -225,6 +225,10 @@ def _bootstrap_run_context() -> "RunContext":
         raise InvalidInputs(
             "protected_area_acres are required. Missing: " + ", ".join(missing)
         )
+    if project_details.construction_years < 1:
+        raise InvalidInputs(
+            f"construction_years must be >= 1 (got {project_details.construction_years})."
+        )
     financing = load_financing_details()
     contingencies = load_contingencies()
     physical_raw = get_physical_data_raw()
