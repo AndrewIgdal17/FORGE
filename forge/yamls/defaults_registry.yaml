@@ -75,6 +75,44 @@ utilities:
       yaml_file: "02_project_physical_details.yaml"
       basis: "Sourced"
 
+  # --- Protected-area acres (habitat credit inputs; required, null is not zero) ---
+  protected_area_acres:
+    forested:
+      path: "02_project_physical_details.terrain.protected_area_acres.forested"
+      unit: "acres"
+      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
+      citation: ~
+      yaml_file: "02_project_physical_details.yaml"
+      basis: "Author judgment"
+    scrubbed_flat:
+      path: "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat"
+      unit: "acres"
+      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
+      citation: ~
+      yaml_file: "02_project_physical_details.yaml"
+      basis: "Author judgment"
+    desert_barren:
+      path: "02_project_physical_details.terrain.protected_area_acres.desert_barren"
+      unit: "acres"
+      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
+      citation: ~
+      yaml_file: "02_project_physical_details.yaml"
+      basis: "Author judgment"
+    rolling_hills:
+      path: "02_project_physical_details.terrain.protected_area_acres.rolling_hills"
+      unit: "acres"
+      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
+      citation: ~
+      yaml_file: "02_project_physical_details.yaml"
+      basis: "Author judgment"
+    mountain:
+      path: "02_project_physical_details.terrain.protected_area_acres.mountain"
+      unit: "acres"
+      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
+      citation: ~
+      yaml_file: "02_project_physical_details.yaml"
+      basis: "Author judgment"
+
   # --- Financial parameters ---
   financial:
     inflation_rate:
@@ -331,9 +369,16 @@ hard_costs:
       citation: ~
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Author judgment"
-    compensatory_mitigation_ratio:
-      path: "09_environmental_mitigation.environmental_mitigation.mitigation_ratio"
+    wetland_compensation_ratio:
+      path: "09_environmental_mitigation.environmental_mitigation.wetland_compensation_ratio"
       unit: "dimensionless"
+      source: "MISO wetland price is dollars per impact acre"
+      citation: ~
+      yaml_file: "09_environmental_mitigation.yaml"
+      basis: "Author judgment"
+    habitat_compensation_ratio:
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_compensation_ratio"
+      unit: "credits per impact acre"
       source: "33 CFR §332.3(f) Category II preservation"
       citation: "acoe2008compensatory"
       yaml_file: "09_environmental_mitigation.yaml"
@@ -345,10 +390,10 @@ hard_costs:
       citation: "MISO2025CostGuide"
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Sourced"
-    rebuild_env_mitigation_fraction:
-      path: "09_environmental_mitigation.environmental_mitigation.rebuild_env_mitigation_fraction"
+    disturbance_multiplier_rebuild:
+      path: "09_environmental_mitigation.environmental_mitigation.disturbance_multiplier_rebuild"
       unit: "dimensionless [0,1]"
-      source: "Author default for rebuild projects"
+      source: "Author default for rebuild projects. Reconductoring is 0. Greenfield is 1."
       citation: ~
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Author judgment"
@@ -362,36 +407,36 @@ hard_costs:
 
     # Habitat credit costs by terrain (uniform; CPI-adjusted from ~2007$)
     habitat_credit_forested:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.forested"
-      unit: "$/acre (2025$)"
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.forested"
+      unit: "$/credit (2025$)"
       source: "Ecosystem Marketplace/Forest Trends national average, CPI-U adjusted"
       citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Derived"
     habitat_credit_scrubbed_flat:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.scrubbed_flat"
-      unit: "$/acre (2025$)"
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.scrubbed_flat"
+      unit: "$/credit (2025$)"
       source: "Same national average; per-terrain data insufficient"
       citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Derived"
     habitat_credit_desert_barren:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.desert_barren"
-      unit: "$/acre (2025$)"
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.desert_barren"
+      unit: "$/credit (2025$)"
       source: "Same national average"
       citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Derived"
     habitat_credit_rolling_hills:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.rolling_hills"
-      unit: "$/acre (2025$)"
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.rolling_hills"
+      unit: "$/credit (2025$)"
       source: "Same national average"
       citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
       yaml_file: "09_environmental_mitigation.yaml"
       basis: "Derived"
     habitat_credit_mountain:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_acre.mountain"
-      unit: "$/acre (2025$)"
+      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.mountain"
+      unit: "$/credit (2025$)"
       source: "Same national average"
       citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
       yaml_file: "09_environmental_mitigation.yaml"
