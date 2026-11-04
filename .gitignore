@@ -117,6 +117,7 @@ yamls.lock
 
 # Local agent / scratch artifacts
 .superpower[s]/
+.worktrees/
 .claude/
 Generalized_FORGE_Equation.*
 Projects/
