@@ -9,7 +9,7 @@ import logging
 
 # Standard library imports
 import yaml
-from typing import Dict, Any
+from typing import Any
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 
@@ -20,7 +20,6 @@ from forge.scripts.utils.smart_loaders import (
     load_environmental_mitigation,
     load_financing_details,
 )
-from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 from forge.scripts.utils.financial_utils import (
     calculate_present_value,
     calculate_afudc_rate,
@@ -33,129 +32,78 @@ from forge.scripts.utils.run_context import get_run_context, add_derived
 logger = logging.getLogger(__name__)
 
 
+HABITAT_CLASSES = (
+    "forested",
+    "scrubbed_flat",
+    "desert_barren",
+    "rolling_hills",
+    "mountain",
+)
+
+
+def disturbance_multiplier(project_type: str, rebuild_multiplier: float) -> float:
+    from forge.errors import InvalidInputs
+
+    if project_type == "reconductoring":
+        return 0.0
+    if project_type == "rebuild":
+        return float(rebuild_multiplier)
+    if project_type == "greenfield":
+        return 1.0
+    raise InvalidInputs(f"project_type '{project_type}' is not allowed.")
+
+
 def calculate_environmental_mitigation_costs(
-    em_yaml: Dict[str, Any],
+    em_yaml: dict[str, Any],
     category: str,
-    terrain_miles_dict: Dict[str, float],
-    row_width_feet: float,
+    acres_by_terrain: dict[str, float],
+    protected_area_acres: dict[str, float],
     project_type: str = "greenfield",
-    subsea_capex: float = 0.0,
-    rebuild_env_mitigation_fraction: float = 0.5,
-) -> Dict[str, float]:
-    """
-    Calculate environmental mitigation costs including base mitigation,
-    wetland/habitat credit purchases, and marine environmental mitigation.
+) -> dict[str, float]:
+    from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 
-    Args:
-        em_yaml: Loaded environmental mitigation YAML data
-        category: Project category identifier
-        terrain_miles_dict: Dictionary of terrain type to miles
-        row_width_feet: ROW width in feet
-        project_type: "greenfield" | "reconductoring" | "rebuild"
-                     ξ_credits = 0 for reconductoring (existing ROW),
-                     rebuild_env_mitigation_fraction for rebuild, 1 otherwise
-        subsea_capex: Subsea line construction CAPEX (conductor + structure),
-                     used for marine environmental mitigation (% of CAPEX)
-        rebuild_env_mitigation_fraction: Fraction of wetland/habitat credits
-                     applied for rebuild projects (default 0.5)
-
-    Returns:
-        dict: Contains base_cost, wetlands_credits, habitat_credits, marine_cost,
-              total, uplift_factor_applied, total_acres, effective_acres
-    """
-    mitigation_config = em_yaml["environmental_mitigation"]
-    base_costs = mitigation_config["base_mitigation_cost_per_acre"]
-    uplift_factor = mitigation_config["mitigation_uplift_factor"]
-    mitigation_ratio = mitigation_config["mitigation_ratio"]
-
-    # Determine construction type from category
-    construction_type = category.split("/")[0]  # e.g., "overhead", "underground"
-
-    # Map construction_type to YAML keys
-    yaml_construction_type = normalize_construction_type_for_yaml(construction_type, context="environmental")
-
-    # Calculate base acreage by terrain (before uplift)
-    total_base_acres = 0.0
+    config = em_yaml["environmental_mitigation"]
+    uplift = float(config["mitigation_uplift_factor"])
+    mu_wet = float(config["wetland_compensation_ratio"])
+    mu_hab = float(config["habitat_compensation_ratio"])
+    mu_d = disturbance_multiplier(
+        project_type, float(config["disturbance_multiplier_rebuild"])
+    )
+    yaml_ct = normalize_construction_type_for_yaml(
+        category.split("/")[0], context="environmental"
+    )
+    base_table = config["base_mitigation_cost_per_acre"].get(yaml_ct, {})
     base_cost = 0.0
-    acres_by_terrain = {}
-
-    for terrain, miles in terrain_miles_dict.items():
-        if miles > 0:
-            # Calculate acres using utility function
-            from forge.scripts.utils.calculation_utils import miles_to_acres
-            terrain_acres = miles_to_acres(miles, row_width_feet)
-            acres_by_terrain[terrain] = terrain_acres
-            total_base_acres += terrain_acres
-
-            # Apply uplift for effective acres
-            effective_acres = terrain_acres * uplift_factor
-
-            # Get cost per acre for this construction type and terrain
-            cost_per_acre = base_costs.get(yaml_construction_type, {}).get(terrain, 0.0)
-            base_cost += cost_per_acre * effective_acres
-
-    # Calculate total effective acres (with uplift)
-    total_effective_acres = total_base_acres * uplift_factor
-
-    # Identify impacted acres for credits (use effective acres with uplift)
-    wetland_impacted_acres = acres_by_terrain.get("wetland", 0.0) * uplift_factor * mitigation_ratio
-
-    # Habitat credits: sum relevant natural terrains (conservative approach)
-    habitat_terrains = [
-        "forested",
-        "scrubbed_flat",
-        "desert_barren",
-        "rolling_hills",
-        "mountain",
-    ]
-    habitat_impacted_acres = (
-        sum(acres_by_terrain.get(t, 0.0) for t in habitat_terrains) * uplift_factor * mitigation_ratio
-    )
-
-    # Calculate wetland credits
-    wetland_cost_per_acre = mitigation_config["wetland_credit_cost_per_acre"]
-    wetlands_credits = wetland_cost_per_acre * wetland_impacted_acres
-
-    # Calculate habitat credits: per-terrain cost
-    habitat_costs = mitigation_config.get("habitat_credit_cost_per_acre", {})
+    total_base_acres = 0.0
+    for terrain, acres in acres_by_terrain.items():
+        if acres is None or acres <= 0:
+            continue
+        total_base_acres += float(acres)
+        base_cost += float(base_table.get(terrain, 0.0)) * uplift * float(acres)
+    base_cost *= mu_d
+    wetland_acres = float(acres_by_terrain.get("wetland") or 0.0)
+    wetland_impacted = mu_d * mu_wet * uplift * wetland_acres
+    wetlands_credits = float(config["wetland_credit_cost_per_acre"]) * wetland_impacted
+    prices = config["habitat_credit_cost_per_credit"]
     habitat_credits = 0.0
-    for terrain in habitat_terrains:
-        terrain_acres = acres_by_terrain.get(terrain, 0.0)
-        if terrain_acres > 0:
-            effective_acres = terrain_acres * uplift_factor * mitigation_ratio
-            cost_per_acre = habitat_costs[terrain]
-            habitat_credits += cost_per_acre * effective_acres
-
-    # Appendix §3: ξ_credits gates wetland/habitat credits at the point of use
-    # (reconductoring uses existing ROW; rebuild applies a partial fraction).
-    xi_credits = (
-        0.0 if project_type == "reconductoring"
-        else rebuild_env_mitigation_fraction if project_type == "rebuild"
-        else 1.0
-    )
-    wetlands_credits_gated = xi_credits * wetlands_credits
-    habitat_credits_gated = xi_credits * habitat_credits
-
-    # Marine environmental mitigation (subsea only, % of CAPEX)
-    marine_env_mitigation_pct_capex = mitigation_config["marine_env_mitigation_pct_capex"]
-    if yaml_construction_type == "subsea":
-        marine_cost = marine_env_mitigation_pct_capex * subsea_capex
-    else:
-        marine_cost = 0.0
-
+    habitat_credit_count = 0.0
+    for terrain in HABITAT_CLASSES:
+        gap = float(protected_area_acres.get(terrain) or 0.0)
+        count = mu_d * uplift * mu_hab * gap
+        habitat_credit_count += count
+        habitat_credits += float(prices[terrain]) * count
+    total_credits = wetlands_credits + habitat_credits
     return {
         "base_cost": base_cost,
-        "wetlands_credits": wetlands_credits_gated,
-        "habitat_credits": habitat_credits_gated,
-        "total_credits": wetlands_credits_gated + habitat_credits_gated,
-        "marine_cost": marine_cost,
-        "total": base_cost + wetlands_credits_gated + habitat_credits_gated + marine_cost,
-        "uplift_factor_applied": uplift_factor,
+        "wetlands_credits": wetlands_credits,
+        "habitat_credits": habitat_credits,
+        "habitat_credit_count": habitat_credit_count,
+        "total_credits": total_credits,
+        "total": base_cost + total_credits,
+        "uplift_factor_applied": uplift,
         "total_base_acres": total_base_acres,
-        "total_effective_acres": total_effective_acres,
-        "wetland_impacted_acres": wetland_impacted_acres,
-        "habitat_impacted_acres": habitat_impacted_acres,
-        "mitigation_ratio": mitigation_ratio,
+        "total_effective_acres": total_base_acres * uplift,
+        "wetland_impacted_acres": wetland_impacted,
     }
 
 def main() -> None:
