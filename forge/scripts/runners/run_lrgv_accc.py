@@ -53,13 +53,12 @@ def _patch_lrgv_common(inputs: dict) -> dict:
 
     # --- 09: Environmental Mitigation ---
     env = inputs["09_environmental_mitigation"]["environmental_mitigation"]
-    env["habitat_credit_cost_per_acre"] = {
+    env["habitat_credit_cost_per_credit"] = {
         "forested": 30_000,
         "scrubbed_flat": 5_000,
         "desert_barren": 3_000,
         "rolling_hills": 5_000,
         "mountain": 30_000,
-        "farmland": 2_000,
     }
 
     # --- 11: ROW (existing corridor — rent/hold, minimal acquisition) ---

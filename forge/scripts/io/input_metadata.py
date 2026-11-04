@@ -231,6 +231,17 @@ for _i, _t in enumerate(TERRAINS):
         unit="miles", tier="first-glance", display_order=_i + 1, validation={"min": 0},
         sub_tab="terrain-mix",
     ))
+for _i, _t in enumerate(("forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain")):
+    _TAB2.append(_f(
+        f"protected_area_acres_{_t}", taxonomy_id="route_terrain_miles", input_tab="routing",
+        yaml_section="02_project_physical_details",
+        field_path=f"terrain.protected_area_acres.{_t}",
+        label=f"{_terrain_label(_t)} protected-area acres",
+        help_text="Acres of this class inside protected areas. Habitat credits use this area. Required.",
+        unit="acres", tier="first-glance", display_order=20 + _i,
+        validation={"required": True, "min": 0},
+        sub_tab="terrain-mix",
+    ))
 for _i, _t in enumerate(TERRAINS):
     _TAB2.append(_f(
         f"terrain_mult_{_t}", taxonomy_id="route_terrain_multipliers", input_tab="routing",
@@ -534,31 +545,44 @@ for _terrain in ["forested", "scrubbed_flat", "desert_barren", "rolling_hills", 
     _TAB4.append(_f(
         f"env_credit_cost_habitat_{_terrain}", taxonomy_id="env_mitigation", input_tab="capital-costs",
         yaml_section="09_environmental_mitigation",
-        field_path=f"environmental_mitigation.habitat_credit_cost_per_acre.{_terrain}",
+        field_path=f"environmental_mitigation.habitat_credit_cost_per_credit.{_terrain}",
         label=f"Habitat — {_terrain_label(_terrain)}",
         help_text=f"Per-acre habitat credit cost for {_terrain_label(_terrain).lower()} terrain",
         section_label="Credit Costs",
-        unit="$/acre", input_type="currency", tier="working", display_order=_env_order,
+        unit="$/credit", input_type="currency", tier="working", display_order=_env_order,
         sub_tab="credits"))
     _env_order += 1
 
 _TAB4.append(_f(
-    "env_mitigation_ratio", taxonomy_id="env_mitigation", input_tab="capital-costs",
+    "env_wetland_compensation_ratio", taxonomy_id="env_mitigation", input_tab="capital-costs",
     yaml_section="09_environmental_mitigation",
-    field_path="environmental_mitigation.mitigation_ratio",
-    label="Compensatory mitigation ratio",
-    help_text="Credits required equal impacted acres times this ratio. Default 2.0.",
+    field_path="environmental_mitigation.wetland_compensation_ratio",
+    label="Wetland compensation ratio",
+    help_text="Multiplies wetland acres. The wetland price is dollars per impact acre. Default 1.0.",
     input_type="number", tier="working", display_order=_env_order,
     validation={"min": 0, "step": 0.1},
-    sub_tab="credits"))
+    sub_tab="credits",
+))
 _env_order += 1
 
 _TAB4.append(_f(
-    "rebuild_env_mitigation_fraction", taxonomy_id="env_mitigation",
+    "env_habitat_compensation_ratio", taxonomy_id="env_mitigation", input_tab="capital-costs",
+    yaml_section="09_environmental_mitigation",
+    field_path="environmental_mitigation.habitat_compensation_ratio",
+    label="Habitat compensation ratio",
+    help_text="Credits per impact acre. Default 2.0.",
+    input_type="number", tier="working", display_order=_env_order,
+    validation={"min": 0, "step": 0.1},
+    sub_tab="credits",
+))
+_env_order += 1
+
+_TAB4.append(_f(
+    "disturbance_multiplier_rebuild", taxonomy_id="env_mitigation",
     input_tab="capital-costs", yaml_section="09_environmental_mitigation",
-    field_path="environmental_mitigation.rebuild_env_mitigation_fraction",
-    label="Rebuild credit share (%)",
-    help_text="Share of wetland and habitat credits kept on a rebuild. Default 50%. Reconductoring keeps none.",
+    field_path="environmental_mitigation.disturbance_multiplier_rebuild",
+    label="Rebuild disturbance multiplier",
+    help_text="Scales on-site restoration and wetland and habitat credits on a rebuild. Reconductoring uses 0. Greenfield uses 1. Default 0.5.",
     input_type="percent", tier="working", display_order=_env_order,
     sub_tab="credits", condition="rebuild_only",
     validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))

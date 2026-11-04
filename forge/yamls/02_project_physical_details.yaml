@@ -23,3 +23,10 @@ terrain:
     rolling_hills: 1.4  # WECC 2014
     mountain: 1.75     # WECC 2014
     subsea: 1          # Marine costs handled separately (not terrain-multiplied)
+
+  protected_area_acres: # acres inside PAD-US GAP 1–3. Required. Null is not zero.
+    forested: null
+    scrubbed_flat: null
+    desert_barren: null
+    rolling_hills: null
+    mountain: null

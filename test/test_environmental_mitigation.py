@@ -85,3 +85,23 @@ def test_reconductoring_zeros_onsite_and_credits_and_rebuild_halves_them():
     assert half["wetlands_credits"] == pytest.approx(62.5)
     assert half["habitat_credit_count"] == pytest.approx(1.25)
     assert half["habitat_credits"] == pytest.approx(12.5)
+
+
+from forge.data import get_defaults_template
+
+
+def test_defaults_expose_split_ratios_and_null_acres():
+    template = get_defaults_template()
+    env = template["09_environmental_mitigation"]["environmental_mitigation"]
+    assert env["wetland_compensation_ratio"] == 1.0
+    assert env["habitat_compensation_ratio"] == 2.0
+    assert env["disturbance_multiplier_rebuild"] == 0.5
+    assert "mitigation_ratio" not in env
+    assert "rebuild_env_mitigation_fraction" not in env
+    for name in ("forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain"):
+        assert env["habitat_credit_cost_per_credit"][name] == 46770
+    acres = template["02_project_physical_details"]["terrain"]["protected_area_acres"]
+    assert list(acres) == [
+        "forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain",
+    ]
+    assert all(value is None for value in acres.values())

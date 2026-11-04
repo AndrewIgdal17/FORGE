@@ -591,6 +591,21 @@ def load_environmental_mitigation() -> Dict[str, Any]:
     return env_mitigation
 
 
+def load_protected_area_acres() -> dict[str, float]:
+    """Return the five protected-area acreages. Null is an error, not zero."""
+    from forge.scripts.calc.environmental_mitigation import HABITAT_CLASSES
+
+    physical = section("02_project_physical_details")
+    acres = physical["terrain"]["protected_area_acres"]
+    loaded: dict[str, float] = {}
+    for name in HABITAT_CLASSES:
+        value = acres[name]
+        if value is None:
+            raise KeyError(name)
+        loaded[name] = float(value)
+    return loaded
+
+
 def load_cost_timing_patterns() -> Dict[str, Any]:
     """Load cost timing patterns for AFUDC calculations."""
     cost_timing = section("19_cost_timing_patterns")

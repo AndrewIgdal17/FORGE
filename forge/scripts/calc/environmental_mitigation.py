@@ -130,32 +130,22 @@ def main() -> None:
     # Load environmental mitigation parameters
     em_yaml = load_environmental_mitigation()
 
-    # Compute subsea CAPEX for marine mitigation (subsea only).
-    # Appendix §3: C_marine,env = r_marine,env × C_subsea,CAPEX from build costs.
-    subsea_capex = 0.0
-    if project_details.construction_type == "Subsea":
-        if ctx.build_costs is None:
-            raise RuntimeError(
-                f"{__name__} requires a RunContext. Run via forge.py or set up "
-                "RunContext in your test fixture."
-            )
-        subsea_capex = (
-            ctx.build_costs.conductor_cost_with_contingencies
-            + ctx.build_costs.structure_cost_with_contingencies
-        )
+    from forge.scripts.utils.calculation_utils import miles_to_acres
+    from forge.scripts.io.yaml_loaders import load_protected_area_acres
 
-    # Calculate environmental mitigation costs (nominal)
-    rebuild_env_mitigation_fraction = em_yaml["environmental_mitigation"][
-        "rebuild_env_mitigation_fraction"
-    ]
+    acres_by_terrain = {
+        terrain: miles_to_acres(miles, row_width_feet)
+        for terrain, miles in terrain_miles.items()
+        if miles
+    }
     results = calculate_environmental_mitigation_costs(
-        em_yaml, category, terrain_miles, row_width_feet,
+        em_yaml,
+        category,
+        acres_by_terrain,
+        load_protected_area_acres(),
         project_type=project_details.project_type,
-        subsea_capex=subsea_capex,
-        rebuild_env_mitigation_fraction=rebuild_env_mitigation_fraction,
     )
 
-    from forge.scripts.utils.calculation_utils import miles_to_acres
     _terrain_acres = {t: miles_to_acres(m, row_width_feet) for t, m in terrain_miles.items() if m > 0}
     _uplift = results["uplift_factor_applied"]
     _eff_acres = {t: a * _uplift for t, a in _terrain_acres.items()}
@@ -164,7 +154,7 @@ def main() -> None:
         "effective_acres_per_terrain": _eff_acres,
         "total_effective_acres": results["total_effective_acres"],
         "wetland_impacted_acres": results["wetland_impacted_acres"],
-        "habitat_impacted_acres": results["habitat_impacted_acres"],
+        "habitat_credit_count": results["habitat_credit_count"],
     })
 
     # Load financing parameters for discounting
@@ -176,9 +166,9 @@ def main() -> None:
 
     # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
     if afudc_setup.apply_afudc:
-        # Base mitigation costs (includes marine environmental mitigation)
+        # Base mitigation costs
         base_cap, base_afudc = calculate_afudc_capitalized_cost(
-            results["base_cost"] + results["marine_cost"],
+            results["base_cost"],
             afudc_setup.timing_patterns["environmental_mitigation_base"],
             project_details.delay_years,
             project_details.construction_years,
@@ -227,12 +217,12 @@ def main() -> None:
     # Base mitigation: spread evenly over construction period
     # Annual cost during construction years
     if project_details.construction_years > 0:
-        annual_base_cost = (results["base_cost"] + results["marine_cost"]) / project_details.construction_years
+        annual_base_cost = results["base_cost"] / project_details.construction_years
         base_cost_pv = calculate_present_value(
             annual_base_cost, financing.wacc_real, project_details.construction_years, construction_start_year
         )
     else:
-        base_cost_pv = (results["base_cost"] + results["marine_cost"]) / (1 + financing.wacc_real) ** construction_start_year
+        base_cost_pv = results["base_cost"] / (1 + financing.wacc_real) ** construction_start_year
 
     # Total PV
     total_pv = base_cost_pv + total_credits_pv
@@ -250,12 +240,11 @@ def main() -> None:
     logger.info(f"  Base ROW Acres: {results['total_base_acres']:,.2f}")
     logger.info(f"  Effective Acres (with uplift): {results['total_effective_acres']:,.2f}")
     logger.info(f"  Wetland Impacted Acres: {results['wetland_impacted_acres']:,.2f}")
-    logger.info(f"  Habitat Impacted Acres: {results['habitat_impacted_acres']:,.2f}")
+    logger.info(f"  Habitat Credit Count: {results['habitat_credit_count']:,.2f}")
     logger.info("")
 
     logger.info("[NOMINAL VALUES]")
     logger.info(f"  Base Mitigation/Restoration: ${results['base_cost']:,.2f}")
-    logger.info(f"  Marine Environmental Mitigation: ${results['marine_cost']:,.2f}")
     logger.info(f"  Wetland Credits: ${results['wetlands_credits']:,.2f}")
     logger.info(f"  Habitat Credits: ${results['habitat_credits']:,.2f}")
     logger.info(f"  Total Credit Costs: ${results['total_credits']:,.2f}")
@@ -305,7 +294,6 @@ def main() -> None:
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
         "base_cost_pv": base_cost_pv,
-        "marine_cost_nominal": results["marine_cost"],
         "credits_nominal": results["total_credits"],
         "credits_pv": total_credits_pv,
     }
