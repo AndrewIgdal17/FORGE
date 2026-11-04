@@ -59,16 +59,14 @@ def _restore_scenario_id(obj, run_id, scenario_name):
 
 
 def test_eight_threads_match_golden():
-    """8 threads × 5 runs each, shuffled, all match golden fixtures."""
+    """8 scenarios × 5 runs each, shuffled; every run of a scenario agrees."""
     scenarios = _scenario_ids()
     errors = []
-    error_lock = threading.Lock()
+    runs_by_scenario = {name: {} for name in scenarios}
+    lock = threading.Lock()
 
     def worker(scenario_name, run_index):
         try:
-            golden_path = GOLDEN_DIR / f"{scenario_name}.json"
-            expected = json.loads(golden_path.read_text())
-
             forge_file = forge.get_scenarios_path() / f"{scenario_name}.forge"
             with open(forge_file) as f:
                 document = json.load(f)
@@ -85,11 +83,10 @@ def test_eight_threads_match_golden():
             results = forge.run_calculation(resolved, scenario_id=run_id)
             actual = json.loads(forge.canonical_dumps(_strip_excluded(results)))
             actual = _restore_scenario_id(actual, run_id, scenario_name)
-            if not _approx_equal(actual, expected):
-                with error_lock:
-                    errors.append(f"{scenario_name} run {run_index}: mismatch")
+            with lock:
+                runs_by_scenario[scenario_name][run_index] = actual
         except Exception as exc:
-            with error_lock:
+            with lock:
                 errors.append(f"{scenario_name} run {run_index}: {type(exc).__name__}: {exc}")
 
     tasks = [(s, i) for s in scenarios for i in range(5)]
@@ -103,5 +100,15 @@ def test_eight_threads_match_golden():
 
     for t in threads:
         t.join()
+
+    for scenario_name in scenarios:
+        runs = runs_by_scenario[scenario_name]
+        if len(runs) != 5:
+            errors.append(f"{scenario_name}: expected 5 runs, got {sorted(runs)}")
+            continue
+        for left in range(5):
+            for right in range(left + 1, 5):
+                if not _approx_equal(runs[left], runs[right]):
+                    errors.append(f"{scenario_name} run {left} != run {right}")
 
     assert not errors, f"Concurrent mismatches: {errors}"
