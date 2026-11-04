@@ -43,7 +43,6 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
         "urban": 0,
         "rolling_hills": 60,
         "mountain": 30,
-        "subsea": 0,
     }
 
     # --- Tab 2: ROW Zones ---

@@ -26,3 +26,14 @@ def test_afudc_rejects_zero_construction_years():
             False,
             spending_profiles={"5": [0.2, 0.2, 0.2, 0.2, 0.2]},
         )
+
+
+def test_subsea_construction_type_is_not_an_option():
+    errors = validate_changes({
+        "01_project_technical_details.project.construction_type": "Subsea",
+    })
+    assert errors[0]["path"] == "01_project_technical_details.project.construction_type"
+    assert errors[0]["message"] == (
+        "'Subsea' is not one of the allowed options "
+        "['Overhead', 'Underground Direct-Buried', 'Underground Tunnel']"
+    )

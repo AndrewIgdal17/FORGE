@@ -35,13 +35,13 @@ def _converter_inputs(vsc_rate: float) -> dict:
     )
 
 
-def _structure_inputs(subsea_rate: float) -> dict:
+def _structure_inputs(line_rate: float) -> dict:
     return yaml.safe_load(
         "project_categories_om_structures:\n"
         "  Overhead:\n"
         "    base_om_per_mile_year: 19090\n"
-        "  Subsea:\n"
-        f"    om_pct_of_line_capex: {subsea_rate}\n"
+        "  Underground tunnel:\n"
+        f"    om_pct_of_line_capex: {line_rate}\n"
         "om_real_escalation_rate: 0.02\n"
     )
 
@@ -86,13 +86,13 @@ def test_nonoverhead_line_om_uses_run_inputs_not_canonical_rates():
     set_run_context(ctx)
     try:
         result = oandm.load_nonoverhead_line_om(
-            construction_type="Subsea",
+            construction_type="Underground tunnel",
             ac_dc="DC",
             capacity_mw=1000,
             conductor_type="XLPE",
             converter_type="VSC Converter",
         )
-        # (1_000_000 + 500_000) * 0.05 custom rate. Canonical YAML is 0.025 → 37_500.
+        # (1_000_000 + 500_000) * 0.05 custom rate.
         assert abs(result - 75_000.0) < 1e-9
     finally:
         reset_run_state(token)

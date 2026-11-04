@@ -14,7 +14,7 @@ def _runnable_inputs() -> dict:
     project, so these checks use a bundled scenario the same way the golden
     tests do.
     """
-    forge_file = forge.get_scenarios_path() / "TBC_Delay4.forge"
+    forge_file = forge.get_scenarios_path() / "SunZia_Delay2.forge"
     with open(forge_file) as handle:
         document = json.load(handle)
     changes = forge.diff_changes(document["inputs"])

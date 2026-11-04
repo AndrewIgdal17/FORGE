@@ -33,7 +33,7 @@ def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, flo
     Load vegetation management O&M costs from YAML file.
 
     Args:
-        construction_type: Type of construction (Overhead/Subsea)
+        construction_type: Type of construction (Overhead, Underground Direct Buried, or Underground Tunnel)
 
     Returns:
         float: Variable vegetation management cost per mile per year
@@ -111,7 +111,7 @@ def load_nonoverhead_line_om(
 
     K_line = C_adj,cont,conductor + C_adj,cont,structure (post-contingency,
     post-soft-cost CAPEX from ctx.build_costs; excludes converter stations).
-    Rates from 14_category_om_structures.yaml: UG 0.15%, tunnel 0.4%, subsea 2.5%.
+    Rates from 14_category_om_structures.yaml: UG 0.15%, tunnel 0.4%.
 
     Returns:
         float: Total annual line O&M cost ($/year).
@@ -180,7 +180,6 @@ def main() -> None:
             + physical_details.urban_miles * vegetation_costs.get("urban", 0)
             + physical_details.rolling_hills_miles * vegetation_costs.get("rolling_hills", 0)
             + physical_details.mountain_miles * vegetation_costs.get("mountain", 0)
-            + physical_details.subsea_miles * vegetation_costs.get("subsea", 0)
         )
 
         total_line_om_per_year = base_om_per_year + total_vegetation_management_cost_per_year
@@ -305,7 +304,6 @@ def main() -> None:
             "urban": "Urban",
             "rolling_hills": "Rolling Hills",
             "mountain": "Mountain",
-            "subsea": "Subsea",
         }
         for key, label in terrain_names.items():
             structures = int(structure_dict[key])

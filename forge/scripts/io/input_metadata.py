@@ -25,10 +25,10 @@ InputCondition = Literal[
 
 TERRAINS = (
     "forested", "scrubbed_flat", "wetland", "farmland",
-    "desert_barren", "urban", "rolling_hills", "mountain", "subsea",
+    "desert_barren", "urban", "rolling_hills", "mountain",
 )
 FUELS = ("coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other")
-CONSTRUCTION_TYPES = ("overhead", "underground", "subsea")
+CONSTRUCTION_TYPES = ("overhead", "underground")
 
 
 @dataclass(frozen=True)
@@ -65,9 +65,9 @@ def _terrain_label(t: str) -> str:
 _TAB1: list[InputField] = [
     _f("construction_type", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.construction_type",
-       label="Construction Type", help_text="Overhead, underground, or subsea transmission",
+       label="Construction Type", help_text="Overhead or underground transmission",
        input_type="dropdown", tier="first-glance", display_order=1,
-       validation={"required": True, "options": ["Overhead", "Underground Direct-Buried", "Underground Tunnel", "Subsea"]},
+       validation={"required": True, "options": ["Overhead", "Underground Direct-Buried", "Underground Tunnel"]},
        sub_tab="technology"),
     _f("ac_dc", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.ac_dc",
@@ -93,7 +93,6 @@ _TAB1: list[InputField] = [
                        "Overhead": ["Standard Aluminum Conductor", "Advanced Aluminum Conductor"],
                        "Underground Direct-Buried": ["Underground Copper Conductor"],
                        "Underground Tunnel": ["Underground Copper Conductor"],
-                       "Subsea": ["Subsea Copper Conductor"],
                    }},
        sub_tab="conductor-details"),
     _f("number_of_converters", taxonomy_id="project_technology", input_tab="equipment",
@@ -147,7 +146,6 @@ _TAB1: list[InputField] = [
                        "Overhead": ["Standard Aluminum Conductor", "Advanced Aluminum Conductor"],
                        "Underground Direct-Buried": ["Underground Copper Conductor"],
                        "Underground Tunnel": ["Underground Copper Conductor"],
-                       "Subsea": ["Subsea Copper Conductor"],
                    },
                    "allowBlank": True},
        sub_tab="conductor-details"),
@@ -498,13 +496,11 @@ _TAB4.append(_f(
     label="Mitigation Uplift Factor", help_text="TCE factor for construction width beyond ROW",
     tier="working", display_order=1, sub_tab="base-mitigation"))
 
-# Base mitigation: overhead (9), underground_direct_buried (9), underground_tunnel (11), subsea (2)
+# Base mitigation: overhead (8), underground_direct_buried (8), underground_tunnel (8)
 _ENV_CT = [
     ("overhead", "Overhead", TERRAINS),
     ("underground_direct_buried", "Underground Direct Buried", TERRAINS),
-    ("underground_tunnel", "Underground Tunnel",
-     TERRAINS + ("linear_corridor_default", "shaft_site_default")),
-    ("subsea", "Subsea", ("seabed_corridor_default", "landfall_default")),
+    ("underground_tunnel", "Underground Tunnel", TERRAINS),
 ]
 _env_order = 2
 for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
@@ -518,17 +514,6 @@ for _ct_key, _ct_label, _ct_terrains in _ENV_CT:
             unit="$/acre", input_type="currency", tier="working", display_order=_env_order,
             sub_tab="base-mitigation"))
         _env_order += 1
-
-_TAB4.append(_f(
-    "env_marine_mitigation_pct", taxonomy_id="env_mitigation", input_tab="capital-costs",
-    yaml_section="09_environmental_mitigation",
-    field_path="environmental_mitigation.marine_env_mitigation_pct_capex",
-    label="Marine mitigation (% of subsea CAPEX)",
-    help_text="Added on subsea projects. Default 3% of subsea construction cost.",
-    input_type="percent", tier="working", display_order=_env_order,
-    validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
-    sub_tab="base-mitigation"))
-_env_order += 1
 
 # Credits: 1 wetland + 5 habitat = 6 fields
 _TAB4.append(_f(
@@ -660,10 +645,10 @@ _TAB5: list[InputField] = [
        sub_tab="operational-insurance"),
 ]
 
-# Vegetation management: 4 construction types × 9 terrains = 36
+# Vegetation management: 3 construction types × 8 terrains = 24
 _VEG_CT = [
     ("Overhead", "Overhead"), ("Underground Direct Buried", "Underground Direct Buried"),
-    ("Underground Tunnel", "Underground Tunnel"), ("Subsea", "Subsea"),
+    ("Underground Tunnel", "Underground Tunnel"),
 ]
 _veg_order = 1
 for _ct_key, _ct_label in _VEG_CT:

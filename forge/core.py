@@ -229,6 +229,8 @@ def _bootstrap_run_context() -> "RunContext":
         raise InvalidInputs(
             f"construction_years must be >= 1 (got {project_details.construction_years})."
         )
+    if project_details.construction_type == "Subsea":
+        raise InvalidInputs("construction_type 'Subsea' is not allowed.")
     financing = load_financing_details()
     contingencies = load_contingencies()
     physical_raw = get_physical_data_raw()

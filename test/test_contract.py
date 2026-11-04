@@ -229,7 +229,7 @@ def test_each_case_study_round_trips_through_changes():
     template = forge.get_defaults_template()
     scenarios = Path(forge.get_scenarios_path())
     names = sorted(path.name for path in scenarios.glob("*.forge"))
-    assert len(names) == 8
+    assert len(names) == 7
     for name in names:
         document = json.loads((scenarios / name).read_text())
         inputs = document["inputs"]

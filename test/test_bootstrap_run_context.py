@@ -19,6 +19,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         number_of_converters=2,
         delay_years=1.0,
         construction_years=3.0,
+        construction_type="Overhead",
         capacity_mw=500,
     )
     financing = SimpleNamespace(

@@ -46,7 +46,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
         "urban": 0,
         "rolling_hills": 15,
         "mountain": 0,
-        "subsea": 0,
     }
 
     # --- 03: Financial ---

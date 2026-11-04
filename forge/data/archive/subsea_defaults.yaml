@@ -1,0 +1,855 @@
+# Inactive subsea defaults. The calculator does not load this file.
+
+# source: forge/yamls/02_project_physical_details.yaml
+# path: terrain.terrain_miles.subsea
+# comment: miles (>= 0)
+terrain.terrain_miles.subsea: 0
+# path: terrain.terrain_multipliers.subsea
+# comment: miles (>= 0)
+terrain.terrain_multipliers.subsea: 1
+
+# source: forge/yamls/04_insurance.yaml
+# path: insurance.premium_rate_by_type.subsea
+# comment: Commercial property-damage-only, 2-4% range. MarketIntelo (2025); Ofgem Viking Link PCR (2024).
+insurance.premium_rate_by_type.subsea: 0.03
+
+# source: forge/yamls/06_wildfire_costs.yaml
+# path: wildfire.ignition_rate_multiplier.subsea
+# comment: No wildfire risk (>= 0)
+wildfire.ignition_rate_multiplier.subsea: 0.0
+
+# source: forge/yamls/07_outage_costs.yaml
+# path: outage.outage_duration_multiplier.subsea
+# comment: 6h × 250 = 1500h (~62 days) effective subsea duration (CIGRE TB 815, IEA Wind TEM95, Leadvent)
+outage.outage_duration_multiplier.subsea: 250.0
+# path: outage.outage_rate.subsea
+# comment: 6h × 250 = 1500h (~62 days) effective subsea duration (CIGRE TB 815, IEA Wind TEM95, Leadvent)
+outage.outage_rate.subsea: 0.0007
+
+# source: forge/yamls/09_environmental_mitigation.yaml
+# path: environmental_mitigation.marine_env_mitigation_pct_capex
+# comment: 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+environmental_mitigation.marine_env_mitigation_pct_capex: 0.03
+# path: environmental_mitigation.base_mitigation_cost_per_acre.overhead.subsea
+# comment: 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+environmental_mitigation.base_mitigation_cost_per_acre.overhead.subsea: 1000
+# path: environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.subsea
+# comment: 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.subsea: 1000
+# path: environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.subsea
+# comment: 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.subsea: 1000
+# path: environmental_mitigation.base_mitigation_cost_per_acre.subsea
+# comment: 3% of subsea construction CAPEX. MISO engineering/environmental/testing benchmark (MISO, 2025). Sensitivity range 1.0-3.0%.
+environmental_mitigation.base_mitigation_cost_per_acre.subsea:
+  seabed_corridor_default: 0
+  landfall_default: 1000
+
+# source: forge/yamls/10_project_category_build_costs.yaml
+# path: project_categories_build_costs.Subsea/AC/140MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/140MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 140
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 2725397
+  fixed_conductor_cost: 24239865
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/329MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/329MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 329
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 2725397
+  fixed_conductor_cost: 24239865
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/394MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/394MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 394
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 2725397
+  fixed_conductor_cost: 24239865
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/460MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/460MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 460
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 4866781
+  fixed_conductor_cost: 37210319
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/657MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/657MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 657
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 11576579
+  fixed_conductor_cost: 78286645
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/1792MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/1792MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 1792
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 11576579
+  fixed_conductor_cost: 78286645
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/2598MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/2598MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 2598
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 11576579
+  fixed_conductor_cost: 78286645
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/AC/6625MW/Subsea Copper Conductor/NA
+project_categories_build_costs.Subsea/AC/6625MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 6625
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  variable_conductor_cost_per_mile: 11576579
+  fixed_conductor_cost: 78286645
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 0
+# path: project_categories_build_costs.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter
+project_categories_build_costs.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  variable_conductor_cost_per_mile: 1168027
+  fixed_conductor_cost: 14806807
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 83690508
+# path: project_categories_build_costs.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter
+project_categories_build_costs.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  variable_conductor_cost_per_mile: 1168027
+  fixed_conductor_cost: 14806807
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 111837539
+# path: project_categories_build_costs.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter
+project_categories_build_costs.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  variable_conductor_cost_per_mile: 3893425
+  fixed_conductor_cost: 31314658
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 249695446
+# path: project_categories_build_costs.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter
+project_categories_build_costs.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  variable_conductor_cost_per_mile: 3893425
+  fixed_conductor_cost: 31314658
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 324378903
+# path: project_categories_build_costs.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter
+project_categories_build_costs.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  variable_conductor_cost_per_mile: 3893425
+  fixed_conductor_cost: 31314658
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 336888695
+# path: project_categories_build_costs.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter
+project_categories_build_costs.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  variable_conductor_cost_per_mile: 3893425
+  fixed_conductor_cost: 31314658
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 435966247
+# path: project_categories_build_costs.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter
+project_categories_build_costs.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  variable_conductor_cost_per_mile: 7717720
+  fixed_conductor_cost: 54768435
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 405442355
+# path: project_categories_build_costs.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter
+project_categories_build_costs.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  variable_conductor_cost_per_mile: 7717720
+  fixed_conductor_cost: 54768435
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 527537923
+# path: project_categories_build_costs.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter
+project_categories_build_costs.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  variable_conductor_cost_per_mile: 7717720
+  fixed_conductor_cost: 54768435
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 505087851
+# path: project_categories_build_costs.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter
+project_categories_build_costs.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  variable_conductor_cost_per_mile: 7717720
+  fixed_conductor_cost: 54768435
+  variable_structure_cost_per_mile: 0
+  fixed_converter_cost: 642127617
+
+# source: forge/yamls/12_project_om_vegetation_management.yaml
+# path: vegetation_management_om_costs.Overhead.subsea
+# comment: $/mile/year. Not applicable.
+vegetation_management_om_costs.Overhead.subsea: 0
+# path: vegetation_management_om_costs.Underground Direct Buried.subsea
+# comment: $/mile/year. Not applicable.
+vegetation_management_om_costs.Underground Direct Buried.subsea: 0
+# path: vegetation_management_om_costs.Underground Tunnel.subsea
+# comment: $/mile/year. Not applicable.
+vegetation_management_om_costs.Underground Tunnel.subsea: 0
+# path: vegetation_management_om_costs.Subsea
+vegetation_management_om_costs.Subsea:
+  forested: 0
+  scrubbed_flat: 0
+  wetland: 0
+  farmland: 0
+  desert_barren: 0
+  urban: 0
+  rolling_hills: 0
+  mountain: 0
+  subsea: 0
+
+# source: forge/yamls/14_category_om_structures.yaml
+# path: project_categories_om_structures.Subsea
+project_categories_om_structures.Subsea:
+  om_pct_of_line_capex: 0.025
+
+# source: forge/yamls/20_project_category_row_widths.yaml
+# path: project_categories_row_widths.Subsea/AC/140MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/140MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 140
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 30
+# path: project_categories_row_widths.Subsea/AC/329MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/329MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 329
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 31
+# path: project_categories_row_widths.Subsea/AC/394MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/394MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 394
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 32
+# path: project_categories_row_widths.Subsea/AC/460MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/460MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 460
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 33
+# path: project_categories_row_widths.Subsea/AC/657MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/657MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 657
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 35
+# path: project_categories_row_widths.Subsea/AC/1792MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/1792MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 1792
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 38
+# path: project_categories_row_widths.Subsea/AC/2598MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/2598MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 2598
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 42
+# path: project_categories_row_widths.Subsea/AC/6625MW/Subsea Copper Conductor/NA
+project_categories_row_widths.Subsea/AC/6625MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 6625
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+  row_width_feet: 50
+# path: project_categories_row_widths.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter
+project_categories_row_widths.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  row_width_feet: 30
+# path: project_categories_row_widths.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter
+project_categories_row_widths.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  row_width_feet: 30
+# path: project_categories_row_widths.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter
+project_categories_row_widths.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  row_width_feet: 38
+# path: project_categories_row_widths.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter
+project_categories_row_widths.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  row_width_feet: 38
+# path: project_categories_row_widths.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter
+project_categories_row_widths.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  row_width_feet: 43
+# path: project_categories_row_widths.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter
+project_categories_row_widths.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  row_width_feet: 43
+# path: project_categories_row_widths.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter
+project_categories_row_widths.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  row_width_feet: 48
+# path: project_categories_row_widths.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter
+project_categories_row_widths.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  row_width_feet: 48
+# path: project_categories_row_widths.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter
+project_categories_row_widths.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+  row_width_feet: 50
+# path: project_categories_row_widths.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter
+project_categories_row_widths.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+  row_width_feet: 50
+
+# source: forge/yamls/21_project_category_circuit_and_resistance_detail.yaml
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/140MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/140MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 140
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 69
+  conductors_per_phase: 1
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.029772873
+  DC_20_resistance: 0.020760544
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/329MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/329MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 329
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 115
+  conductors_per_phase: 1
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.029772873
+  DC_20_resistance: 0.020760544
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/394MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/394MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 394
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 138
+  conductors_per_phase: 1
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.029772873
+  DC_20_resistance: 0.020760544
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/460MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/460MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 460
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 161
+  conductors_per_phase: 1
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.019794937
+  DC_20_resistance: 0.01158728
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/657MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/657MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 657
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 230
+  conductors_per_phase: 3
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.022852692
+  DC_20_resistance: 0.0144841
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/1792MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/1792MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 1792
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 345
+  conductors_per_phase: 3
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.022852692
+  DC_20_resistance: 0.0144841
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/2598MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/2598MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 2598
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 500
+  conductors_per_phase: 2
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/AC/6625MW/Subsea Copper Conductor/NA
+project_categories_circuit_and_resistance_details.Subsea/AC/6625MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 6625
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: NA
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 765
+  conductors_per_phase: 2
+  number_of_phases: 3
+  number_of_circuits_poles: 1
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: LCC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 250
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.043341867
+  DC_20_resistance: 0.031910864
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: VSC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 250
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.043341867
+  DC_20_resistance: 0.031910864
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: LCC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 400
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: VSC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 400
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: LCC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 500
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: VSC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 500
+  conductors_per_phase: 1
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: LCC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 600
+  conductors_per_phase: 2
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: VSC Converter
+  conductor_specification: XLPE Copper 1400 mm^2
+  voltage_kv: 600
+  conductors_per_phase: 2
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: LCC Converter
+  conductor_specification: XLPE Copper 3000 mm^2
+  voltage_kv: 640
+  conductors_per_phase: 2
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+# path: project_categories_circuit_and_resistance_details.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter
+project_categories_circuit_and_resistance_details.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  material: copper
+  alpha_20: 0.00393
+  converter_type: VSC Converter
+  conductor_specification: XLPE Copper 3000 mm^2
+  voltage_kv: 640
+  conductors_per_phase: 2
+  number_of_phases: 1
+  number_of_circuits_poles: 2
+  AC_75_resistance: 0.016502847
+  DC_20_resistance: 0.009794776
+
+# source: forge/yamls/project_category_template.yaml
+# path: project_categories.subsea_ac.Subsea/AC/140MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/140MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 140
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/329MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/329MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 329
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/394MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/394MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 394
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/460MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/460MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 460
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/657MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/657MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 657
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/1792MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/1792MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 1792
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/2598MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/2598MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 2598
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_ac.Subsea/AC/6625MW/Subsea Copper Conductor/NA
+project_categories.subsea_ac.Subsea/AC/6625MW/Subsea Copper Conductor/NA:
+  installation_method: Subsea
+  current_type: AC
+  capacity_mw: 6625
+  conductor_type: Subsea Copper Conductor
+  converter_type: NA
+# path: project_categories.subsea_dc.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter
+project_categories.subsea_dc.Subsea/DC/500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+# path: project_categories.subsea_dc.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter
+project_categories.subsea_dc.Subsea/DC/500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+# path: project_categories.subsea_dc.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter
+project_categories.subsea_dc.Subsea/DC/1500MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+# path: project_categories.subsea_dc.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter
+project_categories.subsea_dc.Subsea/DC/1500MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 1500
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+# path: project_categories.subsea_dc.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter
+project_categories.subsea_dc.Subsea/DC/2000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+# path: project_categories.subsea_dc.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter
+project_categories.subsea_dc.Subsea/DC/2000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+# path: project_categories.subsea_dc.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter
+project_categories.subsea_dc.Subsea/DC/2400MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+# path: project_categories.subsea_dc.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter
+project_categories.subsea_dc.Subsea/DC/2400MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 2400
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+# path: project_categories.subsea_dc.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter
+project_categories.subsea_dc.Subsea/DC/6000MW/Subsea Copper Conductor/LCC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: LCC Converter
+# path: project_categories.subsea_dc.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter
+project_categories.subsea_dc.Subsea/DC/6000MW/Subsea Copper Conductor/VSC Converter:
+  installation_method: Subsea
+  current_type: DC
+  capacity_mw: 6000
+  conductor_type: Subsea Copper Conductor
+  converter_type: VSC Converter
+
+# source: forge/yamls/defaults_registry.yaml
+# path: utilities.terrain_multipliers.subsea
+utilities.terrain_multipliers.subsea:
+  path: 02_project_physical_details.terrain.terrain_multipliers.subsea
+  unit: dimensionless
+  source: Marine costs handled separately
+  citation: null
+  yaml_file: 02_project_physical_details.yaml
+  basis: Sourced
+# path: hard_costs.environmental_mitigation.marine_env_mitigation_pct_capex
+hard_costs.environmental_mitigation.marine_env_mitigation_pct_capex:
+  path: 09_environmental_mitigation.environmental_mitigation.marine_env_mitigation_pct_capex
+  unit: decimal fraction
+  source: 3% of subsea construction CAPEX (MISO benchmark)
+  citation: MISO2025CostGuide
+  yaml_file: 09_environmental_mitigation.yaml
+  basis: Sourced

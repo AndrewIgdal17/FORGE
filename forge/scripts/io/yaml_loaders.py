@@ -61,7 +61,6 @@ class PhysicalDetailsDetailed:
     urban_miles: float
     rolling_hills_miles: float
     mountain_miles: float
-    subsea_miles: float
 
 
 @dataclass
@@ -134,7 +133,6 @@ def normalize_construction_type(construction_type: str) -> str:
         "Underground direct-buried": "Underground direct-buried",  # Already correct
         "Underground tunnel": "Underground tunnel",  # Already correct
         "Overhead": "Overhead",  # Already correct
-        "Subsea": "Subsea",  # Already correct
     }
 
     normalized = normalization_map.get(construction_type, construction_type)
@@ -577,7 +575,6 @@ def load_physical_details_detailed() -> PhysicalDetailsDetailed:
             urban_miles=safe_get("urban"),
             rolling_hills_miles=safe_get("rolling_hills"),
             mountain_miles=safe_get("mountain"),
-            subsea_miles=safe_get("subsea"),
         )
     except KeyError as e:
         raise KeyError(f"Missing required key in physical details YAML: {e}")

@@ -31,7 +31,6 @@ CONSTRUCTION_TYPE_OVERHEAD = "Overhead"
 CONSTRUCTION_TYPE_UNDERGROUND = "Underground"
 CONSTRUCTION_TYPE_UNDERGROUND_DIRECT_BURIED = "Underground direct-buried"
 CONSTRUCTION_TYPE_UNDERGROUND_TUNNEL = "Underground tunnel"
-CONSTRUCTION_TYPE_SUBSEA = "Subsea"
 
 # Special value constants
 CONVERTER_TYPE_NA = "NA"  # Used when AC (no converter)

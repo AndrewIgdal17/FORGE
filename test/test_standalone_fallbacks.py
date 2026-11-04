@@ -134,12 +134,12 @@ def test_oandm_line_om_reads_ctx_build_costs(monkeypatch):
     set_run_context(ctx)
     try:
         result = oandm.load_nonoverhead_line_om(
-            construction_type="Subsea",
+            construction_type="Underground tunnel",
             ac_dc="DC",
             capacity_mw=1000,
             conductor_type="XLPE",
             converter_type="VSC Converter",
         )
-        assert abs(result - 37_500.0) < 1e-9
+        assert abs(result - 6_000.0) < 1e-9
     finally:
         reset_run_state(token)

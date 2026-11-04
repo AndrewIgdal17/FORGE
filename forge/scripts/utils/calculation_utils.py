@@ -299,7 +299,7 @@ def build_category_string(
     Category format: "{construction_type}/{ac_dc}/{capacity_mw}MW/{conductor_type}/{converter_type}"
 
     Args:
-        construction_type: Construction type (Overhead, Underground, Subsea)
+        construction_type: Construction type (Overhead, Underground)
         ac_dc: "AC" or "DC"
         capacity_mw: Capacity in MW (int or str, with/without "MW" suffix)
         conductor_type: Conductor type
@@ -376,7 +376,6 @@ def normalize_construction_type_for_yaml(
     - "Overhead" -> "overhead"
     - "Underground" -> "underground" (or "underground_direct_buried" for environmental)
     - "Underground direct-buried" -> "underground" (or "underground_direct_buried" for environmental)
-    - "Subsea" -> "subsea"
 
     Args:
         construction_type: Construction type string (case-insensitive)
@@ -389,9 +388,7 @@ def normalize_construction_type_for_yaml(
     """
     construction_type_lower = construction_type.lower()
 
-    if "subsea" in construction_type_lower:
-        return "subsea"
-    elif "underground" in construction_type_lower:
+    if "underground" in construction_type_lower:
         if context == "environmental":
             if "tunnel" in construction_type_lower:
                 return "underground_tunnel"

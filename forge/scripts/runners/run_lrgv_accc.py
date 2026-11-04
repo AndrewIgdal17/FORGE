@@ -24,7 +24,6 @@ def _patch_lrgv_common(inputs: dict) -> dict:
         "urban": 0,
         "rolling_hills": 0,
         "mountain": 0,
-        "subsea": 0,
     }
 
     # --- 03: Financial ---

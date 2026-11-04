@@ -1,1378 +1,1171 @@
-# FORGE Defaults Registry
-# Snapshot date: 2026-09-25
-# Reference-only snapshot of methodology defaults. Not imported at runtime.
-# Role: Reference only — the calculator reads defaults from individual YAML files.
-# The `yaml_file` field in each entry points to the runtime source.
-
-# ===========================================================================
-# 1. UTILITIES (Weighted Miles, Financial Parameters, Spending Profiles)
-# ===========================================================================
 utilities:
-
-  # --- Terrain multipliers (construction cost) ---
   terrain_multipliers:
     forested:
-      path: "02_project_physical_details.terrain.terrain_multipliers.forested"
-      unit: "dimensionless"
-      source: "WECC 2014 (Black & Veatch)"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.forested
+      unit: dimensionless
+      source: WECC 2014 (Black & Veatch)
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     scrubbed_flat:
-      path: "02_project_physical_details.terrain.terrain_multipliers.scrubbed_flat"
-      unit: "dimensionless"
-      source: "WECC 2014 (baseline terrain)"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.scrubbed_flat
+      unit: dimensionless
+      source: WECC 2014 (baseline terrain)
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     wetland:
-      path: "02_project_physical_details.terrain.terrain_multipliers.wetland"
-      unit: "dimensionless"
-      source: "MISO MTEP25 Table 2.2-9"
-      citation: "MISO2025CostWorkbook"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.wetland
+      unit: dimensionless
+      source: MISO MTEP25 Table 2.2-9
+      citation: MISO2025CostWorkbook
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     farmland:
-      path: "02_project_physical_details.terrain.terrain_multipliers.farmland"
-      unit: "dimensionless"
-      source: "WECC 2014 (baseline terrain)"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.farmland
+      unit: dimensionless
+      source: WECC 2014 (baseline terrain)
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     desert_barren:
-      path: "02_project_physical_details.terrain.terrain_multipliers.desert_barren"
-      unit: "dimensionless"
-      source: "WECC 2014"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.desert_barren
+      unit: dimensionless
+      source: WECC 2014
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     urban:
-      path: "02_project_physical_details.terrain.terrain_multipliers.urban"
-      unit: "dimensionless"
-      source: "WECC 2014"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.urban
+      unit: dimensionless
+      source: WECC 2014
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     rolling_hills:
-      path: "02_project_physical_details.terrain.terrain_multipliers.rolling_hills"
-      unit: "dimensionless"
-      source: "WECC 2014"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
+      path: 02_project_physical_details.terrain.terrain_multipliers.rolling_hills
+      unit: dimensionless
+      source: WECC 2014
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
     mountain:
-      path: "02_project_physical_details.terrain.terrain_multipliers.mountain"
-      unit: "dimensionless"
-      source: "WECC 2014"
-      citation: "RawlinsEtAl2014WECCTransmission"
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
-    subsea:
-      path: "02_project_physical_details.terrain.terrain_multipliers.subsea"
-      unit: "dimensionless"
-      source: "Marine costs handled separately"
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Sourced"
-
-  # --- Protected-area acres (habitat credit inputs; required, null is not zero) ---
+      path: 02_project_physical_details.terrain.terrain_multipliers.mountain
+      unit: dimensionless
+      source: WECC 2014
+      citation: RawlinsEtAl2014WECCTransmission
+      yaml_file: 02_project_physical_details.yaml
+      basis: Sourced
   protected_area_acres:
     forested:
-      path: "02_project_physical_details.terrain.protected_area_acres.forested"
-      unit: "acres"
-      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Author judgment"
+      path: 02_project_physical_details.terrain.protected_area_acres.forested
+      unit: acres
+      source: "Acres inside PAD-US GAP 1\u20133. Required project input. Null is not zero."
+      citation: null
+      yaml_file: 02_project_physical_details.yaml
+      basis: Author judgment
     scrubbed_flat:
-      path: "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat"
-      unit: "acres"
-      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Author judgment"
+      path: 02_project_physical_details.terrain.protected_area_acres.scrubbed_flat
+      unit: acres
+      source: "Acres inside PAD-US GAP 1\u20133. Required project input. Null is not zero."
+      citation: null
+      yaml_file: 02_project_physical_details.yaml
+      basis: Author judgment
     desert_barren:
-      path: "02_project_physical_details.terrain.protected_area_acres.desert_barren"
-      unit: "acres"
-      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Author judgment"
+      path: 02_project_physical_details.terrain.protected_area_acres.desert_barren
+      unit: acres
+      source: "Acres inside PAD-US GAP 1\u20133. Required project input. Null is not zero."
+      citation: null
+      yaml_file: 02_project_physical_details.yaml
+      basis: Author judgment
     rolling_hills:
-      path: "02_project_physical_details.terrain.protected_area_acres.rolling_hills"
-      unit: "acres"
-      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Author judgment"
+      path: 02_project_physical_details.terrain.protected_area_acres.rolling_hills
+      unit: acres
+      source: "Acres inside PAD-US GAP 1\u20133. Required project input. Null is not zero."
+      citation: null
+      yaml_file: 02_project_physical_details.yaml
+      basis: Author judgment
     mountain:
-      path: "02_project_physical_details.terrain.protected_area_acres.mountain"
-      unit: "acres"
-      source: "Acres inside PAD-US GAP 1–3. Required project input. Null is not zero."
-      citation: ~
-      yaml_file: "02_project_physical_details.yaml"
-      basis: "Author judgment"
-
-  # --- Financial parameters ---
+      path: 02_project_physical_details.terrain.protected_area_acres.mountain
+      unit: acres
+      source: "Acres inside PAD-US GAP 1\u20133. Required project input. Null is not zero."
+      citation: null
+      yaml_file: 02_project_physical_details.yaml
+      basis: Author judgment
   financial:
     inflation_rate:
-      path: "03_financing.financial.inflation_rate"
-      unit: "decimal"
-      source: "SSA 2025 Trustees Report long-range assumptions"
-      citation: "SSATrustees2025"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.inflation_rate
+      unit: decimal
+      source: SSA 2025 Trustees Report long-range assumptions
+      citation: SSATrustees2025
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     base_year:
-      path: "03_financing.financial.base_year"
-      unit: "year"
-      source: "Model convention"
-      citation: ~
-      yaml_file: "03_financing.yaml"
-      basis: "Author judgment"
+      path: 03_financing.financial.base_year
+      unit: year
+      source: Model convention
+      citation: null
+      yaml_file: 03_financing.yaml
+      basis: Author judgment
     wacc_nominal:
-      path: "03_financing.financial.wacc_nominal"
-      unit: "decimal"
-      source: "CPUC 2025 Cost of Capital fact sheet"
-      citation: "CPUC2025CoC"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.wacc_nominal
+      unit: decimal
+      source: CPUC 2025 Cost of Capital fact sheet
+      citation: CPUC2025CoC
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     social_discount_rate:
-      path: "03_financing.financial.social_discount_rate"
-      unit: "decimal"
-      source: "OMB Circular A-4 (2023 revision), 2% near-term Ramsey rate"
-      citation: "OMB2023CircularA4; Rennert2022"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.social_discount_rate
+      unit: decimal
+      source: OMB Circular A-4 (2023 revision), 2% near-term Ramsey rate
+      citation: OMB2023CircularA4; Rennert2022
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     construction_cost_escalation_rate:
-      path: "03_financing.financial.construction_cost_escalation_rate"
-      unit: "decimal (nominal annual)"
-      source: "MISO MTEP25 planning methodology"
-      citation: "MISO2025CostGuide"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.construction_cost_escalation_rate
+      unit: decimal (nominal annual)
+      source: MISO MTEP25 planning methodology
+      citation: MISO2025CostGuide
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     benefit_price_escalation_real:
-      path: "17_congestion_reductions.benefit_price_escalation_real"
-      unit: "decimal (real annual)"
-      source: "Flat-price default aligned with current CAISO TEAM practice"
-      citation: "CAISO2004TEAM; ChangPfeifenbergerHagerty2013"
-      yaml_file: "17_congestion_reductions.yaml"
-      basis: "Sourced"
+      path: 17_congestion_reductions.benefit_price_escalation_real
+      unit: decimal (real annual)
+      source: Flat-price default aligned with current CAISO TEAM practice
+      citation: CAISO2004TEAM; ChangPfeifenbergerHagerty2013
+      yaml_file: 17_congestion_reductions.yaml
+      basis: Sourced
     row_rent_escalation_real:
-      path: "11_project_row_details.row_rent_escalation_real"
-      unit: "decimal (real annual)"
-      source: "BLM rents already adjust at IPD-GDP rate (~2.6%/yr nominal)"
-      citation: "BLM2026PIM2026002; CFR_43_2806_22"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
-
-  # --- Construction spending profiles (S-curve weights) ---
+      path: 11_project_row_details.row_rent_escalation_real
+      unit: decimal (real annual)
+      source: BLM rents already adjust at IPD-GDP rate (~2.6%/yr nominal)
+      citation: BLM2026PIM2026002; CFR_43_2806_22
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
   spending_profiles:
     five_year:
-      path: "19_cost_timing_patterns.construction_spending_profiles.5"
-      unit: "fraction (sums to 1.0)"
-      source: "MISO MTEP25 Table 5-1"
-      citation: "MISO2025CostGuide"
-      yaml_file: "19_cost_timing_patterns.yaml"
-      basis: "Sourced"
+      path: 19_cost_timing_patterns.construction_spending_profiles.5
+      unit: fraction (sums to 1.0)
+      source: MISO MTEP25 Table 5-1
+      citation: MISO2025CostGuide
+      yaml_file: 19_cost_timing_patterns.yaml
+      basis: Sourced
     six_year:
-      path: "19_cost_timing_patterns.construction_spending_profiles.6"
-      unit: "fraction (sums to 1.0)"
-      source: "MISO MTEP25 Table 5-1"
-      citation: "MISO2025CostGuide"
-      yaml_file: "19_cost_timing_patterns.yaml"
-      basis: "Sourced"
+      path: 19_cost_timing_patterns.construction_spending_profiles.6
+      unit: fraction (sums to 1.0)
+      source: MISO MTEP25 Table 5-1
+      citation: MISO2025CostGuide
+      yaml_file: 19_cost_timing_patterns.yaml
+      basis: Sourced
     seven_year:
-      path: "19_cost_timing_patterns.construction_spending_profiles.7"
-      unit: "fraction (sums to 1.0)"
-      source: "MISO MTEP25 Table 5-1"
-      citation: "MISO2025CostGuide"
-      yaml_file: "19_cost_timing_patterns.yaml"
-      basis: "Sourced"
+      path: 19_cost_timing_patterns.construction_spending_profiles.7
+      unit: fraction (sums to 1.0)
+      source: MISO MTEP25 Table 5-1
+      citation: MISO2025CostGuide
+      yaml_file: 19_cost_timing_patterns.yaml
+      basis: Sourced
     eight_year:
-      path: "19_cost_timing_patterns.construction_spending_profiles.8"
-      unit: "fraction (sums to 1.0)"
-      source: "MISO MTEP25 Table 5-1"
-      citation: "MISO2025CostGuide"
-      yaml_file: "19_cost_timing_patterns.yaml"
-      basis: "Sourced"
-
-# ===========================================================================
-# 2. HARD COSTS — BUILD COSTS
-# ===========================================================================
+      path: 19_cost_timing_patterns.construction_spending_profiles.8
+      unit: fraction (sums to 1.0)
+      source: MISO MTEP25 Table 5-1
+      citation: MISO2025CostGuide
+      yaml_file: 19_cost_timing_patterns.yaml
+      basis: Sourced
 hard_costs:
-
   build:
     contingency_conductor:
-      path: "03_financing.financial.contingencies.conductor_contingency"
-      unit: "fraction [0,1]"
-      source: "MISO MTEP25 planning-level contingency"
-      citation: "MISO2025CostGuide"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.contingencies.conductor_contingency
+      unit: fraction [0,1]
+      source: MISO MTEP25 planning-level contingency
+      citation: MISO2025CostGuide
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     contingency_structure:
-      path: "03_financing.financial.contingencies.structure_contingency"
-      unit: "fraction [0,1]"
-      source: "MISO MTEP25 planning-level contingency"
-      citation: "MISO2025CostGuide"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.contingencies.structure_contingency
+      unit: fraction [0,1]
+      source: MISO MTEP25 planning-level contingency
+      citation: MISO2025CostGuide
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     contingency_converter:
-      path: "03_financing.financial.contingencies.converter_contingency"
-      unit: "fraction [0,1]"
-      source: "MISO MTEP25 planning-level contingency"
-      citation: "MISO2025CostGuide"
-      yaml_file: "03_financing.yaml"
-      basis: "Sourced"
+      path: 03_financing.financial.contingencies.converter_contingency
+      unit: fraction [0,1]
+      source: MISO MTEP25 planning-level contingency
+      citation: MISO2025CostGuide
+      yaml_file: 03_financing.yaml
+      basis: Sourced
     soft_cost_multiplier:
-      path: "10_project_category_build_costs.soft_cost_multiplier"
-      unit: "decimal fraction"
-      source: "MISO MTEP25; AACE 96R-18"
-      citation: "MISO2025CostGuide"
-      yaml_file: "10_project_category_build_costs.yaml"
-      basis: "Sourced"
-
-  # --- ROW Acquisition ---
+      path: 10_project_category_build_costs.soft_cost_multiplier
+      unit: decimal fraction
+      source: MISO MTEP25; AACE 96R-18
+      citation: MISO2025CostGuide
+      yaml_file: 10_project_category_build_costs.yaml
+      basis: Sourced
   row:
-    # Note: the 0.10 hold-cost ratio is not a template leaf and has no entry
-    # here. The template stores each zone's hold cost directly
-    # (hold_cost_per_acre_yr below); the registry only points at template
-    # nodes, so a ratio that is never read at runtime isn't registered.
-
-    # BLM Per-Acre Linear Rent Schedule (15 zones, CY 2026 deflated to 2025$)
     blm_zone_1:
       acquisition_cost_per_acre: 299
       rent_cost_per_acre_yr: 8
-      hold_cost_per_acre_yr: 0.80
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      hold_cost_per_acre_yr: 0.8
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_2:
       acquisition_cost_per_acre: 579
       rent_cost_per_acre_yr: 15
       hold_cost_per_acre_yr: 2
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_3:
       acquisition_cost_per_acre: 1132
       rent_cost_per_acre_yr: 30
       hold_cost_per_acre_yr: 3
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_4:
       acquisition_cost_per_acre: 1706
       rent_cost_per_acre_yr: 45
       hold_cost_per_acre_yr: 4
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_5:
       acquisition_cost_per_acre: 2350
       rent_cost_per_acre_yr: 62
       hold_cost_per_acre_yr: 6
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_6:
       acquisition_cost_per_acre: 3394
       rent_cost_per_acre_yr: 89
       hold_cost_per_acre_yr: 9
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_7:
       acquisition_cost_per_acre: 4746
       rent_cost_per_acre_yr: 125
       hold_cost_per_acre_yr: 12
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_8:
       acquisition_cost_per_acre: 6583
       rent_cost_per_acre_yr: 173
       hold_cost_per_acre_yr: 17
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_9:
       acquisition_cost_per_acre: 16279
       rent_cost_per_acre_yr: 428
       hold_cost_per_acre_yr: 43
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_10:
       acquisition_cost_per_acre: 50000
       rent_cost_per_acre_yr: 1315
       hold_cost_per_acre_yr: 132
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_11:
       acquisition_cost_per_acre: 100000
       rent_cost_per_acre_yr: 2630
       hold_cost_per_acre_yr: 263
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_12:
       acquisition_cost_per_acre: 250000
       rent_cost_per_acre_yr: 6575
       hold_cost_per_acre_yr: 658
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_13:
       acquisition_cost_per_acre: 500000
       rent_cost_per_acre_yr: 13150
       hold_cost_per_acre_yr: 1315
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_14:
       acquisition_cost_per_acre: 750000
       rent_cost_per_acre_yr: 19725
       hold_cost_per_acre_yr: 1972
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
     blm_zone_15:
       acquisition_cost_per_acre: 1000000
       rent_cost_per_acre_yr: 26300
       hold_cost_per_acre_yr: 2630
-      unit: "$/acre or $/acre/yr (2025$)"
-      citation: "BLM2026LinearRentSchedule"
-      yaml_file: "11_project_row_details.yaml"
-      basis: "Sourced"
-
-  # --- Environmental Mitigation ---
+      unit: $/acre or $/acre/yr (2025$)
+      citation: BLM2026LinearRentSchedule
+      yaml_file: 11_project_row_details.yaml
+      basis: Sourced
   environmental_mitigation:
     mitigation_uplift_factor:
-      path: "09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor"
-      unit: "dimensionless"
-      source: "TCE typically extends impacted width to ~1.25x ROW width"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor
+      unit: dimensionless
+      source: TCE typically extends impacted width to ~1.25x ROW width
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     wetland_compensation_ratio:
-      path: "09_environmental_mitigation.environmental_mitigation.wetland_compensation_ratio"
-      unit: "dimensionless"
-      source: "MISO wetland price is dollars per impact acre"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.wetland_compensation_ratio
+      unit: dimensionless
+      source: MISO wetland price is dollars per impact acre
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     habitat_compensation_ratio:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_compensation_ratio"
-      unit: "credits per impact acre"
-      source: "33 CFR §332.3(f) Category II preservation"
-      citation: "acoe2008compensatory"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Sourced"
-    marine_env_mitigation_pct_capex:
-      path: "09_environmental_mitigation.environmental_mitigation.marine_env_mitigation_pct_capex"
-      unit: "decimal fraction"
-      source: "3% of subsea construction CAPEX (MISO benchmark)"
-      citation: "MISO2025CostGuide"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Sourced"
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_compensation_ratio
+      unit: credits per impact acre
+      source: "33 CFR \xA7332.3(f) Category II preservation"
+      citation: acoe2008compensatory
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Sourced
     disturbance_multiplier_rebuild:
-      path: "09_environmental_mitigation.environmental_mitigation.disturbance_multiplier_rebuild"
-      unit: "dimensionless [0,1]"
-      source: "Author default for rebuild projects. Reconductoring is 0. Greenfield is 1."
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.disturbance_multiplier_rebuild
+      unit: dimensionless [0,1]
+      source: Author default for rebuild projects. Reconductoring is 0. Greenfield is 1.
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     wetland_credit_cost_per_acre:
-      path: "09_environmental_mitigation.environmental_mitigation.wetland_credit_cost_per_acre"
-      unit: "$/acre (2025$)"
-      source: "MISO MTEP25 Workbook Table 2.2-9"
-      citation: "MISO2025CostWorkbook"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Sourced"
-
-    # Habitat credit costs by terrain (uniform; CPI-adjusted from ~2007$)
+      path: 09_environmental_mitigation.environmental_mitigation.wetland_credit_cost_per_acre
+      unit: $/acre (2025$)
+      source: MISO MTEP25 Workbook Table 2.2-9
+      citation: MISO2025CostWorkbook
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Sourced
     habitat_credit_forested:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.forested"
-      unit: "$/credit (2025$)"
-      source: "Ecosystem Marketplace/Forest Trends national average, CPI-U adjusted"
-      citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Derived"
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.forested
+      unit: $/credit (2025$)
+      source: Ecosystem Marketplace/Forest Trends national average, CPI-U adjusted
+      citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Derived
     habitat_credit_scrubbed_flat:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.scrubbed_flat"
-      unit: "$/credit (2025$)"
-      source: "Same national average; per-terrain data insufficient"
-      citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Derived"
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.scrubbed_flat
+      unit: $/credit (2025$)
+      source: Same national average; per-terrain data insufficient
+      citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Derived
     habitat_credit_desert_barren:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.desert_barren"
-      unit: "$/credit (2025$)"
-      source: "Same national average"
-      citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Derived"
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.desert_barren
+      unit: $/credit (2025$)
+      source: Same national average
+      citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Derived
     habitat_credit_rolling_hills:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.rolling_hills"
-      unit: "$/credit (2025$)"
-      source: "Same national average"
-      citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Derived"
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.rolling_hills
+      unit: $/credit (2025$)
+      source: Same national average
+      citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Derived
     habitat_credit_mountain:
-      path: "09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.mountain"
-      unit: "$/credit (2025$)"
-      source: "Same national average"
-      citation: "Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Derived"
-
-    # Base mitigation cost per acre — Overhead
+      path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.mountain
+      unit: $/credit (2025$)
+      source: Same national average
+      citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Derived
     base_cost_oh_forested:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.forested"
-      unit: "$/acre (2025$)"
-      source: "MISO MTEP25 Table 2.2-9 clearing cost"
-      citation: "MISO2025CostWorkbook"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Sourced"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.forested
+      unit: $/acre (2025$)
+      source: MISO MTEP25 Table 2.2-9 clearing cost
+      citation: MISO2025CostWorkbook
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Sourced
     base_cost_oh_scrubbed_flat:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.scrubbed_flat"
-      unit: "$/acre (2025$)"
-      source: "Order-of-magnitude estimate; light brush clearing"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.scrubbed_flat
+      unit: $/acre (2025$)
+      source: Order-of-magnitude estimate; light brush clearing
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_wetland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.wetland"
-      unit: "$/acre (2025$)"
-      source: "Author estimate (different concept from MISO construction-difficulty adder)"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.wetland
+      unit: $/acre (2025$)
+      source: Author estimate (different concept from MISO construction-difficulty adder)
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_farmland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.farmland"
-      unit: "$/acre (2025$)"
-      source: "Minimal clearing; crop/pasture restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.farmland
+      unit: $/acre (2025$)
+      source: Minimal clearing; crop/pasture restoration
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_desert_barren:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.desert_barren"
-      unit: "$/acre (2025$)"
-      source: "Stabilization and revegetation of arid soils"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.desert_barren
+      unit: $/acre (2025$)
+      source: Stabilization and revegetation of arid soils
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_urban:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.urban"
-      unit: "$/acre (2025$)"
-      source: "Hardscape restoration, limited clearing"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.urban
+      unit: $/acre (2025$)
+      source: Hardscape restoration, limited clearing
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_rolling_hills:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.rolling_hills"
-      unit: "$/acre (2025$)"
-      source: "Moderate grading and revegetation"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.rolling_hills
+      unit: $/acre (2025$)
+      source: Moderate grading and revegetation
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_oh_mountain:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.mountain"
-      unit: "$/acre (2025$)"
-      source: "MISO MTEP25 Table 2.2-9 mountainous terrain clearing"
-      citation: "MISO2025CostWorkbook"
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Sourced"
-    base_cost_oh_subsea:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.subsea"
-      unit: "$/acre (2025$)"
-      source: "Onshore landfall/construction yard restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-
-    # Base mitigation cost per acre — Underground Direct Buried
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.mountain
+      unit: $/acre (2025$)
+      source: MISO MTEP25 Table 2.2-9 mountainous terrain clearing
+      citation: MISO2025CostWorkbook
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Sourced
     base_cost_ug_db_forested:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.forested"
-      unit: "$/acre (2025$)"
-      source: "Same clearing scope as overhead for trench"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.forested
+      unit: $/acre (2025$)
+      source: Same clearing scope as overhead for trench
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_scrubbed_flat:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.scrubbed_flat"
-      unit: "$/acre (2025$)"
-      source: "Light clearing for trench access"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.scrubbed_flat
+      unit: $/acre (2025$)
+      source: Light clearing for trench access
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_wetland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.wetland"
-      unit: "$/acre (2025$)"
-      source: "2x overhead: trench dewatering + wetland restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.wetland
+      unit: $/acre (2025$)
+      source: '2x overhead: trench dewatering + wetland restoration'
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_farmland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.farmland"
-      unit: "$/acre (2025$)"
-      source: "Minimal; topsoil strip and replace"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.farmland
+      unit: $/acre (2025$)
+      source: Minimal; topsoil strip and replace
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_desert_barren:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.desert_barren"
-      unit: "$/acre (2025$)"
-      source: "Trench stabilization"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.desert_barren
+      unit: $/acre (2025$)
+      source: Trench stabilization
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_urban:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.urban"
-      unit: "$/acre (2025$)"
-      source: "Pavement/utility relocation + surface restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.urban
+      unit: $/acre (2025$)
+      source: Pavement/utility relocation + surface restoration
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_rolling_hills:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.rolling_hills"
-      unit: "$/acre (2025$)"
-      source: "Moderate grading for trench alignment"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.rolling_hills
+      unit: $/acre (2025$)
+      source: Moderate grading for trench alignment
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_db_mountain:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.mountain"
-      unit: "$/acre (2025$)"
-      source: "Rock excavation + steep-slope stabilization"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-    base_cost_ug_db_subsea:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.subsea"
-      unit: "$/acre (2025$)"
-      source: "Onshore landfall restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-
-    # Base mitigation cost per acre — Underground Tunnel
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_direct_buried.mountain
+      unit: $/acre (2025$)
+      source: Rock excavation + steep-slope stabilization
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_forested:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.forested"
-      unit: "$/acre (2025$)"
-      source: "Portal/shaft site clearing only"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.forested
+      unit: $/acre (2025$)
+      source: Portal/shaft site clearing only
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_scrubbed_flat:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.scrubbed_flat"
-      unit: "$/acre (2025$)"
-      source: "Portal site preparation"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.scrubbed_flat
+      unit: $/acre (2025$)
+      source: Portal site preparation
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_wetland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.wetland"
-      unit: "$/acre (2025$)"
-      source: "Portal + access road through regulated wetland"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.wetland
+      unit: $/acre (2025$)
+      source: Portal + access road through regulated wetland
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_farmland:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.farmland"
-      unit: "$/acre (2025$)"
-      source: "Portal site on agricultural land"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.farmland
+      unit: $/acre (2025$)
+      source: Portal site on agricultural land
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_desert_barren:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.desert_barren"
-      unit: "$/acre (2025$)"
-      source: "Portal site stabilization"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.desert_barren
+      unit: $/acre (2025$)
+      source: Portal site stabilization
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_urban:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.urban"
-      unit: "$/acre (2025$)"
-      source: "Portal site in developed area"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.urban
+      unit: $/acre (2025$)
+      source: Portal site in developed area
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_rolling_hills:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.rolling_hills"
-      unit: "$/acre (2025$)"
-      source: "Portal site grading"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.rolling_hills
+      unit: $/acre (2025$)
+      source: Portal site grading
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
     base_cost_ug_tunnel_mountain:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.mountain"
-      unit: "$/acre (2025$)"
-      source: "Portal excavation in rock"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-    base_cost_ug_tunnel_subsea:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.subsea"
-      unit: "$/acre (2025$)"
-      source: "Shore portal restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-    base_cost_ug_tunnel_linear_corridor_default:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.linear_corridor_default"
-      unit: "$/acre (2025$)"
-      source: "Generic corridor if terrain unknown"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-    base_cost_ug_tunnel_shaft_site_default:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.shaft_site_default"
-      unit: "$/acre (2025$)"
-      source: "Average shaft pad/disturbed site"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-
-    # Base mitigation cost per acre — Subsea
-    base_cost_subsea_seabed_corridor:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.subsea.seabed_corridor_default"
-      unit: "$/acre"
-      source: "Passive seabed recovery (no active restoration)"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-    base_cost_subsea_landfall:
-      path: "09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.subsea.landfall_default"
-      unit: "$/acre (2025$)"
-      source: "Basic onshore landfall site restoration"
-      citation: ~
-      yaml_file: "09_environmental_mitigation.yaml"
-      basis: "Author judgment"
-
-# ===========================================================================
-# 3. SOFT COSTS — O&M, INSURANCE, OPERATIONAL ROW
-# ===========================================================================
+      path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.underground_tunnel.mountain
+      unit: $/acre (2025$)
+      source: Portal excavation in rock
+      citation: null
+      yaml_file: 09_environmental_mitigation.yaml
+      basis: Author judgment
 soft_costs:
-
   oandm:
-    # Overhead base O&M (excludes vegetation management)
     base_om_per_mile_year_overhead:
-      path: "14_category_om_structures.project_categories_om_structures.Overhead.base_om_per_mile_year"
-      unit: "$/mile/year (2025$)"
-      source: "CT Siting Council (2022), FERC Form 1 data, 2017-2021 mean"
-      citation: "CTSitingCouncil2022LCA"
-      yaml_file: "14_category_om_structures.yaml"
-      basis: "Sourced"
-
-    # Converter O&M rates (fraction of station CAPEX per year)
+      path: 14_category_om_structures.project_categories_om_structures.Overhead.base_om_per_mile_year
+      unit: $/mile/year (2025$)
+      source: CT Siting Council (2022), FERC Form 1 data, 2017-2021 mean
+      citation: CTSitingCouncil2022LCA
+      yaml_file: 14_category_om_structures.yaml
+      basis: Sourced
     converter_om_rate_lcc:
-      path: "15_category_om_converters.converter_om_rate.LCC Converter"
-      unit: "decimal fraction"
-      source: "0.5% of station CAPEX/yr"
-      citation: "UCLM2023"
-      yaml_file: "15_category_om_converters.yaml"
-      basis: "Sourced"
+      path: 15_category_om_converters.converter_om_rate.LCC Converter
+      unit: decimal fraction
+      source: 0.5% of station CAPEX/yr
+      citation: UCLM2023
+      yaml_file: 15_category_om_converters.yaml
+      basis: Sourced
     converter_om_rate_vsc:
-      path: "15_category_om_converters.converter_om_rate.VSC Converter"
-      unit: "decimal fraction"
-      source: "0.5% of station CAPEX/yr"
-      citation: "UCLM2023"
-      yaml_file: "15_category_om_converters.yaml"
-      basis: "Sourced"
-
-    # Non-overhead line O&M (fraction of line CAPEX per year)
+      path: 15_category_om_converters.converter_om_rate.VSC Converter
+      unit: decimal fraction
+      source: 0.5% of station CAPEX/yr
+      citation: UCLM2023
+      yaml_file: 15_category_om_converters.yaml
+      basis: Sourced
     line_om_pct_ug_direct_buried:
-      path: "14_category_om_structures.project_categories_om_structures.Underground direct-buried.om_pct_of_line_capex"
-      unit: "decimal fraction"
-      source: "0.15% of line CAPEX/yr"
-      citation: "CIET2023"
-      yaml_file: "14_category_om_structures.yaml"
-      basis: "Sourced"
+      path: 14_category_om_structures.project_categories_om_structures.Underground direct-buried.om_pct_of_line_capex
+      unit: decimal fraction
+      source: 0.15% of line CAPEX/yr
+      citation: CIET2023
+      yaml_file: 14_category_om_structures.yaml
+      basis: Sourced
     line_om_pct_ug_tunnel:
-      path: "14_category_om_structures.project_categories_om_structures.Underground tunnel.om_pct_of_line_capex"
-      unit: "decimal fraction"
-      source: "0.4% of line CAPEX/yr"
-      citation: "IETMottMac2025"
-      yaml_file: "14_category_om_structures.yaml"
-      basis: "Sourced"
-    line_om_pct_subsea:
-      path: "14_category_om_structures.project_categories_om_structures.Subsea.om_pct_of_line_capex"
-      unit: "decimal fraction"
-      source: "2.5% of cable system CAPEX/yr"
-      citation: "NeoMarketData2025"
-      yaml_file: "14_category_om_structures.yaml"
-      basis: "Sourced"
-
-    # O&M escalation rate
+      path: 14_category_om_structures.project_categories_om_structures.Underground tunnel.om_pct_of_line_capex
+      unit: decimal fraction
+      source: 0.4% of line CAPEX/yr
+      citation: IETMottMac2025
+      yaml_file: 14_category_om_structures.yaml
+      basis: Sourced
     om_real_escalation_rate:
-      path: "14_category_om_structures.om_real_escalation_rate"
-      unit: "decimal (real annual)"
-      source: "CT Siting Council (2022) official 40-yr lifecycle CAGR"
-      citation: "CTSitingCouncil2022LCA"
-      yaml_file: "14_category_om_structures.yaml"
-      basis: "Sourced"
-
-    # Vegetation management — overhead only ($/mile/year by terrain)
+      path: 14_category_om_structures.om_real_escalation_rate
+      unit: decimal (real annual)
+      source: CT Siting Council (2022) official 40-yr lifecycle CAGR
+      citation: CTSitingCouncil2022LCA
+      yaml_file: 14_category_om_structures.yaml
+      basis: Sourced
     veg_mgmt_forested:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.forested"
-      unit: "$/mile/year (2025$)"
-      source: "Duke Energy FL $42K/3yr cycle (DOE 2024), CPI-U adjusted"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.forested
+      unit: $/mile/year (2025$)
+      source: Duke Energy FL $42K/3yr cycle (DOE 2024), CPI-U adjusted
+      citation: null
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_mountain:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.mountain"
-      unit: "$/mile/year (2025$)"
-      source: "BPA helicopter operations + LIFE Elia-RTE steep terrain"
-      citation: "BPA2021Veg; LIFEEliaRTE2015"
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.mountain
+      unit: $/mile/year (2025$)
+      source: BPA helicopter operations + LIFE Elia-RTE steep terrain
+      citation: BPA2021Veg; LIFEEliaRTE2015
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_wetland:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.wetland"
-      unit: "$/mile/year (2025$)"
-      source: "Xcel MN (DOE 2024); environmental access restrictions"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.wetland
+      unit: $/mile/year (2025$)
+      source: Xcel MN (DOE 2024); environmental access restrictions
+      citation: null
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_scrubbed_flat:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.scrubbed_flat"
-      unit: "$/mile/year (2025$)"
-      source: "Backwell mechanical mulching $3.8-8.5K/acre"
-      citation: "Backwell2024"
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.scrubbed_flat
+      unit: $/mile/year (2025$)
+      source: Backwell mechanical mulching $3.8-8.5K/acre
+      citation: Backwell2024
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_urban:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.urban"
-      unit: "$/mile/year (2025$)"
-      source: "Urban OH structurally rare; minimal vegetation"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Author judgment"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.urban
+      unit: $/mile/year (2025$)
+      source: Urban OH structurally rare; minimal vegetation
+      citation: null
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Author judgment
     veg_mgmt_rolling_hills:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.rolling_hills"
-      unit: "$/mile/year (2025$)"
-      source: "Duke Energy Indiana 2022 system-wide transmission VM average"
-      citation: "DukeIndianaVM2022"
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.rolling_hills
+      unit: $/mile/year (2025$)
+      source: Duke Energy Indiana 2022 system-wide transmission VM average
+      citation: DukeIndianaVM2022
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_farmland:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.farmland"
-      unit: "$/mile/year (2025$)"
-      source: "Quanta/PUCT 2009, FY2008 utility data, CPI-U adjusted"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.farmland
+      unit: $/mile/year (2025$)
+      source: Quanta/PUCT 2009, FY2008 utility data, CPI-U adjusted
+      citation: null
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
     veg_mgmt_desert_barren:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.desert_barren"
-      unit: "$/mile/year (2025$)"
-      source: "AEP TX North 61-year cycle (Quanta/PUCT 2009), CPI-U adjusted"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
-    veg_mgmt_subsea:
-      path: "12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.subsea"
-      unit: "$/mile/year"
-      source: "Not applicable"
-      citation: ~
-      yaml_file: "12_project_om_vegetation_management.yaml"
-      basis: "Sourced"
-
+      path: 12_project_om_vegetation_management.vegetation_management_om_costs.Overhead.desert_barren
+      unit: $/mile/year (2025$)
+      source: AEP TX North 61-year cycle (Quanta/PUCT 2009), CPI-U adjusted
+      citation: null
+      yaml_file: 12_project_om_vegetation_management.yaml
+      basis: Sourced
   insurance:
-    # Default premium rate (fallback when CT not in per-type lookup)
     premium_rate_default:
-      path: "04_insurance.insurance.premium_rate_default"
-      unit: "decimal fraction"
-      source: "Self-insurance reserve rate"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
-
-    # Premium rates by construction type / asset
+      path: 04_insurance.insurance.premium_rate_default
+      unit: decimal fraction
+      source: Self-insurance reserve rate
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     premium_rate_overhead:
-      path: "04_insurance.insurance.premium_rate_by_type.overhead"
-      unit: "decimal fraction"
-      source: "Self-insurance reserve (commercial T&D coverage unavailable)"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
+      path: 04_insurance.insurance.premium_rate_by_type.overhead
+      unit: decimal fraction
+      source: Self-insurance reserve (commercial T&D coverage unavailable)
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     premium_rate_ug_direct_buried:
-      path: "04_insurance.insurance.premium_rate_by_type.underground_direct_buried"
-      unit: "decimal fraction"
-      source: "Same mechanism as overhead"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
+      path: 04_insurance.insurance.premium_rate_by_type.underground_direct_buried
+      unit: decimal fraction
+      source: Same mechanism as overhead
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     premium_rate_ug_tunnel:
-      path: "04_insurance.insurance.premium_rate_by_type.underground_tunnel"
-      unit: "decimal fraction"
-      source: "Same as direct-buried"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
-    premium_rate_subsea:
-      path: "04_insurance.insurance.premium_rate_by_type.subsea"
-      unit: "decimal fraction"
-      source: "Commercial property-damage-only, 2-4% range"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
+      path: 04_insurance.insurance.premium_rate_by_type.underground_tunnel
+      unit: decimal fraction
+      source: Same as direct-buried
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     premium_rate_converter:
-      path: "04_insurance.insurance.premium_rate_by_type.converter"
-      unit: "decimal fraction"
-      source: "Commercial, 0.4-1.0% range midpoint"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
-
-    # Insurance escalation
+      path: 04_insurance.insurance.premium_rate_by_type.converter
+      unit: decimal fraction
+      source: Commercial, 0.4-1.0% range midpoint
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     insurance_escalation_rate:
-      path: "04_insurance.insurance.escalation_rate"
-      unit: "decimal (real annual)"
-      source: "Structural climate risk repricing"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
-
-    # Insurable component selectors (all default to included)
+      path: 04_insurance.insurance.escalation_rate
+      unit: decimal (real annual)
+      source: Structural climate risk repricing
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     insurable_conductors:
-      path: "04_insurance.insurance.insurable_components.conductors"
-      unit: "boolean"
-      source: "All major components included in insurable value"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
+      path: 04_insurance.insurance.insurable_components.conductors
+      unit: boolean
+      source: All major components included in insurable value
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     insurable_structures:
-      path: "04_insurance.insurance.insurable_components.structures"
-      unit: "boolean"
-      source: "All major components included in insurable value"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
+      path: 04_insurance.insurance.insurable_components.structures
+      unit: boolean
+      source: All major components included in insurable value
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
     insurable_converters:
-      path: "04_insurance.insurance.insurable_components.converters"
-      unit: "boolean"
-      source: "All major components included in insurable value"
-      citation: ~
-      yaml_file: "04_insurance.yaml"
-      basis: "Author judgment"
-
-  # --- Energy Losses ---
+      path: 04_insurance.insurance.insurable_components.converters
+      unit: boolean
+      source: All major components included in insurable value
+      citation: null
+      yaml_file: 04_insurance.yaml
+      basis: Author judgment
   energy_losses:
-    # Corona loss tiers (AC overhead only, kW/mile)
     corona_tier_1_max_230kv:
-      path: "22_corona_losses.corona.voltage_class_tiers[0].kw_per_mile"
-      unit: "kW/mile"
-      source: "Negligible at ≤230 kV"
-      citation: "AEPTransmissionFacts"
-      yaml_file: "22_corona_losses.yaml"
-      basis: "Sourced"
+      path: 22_corona_losses.corona.voltage_class_tiers[0].kw_per_mile
+      unit: kW/mile
+      source: "Negligible at \u2264230 kV"
+      citation: AEPTransmissionFacts
+      yaml_file: 22_corona_losses.yaml
+      basis: Sourced
     corona_tier_2_345kv:
-      path: "22_corona_losses.corona.voltage_class_tiers[1].kw_per_mile"
-      unit: "kW/mile"
-      source: "345 kV class"
-      citation: "AEPTransmissionFacts"
-      yaml_file: "22_corona_losses.yaml"
-      basis: "Sourced"
+      path: 22_corona_losses.corona.voltage_class_tiers[1].kw_per_mile
+      unit: kW/mile
+      source: 345 kV class
+      citation: AEPTransmissionFacts
+      yaml_file: 22_corona_losses.yaml
+      basis: Sourced
     corona_tier_3_500kv:
-      path: "22_corona_losses.corona.voltage_class_tiers[2].kw_per_mile"
-      unit: "kW/mile"
-      source: "500 kV class"
-      citation: "AEPTransmissionFacts"
-      yaml_file: "22_corona_losses.yaml"
-      basis: "Sourced"
+      path: 22_corona_losses.corona.voltage_class_tiers[2].kw_per_mile
+      unit: kW/mile
+      source: 500 kV class
+      citation: AEPTransmissionFacts
+      yaml_file: 22_corona_losses.yaml
+      basis: Sourced
     corona_tier_4_765kv:
-      path: "22_corona_losses.corona.voltage_class_tiers[3].kw_per_mile"
-      unit: "kW/mile"
-      source: "765 kV class (midpoint of 23-64 range)"
-      citation: "AEPTransmissionFacts"
-      yaml_file: "22_corona_losses.yaml"
-      basis: "Sourced"
-
-# ===========================================================================
-# 4. RISK COSTS — WILDFIRE + OUTAGE
-# ===========================================================================
+      path: 22_corona_losses.corona.voltage_class_tiers[3].kw_per_mile
+      unit: kW/mile
+      source: 765 kV class (midpoint of 23-64 range)
+      citation: AEPTransmissionFacts
+      yaml_file: 22_corona_losses.yaml
+      basis: Sourced
 risk_costs:
-
   wildfire:
     base_ignition_rate:
-      path: "06_wildfire_costs.wildfire.base_ignition_rate"
-      unit: "events/(mile·year)"
-      source: "PG&E SOM Metric 3.16 + Johnson/SDG&E 2014"
-      citation: "PGE2025SOM; Johnson2014QuantifyingEconomicRisk"
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
+      path: 06_wildfire_costs.wildfire.base_ignition_rate
+      unit: "events/(mile\xB7year)"
+      source: PG&E SOM Metric 3.16 + Johnson/SDG&E 2014
+      citation: PGE2025SOM; Johnson2014QuantifyingEconomicRisk
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     severity_per_event:
-      path: "06_wildfire_costs.wildfire.severity_per_event"
-      unit: "$/event (2025$)"
-      source: "Eagleston et al. 2025 size-class decomposition, CPI-U from ~2023.5$"
-      citation: "Eagleston2025SystemicDrivers"
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
+      path: 06_wildfire_costs.wildfire.severity_per_event
+      unit: $/event (2025$)
+      source: Eagleston et al. 2025 size-class decomposition, CPI-U from ~2023.5$
+      citation: Eagleston2025SystemicDrivers
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     risk_growth_rate:
-      path: "06_wildfire_costs.wildfire.risk_growth_rate"
-      unit: "decimal (annual)"
-      source: "1.5%/yr increase in ignition probability"
-      citation: "WarnerCallawayFowlie2025DynamicGrid"
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
-
-    # Ignition rate multipliers by construction type
+      path: 06_wildfire_costs.wildfire.risk_growth_rate
+      unit: decimal (annual)
+      source: 1.5%/yr increase in ignition probability
+      citation: WarnerCallawayFowlie2025DynamicGrid
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     ignition_multiplier_overhead:
-      path: "06_wildfire_costs.wildfire.ignition_rate_multiplier.overhead"
-      unit: "dimensionless"
-      source: "Baseline (100% of overhead risk)"
-      citation: ~
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
+      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.overhead
+      unit: dimensionless
+      source: Baseline (100% of overhead risk)
+      citation: null
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     ignition_multiplier_underground:
-      path: "06_wildfire_costs.wildfire.ignition_rate_multiplier.underground"
-      unit: "dimensionless"
-      source: "99% reduction per PG&E VP Undergrounding"
-      citation: "PGEUndergrounding2024"
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
+      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground
+      unit: dimensionless
+      source: 99% reduction per PG&E VP Undergrounding
+      citation: PGEUndergrounding2024
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     ignition_multiplier_underground_direct_buried:
-      path: "06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_direct_buried"
-      unit: "dimensionless"
-      source: "No wildfire risk (non-overhead)"
-      citation: ~
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
+      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_direct_buried
+      unit: dimensionless
+      source: No wildfire risk (non-overhead)
+      citation: null
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
     ignition_multiplier_underground_tunnel:
-      path: "06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_tunnel"
-      unit: "dimensionless"
-      source: "No wildfire risk (non-overhead)"
-      citation: ~
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
-    ignition_multiplier_subsea:
-      path: "06_wildfire_costs.wildfire.ignition_rate_multiplier.subsea"
-      unit: "dimensionless"
-      source: "No wildfire risk"
-      citation: ~
-      yaml_file: "06_wildfire_costs.yaml"
-      basis: "Sourced"
-
+      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_tunnel
+      unit: dimensionless
+      source: No wildfire risk (non-overhead)
+      citation: null
+      yaml_file: 06_wildfire_costs.yaml
+      basis: Sourced
   outage:
-    # Overhead decomposition model
     lambda_terminal:
-      path: "07_outage_costs.outage.outage_rate.overhead.lambda_terminal"
-      unit: "outages/year"
-      source: "BC Hydro VITR EENS study (Appendix B, 230 kV overhead)"
-      citation: "BCHydroVITR_EENS"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.outage_rate.overhead.lambda_terminal
+      unit: outages/year
+      source: BC Hydro VITR EENS study (Appendix B, 230 kV overhead)
+      citation: BCHydroVITR_EENS
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     lambda_per_mile:
-      path: "07_outage_costs.outage.outage_rate.overhead.lambda_per_mile"
-      unit: "outages/(mile·year)"
-      source: "CEA 240kV 0.014, Zhou BPA 0.013, Poland 220kV 0.012"
-      citation: "PijarskiBelowski2025"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-
-    # Non-overhead outage rates
+      path: 07_outage_costs.outage.outage_rate.overhead.lambda_per_mile
+      unit: "outages/(mile\xB7year)"
+      source: CEA 240kV 0.014, Zhou BPA 0.013, Poland 220kV 0.012
+      citation: PijarskiBelowski2025
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     outage_rate_underground:
-      path: "07_outage_costs.outage.outage_rate.underground"
-      unit: "outages/(mile·year)"
-      source: "CIGRE TB 379/815 land XLPE cable failure rate midpoint"
-      citation: "CIGRETB379; CIGRETB815"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-    outage_rate_subsea:
-      path: "07_outage_costs.outage.outage_rate.subsea"
-      unit: "outages/(mile·year)"
-      source: "ENTSO-E/Europacable (2019), CIGRE TB 815 (2020)"
-      citation: "CIGRETB815; IEAWindTEM95_2019"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-
-    # Duration
+      path: 07_outage_costs.outage.outage_rate.underground
+      unit: "outages/(mile\xB7year)"
+      source: CIGRE TB 379/815 land XLPE cable failure rate midpoint
+      citation: CIGRETB379; CIGRETB815
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     outage_duration_base:
-      path: "07_outage_costs.outage.outage_duration"
-      unit: "hours/event"
-      source: "Overhead baseline outage duration"
-      citation: ~
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Author judgment"
+      path: 07_outage_costs.outage.outage_duration
+      unit: hours/event
+      source: Overhead baseline outage duration
+      citation: null
+      yaml_file: 07_outage_costs.yaml
+      basis: Author judgment
     duration_multiplier_overhead:
-      path: "07_outage_costs.outage.outage_duration_multiplier.overhead"
-      unit: "dimensionless"
-      source: "Baseline"
-      citation: ~
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.outage_duration_multiplier.overhead
+      unit: dimensionless
+      source: Baseline
+      citation: null
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     duration_multiplier_underground:
-      path: "07_outage_costs.outage.outage_duration_multiplier.underground"
-      unit: "dimensionless"
-      source: "6h × 80 = 480h (~20 days) average XLPE land cable repair"
-      citation: "CIGRETB815"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-    duration_multiplier_subsea:
-      path: "07_outage_costs.outage.outage_duration_multiplier.subsea"
-      unit: "dimensionless"
-      source: "6h × 250 = 1500h (~62 days) effective subsea duration"
-      citation: "CIGRETB815; IEAWindTEM95_2019"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-
-    # Redispatch cost
+      path: 07_outage_costs.outage.outage_duration_multiplier.underground
+      unit: dimensionless
+      source: "6h \xD7 80 = 480h (~20 days) average XLPE land cable repair"
+      citation: CIGRETB815
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     redispatch_cost_per_mwh:
-      path: "07_outage_costs.outage.redispatch_cost_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "LBNL Millstein et al. 2022, empirical congestion relief, CPI-U adjusted"
-      citation: "Millstein2022EmpiricalTransmissionValue"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
-
-    # Risk growth
+      path: 07_outage_costs.outage.redispatch_cost_per_mwh
+      unit: $/MWh (2025$)
+      source: LBNL Millstein et al. 2022, empirical congestion relief, CPI-U adjusted
+      citation: Millstein2022EmpiricalTransmissionValue
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     outage_risk_growth_rate:
-      path: "07_outage_costs.outage.risk_growth_rate"
-      unit: "decimal (annual)"
-      source: "Default 0 (no trend assumed)"
-      citation: ~
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Author judgment"
-
-    # Value of Lost Load tiers (piecewise VoLL, 2025$)
+      path: 07_outage_costs.outage.risk_growth_rate
+      unit: decimal (annual)
+      source: Default 0 (no trend assumed)
+      citation: null
+      yaml_file: 07_outage_costs.yaml
+      basis: Author judgment
     voll_tier_1_0_to_1h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     voll_tier_2_1_to_2h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Brattle/ERCOT 2024 observed"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Brattle/ERCOT 2024 observed
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     voll_tier_3_2_to_4h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Brattle/ERCOT 2024 observed"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Brattle/ERCOT 2024 observed
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     voll_tier_4_4_to_8h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Brattle/ERCOT 2024 observed"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Brattle/ERCOT 2024 observed
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     voll_tier_5_8_to_16h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Brattle/ERCOT 2024 observed"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Sourced"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Brattle/ERCOT 2024 observed
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     voll_tier_6_16_to_32h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Extrapolated via V(t) = 32210/t + 3339 + 492t"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Derived"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Extrapolated via V(t) = 32210/t + 3339 + 492t
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Derived
     voll_tier_7_32_to_64h:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Extrapolated"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Derived"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Extrapolated
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Derived
     voll_tier_8_64h_to_7d:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Extrapolated"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Derived"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Extrapolated
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Derived
     voll_tier_9_7d_to_30d:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Extrapolated"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Derived"
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Extrapolated
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Derived
     voll_tier_10_over_30d:
-      path: "07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh"
-      unit: "$/MWh (2025$)"
-      source: "Flat cap at 30-day extrapolated value"
-      citation: "BrattleERCOT2024"
-      yaml_file: "07_outage_costs.yaml"
-      basis: "Derived"
-
-# ===========================================================================
-# 5. EMISSIONS COSTS
-# ===========================================================================
+      path: 07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh
+      unit: $/MWh (2025$)
+      source: Flat cap at 30-day extrapolated value
+      citation: BrattleERCOT2024
+      yaml_file: 07_outage_costs.yaml
+      basis: Derived
 emissions_costs:
-
   social_costs:
     co2_cost_per_kg:
-      path: "16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg"
-      unit: "$/kg (2025$)"
-      source: "$236/tCO2, EPA SC-GHG 2023, 2% Ramsey rate, CPI-U from 2020$"
-      citation: "Rennert2022; EPASCGHG2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_per_kg
+      unit: $/kg (2025$)
+      source: $236/tCO2, EPA SC-GHG 2023, 2% Ramsey rate, CPI-U from 2020$
+      citation: Rennert2022; EPASCGHG2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     co2_cost_annual_growth:
-      path: "16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth"
-      unit: "decimal (real annual)"
-      source: "2%/yr real escalation in social cost of CO2"
-      citation: "Rennert2022"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth
+      unit: decimal (real annual)
+      source: 2%/yr real escalation in social cost of CO2
+      citation: Rennert2022
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     sox_cost_per_kg:
-      path: "16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg"
-      unit: "$/kg (2025$)"
-      source: "EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related)"
-      citation: "EPA2023BPT"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.societal_costs_per_kg.sox_cost_per_kg
+      unit: $/kg (2025$)
+      source: EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5-related)
+      citation: EPA2023BPT
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     nox_cost_per_kg:
-      path: "16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg"
-      unit: "$/kg (2025$)"
-      source: "EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone)"
-      citation: "EPA2023BPT"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.societal_costs_per_kg.nox_cost_per_kg
+      unit: $/kg (2025$)
+      source: EPA BPT TSD 2024, EGU sector, 2% DR (PM2.5 + ozone)
+      citation: EPA2023BPT
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     compensation_percent:
-      path: "16_emissions_reductions.emissions_reductions.compensation_percent"
-      unit: "dimensionless [0,1]"
-      source: "Fraction of line losses compensated by additional generation"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Author judgment"
-
-  # Emission intensities by fuel type (kg/MWh, lifecycle medians)
+      path: 16_emissions_reductions.emissions_reductions.compensation_percent
+      unit: dimensionless [0,1]
+      source: Fraction of line losses compensated by additional generation
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Author judgment
   emission_intensities:
     coal_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.coal"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.coal
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     coal_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.coal"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.coal
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     coal_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.coal"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.coal
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     oil_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.oil"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.oil
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     oil_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.oil"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.oil
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     oil_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.oil"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.oil
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     natural_gas_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.natural_gas"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.natural_gas
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     natural_gas_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.natural_gas"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.natural_gas
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     natural_gas_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.natural_gas"
-      unit: "kg/MWh"
-      source: "EPA eGRID (2023)"
-      citation: "EPAeGRID2023"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.natural_gas
+      unit: kg/MWh
+      source: EPA eGRID (2023)
+      citation: EPAeGRID2023
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     solar_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.solar"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.solar
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     solar_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.solar"
-      unit: "kg/MWh"
-      source: "Zero by definition (no combustion)"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.solar
+      unit: kg/MWh
+      source: Zero by definition (no combustion)
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     solar_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.solar"
-      unit: "kg/MWh"
-      source: "Zero by definition (no combustion)"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.solar
+      unit: kg/MWh
+      source: Zero by definition (no combustion)
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     wind_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.wind"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.wind
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     wind_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.wind"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.wind
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     wind_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.wind"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.wind
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     hydro_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.hydro"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.hydro
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     hydro_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.hydro"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.hydro
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     hydro_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.hydro"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.hydro
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     nuclear_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.nuclear"
-      unit: "kg/MWh"
-      source: "IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median"
-      citation: "BrucknerEtAl2014Ch7"
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.nuclear
+      unit: kg/MWh
+      source: IPCC AR5 WG3 Ch7 Table A.III.2 lifecycle median
+      citation: BrucknerEtAl2014Ch7
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     nuclear_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.nuclear"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.nuclear
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     nuclear_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.nuclear"
-      unit: "kg/MWh"
-      source: "Zero by definition"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Sourced"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.nuclear
+      unit: kg/MWh
+      source: Zero by definition
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Sourced
     other_co2:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.other"
-      unit: "kg/MWh"
-      source: "Catch-all category; zero by default"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Author judgment"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.co2_intensity_kg_per_mwh.other
+      unit: kg/MWh
+      source: Catch-all category; zero by default
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Author judgment
     other_sox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.other"
-      unit: "kg/MWh"
-      source: "Catch-all category; zero by default"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Author judgment"
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.sox_intensity_kg_per_mwh.other
+      unit: kg/MWh
+      source: Catch-all category; zero by default
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Author judgment
     other_nox:
-      path: "16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.other"
-      unit: "kg/MWh"
-      source: "Catch-all category; zero by default"
-      citation: ~
-      yaml_file: "16_emissions_reductions.yaml"
-      basis: "Author judgment"
-
-# ===========================================================================
-# 6. BENEFITS (Congestion, Capacity Value, Displacement)
-# ===========================================================================
+      path: 16_emissions_reductions.emissions_reductions.emission_intensities.nox_intensity_kg_per_mwh.other
+      unit: kg/MWh
+      source: Catch-all category; zero by default
+      citation: null
+      yaml_file: 16_emissions_reductions.yaml
+      basis: Author judgment
 benefits:
-
   congestion:
-    # No unique defaults beyond g_benefit (in utilities/financial).
-    # Congestion parameters (constrained_hours, average_exceedance,
-    # average_congestion_price, flow_factor) are scenario inputs.
     annual_base_delay_cost:
-      path: "05_delays.annual_base_delay_cost"
-      unit: "$/year"
-      source: "Project-specific; no published benchmark. Default 0."
-      citation: ~
-      yaml_file: "05_delays.yaml"
-      basis: "Author judgment"
-
+      path: 05_delays.annual_base_delay_cost
+      unit: $/year
+      source: Project-specific; no published benchmark. Default 0.
+      citation: null
+      yaml_file: 05_delays.yaml
+      basis: Author judgment
   capacity_value:
     capacity_credit:
-      path: "20_capacity_value.capacity_credit"
-      unit: "dimensionless [0,1]"
-      source: "ELCC fraction; default off"
-      citation: "GridStrategies2025RAValueTx"
-      yaml_file: "20_capacity_value.yaml"
-      basis: "Author judgment"
+      path: 20_capacity_value.capacity_credit
+      unit: dimensionless [0,1]
+      source: ELCC fraction; default off
+      citation: GridStrategies2025RAValueTx
+      yaml_file: 20_capacity_value.yaml
+      basis: Author judgment
     capacity_price:
-      path: "20_capacity_value.capacity_price"
-      unit: "$/MW-yr"
-      source: "Net CONE or capacity clearing price; default placeholder"
-      citation: "PJM2026_27BRAParameters; MISO2026_27PRAResults"
-      yaml_file: "20_capacity_value.yaml"
-      basis: "Author judgment"
+      path: 20_capacity_value.capacity_price
+      unit: $/MW-yr
+      source: Net CONE or capacity clearing price; default placeholder
+      citation: PJM2026_27BRAParameters; MISO2026_27PRAResults
+      yaml_file: 20_capacity_value.yaml
+      basis: Author judgment
     applicability_gate:
-      path: "20_capacity_value.applicability_gate"
-      unit: "boolean"
-      source: "True only if receiving region is capacity-short"
-      citation: ~
-      yaml_file: "20_capacity_value.yaml"
-      basis: "Author judgment"
+      path: 20_capacity_value.applicability_gate
+      unit: boolean
+      source: True only if receiving region is capacity-short
+      citation: null
+      yaml_file: 20_capacity_value.yaml
+      basis: Author judgment
