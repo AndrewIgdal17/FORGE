@@ -33,7 +33,8 @@ def calculate_wildfire_costs(
     project_lifetime: int,
     social_discount_rate: float,
     delay_years: float = 0,
-    construction_years: float = 0,
+    *,
+    construction_years: float,
 ) -> Dict[str, Any]:
     """
     Calculate expected wildfire costs using line-level ignition rate.
@@ -45,12 +46,13 @@ def calculate_wildfire_costs(
         project_lifetime: Project lifetime in years
         social_discount_rate: Social discount rate for PV calculation (r_social)
         delay_years: Years of delay before construction starts
-        construction_years: Years of construction
+        construction_years: Years of construction. Required keyword.
 
     Returns:
         dict: Contains lambda_total, EAL, nominal_cost, pv_cost
 
     Raises:
+        TypeError: If construction_years is omitted
         ValueError: If social_discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     validate_discount_rate(social_discount_rate)

@@ -139,6 +139,19 @@ def test_missing_habitat_price_names_the_habitat_class():
     assert "desert_barren" in str(exc_info.value)
 
 
+def test_negative_forested_acres_raise():
+    with pytest.raises(
+        InvalidInputs,
+        match=r"Negative acreage for terrain class 'forested'\.",
+    ):
+        calculate_environmental_mitigation_costs(
+            _yaml(1.25),
+            "Overhead/AC/500MW/Standard Aluminum Conductor/NA",
+            {"forested": -1},
+            {},
+        )
+
+
 def test_nonpositive_acres_without_a_price_are_not_priced_at_zero_or_rejected():
     em = _yaml(1.25)
     del em["environmental_mitigation"]["habitat_credit_cost_per_credit"]["desert_barren"]

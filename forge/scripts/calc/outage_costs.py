@@ -69,7 +69,8 @@ def calculate_outage_costs(
     project_lifetime: int,
     discount_rate: float,
     delay_years: float = 0,
-    construction_years: float = 0,
+    *,
+    construction_years: float,
     number_of_circuits_poles: int = 1,
     line_utilization: float = 1.0,
     ac_dc: str = "AC",
@@ -85,7 +86,7 @@ def calculate_outage_costs(
         project_lifetime: Project lifetime in years
         discount_rate: Discount rate for PV calculation
         delay_years: Years of delay before construction starts
-        construction_years: Years of construction
+        construction_years: Years of construction. Required keyword.
         number_of_circuits_poles: Number of circuits (AC) or poles (DC); used to
             auto-derive phi = 1/N_poles when capacity_at_risk_factor is "auto"
         line_utilization: Average fraction of line capacity in use (0-1)
@@ -95,6 +96,7 @@ def calculate_outage_costs(
         dict: Contains expected_annual_loss, nominal_cost, pv_cost
 
     Raises:
+        TypeError: If construction_years is omitted
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
     """
     validate_discount_rate(discount_rate)

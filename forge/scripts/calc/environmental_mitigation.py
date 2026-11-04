@@ -78,8 +78,12 @@ def calculate_environmental_mitigation_costs(
     base_cost = 0.0
     total_base_acres = 0.0
     for terrain, acres in acres_by_terrain.items():
-        if acres is None or acres <= 0:
+        if acres is None or acres == 0:
             continue
+        if acres < 0:
+            raise InvalidInputs(
+                f"Negative acreage for terrain class '{terrain}'."
+            )
         if terrain not in base_table or base_table[terrain] is None:
             raise InvalidInputs(
                 f"No base mitigation cost per acre for construction type "
