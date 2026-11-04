@@ -69,6 +69,8 @@ def calculate_environmental_mitigation_costs(
     mu_d = disturbance_multiplier(
         project_type, float(config["disturbance_multiplier_rebuild"])
     )
+    from forge.errors import InvalidInputs
+
     yaml_ct = normalize_construction_type_for_yaml(
         category.split("/")[0], context="environmental"
     )
@@ -78,8 +80,13 @@ def calculate_environmental_mitigation_costs(
     for terrain, acres in acres_by_terrain.items():
         if acres is None or acres <= 0:
             continue
+        if terrain not in base_table or base_table[terrain] is None:
+            raise InvalidInputs(
+                f"No base mitigation cost per acre for construction type "
+                f"'{yaml_ct}' and terrain class '{terrain}'."
+            )
         total_base_acres += float(acres)
-        base_cost += float(base_table.get(terrain, 0.0)) * uplift * float(acres)
+        base_cost += float(base_table[terrain]) * uplift * float(acres)
     base_cost *= mu_d
     wetland_acres = float(acres_by_terrain.get("wetland") or 0.0)
     wetland_impacted = mu_d * mu_wet * uplift * wetland_acres
@@ -89,6 +96,12 @@ def calculate_environmental_mitigation_costs(
     habitat_credit_count = 0.0
     for terrain in HABITAT_CLASSES:
         gap = float(protected_area_acres.get(terrain) or 0.0)
+        if gap > 0 and (terrain not in prices or prices[terrain] is None):
+            raise InvalidInputs(
+                f"No habitat credit price for habitat class '{terrain}'."
+            )
+        if terrain not in prices or prices[terrain] is None:
+            continue
         count = mu_d * uplift * mu_hab * gap
         habitat_credit_count += count
         habitat_credits += float(prices[terrain]) * count

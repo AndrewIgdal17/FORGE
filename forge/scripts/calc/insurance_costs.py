@@ -41,8 +41,8 @@ def calculate_insurance_costs(
     """
     Calculate operational insurance costs based on insurable asset value.
 
-    Overhead/underground lines use a self-insurance reserve rate; subsea cables
-    and converter stations use commercial property insurance rates.
+    Overhead/underground lines use a self-insurance reserve rate; converter
+    stations use commercial property insurance rates.
 
     Premiums escalate at g_ins over the project lifetime (appendix §5).
     Nominal lifetime cost is the growing series; PV is the growing annuity
@@ -54,7 +54,7 @@ def calculate_insurance_costs(
         structure_cost_with_contingencies: Structure cost with contingencies
         converter_cost_with_contingencies: Converter cost with contingencies
         project_lifetime: Project lifetime in years
-        construction_type: Construction type string (e.g. "Overhead", "Subsea")
+        construction_type: Construction type string (e.g. "Overhead", "Underground")
         wacc_real: Real WACC used to discount the growing annuity
         delay_years: Years of delay before construction starts
         construction_years: Years of construction (premiums start at COD)

@@ -105,3 +105,54 @@ def test_defaults_expose_split_ratios_and_null_acres():
         "forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain",
     ]
     assert all(value is None for value in acres.values())
+
+
+def test_positive_acres_missing_from_the_overhead_price_table_raise():
+    with pytest.raises(InvalidInputs) as exc_info:
+        calculate_environmental_mitigation_costs(
+            _yaml(1.25),
+            "Overhead/AC/500MW/Standard Aluminum Conductor/NA",
+            {"mountain": 4.0},
+            {},
+        )
+    message = str(exc_info.value)
+    assert "overhead" in message
+    assert "mountain" in message
+
+
+def test_missing_habitat_price_names_the_habitat_class():
+    em = _yaml(1.25)
+    del em["environmental_mitigation"]["habitat_credit_cost_per_credit"]["desert_barren"]
+    with pytest.raises(InvalidInputs) as exc_info:
+        calculate_environmental_mitigation_costs(
+            em,
+            "Overhead/AC/500MW/Standard Aluminum Conductor/NA",
+            {"forested": 10.0, "wetland": 1.0},
+            {
+                "forested": 0.0,
+                "scrubbed_flat": 0.0,
+                "desert_barren": 2.0,
+                "rolling_hills": 0.0,
+                "mountain": 0.0,
+            },
+        )
+    assert "desert_barren" in str(exc_info.value)
+
+
+def test_nonpositive_acres_without_a_price_are_not_priced_at_zero_or_rejected():
+    em = _yaml(1.25)
+    del em["environmental_mitigation"]["habitat_credit_cost_per_credit"]["desert_barren"]
+    result = calculate_environmental_mitigation_costs(
+        em,
+        "Overhead/AC/500MW/Standard Aluminum Conductor/NA",
+        {"forested": 10.0, "wetland": 1.0, "urban": 0.0, "farmland": None},
+        {
+            "forested": 1.0,
+            "scrubbed_flat": 0.0,
+            "desert_barren": 0.0,
+            "rolling_hills": None,
+            "mountain": 0.0,
+        },
+    )
+    assert result["base_cost"] == pytest.approx(60.0)
+    assert result["habitat_credits"] == pytest.approx(25.0)

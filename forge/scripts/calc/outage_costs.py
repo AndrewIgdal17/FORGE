@@ -79,7 +79,7 @@ def calculate_outage_costs(
 
     Args:
         outage_yaml: Loaded outage YAML data
-        construction_type: Construction type (overhead, underground, subsea)
+        construction_type: Construction type (overhead, underground)
         terrain_miles: Dictionary of terrain type to miles (summed for total length)
         capacity_mw: Project capacity in MW
         project_lifetime: Project lifetime in years

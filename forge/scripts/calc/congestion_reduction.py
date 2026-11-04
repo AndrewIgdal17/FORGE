@@ -16,7 +16,13 @@ from typing import Dict, Any, Tuple
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
-from forge.scripts.utils.financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
+from forge.scripts.utils.financial_utils import (
+    calculate_present_value,
+    calculate_cod_year,
+    calculate_growing_annuity_pv,
+    calculate_nominal_growing_series,
+    unshifted_growing_annuity_pv,
+)
 from forge.scripts.utils.smart_loaders import (
     load_congestion_reductions,
     load_project_technical_details as load_project_technical_details_centralized,
@@ -191,12 +197,14 @@ def calculate_congestion_reduction_costs(
 
     lifetime_remedial_benefit_pv = lifetime_congestion_benefit_pv
 
-    # Delay opportunity costs — delay period starts at year 1 (no additional delay shift)
+    # Delay opportunity costs — delay period starts at year 1 (no additional delay shift).
+    # N is already delay + construction. The old call omitted construction_years,
+    # whose default of 0 added no further shift. Keep that unshifted present value.
     delay_construction_years = delay_years + construction_years
     congestion_delay_cost_nominal = calculate_nominal_growing_series(
         cong_delay_annual, g, delay_construction_years
     )
-    congestion_delay_cost_pv = calculate_growing_annuity_pv(
+    congestion_delay_cost_pv = unshifted_growing_annuity_pv(
         cong_delay_annual, g, wacc_real, delay_construction_years,
     )
 

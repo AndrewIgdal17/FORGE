@@ -93,13 +93,29 @@ def calculate_present_value(
     return total_pv
 
 
+def unshifted_growing_annuity_pv(
+    annual_amount: float,
+    growth_rate: float,
+    discount_rate: float,
+    periods: float,
+) -> float:
+    """Present value of a growing annuity with no delay or construction discount."""
+    validate_discount_rate(discount_rate)
+    g = growth_rate
+    d = discount_rate
+    if abs(d - g) < DISCOUNT_GROWTH_EQUALITY_TOLERANCE:  # Edge case: d = g
+        return annual_amount * periods / (1 + d)
+    return annual_amount * ((1 - ((1 + g) / (1 + d)) ** periods) / (d - g))
+
+
 def calculate_growing_annuity_pv(
     annual_amount: float,
     growth_rate: float,
     discount_rate: float,
     project_lifetime: int,
     delay_years: float = 0.0,
-    construction_years: float = 0.0,
+    *,
+    construction_years: float,
 ) -> float:
     """
     Calculate present value of a growing annuity with optional delay period discounting.
@@ -119,36 +135,36 @@ def calculate_growing_annuity_pv(
         discount_rate: Discount rate (decimal, e.g., 0.05 for 5%)
         project_lifetime: Number of years in project lifetime
         delay_years: Years of delay before operations start (default: 0.0)
-        construction_years: Years of construction (default: 0.0)
+        construction_years: Years of construction. Required keyword. Must be >= 1.
+            The lag is delay_years + construction_years.
     
     Returns:
         float: Present value of the growing annuity, discounted for delay period if applicable
     
     Raises:
         ValueError: If discount_rate <= MIN_DISCOUNT_RATE
+        ValueError: If construction_years is None or < 1
     """
     # Validate discount_rate to prevent division by zero
     validate_discount_rate(discount_rate)
     
-    # Handle None values for delay_years and construction_years
+    # Handle None values for delay_years
     delay_years = delay_years if delay_years is not None else 0.0
-    construction_years = construction_years if construction_years is not None else 0.0
+    if construction_years is None or construction_years < 1:
+        raise ValueError(
+            f"construction_years must be >= 1, got {construction_years}"
+        )
     
     # Calculate present value with growing annuity
-    g = growth_rate
-    d = discount_rate
-    N = project_lifetime
-    
-    if abs(d - g) < DISCOUNT_GROWTH_EQUALITY_TOLERANCE:  # Edge case: d = g
-        pv = annual_amount * N / (1 + d)
-    else:
-        pv = annual_amount * ((1 - ((1 + g) / (1 + d)) ** N) / (d - g))
+    pv = unshifted_growing_annuity_pv(
+        annual_amount, growth_rate, discount_rate, project_lifetime
+    )
     
     # Discount for delay and construction periods
     # Risks only start accumulating after operations begin (after delay + construction)
     delay_period = delay_years + construction_years
     if delay_period > 0:
-        pv = pv / ((1 + d) ** delay_period)
+        pv = pv / ((1 + discount_rate) ** delay_period)
     
     return pv
 

@@ -79,7 +79,7 @@ def load_project_details() -> LineLossProjectDetails:
 
     Returns:
         LineLossProjectDetails: Dataclass containing all project details for line loss calculations
-            - construction_type: Type of construction (e.g., "Overhead", "Subsea")
+            - construction_type: Type of construction (e.g., "Overhead", "Underground")
             - ac_dc: "AC" or "DC" designation
             - capacity_mw: Line capacity in MW
             - conductor_type: Type of conductor used

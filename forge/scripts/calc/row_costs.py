@@ -29,10 +29,10 @@ from forge.scripts.utils.smart_loaders import (
     get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import (
-    calculate_growing_annuity_pv,
     calculate_nominal_growing_series,
     calculate_afudc_rate,
     calculate_afudc_capitalized_cost,
+    unshifted_growing_annuity_pv,
     validate_discount_rate,
 )
 
@@ -198,13 +198,13 @@ def main() -> None:
 
     validate_discount_rate(financing.wacc_real, "wacc_real")
     # Holding PV: constant-payment annuity over delay (growth_rate=0).
-    total_holding_cost_pv = xi_holding * calculate_growing_annuity_pv(
+    # The lag is zero (old delay_years + construction_years). Do not add a
+    # year of discount, and do not pass construction_years below 1.
+    total_holding_cost_pv = xi_holding * unshifted_growing_annuity_pv(
         yearly_holding_cost,
         0.0,
         financing.wacc_real,
         int(project_details.delay_years),
-        delay_years=0.0,
-        construction_years=0.0,
     )
     total_acquisition_cost_pv = (
         acquisition_cost_used
@@ -216,14 +216,19 @@ def main() -> None:
         if agreement_type == "lease_license_existing"
         else project_details.delay_years
     )
-    total_rent_cost_pv = xi_rent * calculate_growing_annuity_pv(
+    # Rent is not shifted by construction. The old lag is rent_delay alone
+    # (construction_years was 0). Keep that present value: unshifted annuity,
+    # then discount only when rent_delay is positive. Do not pass a
+    # construction_years below 1, and do not add a year when the lag is 0.
+    rent_annuity = unshifted_growing_annuity_pv(
         yearly_rent_cost,
         g_rent,
         financing.wacc_real,
         int(rent_total_years),
-        delay_years=rent_delay,
-        construction_years=0.0,
     )
+    if rent_delay > 0:
+        rent_annuity = rent_annuity / ((1 + financing.wacc_real) ** rent_delay)
+    total_rent_cost_pv = xi_rent * rent_annuity
 
     # Acquisition only. Holding is operating expense, not capital.
     # acquisition_afudc is the capitalized acquisition cost at COD.
