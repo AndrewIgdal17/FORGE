@@ -5,6 +5,13 @@ from forge.contract import resolve_inputs
 from forge.data import get_defaults_template, get_yamls_path
 
 _INDEX = re.compile(r"\[(\d+)\]")
+_ACRE_PATHS = (
+    "02_project_physical_details.terrain.protected_area_acres.forested",
+    "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat",
+    "02_project_physical_details.terrain.protected_area_acres.desert_barren",
+    "02_project_physical_details.terrain.protected_area_acres.rolling_hills",
+    "02_project_physical_details.terrain.protected_area_acres.mountain",
+)
 
 
 def _entries(node, prefix=""):
@@ -37,4 +44,7 @@ def test_registry_paths_resolve_and_values_are_gone():
         assert "value" not in entry, name
         node = _walk(template, entry["path"])
         if not isinstance(node, list):
-            resolve_inputs({entry["path"]: None})
+            changes = {path: 0.0 for path in _ACRE_PATHS}
+            if entry["path"] not in _ACRE_PATHS:
+                changes[entry["path"]] = None
+            resolve_inputs(changes)

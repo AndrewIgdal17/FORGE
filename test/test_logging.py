@@ -14,7 +14,15 @@ def test_run_calculation_is_silent(capsys):
     forge_file = forge.get_scenarios_path() / "SunZia_Delay2.forge"
     with open(forge_file) as f:
         document = json.load(f)
-    inputs = forge.resolve_inputs(forge.diff_changes(document["inputs"]))
+    changes = forge.diff_changes(document["inputs"])
+    changes.update({
+        "02_project_physical_details.terrain.protected_area_acres.forested": 0.0,
+        "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat": 0.0,
+        "02_project_physical_details.terrain.protected_area_acres.desert_barren": 0.0,
+        "02_project_physical_details.terrain.protected_area_acres.rolling_hills": 0.0,
+        "02_project_physical_details.terrain.protected_area_acres.mountain": 0.0,
+    })
+    inputs = forge.resolve_inputs(changes)
     forge.run_calculation(inputs, scenario_id="silent_test")
     captured = capsys.readouterr()
     assert captured.out == "", f"Unexpected stdout: {captured.out[:200]}"

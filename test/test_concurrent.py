@@ -73,6 +73,13 @@ def test_eight_threads_match_golden():
             with open(forge_file) as f:
                 document = json.load(f)
             changes = forge.diff_changes(document["inputs"])
+            changes.update({
+                "02_project_physical_details.terrain.protected_area_acres.forested": 0.0,
+                "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat": 0.0,
+                "02_project_physical_details.terrain.protected_area_acres.desert_barren": 0.0,
+                "02_project_physical_details.terrain.protected_area_acres.rolling_hills": 0.0,
+                "02_project_physical_details.terrain.protected_area_acres.mountain": 0.0,
+            })
             resolved = forge.resolve_inputs(changes)
             run_id = f"{scenario_name}_{run_index}"
             results = forge.run_calculation(resolved, scenario_id=run_id)

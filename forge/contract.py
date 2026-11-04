@@ -11,7 +11,7 @@ from importlib.metadata import PackageNotFoundError, distribution, version
 from typing import Any
 
 from forge.data import get_defaults_template
-from forge.errors import UnknownInputPath
+from forge.errors import InvalidInputs, UnknownInputPath
 from forge.scripts.io.input_metadata import input_metadata_to_dict
 
 _INDEX = re.compile(r"\[(\d+)\]")
@@ -243,6 +243,34 @@ def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
     return errors
 
 
+_ACRE_CLASSES = (
+    "forested",
+    "scrubbed_flat",
+    "desert_barren",
+    "rolling_hills",
+    "mountain",
+)
+
+
+def missing_protected_area_acres(document: Mapping[str, Any]) -> list[str]:
+    terrain = document.get("02_project_physical_details", {})
+    if not isinstance(terrain, dict):
+        terrain = {}
+    acres = terrain.get("terrain", {})
+    if not isinstance(acres, dict):
+        acres = {}
+    acres = acres.get("protected_area_acres", {})
+    if not isinstance(acres, dict):
+        acres = {}
+    missing: list[str] = []
+    for name in _ACRE_CLASSES:
+        path = f"02_project_physical_details.terrain.protected_area_acres.{name}"
+        value = acres.get(name, None)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            missing.append(path)
+    return missing
+
+
 def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     errors = validate_changes(changes)
     if errors:
@@ -251,6 +279,11 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     for path, value in changes.items():
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
+    missing = missing_protected_area_acres(resolved)
+    if missing:
+        raise InvalidInputs(
+            "protected_area_acres are required. Missing: " + ", ".join(missing)
+        )
     return resolved
 
 

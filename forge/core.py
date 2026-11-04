@@ -217,6 +217,14 @@ def _bootstrap_run_context() -> "RunContext":
             f"capacity_mw is required and must be > 0 (got {capacity_mw}). "
             "Set a valid line capacity in MW."
         )
+    from forge.contract import missing_protected_area_acres
+    from forge.scripts.utils.run_context import get_run_state
+
+    missing = missing_protected_area_acres(get_run_state().inputs)
+    if missing:
+        raise InvalidInputs(
+            "protected_area_acres are required. Missing: " + ", ".join(missing)
+        )
     financing = load_financing_details()
     contingencies = load_contingencies()
     physical_raw = get_physical_data_raw()

@@ -1,0 +1,31 @@
+import pytest
+
+import forge
+from forge.contract import missing_protected_area_acres
+from forge.errors import InvalidInputs
+
+PATHS = (
+    "02_project_physical_details.terrain.protected_area_acres.forested",
+    "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat",
+    "02_project_physical_details.terrain.protected_area_acres.desert_barren",
+    "02_project_physical_details.terrain.protected_area_acres.rolling_hills",
+    "02_project_physical_details.terrain.protected_area_acres.mountain",
+)
+
+
+def test_empty_changes_name_every_missing_path():
+    with pytest.raises(InvalidInputs) as exc:
+        forge.resolve_inputs({})
+    message = str(exc.value)
+    assert message.startswith("protected_area_acres are required. Missing: ")
+    for path in PATHS:
+        assert path in message
+
+
+def test_explicit_zero_is_accepted_and_a_string_is_named():
+    changes = {path: 0.0 for path in PATHS}
+    resolved = forge.resolve_inputs(changes)
+    assert missing_protected_area_acres(resolved) == []
+    changes[PATHS[0]] = "nope"
+    with pytest.raises(InvalidInputs, match=PATHS[0]):
+        forge.resolve_inputs(changes)

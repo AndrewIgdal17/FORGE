@@ -74,7 +74,22 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         lambda delay: 2027.0,
     )
 
-    state = RunState(inputs={}, scenario_id="test")
+    state = RunState(
+        inputs={
+            "02_project_physical_details": {
+                "terrain": {
+                    "protected_area_acres": {
+                        "forested": 0.0,
+                        "scrubbed_flat": 0.0,
+                        "desert_barren": 0.0,
+                        "rolling_hills": 0.0,
+                        "mountain": 0.0,
+                    }
+                }
+            }
+        },
+        scenario_id="test",
+    )
     token = set_run_state(state)
     try:
         ctx = _bootstrap_run_context()
@@ -124,7 +139,22 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
         "forge.scripts.io.yaml_loaders.load_project_technical_details", lambda: project
     )
 
-    state = RunState(inputs={}, scenario_id="test")
+    state = RunState(
+        inputs={
+            "02_project_physical_details": {
+                "terrain": {
+                    "protected_area_acres": {
+                        "forested": 0.0,
+                        "scrubbed_flat": 0.0,
+                        "desert_barren": 0.0,
+                        "rolling_hills": 0.0,
+                        "mountain": 0.0,
+                    }
+                }
+            }
+        },
+        scenario_id="test",
+    )
     token = set_run_state(state)
     try:
         with pytest.raises(InvalidInputs, match="capacity_mw is required and must be > 0"):

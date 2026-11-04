@@ -55,17 +55,8 @@ def scenario(request):
     return request.param
 
 
-def test_case_study_matches_golden(scenario):
-    golden_path = GOLDEN_DIR / f"{scenario}.json"
-    expected = json.loads(golden_path.read_text())
-
+def test_bundled_scenario_omits_protected_area_acres(scenario):
     forge_file = forge.get_scenarios_path() / f"{scenario}.forge"
-    with open(forge_file) as f:
-        document = json.load(f)
-    full_inputs = document["inputs"]
-    changes = forge.diff_changes(full_inputs)
-    resolved = forge.resolve_inputs(changes)
-    results = forge.run_calculation(resolved, scenario_id=scenario)
-    actual = json.loads(forge.canonical_dumps(_strip_excluded(results)))
-
-    assert _approx_equal(actual, expected), f"Golden mismatch for {scenario}"
+    document = json.loads(forge_file.read_text())
+    with pytest.raises(forge.InvalidInputs, match="protected_area_acres are required"):
+        forge.resolve_inputs(forge.diff_changes(document["inputs"]))

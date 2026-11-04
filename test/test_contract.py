@@ -8,7 +8,15 @@ import pytest
 import forge
 import forge.contract
 from forge.contract import canonical_dumps, validate_changes
-from forge.errors import UnknownInputPath
+from forge.errors import InvalidInputs, UnknownInputPath
+
+PATHS = (
+    "02_project_physical_details.terrain.protected_area_acres.forested",
+    "02_project_physical_details.terrain.protected_area_acres.scrubbed_flat",
+    "02_project_physical_details.terrain.protected_area_acres.desert_barren",
+    "02_project_physical_details.terrain.protected_area_acres.rolling_hills",
+    "02_project_physical_details.terrain.protected_area_acres.mountain",
+)
 
 
 def test_validate_changes_catches_bad_values():
@@ -104,8 +112,10 @@ def test_template_has_the_missing_leaves():
 
 
 def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
-    assert forge.resolve_inputs({}) == forge.get_defaults_template()
+    with pytest.raises(InvalidInputs, match="protected_area_acres are required"):
+        forge.resolve_inputs({})
     resolved = forge.resolve_inputs({
+        **{path: 0.0 for path in PATHS},
         "01_project_technical_details.project.capacity_mw": 1792,
         "07_outage_costs.outage.value_of_lost_load.tiers[9].max_hours": "Infinity",
         "01_project_technical_details.project.old_converter_type": "NaN",
@@ -127,6 +137,7 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
 
 def test_run_calculation_does_not_reread_bundled_yaml(monkeypatch):
     inputs = forge.resolve_inputs({
+        **{path: 0.0 for path in PATHS},
         "01_project_technical_details.project.capacity_mw": 1792,
     })
     opened: list[str] = []
@@ -148,7 +159,10 @@ def test_calculator_info_and_provenance():
     assert info["version"]
     assert info["defaults_id"] == forge.get_defaults_id()
     assert "commit" in info
-    inputs = forge.resolve_inputs({"01_project_technical_details.project.capacity_mw": 1792})
+    inputs = forge.resolve_inputs({
+        **{path: 0.0 for path in PATHS},
+        "01_project_technical_details.project.capacity_mw": 1792,
+    })
     results = forge.run_calculation(inputs, scenario_id="prov-test")
     provenance = results["provenance"]
     assert provenance["defaults_id"] == info["defaults_id"]
@@ -220,5 +234,6 @@ def test_each_case_study_round_trips_through_changes():
         document = json.loads((scenarios / name).read_text())
         inputs = document["inputs"]
         changes = forge.diff_changes(inputs)
+        changes.update({path: 0.0 for path in PATHS})
         resolved = forge.resolve_inputs(changes)
         _assert_present_leaves_match(template, resolved, inputs)
