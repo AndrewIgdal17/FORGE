@@ -3081,7 +3081,7 @@
   },
   "results": {
     "scenario_id": "CTT_Actual_Delay2",
-    "timestamp": "2026-11-09T10:16:01.320488",
+    "timestamp": "2026-11-09T10:16:17.844720",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
@@ -4723,8 +4723,8 @@
       "net_benefit_nominal": 12123459620.354496,
       "bcr_utility": 0.9853877745381627,
       "net_benefit_utility_pv": -9475486.883239865,
-      "utility_costs_pv": 648462953.7086607,
-      "utility_benefits_pv": 638987466.8254209,
+      "utility_costs_pv": 648462953.7086606,
+      "utility_benefits_pv": 638987466.8254207,
       "bcr_ratepayer": 1.9940975537580783,
       "net_benefit_ratepayer_pv": 1667810035.8031297,
       "ratepayer_costs_pv": 1677712644.4966636,
@@ -4861,7 +4861,7 @@
     "csv_equivalent": {
       "project_name": "CTT_Panhandle_345kV_1792MW_AC",
       "scenario_id": "CTT_Actual_Delay2",
-      "timestamp": "2026-11-09T10:16:01.320488",
+      "timestamp": "2026-11-09T10:16:17.844720",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -8496,7 +8496,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-11-09T10:16:01.341567",
+    "timestamp": "2026-11-09T10:16:17.864892",
     "scenario_id": "CTT_Actual_Delay2",
     "source": "ctt_panhandle_crez_case_study"
   }

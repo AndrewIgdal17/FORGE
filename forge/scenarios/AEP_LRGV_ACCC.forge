@@ -3081,7 +3081,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACCC",
-    "timestamp": "2026-11-09T10:15:04.249311",
+    "timestamp": "2026-11-09T10:16:19.220162",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACCC_Reconductoring",
@@ -4721,10 +4721,10 @@
       "bcr_societal": 0.38467813583211896,
       "net_benefit_pv": -11960191418.254553,
       "net_benefit_nominal": -15038956907.303513,
-      "bcr_utility": 0.9836575233045038,
-      "net_benefit_utility_pv": -5765985.374085844,
+      "bcr_utility": 0.9836575233045036,
+      "net_benefit_utility_pv": -5765985.374085903,
       "utility_costs_pv": 352822003.7587627,
-      "utility_benefits_pv": 347056018.3846769,
+      "utility_benefits_pv": 347056018.3846768,
       "bcr_ratepayer": 1.775434060531607,
       "net_benefit_ratepayer_pv": 1963954403.1172361,
       "ratepayer_costs_pv": 2532716194.812008,
@@ -4861,7 +4861,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACCC_Reconductoring",
       "scenario_id": "AEP_LRGV_ACCC",
-      "timestamp": "2026-11-09T10:15:04.249311",
+      "timestamp": "2026-11-09T10:16:19.220162",
       "capacity_mw": 2598,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -4913,13 +4913,13 @@
       "bcr_excluding_avoided_emissions": 0.38467813583211896,
       "bcr_excluding_wildfire_risk": 0.3855250066947767,
       "bcr_excluding_wildfire_risk_and_outage_risk": 0.394000378464185,
-      "bcr_utility": 0.9836575233045038,
+      "bcr_utility": 0.9836575233045036,
       "bcr_ratepayer": 1.775434060531607,
       "net_benefit_pv": -11960191418.254553,
       "net_benefit_excluding_avoided_emissions_pv": -11960191418.254553,
       "net_benefit_excluding_wildfire_risk_pv": -11917494117.481192,
       "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -11500295509.022406,
-      "net_benefit_utility_pv": -5765985.374085844,
+      "net_benefit_utility_pv": -5765985.374085903,
       "net_benefit_ratepayer_pv": 1963954403.1172361
     },
     "taxonomy_results": [
@@ -8459,7 +8459,7 @@
     ],
     "provenance": {
       "package": "forge-calc",
-      "version": "2.1.4",
+      "version": "2.1.5",
       "commit": null,
       "defaults_id": "sha256:3d64447faae7b872d63740501218cf7c94039a3eee43ec643f1248e2fc1ef275",
       "inputs_id": "sha256:2e60a56c0140dc86f5e8c2297025d8cb942dc7e83adf4f6a8e926f66327801ad"
@@ -8481,7 +8481,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-11-09T10:15:04.266710",
+    "timestamp": "2026-11-09T10:16:19.238558",
     "scenario_id": "AEP_LRGV_ACCC",
     "source": "case_study"
   }

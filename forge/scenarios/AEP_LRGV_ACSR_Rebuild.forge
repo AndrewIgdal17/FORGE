@@ -3081,7 +3081,7 @@
   },
   "results": {
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-    "timestamp": "2026-11-09T10:15:04.260204",
+    "timestamp": "2026-11-09T10:16:19.231170",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
@@ -4670,10 +4670,10 @@
       "bcr_societal": 0.0,
       "net_benefit_pv": -14636793398.587831,
       "net_benefit_nominal": -22875199535.80517,
-      "bcr_utility": 0.9688708360417799,
-      "net_benefit_utility_pv": -18845138.77185762,
+      "bcr_utility": 0.9688708360417797,
+      "net_benefit_utility_pv": -18845138.77185774,
       "utility_costs_pv": 605385316.3917465,
-      "utility_benefits_pv": 586540177.6198889,
+      "utility_benefits_pv": 586540177.6198888,
       "bcr_ratepayer": 0.0,
       "net_benefit_ratepayer_pv": -2425898398.9448023,
       "ratepayer_costs_pv": 2425898398.9448023,
@@ -4758,7 +4758,7 @@
     "csv_equivalent": {
       "project_name": "AEP_LRGV_345kV_ACSR_Rebuild",
       "scenario_id": "AEP_LRGV_ACSR_Rebuild",
-      "timestamp": "2026-11-09T10:15:04.260204",
+      "timestamp": "2026-11-09T10:16:19.231170",
       "capacity_mw": 1792,
       "line_length_miles": 240,
       "construction_type": "Overhead",
@@ -4810,13 +4810,13 @@
       "bcr_excluding_avoided_emissions": 0.0,
       "bcr_excluding_wildfire_risk": 0.0,
       "bcr_excluding_wildfire_risk_and_outage_risk": 0.0,
-      "bcr_utility": 0.9688708360417799,
+      "bcr_utility": 0.9688708360417797,
       "bcr_ratepayer": 0.0,
       "net_benefit_pv": -14636793398.587831,
       "net_benefit_excluding_avoided_emissions_pv": -14636793398.587831,
       "net_benefit_excluding_wildfire_risk_pv": -14594720926.37732,
       "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": -14323551205.24058,
-      "net_benefit_utility_pv": -18845138.77185762,
+      "net_benefit_utility_pv": -18845138.77185774,
       "net_benefit_ratepayer_pv": -2425898398.9448023
     },
     "taxonomy_results": [
@@ -8483,7 +8483,7 @@
     ],
     "provenance": {
       "package": "forge-calc",
-      "version": "2.1.4",
+      "version": "2.1.5",
       "commit": null,
       "defaults_id": "sha256:3d64447faae7b872d63740501218cf7c94039a3eee43ec643f1248e2fc1ef275",
       "inputs_id": "sha256:7c8d72dcbdaa52af67e18caac31e044ffff96143bf0056b89c82c383a04b383c"
@@ -8505,7 +8505,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-11-09T10:15:04.272055",
+    "timestamp": "2026-11-09T10:16:19.244408",
     "scenario_id": "AEP_LRGV_ACSR_Rebuild",
     "source": "case_study"
   }

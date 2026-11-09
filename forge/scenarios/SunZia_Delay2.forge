@@ -3081,7 +3081,7 @@
   },
   "results": {
     "scenario_id": "SunZia_Delay2",
-    "timestamp": "2026-11-09T10:15:03.365675",
+    "timestamp": "2026-11-09T10:16:18.311565",
     "input_mode": "json",
     "technical_parameters": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
@@ -4747,10 +4747,10 @@
       "net_benefit_utility_pv": -28142563.547863483,
       "utility_costs_pv": 2873195317.9752,
       "utility_benefits_pv": 2845052754.4273367,
-      "bcr_ratepayer": 3.110335997575054,
-      "net_benefit_ratepayer_pv": 7255568612.166629,
+      "bcr_ratepayer": 3.1103359975750537,
+      "net_benefit_ratepayer_pv": 7255568612.166627,
       "ratepayer_costs_pv": 3438110623.381234,
-      "ratepayer_benefits_pv": 10693679235.547863,
+      "ratepayer_benefits_pv": 10693679235.547861,
       "bcr_excluding_avoided_emissions": 0.6808882248322476,
       "net_benefit_excluding_avoided_emissions_pv": -9138094712.941486,
       "total_costs_excluding_avoided_emissions_pv": 28636031083.89756,
@@ -4883,7 +4883,7 @@
     "csv_equivalent": {
       "project_name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
       "scenario_id": "SunZia_Delay2",
-      "timestamp": "2026-11-09T10:15:03.365675",
+      "timestamp": "2026-11-09T10:16:18.311565",
       "capacity_mw": 2400,
       "line_length_miles": 550,
       "construction_type": "Overhead",
@@ -4936,13 +4936,13 @@
       "bcr_excluding_wildfire_risk": 1.7884751720729306,
       "bcr_excluding_wildfire_risk_and_outage_risk": 3.3999687997589714,
       "bcr_utility": 0.9902051338550503,
-      "bcr_ratepayer": 3.110335997575054,
+      "bcr_ratepayer": 3.1103359975750537,
       "net_benefit_pv": 21882236144.93062,
       "net_benefit_excluding_avoided_emissions_pv": -9138094712.941486,
       "net_benefit_excluding_wildfire_risk_pv": 22271709480.824875,
       "net_benefit_excluding_wildfire_risk_and_outage_risk_pv": 35659816988.81142,
       "net_benefit_utility_pv": -28142563.547863483,
-      "net_benefit_ratepayer_pv": 7255568612.166629
+      "net_benefit_ratepayer_pv": 7255568612.166627
     },
     "taxonomy_results": [
       {
@@ -8565,7 +8565,7 @@
     ],
     "provenance": {
       "package": "forge-calc",
-      "version": "2.1.4",
+      "version": "2.1.5",
       "commit": null,
       "defaults_id": "sha256:3d64447faae7b872d63740501218cf7c94039a3eee43ec643f1248e2fc1ef275",
       "inputs_id": "sha256:326d5fa78229c57347605e30fdbe4385afd59a8fc2c024c0f904e68d3aba03a8"
@@ -8587,7 +8587,7 @@
     }
   },
   "metadata": {
-    "timestamp": "2026-11-09T10:15:03.380341",
+    "timestamp": "2026-11-09T10:16:18.327730",
     "scenario_id": "SunZia_Delay2",
     "source": "sunzia_case_study"
   }
