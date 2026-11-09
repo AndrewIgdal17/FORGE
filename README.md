@@ -56,7 +56,7 @@ uv sync
 
 ## Cost Modules
 
-FORGE runs 17 calculator modules:
+FORGE runs 16 calculator modules:
 
 **Capital Costs:**
 
@@ -138,7 +138,7 @@ forge/                        # Python package (forge-calc)
 │   ├── io/                   # Input/output processing
 │   ├── utils/                # Shared utilities
 │   ├── sensitivity/          # Sensitivity runners
-│   └── tests/                # Facilitated-emissions unit tests
+│   └── tests/                # Script-level validation helpers
 ├── yamls/                    # YAML input templates (package data)
 ├── scenarios/                # Case study scenarios (package data)
 └── presets/                  # Bundled presets (package data)

@@ -58,15 +58,14 @@
         "base_year": 2026,
         "wacc_nominal": 0.0666,
         "social_discount_rate": 0.02,
-        "construction_cost_escalation_rate": 0.04,
+        "construction_cost_escalation_nominal": 0.04,
         "contingencies": {
           "conductor_contingency": 0.2,
           "structure_contingency": 0.2,
           "converter_contingency": 0.2
         },
         "afudc": {
-          "apply_afudc": true,
-          "delay_period_active_work": true
+          "apply_afudc": true
         },
         "revenue": {
           "rate_based": {
@@ -2225,53 +2224,6 @@
       }
     },
     "19_cost_timing_patterns": {
-      "cost_timing_patterns": {
-        "build_costs": {
-          "during_delay": 0.0,
-          "during_construction": 1.0,
-          "afudc_eligible": true
-        },
-        "row_acquisition": {
-          "during_delay": 0.0,
-          "during_construction": 1.0,
-          "afudc_eligible": true
-        },
-        "row_holding": {
-          "during_delay": 1.0,
-          "during_construction": 0.0,
-          "afudc_eligible": false
-        },
-        "row_rent": {
-          "during_delay": 0.0,
-          "during_construction": 0.0,
-          "afudc_eligible": false
-        },
-        "environmental_mitigation_base": {
-          "during_delay": 0.0,
-          "during_construction": 1.0,
-          "afudc_eligible": true
-        },
-        "environmental_mitigation_credits": {
-          "during_delay": 0.0,
-          "during_construction": 1.0,
-          "afudc_eligible": true
-        },
-        "delay_costs": {
-          "during_delay": 1.0,
-          "during_construction": 0.0,
-          "afudc_eligible": false
-        },
-        "operations_and_maintenance": {
-          "during_delay": 0.0,
-          "during_construction": 0.0,
-          "afudc_eligible": false
-        },
-        "construction_insurance": {
-          "during_delay": 0.0,
-          "during_construction": 1.0,
-          "afudc_eligible": true
-        }
-      },
       "construction_spending_profiles": {
         "5": [
           0.01,
@@ -4696,14 +4648,6 @@
           64490770.14230083
         ]
       },
-      "displacement_delay": {
-        "displacement_delay_cost_pv": 0.0,
-        "displacement_delay_cost_nominal": 0.0,
-        "co2_pv": 0.0,
-        "sox_pv": 0.0,
-        "nox_pv": 0.0,
-        "energy_delivered_annual_mwh": 0.0
-      },
       "line_loss": {
         "annual_cost": 89448448.83810689,
         "total_nominal": 4472422441.905344,
@@ -4739,8 +4683,6 @@
         "delivered_benefit_nominal": 0.0,
         "delivered_benefit_pv": 0.0,
         "energy_delivered_annual_mwh_yr": 0.0,
-        "congestion_delay_cost_nominal": 0.0,
-        "congestion_delay_cost_pv": 0.0,
         "effective_capacity_relief_mw": 0.0,
         "constrained_hours": 1200.0,
         "relief_mw": 0.0,
@@ -4761,7 +4703,6 @@
       "reporting_category_soft_pv": 1605639423.8313744,
       "reporting_category_risk_pv": 309078145.74762625,
       "reporting_category_emissions_pv": 10289171026.66392,
-      "fac_emissions_project_pv": 0.0,
       "displacement_avoided_benefit_pv": 0.0,
       "benefits_remedial_pv": 0.0,
       "benefits_enabling_pv": 0.0
@@ -4780,18 +4721,15 @@
       "conductor_loss_pv": 1440012667.024141,
       "converter_loss_pv": 0.0,
       "emissions_comp_cost_pv": 10289171026.66392,
-      "fac_emissions_project_pv": 0.0,
       "displacement_avoided_benefit_pv": 0.0,
       "wildfire_pv": 37908424.61088712,
       "outage_pv": 271169721.13673913,
       "delay_cost_pv": 18845138.771857657,
-      "congestion_delay_cost_pv": 0.0,
       "congestion_benefit_pv": 0.0,
       "delivered_benefit_pv": 0.0,
       "delivered_benefit_nominal": 0.0,
       "capacity_value_benefit_pv": 0.0,
       "capital_recovery_pv": 442146931.67963916,
-      "emissions_displacement_delay_pv": 0.0,
       "energy_losses_nominal": 4472422441.905344,
       "total_costs_pv": 12651588016.5659,
       "total_costs_nominal": 21113048639.644802,
@@ -4926,8 +4864,6 @@
       "outage_pv": 271169721.13673913,
       "risk_costs_pv": 309078145.74762625,
       "delay_cost_pv": 18845138.771857657,
-      "congestion_delay_cost_pv": 0.0,
-      "emissions_displacement_delay_pv": 0.0,
       "delay_costs_pv": 18845138.771857657,
       "emissions_comp_cost_pv": 10289171026.66392,
       "energy_losses_pv": 1440012667.024141,
@@ -4951,8 +4887,6 @@
       "total_benefits_pv": 0.0,
       "benefits_remedial_pv": 0.0,
       "benefits_enabling_pv": 0.0,
-      "fac_emissions_project_pv": 0.0,
-      "fac_emissions_noline_pv": 0,
       "bcr_societal": 0.0,
       "bcr_excluding_avoided_emissions": 0.0,
       "bcr_excluding_wildfire_risk": 0.0,

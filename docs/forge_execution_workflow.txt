@@ -36,7 +36,7 @@ flowchart TD
     Conditional5 -->|"No"| AddOandM["Add: forge.scripts.calc.oandm"]
     Conditional5 -->|"Yes"| Conditional6
     AddOandM --> Conditional6{"--no_emissions?"}
-    Conditional6 -->|"No"| AddEmissions["Add: forge.scripts.calc.emissions<br/>forge.scripts.calc.facilitated_emissions<br/>forge.scripts.calc.displacement_delay_cost"]
+    Conditional6 -->|"No"| AddEmissions["Add: forge.scripts.calc.emissions<br/>forge.scripts.calc.avoided_emissions"]
     Conditional6 -->|"Yes"| Conditional7
     AddEmissions --> Conditional7{"--no_linelosses?"}
     Conditional7 -->|"No"| AddLineLosses["Add: forge.scripts.calc.line_loss_costs"]

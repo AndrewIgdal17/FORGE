@@ -27,14 +27,12 @@ This document covers the methodology for the Framework for Open Reproducible Gri
   - [Thermal line loss costs (3.a)](#thermal-line-loss-costs-3a)
   - [Emissions costs (3.b)](#emissions-costs-3b)
   - [Residual exceedance cost (3.c)](#residual-exceedance-cost-3c)
-  - [Facilitated emissions and avoided-emissions benefit](#facilitated-emissions-and-avoided-emissions-benefit)
+  - [Avoided-emissions benefit](#avoided-emissions-benefit)
 - [Risk costs](#risk-costs)
   - [Expected cost of wildfires (4.a)](#expected-cost-of-wildfires-4a)
   - [Expected cost of outages (4.b)](#expected-cost-of-outages-4b)
 - [Delay costs](#delay-costs)
   - [Base delay costs (5.a)](#base-delay-costs-5a)
-  - [Congestion delay costs (5.b)](#congestion-delay-costs-5b)
-  - [Displacement delay cost (5.c)](#displacement-delay-cost-5c)
 - [Benefits](#benefits)
   - [Congestion Reduction Benefits](#congestion-reduction-benefits)
   - [Benefit of Delivered Energy](#benefit-of-delivered-energy)
@@ -121,8 +119,8 @@ $$
 **When each rate is used**
 
 - **$r_{WACC,nom}$:** Utility/regulatory perspective (e.g. AFUDC rate when applicable).
-- **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, energy loss costs, benefits, revenue; delay and congestion delay costs.
-- **$r_{social}$:** Societal PV of externality costs: loss-compensation emissions, facilitated emissions, expected wildfire cost, expected outage cost.
+- **$r_{WACC,real}$:** Societal PV of capital, O&M, insurance, ROW rent, energy loss costs, benefits, revenue, and base delay costs.
+- **$r_{social}$:** Societal PV of externality costs: loss-compensation emissions, the avoided-emissions benefit, expected wildfire cost, expected outage cost.
 
 **Alignment with Paper 1 Methods (discounting).** The split above—real WACC for market-valued project cash flows versus the social discount rate for externality streams—is the same structure described in the paper’s Methods (discounting subsection). This file remains the implementation reference for symbols and module boundaries; the paper remains the public-facing statement of scope.
 
@@ -1038,7 +1036,7 @@ $$
 Emissions cost is not capitalized; there is no AFUDC term. It does not enter rate base.
 
 **Societal perspective**
-The relevant measure is real (present value) total emissions cost, $C_{emissions,real}$, using $r_{social}$. This is an externality cost; unlike market-tracked costs (e.g. thermal line loss cost 3.a), it is discounted at the social discount rate. Facilitated (generation-mix / delivered-energy) emissions PV is also discounted at $r_{social}$, the same externality treatment as loss-compensation emissions.
+The relevant measure is real (present value) total emissions cost, $C_{emissions,real}$, using $r_{social}$. This is an externality cost; unlike market-tracked costs (e.g. thermal line loss cost 3.a), it is discounted at the social discount rate. The avoided-emissions benefit is discounted at $r_{social}$, the same externality treatment as loss-compensation emissions.
 
 **Link to Energy losses**
 $E_{loss}$ is defined in the Energy losses section. Emissions cost (3.b) uses the share $\alpha$ of that loss assumed to be compensated by additional generation ($TEC = \alpha \times E_{loss}$), then applies the energy mix, emission intensities, and societal costs per kg to obtain $C_{\tau}$ and hence $C_{emissions,nominal}$ and $C_{emissions,real}$.
@@ -1064,14 +1062,14 @@ $C_{residual,nominal}$ and $C_{residual,real}$ (PV) follow the same discounting 
 
 ---
 
-### Facilitated emissions and avoided-emissions benefit
+### Avoided-emissions benefit
 
-`facilitated_emissions.py` computes operational displacement avoided emissions $B_{\text{avoided,emissions}}$. It compares two generation-mix trajectories over delivered energy $E_{\text{delivered,annual}}$, both starting from the same grid state at COD, discounted at $r_{social}$:
+The avoided-emissions benefit $B_{\text{avoided,emissions}}$ compares two generation-mix trajectories over delivered energy $E_{\text{delivered,annual}}$. Both start from the same grid state at COD and are discounted at $r_{social}$:
 
-- **No-line:** mix evolves at the without-line rate.
-- **Project-line:** mix evolves at the with-line rate.
+- **No-line:** the mix evolves at the without-line rate.
+- **With-line:** the mix evolves at the with-line rate.
 
-$B_{\text{avoided,emissions}} = C_{\text{fac,noline}} - C_{\text{fac,withline}}$. Facilitated emissions on the project path is an intermediate (reporting-only) quantity, not a BCR cost. Loss-compensation emissions (3.b) remain a separate cost stream.
+$B_{\text{avoided,emissions}} = C_{\text{noline}} - C_{\text{withline}}$. Loss-compensation emissions (3.b) remain a separate cost stream.
 
 ---
 
@@ -1306,82 +1304,6 @@ Base delay costs are not capitalized; there is no AFUDC term. They do not enter 
 **Societal perspective**
 The relevant measure is real (present value) base delay cost, $C_{delay,real}$, using $r_{WACC,real}$ (from financing details). This aligns with the PV of capital and other cost streams in FORGE.
 
-**Link to other delay cost categories**
-5.b (congestion delay costs) is the opportunity cost of foregone congestion relief during delay and construction; see that section. 5.c (displacement delay cost) is the opportunity cost of foregone emissions displacement during delay.
-
----
-
-### Congestion delay costs (5.b)
-
-Congestion delay costs are the **opportunity cost** of congestion that is not relieved while the project is in the delay and construction period. In each of those years, the same congestion relief (MWh/yr) that the project would provide once in service is valued at the same price ($/MWh); that annual value is the cost of delay. So the **annual** congestion delay cost equals the **annual congestion reduction benefit**. The cost stream runs over $T_{delay} + T_{construction}$ years (years 1 through $T_{delay} + T_{construction}$). Present value is a level annuity over that period, discounted at real WACC. Congestion delay costs are not AFUDC-eligible and do not enter rate base; they are societal/opportunity costs.
-
-**Conceptually**
-This cost answers: "What congestion benefit do we give up each year we are delayed?" Effective capacity relief is the same as in the Congestion Reduction Benefits section. The same annual $ amount is used as the raw congestion benefit, so there is no double-count with post-COD benefits.
-
-**Variables**
-
-| Variable                      | Meaning / units                                 | Notes                                                                                                                                                   |
-| ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $B_{congestion,annual}$ | Annual congestion reduction benefit, $/yr | Same formula as in Congestion Reduction Benefits: congestion relief MWh/yr × $\gamma_{congestion}$. |
-| $C_{cong,delay,annual}$       | Congestion delay cost (annual), $/yr            | $C_{cong,delay,annual} = B_{congestion,annual}\text{ (raw)}$.                                                                                           |
-| $T_{delay}$                   | Delay years                                     | From project technical details.                                                                                                                         |
-| $T_{construction}$            | Construction years                              | From project technical details.                                                                                                                         |
-| $r_{WACC,real}$               | Real WACC, decimal                              | Used to discount the delay cost stream.                                                                                                                 |
-| $C_{cong,delay,nominal}$      | Congestion delay cost (nominal), $              | Total over delay + construction; undiscounted.                                                                                                          |
-| $C_{cong,delay,real}$         | Congestion delay cost (real / PV), $            | PV of level annuity over $T_{delay} + T_{construction}$ years at $r_{WACC,real}$, starting at year 1.                                                    |
-
-**Equations**
-
-1. Annual congestion delay cost
-
-The annual opportunity cost is the same as the raw annual congestion reduction benefit (congestion relief × $\gamma_{congestion}$; see Congestion Reduction Benefits):
-
-$$
-C_{cong,delay,annual} = B_{congestion,annual}\text{ (raw)}.
-
-
-$$
-
-2. Nominal total congestion delay cost
-
-$$
-C_{cong,delay,nominal} = C_{cong,delay,annual} \times (T_{delay} + T_{construction}).
-
-
-$$
-
-3. Real (present value) congestion delay cost
-
-Level annuity over years $t = 1, \ldots, T_{delay} + T_{construction}$, discounted at $r_{WACC,real}$:
-
-$$
-C_{cong,delay,real} = \sum_{t=1}^{T_{delay} + T_{construction}} \frac{C_{cong,delay,annual}}{(1+r_{WACC,real})^t} = C_{cong,delay,annual} \times \frac{1 - (1+r_{WACC,real})^{-(T_{delay} + T_{construction})}}{r_{WACC,real}} \quad (r_{WACC,real} \neq 0).
-
-
-$$
-
-(If $r_{WACC,real} = 0$, $C_{cong,delay,real} = C_{cong,delay,annual} \times (T_{delay} + T_{construction})$.)
-
----
-
-**Regulatory perspective (AFUDC)**
-Congestion delay costs are not capitalized; there is no AFUDC term. They do not enter rate base.
-
-**Societal perspective**
-The relevant measure is real (present value) congestion delay cost, $C_{cong,delay,real}$, using $r_{WACC,real}$. This is the PV of foregone congestion relief during delay and construction.
-
-**Link to Congestion Reduction Benefits**
-The same effective capacity relief defines $B_{congestion,annual}$. 5.b uses that annual value (raw) as the cost per year of delay/construction, so benefits (post-COD) and congestion delay cost (during delay/construction) are consistent and not double-counted.
-
-**Link to Base delay costs (5.a)**
-5.a is out-of-pocket delay costs (legal, admin, etc.). 5.b is the opportunity cost of foregone congestion relief during the same period. Both use $T_{delay}$; 5.b uses $T_{delay} + T_{construction}$ as the cost duration and $r_{WACC,real}$ for PV.
-
----
-
-### Displacement delay cost (5.c)
-
-`displacement_delay_cost.py` computes the displacement delay cost during the pre-COD delay period: every delay year is a year in which dirtier generation runs instead of being displaced by the project's cleaner mix. Both trajectories start from the same initial grid mix at year 0 (without-line at the pre-COD rate; hypothetical with-line at the post-COD rate). The year-by-year emissions difference is valued at year-specific social costs and discounted at $r_{social}$. The cost is not AFUDC-eligible and does not enter rate base.
-
 ## Reporting framework
 
 Total costs are organized into **four reporting categories** for the appendix and results presentation:
@@ -1389,7 +1311,7 @@ Total costs are organized into **four reporting categories** for the appendix an
 | Category | Definition | Components |
 |--------|-----------|-----------|
 | $C_{\text{hard}}$ | Capital | Build + ROW capital + environmental mitigation |
-| $C_{\text{soft}}$ | Operational + energy losses + delay | O&M + insurance + rent + line losses + residual exceedance + base delay + congestion delay + displacement delay |
+| $C_{\text{soft}}$ | Operational + energy losses + delay | O&M + insurance + rent + line losses + residual exceedance + base delay |
 | $C_{\text{risk}}$ | Expected losses from uncertain events | $C_{\text{wf}} + C_{\text{outage}}$ |
 | $C_{\text{emissions}}$ | Social cost of emissions | Loss-compensation emissions |
 
