@@ -22,11 +22,11 @@ from forge.scripts.utils.smart_loaders import (
 )
 from forge.scripts.utils.financial_utils import (
     calculate_present_value,
-    calculate_afudc_rate,
-    calculate_afudc_capitalized_cost,
+    capitalize_yearly_spending,
     validate_discount_rate,
     calculate_construction_start_year,
 )
+from forge.scripts.utils.streams import weighted
 from forge.scripts.utils.run_context import get_run_context, add_derived
 
 logger = logging.getLogger(__name__)
@@ -177,35 +177,22 @@ def main() -> None:
     # Load financing parameters for discounting
     financing = load_financing_details()
 
-    # Load AFUDC configuration and timing patterns
-    from forge.scripts.utils.financial_utils import load_afudc_setup
-    afudc_setup = load_afudc_setup()
-
-    # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-    if afudc_setup.apply_afudc:
-        # Base mitigation costs
-        base_cap, base_afudc = calculate_afudc_capitalized_cost(
-            results["base_cost"],
-            afudc_setup.timing_patterns["environmental_mitigation_base"],
-            project_details.delay_years,
-            project_details.construction_years,
-            afudc_setup.afudc_rate,
-            afudc_setup.delay_active,
-            spending_profiles=afudc_setup.spending_profiles,
-        )
-
-        # Credit costs (wetlands + habitat combined)
-        credits_cap, credits_afudc = calculate_afudc_capitalized_cost(
-            results["total_credits"],
-            afudc_setup.timing_patterns["environmental_mitigation_credits"],
-            project_details.delay_years,
-            project_details.construction_years,
-            afudc_setup.afudc_rate,
-            afudc_setup.delay_active,
-            spending_profiles=afudc_setup.spending_profiles,
-        )
-
-        total_capitalized = base_cap + credits_cap
+    base_yearly = weighted(
+        results["base_cost"], ctx.spending_weights, ctx.t_start, ctx.horizon
+    )
+    credits_yearly = weighted(
+        results["total_credits"], ctx.spending_weights, ctx.t_start, ctx.horizon
+    )
+    base_cap = capitalize_yearly_spending(
+        base_yearly, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
+    )
+    credits_cap = capitalize_yearly_spending(
+        credits_yearly, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
+    )
+    total_capitalized = base_cap + credits_cap
+    if ctx.apply_afudc:
+        base_afudc = base_cap - results["base_cost"]
+        credits_afudc = credits_cap - results["total_credits"]
         total_afudc = base_afudc + credits_afudc
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
@@ -261,10 +248,9 @@ def main() -> None:
     logger.info(f"  TOTAL NOMINAL COST: ${results['total']:,.2f}")
     logger.info("")
 
-    if afudc_setup.apply_afudc:
+    if ctx.apply_afudc:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        logger.info(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
-        logger.info(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
+        logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
         logger.info("")
         logger.info(f"  Base Mitigation Capitalized: ${base_cap:,.2f}")
         logger.info(f"    AFUDC on Base: ${base_afudc:,.2f}")
@@ -299,7 +285,7 @@ def main() -> None:
     # Prepare results dictionary
     csv_results = {
         "total_nominal": results["total"],
-        "total_afudc": total_capitalized if afudc_setup.apply_afudc else 0,
+        "total_afudc": total_capitalized,
         "total_pv": total_pv,
         "base_cost_nominal": results["base_cost"],
         "base_cost_pv": base_cost_pv,

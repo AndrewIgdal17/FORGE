@@ -375,48 +375,7 @@ _TAB3: list[InputField] = [
        yaml_section="03_financing", field_path="financial.afudc.apply_afudc",
        label="Apply AFUDC", help_text="Toggle AFUDC capitalization",
        input_type="toggle", tier="advanced", display_order=1),
-    _f("delay_period_active_work", taxonomy_id="financial_afudc", input_tab="financial",
-       sub_tab="afudc", condition="always_hidden",
-       yaml_section="03_financing", field_path="financial.afudc.delay_period_active_work",
-       label="Delay Period Active Work", help_text="AFUDC accrues during delay if active work continues",
-       input_type="toggle", tier="advanced", display_order=2),
 ]
-
-# --- Cost timing patterns (27 fields: 9 categories × 3 fields) ---
-# Plus 26 construction spending-profile year weights, appended below.
-_TIMING_CATEGORIES = [
-    ("build_costs", "Build Costs"), ("row_acquisition", "ROW Acquisition"),
-    ("row_holding", "ROW Holding"), ("row_rent", "ROW Rent"),
-    ("environmental_mitigation_base", "Environmental Mitigation Base"),
-    ("environmental_mitigation_credits", "Environmental Mitigation Credits"),
-    ("delay_costs", "Delay Costs"), ("operations_and_maintenance", "O&M"),
-    ("construction_insurance", "Construction Insurance"),
-]
-for _ci, (_cat, _cat_label) in enumerate(_TIMING_CATEGORIES):
-    _base = f"cost_timing_patterns.{_cat}"
-    _TAB3.append(_f(
-        f"timing_{_cat}_delay", taxonomy_id="financial_timing_patterns", input_tab="financial",
-        sub_tab="afudc", condition="always_hidden",
-        yaml_section="19_cost_timing_patterns", field_path=f"{_base}.during_delay",
-        label="During Delay", help_text=f"Fraction of {_cat_label} cost incurred during delay period",
-        section_label=_cat_label, input_type="percent",
-        tier="advanced", display_order=_ci * 3 + 1,
-        validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
-    _TAB3.append(_f(
-        f"timing_{_cat}_construction", taxonomy_id="financial_timing_patterns", input_tab="financial",
-        sub_tab="afudc", condition="always_hidden",
-        yaml_section="19_cost_timing_patterns", field_path=f"{_base}.during_construction",
-        label="During Construction", help_text=f"Fraction of {_cat_label} cost incurred during construction",
-        section_label=_cat_label, input_type="percent",
-        tier="advanced", display_order=_ci * 3 + 2,
-        validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
-    _TAB3.append(_f(
-        f"timing_{_cat}_afudc", taxonomy_id="financial_timing_patterns", input_tab="financial",
-        sub_tab="afudc", condition="always_hidden",
-        yaml_section="19_cost_timing_patterns", field_path=f"{_base}.afudc_eligible",
-        label="AFUDC Eligible", help_text=f"Whether {_cat_label} costs are AFUDC-eligible (compounded to COD)",
-        section_label=_cat_label, input_type="toggle",
-        tier="advanced", display_order=_ci * 3 + 3))
 
 # Construction spending profiles (26 year-weights: 5 + 6 + 7 + 8).
 _SPENDING_HELP = (
@@ -424,7 +383,7 @@ _SPENDING_HELP = (
     "one S-curve and resamples to the construction duration. A 1-year project "
     "ignores these weights."
 )
-_spending_order = 28
+_spending_order = 1
 for _duration, _years in (("5", 5), ("6", 6), ("7", 7), ("8", 8)):
     for _year in range(_years):
         _TAB3.append(_f(

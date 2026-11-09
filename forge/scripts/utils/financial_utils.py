@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 from typing import Dict, Any, Tuple
 from .constants import MIN_DISCOUNT_RATE, TIMING_PATTERN_TOLERANCE, DISCOUNT_GROWTH_EQUALITY_TOLERANCE, GROWTH_RATE_TOLERANCE
 
@@ -380,6 +379,37 @@ def get_construction_spending_weights(
     return weights_out
 
 
+def capitalize_yearly_spending(
+    yearly: list[float],
+    t_cod: int,
+    afudc_rate: float,
+    apply_afudc: bool,
+) -> float:
+    """Capitalize construction-period spending to COD.
+
+    Year ``t`` is ``yearly[t - 1]``. Each amount in a year ``t < t_cod``
+    compounds from mid-year to the end of year ``t_cod - 1`` when
+    ``apply_afudc`` is true. Otherwise those amounts are summed with no
+    financing allowance. A non-zero amount in year ``t >= t_cod`` is an error.
+    """
+    for t, amount in enumerate(yearly, start=1):
+        if t >= t_cod and amount != 0:
+            raise ValueError(
+                f"spending in year {t} is at or after COD year {t_cod}"
+            )
+    total = 0.0
+    last_construction_year = t_cod - 1
+    for t, amount in enumerate(yearly, start=1):
+        if t >= t_cod:
+            break
+        if apply_afudc:
+            years_to_cod = last_construction_year - t + 0.5
+            total += amount * (1.0 + afudc_rate) ** years_to_cod
+        else:
+            total += amount
+    return total
+
+
 def calculate_afudc_capitalized_cost(
     nominal_cost: float,
     timing_pattern: Dict[str, Any],
@@ -487,49 +517,3 @@ def calculate_afudc_capitalized_cost(
     afudc_amount = capitalized_cost - nominal_cost
 
     return capitalized_cost, afudc_amount
-
-
-@dataclass
-class AFUDCSetup:
-    """AFUDC configuration and parameters."""
-    timing_patterns: Dict[str, Any]
-    apply_afudc: bool
-    delay_active: bool
-    afudc_rate: float
-    afudc_source: str
-    spending_profiles: dict[str, list[float]] | None = None
-
-
-def load_afudc_setup() -> AFUDCSetup:
-    """
-    Load all AFUDC-related configuration and parameters.
-    
-    Returns:
-        AFUDCSetup dataclass containing:
-            - timing_patterns: Cost timing patterns dictionary
-            - apply_afudc: Whether to apply AFUDC
-            - delay_active: Whether delay period has active work
-            - afudc_rate: Calculated AFUDC rate
-            - afudc_source: Description of AFUDC rate source
-    """
-    from .smart_loaders import (
-        load_cost_timing_patterns,
-        load_afudc_config,
-        get_financing_data_raw,
-    )
-    
-    cost_timing_data = load_cost_timing_patterns()
-    timing_patterns = cost_timing_data["cost_timing_patterns"]
-    spending_profiles = cost_timing_data.get("construction_spending_profiles")
-    apply_afudc, delay_active = load_afudc_config()
-    financing_yaml = get_financing_data_raw()
-    afudc_rate, afudc_source = calculate_afudc_rate(financing_yaml)
-    
-    return AFUDCSetup(
-        timing_patterns=timing_patterns,
-        apply_afudc=apply_afudc,
-        delay_active=delay_active,
-        afudc_rate=afudc_rate,
-        afudc_source=afudc_source,
-        spending_profiles=spending_profiles,
-    )

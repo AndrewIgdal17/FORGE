@@ -193,10 +193,10 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Rate-based revenue: enabled flag, FERC declining-balance formula."),
     TaxonomyItem("financial_afudc", "utility", "financial", "afudc",
                  "AFUDC Configuration", "per_perspective", None, 5,
-                 "AFUDC application toggle and delay period active work flag."),
+                 "AFUDC application toggle."),
     TaxonomyItem("financial_timing_patterns", "utility", "financial", "timing_patterns",
-                 "Cost Timing Patterns", "per_perspective", None, 6,
-                 "Spending split by cost component for AFUDC capitalization."),
+                 "Construction Spending Profiles", "per_perspective", None, 6,
+                 "Year-by-year weights that spread construction spending."),
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}

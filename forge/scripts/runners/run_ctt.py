@@ -55,7 +55,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     fin["wacc_nominal"] = 0.0626
     fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True
-    fin["afudc"]["delay_period_active_work"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 05: Delay Costs (Scenario A: streamlined CREZ permitting) ---

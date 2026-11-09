@@ -24,17 +24,14 @@ from forge.scripts.utils.smart_loaders import (
     load_row_widths,
     load_row_details,
     load_financing_details,
-    load_cost_timing_patterns,
-    load_afudc_config,
-    get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import (
     calculate_nominal_growing_series,
-    calculate_afudc_rate,
-    calculate_afudc_capitalized_cost,
+    capitalize_yearly_spending,
     unshifted_growing_annuity_pv,
     validate_discount_rate,
 )
+from forge.scripts.utils.streams import weighted
 
 logger = logging.getLogger(__name__)
 
@@ -140,11 +137,6 @@ def main() -> None:
     # Load financing parameters
     financing = load_financing_details()
 
-    # Load AFUDC configuration and timing patterns
-    from forge.scripts.utils.financial_utils import load_afudc_setup
-
-    afudc_setup = load_afudc_setup()
-
     # Define timing for annual ROW payment (rent). Lease/license rent runs from
     # year 1 (rent_start_year == 1); other agreement types start rent at
     # calculate_construction_start_year(delay_years) == delay_years + 1, i.e.
@@ -175,18 +167,24 @@ def main() -> None:
         total_holding_cost + acquisition_cost_used + total_rent_cost
     )
 
-    # Only acquisition is AFUDC-eligible (appendix L392–393, L475–476).
-    if afudc_setup.apply_afudc and acquisition_cost_used != 0:
-        acquisition_capitalized, afudc_on_acquisition = (
-            calculate_afudc_capitalized_cost(
-                acquisition_cost_used,
-                afudc_setup.timing_patterns["row_acquisition"],
-                project_details.delay_years,
-                project_details.construction_years,
-                afudc_setup.afudc_rate,
-                afudc_setup.delay_active,
-                spending_profiles=afudc_setup.spending_profiles,
-            )
+    # Only acquisition is capitalized. Holding and rent stay outside rate base.
+    if acquisition_cost_used != 0:
+        yearly_acquisition = weighted(
+            acquisition_cost_used,
+            ctx.spending_weights,
+            ctx.t_start,
+            ctx.horizon,
+        )
+        acquisition_capitalized = capitalize_yearly_spending(
+            yearly_acquisition,
+            ctx.t_cod,
+            ctx.afudc_rate,
+            ctx.apply_afudc,
+        )
+        afudc_on_acquisition = (
+            acquisition_capitalized - acquisition_cost_used
+            if ctx.apply_afudc
+            else 0.0
         )
     else:
         acquisition_capitalized = acquisition_cost_used
@@ -266,13 +264,10 @@ def main() -> None:
     logger.info(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
     logger.info("")
 
-    if afudc_setup.apply_afudc and acquisition_cost_used != 0:
+    if ctx.apply_afudc and acquisition_cost_used != 0:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         logger.info(
-            f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})"
-        )
-        logger.info(
-            f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}"
+            f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})"
         )
         logger.info("")
         logger.info(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")

@@ -22,10 +22,10 @@ from forge.scripts.utils.smart_loaders import (
 )
 from forge.scripts.utils.financial_utils import (
     calculate_present_value,
-    calculate_afudc_rate,
-    calculate_afudc_capitalized_cost,
+    capitalize_yearly_spending,
     calculate_construction_start_year,
 )
+from forge.scripts.utils.streams import weighted
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
@@ -326,25 +326,23 @@ def main() -> None:
             "construction_cost_escalation_factor": escalation_factor,
         })
 
-    # Load AFUDC configuration and timing patterns
-    from forge.scripts.utils.financial_utils import load_afudc_setup
-    afudc_setup = load_afudc_setup()
-
-    # ===== REGULATORY PERSPECTIVE: AFUDC Capitalization =====
-    if afudc_setup.apply_afudc:
-        # Build costs are AFUDC-eligible and occur during construction
-        (
-            capitalized_cost_with_contingencies,
-            afudc_amount,
-        ) = calculate_afudc_capitalized_cost(
-            costs.total_cost_with_contingencies,
-            afudc_setup.timing_patterns["build_costs"],
-            project_details.delay_years,
-            project_details.construction_years,
-            afudc_setup.afudc_rate,
-            afudc_setup.delay_active,
-            spending_profiles=afudc_setup.spending_profiles,
-        )
+    yearly_build = weighted(
+        costs.total_cost_with_contingencies,
+        ctx.spending_weights,
+        ctx.t_start,
+        ctx.horizon,
+    )
+    capitalized_cost_with_contingencies = capitalize_yearly_spending(
+        yearly_build,
+        ctx.t_cod,
+        ctx.afudc_rate,
+        ctx.apply_afudc,
+    )
+    afudc_amount = (
+        capitalized_cost_with_contingencies - costs.total_cost_with_contingencies
+        if ctx.apply_afudc
+        else 0.0
+    )
 
     # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
     # Build costs: spread evenly over construction period
@@ -384,10 +382,9 @@ def main() -> None:
         logger.info(f"\n  Delay Escalation: {construction_escalation_real:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
     logger.info("")
 
-    if afudc_setup.apply_afudc:
+    if ctx.apply_afudc:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        logger.info(f"  AFUDC Rate: {afudc_setup.afudc_rate:.2%} ({afudc_setup.afudc_source})")
-        logger.info(f"  Delay Period Active Work: {'Yes' if afudc_setup.delay_active else 'No'}")
+        logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
         logger.info("")
         logger.info(
             f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
@@ -422,7 +419,7 @@ def main() -> None:
     # Prepare results dictionary
     results = {
         "total_nominal": costs.total_cost_with_contingencies,
-        "total_afudc": capitalized_cost_with_contingencies if afudc_setup.apply_afudc else 0,
+        "total_afudc": capitalized_cost_with_contingencies,
         "total_pv": build_cost_pv,
         "conductor_nominal": costs.conductor_cost_with_contingencies,
         "structure_nominal": costs.structure_cost_with_contingencies,
