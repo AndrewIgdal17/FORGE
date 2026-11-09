@@ -16,13 +16,29 @@ SCENARIOS_DIR = REPO_ROOT / "scenarios"
 logger = logging.getLogger(__name__)
 
 
+_PROTECTED_ACRE_KEYS = (
+    "forested",
+    "scrubbed_flat",
+    "desert_barren",
+    "rolling_hills",
+    "mountain",
+)
+
+
 def build_default_inputs() -> dict[str, Any]:
     """Return the canonical defaults template.
 
     Same dict shape as a .forge file's ``inputs`` key: YAML stems mapped to
-    their parsed contents.
+    their parsed contents. Case-study runners zero ``protected_area_acres``
+    so the required-field check passes when a study has no protected land.
     """
-    return get_defaults_template()
+    inputs = get_defaults_template()
+    acres = inputs["02_project_physical_details"]["terrain"].setdefault(
+        "protected_area_acres", {}
+    )
+    for key in _PROTECTED_ACRE_KEYS:
+        acres[key] = 0.0
+    return inputs
 
 
 def run_scenario(inputs: dict, scenario_id: str) -> dict:
@@ -38,11 +54,22 @@ def run_scenario(inputs: dict, scenario_id: str) -> dict:
 def save_forge_file(
     inputs: dict, results: dict, name: str, scenario_id: str, source: str = "case_study"
 ) -> Path:
-    """Save a complete .forge file with inputs, results, and metadata."""
+    """Save a complete .forge file with inputs, results, and metadata.
+
+    Bundled scenarios keep ``protected_area_acres`` null so loading them
+    through ``diff_changes`` / ``resolve_inputs`` still requires an explicit
+    acreage choice. Runners zero those fields only for the calculation.
+    """
+    saved_inputs = json.loads(json.dumps(inputs, default=str))
+    acres = saved_inputs["02_project_physical_details"]["terrain"].setdefault(
+        "protected_area_acres", {}
+    )
+    for key in _PROTECTED_ACRE_KEYS:
+        acres[key] = None
     forge = {
         "version": "1.0",
         "customName": name,
-        "inputs": inputs,
+        "inputs": saved_inputs,
         "results": results,
         "metadata": {
             "timestamp": datetime.now().isoformat(),
