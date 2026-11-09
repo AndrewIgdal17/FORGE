@@ -216,7 +216,13 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             )
         row_agreement_type = project_data.get("row_agreement_type")
         if row_agreement_type is None:
-            row_agreement_type = "permanent_easement_new"
+            # Methodology §II.3: no agreement chosen means a new easement for
+            # greenfield and a lease of the existing corridor otherwise.
+            row_agreement_type = (
+                "permanent_easement_new"
+                if project_type == "greenfield"
+                else "lease_license_existing"
+            )
         if row_agreement_type == "fee_simple":
             raise InvalidInputs(
                 "fee_simple is no longer an agreement type. Choose another agreement."

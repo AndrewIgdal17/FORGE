@@ -399,17 +399,20 @@ _TAB2.append(_f(
     yaml_section="01_project_technical_details", field_path="project.row_agreement_type",
     label="ROW agreement",
     help_text=(
-        "Default is new permanent easement (acquisition and holding, no rent). "
-        "Lease is rent from year 1 with no acquisition/holding. Federal hybrid is "
-        "all three, rent from start of construction. Lease and federal hybrid apply "
-        "only when selected."
+        "New permanent easement: acquisition and holding, no rent. Lease or license "
+        "of an existing corridor: rent from year 1, no acquisition or holding. "
+        "Federal hybrid: acquisition, holding, and rent from the start of "
+        "construction. If none is chosen, greenfield takes a new easement and "
+        "reconductoring or rebuild takes a lease."
     ),
     input_type="dropdown", tier="working", display_order=0,
     validation={"options": [
         "permanent_easement_new",
         "federal_hybrid",
         "lease_license_existing",
-    ]},
+    ], "retired_options": {
+        "fee_simple": "fee_simple is no longer an agreement type. Choose another agreement.",
+    }},
     sub_tab="rights-of-way"))
 
 # ROW zones (15 zones × 4 fields = 60) — rendered on Project Technical Details / Routing / Rights of Way

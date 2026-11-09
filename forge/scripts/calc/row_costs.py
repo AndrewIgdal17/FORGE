@@ -104,7 +104,7 @@ def main() -> None:
 
     # ROW agreement type: drives which terms apply (mutual exclusivity)
     agreement_type = (
-        getattr(project_details, "row_agreement_type", None) or "permanent_easement_new"
+        project_details.row_agreement_type
     )
     # Explicit binary selectors (appendix §Capital ROW Eq 5, §Op ROW Rent Eq 1).
     # Component costs stay ungated; selectors apply at assembly of totals.

@@ -15,7 +15,7 @@ project:
   value_of_load_per_mwh: 0 # $/MWh (>= 0)
 
   project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
-  row_agreement_type: permanent_easement_new # permanent_easement_new | federal_hybrid | lease_license_existing
+  row_agreement_type: null # permanent_easement_new | federal_hybrid | lease_license_existing; null = permanent_easement_new for greenfield, lease_license_existing for reconductoring and rebuild
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor
   old_ac_dc: null # AC or DC

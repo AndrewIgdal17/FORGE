@@ -2,4 +2,4 @@ from importlib.metadata import version
 
 
 def test_package_version():
-    assert version("forge-calc") == "2.1.3"
+    assert version("forge-calc") == "2.1.6"

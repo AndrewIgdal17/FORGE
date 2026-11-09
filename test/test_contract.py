@@ -1,4 +1,5 @@
 import hashlib
+import copy
 import json
 import math
 from pathlib import Path
@@ -236,4 +237,13 @@ def test_each_case_study_round_trips_through_changes():
         changes = forge.diff_changes(inputs)
         changes.update({path: 0.0 for path in PATHS})
         resolved = forge.resolve_inputs(changes)
-        _assert_present_leaves_match(template, resolved, inputs)
+        # Compare against what was submitted: the case study plus this test's
+        # own protected-area overrides (the .forge files store them as null).
+        expected = copy.deepcopy(inputs)
+        for path in PATHS:
+            node = expected
+            *parents, leaf = path.split(".")
+            for key in parents:
+                node = node.setdefault(key, {})
+            node[leaf] = 0.0
+        _assert_present_leaves_match(template, resolved, expected)

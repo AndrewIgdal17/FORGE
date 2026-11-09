@@ -173,6 +173,9 @@ def _validate_against_metadata(path: str, decoded: Any, field: dict, template: d
         return None
 
     if input_type in ("dropdown", "dynamic_dropdown"):
+        retired = validation.get("retired_options") or {}
+        if decoded in retired:
+            return retired[decoded]
         options = validation.get("options")
         if options is not None:
             if decoded not in options:
@@ -299,10 +302,16 @@ def missing_protected_area_acres(document: Mapping[str, Any]) -> list[str]:
     return missing
 
 
+def _is_value_error(message: str) -> bool:
+    """A known path holding a value the user must change, as opposed to an
+    unknown path. These raise InvalidInputs so the message reaches the user."""
+    return "is not a whole number" in message or "is no longer" in message
+
+
 def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     errors = validate_changes(changes)
     if errors:
-        if all("is not a whole number" in error["message"] for error in errors):
+        if all(_is_value_error(error["message"]) for error in errors):
             detail = "; ".join(f"{error['path']}: {error['message']}" for error in errors)
             raise InvalidInputs(detail)
         raise UnknownInputPath([error["path"] for error in errors])

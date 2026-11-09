@@ -50,18 +50,27 @@ def _load_with_inputs(inputs: dict):
         reset_run_state(token)
 
 
+# Methodology §II.3 (F3): with no agreement chosen, greenfield takes a new
+# easement and reconductoring or rebuild takes a lease of the existing corridor.
+_DEFAULT_BY_TYPE = {
+    "greenfield": "permanent_easement_new",
+    "reconductoring": "lease_license_existing",
+    "rebuild": "lease_license_existing",
+}
+
+
 @pytest.mark.parametrize("project_type", ["greenfield", "reconductoring", "rebuild"])
-def test_missing_agreement_defaults_to_permanent_easement_new(project_type):
+def test_missing_agreement_defaults_by_project_type(project_type):
     project = {**_PROJECT_BASE, "project_type": project_type}
     details = _load_with_inputs(_technical_inputs(project))
-    assert details.row_agreement_type == "permanent_easement_new"
+    assert details.row_agreement_type == _DEFAULT_BY_TYPE[project_type]
 
 
 @pytest.mark.parametrize("project_type", ["greenfield", "reconductoring", "rebuild"])
-def test_null_agreement_defaults_to_permanent_easement_new(project_type):
+def test_null_agreement_defaults_by_project_type(project_type):
     project = {**_PROJECT_BASE, "project_type": project_type, "row_agreement_type": None}
     details = _load_with_inputs(_technical_inputs(project))
-    assert details.row_agreement_type == "permanent_easement_new"
+    assert details.row_agreement_type == _DEFAULT_BY_TYPE[project_type]
 
 
 @pytest.mark.parametrize(
@@ -75,7 +84,7 @@ def test_legacy_uses_existing_row_true_still_defaults_agreement(project_type):
         "uses_existing_row": True,
     }
     details = _load_with_inputs(_technical_inputs(project))
-    assert details.row_agreement_type == "permanent_easement_new"
+    assert details.row_agreement_type == _DEFAULT_BY_TYPE[project_type]
 
 
 def test_validate_changes_rejects_fee_simple():
