@@ -53,15 +53,6 @@ def _safe(d: dict, key: str) -> float:
     return float(v)
 
 
-def _proportional_pv(
-    total_pv: float, component_nominal: float, total_nominal: float
-) -> float:
-    """Split an aggregate PV proportionally by nominal ratio."""
-    if total_nominal == 0:
-        return 0.0
-    return total_pv * component_nominal / total_nominal
-
-
 # ---------------------------------------------------------------------------
 # Per-module adapter functions
 # ---------------------------------------------------------------------------
@@ -95,52 +86,65 @@ def adapt_build(build: dict) -> list[TaxonomyResult]:
 
 
 def adapt_row(row: dict) -> list[TaxonomyResult]:
-    """Adapt costs.row -> row_acquisition, row_holding, row_rent."""
+    """Adapt costs.row -> row_acquisition, row_holding, row_rent.
+
+    Each item copies its stream and the social and WACC present values
+    already computed from that stream.
+    """
     if not row:
         return []
-    cap_pv = _safe(row, "acquisition_pv")
-    cap_nom = _safe(row, "acquisition_nominal_total")
-    acq_nom = _safe(row, "acquisition_nominal")
-    hold_nom = _safe(row, "holding_nominal")
+    streams = row.get("streams") or {}
+
+    def _item(taxonomy_id: str, pv_key: str, nominal_key: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(row, pv_key),
+            value_nominal=_safe(row, nominal_key),
+            value_pv_wacc=_safe(row, f"{pv_key}_wacc"),
+            stream=list(stream) if stream is not None else None,
+        )
+
     return [
-        TaxonomyResult(
-            "row_acquisition",
-            value_pv=_proportional_pv(cap_pv, acq_nom, cap_nom),
-            value_nominal=acq_nom,
-        ),
-        TaxonomyResult(
-            "row_holding",
-            value_pv=_proportional_pv(cap_pv, hold_nom, cap_nom),
-            value_nominal=hold_nom,
-        ),
-        TaxonomyResult(
-            "row_rent",
-            value_pv=_safe(row, "row_rent_pv"),
-            value_nominal=_safe(row, "row_rent_nominal"),
-        ),
+        _item("row_acquisition", "acquisition_pv", "acquisition_nominal"),
+        _item("row_holding", "row_holding_pv", "holding_nominal"),
+        _item("row_rent", "row_rent_pv", "row_rent_nominal"),
     ]
 
 
 def adapt_environmental(env: dict) -> list[TaxonomyResult]:
-    """Adapt costs.environmental -> env_mitigation."""
+    """Adapt costs.environmental -> env_mitigation.
+
+    Copies the mitigation stream and both present values. Detail rows use the
+    societal present values of on-site work and credits.
+    """
     if not env:
         return []
+    streams = env.get("streams") or {}
+    stream = streams.get("env_mitigation")
     detail = None
     base_nom = _safe(env, "base_cost_nominal")
     credits_nom = _safe(env, "credits_nominal")
     if base_nom or credits_nom:
-        credits_pv = _safe(env, "credits_pv")
-        total_pv = _safe(env, "total_pv")
-        base_pv = total_pv - credits_pv if credits_pv else total_pv
         detail = (
-            DetailRow("credit_type", "base", value_pv=base_pv, value_nominal=base_nom),
-            DetailRow("credit_type", "credits", value_pv=credits_pv, value_nominal=credits_nom),
+            DetailRow(
+                "credit_type", "base",
+                value_pv=_safe(env, "base_cost_pv"),
+                value_nominal=base_nom,
+            ),
+            DetailRow(
+                "credit_type", "credits",
+                value_pv=_safe(env, "credits_pv"),
+                value_nominal=credits_nom,
+            ),
         )
     return [
         TaxonomyResult(
             "env_mitigation",
             value_pv=_safe(env, "total_pv"),
             value_nominal=_safe(env, "total_nominal"),
+            value_pv_wacc=_safe(env, "total_pv_wacc"),
+            stream=list(stream) if stream is not None else None,
             detail=detail,
         ),
     ]

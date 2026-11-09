@@ -21,12 +21,10 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_details,
 )
 from forge.scripts.utils.financial_utils import (
-    calculate_present_value,
     capitalize_yearly_spending,
     validate_discount_rate,
-    calculate_construction_start_year,
 )
-from forge.scripts.utils.streams import weighted
+from forge.scripts.utils.streams import pv, undiscounted, weighted
 from forge.scripts.utils.run_context import get_run_context, add_derived
 
 logger = logging.getLogger(__name__)
@@ -174,54 +172,36 @@ def main() -> None:
         "habitat_credit_count": results["habitat_credit_count"],
     })
 
-    # Load financing parameters for discounting
+    # On-site mitigation and credits share one MISO-weighted stream, with no
+    # escalation. Capitalization uses that same yearly stream.
     financing = load_financing_details()
-
-    base_yearly = weighted(
-        results["base_cost"], ctx.spending_weights, ctx.t_start, ctx.horizon
-    )
-    credits_yearly = weighted(
-        results["total_credits"], ctx.spending_weights, ctx.t_start, ctx.horizon
-    )
-    base_cap = capitalize_yearly_spending(
-        base_yearly, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
-    )
-    credits_cap = capitalize_yearly_spending(
-        credits_yearly, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
-    )
-    total_capitalized = base_cap + credits_cap
-    if ctx.apply_afudc:
-        base_afudc = base_cap - results["base_cost"]
-        credits_afudc = credits_cap - results["total_credits"]
-        total_afudc = base_afudc + credits_afudc
-
-    # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
-    # Validate wacc_real before direct use to prevent division by zero
     validate_discount_rate(financing.wacc_real, "wacc_real")
 
-    construction_start_year = calculate_construction_start_year(project_details.delay_years)
-    annual_total_credits = results["total_credits"] / project_details.construction_years
-    annual_wetlands = results["wetlands_credits"] / project_details.construction_years
-    annual_habitat = results["habitat_credits"] / project_details.construction_years
-    total_credits_pv = calculate_present_value(
-        annual_total_credits, financing.wacc_real, project_details.construction_years, construction_start_year
+    base_stream = weighted(
+        results["base_cost"], ctx.spending_weights, ctx.t_start, ctx.horizon
     )
-    wetlands_credits_pv = calculate_present_value(
-        annual_wetlands, financing.wacc_real, project_details.construction_years, construction_start_year
+    credits_stream = weighted(
+        results["total_credits"], ctx.spending_weights, ctx.t_start, ctx.horizon
     )
-    habitat_credits_pv = calculate_present_value(
-        annual_habitat, financing.wacc_real, project_details.construction_years, construction_start_year
+    mitigation_stream = weighted(
+        results["base_cost"] + results["total_credits"],
+        ctx.spending_weights,
+        ctx.t_start,
+        ctx.horizon,
     )
-
-    # Base mitigation: spread evenly over construction period
-    # Annual cost during construction years
-    annual_base_cost = results["base_cost"] / project_details.construction_years
-    base_cost_pv = calculate_present_value(
-        annual_base_cost, financing.wacc_real, project_details.construction_years, construction_start_year
+    total_afudc = capitalize_yearly_spending(
+        mitigation_stream, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
     )
-
-    # Total PV
-    total_pv = base_cost_pv + total_credits_pv
+    r_social = ctx.social_discount_rate
+    r_wacc = financing.wacc_real
+    base_cost_pv = pv(base_stream, r_social)
+    credits_pv = pv(credits_stream, r_social)
+    total_pv = pv(mitigation_stream, r_social)
+    total_pv_wacc = pv(mitigation_stream, r_wacc)
+    base_cost_nominal = undiscounted(base_stream)
+    credits_nominal = undiscounted(credits_stream)
+    total_nominal = undiscounted(mitigation_stream)
+    afudc_amount = total_afudc - total_nominal if ctx.apply_afudc else 0.0
 
     # Display results
     logger.info("=" * 80)
@@ -240,37 +220,29 @@ def main() -> None:
     logger.info("")
 
     logger.info("[NOMINAL VALUES]")
-    logger.info(f"  Base Mitigation/Restoration: ${results['base_cost']:,.2f}")
+    logger.info(f"  Base Mitigation/Restoration: ${base_cost_nominal:,.2f}")
     logger.info(f"  Wetland Credits: ${results['wetlands_credits']:,.2f}")
     logger.info(f"  Habitat Credits: ${results['habitat_credits']:,.2f}")
-    logger.info(f"  Total Credit Costs: ${results['total_credits']:,.2f}")
+    logger.info(f"  Total Credit Costs: ${credits_nominal:,.2f}")
     logger.info(f"  ---")
-    logger.info(f"  TOTAL NOMINAL COST: ${results['total']:,.2f}")
+    logger.info(f"  TOTAL NOMINAL COST: ${total_nominal:,.2f}")
     logger.info("")
 
     if ctx.apply_afudc:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
         logger.info("")
-        logger.info(f"  Base Mitigation Capitalized: ${base_cap:,.2f}")
-        logger.info(f"    AFUDC on Base: ${base_afudc:,.2f}")
-        logger.info(f"  Credits Capitalized: ${credits_cap:,.2f}")
-        logger.info(f"    AFUDC on Credits: ${credits_afudc:,.2f}")
-        logger.info(f"  ---")
-        logger.info(f"  TOTAL CAPITALIZED COST (at COD): ${total_capitalized:,.2f}")
-        logger.info(f"  Total AFUDC Amount: ${total_afudc:,.2f}")
+        logger.info(f"  TOTAL CAPITALIZED COST (at COD): ${total_afudc:,.2f}")
+        logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
         logger.info("")
 
     logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
-    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Social Discount Rate: {r_social:.2%}")
+    logger.info(f"  Real WACC: {r_wacc:.2%}")
     logger.info(f"  Base Year: {financing.base_year}")
     logger.info("")
     logger.info(f"  Base Mitigation/Restoration PV: ${base_cost_pv:,.2f}")
-    logger.info(f"    (Spread over {project_details.construction_years} year(s))")
-    logger.info(f"  Wetland Credits PV: ${wetlands_credits_pv:,.2f}")
-    logger.info(f"  Habitat Credits PV: ${habitat_credits_pv:,.2f}")
-    logger.info(f"  Total Credit Costs PV: ${total_credits_pv:,.2f}")
-    logger.info(f"    (Payments start at year {construction_start_year:.1f})")
+    logger.info(f"  Total Credit Costs PV: ${credits_pv:,.2f}")
     logger.info(f"  ---")
     logger.info(f"  TOTAL PRESENT VALUE: ${total_pv:,.2f}")
     logger.info("=" * 80)
@@ -284,13 +256,15 @@ def main() -> None:
 
     # Prepare results dictionary
     csv_results = {
-        "total_nominal": results["total"],
-        "total_afudc": total_capitalized,
+        "streams": {"env_mitigation": mitigation_stream},
+        "total_nominal": total_nominal,
+        "total_afudc": total_afudc,
         "total_pv": total_pv,
-        "base_cost_nominal": results["base_cost"],
+        "total_pv_wacc": total_pv_wacc,
+        "base_cost_nominal": base_cost_nominal,
         "base_cost_pv": base_cost_pv,
-        "credits_nominal": results["total_credits"],
-        "credits_pv": total_credits_pv,
+        "credits_nominal": credits_nominal,
+        "credits_pv": credits_pv,
     }
 
     # Write to CSV

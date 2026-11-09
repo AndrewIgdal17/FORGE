@@ -108,7 +108,7 @@ def _build_stream_registry(results: dict, inputs: dict, wacc_real: float) -> lis
 
     Note: ROW rent is NOT included here — it has its own payment window (which
     varies by ROW agreement type and can start before COD) and is handled
-    separately by `_row_rent_stream_params()` / the main loop's `pv_rent` term.
+    separately by `_row_rent_stream_params()` / the main loop's rent terms.
     """
     project_details = inputs["01_project_technical_details"]
 
@@ -327,11 +327,15 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
 
         # ROW rent: own payment window (may start pre-COD for lease/license
         # agreements), independent of the delay/construction/operation phases
-        # below — see `_row_rent_stream_params()`.
-        pv_rent = 0.0
+        # below — see `_row_rent_stream_params()`. The societal total discounts
+        # at the social rate. Utility and ratepayer accumulators use real WACC.
+        pv_rent_social = 0.0
+        pv_rent_wacc = 0.0
         if rent_annual and rent_start_year <= t <= rent_start_year + rent_num_years - 1:
             k_rent = t - rent_start_year + 1
-            pv_rent = rent_annual * (1 + rent_growth) ** (k_rent - 1) / (1 + wacc_real) ** t
+            grown = rent_annual * (1 + rent_growth) ** (k_rent - 1)
+            pv_rent_social = grown / (1 + social_discount_rate) ** t
+            pv_rent_wacc = grown / (1 + wacc_real) ** t
 
         if t <= D:
             phase = "delay"
@@ -397,8 +401,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         # agreements) and counts toward the operational-soft-cost
         # accumulator used by the system/ratepayer BCR denominators, same as
         # the other soft-op streams.
-        pv_C_soft += pv_rent
-        pv_soft_op_year += pv_rent
+        pv_C_soft += pv_rent_social
+        pv_soft_op_year += pv_rent_wacc
 
         cum_C_hard += pv_C_hard
         cum_C_soft += pv_C_soft

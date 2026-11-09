@@ -26,12 +26,10 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_details,
 )
 from forge.scripts.utils.financial_utils import (
-    calculate_nominal_growing_series,
     capitalize_yearly_spending,
-    unshifted_growing_annuity_pv,
     validate_discount_rate,
 )
-from forge.scripts.utils.streams import weighted
+from forge.scripts.utils.streams import growing, level, pv, undiscounted, weighted
 
 logger = logging.getLogger(__name__)
 
@@ -130,115 +128,66 @@ def main() -> None:
         "agreement_type": agreement_type,
     })
 
-    # Real annual escalation applied to operational ROW rent only (default 0% real,
-    # backward-compatible with pre-escalation YAMLs). Holding uses a flat product.
+    # Real annual escalation applies to operational ROW rent only. Acquisition
+    # follows the MISO weights with no escalation. Holding is a level amount
+    # over the delay years and is not capitalized.
     g_rent = float(_row_details["row_rent_escalation_real"])
 
-    # Load financing parameters
     financing = load_financing_details()
-
-    # Define timing for annual ROW payment (rent). Lease/license rent runs from
-    # year 1 (rent_start_year == 1); other agreement types start rent at
-    # calculate_construction_start_year(delay_years) == delay_years + 1, i.e.
-    # once the delay period ends.
-    if agreement_type == "lease_license_existing":
-        rent_total_years = (
-            project_details.delay_years
-            + project_details.construction_years
-            + project_details.project_lifetime
-        )
-    else:
-        rent_total_years = (
-            project_details.project_lifetime + project_details.construction_years
-        )
-
-    # Holding: appendix §Capital ROW Eq 4 — simple product, no escalation.
-    total_holding_cost = (
-        xi_holding * yearly_holding_cost * project_details.delay_years
-    )
-    # Rent: appendix §Op ROW Rent Eq 3 — growing series gated by xi_rent.
-    total_rent_cost = xi_rent * calculate_nominal_growing_series(
-        yearly_rent_cost,
-        g_rent,
-        rent_total_years,
-    )
-    acquisition_cost_used = xi_acquisition * acquisition_cost
-    total_nominal_cost = (
-        total_holding_cost + acquisition_cost_used + total_rent_cost
-    )
-
-    # Only acquisition is capitalized. Holding and rent stay outside rate base.
-    if acquisition_cost_used != 0:
-        yearly_acquisition = weighted(
-            acquisition_cost_used,
-            ctx.spending_weights,
-            ctx.t_start,
-            ctx.horizon,
-        )
-        acquisition_capitalized = capitalize_yearly_spending(
-            yearly_acquisition,
-            ctx.t_cod,
-            ctx.afudc_rate,
-            ctx.apply_afudc,
-        )
-        afudc_on_acquisition = (
-            acquisition_capitalized - acquisition_cost_used
-            if ctx.apply_afudc
-            else 0.0
-        )
-    else:
-        acquisition_capitalized = acquisition_cost_used
-        afudc_on_acquisition = 0.0
-
-    # Holding is a real operating expense (FERC Account 567), not AFUDC-eligible.
-    holding_capitalized = total_holding_cost
-    holding_afudc = 0.0
-
     validate_discount_rate(financing.wacc_real, "wacc_real")
-    # Holding PV: constant-payment annuity over delay (growth_rate=0).
-    # The lag is zero (old delay_years + construction_years). Do not add a
-    # year of discount, and do not pass construction_years below 1.
-    total_holding_cost_pv = xi_holding * unshifted_growing_annuity_pv(
-        yearly_holding_cost,
-        0.0,
-        financing.wacc_real,
-        int(project_details.delay_years),
-    )
-    total_acquisition_cost_pv = (
-        acquisition_cost_used
-        / (1 + financing.wacc_real) ** project_details.delay_years
-    )
-    # Lease rent starts year 1 (no delay shift); hybrid starts after delay.
-    rent_delay = (
-        0.0
-        if agreement_type == "lease_license_existing"
-        else project_details.delay_years
-    )
-    # Rent is not shifted by construction. The old lag is rent_delay alone
-    # (construction_years was 0). Keep that present value: unshifted annuity,
-    # then discount only when rent_delay is positive. Do not pass a
-    # construction_years below 1, and do not add a year when the lag is 0.
-    rent_annuity = unshifted_growing_annuity_pv(
-        yearly_rent_cost,
-        g_rent,
-        financing.wacc_real,
-        int(rent_total_years),
-    )
-    if rent_delay > 0:
-        rent_annuity = rent_annuity / ((1 + financing.wacc_real) ** rent_delay)
-    total_rent_cost_pv = xi_rent * rent_annuity
 
-    # Acquisition only. Holding is operating expense, not capital.
-    # acquisition_afudc is the capitalized acquisition cost at COD.
-    # afudc_on_acquisition is the AFUDC increment alone.
-    acquisition_afudc = acquisition_capitalized
-    acquisition_pv = total_acquisition_cost_pv
-    row_holding_pv = total_holding_cost_pv
-    acquisition_nominal_total = acquisition_cost_used + total_holding_cost
-    row_rent_pv = total_rent_cost_pv
-    row_rent_nominal = total_rent_cost
-    total_afudc = acquisition_afudc
-    total_pv_cost = acquisition_pv + row_holding_pv + total_rent_cost_pv
+    delay_years = int(project_details.delay_years)
+    annual_hold = xi_holding * yearly_holding_cost
+    acq_total = xi_acquisition * acquisition_cost
+    annual_rent = xi_rent * yearly_rent_cost
+    # Lease rent runs from year 1 through the horizon. Every other agreement
+    # type starts at construction and runs through the horizon. Growth is
+    # measured from year 1 in both cases.
+    if agreement_type == "lease_license_existing":
+        rent_t0, rent_n = 1, ctx.horizon
+    else:
+        rent_t0 = ctx.t_start
+        rent_n = ctx.horizon - ctx.t_start + 1
+
+    acq_stream = weighted(acq_total, ctx.spending_weights, ctx.t_start, ctx.horizon)
+    holding_stream = level(annual_hold, 1, delay_years, ctx.horizon)
+    rent_stream = growing(annual_rent, g_rent, rent_t0, rent_n, ctx.horizon)
+    row_streams = {
+        "row_acquisition": acq_stream,
+        "row_holding": holding_stream,
+        "row_rent": rent_stream,
+    }
+
+    r_social = ctx.social_discount_rate
+    r_wacc = financing.wacc_real
+    acquisition_pv = pv(acq_stream, r_social)
+    acquisition_pv_wacc = pv(acq_stream, r_wacc)
+    row_holding_pv = pv(holding_stream, r_social)
+    row_holding_pv_wacc = pv(holding_stream, r_wacc)
+    row_rent_pv = pv(rent_stream, r_social)
+    row_rent_pv_wacc = pv(rent_stream, r_wacc)
+    total_pv = acquisition_pv + row_holding_pv + row_rent_pv
+    total_pv_wacc = acquisition_pv_wacc + row_holding_pv_wacc + row_rent_pv_wacc
+
+    acquisition_nominal = undiscounted(acq_stream)
+    holding_nominal = undiscounted(holding_stream)
+    rent_nominal = undiscounted(rent_stream)
+    row_rent_nominal = rent_nominal
+    total_nominal = acquisition_nominal + holding_nominal + rent_nominal
+    acquisition_nominal_total = acquisition_nominal + holding_nominal
+
+    # Only the acquisition stream is capitalized. Holding and rent stay outside
+    # rate base. With AFUDC off this is the undiscounted acquisition spending.
+    total_afudc = capitalize_yearly_spending(
+        acq_stream,
+        ctx.t_cod,
+        ctx.afudc_rate,
+        ctx.apply_afudc,
+    )
+    acquisition_afudc = total_afudc
+    afudc_on_acquisition = (
+        total_afudc - acquisition_nominal if ctx.apply_afudc else 0.0
+    )
 
     # Display results
     logger.info("=" * 80)
@@ -253,47 +202,48 @@ def main() -> None:
 
     logger.info("[NOMINAL VALUES]")
     logger.info(f"  Rent Escalation Rate (g_rent): {g_rent:.2%}/year (real)")
-    logger.info(f"  Holding Cost (option fee): ${total_holding_cost:,.2f}")
+    logger.info(f"  Holding Cost (option fee): ${holding_nominal:,.2f}")
     logger.info(
-        f"    (Annual: ${xi_holding * yearly_holding_cost:,.2f} over {project_details.delay_years} year(s))"
+        f"    (Annual: ${annual_hold:,.2f} over {delay_years} year(s))"
     )
-    logger.info(f"  Acquisition Cost: ${acquisition_cost_used:,.2f}")
-    logger.info(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
-    logger.info(f"    (Annual: ${xi_rent * yearly_rent_cost:,.2f} over {rent_total_years} year(s))")
+    logger.info(f"  Acquisition Cost: ${acquisition_nominal:,.2f}")
+    logger.info(f"  Annual ROW Payment: ${rent_nominal:,.2f}")
+    logger.info(f"    (Annual: ${annual_rent:,.2f} over {rent_n} year(s))")
     logger.info(f"  ---")
-    logger.info(f"  TOTAL NOMINAL ROW COST: ${total_nominal_cost:,.2f}")
+    logger.info(f"  TOTAL NOMINAL ROW COST: ${total_nominal:,.2f}")
     logger.info("")
 
-    if ctx.apply_afudc and acquisition_cost_used != 0:
+    if ctx.apply_afudc and acquisition_nominal != 0:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         logger.info(
             f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})"
         )
         logger.info("")
-        logger.info(f"  Acquisition Cost Capitalized: ${acquisition_capitalized:,.2f}")
+        logger.info(f"  Acquisition Cost Capitalized: ${total_afudc:,.2f}")
         logger.info(f"    AFUDC on Acquisition: ${afudc_on_acquisition:,.2f}")
-        logger.info(f"  Holding Cost (operating expense): ${holding_capitalized:,.2f}")
-        logger.info(f"    AFUDC on Holding: ${holding_afudc:,.2f} (not AFUDC-eligible)")
-        logger.info(f"  Annual ROW Payment: ${total_rent_cost:,.2f}")
+        logger.info(f"  Holding Cost (operating expense): ${holding_nominal:,.2f}")
+        logger.info(f"    AFUDC on Holding: ${0.0:,.2f} (not AFUDC-eligible)")
+        logger.info(f"  Annual ROW Payment: ${rent_nominal:,.2f}")
         logger.info(f"    (NOT AFUDC-eligible - operational period)")
         logger.info(f"  ---")
         logger.info(
             f"  Acquisition (at COD): ${acquisition_afudc:,.2f}"
         )
         logger.info(
-            f"  TOTAL (Acquisition at COD + annual ROW payment): ${acquisition_afudc + total_rent_cost:,.2f}"
+            f"  TOTAL (Acquisition at COD + annual ROW payment): ${acquisition_afudc + rent_nominal:,.2f}"
         )
         logger.info("")
 
     logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
-    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Social Discount Rate: {r_social:.2%}")
+    logger.info(f"  Real WACC: {r_wacc:.2%}")
     logger.info(f"  Base Year: {financing.base_year}")
     logger.info("")
-    logger.info(f"  Holding Cost PV: ${total_holding_cost_pv:,.2f}")
-    logger.info(f"  Acquisition Cost PV: ${total_acquisition_cost_pv:,.2f}")
-    logger.info(f"  Annual ROW Payment PV: ${total_rent_cost_pv:,.2f}")
+    logger.info(f"  Holding Cost PV: ${row_holding_pv:,.2f}")
+    logger.info(f"  Acquisition Cost PV: ${acquisition_pv:,.2f}")
+    logger.info(f"  Annual ROW Payment PV: ${row_rent_pv:,.2f}")
     logger.info(f"  ---")
-    logger.info(f"  TOTAL PRESENT VALUE ROW COST: ${total_pv_cost:,.2f}")
+    logger.info(f"  TOTAL PRESENT VALUE ROW COST: ${total_pv:,.2f}")
     logger.info("=" * 80)
 
     # ========================================================================
@@ -302,18 +252,23 @@ def main() -> None:
 
     csv_manager = SmartOutputManager()
     results = {
-        "total_nominal": total_nominal_cost,
+        "streams": row_streams,
+        "total_nominal": total_nominal,
         "total_afudc": total_afudc,
-        "total_pv": total_pv_cost,
+        "total_pv": total_pv,
+        "total_pv_wacc": total_pv_wacc,
         "acquisition_pv": acquisition_pv,
+        "acquisition_pv_wacc": acquisition_pv_wacc,
         "acquisition_afudc": acquisition_afudc,
         "acquisition_nominal_total": acquisition_nominal_total,
         "row_holding_pv": row_holding_pv,
+        "row_holding_pv_wacc": row_holding_pv_wacc,
         "row_rent_pv": row_rent_pv,
+        "row_rent_pv_wacc": row_rent_pv_wacc,
         "row_rent_nominal": row_rent_nominal,
-        "acquisition_nominal": acquisition_cost_used,
-        "holding_nominal": total_holding_cost,
-        "rent_nominal": total_rent_cost,
+        "acquisition_nominal": acquisition_nominal,
+        "holding_nominal": holding_nominal,
+        "rent_nominal": rent_nominal,
         "row_rent_escalation_real": g_rent,
     }
 
