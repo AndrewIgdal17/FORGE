@@ -156,10 +156,11 @@ def _validate_against_metadata(path: str, decoded: Any, field: dict, template: d
         pass
 
     if input_type in _NUMERIC_INPUT_TYPES:
-        if leaf_is_null:
+        if leaf_is_null and not validation.get("nullable_number"):
             # The default is null, so metadata's declared type can't be
             # trusted as the ground truth (e.g. design-comparison fields
             # that hold strings but default to the generic "number" type).
+            # nullable_number opts that field back into the checks below.
             return None
         if not isinstance(decoded, (int, float)) or isinstance(decoded, bool):
             return "must be a number"
