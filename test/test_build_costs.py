@@ -124,7 +124,12 @@ def _patch_load_and_escalate(tmp_path, monkeypatch, delay_years=0, escalation_ra
     token = _activate_build_inputs(monkeypatch, _BUILD_YAML + extra_yaml)
     monkeypatch.setattr(
         "forge.scripts.utils.smart_loaders.get_financing_data_raw",
-        lambda: {"financial": {"construction_cost_escalation_rate": escalation_rate}},
+        lambda: {
+            "financial": {
+                "construction_cost_escalation_nominal": escalation_rate,
+                "inflation_rate": 0.0,
+            }
+        },
     )
     details = _FakeProjectDetails()
     details.delay_years = delay_years

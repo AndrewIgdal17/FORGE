@@ -26,6 +26,7 @@ timeline:
   construction_years: 1 # years (> 0)
   delay_years: 0 # years (>= 0)
   project_lifetime: 40 # years (> 0)
+  baseline_delay_years: 0
 
 
 ### DEFINITIONS:

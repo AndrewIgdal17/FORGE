@@ -40,6 +40,12 @@ class RunContext:
     afudc_source: str = ""
     cod_year: float = 0.0
     construction_start_year: float = 0.0
+    horizon: int = 0
+    t_start: int = 0
+    t_end: int = 0
+    t_cod: int = 0
+    spending_weights: list[float] = dc_field(default_factory=list)
+    apply_afudc: bool = True
     build_costs: BuildCosts | None = None
     derived_parameters: dict[str, Any] = dc_field(default_factory=dict)
 

@@ -19,7 +19,6 @@ from forge.scripts.utils.smart_loaders import (
     load_physical_details,
     load_contingencies,
     load_financing_details,
-    get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import (
     calculate_present_value,
@@ -180,6 +179,27 @@ def load_costs(
     )
 
 
+def _construction_escalation_real() -> float:
+    """Real construction escalation from the run context, else Fisher on the nominal input."""
+    ctx = get_run_context()
+    financing = getattr(ctx, "financing", None) if ctx is not None else None
+    real = (
+        getattr(financing, "construction_escalation_real", None)
+        if financing is not None
+        else None
+    )
+    if real is not None:
+        return float(real)
+    from forge.scripts.utils.financial_utils import fisher_real
+    from forge.scripts.utils.smart_loaders import get_financing_data_raw
+
+    financial = get_financing_data_raw()["financial"]
+    return fisher_real(
+        financial["construction_cost_escalation_nominal"],
+        financial["inflation_rate"],
+    )
+
+
 def load_and_escalate_costs(
     category: str,
     number_of_converters: int,
@@ -210,11 +230,7 @@ def load_and_escalate_costs(
 
     delay_years = getattr(project_details, "delay_years", 0) or 0
     if delay_years > 0:
-        from forge.scripts.utils.smart_loaders import get_financing_data_raw as _get_financing_data_raw
-        fin_raw = _get_financing_data_raw()
-        escalation_rate = (
-            fin_raw["financial"]["construction_cost_escalation_rate"] or 0
-        )
+        escalation_rate = _construction_escalation_real()
         if escalation_rate > 0:
             factor = (1 + escalation_rate) ** delay_years
             costs = BuildCosts(
@@ -282,12 +298,9 @@ def main() -> None:
     })
 
     # Escalate build cost during delay period (#27)
-    financing_yaml_raw = get_financing_data_raw()
-    construction_cost_escalation_rate = financing_yaml_raw["financial"][
-        "construction_cost_escalation_rate"
-    ]
-    if project_details.delay_years > 0 and construction_cost_escalation_rate > 0:
-        escalation_factor = (1 + construction_cost_escalation_rate) ** project_details.delay_years
+    construction_escalation_real = financing.construction_escalation_real
+    if project_details.delay_years > 0 and construction_escalation_real > 0:
+        escalation_factor = (1 + construction_escalation_real) ** project_details.delay_years
         costs = BuildCosts(
             total_cost=costs.total_cost,
             total_cost_with_contingencies=costs.total_cost_with_contingencies * escalation_factor,
@@ -367,8 +380,8 @@ def main() -> None:
     logger.info(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
     logger.info("  " + "-" * 52)
     logger.info(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
-    if project_details.delay_years > 0 and construction_cost_escalation_rate > 0:
-        logger.info(f"\n  Delay Escalation: {construction_cost_escalation_rate:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
+    if project_details.delay_years > 0 and construction_escalation_real > 0:
+        logger.info(f"\n  Delay Escalation: {construction_escalation_real:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
     logger.info("")
 
     if afudc_setup.apply_afudc:

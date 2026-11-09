@@ -121,8 +121,8 @@ utilities:
       citation: OMB2023CircularA4; Rennert2022
       yaml_file: 03_financing.yaml
       basis: Sourced
-    construction_cost_escalation_rate:
-      path: 03_financing.financial.construction_cost_escalation_rate
+    construction_cost_escalation_nominal:
+      path: 03_financing.financial.construction_cost_escalation_nominal
       unit: decimal (nominal annual)
       source: MISO MTEP25 planning methodology
       citation: MISO2025CostGuide
@@ -1169,3 +1169,11 @@ benefits:
       citation: null
       yaml_file: 20_capacity_value.yaml
       basis: Author judgment
+timeline:
+  baseline_delay_years:
+    path: 01_project_technical_details.timeline.baseline_delay_years
+    unit: years
+    source: On-time comparison delay. Default 0.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment

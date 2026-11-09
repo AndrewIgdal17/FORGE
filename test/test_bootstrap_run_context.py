@@ -19,6 +19,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         number_of_converters=2,
         delay_years=1.0,
         construction_years=3.0,
+        project_lifetime=40,
         construction_type="Overhead",
         capacity_mw=500,
     )
@@ -66,14 +67,6 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         "forge.scripts.utils.financial_utils.calculate_afudc_rate",
         lambda raw: (0.05, "calculated"),
     )
-    monkeypatch.setattr(
-        "forge.scripts.utils.financial_utils.calculate_cod_year",
-        lambda delay, construction: 2030.0,
-    )
-    monkeypatch.setattr(
-        "forge.scripts.utils.financial_utils.calculate_construction_start_year",
-        lambda delay: 2027.0,
-    )
 
     state = RunState(
         inputs={
@@ -87,7 +80,12 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
                         "mountain": 0.0,
                     }
                 }
-            }
+            },
+            "19_cost_timing_patterns": {
+                "construction_spending_profiles": {
+                    "5": [0.01, 0.04, 0.35, 0.35, 0.25],
+                }
+            },
         },
         scenario_id="test",
     )
@@ -109,8 +107,11 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         assert ctx.social_discount_rate == 0.03
         assert ctx.afudc_rate == 0.05
         assert ctx.afudc_source == "calculated"
-        assert ctx.cod_year == 2030.0
-        assert ctx.construction_start_year == 2027.0
+        assert ctx.cod_year == 5
+        assert ctx.construction_start_year == 2
+        assert ctx.t_cod == 5
+        assert ctx.t_start == 2
+        assert ctx.horizon == 44
         derived = ctx.derived_parameters
         assert derived["category_string"] == ctx.category_string
         assert derived["wacc_real"] == 0.04
@@ -218,14 +219,6 @@ def test_bootstrap_rejects_zero_construction_years(monkeypatch):
     monkeypatch.setattr(
         "forge.scripts.utils.financial_utils.calculate_afudc_rate",
         lambda raw: (0.05, "calculated"),
-    )
-    monkeypatch.setattr(
-        "forge.scripts.utils.financial_utils.calculate_cod_year",
-        lambda delay, construction: 2030.0,
-    )
-    monkeypatch.setattr(
-        "forge.scripts.utils.financial_utils.calculate_construction_start_year",
-        lambda delay: 2027.0,
     )
 
     state = RunState(

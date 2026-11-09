@@ -114,7 +114,23 @@ def _metadata_by_path() -> dict[str, dict]:
     }
 
 
+def is_whole_number(value: Any) -> bool:
+    """True when value is a finite integer, or a float with no fractional part."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    if isinstance(value, int):
+        return True
+    return math.isfinite(value) and value.is_integer()
+
+
 def _check_bounds(decoded: Any, validation: dict) -> str | None:
+    if (
+        validation.get("integer")
+        and isinstance(decoded, (int, float))
+        and not isinstance(decoded, bool)
+        and not is_whole_number(decoded)
+    ):
+        return f"{decoded} is not a whole number"
     minimum = validation.get("min")
     if minimum is not None and decoded < minimum:
         return f"{decoded} is below the minimum of {minimum}"
@@ -279,6 +295,9 @@ def missing_protected_area_acres(document: Mapping[str, Any]) -> list[str]:
 def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     errors = validate_changes(changes)
     if errors:
+        if all("is not a whole number" in error["message"] for error in errors):
+            detail = "; ".join(f"{error['path']}: {error['message']}" for error in errors)
+            raise InvalidInputs(detail)
         raise UnknownInputPath([error["path"] for error in errors])
     resolved = copy.deepcopy(get_defaults_template())
     for path, value in changes.items():

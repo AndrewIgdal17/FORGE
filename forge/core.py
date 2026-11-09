@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 from typing import Any
 
-from forge.contract import calculator_info, canonical_dumps
+from forge.contract import calculator_info, canonical_dumps, is_whole_number
 from forge.errors import InvalidInputs, CalculationError
 from forge.scripts.io.csv_output_manager import BATCH_SUMMARY_FIELDS
 from forge.scripts.utils.run_context import (
@@ -191,6 +191,23 @@ def _build_scripts_list(
     return scripts
 
 
+def _baseline_delay_years(inputs: dict, project_details: Any) -> Any:
+    """Read the on-time delay, defaulting to 0 when the input is absent."""
+    section = inputs.get("01_project_technical_details", {})
+    timeline = section.get("timeline", {}) if isinstance(section, dict) else {}
+    if isinstance(timeline, dict) and "baseline_delay_years" in timeline:
+        return timeline["baseline_delay_years"]
+    if hasattr(project_details, "baseline_delay_years"):
+        return project_details.baseline_delay_years
+    return 0
+
+
+def _require_whole_year(name: str, value: Any) -> int:
+    if not is_whole_number(value):
+        raise InvalidInputs(f"{name} {value} is not a whole number")
+    return int(value)
+
+
 def _bootstrap_run_context() -> "RunContext":
     """Load input sections once and populate the shared RunContext.
 
@@ -206,7 +223,8 @@ def _bootstrap_run_context() -> "RunContext":
     from forge.scripts.utils.calculation_utils import build_category_string
     from forge.scripts.utils.weighted_miles import calculate_weighted_miles as _calc_wm
     from forge.scripts.utils.financial_utils import (
-        calculate_afudc_rate, calculate_cod_year, calculate_construction_start_year,
+        calculate_afudc_rate,
+        get_construction_spending_weights,
     )
     from forge.scripts.utils.smart_loaders import get_financing_data_raw
 
@@ -220,17 +238,42 @@ def _bootstrap_run_context() -> "RunContext":
     from forge.contract import missing_protected_area_acres
     from forge.scripts.utils.run_context import get_run_state
 
-    missing = missing_protected_area_acres(get_run_state().inputs)
+    inputs = get_run_state().inputs
+    missing = missing_protected_area_acres(inputs)
     if missing:
         raise InvalidInputs(
             "protected_area_acres are required. Missing: " + ", ".join(missing)
+        )
+    delay_years = _require_whole_year("delay_years", project_details.delay_years)
+    if not is_whole_number(project_details.construction_years):
+        raise InvalidInputs(
+            f"construction_years {project_details.construction_years} is not a whole number"
         )
     if project_details.construction_years < 1:
         raise InvalidInputs(
             f"construction_years must be >= 1 (got {project_details.construction_years})."
         )
+    construction_years = int(project_details.construction_years)
+    project_lifetime = _require_whole_year(
+        "project_lifetime", getattr(project_details, "project_lifetime", None)
+    )
+    baseline_delay = _require_whole_year(
+        "baseline_delay_years", _baseline_delay_years(inputs, project_details)
+    )
+    if baseline_delay > delay_years:
+        raise InvalidInputs(
+            f"baseline_delay_years ({baseline_delay}) must not exceed delay_years ({delay_years})."
+        )
     if project_details.construction_type == "Subsea":
         raise InvalidInputs("construction_type 'Subsea' is not allowed.")
+    t_start = delay_years + 1
+    t_end = delay_years + construction_years
+    t_cod = t_end + 1
+    horizon = t_cod + project_lifetime - 1
+    spending_weights = get_construction_spending_weights(
+        construction_years,
+        inputs["19_cost_timing_patterns"]["construction_spending_profiles"],
+    )
     financing = load_financing_details()
     contingencies = load_contingencies()
     physical_raw = get_physical_data_raw()
@@ -243,8 +286,16 @@ def _bootstrap_run_context() -> "RunContext":
 
     fin_raw = get_financing_data_raw()
     afudc_rate, afudc_source = calculate_afudc_rate(fin_raw)
-    cod_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
-    construction_start_year = calculate_construction_start_year(project_details.delay_years)
+    afudc_cfg = fin_raw.get("financial", {}).get("afudc", {})
+    apply_afudc = True
+    if isinstance(afudc_cfg, dict) and "apply_afudc" in afudc_cfg:
+        apply_afudc = bool(afudc_cfg["apply_afudc"])
+    social_discount_rate = getattr(financing, "social_discount_rate", None)
+    if social_discount_rate is None:
+        social_discount_rate = fin_raw["financial"].get("social_discount_rate", 0)
+    construction_escalation_real = getattr(
+        financing, "construction_escalation_real", None
+    )
 
     ctx = RunContext(
         project_details=project_details,
@@ -258,11 +309,17 @@ def _bootstrap_run_context() -> "RunContext":
         weighted_miles=weighted_miles,
         average_terrain_multiplier=avg_terrain_mult,
         number_of_converters=project_details.number_of_converters,
-        social_discount_rate=fin_raw["financial"].get("social_discount_rate", 0),
+        social_discount_rate=social_discount_rate,
         afudc_rate=afudc_rate,
         afudc_source=afudc_source,
-        cod_year=cod_year,
-        construction_start_year=construction_start_year,
+        cod_year=t_cod,
+        construction_start_year=t_start,
+        horizon=horizon,
+        t_start=t_start,
+        t_end=t_end,
+        t_cod=t_cod,
+        spending_weights=spending_weights,
+        apply_afudc=apply_afudc,
     )
     set_run_context(ctx)
 
@@ -277,11 +334,15 @@ def _bootstrap_run_context() -> "RunContext":
         "wacc_real": financing.wacc_real,
         "wacc_nominal": financing.wacc_nominal,
         "inflation_rate": financing.inflation_rate,
-        "social_discount_rate": fin_raw["financial"].get("social_discount_rate", 0),
+        "social_discount_rate": social_discount_rate,
+        "construction_escalation_real": construction_escalation_real,
+        "construction_spending_weights": spending_weights,
+        "t_cod": t_cod,
+        "horizon": horizon,
         "afudc_rate": afudc_rate,
         "afudc_source": afudc_source,
-        "cod_year": cod_year,
-        "construction_start_year": construction_start_year,
+        "cod_year": t_cod,
+        "construction_start_year": t_start,
         "contingencies": contingencies,
     })
 

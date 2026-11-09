@@ -10,7 +10,7 @@ from typing import Dict, Any, Tuple, Optional
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
 from forge.scripts.utils.calculation_utils import normalize_capacity_mw
-from forge.scripts.utils.financial_utils import calculate_real_wacc, get_wacc_nominal
+from forge.scripts.utils.financial_utils import calculate_real_wacc, fisher_real, get_wacc_nominal
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,9 @@ class FinancingDetails:
     base_year: int
     wacc_nominal: float
     wacc_real: float
+    construction_escalation_nominal: float
+    construction_escalation_real: float
+    social_discount_rate: float
 
 
 def load_financing_details() -> FinancingDetails:
@@ -105,9 +108,16 @@ def load_financing_details() -> FinancingDetails:
             raise KeyError("Missing 'base_year' key in financing YAML file")
         if "wacc_nominal" not in financial:
             raise KeyError("Missing 'wacc_nominal' key in financing YAML file")
+        if "construction_cost_escalation_nominal" not in financial:
+            raise KeyError(
+                "Missing 'construction_cost_escalation_nominal' key in financing YAML file"
+            )
+        if "social_discount_rate" not in financial:
+            raise KeyError("Missing 'social_discount_rate' key in financing YAML file")
         inflation_rate = financial["inflation_rate"]
         base_year = financial["base_year"]
         wacc_nominal = get_wacc_nominal(financing_data)
+        construction_escalation_nominal = financial["construction_cost_escalation_nominal"]
 
         wacc_real = calculate_real_wacc(wacc_nominal, inflation_rate)
         return FinancingDetails(
@@ -115,6 +125,11 @@ def load_financing_details() -> FinancingDetails:
             base_year=base_year,
             wacc_nominal=wacc_nominal,
             wacc_real=wacc_real,
+            construction_escalation_nominal=construction_escalation_nominal,
+            construction_escalation_real=fisher_real(
+                construction_escalation_nominal, inflation_rate
+            ),
+            social_discount_rate=financial["social_discount_rate"],
         )
     except KeyError as e:
         raise KeyError(f"Missing required key in financing YAML: {e}")
