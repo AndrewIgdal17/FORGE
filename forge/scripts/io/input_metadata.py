@@ -123,11 +123,6 @@ _TAB1: list[InputField] = [
        input_type="dropdown", tier="first-glance", display_order=8,
        sub_tab="technology",
        validation={"required": True, "options": ["greenfield", "reconductoring", "rebuild"]}),
-    _f("uses_existing_row", taxonomy_id="project_technology", input_tab="project-identity",
-       yaml_section="01_project_technical_details", field_path="project.uses_existing_row",
-       label="Project Uses Existing ROW", help_text="Zeroes acquisition/holding, includes delay in rent",
-       input_type="toggle", tier="first-glance", display_order=9,
-       sub_tab="technology"),
     _f("old_capacity_mw", taxonomy_id="project_technology", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="project.old_capacity_mw",
        label="Old Capacity MW", help_text="Existing line capacity (C_old)", unit="MW",
@@ -404,15 +399,14 @@ _TAB2.append(_f(
     yaml_section="01_project_technical_details", field_path="project.row_agreement_type",
     label="ROW agreement",
     help_text=(
-        "Lease drops acquisition and holding, keeps rent from year 1. "
-        "Permanent easement and fee simple keep acquisition and holding, drop rent. "
-        "Federal hybrid keeps all three. If unset, reconductoring/rebuild/existing-ROW "
-        "infers lease; otherwise permanent easement."
+        "Default is new permanent easement (acquisition and holding, no rent). "
+        "Lease is rent from year 1 with no acquisition/holding. Federal hybrid is "
+        "all three, rent from start of construction. Lease and federal hybrid apply "
+        "only when selected."
     ),
     input_type="dropdown", tier="working", display_order=0,
     validation={"options": [
         "permanent_easement_new",
-        "fee_simple",
         "federal_hybrid",
         "lease_license_existing",
     ]},

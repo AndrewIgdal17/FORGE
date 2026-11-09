@@ -14,11 +14,11 @@
         "line_utilization": 0.65,
         "value_of_load_per_mwh": 42.0,
         "project_type": "greenfield",
-        "uses_existing_row": false,
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
-        "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC"
+        "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC",
+        "row_agreement_type": "permanent_easement_new"
       },
       "timeline": {
         "construction_years": 3,

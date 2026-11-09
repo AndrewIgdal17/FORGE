@@ -18,6 +18,10 @@ _INDEX = re.compile(r"\[(\d+)\]")
 _SCALAR = (int, float, str, bool, type(None))
 _MAX_STRING_LENGTH = 200
 _NUMERIC_INPUT_TYPES = ("number", "currency", "percent")
+_ROW_AGREEMENT_TYPE_PATH = "01_project_technical_details.project.row_agreement_type"
+_FEE_SIMPLE_REJECTED_MESSAGE = (
+    "fee_simple is no longer an agreement type. Choose another agreement."
+)
 
 
 def _encode(value: Any) -> Any:
@@ -248,6 +252,9 @@ def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
                 "path": path,
                 "message": f"string exceeds {_MAX_STRING_LENGTH} characters",
             })
+            continue
+        if path == _ROW_AGREEMENT_TYPE_PATH and decoded == "fee_simple":
+            errors.append({"path": path, "message": _FEE_SIMPLE_REJECTED_MESSAGE})
             continue
         field = metadata.get(path)
         if field is not None:

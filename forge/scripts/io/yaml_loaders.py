@@ -11,6 +11,7 @@ from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
 from forge.scripts.utils.calculation_utils import normalize_capacity_mw
 from forge.scripts.utils.financial_utils import calculate_real_wacc, fisher_real, get_wacc_nominal
+from forge.errors import InvalidInputs
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +27,12 @@ class ProjectTechnicalDetails:
     converter_type: str
     line_utilization: float
     project_type: str  # "greenfield" | "reconductoring" | "rebuild"
-    uses_existing_row: bool
     delay_years: float
     construction_years: int
     project_lifetime: int
     converter_loss_percentage: Optional[float]
     number_of_converters: int = 0
-    row_agreement_type: Optional[str] = (
-        None  # permanent_easement_new | lease_license_existing | fee_simple | federal_hybrid; if None, inferred from project_type/uses_existing_row
-    )
+    row_agreement_type: str = "permanent_easement_new"  # permanent_easement_new | lease_license_existing | federal_hybrid
 
 
 @dataclass
@@ -211,7 +209,6 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             if ac_dc == "AC"
             else project_data.get("converter_loss_percentage", None)
         )
-        uses_existing_row = project_data.get("uses_existing_row", False)
         project_type = project_data["project_type"]
         if project_type not in ("greenfield", "reconductoring", "rebuild"):
             raise ValueError(
@@ -219,10 +216,10 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             )
         row_agreement_type = project_data.get("row_agreement_type")
         if row_agreement_type is None:
-            row_agreement_type = (
-                "lease_license_existing"
-                if (project_type in ("reconductoring", "rebuild") or uses_existing_row)
-                else "permanent_easement_new"
+            row_agreement_type = "permanent_easement_new"
+        if row_agreement_type == "fee_simple":
+            raise InvalidInputs(
+                "fee_simple is no longer an agreement type. Choose another agreement."
             )
         # Extract number_of_converters for DC projects
         if ac_dc == "DC":
@@ -242,7 +239,6 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             converter_type=converter_type,
             line_utilization=project_data["line_utilization"],
             project_type=project_type,
-            uses_existing_row=uses_existing_row,
             delay_years=timeline_data["delay_years"],
             construction_years=timeline_data["construction_years"],
             project_lifetime=timeline_data["project_lifetime"],

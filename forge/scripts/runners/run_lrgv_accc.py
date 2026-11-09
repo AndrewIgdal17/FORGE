@@ -124,7 +124,7 @@ def patch_lrgv_accc(inputs: dict) -> dict:
     proj["project"]["line_utilization"] = 0.65
     proj["project"]["value_of_load_per_mwh"] = 42.0
     proj["project"]["project_type"] = "reconductoring"
-    proj["project"]["uses_existing_row"] = True
+    proj["project"]["row_agreement_type"] = "lease_license_existing"
     proj["project"]["old_capacity_mw"] = 1792
     proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
     proj["project"]["old_ac_dc"] = "AC"
@@ -153,7 +153,7 @@ def patch_lrgv_acsr_rebuild(inputs: dict) -> dict:
     proj["project"]["line_utilization"] = 0.65
     proj["project"]["value_of_load_per_mwh"] = 42.0
     proj["project"]["project_type"] = "rebuild"
-    proj["project"]["uses_existing_row"] = True
+    proj["project"]["row_agreement_type"] = "lease_license_existing"
     proj["project"]["old_capacity_mw"] = 1792
     proj["project"]["old_conductor_type"] = "Standard Aluminum Conductor"
     proj["project"]["old_ac_dc"] = "AC"

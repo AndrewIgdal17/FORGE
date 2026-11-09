@@ -14,11 +14,11 @@
         "line_utilization": 0.65,
         "value_of_load_per_mwh": 42.0,
         "project_type": "rebuild",
-        "uses_existing_row": true,
         "old_capacity_mw": 1792,
         "old_conductor_type": "Standard Aluminum Conductor",
         "old_ac_dc": "AC",
-        "name": "AEP_LRGV_345kV_ACSR_Rebuild"
+        "name": "AEP_LRGV_345kV_ACSR_Rebuild",
+        "row_agreement_type": "lease_license_existing"
       },
       "timeline": {
         "construction_years": 5,

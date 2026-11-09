@@ -24,7 +24,7 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     proj["project"]["line_utilization"] = 0.67
     proj["project"]["value_of_load_per_mwh"] = 30.0
     proj["project"]["project_type"] = "greenfield"
-    proj["project"]["uses_existing_row"] = False
+    proj["project"]["row_agreement_type"] = "permanent_easement_new"
     proj["project"]["old_capacity_mw"] = None
     proj["project"]["old_conductor_type"] = None
     proj["project"]["old_ac_dc"] = None

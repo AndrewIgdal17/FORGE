@@ -112,7 +112,6 @@ def load_project_details() -> LineLossProjectDetails:
         converter_type = project_details_obj.converter_type
         line_utilization_percent = project_details_obj.line_utilization
         project_type = project_details_obj.project_type
-        uses_existing_row = project_details_obj.uses_existing_row
         delay_years = project_details_obj.delay_years
         construction_years = project_details_obj.construction_years
         project_lifetime = project_details_obj.project_lifetime

@@ -78,7 +78,6 @@ class JSONOutputManager:
         line_utilization = project_details.line_utilization
         project_type = project_details.project_type
         is_reconductoring_or_rebuild = project_type in ("reconductoring", "rebuild")
-        uses_existing_row = project_details.uses_existing_row
         delay_years = project_details.delay_years
         construction_years = project_details.construction_years
         project_lifetime = project_details.project_lifetime
@@ -103,7 +102,6 @@ class JSONOutputManager:
             "conductor_type": conductor_type,
             "line_length_miles": total_line_length,
             "line_utilization": line_utilization,
-            "uses_existing_row": uses_existing_row,
             # Converter details (for DC projects)
             "converter_type": converter_type,
             "number_of_converters": (

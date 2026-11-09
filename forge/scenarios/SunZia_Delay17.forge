@@ -14,11 +14,11 @@
         "line_utilization": 0.67,
         "value_of_load_per_mwh": 30.0,
         "project_type": "greenfield",
-        "uses_existing_row": false,
         "old_capacity_mw": null,
         "old_conductor_type": null,
         "old_ac_dc": null,
-        "name": "SunZia_HVDC_2400MW_StandardAluminum_VSC"
+        "name": "SunZia_HVDC_2400MW_StandardAluminum_VSC",
+        "row_agreement_type": "permanent_easement_new"
       },
       "timeline": {
         "construction_years": 3,
