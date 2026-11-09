@@ -7,9 +7,9 @@ import forge
 def test_run_calculation_is_silent(capsys):
     """With no logging configured, run_calculation produces no output.
 
-    The defaults template has capacity_mw 0, so bootstrap raises before any
-    module runs. A bundled case study is the smallest input that completes
-    the pipeline and would emit the module print calls.
+    The defaults template leaves required inputs empty, so bootstrap raises
+    before any module runs. A bundled case study is the smallest input that
+    completes the pipeline and would emit the module print calls.
     """
     forge_file = forge.get_scenarios_path() / "SunZia_Delay2.forge"
     with open(forge_file) as f:

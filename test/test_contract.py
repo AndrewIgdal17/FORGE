@@ -18,6 +18,13 @@ PATHS = (
     "02_project_physical_details.terrain.protected_area_acres.rolling_hills",
     "02_project_physical_details.terrain.protected_area_acres.mountain",
 )
+# The template used to carry zeros for these. A runnable draft now has to set them.
+_TEMPLATE_RUN = {
+    "01_project_technical_details.project.value_of_load_per_mwh": 0.0,
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance": 0.0,
+    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
+}
 
 
 def test_validate_changes_catches_bad_values():
@@ -117,6 +124,7 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
         forge.resolve_inputs({})
     resolved = forge.resolve_inputs({
         **{path: 0.0 for path in PATHS},
+        **_TEMPLATE_RUN,
         "01_project_technical_details.project.capacity_mw": 1792,
         "07_outage_costs.outage.value_of_lost_load.tiers[9].max_hours": "Infinity",
         "01_project_technical_details.project.old_converter_type": "NaN",
@@ -139,6 +147,7 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
 def test_run_calculation_does_not_reread_bundled_yaml(monkeypatch):
     inputs = forge.resolve_inputs({
         **{path: 0.0 for path in PATHS},
+        **_TEMPLATE_RUN,
         "01_project_technical_details.project.capacity_mw": 1792,
     })
     opened: list[str] = []
@@ -162,6 +171,7 @@ def test_calculator_info_and_provenance():
     assert "commit" in info
     inputs = forge.resolve_inputs({
         **{path: 0.0 for path in PATHS},
+        **_TEMPLATE_RUN,
         "01_project_technical_details.project.capacity_mw": 1792,
     })
     results = forge.run_calculation(inputs, scenario_id="prov-test")

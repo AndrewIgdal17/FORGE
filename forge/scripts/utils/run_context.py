@@ -59,12 +59,16 @@ class RunState:
     ``aggregator``  — the JSONOutputManager for this run (set before the module loop).
     ``run_context``  — populated by _bootstrap_run_context; None until then.
     ``derived_parameters`` — accumulated by add_derived().
+    ``capital_only`` — required-input check skips after-route fields.
+    ``no_linelosses`` — energy value is not required on the regional margin.
     """
     inputs: dict[str, Any]
     scenario_id: str = ""
     aggregator: Any = None
     run_context: RunContext | None = None
     derived_parameters: dict[str, Any] = dc_field(default_factory=dict)
+    capital_only: bool = False
+    no_linelosses: bool = False
 
 
 _SENTINEL = object()

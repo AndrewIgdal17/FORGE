@@ -37,6 +37,15 @@ def _walk(root, path):
     return current
 
 
+# A blank template no longer resolves. These are the zeros the old defaults supplied.
+_RUNNABLE = {
+    "01_project_technical_details.project.capacity_mw": 500,
+    "01_project_technical_details.project.value_of_load_per_mwh": 0.0,
+    "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
+    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
+}
+
+
 def test_registry_paths_resolve_and_values_are_gone():
     document = yaml.safe_load((get_yamls_path() / "defaults_registry.yaml").read_text())
     template = get_defaults_template()
@@ -45,6 +54,7 @@ def test_registry_paths_resolve_and_values_are_gone():
         node = _walk(template, entry["path"])
         if not isinstance(node, list):
             changes = {path: 0.0 for path in _ACRE_PATHS}
-            if entry["path"] not in _ACRE_PATHS:
+            changes.update(_RUNNABLE)
+            if entry["path"] not in changes:
                 changes[entry["path"]] = None
             resolve_inputs(changes)

@@ -10,9 +10,9 @@ import forge
 def _runnable_inputs() -> dict:
     """Return a complete case-study input dict.
 
-    ``get_defaults_template()`` has ``capacity_mw`` of 0 and is not a runnable
-    project, so these checks use a bundled scenario the same way the golden
-    tests do.
+    ``get_defaults_template()`` leaves required inputs empty and is not a
+    runnable project, so these checks use a bundled scenario the same way the
+    golden tests do.
     """
     forge_file = forge.get_scenarios_path() / "SunZia_Delay2.forge"
     with open(forge_file) as handle:

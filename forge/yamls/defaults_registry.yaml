@@ -1170,3 +1170,88 @@ timeline:
     citation: null
     yaml_file: 01_project_technical_details.yaml
     basis: Author judgment
+sending_end:
+  sending_source:
+    path: 01_project_technical_details.project.sending_source
+    unit: margin or dedicated
+    source: Regional margin is the methodology default
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  contract_price_per_mwh:
+    path: 01_project_technical_details.project.dedicated_resource.contract_price_per_mwh
+    unit: $/MWh
+    source: All-in dedicated-resource price. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  emission_rate_co2e:
+    path: 01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.co2e
+    unit: kg/MWh
+    source: Dedicated-resource CO2e rate. No default. Zero for wind or solar.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  emission_rate_so2:
+    path: 01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.so2
+    unit: kg/MWh
+    source: Dedicated-resource SO2 rate. No default. Zero for wind or solar.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  emission_rate_nox:
+    path: 01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.nox
+    unit: kg/MWh
+    source: Dedicated-resource NOx rate. No default. Zero for wind or solar.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  capacity_mw:
+    path: 01_project_technical_details.project.capacity_mw
+    unit: MW
+    source: Nameplate transfer capacity. Required, and must be greater than 0.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  value_of_load_per_mwh:
+    path: 01_project_technical_details.project.value_of_load_per_mwh
+    unit: $/MWh
+    source: Receiving-end energy value. Required, and must be at least 0.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Author judgment
+  flow_factor:
+    path: 17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor
+    unit: share [0,1]
+    source: Deliverability to the targeted constraint. Required for greenfield on the margin.
+    citation: null
+    yaml_file: 17_congestion_reductions.yaml
+    basis: Author judgment
+  greenfield_average_exceedance:
+    path: 17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance
+    unit: MW
+    source: Empty means equal to effective capacity. A supplied value is at least 0.
+    citation: null
+    yaml_file: 17_congestion_reductions.yaml
+    basis: Author judgment
+  greenfield_congestion_spread:
+    path: 17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price
+    unit: $/MWh
+    source: Mean congestion spread over all 8,760 hours. Any real value. No default.
+    citation: null
+    yaml_file: 17_congestion_reductions.yaml
+    basis: Author judgment
+  incremental_average_exceedance:
+    path: 17_congestion_reductions.incremental_congestion_reductions.constraints.average_exceedance
+    unit: MW
+    source: Empty means equal to effective capacity. A supplied value is at least 0.
+    citation: null
+    yaml_file: 17_congestion_reductions.yaml
+    basis: Author judgment
+  incremental_congestion_spread:
+    path: 17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price
+    unit: $/MWh
+    source: Mean congestion spread over all 8,760 hours. Any real value. No default.
+    citation: null
+    yaml_file: 17_congestion_reductions.yaml
+    basis: Author judgment

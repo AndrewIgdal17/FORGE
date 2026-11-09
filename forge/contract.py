@@ -309,6 +309,115 @@ def _is_value_error(message: str) -> bool:
     return "is not a whole number" in message or "is no longer" in message
 
 
+_CAPACITY_MW_PATH = "01_project_technical_details.project.capacity_mw"
+_ENERGY_VALUE_PATH = "01_project_technical_details.project.value_of_load_per_mwh"
+
+
+def _project_section(document: Mapping[str, Any]) -> Mapping[str, Any]:
+    section = document.get("01_project_technical_details", {})
+    if not isinstance(section, dict):
+        return {}
+    project = section.get("project", {})
+    return project if isinstance(project, dict) else {}
+
+
+def _required_condition(name: str, project: Mapping[str, Any]) -> bool:
+    project_type = project.get("project_type")
+    sending_source = project.get("sending_source")
+    replaced_line = project_type in {"reconductoring", "rebuild"}
+    if name == "always":
+        return True
+    if name == "greenfield_margin":
+        return project_type == "greenfield" and sending_source == "margin"
+    if name == "reconductoring_or_rebuild_and_margin":
+        return replaced_line and sending_source == "margin"
+    if name == "dedicated":
+        return sending_source == "dedicated"
+    if name == "reconductoring_or_rebuild":
+        return replaced_line
+    if name == "reconductoring_or_rebuild_dc":
+        return replaced_line and project.get("old_ac_dc") == "DC"
+    raise ValueError(f"unknown required_when condition {name!r}")
+
+
+def _value_is_missing(path: str, value: Any) -> bool:
+    if path == _CAPACITY_MW_PATH:
+        if value is None:
+            return True
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return False
+        return value <= 0
+    return value is None
+
+
+def _missing_required_in(
+    document: Mapping[str, Any],
+    *,
+    capital_only: bool,
+    no_linelosses: bool,
+) -> list[dict]:
+    project = _project_section(document)
+    sending_source = project.get("sending_source")
+    missing: list[dict] = []
+    for field in input_metadata_to_dict():
+        required_when = field.get("required_when")
+        stage = field.get("required_stage")
+        if not required_when or not stage:
+            continue
+        if capital_only and stage == "after_route":
+            continue
+        path = f"{field['yaml_section']}.{field['field_path']}"
+        if (
+            no_linelosses
+            and path == _ENERGY_VALUE_PATH
+            and sending_source != "dedicated"
+        ):
+            continue
+        if not _required_condition(required_when, project):
+            continue
+        try:
+            parent, key = _walk(document, path)
+            value = parent[key]
+        except KeyError:
+            value = None
+        if not _value_is_missing(path, value):
+            continue
+        label = field["label"]
+        missing.append({
+            "path": path,
+            "label": label,
+            "stage": stage,
+            "message": f"{label} is required.",
+        })
+    return missing
+
+
+def missing_required_inputs(
+    changes: Mapping[str, Any],
+    *,
+    capital_only: bool = False,
+    no_linelosses: bool = False,
+) -> list[dict]:
+    """Fields whose condition holds and whose resolved value is missing.
+
+    ``capital_only`` drops every after-route field. ``no_linelosses`` drops
+    the energy value unless the sending-end source is a dedicated resource.
+    """
+    resolved = copy.deepcopy(get_defaults_template())
+    for path, value in changes.items():
+        parent, key = _walk(resolved, path)
+        parent[key] = _decode(value)
+    return _missing_required_in(
+        resolved,
+        capital_only=capital_only,
+        no_linelosses=no_linelosses,
+    )
+
+
+def _required_inputs_message(missing: list[dict]) -> str:
+    return "; ".join(f"{item['path']}: {item['message']}" for item in missing)
+
+
 def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     errors = validate_changes(changes)
     if errors:
@@ -320,11 +429,19 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     for path, value in changes.items():
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
-    missing = missing_protected_area_acres(resolved)
-    if missing:
-        raise InvalidInputs(
-            "protected_area_acres are required. Missing: " + ", ".join(missing)
+    parts: list[str] = []
+    missing_acres = missing_protected_area_acres(resolved)
+    if missing_acres:
+        parts.append(
+            "protected_area_acres are required. Missing: " + ", ".join(missing_acres)
         )
+    missing_required = _missing_required_in(
+        resolved, capital_only=False, no_linelosses=False
+    )
+    if missing_required:
+        parts.append(_required_inputs_message(missing_required))
+    if parts:
+        raise InvalidInputs(" ".join(parts))
     return resolved
 
 

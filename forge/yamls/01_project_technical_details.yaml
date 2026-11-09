@@ -5,16 +5,23 @@ project:
   construction_type: "Overhead" # Overhead, Underground direct-buried, Underground Tunnel
   ac_dc: "AC" # AC or DC
   number_of_converters: 0 # 1 or 2
-  capacity_mw: 0 # MW
+  capacity_mw: null # MW; required, and must be > 0
   conductor_type: "Standard Aluminum Conductor" # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor
   converter_type: "NA" # LCC Converter or VSC Converter
   converter_loss_percentage: # Optional: Loss percentage [0,1] (defaults: 0.0075 for LCC, 0.01 for VSC)
 
   line_utilization: 0.70 # % [0,1]
 
-  value_of_load_per_mwh: 0 # $/MWh (>= 0)
+  value_of_load_per_mwh: null # $/MWh (>= 0)
 
   project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
+  sending_source: "margin" # "margin" (regional margin) or "dedicated"
+  dedicated_resource:
+    contract_price_per_mwh: null # $/MWh, all-in (energy and capacity)
+    emission_rate_kg_per_mwh:
+      co2e: null
+      so2: null
+      nox: null
   row_agreement_type: null # permanent_easement_new | federal_hybrid | lease_license_existing; null = permanent_easement_new for greenfield, lease_license_existing for reconductoring and rebuild
   old_capacity_mw: null # MW
   old_conductor_type: null # Standard Aluminum Conductor, Advanced Aluminum Conductor, Underground Copper Conductor

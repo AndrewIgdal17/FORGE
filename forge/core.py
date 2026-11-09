@@ -198,6 +198,22 @@ def _require_whole_year(name: str, value: Any) -> int:
     return int(value)
 
 
+def _raise_if_required_inputs_missing() -> None:
+    """Repeat the required-input check against the active run and its flags."""
+    from forge.contract import diff_changes, missing_required_inputs
+    from forge.scripts.utils.run_context import get_run_state
+
+    state = get_run_state()
+    missing_req = missing_required_inputs(
+        diff_changes(state.inputs),
+        capital_only=state.capital_only,
+        no_linelosses=state.no_linelosses,
+    )
+    if missing_req:
+        detail = "; ".join(f"{item['path']}: {item['message']}" for item in missing_req)
+        raise InvalidInputs(detail)
+
+
 def _bootstrap_run_context() -> "RunContext":
     """Load input sections once and populate the shared RunContext.
 
@@ -218,16 +234,11 @@ def _bootstrap_run_context() -> "RunContext":
     )
     from forge.scripts.utils.smart_loaders import get_financing_data_raw
 
-    project_details = load_project_technical_details()
-    capacity_mw = getattr(project_details, "capacity_mw", None)
-    if capacity_mw is None or capacity_mw == 0:
-        raise InvalidInputs(
-            f"capacity_mw is required and must be > 0 (got {capacity_mw}). "
-            "Set a valid line capacity in MW."
-        )
     from forge.contract import missing_protected_area_acres
     from forge.scripts.utils.run_context import get_run_state
 
+    _raise_if_required_inputs_missing()
+    project_details = load_project_technical_details()
     inputs = get_run_state().inputs
     missing = missing_protected_area_acres(inputs)
     if missing:
@@ -360,9 +371,14 @@ def _run_once(
     state = RunState(
         inputs=inputs,
         scenario_id=scenario_id or datetime.now().strftime("%Y%m%d_%H%M%S_%f"),
+        capital_only=capital_only,
+        no_linelosses=no_linelosses,
     )
     token = set_run_state(state)
     try:
+        # The output manager loads capacity before bootstrap. Reject a blank
+        # draft first so a null capacity stays InvalidInputs.
+        _raise_if_required_inputs_missing()
         aggregator = JSONOutputManager(scenario_id=state.scenario_id)
         state.aggregator = aggregator
 

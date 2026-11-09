@@ -1,6 +1,7 @@
 """Access bundled FORGE data (YAML templates, scenarios)."""
 from __future__ import annotations
 
+import copy
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -17,10 +18,10 @@ def get_scenarios_path() -> Path:
 
 
 _SKIP_STEMS = {"project_category_template", "defaults_registry"}
+_DEFAULTS_TEMPLATE: dict[str, Any] | None = None
 
 
-def get_defaults_template() -> dict[str, Any]:
-    """Load and merge all YAML templates into a combined defaults dict."""
+def _read_defaults_template() -> dict[str, Any]:
     import yaml
 
     combined: dict[str, Any] = {}
@@ -30,3 +31,14 @@ def get_defaults_template() -> dict[str, Any]:
         with yaml_file.open() as handle:
             combined[yaml_file.stem] = yaml.safe_load(handle)
     return combined
+
+
+def get_defaults_template() -> dict[str, Any]:
+    """Return a deep copy of the bundled defaults.
+
+    The files are read once per process. A calculation must not reread them.
+    """
+    global _DEFAULTS_TEMPLATE
+    if _DEFAULTS_TEMPLATE is None:
+        _DEFAULTS_TEMPLATE = _read_defaults_template()
+    return copy.deepcopy(_DEFAULTS_TEMPLATE)

@@ -10,8 +10,9 @@ from forge.errors import InvalidInputs, CalculationError
 def _runnable_inputs():
     """A case-study document that passes bootstrap.
 
-    The defaults template has capacity_mw 0 and a category with no ROW width,
-    so a module-loop test cannot start from get_defaults_template() alone.
+    The defaults template leaves required inputs empty and has a category
+    with no ROW width, so a module-loop test cannot start from
+    get_defaults_template() alone.
     """
     forge_file = forge.get_scenarios_path() / "SunZia_Delay2.forge"
     with open(forge_file) as f:

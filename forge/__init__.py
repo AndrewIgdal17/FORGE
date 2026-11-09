@@ -7,6 +7,7 @@ from forge.contract import (
     canonical_dumps,
     diff_changes,
     get_defaults_id,
+    missing_required_inputs,
     resolve_inputs,
     validate_changes,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "canonical_dumps",
     "get_defaults_id",
     "resolve_inputs",
+    "missing_required_inputs",
     "validate_changes",
     "diff_changes",
     "calculator_info",

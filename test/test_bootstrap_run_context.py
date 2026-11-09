@@ -12,6 +12,28 @@ from forge.scripts.utils.run_context import (
 )
 
 
+def _with_required_inputs(inputs: dict, *, capacity_mw: float = 500) -> dict:
+    """Fill the null template fields a greenfield margin draft must carry."""
+    merged = dict(inputs)
+    technical = dict(merged.get("01_project_technical_details") or {})
+    project = dict(technical.get("project") or {})
+    project["capacity_mw"] = capacity_mw
+    project["value_of_load_per_mwh"] = 0.0
+    technical["project"] = project
+    merged["01_project_technical_details"] = technical
+    congestion = dict(merged.get("17_congestion_reductions") or {})
+    greenfield = dict(congestion.get("greenfield_congestion_reductions") or {})
+    constraints = dict(greenfield.get("constraints") or {})
+    constraints["flow_factor"] = 0.0
+    prices = dict(greenfield.get("prices") or {})
+    prices["average_congestion_price"] = 0.0
+    greenfield["constraints"] = constraints
+    greenfield["prices"] = prices
+    congestion["greenfield_congestion_reductions"] = greenfield
+    merged["17_congestion_reductions"] = congestion
+    return merged
+
+
 def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
     from forge.core import _bootstrap_run_context
 
@@ -69,7 +91,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
     )
 
     state = RunState(
-        inputs={
+        inputs=_with_required_inputs({
             "02_project_physical_details": {
                 "terrain": {
                     "protected_area_acres": {
@@ -86,7 +108,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
                     "5": [0.01, 0.04, 0.35, 0.35, 0.25],
                 }
             },
-        },
+        }),
         scenario_id="test",
     )
     token = set_run_state(state)
@@ -142,7 +164,7 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
     )
 
     state = RunState(
-        inputs={
+        inputs=_with_required_inputs({
             "02_project_physical_details": {
                 "terrain": {
                     "protected_area_acres": {
@@ -154,12 +176,12 @@ def test_bootstrap_rejects_zero_capacity_mw(monkeypatch):
                     }
                 }
             }
-        },
+        }, capacity_mw=0),
         scenario_id="test",
     )
     token = set_run_state(state)
     try:
-        with pytest.raises(InvalidInputs, match="capacity_mw is required and must be > 0"):
+        with pytest.raises(InvalidInputs, match="Capacity MW is required."):
             _bootstrap_run_context()
     finally:
         reset_run_state(token)
@@ -222,7 +244,7 @@ def test_bootstrap_rejects_zero_construction_years(monkeypatch):
     )
 
     state = RunState(
-        inputs={
+        inputs=_with_required_inputs({
             "02_project_physical_details": {
                 "terrain": {
                     "protected_area_acres": {
@@ -234,7 +256,7 @@ def test_bootstrap_rejects_zero_construction_years(monkeypatch):
                     }
                 }
             }
-        },
+        }),
         scenario_id="test",
     )
     token = set_run_state(state)
