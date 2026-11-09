@@ -201,7 +201,7 @@ def _require_whole_year(name: str, value: Any) -> int:
 def _bootstrap_run_context() -> "RunContext":
     """Load input sections once and populate the shared RunContext.
 
-    Called by run_calculation() after RunState is set. Returns the populated
+    Called by _run_once() after RunState is set. Returns the populated
     RunContext; also calls set_run_context() and add_derived() as side effects.
     """
     from forge.scripts.utils.run_context import RunContext, add_derived, set_run_context
@@ -339,7 +339,7 @@ def _bootstrap_run_context() -> "RunContext":
     return ctx
 
 
-def run_calculation(
+def _run_once(
     combined_data: dict[str, Any],
     scenario_id: str = "",
     *,
@@ -351,12 +351,9 @@ def run_calculation(
     no_outages: bool = False,
     no_oandm: bool = False,
     capital_only: bool = False,
+    trajectory: bool = True,
 ) -> dict[str, Any]:
-    """Run the full FORGE calculation pipeline.
-
-    Pure function: reads no file, writes no file, changes no process-wide state.
-    Concurrent calls on different threads return the same results as sequential calls.
-    """
+    """Run the pipeline once. ``trajectory=False`` skips the year-by-year rows."""
     from forge.scripts.io.json_output_manager import JSONOutputManager
 
     inputs = copy.deepcopy(combined_data)
@@ -428,7 +425,7 @@ def run_calculation(
         if taxonomy_results_json is not None:
             results["taxonomy_results"] = taxonomy_results_json
 
-        if results.get("bcr"):
+        if trajectory and results.get("bcr"):
             try:
                 from forge.scripts.calc.bcr_trajectory import compute_trajectory
                 results["trajectory"] = compute_trajectory(results, inputs)
@@ -451,6 +448,149 @@ def run_calculation(
         return results
     finally:
         reset_run_state(token)
+
+
+def _societal_value_pv(results: dict[str, Any], taxonomy_id: str) -> Any:
+    """Societal present value, or None when that module did not run."""
+    for entry in results.get("taxonomy_results") or []:
+        if entry.get("taxonomy_id") == taxonomy_id:
+            return entry.get("value_pv")
+    return None
+
+
+def _forgone_delay(cong: Any, avoid: Any) -> Any:
+    """Sum of the two benefit differences. None when either difference is None."""
+    if cong is None or avoid is None:
+        return None
+    return cong + avoid
+
+
+def _on_time_metrics(results: dict[str, Any]) -> dict[str, Any]:
+    bcr = results["bcr"]
+    return {
+        "bcr_societal": bcr["bcr_societal"],
+        "net_benefit_pv": bcr["net_benefit_pv"],
+        "total_costs_pv": bcr["total_costs_pv"],
+        "total_benefits_pv": bcr["total_benefits_pv"],
+    }
+
+
+def _delay_block(
+    *,
+    baseline: int,
+    delay_years: int,
+    on_time_run: bool,
+    cong: Any,
+    avoid: Any,
+    delta_nb: float,
+    on_time: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "baseline_delay_years": baseline,
+        "delay_years": delay_years,
+        "on_time_run": on_time_run,
+        "delay_cost_cong": cong,
+        "delay_cost_avoid": avoid,
+        "delay_cost_forgone": _forgone_delay(cong, avoid),
+        "delta_nb_delay": delta_nb,
+        "on_time": on_time,
+    }
+
+
+def _entered_delay_years(inputs: dict[str, Any]) -> tuple[int, int]:
+    section = inputs.get("01_project_technical_details", {})
+    timeline = section.get("timeline", {}) if isinstance(section, dict) else {}
+    if not isinstance(timeline, dict):
+        timeline = {}
+    delay_years = _require_whole_year("delay_years", timeline["delay_years"])
+    baseline = _require_whole_year(
+        "baseline_delay_years", _baseline_delay_years(inputs, None)
+    )
+    return delay_years, baseline
+
+
+def _delay_comparison(
+    inputs: dict[str, Any],
+    results: dict[str, Any],
+    scenario_id: str,
+    flags: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Compare the run as entered with the same project at the baseline delay.
+
+    Capital-only runs have no benefits, so the block is None. A run already at
+    the baseline delay is not run again. A module that did not run contributes
+    None, including when the two delays are equal.
+    """
+    if flags["capital_only"]:
+        return None
+    delay_years, baseline = _entered_delay_years(inputs)
+    if delay_years == baseline:
+        cong = 0.0 if _societal_value_pv(results, "congestion_benefit") is not None else None
+        avoid = 0.0 if _societal_value_pv(results, "avoided_emissions_benefit") is not None else None
+        return _delay_block(
+            baseline=baseline,
+            delay_years=delay_years,
+            on_time_run=False,
+            cong=cong,
+            avoid=avoid,
+            delta_nb=0.0,
+            on_time=_on_time_metrics(results),
+        )
+    ot_inputs = copy.deepcopy(inputs)
+    ot_inputs["01_project_technical_details"]["timeline"]["delay_years"] = baseline
+    # Look up the module global at call time so a test patch of _run_once counts.
+    ot = _run_once(ot_inputs, scenario_id, trajectory=False, **flags)
+    entered_cong = _societal_value_pv(results, "congestion_benefit")
+    on_time_cong = _societal_value_pv(ot, "congestion_benefit")
+    entered_avoid = _societal_value_pv(results, "avoided_emissions_benefit")
+    on_time_avoid = _societal_value_pv(ot, "avoided_emissions_benefit")
+    cong = None if entered_cong is None or on_time_cong is None else on_time_cong - entered_cong
+    avoid = None if entered_avoid is None or on_time_avoid is None else on_time_avoid - entered_avoid
+    delta_nb = ot["bcr"]["net_benefit_pv"] - results["bcr"]["net_benefit_pv"]
+    return _delay_block(
+        baseline=baseline,
+        delay_years=delay_years,
+        on_time_run=True,
+        cong=cong,
+        avoid=avoid,
+        delta_nb=delta_nb,
+        on_time=_on_time_metrics(ot),
+    )
+
+
+def run_calculation(
+    combined_data: dict[str, Any],
+    scenario_id: str = "",
+    *,
+    no_emissions: bool = False,
+    no_linelosses: bool = False,
+    no_insurance: bool = False,
+    no_delay_costs: bool = False,
+    no_wildfire: bool = False,
+    no_outages: bool = False,
+    no_oandm: bool = False,
+    capital_only: bool = False,
+) -> dict[str, Any]:
+    """Run the full FORGE calculation pipeline.
+
+    Pure function: reads no file, writes no file, changes no process-wide state.
+    Concurrent calls on different threads return the same results as sequential calls.
+    """
+    flags = {
+        "no_emissions": no_emissions,
+        "no_linelosses": no_linelosses,
+        "no_insurance": no_insurance,
+        "no_delay_costs": no_delay_costs,
+        "no_wildfire": no_wildfire,
+        "no_outages": no_outages,
+        "no_oandm": no_oandm,
+        "capital_only": capital_only,
+    }
+    results = _run_once(combined_data, scenario_id, trajectory=True, **flags)
+    results["delay_comparison"] = _delay_comparison(
+        combined_data, results, scenario_id, flags
+    )
+    return results
 
 
 def main() -> None:

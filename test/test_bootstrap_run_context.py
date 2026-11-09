@@ -247,10 +247,12 @@ def test_bootstrap_rejects_zero_construction_years(monkeypatch):
 
 def test_run_calculation_and_main_share_bootstrap():
     import forge
+    from forge.core import _run_once
 
-    # main() calls run_calculation(), which calls _bootstrap_run_context()
-    rc_src = inspect.getsource(forge.run_calculation)
-    assert "_bootstrap_run_context()" in rc_src
+    # main() calls run_calculation(), which calls _run_once(), which calls
+    # _bootstrap_run_context(). The pipeline body moved out of the wrapper.
+    assert "_bootstrap_run_context()" in inspect.getsource(_run_once)
+    assert "_run_once(" in inspect.getsource(forge.run_calculation)
 
     main_src = inspect.getsource(forge.main)
     assert "run_calculation(" in main_src
