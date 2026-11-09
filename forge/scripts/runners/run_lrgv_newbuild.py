@@ -172,9 +172,6 @@ def print_results(results: dict, label: str):
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")
     print(f"  Fac. emissions (no-line): {fmt(fac.get('fac_emissions_noline_pv', 0))}")
 
-    print(f"\n  --- DELAY COSTS (embedded) ---")
-    print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")
-
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
     print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")

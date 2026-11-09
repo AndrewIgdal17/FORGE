@@ -152,9 +152,6 @@ def print_results(results: dict, label: str):
     print(f"  Fac. emissions (proj):  {fmt(fac.get('fac_emissions_project_pv', 0))}")
     print(f"  Fac. emissions (no-line): {fmt(fac.get('fac_emissions_noline_pv', 0))}")
 
-    print(f"\n  --- DELAY COSTS (embedded in benefits) ---")
-    print(f"  Congestion delay cost:  {fmt(cc['congestion_delay_cost_pv'])}")
-
     print(f"\n  --- BCR RATIOS ---")
     print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
     print(f"  BCR Utility:            {bcr.get('bcr_utility', 'N/A'):.3f}")
@@ -213,13 +210,10 @@ def main():
 
     # Delay-specific costs
     cc_a = results_actual["benefits"]["congestion"]
-    cc_b = results_cf["benefits"]["congestion"]
-    forgone_cong = cc_b["congestion_delay_cost_pv"] - cc_a["congestion_delay_cost_pv"]
     delay_cost_a = results_actual["costs"]["delay"]["total_pv"]
     delay_cost_b = results_cf["costs"]["delay"]["total_pv"]
     print(f"\n  --- DELAY DECOMPOSITION ---")
     print(f"  Direct delay costs:     {fmt(delay_cost_a)} (2yr) vs {fmt(delay_cost_b)} (7yr)")
-    print(f"  Additional forgone congestion relief: {fmt(forgone_cong)}")
     print(f"  Total social cost of 5 extra years: {fmt(delta_nb)}")
 
     # Validation against actuals
