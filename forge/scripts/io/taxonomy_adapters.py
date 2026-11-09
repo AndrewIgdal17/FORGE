@@ -68,30 +68,29 @@ def _proportional_pv(
 
 
 def adapt_build(build: dict) -> list[TaxonomyResult]:
-    """Adapt costs.build -> build_conductor, build_structure, build_converter."""
+    """Adapt costs.build -> build_conductor, build_structure, build_converter.
+
+    Reads each component stream and the social and WACC present values already
+    computed from that stream.
+    """
     if not build:
         return []
-    total_pv = _safe(build, "total_pv")
-    total_nominal = _safe(build, "total_nominal")
-    cond_nom = _safe(build, "conductor_nominal")
-    struct_nom = _safe(build, "structure_nominal")
-    conv_nom = _safe(build, "converter_nominal")
+    streams = build.get("streams") or {}
+
+    def _item(taxonomy_id: str, component: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(build, f"{component}_pv"),
+            value_nominal=_safe(build, f"{component}_nominal"),
+            value_pv_wacc=_safe(build, f"{component}_pv_wacc"),
+            stream=list(stream) if stream is not None else None,
+        )
+
     return [
-        TaxonomyResult(
-            "build_conductor",
-            value_pv=_proportional_pv(total_pv, cond_nom, total_nominal),
-            value_nominal=cond_nom,
-        ),
-        TaxonomyResult(
-            "build_structure",
-            value_pv=_proportional_pv(total_pv, struct_nom, total_nominal),
-            value_nominal=struct_nom,
-        ),
-        TaxonomyResult(
-            "build_converter",
-            value_pv=_proportional_pv(total_pv, conv_nom, total_nominal),
-            value_nominal=conv_nom,
-        ),
+        _item("build_conductor", "conductor"),
+        _item("build_structure", "structure"),
+        _item("build_converter", "converter"),
     ]
 
 

@@ -90,7 +90,7 @@ def _section_from_yaml(stem: str) -> dict:
     return yaml.safe_load((get_yamls_path() / f"{stem}.yaml").read_text())
 
 
-def test_oandm_converter_reads_ctx_build_costs(monkeypatch):
+def test_oandm_converter_reads_ctx_build_costs():
     """In-pipeline RunContext.build_costs is used when present (no reload)."""
     from forge.scripts.calc import oandm
 
@@ -103,12 +103,6 @@ def test_oandm_converter_reads_ctx_build_costs(monkeypatch):
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
     try:
-        def _should_not_run(*a, **k):
-            raise AssertionError("load_and_escalate_costs must not run when ctx.build_costs is set")
-
-        monkeypatch.setattr(
-            "forge.scripts.calc.build_costs.load_and_escalate_costs", _should_not_run
-        )
         result = oandm.load_converter_om_costs(
             ac_dc="DC",
             converter_type="VSC Converter",

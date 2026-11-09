@@ -20,12 +20,8 @@ from forge.scripts.utils.smart_loaders import (
     load_contingencies,
     load_financing_details,
 )
-from forge.scripts.utils.financial_utils import (
-    calculate_present_value,
-    capitalize_yearly_spending,
-    calculate_construction_start_year,
-)
-from forge.scripts.utils.streams import weighted
+from forge.scripts.utils.financial_utils import capitalize_yearly_spending
+from forge.scripts.utils.streams import add, pv, undiscounted, weighted
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
@@ -179,75 +175,6 @@ def load_costs(
     )
 
 
-def _construction_escalation_real() -> float:
-    """Real construction escalation from the run context, else Fisher on the nominal input."""
-    ctx = get_run_context()
-    financing = getattr(ctx, "financing", None) if ctx is not None else None
-    real = (
-        getattr(financing, "construction_escalation_real", None)
-        if financing is not None
-        else None
-    )
-    if real is not None:
-        return float(real)
-    from forge.scripts.utils.financial_utils import fisher_real
-    from forge.scripts.utils.smart_loaders import get_financing_data_raw
-
-    financial = get_financing_data_raw()["financial"]
-    return fisher_real(
-        financial["construction_cost_escalation_nominal"],
-        financial["inflation_rate"],
-    )
-
-
-def load_and_escalate_costs(
-    category: str,
-    number_of_converters: int,
-    contingencies: dict,
-    project_type: str,
-    project_details,
-) -> BuildCosts:
-    """Load build costs with overrides and delay escalation — full pipeline equivalent.
-
-    Use this in downstream modules' standalone fallback paths to get the same
-    BuildCosts object that main() would produce. This replaces incomplete
-    re-derivation fallbacks that were missing overrides/escalation/contingencies.
-    """
-    overrides = None
-    try:
-        raw = section("10_project_category_build_costs") or {}
-        raw_ov = raw.get("overrides")
-        if raw_ov and isinstance(raw_ov, dict):
-            overrides = {k: v for k, v in raw_ov.items() if v is not None}
-            if not overrides:
-                overrides = None
-    except KeyError:
-        pass
-
-    costs = load_costs(
-        category, number_of_converters, contingencies, project_type, overrides=overrides
-    )
-
-    delay_years = getattr(project_details, "delay_years", 0) or 0
-    if delay_years > 0:
-        escalation_rate = _construction_escalation_real()
-        if escalation_rate > 0:
-            factor = (1 + escalation_rate) ** delay_years
-            costs = BuildCosts(
-                total_cost=costs.total_cost,
-                total_cost_with_contingencies=costs.total_cost_with_contingencies * factor,
-                conductor_cost=costs.conductor_cost,
-                structure_cost=costs.structure_cost,
-                converter_cost=costs.converter_cost,
-                conductor_cost_with_contingencies=costs.conductor_cost_with_contingencies * factor,
-                structure_cost_with_contingencies=costs.structure_cost_with_contingencies * factor,
-                converter_cost_with_contingencies=costs.converter_cost_with_contingencies * factor,
-                weighted_miles=costs.weighted_miles,
-                average_terrain_multiplier=costs.average_terrain_multiplier,
-            )
-    return costs
-
-
 def main() -> None:
     """
     Main function to calculate and display build costs.
@@ -297,61 +224,54 @@ def main() -> None:
         "total_build_cost_with_contingencies": costs.total_cost_with_contingencies,
     })
 
-    # Escalate build cost during delay period (#27)
-    construction_escalation_real = financing.construction_escalation_real
-    if project_details.delay_years > 0 and construction_escalation_real > 0:
-        escalation_factor = (1 + construction_escalation_real) ** project_details.delay_years
-        costs = BuildCosts(
-            total_cost=costs.total_cost,
-            total_cost_with_contingencies=costs.total_cost_with_contingencies * escalation_factor,
-            conductor_cost=costs.conductor_cost,
-            structure_cost=costs.structure_cost,
-            converter_cost=costs.converter_cost,
-            conductor_cost_with_contingencies=costs.conductor_cost_with_contingencies * escalation_factor,
-            structure_cost_with_contingencies=costs.structure_cost_with_contingencies * escalation_factor,
-            converter_cost_with_contingencies=costs.converter_cost_with_contingencies * escalation_factor,
-            weighted_miles=costs.weighted_miles,
-            average_terrain_multiplier=costs.average_terrain_multiplier,
+    # Per-year real escalation on the MISO weights. The BuildCosts object stays
+    # in base-year prices; insurance and O&M read that capital base.
+    g_construction = financing.construction_escalation_real
+    bases = {
+        "conductor": costs.conductor_cost_with_contingencies,
+        "structure": costs.structure_cost_with_contingencies,
+        "converter": costs.converter_cost_with_contingencies,
+    }
+    build_streams = {
+        f"build_{name}": weighted(
+            base,
+            ctx.spending_weights,
+            ctx.t_start,
+            ctx.horizon,
+            escalation=g_construction,
         )
-        # Update context with escalated values
-        set_build_costs(costs)
-        add_derived({
-            "conductor_cost": costs.conductor_cost,
-            "structure_cost": costs.structure_cost,
-            "converter_cost": costs.converter_cost,
-            "conductor_cost_with_contingencies": costs.conductor_cost_with_contingencies,
-            "structure_cost_with_contingencies": costs.structure_cost_with_contingencies,
-            "converter_cost_with_contingencies": costs.converter_cost_with_contingencies,
-            "total_build_cost_with_contingencies": costs.total_cost_with_contingencies,
-            "construction_cost_escalation_factor": escalation_factor,
-        })
-
-    yearly_build = weighted(
-        costs.total_cost_with_contingencies,
-        ctx.spending_weights,
-        ctx.t_start,
-        ctx.horizon,
+        for name, base in bases.items()
+    }
+    summed = add(
+        build_streams["build_conductor"],
+        build_streams["build_structure"],
+        build_streams["build_converter"],
     )
     capitalized_cost_with_contingencies = capitalize_yearly_spending(
-        yearly_build,
+        summed,
         ctx.t_cod,
         ctx.afudc_rate,
         ctx.apply_afudc,
     )
+    total_nominal = undiscounted(summed)
     afudc_amount = (
-        capitalized_cost_with_contingencies - costs.total_cost_with_contingencies
+        capitalized_cost_with_contingencies - total_nominal
         if ctx.apply_afudc
         else 0.0
     )
-
-    # ===== SOCIETAL PERSPECTIVE: Present Value Discounting =====
-    # Build costs: spread evenly over construction period
-    # Annual cost during construction years
-    construction_start_year = calculate_construction_start_year(project_details.delay_years)
-    annual_build_cost = costs.total_cost_with_contingencies / project_details.construction_years
-    build_cost_pv = calculate_present_value(
-        annual_build_cost, financing.wacc_real, project_details.construction_years, construction_start_year
-    )
+    r_social = ctx.social_discount_rate
+    r_wacc = financing.wacc_real
+    component_pv = {
+        name: pv(build_streams[f"build_{name}"], r_social) for name in bases
+    }
+    component_pv_wacc = {
+        name: pv(build_streams[f"build_{name}"], r_wacc) for name in bases
+    }
+    component_nominal = {
+        name: undiscounted(build_streams[f"build_{name}"]) for name in bases
+    }
+    total_pv = pv(summed, r_social)
+    total_pv_wacc = pv(summed, r_wacc)
 
     # Format and display results
     logger.info("=" * 80)
@@ -377,9 +297,10 @@ def main() -> None:
     logger.info(f"  Structure Costs:          ${costs.structure_cost_with_contingencies:,.2f}")
     logger.info(f"  Converter Costs:          ${costs.converter_cost_with_contingencies:,.2f}")
     logger.info("  " + "-" * 52)
-    logger.info(f"  TOTAL NOMINAL COST:       ${costs.total_cost_with_contingencies:,.2f}")
-    if project_details.delay_years > 0 and construction_escalation_real > 0:
-        logger.info(f"\n  Delay Escalation: {construction_escalation_real:.1%}/yr × {project_details.delay_years} yrs = {escalation_factor:.3f}× ({(escalation_factor-1)*100:.1f}% increase)")
+    logger.info(f"  TOTAL UNDISCOUNTED COST:  ${total_nominal:,.2f}")
+    logger.info(
+        f"\n  Construction escalation (real): {g_construction:.2%} on each calendar year"
+    )
     logger.info("")
 
     if ctx.apply_afudc:
@@ -396,17 +317,16 @@ def main() -> None:
         logger.info("")
 
     logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
-    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info(f"  Social Discount Rate: {r_social:.2%}")
+    logger.info(f"  Real WACC: {r_wacc:.2%}")
     logger.info(f"  Base Year: {financing.base_year}")
     logger.info("")
     logger.info("Build costs incurred during construction period:")
     logger.info(
-        f"  Annual Cost (over {project_details.construction_years} year(s) construction): ${annual_build_cost:,.2f}"
+        f"  Construction Period: Year {ctx.t_start} to Year {ctx.t_end}"
     )
-    logger.info(
-        f"  Construction Period: Year {construction_start_year:.1f} to Year {construction_start_year + project_details.construction_years - 1:.1f}"
-    )
-    logger.info(f"  Build Cost PV: ${build_cost_pv:,.2f}")
+    logger.info(f"  Build Cost PV (social): ${total_pv:,.2f}")
+    logger.info(f"  Build Cost PV (WACC): ${total_pv_wacc:,.2f}")
     logger.info("=" * 80)
 
     # ========================================================================
@@ -418,12 +338,23 @@ def main() -> None:
 
     # Prepare results dictionary
     results = {
-        "total_nominal": costs.total_cost_with_contingencies,
+        "conductor_base_cost": bases["conductor"],
+        "structure_base_cost": bases["structure"],
+        "converter_base_cost": bases["converter"],
+        "streams": build_streams,
+        "total_nominal": total_nominal,
         "total_afudc": capitalized_cost_with_contingencies,
-        "total_pv": build_cost_pv,
-        "conductor_nominal": costs.conductor_cost_with_contingencies,
-        "structure_nominal": costs.structure_cost_with_contingencies,
-        "converter_nominal": costs.converter_cost_with_contingencies,
+        "total_pv": total_pv,
+        "total_pv_wacc": total_pv_wacc,
+        "conductor_nominal": component_nominal["conductor"],
+        "structure_nominal": component_nominal["structure"],
+        "converter_nominal": component_nominal["converter"],
+        "conductor_pv": component_pv["conductor"],
+        "structure_pv": component_pv["structure"],
+        "converter_pv": component_pv["converter"],
+        "conductor_pv_wacc": component_pv_wacc["conductor"],
+        "structure_pv_wacc": component_pv_wacc["structure"],
+        "converter_pv_wacc": component_pv_wacc["converter"],
         "conductor_afudc": 0,  # Component-level AFUDC not calculated separately
         "structure_afudc": 0,
         "converter_afudc": 0,
