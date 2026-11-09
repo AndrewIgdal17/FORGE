@@ -25,11 +25,6 @@ from forge.scripts.calc.energy_losses import (
     full_load_adjusted,
     calculate_line_losses,
 )
-from forge.scripts.utils.financial_utils import (
-    calculate_growing_annuity_pv,
-    calculate_nominal_growing_series,
-    calculate_cod_year,
-)
 from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.calculation_utils import (
     to_percent,
@@ -495,11 +490,6 @@ def main() -> None:
     direct_annual_benefit = (
         direct_loss_reduction_mwh * project_details.value_of_load
     )
-    direct_lifetime_benefit = calculate_nominal_growing_series(
-        direct_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.project_lifetime,
-    )
 
     # METHOD 2: Counterfactual Comparison - Compare old vs new conductor at new capacity
     counterfactual_loss_reduction_mwh = (
@@ -507,11 +497,6 @@ def main() -> None:
     )
     counterfactual_annual_benefit = (
         counterfactual_loss_reduction_mwh * project_details.value_of_load
-    )
-    counterfactual_lifetime_benefit = calculate_nominal_growing_series(
-        counterfactual_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.project_lifetime,
     )
 
     # METHOD 3: Normalized (Per MWh) Comparison
@@ -521,43 +506,6 @@ def main() -> None:
     )
     normalized_annual_benefit = (
         normalized_loss_reduction_mwh * project_details.value_of_load
-    )
-    normalized_lifetime_benefit = calculate_nominal_growing_series(
-        normalized_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.project_lifetime,
-    )
-
-    # Line losses start at first year of operation (COD); kept for display only —
-    # calculate_growing_annuity_pv derives the delay discount from delay/construction years
-    start_year = calculate_cod_year(
-        project_details.delay_years, project_details.construction_years
-    )
-
-    # Calculate NPVs for all three methods
-    direct_npv = calculate_growing_annuity_pv(
-        direct_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    counterfactual_npv = calculate_growing_annuity_pv(
-        counterfactual_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    normalized_npv = calculate_growing_annuity_pv(
-        normalized_annual_benefit,
-        project_details.benefit_price_escalation_real,
-        project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
     )
 
     # Print results
@@ -589,12 +537,6 @@ def main() -> None:
     logger.info("NOMINAL VALUES:")
     logger.info(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
     logger.info(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
-    logger.info(f"  Lifetime Benefit: ${direct_lifetime_benefit:,.2f}")
-    logger.info("")
-    logger.info("DISCOUNTED VALUES (NPV):")
-    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    logger.info(f"  Start Year: {start_year:.1f} years")
-    logger.info(f"  Net Present Value: ${direct_npv:,.2f}")
     logger.info("")
 
     logger.info("=" * 70)
@@ -605,12 +547,6 @@ def main() -> None:
     logger.info("NOMINAL VALUES:")
     logger.info(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
     logger.info(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
-    logger.info(f"  Lifetime Benefit: ${counterfactual_lifetime_benefit:,.2f}")
-    logger.info("")
-    logger.info("DISCOUNTED VALUES (NPV):")
-    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    logger.info(f"  Start Year: {start_year:.1f} years")
-    logger.info(f"  Net Present Value: ${counterfactual_npv:,.2f}")
     logger.info("")
 
     logger.info("=" * 70)
@@ -621,12 +557,6 @@ def main() -> None:
     logger.info("NOMINAL VALUES:")
     logger.info(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
     logger.info(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
-    logger.info(f"  Lifetime Benefit: ${normalized_lifetime_benefit:,.2f}")
-    logger.info("")
-    logger.info("DISCOUNTED VALUES (NPV):")
-    logger.info(f"  Discount Rate: {to_percent(project_details.wacc_real):.1f}% (real WACC)")
-    logger.info(f"  Start Year: {start_year:.1f} years")
-    logger.info(f"  Net Present Value: ${normalized_npv:,.2f}")
     logger.info("")
 
     logger.info("=" * 70)

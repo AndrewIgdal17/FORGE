@@ -109,45 +109,44 @@ def _zero_wacc_inputs():
 
 
 def test_bcr_utility_uses_atrr_excluding_line_losses_and_congestion_delay():
-    """Utility BCR is ATRR / (ATRR + base_delay) per taxonomy revenue_requirement / atrr_delay.
+    """Utility BCR is ATRR / (ATRR + base_delay).
 
     ATRR = capital recovery + O&M + insurance + ROW rent. Line losses and
-    congestion-delay opportunity cost are not in that basket.
+    social-only risk are not in that basket. Amounts sit on the stream.
     """
     delay_pv = 20.0
-    congestion_delay_pv = 30.0
+    wildfire_pv = 30.0
     rate_base = 100.0
     annual_om = 10.0
     annual_insurance = 5.0
     annual_loss = 50.0
     atrr = rate_base + annual_om + annual_insurance
     expected = atrr / (atrr + delay_pv)
-    total_costs = delay_pv + congestion_delay_pv + annual_om + annual_insurance + annual_loss
 
+    def at(year: int, amount: float) -> list[float]:
+        stream = [0.0, 0.0, 0.0]
+        stream[year - 1] = amount
+        return stream
+
+    total_costs = delay_pv + annual_om + annual_insurance + annual_loss + wildfire_pv
     results = {
         "bcr": {
-            "build_cost_pv": 0.0,
-            "acquisition_pv": 0.0,
-            "env_mitigation_pv": 0.0,
-            "delay_cost_pv": delay_pv,
-            "congestion_delay_cost_pv": congestion_delay_pv,
-            "emissions_displacement_delay_pv": 0.0,
             "total_costs_pv": total_costs,
             "total_benefits_pv": 0.0,
             "bcr_utility": expected,
         },
-        "benefits": {
-            "congestion": {},
-            "capital_recovery": {"rate_base_real": rate_base},
+        "derived_parameters": {
+            "wacc_real": 0.0,
+            "social_discount_rate": 0.0,
         },
-        "costs": {
-            "oandm": {"total_annual": annual_om},
-            "insurance": {"annual_premium": annual_insurance},
-            "line_loss": {"annual_cost": annual_loss},
-            "row": {"row_rent_nominal": 0.0},
-            "wildfire": {"EAL": 0.0},
-            "outage": {"expected_annual_loss": 0.0},
-        },
+        "taxonomy_results": [
+            {"taxonomy_id": "base_delay", "stream": at(1, delay_pv)},
+            {"taxonomy_id": "oandm", "stream": at(3, annual_om)},
+            {"taxonomy_id": "insurance", "stream": at(3, annual_insurance)},
+            {"taxonomy_id": "line_loss_conductor", "stream": at(3, annual_loss)},
+            {"taxonomy_id": "capital_recovery", "stream": at(3, rate_base)},
+            {"taxonomy_id": "wildfire_eac", "stream": at(3, wildfire_pv), "value_pv_wacc": None},
+        ],
     }
 
     traj = compute_trajectory(results, _zero_wacc_inputs())

@@ -4,10 +4,7 @@ from forge.contract import validate_changes
 from forge.errors import InvalidInputs
 from forge.scripts.calc.outage_costs import calculate_outage_costs
 from forge.scripts.calc.wildfire_costs import calculate_wildfire_costs
-from forge.scripts.utils.financial_utils import (
-    calculate_afudc_capitalized_cost,
-    calculate_growing_annuity_pv,
-)
+from forge.scripts.utils.financial_utils import calculate_afudc_capitalized_cost
 
 
 def test_validate_changes_rejects_zero_construction_years():
@@ -42,29 +39,6 @@ def test_subsea_construction_type_is_not_an_option():
         "'Subsea' is not one of the allowed options "
         "['Overhead', 'Underground Direct-Buried', 'Underground Tunnel']"
     )
-
-
-def test_growing_annuity_requires_construction_years_of_at_least_one():
-    with pytest.raises(TypeError):
-        calculate_growing_annuity_pv(100.0, 0.0, 0.05, 10)
-
-    with pytest.raises(ValueError) as none_exc:
-        calculate_growing_annuity_pv(
-            100.0, 0.0, 0.05, 10, construction_years=None
-        )
-    assert str(none_exc.value) == "construction_years must be >= 1, got None"
-
-    with pytest.raises(ValueError) as zero_exc:
-        calculate_growing_annuity_pv(
-            100.0, 0.0, 0.05, 10, construction_years=0
-        )
-    assert str(zero_exc.value) == "construction_years must be >= 1, got 0"
-
-    accepted = calculate_growing_annuity_pv(
-        100.0, 0.0, 0.05, 10, construction_years=1
-    )
-    unshifted = 100.0 * ((1 - (1.0 / 1.05) ** 10) / 0.05)
-    assert accepted == pytest.approx(unshifted / 1.05)
 
 
 def _outage_yaml() -> dict:

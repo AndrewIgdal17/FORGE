@@ -425,6 +425,10 @@ def _run_once(
         if taxonomy_results_json is not None:
             results["taxonomy_results"] = taxonomy_results_json
 
+        ctx = get_run_context()
+        if ctx is not None and ctx.derived_parameters:
+            results["derived_parameters"] = ctx.derived_parameters
+
         if trajectory and results.get("bcr"):
             try:
                 from forge.scripts.calc.bcr_trajectory import compute_trajectory
@@ -433,10 +437,6 @@ def _run_once(
                 raise
             except Exception as exc:
                 raise CalculationError("bcr_trajectory", exc) from exc
-
-        ctx = get_run_context()
-        if ctx is not None and ctx.derived_parameters:
-            results["derived_parameters"] = ctx.derived_parameters
 
         provenance = calculator_info()
         provenance["inputs_id"] = "sha256:" + hashlib.sha256(

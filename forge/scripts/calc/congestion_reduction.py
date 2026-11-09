@@ -16,11 +16,6 @@ from typing import Dict, Any, Tuple
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
-from forge.scripts.utils.financial_utils import (
-    calculate_present_value,
-    calculate_growing_annuity_pv,
-    calculate_nominal_growing_series,
-)
 from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.smart_loaders import (
     load_congestion_reductions,
@@ -53,11 +48,8 @@ class CongestionReductionResults:
     relief_mw: float
     # Congestion benefit (remedial)
     annual_congestion_benefit: float
-    lifetime_congestion_benefit: float
-    lifetime_congestion_benefit_pv: float
     # Total remedial (= congestion only)
     annual_remedial_benefit: float
-    lifetime_remedial_benefit_pv: float
 
 def _get_old_capacity_mw() -> int:
     """
@@ -120,7 +112,6 @@ def load_project_technical_details() -> CongestionProjectDetails:
     )
 
 # load_financing_details is now imported from smart_loaders
-# calculate_present_value is now imported from financial_utils
 
 def calculate_congestion_reduction_costs(
     project_type: str,
@@ -130,11 +121,6 @@ def calculate_congestion_reduction_costs(
     constrained_hours: float,
     average_exceedance: float,
     average_congestion_price: float,
-    project_lifetime: int,
-    delay_years: float,
-    construction_years: int,
-    wacc_real: float,
-    benefit_price_escalation_real: float = 0.0,
 ) -> CongestionReductionResults:
     """
     Single-constraint congestion relief benefit.
@@ -155,17 +141,10 @@ def calculate_congestion_reduction_costs(
         constrained_hours: H, hours per year the constraint binds
         average_exceedance: X, average MW exceedance during constrained hours
         average_congestion_price: gamma_cong, $/MWh redispatch cost
-        project_lifetime: Project operational lifetime in years
-        delay_years: Number of years of project delay before construction
-        construction_years: Number of years of construction
-        wacc_real: Real weighted average cost of capital (discount rate)
-        benefit_price_escalation_real: Real annual growth rate for benefit prices (decimal, default 0.0)
 
     Returns:
         CongestionReductionResults: Dataclass containing congestion reduction results
     """
-    g = benefit_price_escalation_real
-
     # Effective capacity
     if project_type == "greenfield":
         delta_C_eff = max(0.0, flow_factor * capacity_mw)
@@ -180,27 +159,13 @@ def calculate_congestion_reduction_costs(
     annual_congestion_benefit = H * relief_mw * average_congestion_price
     annual_remedial_benefit = annual_congestion_benefit
 
-    # Lifetime (nominal growing series) and PV (growing annuity)
-    lifetime_congestion_benefit = calculate_nominal_growing_series(
-        annual_congestion_benefit, g, project_lifetime
-    )
-    lifetime_congestion_benefit_pv = calculate_growing_annuity_pv(
-        annual_congestion_benefit, g, wacc_real, project_lifetime,
-        delay_years=delay_years, construction_years=construction_years,
-    )
-
-    lifetime_remedial_benefit_pv = lifetime_congestion_benefit_pv
-
     return CongestionReductionResults(
         effective_capacity_mw=delta_C_eff,
         constrained_hours=H,
         average_exceedance=X,
         relief_mw=relief_mw,
         annual_congestion_benefit=annual_congestion_benefit,
-        lifetime_congestion_benefit=lifetime_congestion_benefit,
-        lifetime_congestion_benefit_pv=lifetime_congestion_benefit_pv,
         annual_remedial_benefit=annual_remedial_benefit,
-        lifetime_remedial_benefit_pv=lifetime_remedial_benefit_pv,
     )
 
 
@@ -249,11 +214,6 @@ def main() -> None:
         params.constrained_hours,
         params.average_exceedance,
         params.average_congestion_price,
-        project_details_cc.project_lifetime,
-        project_details_cc.delay_years,
-        project_details_cc.construction_years,
-        financing.wacc_real,
-        params.benefit_price_escalation_real,
     )
 
     logger.info("=" * 60)
@@ -406,24 +366,19 @@ def calculate_capacity_value_benefit(
     (Brattle 2013). Uses Net CONE to avoid double-counting with
     delivered energy benefit.
 
-    Returns dict with capacity_value_annual, capacity_value_nominal,
-    and capacity_value_pv.
+    Returns dict with capacity_value_annual and capacity_value_pv.
+    capacity_value_pv is the WACC present value of the benefit stream.
     """
     g = benefit_price_escalation_real
 
     indicator_cap = 1.0 if (applicability_gate and capacity_credit > 0 and capacity_price > 0) else 0.0
     annual = delta_c_effective * capacity_credit * capacity_price * indicator_cap
 
-    nominal = calculate_nominal_growing_series(annual, g, project_lifetime)
-
-    pv = calculate_growing_annuity_pv(
-        annual, g, wacc_real, project_lifetime,
-        delay_years=delay_years,
-        construction_years=construction_years,
-    )
+    t_cod = int(delay_years) + int(construction_years) + 1
+    lifetime = int(project_lifetime)
+    stream = growing(annual, g, t_cod, lifetime, t_cod + lifetime - 1)
 
     return {
         "capacity_value_annual": annual,
-        "capacity_value_nominal": nominal,
-        "capacity_value_pv": pv,
+        "capacity_value_pv": pv(stream, wacc_real),
     }

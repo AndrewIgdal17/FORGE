@@ -23,7 +23,7 @@ from forge.scripts.utils.smart_loaders import (
     load_grid_mix,
 )
 from forge.scripts.utils.streams import pv, undiscounted
-from forge.scripts.utils.financial_utils import calculate_present_value, calculate_cod_year
+from forge.scripts.utils.financial_utils import calculate_cod_year
 from forge.scripts.utils.calculation_utils import from_percent
 
 GRID_SOURCES = [

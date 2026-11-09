@@ -148,11 +148,8 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             if result is None:
                 continue
             if result.value_pv_wacc is None:
-                # TEMPORARY(spec05-task11): an item whose value_pv_wacc is None
-                # contributes its value_pv. Task 11 removes this fallback and raises.
-                total += result.value_pv
-            else:
-                total += result.value_pv_wacc
+                raise ValueError(f"{tid} has no WACC present value")
+            total += result.value_pv_wacc
         return total
 
     def _sum_nom(ids: frozenset[str]) -> float:
