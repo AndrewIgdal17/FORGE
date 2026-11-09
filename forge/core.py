@@ -42,8 +42,7 @@ _PRELOAD_MODULES = [
     "forge.scripts.calc.energy_losses",
     "forge.scripts.calc.oandm",
     "forge.scripts.calc.emissions",
-    "forge.scripts.calc.facilitated_emissions",
-    "forge.scripts.calc.displacement_delay_cost",
+    "forge.scripts.calc.avoided_emissions",
     "forge.scripts.calc.line_loss_costs",
     "forge.scripts.io.taxonomy_adapters",
     "forge.scripts.calc.bcr_calculator",
@@ -96,8 +95,6 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
         "reporting_category_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
         "reporting_category_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
         "reporting_category_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
-        # Facilitated emissions + displacement (reporting)
-        "fac_emissions_project_pv": csv_equivalent.get("fac_emissions_project_pv", 0),
         "displacement_avoided_benefit_pv": csv_equivalent.get("displacement_avoided_benefit_pv", 0),
         # Appendix-aligned benefit categories (B_remedial + B_enabling)
         "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
@@ -107,22 +104,16 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
 
 _TRAJECTORY_ARRAY_KEYS = {
     ("costs", "emissions"): ["emissions_comp_annual_values"],
-    ("benefits", "facilitated_emissions"): [
-        "fac_emissions_withline_annual_values",
-        "fac_emissions_noline_annual_values",
-        "displacement_annual_values",
-    ],
+    ("benefits", "avoided_emissions"): ["avoided_emissions_annual_values"],
 }
 
 
 def _hoist_trajectory_arrays(results: dict) -> None:
     """Copy year-by-year annual-value arrays up to the top level of `results`.
 
-    emissions.py and facilitated_emissions.py nest their results under
-    costs["emissions"] / benefits["facilitated_emissions"]. The (future) BCR
-    trajectory module consumes these arrays directly off the top-level results
-    dict; see BCR trajectory module. Hoist them here
-    rather than duplicating the year-by-year loops elsewhere.
+    emissions.py and avoided_emissions.py nest their results under
+    costs["emissions"] / benefits["avoided_emissions"]. The BCR trajectory
+    module consumes these arrays directly off the top-level results dict.
     """
     for (category, module_key), array_keys in _TRAJECTORY_ARRAY_KEYS.items():
         module_results = results.get(category, {}).get(module_key, {})
@@ -184,8 +175,7 @@ def _build_scripts_list(
         scripts.append("forge.scripts.calc.oandm")
     if not no_emissions:
         scripts.append("forge.scripts.calc.emissions")
-        scripts.append("forge.scripts.calc.facilitated_emissions")
-        scripts.append("forge.scripts.calc.displacement_delay_cost")
+        scripts.append("forge.scripts.calc.avoided_emissions")
     if not no_linelosses:
         scripts.append("forge.scripts.calc.line_loss_costs")
     return scripts

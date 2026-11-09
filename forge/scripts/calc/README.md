@@ -16,8 +16,7 @@ Core cost and benefit calculation modules. `python -m forge` loads most of these
 - `energy_losses` — Physical energy losses (conductor resistance + converter stations).
 - `oandm` — Conductor, structure, converter, and vegetation-management O&M.
 - `emissions` — Loss-compensation emissions social cost (extra generation to cover losses).
-- `facilitated_emissions` — Facilitated emissions and avoided-emissions benefit (`B_avoided_emissions`).
-- `displacement_delay_cost` — Foregone avoided-emissions benefit during the delay period.
+- `avoided_emissions` — Avoided-emissions benefit: no-line minus with-line social cost (`B_avoided_emissions`).
 - `line_loss_costs` — Thermal line-loss costs valued at electricity price.
 - `bcr_calculator` — Taxonomy-driven BCR aggregation across 9 perspectives.
 - `bcr_trajectory` — Year-by-year BCR/NPV trajectory after all modules and BCR aggregation.

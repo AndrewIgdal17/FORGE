@@ -188,11 +188,11 @@ def print_results(results: dict, label: str):
     print(f"  Emissions (loss-comp):  {fmt(costs['emissions']['total_pv'])}")
 
     cc = benefits["congestion"]
-    fac = benefits.get("facilitated_emissions", {})
+    avoided = benefits.get("avoided_emissions", {})
     print(f"\n  --- BENEFITS (PV) ---")
     print(f"  Congestion relief:      {fmt(cc['congestion_benefit_pv'])}")
     print(f"  Delivered energy:       {fmt(cc['delivered_benefit_pv'])}")
-    print(f"  Avoided emissions:      {fmt(fac.get('displacement_avoided_benefit_pv', 0))}")
+    print(f"  Avoided emissions:      {fmt(avoided.get('avoided_emissions_pv', 0))}")
     cap = benefits.get("capacity_value", {})
     print(f"  Capacity value:         {fmt(cap.get('capacity_value_pv', 0))}")
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")

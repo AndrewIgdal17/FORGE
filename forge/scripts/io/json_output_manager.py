@@ -177,17 +177,9 @@ class JSONOutputManager:
         """Add loss-compensation emissions cost results."""
         self.costs["emissions"] = results
 
-    def add_facilitated_emissions_costs(self, results: Dict[str, Any]):
-        """Add facilitated emissions + displacement results.
-
-        Stored under benefits: avoided_emissions_benefit is a benefit (B_avoided_emissions).
-        Facilitated emissions (emissions_fac) is reporting_only (intermediate quantity).
-        """
-        self.benefits["facilitated_emissions"] = results
-
-    def add_displacement_delay_cost(self, results: Dict[str, Any]):
-        """Add displacement delay emissions cost results (soft/delay cost)."""
-        self.costs["displacement_delay"] = results
+    def add_avoided_emissions(self, results: Dict[str, Any]):
+        """Add avoided-emissions benefit results."""
+        self.benefits["avoided_emissions"] = results
 
     def add_line_loss_costs(self, results: Dict[str, Any]):
         """Add line loss cost results."""
@@ -282,11 +274,8 @@ class JSONOutputManager:
         wildfire = self.costs.get("wildfire", {})
         outage = self.costs.get("outage", {})
 
-        # Facilitated emissions (now under benefits; avoided_emissions_benefit is a benefit)
-
         # Delay costs
         delay = self.costs.get("delay", {})
-        displacement_delay = self.costs.get("displacement_delay", {})
 
         self.summary = {
             # Capital costs (ROW = acquisition + holding only; rent is operational)
@@ -346,7 +335,6 @@ class JSONOutputManager:
             + self.summary["total_operational_nominal"]
             + self.summary["total_risk_nominal"]
             + delay.get("total_nominal", 0)
-            + displacement_delay.get("displacement_delay_cost_nominal", 0)
             + self.summary["total_energy_emissions_nominal"]
         )
 
@@ -359,7 +347,6 @@ class JSONOutputManager:
             + self.summary["total_operational_pv"]
             + self.summary["total_risk_pv"]
             + delay.get("total_pv", 0)
-            + displacement_delay.get("displacement_delay_cost_pv", 0)
             + self.summary["total_energy_emissions_pv"]
         )
 
@@ -370,8 +357,7 @@ class JSONOutputManager:
         _ll = self.costs.get("line_loss", {})
         _em = self.costs.get("emissions", {})
         _dl = self.costs.get("delay", {})
-        _disp_delay_pv = displacement_delay.get("displacement_delay_cost_pv", 0) or 0
-        _delay_total_pv = (_dl.get("total_pv", 0) or 0) + _disp_delay_pv
+        _delay_total_pv = _dl.get("total_pv", 0) or 0
         _energy_line_pv = _ll.get("total_pv", 0) or 0
         self.summary["reporting_category_hard_pv"] = self.summary["total_capital_pv"]
         self.summary["reporting_category_soft_pv"] = (

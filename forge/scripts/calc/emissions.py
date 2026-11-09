@@ -21,8 +21,8 @@ from forge.scripts.calc.energy_losses import (
 from forge.scripts.utils.smart_loaders import (
     load_emissions_details,
     load_grid_mix,
-    load_financing_social_discount_rate,
 )
+from forge.scripts.utils.streams import pv, undiscounted
 from forge.scripts.utils.financial_utils import calculate_present_value, calculate_cod_year
 from forge.scripts.utils.calculation_utils import from_percent
 
@@ -217,6 +217,17 @@ def _as_nested_societal_costs(societal_costs: Dict[str, Any]) -> Dict[str, Dict[
             ),
         }
     return nested
+
+
+def place_operating_years(
+    annual_values: list[float], t_cod: int, horizon: int
+) -> list[float]:
+    """Place operating year tau's amount at calendar year t = t_cod + tau - 1."""
+    stream = [0.0] * horizon
+    for tau, amount in enumerate(annual_values, start=1):
+        t = t_cod + tau - 1
+        stream[t - 1] = amount
+    return stream
 
 
 def monetize_annual_emissions(
@@ -469,8 +480,15 @@ def main() -> None:
         societal_costs_details,
     ) = load_emissions_details()
 
-    # Load financing details
-    social_discount_rate = load_financing_social_discount_rate()
+    from forge.scripts.utils.run_context import get_run_context
+
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    social_discount_rate = ctx.social_discount_rate
 
     # Get delay and construction years from project details
     project_details = load_project_technical_details()
@@ -534,11 +552,17 @@ def main() -> None:
     # Initialize CSV output manager
     csv_manager = SmartOutputManager()
 
+    # Operating year tau's existing monetized amount sits at t = t_cod + tau - 1.
+    emissions_stream = place_operating_years(
+        emissions_results.annual_values, ctx.t_cod, ctx.horizon
+    )
+
     # Prepare results dictionary
     results = {
-        "total_nominal": emissions_results.lifetime_cost,
-        "total_pv": emissions_results.lifetime_cost_pv,
+        "total_nominal": undiscounted(emissions_stream),
+        "total_pv": pv(emissions_stream, social_discount_rate),
         "annual_cost": emissions_results.avg_annual_costs,
+        "streams": {"emissions_comp": emissions_stream},
         "co2_emissions_kg": emissions_results.total_emissions["co2"],
         "co2_cost_nominal": emissions_results.total_costs_by_pollutant["co2"],
         "co2_cost_pv": emissions_results.total_costs_by_pollutant_pv["co2"],

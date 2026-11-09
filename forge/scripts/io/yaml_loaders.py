@@ -420,7 +420,7 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
     """Load emissions reductions details from YAML (compensation, intensities, societal costs).
 
     Grid mix is loaded separately via load_grid_mix() — callers that need the mix
-    (facilitated_emissions.py, displacement_delay_cost.py, emissions.py) load it and
+    (avoided_emissions.py, emissions.py) load it and
     derive the COD-state trajectory themselves.
     """
     try:

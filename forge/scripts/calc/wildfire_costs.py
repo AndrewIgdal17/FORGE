@@ -18,9 +18,9 @@ from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERAN
 from forge.scripts.utils.smart_loaders import (
     load_project_technical_details,
     load_wildfire_costs,
-    get_financing_data_raw,
 )
-from forge.scripts.utils.financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from forge.scripts.utils.financial_utils import validate_discount_rate
+from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,8 @@ def calculate_wildfire_costs(
     delay_years: float = 0,
     *,
     construction_years: float,
+    t_cod: int | None = None,
+    horizon: int | None = None,
 ) -> Dict[str, Any]:
     """
     Calculate expected wildfire costs using line-level ignition rate.
@@ -75,20 +77,14 @@ def calculate_wildfire_costs(
     # Expected Annual Loss
     EAL = lambda_total * severity
 
-    nominal_total = calculate_nominal_growing_series(
-        annual_amount=EAL,
-        growth_rate=growth_rate,
-        project_lifetime=project_lifetime,
-    )
-
-    pv_cost = calculate_growing_annuity_pv(
-        annual_amount=EAL,
-        growth_rate=growth_rate,
-        discount_rate=social_discount_rate,
-        project_lifetime=project_lifetime,
-        delay_years=delay_years,
-        construction_years=construction_years,
-    )
+    if t_cod is None:
+        t_cod = int(delay_years) + int(construction_years) + 1
+    lifetime = int(project_lifetime)
+    if horizon is None:
+        horizon = t_cod + lifetime - 1
+    stream = growing(EAL, growth_rate, int(t_cod), lifetime, int(horizon))
+    nominal_total = undiscounted(stream)
+    pv_cost = pv(stream, social_discount_rate)
 
     return {
         "lambda_total": lambda_total,
@@ -97,6 +93,7 @@ def calculate_wildfire_costs(
         "growth_rate": growth_rate,
         "nominal_total": nominal_total,
         "pv_cost": pv_cost,
+        "stream": stream,
         "total_miles": total_miles,
         "base_ignition_rate": base_ignition_rate,
         "construction_multiplier": construction_multiplier,
@@ -119,10 +116,9 @@ def main() -> None:
     terrain_miles = load_terrain_miles()
 
     wildfire_yaml = load_wildfire_costs()
-    financing_yaml = get_financing_data_raw()
 
-    # Social discount rate only — risk externalities use r_social (appendix hard-codes this)
-    social_discount_rate = financing_yaml["financial"]["social_discount_rate"]
+    # Social discount rate only — risk externalities use r_social from RunContext
+    social_discount_rate = ctx.social_discount_rate
     discount_source = "social discount rate"
 
     results = calculate_wildfire_costs(
@@ -133,6 +129,8 @@ def main() -> None:
         social_discount_rate,
         delay_years=project_details.delay_years,
         construction_years=project_details.construction_years,
+        t_cod=ctx.t_cod,
+        horizon=ctx.horizon,
     )
 
     from forge.scripts.utils.run_context import add_derived
@@ -191,5 +189,6 @@ def main() -> None:
     logger.info("=" * 80)
 
     csv_manager = SmartOutputManager()
+    results["streams"] = {"wildfire_eac": results["stream"]}
     csv_manager.add_wildfire_costs(results)
     csv_manager.write_batch_summary()

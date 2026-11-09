@@ -33,9 +33,6 @@ def test_one_parameter_drives_all_benefit_priced_streams():          # A4
     others = {i["taxonomy_id"] for i in a["taxonomy_results"]} - set(BEN_IDS)
     for tid in others:
         stream_a = item(a, tid)["stream"]
-        # Task 9 removes this skip. Wildfire, outage, and emissions have no stream yet.
-        if stream_a is None:
-            continue
         assert stream_a == pytest.approx(item(b, tid)["stream"])
 
 

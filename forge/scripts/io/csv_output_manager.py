@@ -38,7 +38,6 @@ BATCH_SUMMARY_FIELDS = [
     # 6. Delay Costs PV
     "delay_cost_pv",
     "congestion_delay_cost_pv",
-    "emissions_displacement_delay_pv",
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
@@ -67,9 +66,6 @@ BATCH_SUMMARY_FIELDS = [
     # 9a. Appendix-aligned benefit categories
     "benefits_remedial_pv",
     "benefits_enabling_pv",
-    # 9b. Transparency (intermediate quantities)
-    "fac_emissions_project_pv",
-    "fac_emissions_noline_pv",
     # 10. BCR Metrics
     "bcr_societal",
     # Tier 1 exclusion BCRs (3 analytically motivated variants)

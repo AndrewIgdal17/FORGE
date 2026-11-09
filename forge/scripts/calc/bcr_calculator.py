@@ -54,9 +54,7 @@ _EMISSIONS_IDS = frozenset(
 _OPERATIONAL_IDS = frozenset(
     tid for tid in _ALL_COST_IDS if TAXONOMY[tid].subgroup == "operational"
 )
-_DELAY_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].subgroup == "delay"
-)
+_DELAY_IDS = frozenset({"base_delay"})
 _BASE_DELAY_IDS = frozenset({"base_delay"})
 _ENERGY_EMISSIONS_IDS = frozenset(
     tid for tid in _ALL_COST_IDS
@@ -110,11 +108,10 @@ _BCR_OUTPUT_KEYS = frozenset({
     "env_mitigation_pv",
     "oandm_pv", "insurance_pv",
     "energy_losses_pv", "conductor_loss_pv", "converter_loss_pv",
-    "emissions_comp_cost_pv", "fac_emissions_project_pv",
+    "emissions_comp_cost_pv",
     "displacement_avoided_benefit_pv",
     "wildfire_pv", "outage_pv",
     "delay_cost_pv",
-    "emissions_displacement_delay_pv",
     "congestion_benefit_pv",
     "delivered_benefit_pv", "delivered_benefit_nominal",
     "capacity_value_benefit_pv",

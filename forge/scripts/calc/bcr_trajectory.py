@@ -79,22 +79,6 @@ def _dig(d: dict, *keys: str, default: float = 0.0) -> Any:
         cur = cur.get(k)
     return cur if cur is not None else default
 
-def _growing_term(
-    annual: float, growth_rate: float, discount_rate: float,
-    k: int, delay_years: int, construction_years: int,
-) -> float:
-    """PV contribution of an operational-year-k payment from a geometric-growth
-    stream, discounted back to the analysis start (year 1).
-
-    This is the k-th term of the sum that `calculate_growing_annuity_pv()`
-    computes in closed form; summing this over k=1..project_lifetime
-    reproduces that function's output exactly.
-    """
-    if annual == 0:
-        return 0.0
-    exponent = delay_years + construction_years + k
-    return annual * (1 + growth_rate) ** (k - 1) / (1 + discount_rate) ** exponent
-
 def _back_calc_annual(nominal_total: float, growth_rate: float, years: int) -> float:
     """Invert calculate_nominal_growing_series() to recover the base annual amount."""
     if nominal_total == 0 or years <= 0:
@@ -190,21 +174,20 @@ def _build_risk_streams(results: dict, inputs: dict, social_discount_rate: float
     ]
 
 def _build_array_streams(results: dict, social_discount_rate: float) -> list[ArrayStreamSpec]:
-    """Full-fidelity annual arrays exported by emissions.py / facilitated_emissions.py.
+    """Loss-compensation and avoided-emissions operating-year amounts.
 
-    Note: fac_emissions_{withline,noline}_annual_values are NOT included here.
-    Per taxonomy.py, `emissions_fac` is a "reporting_only" item (category
-    "reporting") — it is diagnostic and is not part of total_costs_pv /
-    total_benefits_pv. Only the loss-compensation cost (emissions_comp,
-    category "emissions") and the displacement benefit (avoided_emissions_benefit,
-    category "avoided_emissions") are counted; including the fac_emissions
-    arrays here would break the fidelity assertion.
+    The loop discounts operating year k at exponent D + C + k, which is
+    t_cod + k - 1. That matches the calendar placement of these streams.
     """
     emissions_annual = results.get("emissions_comp_annual_values") or []
-    displacement_annual = results.get("displacement_annual_values") or []
+    avoided_annual = (
+        results.get("avoided_emissions_annual_values")
+        or results.get("displacement_annual_values")
+        or []
+    )
     return [
         ArrayStreamSpec("emissions_comp_annual_values", emissions_annual, social_discount_rate, "C_emissions"),
-        ArrayStreamSpec("displacement_annual_values", displacement_annual, social_discount_rate, "B_avoided_emissions"),
+        ArrayStreamSpec("avoided_emissions_annual_values", avoided_annual, social_discount_rate, "B_avoided_emissions"),
     ]
 
 def _as_float(value: Any, default: float = 0.0) -> float:
@@ -402,7 +385,9 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                     continue
 
             for s in risk_streams:
-                val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
+                # Wildfire and outage grow from year 1, same as their streams.
+                grown = s.annual * (1 + s.growth_rate) ** (t - 1)
+                val = grown / (1 + s.discount_rate) ** t
                 pv_C_risk += val
                 if s.category == "C_risk_wf":
                     pv_C_risk_wf += val

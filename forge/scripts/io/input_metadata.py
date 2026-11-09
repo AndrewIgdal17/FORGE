@@ -870,7 +870,7 @@ for _group_key, _group_label in [
     _is_pct = _group_key == "initial"
     for _fi, _fuel in enumerate(FUELS):
         _TAB8.append(_f(
-            f"grid_mix_{_group_key}_{_fuel}", taxonomy_id="emissions_fac", input_tab="energy-mix",
+            f"grid_mix_{_group_key}_{_fuel}", taxonomy_id="avoided_emissions_benefit", input_tab="energy-mix",
             yaml_section="18_energy_source_mix",
             field_path=f"grid_mix.{_group_key}.{_fuel}",
             label="Percentage" if _is_pct else "Rate Of Change",

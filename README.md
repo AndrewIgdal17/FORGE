@@ -75,26 +75,25 @@ FORGE runs 17 calculator modules:
 7. **Energy Losses** (`energy_losses`) — Physical conductor and converter losses
 8. **Line Loss Costs** (`line_loss_costs`) — Valued energy-loss costs
 9. **Emissions** (`emissions`) — Loss-compensation carbon emissions costs
-10. **Facilitated Emissions** (`facilitated_emissions`) — Project-path vs. no-line emissions (feeds avoided-emissions benefit)
-11. **Displacement Delay** (`displacement_delay_cost`) — Foregone displacement benefit during delay
+10. **Avoided Emissions** (`avoided_emissions`) — No-line minus with-line social cost of delivered energy
 
 **Risk Costs:**
 
-12. **Wildfire** (`wildfire_costs`) — Wildfire risk assessment
-13. **Outage** (`outage_costs`) — Outage risk by terrain type
+11. **Wildfire** (`wildfire_costs`) — Wildfire risk assessment
+12. **Outage** (`outage_costs`) — Outage risk by terrain type
 
 **Other Costs:**
 
-14. **Delays** (`delay_costs`) — Construction delay impacts
+13. **Delays** (`delay_costs`) — Construction delay impacts
 
 **Benefits:**
 
-15. **Congestion Reduction** (`congestion_reduction`) — Congestion relief, delivered energy, and capacity value
+14. **Congestion Reduction** (`congestion_reduction`) — Congestion relief, delivered energy, and capacity value
 
 **Analysis:**
 
-16. **BCR** (`bcr_calculator`) — Benefit-cost ratio calculations
-17. **BCR Trajectory** (`bcr_trajectory`) — Year-by-year BCR/NPV trajectory
+15. **BCR** (`bcr_calculator`) — Benefit-cost ratio calculations
+16. **BCR Trajectory** (`bcr_trajectory`) — Year-by-year BCR/NPV trajectory
 
 ## Common Workflows
 

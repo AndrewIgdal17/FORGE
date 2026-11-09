@@ -242,23 +242,29 @@ def adapt_delay(delay: dict) -> list[TaxonomyResult]:
 
 
 def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
-    """Adapt costs.wildfire -> wildfire_eac."""
+    """Adapt costs.wildfire -> wildfire_eac. Societal present value only."""
     if not wildfire:
         return []
+    streams = wildfire.get("streams") or {}
+    stream = streams.get("wildfire_eac")
     return [
         TaxonomyResult(
             "wildfire_eac",
             value_pv=_safe(wildfire, "pv_cost"),
             value_nominal=_safe(wildfire, "nominal_total"),
             value_annual=_safe(wildfire, "EAL"),
+            value_pv_wacc=None,
+            stream=list(stream) if stream is not None else None,
         ),
     ]
 
 
 def adapt_outage(outage: dict) -> list[TaxonomyResult]:
-    """Adapt costs.outage -> outage_eac with two-tier detail rows."""
+    """Adapt costs.outage -> outage_eac with two-tier detail rows. Societal only."""
     if not outage:
         return []
+    streams = outage.get("streams") or {}
+    stream = streams.get("outage_eac")
     detail_rows: list[DetailRow] = []
     ls = _safe(outage, "cost_loadshed")
     rd = _safe(outage, "cost_redispatch")
@@ -275,15 +281,19 @@ def adapt_outage(outage: dict) -> list[TaxonomyResult]:
             value_pv=_safe(outage, "pv_cost"),
             value_nominal=_safe(outage, "nominal_total"),
             value_annual=_safe(outage, "expected_annual_loss"),
+            value_pv_wacc=None,
+            stream=list(stream) if stream is not None else None,
             detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
 
 
 def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
-    """Adapt costs.emissions -> emissions_comp with pollutant detail."""
+    """Adapt costs.emissions -> emissions_comp with pollutant detail. Societal only."""
     if not emissions:
         return []
+    streams = emissions.get("streams") or {}
+    stream = streams.get("emissions_comp")
     pollutants = ("co2", "sox", "nox")
     detail_rows = tuple(
         DetailRow(
@@ -300,58 +310,26 @@ def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
             value_pv=_safe(emissions, "total_pv"),
             value_nominal=_safe(emissions, "total_nominal"),
             value_annual=_safe(emissions, "annual_cost"),
+            value_pv_wacc=None,
+            stream=list(stream) if stream is not None else None,
             detail=detail_rows if detail_rows else None,
         ),
     ]
 
 
-def adapt_facilitated_emissions(fac_em: dict) -> list[TaxonomyResult]:
-    """Adapt costs.facilitated_emissions -> emissions_fac, avoided_emissions_benefit."""
-    if not fac_em:
+def adapt_avoided_emissions(avoided: dict) -> list[TaxonomyResult]:
+    """Adapt benefits.avoided_emissions -> avoided_emissions_benefit. Societal only."""
+    if not avoided:
         return []
-    pollutants = ("co2", "sox", "nox")
-    fac_detail = tuple(
-        DetailRow(
-            "pollutant", p,
-            value_pv=_safe(fac_em, f"project_{p}_pv"),
-        )
-        for p in pollutants
-        if _safe(fac_em, f"project_{p}_pv")
-    )
+    streams = avoided.get("streams") or {}
+    stream = streams.get("avoided_emissions_benefit")
     return [
-        TaxonomyResult(
-            "emissions_fac",
-            value_pv=_safe(fac_em, "fac_emissions_project_pv"),
-            value_nominal=_safe(fac_em, "fac_emissions_project_nominal"),
-            detail=fac_detail if fac_detail else None,
-        ),
         TaxonomyResult(
             "avoided_emissions_benefit",
-            value_pv=_safe(fac_em, "displacement_avoided_benefit_pv"),
-            value_nominal=_safe(fac_em, "displacement_avoided_benefit_nominal"),
-        ),
-    ]
-
-
-def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
-    """Adapt costs.displacement_delay -> emissions_displacement_delay."""
-    if not disp_delay:
-        return []
-    pollutants = ("co2", "sox", "nox")
-    detail_rows = tuple(
-        DetailRow(
-            "pollutant", p,
-            value_pv=_safe(disp_delay, f"{p}_pv"),
-        )
-        for p in pollutants
-        if _safe(disp_delay, f"{p}_pv")
-    )
-    return [
-        TaxonomyResult(
-            "emissions_displacement_delay",
-            value_pv=_safe(disp_delay, "displacement_delay_cost_pv"),
-            value_nominal=_safe(disp_delay, "displacement_delay_cost_nominal"),
-            detail=detail_rows if detail_rows else None,
+            value_pv=_safe(avoided, "avoided_emissions_pv"),
+            value_nominal=_safe(avoided, "avoided_emissions_nominal"),
+            value_pv_wacc=None,
+            stream=list(stream) if stream is not None else None,
         ),
     ]
 
@@ -431,8 +409,7 @@ def adapt_all_results(json_results: dict) -> list[TaxonomyResult]:
     results += adapt_wildfire(costs.get("wildfire", {}))
     results += adapt_outage(costs.get("outage", {}))
     results += adapt_emissions_comp(costs.get("emissions", {}))
-    results += adapt_facilitated_emissions(benefits.get("facilitated_emissions", {}))
-    results += adapt_displacement_delay_cost(costs.get("displacement_delay", {}))
+    results += adapt_avoided_emissions(benefits.get("avoided_emissions", {}))
     results += adapt_congestion(benefits.get("congestion", {}))
     results += adapt_capital_recovery(benefits.get("capital_recovery", {}))
 
@@ -496,8 +473,6 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "converter_loss_pv": _pv("line_loss_converter"),
         "emissions_comp_cost_pv": _pv("emissions_comp"),
         "emissions_comp_cost_nominal": _nom("emissions_comp"),
-        "fac_emissions_project_pv": _pv("emissions_fac"),
-        "fac_emissions_project_nominal": _nom("emissions_fac"),
         "displacement_avoided_benefit_pv": _pv("avoided_emissions_benefit"),
         "wildfire_pv": _pv("wildfire_eac"),
         "wildfire_nominal": _nom("wildfire_eac"),
@@ -513,8 +488,6 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "capacity_value_benefit_nominal": _nom("capacity_value_benefit"),
         "capital_recovery_pv": _pv("capital_recovery"),
         "capital_recovery_real": _nom("capital_recovery"),
-        "emissions_displacement_delay_pv": _pv("emissions_displacement_delay"),
-        "emissions_displacement_delay_nominal": _nom("emissions_displacement_delay"),
     }
     for result in results:
         if result.value_pv_wacc is not None:

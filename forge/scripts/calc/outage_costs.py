@@ -18,9 +18,9 @@ from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERAN
 from forge.scripts.utils.smart_loaders import (
     load_project_technical_details,
     load_outage_costs,
-    get_financing_data_raw,
 )
-from forge.scripts.utils.financial_utils import calculate_growing_annuity_pv, validate_discount_rate, calculate_nominal_growing_series
+from forge.scripts.utils.financial_utils import validate_discount_rate
+from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 
 logger = logging.getLogger(__name__)
@@ -74,6 +74,8 @@ def calculate_outage_costs(
     number_of_circuits_poles: int = 1,
     line_utilization: float = 1.0,
     ac_dc: str = "AC",
+    t_cod: int | None = None,
+    horizon: int | None = None,
 ) -> Dict[str, Any]:
     """
     Calculate expected outage costs using line-level outage rate model.
@@ -159,20 +161,14 @@ def calculate_outage_costs(
     # Expected annual loss
     expected_annual_loss = lambda_total * cost_per_event
 
-    nominal_total = calculate_nominal_growing_series(
-        annual_amount=expected_annual_loss,
-        growth_rate=growth_rate,
-        project_lifetime=project_lifetime,
-    )
-
-    pv_cost = calculate_growing_annuity_pv(
-        annual_amount=expected_annual_loss,
-        growth_rate=growth_rate,
-        discount_rate=discount_rate,
-        project_lifetime=project_lifetime,
-        delay_years=delay_years,
-        construction_years=construction_years,
-    )
+    if t_cod is None:
+        t_cod = int(delay_years) + int(construction_years) + 1
+    lifetime = int(project_lifetime)
+    if horizon is None:
+        horizon = t_cod + lifetime - 1
+    stream = growing(expected_annual_loss, growth_rate, int(t_cod), lifetime, int(horizon))
+    nominal_total = undiscounted(stream)
+    pv_cost = pv(stream, discount_rate)
 
     return {
         "lambda_total": lambda_total,
@@ -181,6 +177,7 @@ def calculate_outage_costs(
         "growth_rate": growth_rate,
         "nominal_total": nominal_total,
         "pv_cost": pv_cost,
+        "stream": stream,
         "total_miles": total_miles,
         "outage_rate": outage_rate,
         "lambda_terminal": lambda_terminal,
@@ -214,10 +211,9 @@ def main() -> None:
     circuit_details = load_circuit_and_resistance_details(category)
 
     outage_yaml = load_outage_costs()
-    financing_yaml = get_financing_data_raw()
 
-    # Social discount rate only — risk externalities use r_social (appendix hard-codes this)
-    discount_rate = financing_yaml["financial"]["social_discount_rate"]
+    # Social discount rate only — risk externalities use r_social from RunContext
+    discount_rate = ctx.social_discount_rate
     discount_source = "social"
 
     results = calculate_outage_costs(
@@ -232,6 +228,8 @@ def main() -> None:
         number_of_circuits_poles=circuit_details.number_of_circuits_poles,
         line_utilization=project_details.line_utilization,
         ac_dc=project_details.ac_dc,
+        t_cod=ctx.t_cod,
+        horizon=ctx.horizon,
     )
 
     from forge.scripts.utils.run_context import add_derived
@@ -302,5 +300,6 @@ def main() -> None:
     logger.info("=" * 80)
 
     csv_manager = SmartOutputManager()
+    results["streams"] = {"outage_eac": results["stream"]}
     csv_manager.add_outage_costs(results)
     csv_manager.write_batch_summary()

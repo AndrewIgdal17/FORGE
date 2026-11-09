@@ -1,6 +1,6 @@
 """FORGE taxonomy — single source of truth for Python.
 
-Defines the 36-item taxonomy (25 cost/benefit + 12 utility), dimensions
+Defines the 31-item taxonomy, dimensions
 registry, BCR definitions, excludable groups, and calculator key mappings.
 Read-only reference data; importable by any module without circular imports.
 """
@@ -123,9 +123,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("base_delay", "cost", "soft", "delay",
                  "Base Delay Cost", "per_perspective", None, 6,
                  "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
-    TaxonomyItem("emissions_displacement_delay", "cost", "soft", "delay",
-                 "Displacement Delay Emissions Cost", "per_perspective", None, 9,
-                 "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."),
     # --- Risk costs (category: risk) ---
     TaxonomyItem("wildfire_eac", "cost", "risk", "wildfire",
                  "Expected Wildfire Cost", "social", None, 1,
@@ -137,9 +134,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("emissions_comp", "cost", "emissions", "loss_compensation",
                  "Loss-Compensation Emissions", "social", None, 1,
                  "Social cost of emissions from generation compensating for line losses."),
-    TaxonomyItem("emissions_fac", "reporting_only", "reporting", "facilitated",
-                 "Facilitated Emissions", "per_perspective", None, 2,
-                 "Intermediate quantity (not a BCR cost or benefit). Social cost of pollutant emissions from the energy delivered via this project path. The Avoided Emissions Benefit equals the no-line equivalent minus this value."),
     # --- Benefits (categories: remedial, enabling, avoided_emissions) ---
     TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
                  "Congestion Reduction Benefit", "per_perspective", None, 1,
@@ -197,7 +191,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 33, f"Expected 33 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 31, f"Expected 31 taxonomy items, got {len(TAXONOMY)}"
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -223,10 +217,6 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("emissions_comp", "pollutant", "CO2, SOx, NOx"),
     DimensionEntry("emissions_comp", "source", "Per-source mix contribution"),
     DimensionEntry("emissions_comp", "year", "Evolving mix over project lifetime"),
-    DimensionEntry("emissions_fac", "pollutant", "CO2, SOx, NOx"),
-    DimensionEntry("emissions_fac", "source", "Per-source mix contribution"),
-    DimensionEntry("emissions_fac", "year", "Evolving mix over project lifetime"),
-    DimensionEntry("emissions_fac", "instance", "Project vs. no-line (two engine runs)"),
     DimensionEntry("avoided_emissions_benefit", "pollutant", "CO2, SOx, NOx avoided mass + cost"),
     DimensionEntry("avoided_emissions_benefit", "year", "Evolving differential over project lifetime"),
     DimensionEntry("congestion_benefit", "allocation", "Overlap vs. non-overlap binding hours"),
@@ -375,17 +365,13 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "outage_eac": "outage_pv",
     # Emissions costs
     "emissions_comp": "emissions_comp_cost_pv",
-    "emissions_fac": "fac_emissions_project_pv",
     # Benefits
     "congestion_benefit": "congestion_benefit_pv",
     "delivered_energy_benefit": "delivered_benefit_pv",
     "capacity_value_benefit": "capacity_value_benefit_pv",
     # Transfer
     "capital_recovery": "capital_recovery_pv",
-    # Reporting-only
     "avoided_emissions_benefit": "displacement_avoided_benefit_pv",
-    # Soft costs — delay (displacement)
-    "emissions_displacement_delay": "emissions_displacement_delay_pv",
 }
 
 # ---------------------------------------------------------------------------
