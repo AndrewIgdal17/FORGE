@@ -21,6 +21,7 @@ from forge.scripts.utils.smart_loaders import (
     get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import calculate_cod_year
+from forge.scripts.utils.streams import pv, undiscounted
 
 try:
     from forge.scripts.utils.run_context import get_output_manager
@@ -103,11 +104,17 @@ def main() -> None:
         logger.info("RATE-BASED REVENUE CALCULATION SKIPPED")
         logger.info("(revenue.rate_based.enabled = false in financing.yaml)")
         logger.info("=" * 60)
-        # Still write zeros to CSV for consistency
+        # Still write zeros to CSV for consistency. No societal present value.
+        from forge.scripts.utils.run_context import get_run_context
+
+        ctx = get_run_context()
+        horizon = ctx.horizon if ctx is not None else 0
         csv_manager = SmartOutputManager()
         results = {
+            "streams": {"capital_recovery": [0.0] * horizon},
             "capital_recovery_real": 0,
             "capital_recovery_pv": 0,
+            "capital_recovery_pv_wacc": 0,
             "annual_revenue": 0,
             "rate_base": 0,
             "rate_base_real": 0,
@@ -138,26 +145,34 @@ def main() -> None:
     cod_year = calculate_cod_year(delay_years, construction_years)
     rate_base_real = rate_base
 
-    from forge.scripts.utils.run_context import add_derived
+    from forge.scripts.utils.run_context import add_derived, get_run_context
     add_derived({"rate_base": rate_base, "rate_base_real": rate_base_real})
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
 
     # Declining-balance revenue requirement (FERC formula rate)
-    # R_t = RB/n + RB * r * (1 - (t-1)/n) for t = 1..n
+    # R_tau = RB/n + RB * r * (1 - (tau-1)/n) for tau = 1..n
+    # Today's R_tau is placed at calendar year t = t_cod + tau - 1.
     n = project_lifetime
     r_wacc_real = financing.wacc_real
-
-    capital_recovery_pv = 0.0
-    capital_recovery_real = 0.0
+    capital_recovery_stream = [0.0] * ctx.horizon
     annual_revenues = []
 
-    for t in range(1, n + 1):
+    for tau in range(1, n + 1):
         depreciation_t = rate_base_real / n
-        return_t = rate_base_real * r_wacc_real * (1 - (t - 1) / n)
+        return_t = rate_base_real * r_wacc_real * (1 - (tau - 1) / n)
         revenue_t = depreciation_t + return_t
         annual_revenues.append(revenue_t)
-        capital_recovery_real += revenue_t
-        discount_year = cod_year + t - 1
-        capital_recovery_pv += revenue_t / (1 + r_wacc_real) ** discount_year
+        t = ctx.t_cod + tau - 1
+        capital_recovery_stream[t - 1] = revenue_t
+
+    capital_recovery_real = undiscounted(capital_recovery_stream)
+    capital_recovery_pv_wacc = pv(capital_recovery_stream, r_wacc_real)
+    capital_recovery_pv = capital_recovery_pv_wacc
 
     revenue_year_1 = annual_revenues[0] if annual_revenues else 0.0
     revenue_year_n = annual_revenues[-1] if annual_revenues else 0.0
@@ -187,8 +202,10 @@ def main() -> None:
     # CSV Output
     csv_manager = SmartOutputManager()
     results = {
+        "streams": {"capital_recovery": capital_recovery_stream},
         "capital_recovery_real": capital_recovery_real,
         "capital_recovery_pv": capital_recovery_pv,
+        "capital_recovery_pv_wacc": capital_recovery_pv_wacc,
         "annual_revenue": revenue_year_1,
         "rate_base": rate_base,
         "rate_base_real": rate_base_real,

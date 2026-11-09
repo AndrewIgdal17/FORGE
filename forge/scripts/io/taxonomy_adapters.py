@@ -151,9 +151,15 @@ def adapt_environmental(env: dict) -> list[TaxonomyResult]:
 
 
 def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
-    """Adapt costs.oandm -> oandm with component detail."""
+    """Adapt costs.oandm -> oandm with component detail.
+
+    Copies the O&M stream and the social and WACC present values already
+    computed from that stream. Detail rows use the societal component values.
+    """
     if not oandm:
         return []
+    streams = oandm.get("streams") or {}
+    stream = streams.get("oandm")
     components = ("conductor", "converter", "structure", "vegetation")
     detail_rows: list[DetailRow] = []
     for comp in components:
@@ -170,6 +176,8 @@ def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
             value_pv=_safe(oandm, "total_pv"),
             value_nominal=_safe(oandm, "total_nominal"),
             value_annual=_safe(oandm, "total_annual"),
+            value_pv_wacc=_safe(oandm, "total_pv_wacc"),
+            stream=list(stream) if stream is not None else None,
             detail=tuple(detail_rows) if detail_rows else None,
         ),
     ]
@@ -179,12 +187,16 @@ def adapt_insurance(insurance: dict) -> list[TaxonomyResult]:
     """Adapt costs.insurance -> insurance."""
     if not insurance:
         return []
+    streams = insurance.get("streams") or {}
+    stream = streams.get("insurance")
     return [
         TaxonomyResult(
             "insurance",
             value_pv=_safe(insurance, "pv_total"),
             value_nominal=_safe(insurance, "nominal_lifetime_cost"),
             value_annual=_safe(insurance, "annual_premium"),
+            value_pv_wacc=_safe(insurance, "pv_total_wacc"),
+            stream=list(stream) if stream is not None else None,
         ),
     ]
 
@@ -193,19 +205,22 @@ def adapt_line_loss(line_loss: dict) -> list[TaxonomyResult]:
     """Adapt costs.line_loss -> line_loss_conductor, line_loss_converter."""
     if not line_loss:
         return []
+    streams = line_loss.get("streams") or {}
+
+    def _item(taxonomy_id: str, pv_key: str, nominal_key: str, annual_key: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(line_loss, pv_key),
+            value_nominal=_safe(line_loss, nominal_key),
+            value_annual=_safe(line_loss, annual_key),
+            value_pv_wacc=_safe(line_loss, f"{pv_key}_wacc"),
+            stream=list(stream) if stream is not None else None,
+        )
+
     return [
-        TaxonomyResult(
-            "line_loss_conductor",
-            value_pv=_safe(line_loss, "line_cost_pv"),
-            value_nominal=_safe(line_loss, "line_nominal_total"),
-            value_annual=_safe(line_loss, "line_annual_cost"),
-        ),
-        TaxonomyResult(
-            "line_loss_converter",
-            value_pv=_safe(line_loss, "converter_cost_pv"),
-            value_nominal=_safe(line_loss, "converter_nominal_total"),
-            value_annual=_safe(line_loss, "converter_annual_cost"),
-        ),
+        _item("line_loss_conductor", "line_cost_pv", "line_nominal_total", "line_annual_cost"),
+        _item("line_loss_converter", "converter_cost_pv", "converter_nominal_total", "converter_annual_cost"),
     ]
 
 
@@ -213,11 +228,15 @@ def adapt_delay(delay: dict) -> list[TaxonomyResult]:
     """Adapt costs.delay -> base_delay."""
     if not delay:
         return []
+    streams = delay.get("streams") or {}
+    stream = streams.get("base_delay")
     return [
         TaxonomyResult(
             "base_delay",
             value_pv=_safe(delay, "total_pv"),
             value_nominal=_safe(delay, "total_nominal"),
+            value_pv_wacc=_safe(delay, "total_pv_wacc"),
+            stream=list(stream) if stream is not None else None,
         ),
     ]
 
@@ -373,15 +392,24 @@ def adapt_congestion(cc: dict) -> list[TaxonomyResult]:
 
 
 def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.capital_recovery -> capital_recovery."""
+    """Adapt benefits.capital_recovery -> capital_recovery.
+
+    Capital recovery is a transfer. It has no societal present value.
+    ``value_pv_wacc`` is the WACC present value of today's declining-balance
+    schedule, placed at calendar year ``t_cod + tau - 1``.
+    """
     if not capital_recovery:
         return []
+    streams = capital_recovery.get("streams") or {}
+    stream = streams.get("capital_recovery")
     return [
         TaxonomyResult(
             "capital_recovery",
-            value_pv=_safe(capital_recovery, "capital_recovery_pv"),
+            value_pv=None,
             value_nominal=_safe(capital_recovery, "capital_recovery_real"),
             value_annual=_safe(capital_recovery, "annual_revenue"),
+            value_pv_wacc=_safe(capital_recovery, "capital_recovery_pv_wacc"),
+            stream=list(stream) if stream is not None else None,
         ),
     ]
 

@@ -17,7 +17,9 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
 )
-from forge.scripts.utils.financial_utils import calculate_present_value
+from forge.scripts.utils.financial_utils import validate_discount_rate
+from forge.scripts.utils.run_context import add_derived, get_run_context
+from forge.scripts.utils.streams import level, pv, undiscounted
 
 logger = logging.getLogger(__name__)
 
@@ -43,18 +45,24 @@ def main() -> None:
 
     total_yearly_delay_cost = delay_cost_df["annual_base_delay_cost"]
 
-    total_delay_cost = total_yearly_delay_cost * delay_year
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    delay_years = int(delay_year)
+    base_delay_stream = level(total_yearly_delay_cost, 1, delay_years, ctx.horizon)
+    total_delay_cost = undiscounted(base_delay_stream)
 
-    from forge.scripts.utils.run_context import add_derived
     add_derived({"total_annual_delay_cost": total_yearly_delay_cost})
 
     financing = load_financing_details()
-
-    total_delay_cost_pv = calculate_present_value(
-        total_yearly_delay_cost,
-        financing.wacc_real,
-        delay_year,
-    )
+    validate_discount_rate(financing.wacc_real, "wacc_real")
+    r_social = ctx.social_discount_rate
+    r_wacc = financing.wacc_real
+    total_delay_cost_pv = pv(base_delay_stream, r_social)
+    total_delay_cost_pv_wacc = pv(base_delay_stream, r_wacc)
 
     logger.info("=" * 60)
     logger.info("DELAY COST CALCULATION RESULTS")
@@ -65,10 +73,12 @@ def main() -> None:
 
     logger.info("")
     logger.info(
-        f"PRESENT VALUES (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
+        f"PRESENT VALUES (discounted to base year ({financing.base_year}); "
+        f"social {r_social:.2%}, real WACC {r_wacc:.2%}):"
     )
 
-    logger.info(f"TOTAL PRESENT VALUE DELAY COST: ${total_delay_cost_pv:,.2f}")
+    logger.info(f"TOTAL PRESENT VALUE DELAY COST (social): ${total_delay_cost_pv:,.2f}")
+    logger.info(f"TOTAL PRESENT VALUE DELAY COST (WACC): ${total_delay_cost_pv_wacc:,.2f}")
     logger.info("=" * 60)
 
     # ========================================================================
@@ -78,9 +88,11 @@ def main() -> None:
     csv_manager = SmartOutputManager()
 
     results = {
+        "streams": {"base_delay": base_delay_stream},
         "total_nominal": total_delay_cost,
         "total_afudc": 0,
         "total_pv": total_delay_cost_pv,
+        "total_pv_wacc": total_delay_cost_pv_wacc,
     }
 
     csv_manager.add_delay_costs(results)

@@ -282,6 +282,15 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         + bcr.get("emissions_displacement_delay_pv", 0.0)
     )
     base_delay_pv = bcr.get("delay_cost_pv", 0.0)
+    # Utility and ratepayer discount base delay at real WACC. The societal
+    # total still uses delay_cost_pv. Fall back when an older result has no
+    # WACC value, which keeps the zero-rate fidelity fixture unchanged.
+    delay_block = _dig(results, "costs", "delay", default={}) or {}
+    base_delay_utility_pv = (
+        delay_block["total_pv_wacc"]
+        if isinstance(delay_block, dict) and "total_pv_wacc" in delay_block
+        else base_delay_pv
+    )
 
     # --- Revenue (ratepayer BCR denominator) --------------------------------
     capital_recovery = _dig(results, "benefits", "capital_recovery", default={}) or {}
@@ -343,7 +352,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             if D > 0:
                 pv_C_soft += total_delay_soft_pv / D
                 cum_C_delay += total_delay_soft_pv / D
-                cum_base_delay += base_delay_pv / D
+                cum_base_delay += base_delay_utility_pv / D
         elif t <= D + C:
             phase = "construction"
             year_operational = None
@@ -355,22 +364,29 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             if D == 0 and t == D + 1:
                 pv_C_soft += total_delay_soft_pv
                 cum_C_delay += total_delay_soft_pv
-                cum_base_delay += base_delay_pv
+                cum_base_delay += base_delay_utility_pv
         else:
             phase = "operation"
             k = t - D - C
             year_operational = k
 
             for s in operational_streams:
+                if s.category == "C_soft_op":
+                    # O&M, insurance, and losses grow from year 1. The societal
+                    # total discounts at the social rate. Utility and ratepayer
+                    # accumulators discount the same nominal at real WACC.
+                    grown = s.annual * (1 + s.growth_rate) ** (t - 1)
+                    pv_C_soft += grown / (1 + social_discount_rate) ** t
+                    wacc_val = grown / (1 + wacc_real) ** t
+                    pv_soft_op_year += wacc_val
+                    if s.key == "energy_losses_annual_cost":
+                        pv_line_loss_year += wacc_val
+                    continue
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
                 if s.category == "B_remedial":
                     pv_B_remedial += val
                 elif s.category == "B_enabling":
                     pv_B_enabling += val
-                elif s.category == "C_soft_op":
-                    pv_soft_op_year += val
-                    if s.key == "energy_losses_annual_cost":
-                        pv_line_loss_year += val
 
             for s in risk_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
@@ -389,8 +405,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                             pv_C_emissions += pv
                         elif a.category == "B_avoided_emissions":
                             pv_B_avoided_emissions += pv
-
-            pv_C_soft += pv_soft_op_year
 
             if L > 0:
                 R_t = rate_base_real / L + rate_base_real * wacc_real * (1 - (k - 1) / L)

@@ -30,6 +30,7 @@ from forge.scripts.utils.financial_utils import (
     calculate_nominal_growing_series,
     calculate_cod_year,
 )
+from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.calculation_utils import (
     to_percent,
     from_percent,
@@ -253,6 +254,36 @@ def calculate_configuration_losses(
 
     return losses_mwh_per_year, lifetime_losses_mwh
 
+def _operating_loss_values(
+    line_annual: float,
+    converter_annual: float,
+    growth: float,
+    lifetime: int,
+    social_discount_rate: float,
+    wacc_real: float,
+    t_cod: int,
+    horizon: int,
+) -> dict:
+    """Conductor and converter loss streams, grown from year 1 and paid from COD."""
+    line_stream = growing(line_annual, growth, t_cod, lifetime, horizon)
+    converter_stream = growing(converter_annual, growth, t_cod, lifetime, horizon)
+    return {
+        "streams": {
+            "line_loss_conductor": line_stream,
+            "line_loss_converter": converter_stream,
+        },
+        "line_nominal_total": undiscounted(line_stream),
+        "converter_nominal_total": undiscounted(converter_stream),
+        "total_nominal": undiscounted(line_stream) + undiscounted(converter_stream),
+        "line_cost_pv": pv(line_stream, social_discount_rate),
+        "line_cost_pv_wacc": pv(line_stream, wacc_real),
+        "converter_cost_pv": pv(converter_stream, social_discount_rate),
+        "converter_cost_pv_wacc": pv(converter_stream, wacc_real),
+        "total_pv": pv(line_stream, social_discount_rate) + pv(converter_stream, social_discount_rate),
+        "total_pv_wacc": pv(line_stream, wacc_real) + pv(converter_stream, wacc_real),
+    }
+
+
 def main() -> None:
     """Main function to calculate line loss costs for reconductoring projects."""
 
@@ -276,56 +307,30 @@ def main() -> None:
         price = project_details.value_of_load
 
         primary_annual_loss_cost = primary_total_mwh * price
-        primary_lifetime_nominal_cost = calculate_nominal_growing_series(
-            primary_annual_loss_cost, g_benefit, project_details.project_lifetime
-        )
-        primary_pv_loss_cost = calculate_growing_annuity_pv(
-            primary_annual_loss_cost,
-            g_benefit,
-            project_details.wacc_real,
-            project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
-        )
-
         primary_line_annual = primary_line_mwh * price
         primary_converter_annual = primary_converter_mwh * price
-        primary_line_pv = calculate_growing_annuity_pv(
+        ctx = get_run_context()
+        loss_values = _operating_loss_values(
             primary_line_annual,
-            g_benefit,
-            project_details.wacc_real,
-            project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
-        )
-        primary_converter_pv = calculate_growing_annuity_pv(
             primary_converter_annual,
             g_benefit,
+            int(project_details.project_lifetime),
+            ctx.social_discount_rate,
             project_details.wacc_real,
-            project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
+            ctx.t_cod,
+            ctx.horizon,
         )
 
         csv_manager = SmartOutputManager()
         results = {
             "annual_cost": primary_annual_loss_cost,
-            "total_nominal": primary_lifetime_nominal_cost,
             "total_afudc": 0,
-            "total_pv": primary_pv_loss_cost,
             "line_loss_mwh_yr": primary_line_mwh,
             "converter_loss_mwh_yr": primary_converter_mwh,
             "total_loss_mwh_yr": primary_total_mwh,
             "line_annual_cost": primary_line_annual,
             "converter_annual_cost": primary_converter_annual,
-            "line_cost_pv": primary_line_pv,
-            "converter_cost_pv": primary_converter_pv,
-            "line_nominal_total": calculate_nominal_growing_series(
-                primary_line_annual, g_benefit, project_details.project_lifetime
-            ),
-            "converter_nominal_total": calculate_nominal_growing_series(
-                primary_converter_annual, g_benefit, project_details.project_lifetime
-            ),
+            **loss_values,
         }
         csv_manager.add_line_loss_costs(results)
         csv_manager.write_batch_summary()
@@ -639,52 +644,27 @@ def main() -> None:
     new_line_annual_cost = new_line_mwh * price
     new_converter_annual_cost = new_converter_mwh * price
     new_total_annual_cost = new_total_mwh * price
-    new_lifetime_nominal_cost = calculate_nominal_growing_series(
-        new_total_annual_cost, g_benefit, project_details.project_lifetime
-    )
-    new_line_pv = calculate_growing_annuity_pv(
+    ctx = get_run_context()
+    loss_values = _operating_loss_values(
         new_line_annual_cost,
-        g_benefit,
-        project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    new_converter_pv = calculate_growing_annuity_pv(
         new_converter_annual_cost,
         g_benefit,
+        int(project_details.project_lifetime),
+        ctx.social_discount_rate,
         project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    new_pv_loss_cost = calculate_growing_annuity_pv(
-        new_total_annual_cost,
-        g_benefit,
-        project_details.wacc_real,
-        project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
+        ctx.t_cod,
+        ctx.horizon,
     )
 
     results = {
         "annual_cost": new_total_annual_cost,
-        "total_nominal": new_lifetime_nominal_cost,
         "total_afudc": 0,
-        "total_pv": new_pv_loss_cost,
         "line_loss_mwh_yr": new_line_mwh,
         "converter_loss_mwh_yr": new_converter_mwh,
         "total_loss_mwh_yr": new_total_mwh,
         "line_annual_cost": new_line_annual_cost,
         "converter_annual_cost": new_converter_annual_cost,
-        "line_cost_pv": new_line_pv,
-        "converter_cost_pv": new_converter_pv,
-        "line_nominal_total": calculate_nominal_growing_series(
-            new_line_annual_cost, g_benefit, project_details.project_lifetime
-        ),
-        "converter_nominal_total": calculate_nominal_growing_series(
-            new_converter_annual_cost, g_benefit, project_details.project_lifetime
-        ),
+        **loss_values,
     }
 
     csv_manager.add_line_loss_costs(results)

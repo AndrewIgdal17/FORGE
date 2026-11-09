@@ -19,8 +19,8 @@ from forge.scripts.utils.smart_loaders import (
     load_financing_details,
     load_insurance_details,
 )
-from forge.scripts.utils.financial_utils import calculate_present_value, calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
+from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.run_context import get_run_context
 
@@ -35,18 +35,19 @@ def calculate_insurance_costs(
     project_lifetime: int,
     construction_type: str,
     wacc_real: float,
-    delay_years: float,
-    construction_years: float,
-) -> Dict[str, float]:
+    social_discount_rate: float,
+    t_cod: int,
+    horizon: int,
+) -> Dict[str, Any]:
     """
     Calculate operational insurance costs based on insurable asset value.
 
     Overhead/underground lines use a self-insurance reserve rate; converter
     stations use commercial property insurance rates.
 
-    Premiums escalate at g_ins over the project lifetime (appendix §5).
-    Nominal lifetime cost is the growing series; PV is the growing annuity
-    discounted at real WACC from COD.
+    The premium is a base-year amount on unescalated build cost. It grows
+    from year 1 and is paid from COD for the project lifetime. ``insurance_pv``
+    discounts that stream at the social rate; ``insurance_pv_wacc`` uses real WACC.
 
     Args:
         insurance_yaml: Loaded insurance YAML data
@@ -55,13 +56,15 @@ def calculate_insurance_costs(
         converter_cost_with_contingencies: Converter cost with contingencies
         project_lifetime: Project lifetime in years
         construction_type: Construction type string (e.g. "Overhead", "Underground")
-        wacc_real: Real WACC used to discount the growing annuity
-        delay_years: Years of delay before construction starts
-        construction_years: Years of construction (premiums start at COD)
+        wacc_real: Real WACC
+        social_discount_rate: Societal discount rate
+        t_cod: First operating year
+        horizon: Length of the year stream
 
     Returns:
         dict: Contains insurable_value, annual_premium, premium_rate, line_rate,
-              converter_rate, escalation_rate, nominal_lifetime_cost, insurance_pv
+              converter_rate, escalation_rate, nominal_lifetime_cost, insurance_pv,
+              insurance_pv_wacc, and stream
     """
     ins_cfg = insurance_yaml["insurance"]
     components = ins_cfg["insurable_components"]
@@ -87,19 +90,12 @@ def calculate_insurance_costs(
     premium_rate = annual_premium / insurable_value if insurable_value > 0 else 0.0
 
     escalation_rate = ins_cfg["escalation_rate"]
-    nominal_lifetime_cost = calculate_nominal_growing_series(
-        annual_amount=annual_premium,
-        growth_rate=escalation_rate,
-        project_lifetime=project_lifetime,
+    stream = growing(
+        annual_premium, escalation_rate, t_cod, int(project_lifetime), horizon
     )
-    insurance_pv = calculate_growing_annuity_pv(
-        annual_amount=annual_premium,
-        growth_rate=escalation_rate,
-        discount_rate=wacc_real,
-        project_lifetime=project_lifetime,
-        delay_years=delay_years,
-        construction_years=construction_years,
-    )
+    nominal_lifetime_cost = undiscounted(stream)
+    insurance_pv = pv(stream, social_discount_rate)
+    insurance_pv_wacc = pv(stream, wacc_real)
 
     return {
         "insurable_value": insurable_value,
@@ -110,6 +106,8 @@ def calculate_insurance_costs(
         "escalation_rate": escalation_rate,
         "nominal_lifetime_cost": nominal_lifetime_cost,
         "insurance_pv": insurance_pv,
+        "insurance_pv_wacc": insurance_pv_wacc,
+        "stream": stream,
     }
 
 def main() -> None:
@@ -140,7 +138,7 @@ def main() -> None:
     # Load financing parameters for present value calculation
     financing = load_financing_details()
 
-    # Calculate operational insurance costs (growing series + growing annuity)
+    # Premium on the unescalated build cost, then grown from year 1.
     results = calculate_insurance_costs(
         insurance_yaml,
         costs.conductor_cost_with_contingencies,
@@ -149,8 +147,9 @@ def main() -> None:
         project_details.project_lifetime,
         project_details.construction_type,
         financing.wacc_real,
-        project_details.delay_years,
-        project_details.construction_years,
+        ctx.social_discount_rate,
+        ctx.t_cod,
+        ctx.horizon,
     )
 
     from forge.scripts.utils.run_context import add_derived
@@ -186,11 +185,13 @@ def main() -> None:
     logger.info(f"  TOTAL NOMINAL COST: ${results['nominal_lifetime_cost']:,.2f}")
     logger.info("")
 
-    logger.info("[UTILITY PERSPECTIVE - Present Value]")
-    logger.info(f"  Discount Rate: {financing.wacc_real:.2%} (real WACC)")
+    logger.info("[PRESENT VALUE]")
+    logger.info(f"  Social Discount Rate: {ctx.social_discount_rate:.2%}")
+    logger.info(f"  Real WACC: {financing.wacc_real:.2%}")
     logger.info(f"  Base Year: {financing.base_year}")
     logger.info(f"  ---")
-    logger.info(f"  TOTAL PRESENT VALUE: ${results['insurance_pv']:,.2f}")
+    logger.info(f"  TOTAL PRESENT VALUE (social): ${results['insurance_pv']:,.2f}")
+    logger.info(f"  TOTAL PRESENT VALUE (WACC): ${results['insurance_pv_wacc']:,.2f}")
     logger.info("")
     logger.info("NOTE: Operational risk-bearing cost is not AFUDC-eligible (operating expense).")
     logger.info("=" * 80)
@@ -204,9 +205,11 @@ def main() -> None:
 
     # Prepare operational insurance results dictionary for CSV
     csv_results = {
+        "streams": {"insurance": results["stream"]},
         "annual_premium": results["annual_premium"],
         "nominal_lifetime_cost": results["nominal_lifetime_cost"],
         "pv_total": results["insurance_pv"],
+        "pv_total_wacc": results["insurance_pv_wacc"],
         "insurable_value": results["insurable_value"],
         "premium_rate": results["premium_rate"],
     }

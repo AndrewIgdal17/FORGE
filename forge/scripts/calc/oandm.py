@@ -17,10 +17,10 @@ from forge.scripts.io.yaml_loaders import (
     load_project_technical_details,
     load_physical_details_detailed,
 )
-from forge.scripts.utils.financial_utils import calculate_cod_year, calculate_growing_annuity_pv, calculate_nominal_growing_series
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.constants import CONSTRUCTION_TYPE_OVERHEAD
 from forge.scripts.utils.run_context import get_run_context, add_derived
+from forge.scripts.utils.streams import add, growing, pv, undiscounted
 
 logger = logging.getLogger(__name__)
 
@@ -209,70 +209,43 @@ def main() -> None:
         struct_data = section("14_category_om_structures")
         om_real_escalation_rate = struct_data["om_real_escalation_rate"]
 
-    # Calculate lifetime costs (nominal, with real escalation)
-    total_structure_cost_lifetime = calculate_nominal_growing_series(
-        variable_structure_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
-    )
-    total_conductor_cost_lifetime = calculate_nominal_growing_series(
-        total_conductor_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
-    )
-    total_converter_cost_lifetime = calculate_nominal_growing_series(
-        total_converter_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
-    )
-    total_vegetation_management_cost_lifetime = calculate_nominal_growing_series(
-        total_vegetation_management_cost_per_year, om_real_escalation_rate, project_details.project_lifetime,
-    )
-
-    # Calculate present values
-    # O&M costs start at first year of operation (COD)
-    oandm_start_year = calculate_cod_year(project_details.delay_years, project_details.construction_years)
-
-    if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
-        pv_conductor = 0.0
-        pv_structure = 0.0
-        pv_vegetation_management = calculate_growing_annuity_pv(
-            annual_amount=total_vegetation_management_cost_per_year,
-            growth_rate=om_real_escalation_rate,
-            discount_rate=financing.wacc_real,
-            project_lifetime=project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
         )
-        pv_line_om = calculate_growing_annuity_pv(
-            annual_amount=total_line_om_per_year,
-            growth_rate=om_real_escalation_rate,
-            discount_rate=financing.wacc_real,
-            project_lifetime=project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
-        )
-    else:
-        pv_line_om = calculate_growing_annuity_pv(
-            annual_amount=total_line_om_per_year,
-            growth_rate=om_real_escalation_rate,
-            discount_rate=financing.wacc_real,
-            project_lifetime=project_details.project_lifetime,
-            delay_years=project_details.delay_years,
-            construction_years=project_details.construction_years,
-        )
-        pv_conductor = 0.0
-        pv_structure = 0.0
-        pv_vegetation_management = 0.0
+    lifetime = int(project_details.project_lifetime)
+    r_social = ctx.social_discount_rate
+    r_wacc = financing.wacc_real
 
-    pv_converter = calculate_growing_annuity_pv(
-        annual_amount=total_converter_cost_per_year,
-        growth_rate=om_real_escalation_rate,
-        discount_rate=financing.wacc_real,
-        project_lifetime=project_details.project_lifetime,
-        delay_years=project_details.delay_years,
-        construction_years=project_details.construction_years,
-    )
-    pv_total = pv_line_om + pv_converter
+    def _grow(amount: float) -> list[float]:
+        return growing(amount, om_real_escalation_rate, ctx.t_cod, lifetime, ctx.horizon)
+
+    def _values(stream: list[float]) -> tuple[float, float, float]:
+        return pv(stream, r_social), pv(stream, r_wacc), undiscounted(stream)
+
+    conductor_stream = _grow(total_conductor_cost_per_year)
+    structure_stream = _grow(variable_structure_cost_per_year)
+    vegetation_stream = _grow(total_vegetation_management_cost_per_year)
+    converter_stream = _grow(total_converter_cost_per_year)
+    line_stream = _grow(total_line_om_per_year)
+    # Line O&M already contains vegetation and, for overhead, the base rate.
+    # Conductor and structure annuals are legacy zeros beside that line total.
+    oandm_stream = add(line_stream, converter_stream)
+
+    pv_conductor, conductor_pv_wacc, total_conductor_cost_lifetime = _values(conductor_stream)
+    pv_structure, structure_pv_wacc, total_structure_cost_lifetime = _values(structure_stream)
+    (
+        pv_vegetation_management,
+        vegetation_pv_wacc,
+        total_vegetation_management_cost_lifetime,
+    ) = _values(vegetation_stream)
+    pv_converter, converter_pv_wacc, total_converter_cost_lifetime = _values(converter_stream)
+    pv_line_om, line_om_pv_wacc, _line_nominal = _values(line_stream)
+    pv_total, total_pv_wacc, _total_nominal_oandm = _values(oandm_stream)
 
     _total_annual_oandm = total_line_om_per_year + total_converter_cost_per_year
-    _total_nominal_oandm = calculate_nominal_growing_series(
-        _total_annual_oandm, om_real_escalation_rate, project_details.project_lifetime,
-    )
     add_derived({
         "total_structures": structure_dict.get("total", 0) if structure_dict else 0,
         "veg_mgmt_cost_per_year": total_vegetation_management_cost_per_year,
@@ -338,13 +311,15 @@ def main() -> None:
     logger.info(f"Total:      ${_total_nominal_oandm:,.2f}")
 
     logger.info("\n--- Present Value Calculations ---")
-    logger.info(f"Real WACC: {financing.wacc_real:.4f}")
+    logger.info(f"Social Discount Rate: {r_social:.4f}")
+    logger.info(f"Real WACC: {r_wacc:.4f}")
     logger.info(f"PV Conductor:  ${pv_conductor:,.2f}")
     logger.info(f"PV Converter:  ${pv_converter:,.2f}")
     logger.info(f"PV Structure:  ${pv_structure:,.2f}")
     logger.info(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
     logger.info(f"{'─' * 40}")
-    logger.info(f"PV Total:      ${pv_total:,.2f}")
+    logger.info(f"PV Total (social): ${pv_total:,.2f}")
+    logger.info(f"PV Total (WACC):   ${total_pv_wacc:,.2f}")
     logger.info("\n" + "=" * 80)
 
     # ========================================================================
@@ -355,23 +330,30 @@ def main() -> None:
     csv_manager = SmartOutputManager()
 
     results = {
+        "streams": {"oandm": oandm_stream},
         "total_annual": _total_annual_oandm,
         "total_nominal": _total_nominal_oandm,
         "total_pv": pv_total,
+        "total_pv_wacc": total_pv_wacc,
         "conductor_annual": total_conductor_cost_per_year,
         "conductor_nominal": total_conductor_cost_lifetime,
         "conductor_pv": pv_conductor,
+        "conductor_pv_wacc": conductor_pv_wacc,
         "converter_annual": total_converter_cost_per_year,
         "converter_nominal": total_converter_cost_lifetime,
         "converter_pv": pv_converter,
+        "converter_pv_wacc": converter_pv_wacc,
         "structure_annual": variable_structure_cost_per_year,
         "structure_nominal": total_structure_cost_lifetime,
         "structure_pv": pv_structure,
+        "structure_pv_wacc": structure_pv_wacc,
         "vegetation_annual": total_vegetation_management_cost_per_year,
         "vegetation_nominal": total_vegetation_management_cost_lifetime,
         "vegetation_pv": pv_vegetation_management,
+        "vegetation_pv_wacc": vegetation_pv_wacc,
         "line_om_annual": total_line_om_per_year,
         "line_om_pv": pv_line_om,
+        "line_om_pv_wacc": line_om_pv_wacc,
     }
 
     # Write to CSV
