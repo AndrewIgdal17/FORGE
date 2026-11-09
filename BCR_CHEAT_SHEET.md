@@ -18,7 +18,7 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 - **Operational** ($C_{\text{operational}}$): O&M + insurance + ROW rent
 - **Energy/Emissions** ($C_{\text{loss}} + C_{\text{emissions}}$): line losses (conductor + converter) + loss-compensation emissions
 - **Risk** ($C_{\text{risk}}$): expected wildfire cost + expected outage cost
-- **Delay** ($C_{\text{delay}}$): base delay + congestion delay + displacement delay
+- **Delay** ($C_{\text{delay}}$): base delay only. Cost-of-delay comparison: `delay_comparison`.
 
 ---
 

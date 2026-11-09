@@ -37,7 +37,6 @@ BATCH_SUMMARY_FIELDS = [
     "risk_costs_pv",
     # 6. Delay Costs PV
     "delay_cost_pv",
-    "congestion_delay_cost_pv",
     "delay_costs_pv",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
