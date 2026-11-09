@@ -36,6 +36,22 @@ def validate_discount_rate(
     return rate
 
 
+def fisher_real(r_nom: float, inflation: float) -> float:
+    """
+    Convert a nominal rate to a real rate with the Fisher relation.
+
+    Formula: r_real = (1 + r_nom) / (1 + inflation) - 1
+
+    Args:
+        r_nom: Nominal rate
+        inflation: Inflation rate
+
+    Returns:
+        float: Real rate
+    """
+    return (1 + r_nom) / (1 + inflation) - 1
+
+
 def calculate_real_wacc(wacc_nominal: float, inflation_rate: float) -> float:
     """
     Calculate real WACC from nominal WACC and inflation rate using Fisher equation.
@@ -53,7 +69,7 @@ def calculate_real_wacc(wacc_nominal: float, inflation_rate: float) -> float:
         ValueError: If inflation_rate <= -1 (would cause division by zero)
     """
     validate_discount_rate(inflation_rate, "inflation_rate")
-    return (1 + wacc_nominal) / (1 + inflation_rate) - 1
+    return fisher_real(wacc_nominal, inflation_rate)
 
 
 def calculate_present_value(
