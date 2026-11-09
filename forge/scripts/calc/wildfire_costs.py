@@ -65,7 +65,9 @@ def calculate_wildfire_costs(
     base_ignition_rate = wildfire_config["base_ignition_rate"]
     ignition_rate_multiplier = wildfire_config["ignition_rate_multiplier"]
 
-    yaml_construction_type = normalize_construction_type_for_yaml(construction_type)
+    yaml_construction_type = normalize_construction_type_for_yaml(
+        construction_type, context="environmental"
+    )
     construction_multiplier = ignition_rate_multiplier[yaml_construction_type]
 
     total_miles = sum(terrain_miles.values())

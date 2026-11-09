@@ -784,25 +784,18 @@ risk_costs:
       citation: null
       yaml_file: 06_wildfire_costs.yaml
       basis: Sourced
-    ignition_multiplier_underground:
-      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground
+    ignition_multiplier_underground_direct_buried:
+      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_direct_buried
       unit: dimensionless
       source: 99% reduction per PG&E VP Undergrounding
       citation: PGEUndergrounding2024
       yaml_file: 06_wildfire_costs.yaml
       basis: Sourced
-    ignition_multiplier_underground_direct_buried:
-      path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_direct_buried
-      unit: dimensionless
-      source: No wildfire risk (non-overhead)
-      citation: null
-      yaml_file: 06_wildfire_costs.yaml
-      basis: Sourced
     ignition_multiplier_underground_tunnel:
       path: 06_wildfire_costs.wildfire.ignition_rate_multiplier.underground_tunnel
       unit: dimensionless
-      source: No wildfire risk (non-overhead)
-      citation: null
+      source: 99% reduction per PG&E VP Undergrounding
+      citation: PGEUndergrounding2024
       yaml_file: 06_wildfire_costs.yaml
       basis: Sourced
   outage:

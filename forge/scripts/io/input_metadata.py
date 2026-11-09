@@ -29,6 +29,11 @@ TERRAINS = (
 )
 FUELS = ("coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other")
 CONSTRUCTION_TYPES = ("overhead", "underground")
+WILDFIRE_CONSTRUCTION_TYPES = (
+    "overhead",
+    "underground_direct_buried",
+    "underground_tunnel",
+)
 
 
 @dataclass(frozen=True)
@@ -714,7 +719,7 @@ _TAB7.append(_f(
     section_label="Base Ignition Rate",
     unit="events/mi/yr", condition="always_hidden", tier="working",
     display_order=10, validation={"min": 0}, sub_tab="wildfire-risk"))
-for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
+for _ci, _ct in enumerate(WILDFIRE_CONSTRUCTION_TYPES):
     _TAB7.append(_f(
         f"wf_mult_{_ct}", taxonomy_id="wildfire_eac", input_tab="risk",
         yaml_section="06_wildfire_costs", field_path=f"wildfire.ignition_rate_multiplier.{_ct}",

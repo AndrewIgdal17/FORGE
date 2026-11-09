@@ -108,9 +108,8 @@
         "base_ignition_rate": 0.0,
         "ignition_rate_multiplier": {
           "overhead": 1.0,
-          "underground": 0.01,
-          "underground_direct_buried": 0.0,
-          "underground_tunnel": 0.0
+          "underground_direct_buried": 0.01,
+          "underground_tunnel": 0.01
         }
       }
     },
