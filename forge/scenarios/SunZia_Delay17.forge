@@ -14,6 +14,7 @@
         "line_utilization": 0.67,
         "value_of_load_per_mwh": 30.0,
         "project_type": "greenfield",
+        "sending_source": "margin",
         "row_agreement_type": "permanent_easement_new",
         "old_capacity_mw": null,
         "old_conductor_type": null,
@@ -1225,16 +1226,14 @@
       "greenfield_congestion_reductions": {
         "constraints": {
           "flow_factor": 1.0,
-          "constrained_hours": 4000,
           "average_exceedance": 500
         },
         "prices": {
-          "average_congestion_price": 15
+          "average_congestion_price": 6.8493150684931505
         }
       },
       "incremental_congestion_reductions": {
         "constraints": {
-          "constrained_hours": 0,
           "average_exceedance": 0
         },
         "prices": {
@@ -4873,7 +4872,6 @@
           ]
         },
         "effective_capacity_mw": 2400.0,
-        "constrained_hours": 4000.0,
         "relief_mw": 500.0
       },
       "avoided_emissions": {

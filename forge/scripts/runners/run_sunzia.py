@@ -85,9 +85,8 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     cc = inputs["17_congestion_reductions"]
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 1.0
-    gf["constraints"]["constrained_hours"] = 4000
     gf["constraints"]["average_exceedance"] = 500
-    gf["prices"]["average_congestion_price"] = 15
+    gf["prices"]["average_congestion_price"] = 15 * 4000 / 8760
 
     # --- Tab 18: Grid Mix (single-trajectory model) ---
     # Sources: EIA State Electricity Profiles 2008 (Table 5) for AZ+NM;

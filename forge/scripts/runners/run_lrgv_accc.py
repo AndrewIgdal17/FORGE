@@ -79,14 +79,12 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     cc = inputs["17_congestion_reductions"]
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
-    gf["constraints"]["constrained_hours"] = 1200
     gf["constraints"]["average_exceedance"] = 400
-    gf["prices"]["average_congestion_price"] = 15.0
+    gf["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     rc = cc["incremental_congestion_reductions"]
-    rc["constraints"]["constrained_hours"] = 1200
     rc["constraints"]["average_exceedance"] = 400
-    rc["prices"]["average_congestion_price"] = 15.0
+    rc["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     # --- 18: Grid Mix (same ERCOT region as Laredo newbuild) ---
     mix = inputs["18_energy_source_mix"]

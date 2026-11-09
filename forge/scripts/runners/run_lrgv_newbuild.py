@@ -109,9 +109,8 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     cc = inputs["17_congestion_reductions"]
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
-    gf["constraints"]["constrained_hours"] = 1200
     gf["constraints"]["average_exceedance"] = 400
-    gf["prices"]["average_congestion_price"] = 15.0
+    gf["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     # --- 18: Grid Mix (single-trajectory model; same ERCOT region as LRGV) ---
     # Sources: ERCOT CDR 2010; EIA Texas electricity profile 2010; Potomac

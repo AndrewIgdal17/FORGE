@@ -87,9 +87,8 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     cc = inputs["17_congestion_reductions"]
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.50
-    gf["constraints"]["constrained_hours"] = 1800
     gf["constraints"]["average_exceedance"] = 600
-    gf["prices"]["average_congestion_price"] = 11.47
+    gf["prices"]["average_congestion_price"] = 11.47 * 1800 / 8760
 
     # --- 18: Grid Mix (single-trajectory model) ---
     # Sources: ERCOT 2008 Annual Report; ERCOT CDR 2008-2024; Potomac Economics

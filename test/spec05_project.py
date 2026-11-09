@@ -14,6 +14,7 @@ _PROTECTED_ACRES = (
     "02_project_physical_details.terrain.protected_area_acres.rolling_hills",
     "02_project_physical_details.terrain.protected_area_acres.mountain",
 )
+ACRE_ZEROS = {path: 0.0 for path in _PROTECTED_ACRES}
 
 
 _ENERGY = "01_project_technical_details.project.value_of_load_per_mwh"
@@ -37,7 +38,7 @@ def project_changes(**overrides: object) -> dict:
     with open(forge_file) as handle:
         document = json.load(handle)
     changes = forge.diff_changes(document["inputs"])
-    changes.update({path: 0.0 for path in _PROTECTED_ACRES})
+    changes.update(ACRE_ZEROS)
     project = document["inputs"]["01_project_technical_details"]["project"]
     prices = document["inputs"]["17_congestion_reductions"]["greenfield_congestion_reductions"]["prices"]
     if project.get("value_of_load_per_mwh") is None:

@@ -14,6 +14,7 @@
         "line_utilization": 0.65,
         "value_of_load_per_mwh": 42.0,
         "project_type": "rebuild",
+        "sending_source": "margin",
         "row_agreement_type": "lease_license_existing",
         "old_capacity_mw": 1792,
         "old_conductor_type": "Standard Aluminum Conductor",
@@ -1225,20 +1226,18 @@
       "greenfield_congestion_reductions": {
         "constraints": {
           "flow_factor": 0.8,
-          "constrained_hours": 1200,
           "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0
+          "average_congestion_price": 2.0547945205479454
         }
       },
       "incremental_congestion_reductions": {
         "constraints": {
-          "constrained_hours": 1200,
           "average_exceedance": 400
         },
         "prices": {
-          "average_congestion_price": 15.0
+          "average_congestion_price": 2.0547945205479454
         }
       }
     },
@@ -4600,7 +4599,6 @@
           ]
         },
         "effective_capacity_mw": 0.0,
-        "constrained_hours": 1200.0,
         "relief_mw": 0.0
       }
     },
