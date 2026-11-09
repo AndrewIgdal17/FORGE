@@ -32,10 +32,12 @@ class DetailRow:
 @dataclass(frozen=True)
 class TaxonomyResult:
     taxonomy_id: str
-    value_pv: float
+    value_pv: float | None
     value_nominal: float
     value_annual: float | None = None
     detail: tuple[DetailRow, ...] | None = None
+    value_pv_wacc: float | None = None
+    stream: list[float] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -433,7 +435,11 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
 
     def _pv(tid: str) -> float:
         r = by_id.get(tid)
-        return r.value_pv if r else 0.0
+        if r is None:
+            return 0.0
+        if tid == "capital_recovery" and r.value_pv is None:
+            return r.value_pv_wacc if r.value_pv_wacc is not None else 0.0
+        return r.value_pv
 
     def _nom(tid: str) -> float:
         r = by_id.get(tid)
@@ -446,7 +452,7 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
     energy_losses_pv = _pv("line_loss_conductor") + _pv("line_loss_converter")
     energy_losses_nom = _nom("line_loss_conductor") + _nom("line_loss_converter")
 
-    return {
+    flat = {
         "build_cost_pv": build_pv,
         "build_cost_nominal": build_nom,
         "row_cost_pv": row_cap_pv,
@@ -489,6 +495,10 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "emissions_displacement_delay_pv": _pv("emissions_displacement_delay"),
         "emissions_displacement_delay_nominal": _nom("emissions_displacement_delay"),
     }
+    for result in results:
+        if result.value_pv_wacc is not None:
+            flat[f"{result.taxonomy_id}_pv_wacc"] = result.value_pv_wacc
+    return flat
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +514,8 @@ def taxonomy_results_to_json_list(results: list[TaxonomyResult]) -> list[dict]:
             "value_pv": r.value_pv,
             "value_nominal": r.value_nominal,
             "value_annual": r.value_annual,
+            "value_pv_wacc": r.value_pv_wacc,
+            "stream": r.stream,
             "detail": [
                 {
                     "dimension": d.dimension,

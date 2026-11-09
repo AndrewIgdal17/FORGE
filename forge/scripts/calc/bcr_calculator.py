@@ -119,6 +119,7 @@ _BCR_OUTPUT_KEYS = frozenset({
     "delivered_benefit_pv", "delivered_benefit_nominal",
     "capacity_value_benefit_pv",
     "capital_recovery_pv",
+    "capital_recovery_pv_wacc",
 })
 
 def _excl_output_suffix(exclude_groups: frozenset[str]) -> str:
@@ -142,6 +143,20 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
 
     def _sum_pv(ids: frozenset[str]) -> float:
         return sum(by_id[tid].value_pv for tid in ids if tid in by_id)
+
+    def _sum_wacc(ids: frozenset[str]) -> float:
+        total = 0.0
+        for tid in ids:
+            result = by_id.get(tid)
+            if result is None:
+                continue
+            if result.value_pv_wacc is None:
+                # TEMPORARY(spec05-task11): an item whose value_pv_wacc is None
+                # contributes its value_pv. Task 11 removes this fallback and raises.
+                total += result.value_pv
+            else:
+                total += result.value_pv_wacc
+        return total
 
     def _sum_nom(ids: frozenset[str]) -> float:
         return sum(by_id[tid].value_nominal for tid in ids if tid in by_id)
@@ -190,8 +205,12 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             else set()
         )
 
-        numerator = _sum_pv(_NUMER_SETS[bcr_def.numerator_rule] - excluded_ids)
-        denominator = _sum_pv(_DENOM_SETS[bcr_def.denominator_rule] - excluded_ids)
+        # Societal ratios and exclusion variants sum value_pv. Utility and
+        # ratepayer ratios, and their subtotals, sum value_pv_wacc.
+        use_wacc = bcr_def.id in ("bcr_utility", "bcr_ratepayer")
+        summer = _sum_wacc if use_wacc else _sum_pv
+        numerator = summer(_NUMER_SETS[bcr_def.numerator_rule] - excluded_ids)
+        denominator = summer(_DENOM_SETS[bcr_def.denominator_rule] - excluded_ids)
         bcr_value = safe_divide(numerator, denominator)
         net_benefit = numerator - denominator
 
