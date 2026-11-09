@@ -125,9 +125,11 @@ def load_project_details() -> LineLossProjectDetails:
             raise KeyError("Missing 'project' key in project technical details")
         project = project_details["project"]
 
-        value_of_load = project.get(
-            "value_of_load_per_mwh", 0
-        )
+        if "value_of_load_per_mwh" not in project or project["value_of_load_per_mwh"] is None:
+            raise KeyError(
+                "Missing required parameter 'value_of_load_per_mwh' for line losses"
+            )
+        value_of_load = float(project["value_of_load_per_mwh"])
         financing = load_financing_details()
         wacc_real = financing.wacc_real
         congestion_params = load_congestion_reductions()

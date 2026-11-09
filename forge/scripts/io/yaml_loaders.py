@@ -33,16 +33,20 @@ class ProjectTechnicalDetails:
     converter_loss_percentage: Optional[float]
     number_of_converters: int = 0
     row_agreement_type: str = "permanent_easement_new"  # permanent_easement_new | lease_license_existing | federal_hybrid
+    sending_source: str = "margin"  # "margin" | "dedicated"
+    contract_price_per_mwh: Optional[float] = None
+    emission_rate_co2e: Optional[float] = None
+    emission_rate_so2: Optional[float] = None
+    emission_rate_nox: Optional[float] = None
 
 
 @dataclass
 class CongestionParams:
     """Congestion reduction parameters."""
 
-    flow_factor: float
-    constrained_hours: float
-    average_exceedance: float
-    average_congestion_price: float
+    flow_factor: Optional[float]
+    average_exceedance: Optional[float]
+    average_congestion_price: Optional[float]
     benefit_price_escalation_real: float = 0.0
 
 
@@ -152,6 +156,13 @@ def normalize_construction_type(construction_type: str) -> str:
     return normalized
 
 
+def _optional_float(value: Any) -> Optional[float]:
+    """Keep a null leaf null. Any other value is a float."""
+    if value is None:
+        return None
+    return float(value)
+
+
 def load_project_technical_details() -> ProjectTechnicalDetails:
     """Load project technical details - returns all project specs."""
     ctx = get_run_context()
@@ -237,6 +248,8 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             n_conv = int(project_data["number_of_converters"])
         else:
             n_conv = 0
+        dedicated = project_data.get("dedicated_resource") or {}
+        rates = dedicated.get("emission_rate_kg_per_mwh") or {}
         return ProjectTechnicalDetails(
             construction_type=construction_type,
             ac_dc=ac_dc,
@@ -251,6 +264,11 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             converter_loss_percentage=converter_loss_percentage,
             number_of_converters=n_conv,
             row_agreement_type=row_agreement_type,
+            sending_source=project_data.get("sending_source") or "margin",
+            contract_price_per_mwh=_optional_float(dedicated.get("contract_price_per_mwh")),
+            emission_rate_co2e=_optional_float(rates.get("co2e")),
+            emission_rate_so2=_optional_float(rates.get("so2")),
+            emission_rate_nox=_optional_float(rates.get("nox")),
         )
     except KeyError as e:
         raise KeyError(f"Missing required key in project technical details YAML: {e}")
@@ -492,9 +510,8 @@ def load_congestion_reductions() -> CongestionParams:
             # Legacy key from the removed separately-modeled curtailment stream.
             prices.pop("average_curtailment_price", None)
             flow_factor = 0.0
-            constrained_hours = float(constraints["constrained_hours"])
-            average_exceedance = float(constraints["average_exceedance"])
-            average_congestion_price = float(prices["average_congestion_price"])
+            average_exceedance = _optional_float(constraints["average_exceedance"])
+            average_congestion_price = _optional_float(prices["average_congestion_price"])
         else:
             if "greenfield_congestion_reductions" not in data:
                 raise KeyError(
@@ -506,14 +523,12 @@ def load_congestion_reductions() -> CongestionParams:
             constraints.pop("congestion_fraction", None)
             # Legacy key from the removed separately-modeled curtailment stream.
             prices.pop("average_curtailment_price", None)
-            flow_factor = constraints["flow_factor"]
-            constrained_hours = float(constraints["constrained_hours"])
-            average_exceedance = float(constraints["average_exceedance"])
-            average_congestion_price = float(prices["average_congestion_price"])
+            flow_factor = _optional_float(constraints["flow_factor"])
+            average_exceedance = _optional_float(constraints["average_exceedance"])
+            average_congestion_price = _optional_float(prices["average_congestion_price"])
 
         return CongestionParams(
-            flow_factor=float(flow_factor),
-            constrained_hours=constrained_hours,
+            flow_factor=flow_factor,
             average_exceedance=average_exceedance,
             average_congestion_price=average_congestion_price,
             benefit_price_escalation_real=float(

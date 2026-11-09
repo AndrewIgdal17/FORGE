@@ -1,5 +1,6 @@
 # Congestion Reductions — single-constraint congestion relief
-# B_cong = H * min(delta_C_eff, X) * gamma_cong
+# Relief equals effective capacity when exceedance is empty, else min(effective, exceedance).
+# Annual congestion benefit = 1[margin] * 8760 * relief * spread.
 
 # Real annual benefit price escalation applied to congestion, delivered energy,
 # capacity value, and the value of losses.
@@ -8,14 +9,12 @@ benefit_price_escalation_real: 0.01  # real; Chang, Pfeifenberger and Hagerty (2
 greenfield_congestion_reductions:
   constraints:
     flow_factor: null       # deliverability to the targeted constraint [0,1]
-    constrained_hours: 0    # H: total hours/yr the constraint binds (>= 0)
     average_exceedance: null   # X: empty means equal to effective capacity; a value is >= 0
   prices:
     average_congestion_price: null    # congestion spread, $/MWh, mean over all 8,760 hours
 
 incremental_congestion_reductions:
   constraints:
-    constrained_hours: 0
     average_exceedance: null
   prices:
     average_congestion_price: null

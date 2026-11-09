@@ -969,14 +969,10 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
             required_when="greenfield_margin", required_stage="before_route",
             sub_tab="system-constraints"))
     fields += [
-        _f(f"{prefix}_constrained_hours", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.constraints.constrained_hours",
-           label="Constrained Hours", help_text="Hours/year the targeted constraint binds (H)",
-           unit="hrs/year", condition="always_hidden", tier="first-glance", display_order=2,
-           sub_tab="system-constraints"),
         _f(f"{prefix}_avg_exceedance", taxonomy_id="congestion_benefit", input_tab="benefits",
            yaml_section=_base, field_path=f"{yaml_root}.constraints.average_exceedance",
-           label="Average Exceedance", help_text="Average MW exceedance during constrained hours (X)",
+           label="Average exceedance (MW)",
+           help_text="Empty means equal to the effective capacity, so the minimum does not bind. A supplied value is at least 0.",
            unit="MW", condition="always_hidden", tier="first-glance", display_order=3,
            validation={"min": 0, "nullable_number": True},
            sub_tab="system-constraints"),

@@ -37,16 +37,17 @@ class CongestionProjectDetails:
     project_type: str
     capacity_mw: int
     old_capacity_mw: int
+    sending_source: str
+    contract_price_per_mwh: float | None
 
 @dataclass
 class CongestionReductionResults:
     """Results from congestion reduction calculation."""
 
     effective_capacity_mw: float
-    constrained_hours: float
-    average_exceedance: float
+    average_exceedance: float | None
     relief_mw: float
-    # Congestion benefit (remedial)
+    # Congestion benefit (remedial). Zero unless the sending end is the margin.
     annual_congestion_benefit: float
     # Total remedial (= congestion only)
     annual_remedial_benefit: float
@@ -109,63 +110,62 @@ def load_project_technical_details() -> CongestionProjectDetails:
         project_type=project_details.project_type,
         capacity_mw=project_details.capacity_mw,
         old_capacity_mw=old_capacity_mw,
+        sending_source=project_details.sending_source,
+        contract_price_per_mwh=project_details.contract_price_per_mwh,
     )
 
 # load_financing_details is now imported from smart_loaders
 
 def calculate_congestion_reduction_costs(
     project_type: str,
+    sending_source: str,
     capacity_mw: int,
     old_capacity_mw: int,
-    flow_factor: float,
-    constrained_hours: float,
-    average_exceedance: float,
-    average_congestion_price: float,
+    flow_factor: float | None,
+    average_exceedance: float | None,
+    average_congestion_price: float | None,
 ) -> CongestionReductionResults:
+    """Single-constraint congestion relief over all 8,760 hours.
+
+    Effective capacity is ``flow_factor × capacity`` for a greenfield line on
+    the regional margin, ``1 × capacity`` for a greenfield dedicated resource
+    (an entered flow factor is ignored), and ``capacity − old_capacity`` for
+    reconductoring or rebuild. Empty exceedance means relief equals that
+    capacity. The annual benefit is earned only on the margin.
     """
-    Single-constraint congestion relief benefit.
-
-    A transmission constraint binds for H hours/yr with average exceedance X MW.
-    Congestion benefit uses the full constrained hours (no f / (1-f) split):
-
-        B_cong = H * min(delta_C_eff, X) * gamma_cong
-
-    Curtailment benefit is not modeled separately (would double-count MWh
-    already valued under delivered energy).
-
-    Args:
-        project_type: "greenfield" | "reconductoring" | "rebuild"
-        capacity_mw: New line capacity in MW (for greenfield) or upgraded capacity (for reconductoring)
-        old_capacity_mw: Original capacity in MW (used for reconductoring and rebuild projects)
-        flow_factor: Fraction of capacity that effectively relieves constraints (greenfield only)
-        constrained_hours: H, hours per year the constraint binds
-        average_exceedance: X, average MW exceedance during constrained hours
-        average_congestion_price: gamma_cong, $/MWh redispatch cost
-
-    Returns:
-        CongestionReductionResults: Dataclass containing congestion reduction results
-    """
-    # Effective capacity
-    if project_type == "greenfield":
-        delta_C_eff = max(0.0, flow_factor * capacity_mw)
+    if project_type == "greenfield" and sending_source == "dedicated":
+        delta_c_eff = 1.0 * capacity_mw
+    elif project_type == "greenfield":
+        if flow_factor is None:
+            raise ValueError(
+                "flow_factor is required for a greenfield line on the regional margin"
+            )
+        delta_c_eff = max(0.0, flow_factor * capacity_mw)
     else:
-        delta_C_eff = max(0.0, capacity_mw - old_capacity_mw)
+        delta_c_eff = max(0.0, capacity_mw - old_capacity_mw)
 
-    H = max(0.0, float(constrained_hours))
-    X = max(0.0, float(average_exceedance))
+    if average_exceedance is None:
+        relief_mw = delta_c_eff
+    else:
+        relief_mw = min(delta_c_eff, average_exceedance)
 
-    # Core equation — full constrained hours (no congestion-fraction split)
-    relief_mw = min(delta_C_eff, X)
-    annual_congestion_benefit = H * relief_mw * average_congestion_price
-    annual_remedial_benefit = annual_congestion_benefit
+    if sending_source == "margin":
+        if average_congestion_price is None:
+            raise ValueError(
+                "average_congestion_price is required for a line on the regional margin"
+            )
+        annual_congestion_benefit = (
+            HOURS_PER_YEAR * relief_mw * average_congestion_price
+        )
+    else:
+        annual_congestion_benefit = 0.0
 
     return CongestionReductionResults(
-        effective_capacity_mw=delta_C_eff,
-        constrained_hours=H,
-        average_exceedance=X,
+        effective_capacity_mw=delta_c_eff,
+        average_exceedance=average_exceedance,
         relief_mw=relief_mw,
         annual_congestion_benefit=annual_congestion_benefit,
-        annual_remedial_benefit=annual_remedial_benefit,
+        annual_remedial_benefit=annual_congestion_benefit,
     )
 
 
@@ -208,10 +208,10 @@ def main() -> None:
     # Calculate congestion reduction costs
     congestion_results = calculate_congestion_reduction_costs(
         project_details_cc.project_type,
+        project_details_cc.sending_source,
         project_details_cc.capacity_mw,
         project_details_cc.old_capacity_mw,
         params.flow_factor,
-        params.constrained_hours,
         params.average_exceedance,
         params.average_congestion_price,
     )
@@ -222,12 +222,17 @@ def main() -> None:
     logger.info(
         f"Effective capacity: {congestion_results.effective_capacity_mw:,.2f} MW"
     )
-    logger.info(f"Constrained hours: {congestion_results.constrained_hours:,.0f} hrs/yr")
-    logger.info(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
-    logger.info(f"Relief MW (min of relief and exceedance): {congestion_results.relief_mw:,.2f} MW")
+    logger.info(f"Hours per year: {HOURS_PER_YEAR:,.0f}")
+    if congestion_results.average_exceedance is None:
+        logger.info("Average exceedance: empty (relief equals effective capacity)")
+    else:
+        logger.info(
+            f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW"
+        )
+    logger.info(f"Relief MW: {congestion_results.relief_mw:,.2f} MW")
 
-    # E_delivered_annual = Delta_C_effective * u * H
-    # B_delivered_annual = E * gamma_electricity, the base-year amount.
+    # E_deliv = delta_P_eff * utilization * 8760, for every line.
+    # Benefit = 1[dedicated] * E_deliv * (value of load - contract price). No floor.
     project_data = get_project_data_raw()
     project = project_data["project"]
     line_utilization = float(project["line_utilization"])
@@ -236,9 +241,17 @@ def main() -> None:
     energy_delivered_annual_mwh_yr = (
         delta_c_effective * line_utilization * HOURS_PER_YEAR
     )
-    delivered_benefit_annual = (
-        energy_delivered_annual_mwh_yr * value_of_load_per_mwh
-    )
+    if project_details_cc.sending_source == "dedicated":
+        contract_price = project_details_cc.contract_price_per_mwh
+        if contract_price is None:
+            raise ValueError(
+                "contract_price_per_mwh is required for a dedicated resource"
+            )
+        delivered_benefit_annual = energy_delivered_annual_mwh_yr * (
+            value_of_load_per_mwh - contract_price
+        )
+    else:
+        delivered_benefit_annual = 0.0
 
     from forge.scripts.utils.run_context import get_run_context, get_run_state
     cap_params = get_run_state().inputs.get("20_capacity_value") or {}
@@ -336,7 +349,6 @@ def main() -> None:
             "capacity_value_benefit": capacity["stream"],
         },
         "effective_capacity_mw": congestion_results.effective_capacity_mw,
-        "constrained_hours": congestion_results.constrained_hours,
         "relief_mw": congestion_results.relief_mw,
     }
 
