@@ -123,9 +123,6 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("base_delay", "cost", "soft", "delay",
                  "Base Delay Cost", "per_perspective", None, 6,
                  "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
-    TaxonomyItem("congestion_delay", "cost", "soft", "delay",
-                 "Congestion Delay Cost", "per_perspective", None, 7,
-                 "Opportunity cost of congestion during delay + construction period."),
     TaxonomyItem("emissions_displacement_delay", "cost", "soft", "delay",
                  "Displacement Delay Emissions Cost", "per_perspective", None, 9,
                  "Foregone emissions displacement benefit during delay period. Valued at year-specific SCC."),
@@ -200,7 +197,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 34, f"Expected 34 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 33, f"Expected 33 taxonomy items, got {len(TAXONOMY)}"
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -373,7 +370,6 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "line_loss_converter": "converter_loss_pv",
     # Soft costs — delay
     "base_delay": "delay_cost_pv",
-    "congestion_delay": "congestion_delay_cost_pv",
     # Risk costs
     "wildfire_eac": "wildfire_pv",
     "outage_eac": "outage_pv",

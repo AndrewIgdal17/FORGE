@@ -296,7 +296,7 @@ _TAB3: list[InputField] = [
        sub_tab="rates", condition="always_hidden",
        yaml_section="17_congestion_reductions", field_path="benefit_price_escalation_real",
        label="Benefit price escalation (%/yr, real)",
-       help_text="Real annual growth of congestion prices, capacity prices, and the value of delivered energy and losses. Default 0%/yr.",
+       help_text="Default 1%/yr real",
        input_type="percent", tier="working", display_order=6,
        validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True}),
     # --- Contingencies ---

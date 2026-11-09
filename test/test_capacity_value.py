@@ -1,11 +1,8 @@
 """Tests for capacity value benefit computation and delivered-energy parameter checks."""
-import inspect
-
 import pytest
 
 from forge.scripts.calc.congestion_reduction import (
     calculate_capacity_value_benefit,
-    calculate_congestion_reduction_costs,
     require_value_of_load_per_mwh,
 )
 
@@ -85,10 +82,3 @@ def test_missing_value_of_load_per_mwh_raises_keyerror():
 def test_value_of_load_per_mwh_present():
     """Present value_of_load_per_mwh is returned as float."""
     assert require_value_of_load_per_mwh({"value_of_load_per_mwh": 30.0}) == 30.0
-
-
-def test_cong_delay_annual_is_explicit():
-    """Appendix §10 identity: delay cost annual is assigned from congestion benefit annual."""
-    src = inspect.getsource(calculate_congestion_reduction_costs)
-    assert "cong_delay_annual = annual_congestion_benefit" in src
-    assert "cong_delay_annual" in src.split("congestion_delay_cost_nominal")[1]

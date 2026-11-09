@@ -315,6 +315,9 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     cum_B_remedial = 0.0
     cum_B_enabling = 0.0
     cum_B_avoided_emissions = 0.0
+    # Ratepayer numerator discounts the same benefit nominals at real WACC.
+    cum_B_remedial_wacc = 0.0
+    cum_B_enabling_wacc = 0.0
     # Internal-only accumulators (not part of the output schema) needed for
     # the ratepayer BCR denominator, which excludes delay costs, risk costs,
     # and emissions costs.
@@ -330,6 +333,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         pv_C_hard = pv_C_soft = pv_C_risk = pv_C_emissions = 0.0
         pv_C_risk_wf = pv_C_risk_out = 0.0
         pv_B_remedial = pv_B_enabling = pv_B_avoided_emissions = 0.0
+        pv_B_remedial_wacc = pv_B_enabling_wacc = 0.0
         pv_soft_op_year = 0.0
         pv_revenue_year = 0.0
         pv_line_loss_year = 0.0
@@ -382,11 +386,20 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
                     if s.key == "energy_losses_annual_cost":
                         pv_line_loss_year += wacc_val
                     continue
-                val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
-                if s.category == "B_remedial":
-                    pv_B_remedial += val
-                elif s.category == "B_enabling":
-                    pv_B_enabling += val
+                if s.category in ("B_remedial", "B_enabling"):
+                    # Congestion, delivered energy, and capacity value grow from
+                    # year 1. Societal totals discount at the social rate. The
+                    # ratepayer numerator discounts the same nominal at real WACC.
+                    grown = s.annual * (1 + s.growth_rate) ** (t - 1)
+                    social_val = grown / (1 + social_discount_rate) ** t
+                    wacc_val = grown / (1 + wacc_real) ** t
+                    if s.category == "B_remedial":
+                        pv_B_remedial += social_val
+                        pv_B_remedial_wacc += wacc_val
+                    else:
+                        pv_B_enabling += social_val
+                        pv_B_enabling_wacc += wacc_val
+                    continue
 
             for s in risk_streams:
                 val = _growing_term(s.annual, s.growth_rate, s.discount_rate, k, D, C)
@@ -427,6 +440,8 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_B_remedial += pv_B_remedial
         cum_B_enabling += pv_B_enabling
         cum_B_avoided_emissions += pv_B_avoided_emissions
+        cum_B_remedial_wacc += pv_B_remedial_wacc
+        cum_B_enabling_wacc += pv_B_enabling_wacc
         cum_C_soft_op += pv_soft_op_year
         cum_revenue += pv_revenue_year
         cum_line_loss += pv_line_loss_year
@@ -443,15 +458,16 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         bcr_societal = cum_B_total / cum_C_total if cum_C_total > 0 else None
         bcr_excl_wf_out = cum_B_total / denom_excl_risk if denom_excl_risk > 0 else None
         bcr_excl_outage = cum_B_total / denom_excl_outage if denom_excl_outage > 0 else None
+        ratepayer_benefits = cum_B_remedial_wacc + cum_B_enabling_wacc
         bcr_ratepayer = (
-            (cum_B_remedial + cum_B_enabling) / denom_ratepayer if denom_ratepayer > 0 else None
+            ratepayer_benefits / denom_ratepayer if denom_ratepayer > 0 else None
         )
 
         npv_societal = cum_B_total - cum_C_total
         npv_excl_wf_out = cum_B_total - denom_excl_risk if bcr_excl_wf_out is not None else None
         npv_excl_outage = cum_B_total - denom_excl_outage if bcr_excl_outage is not None else None
         npv_ratepayer = (
-            (cum_B_remedial + cum_B_enabling) - denom_ratepayer if bcr_ratepayer is not None else None
+            ratepayer_benefits - denom_ratepayer if bcr_ratepayer is not None else None
         )
 
         denom_excl_emissions = cum_C_total - cum_C_emissions

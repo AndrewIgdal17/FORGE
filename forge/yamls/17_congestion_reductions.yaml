@@ -1,9 +1,9 @@
 # Congestion Reductions — single-constraint congestion relief
 # B_cong = H * min(delta_C_eff, X) * gamma_cong
 
-# Real annual benefit price escalation rate applied to all benefit streams.
-# At 0.0 the formulas collapse to the flat-annuity behavior (backward compatible).
-benefit_price_escalation_real: 0.0
+# Real annual benefit price escalation applied to congestion, delivered energy,
+# capacity value, and the value of losses.
+benefit_price_escalation_real: 0.01  # real; Chang, Pfeifenberger and Hagerty (2013)
 
 greenfield_congestion_reductions:
   constraints:

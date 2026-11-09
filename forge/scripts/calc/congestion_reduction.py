@@ -18,11 +18,10 @@ from forge.scripts.utils.smart_output import SmartOutputManager
 from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
 from forge.scripts.utils.financial_utils import (
     calculate_present_value,
-    calculate_cod_year,
     calculate_growing_annuity_pv,
     calculate_nominal_growing_series,
-    unshifted_growing_annuity_pv,
 )
+from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.smart_loaders import (
     load_congestion_reductions,
     load_project_technical_details as load_project_technical_details_centralized,
@@ -59,9 +58,6 @@ class CongestionReductionResults:
     # Total remedial (= congestion only)
     annual_remedial_benefit: float
     lifetime_remedial_benefit_pv: float
-    # Delay opportunity costs
-    congestion_delay_cost_nominal: float
-    congestion_delay_cost_pv: float
 
 def _get_old_capacity_mw() -> int:
     """
@@ -183,8 +179,6 @@ def calculate_congestion_reduction_costs(
     relief_mw = min(delta_C_eff, X)
     annual_congestion_benefit = H * relief_mw * average_congestion_price
     annual_remedial_benefit = annual_congestion_benefit
-    # Appendix §10: congestion delay cost annual = congestion benefit annual (identity)
-    cong_delay_annual = annual_congestion_benefit
 
     # Lifetime (nominal growing series) and PV (growing annuity)
     lifetime_congestion_benefit = calculate_nominal_growing_series(
@@ -197,17 +191,6 @@ def calculate_congestion_reduction_costs(
 
     lifetime_remedial_benefit_pv = lifetime_congestion_benefit_pv
 
-    # Delay opportunity costs — delay period starts at year 1 (no additional delay shift).
-    # N is already delay + construction. The old call omitted construction_years,
-    # whose default of 0 added no further shift. Keep that unshifted present value.
-    delay_construction_years = delay_years + construction_years
-    congestion_delay_cost_nominal = calculate_nominal_growing_series(
-        cong_delay_annual, g, delay_construction_years
-    )
-    congestion_delay_cost_pv = unshifted_growing_annuity_pv(
-        cong_delay_annual, g, wacc_real, delay_construction_years,
-    )
-
     return CongestionReductionResults(
         effective_capacity_mw=delta_C_eff,
         constrained_hours=H,
@@ -218,9 +201,31 @@ def calculate_congestion_reduction_costs(
         lifetime_congestion_benefit_pv=lifetime_congestion_benefit_pv,
         annual_remedial_benefit=annual_remedial_benefit,
         lifetime_remedial_benefit_pv=lifetime_remedial_benefit_pv,
-        congestion_delay_cost_nominal=congestion_delay_cost_nominal,
-        congestion_delay_cost_pv=congestion_delay_cost_pv,
     )
+
+
+def _growing_benefit(
+    annual: float,
+    growth: float,
+    lifetime: int,
+    social_discount_rate: float,
+    wacc_real: float,
+    t_cod: int,
+    horizon: int,
+) -> Dict[str, Any]:
+    """Benefit stream grown from year 1 and paid from COD.
+
+    ``annual`` stays the base-year amount. Year ``t`` holds
+    ``annual * (1 + growth) ** (t - 1)``.
+    """
+    stream = growing(annual, growth, t_cod, lifetime, horizon)
+    return {
+        "stream": stream,
+        "nominal": undiscounted(stream),
+        "pv": pv(stream, social_discount_rate),
+        "pv_wacc": pv(stream, wacc_real),
+    }
+
 
 def main() -> None:
     """
@@ -261,47 +266,8 @@ def main() -> None:
     logger.info(f"Average exceedance: {congestion_results.average_exceedance:,.2f} MW")
     logger.info(f"Relief MW (min of relief and exceedance): {congestion_results.relief_mw:,.2f} MW")
 
-    logger.info("")
-    logger.info("=" * 60)
-    logger.info("CONGESTION REDUCTION BENEFIT RESULTS")
-    logger.info("=" * 60)
-    logger.info(f"Annual congestion benefit: ${congestion_results.annual_congestion_benefit:,.2f}")
-    logger.info(
-        f"Lifetime congestion benefit: ${congestion_results.lifetime_congestion_benefit:,.2f}"
-    )
-    logger.info(
-        f"PRESENT VALUE (discounted to base year ({financing.base_year}) using real WACC ({financing.wacc_real:.2%})):"
-    )
-    logger.info(
-        f"Lifetime congestion benefit PV: ${congestion_results.lifetime_congestion_benefit_pv:,.2f}"
-    )
-
-    logger.info("")
-    logger.info("=" * 60)
-    logger.info("TOTAL REMEDIAL BENEFIT (CONGESTION)")
-    logger.info("=" * 60)
-    logger.info(f"Annual remedial benefit: ${congestion_results.annual_remedial_benefit:,.2f}")
-    logger.info(
-        f"Lifetime remedial benefit PV: ${congestion_results.lifetime_remedial_benefit_pv:,.2f}"
-    )
-
-    logger.info("")
-    logger.info("=" * 60)
-    logger.info("DELAY/CONSTRUCTION OPPORTUNITY COSTS")
-    logger.info("=" * 60)
-    logger.info(
-        f"Congestion delay cost (nominal): ${congestion_results.congestion_delay_cost_nominal:,.2f}"
-    )
-    logger.info(
-        f"Congestion delay cost (PV): ${congestion_results.congestion_delay_cost_pv:,.2f}"
-    )
-    logger.info("=" * 60)
-
-    # ========================================================================
-    # Benefit of delivered energy
-    # ========================================================================
-    # E_delivered_annual = Delta_C_effective * u * H; B_delivered_annual = E * gamma_electricity;
-    # Nominal lifetime = B_annual * T_lifetime; PV from COD at real WACC.
+    # E_delivered_annual = Delta_C_effective * u * H
+    # B_delivered_annual = E * gamma_electricity, the base-year amount.
     project_data = get_project_data_raw()
     project = project_data["project"]
     line_utilization = float(project["line_utilization"])
@@ -313,68 +279,9 @@ def main() -> None:
     delivered_benefit_annual = (
         energy_delivered_annual_mwh_yr * value_of_load_per_mwh
     )
-    delivered_benefit_nominal = calculate_nominal_growing_series(
-        delivered_benefit_annual,
-        params.benefit_price_escalation_real,
-        project_details_cc.project_lifetime,
-    )
-    cod_year = calculate_cod_year(
-        project_details_cc.delay_years, project_details_cc.construction_years
-    )
-    delivered_benefit_pv = calculate_growing_annuity_pv(
-        delivered_benefit_annual,
-        params.benefit_price_escalation_real,
-        financing.wacc_real,
-        project_details_cc.project_lifetime,
-        delay_years=project_details_cc.delay_years,
-        construction_years=project_details_cc.construction_years,
-    )
 
-    logger.info("")
-    logger.info("=" * 60)
-    logger.info("BENEFIT OF DELIVERED ENERGY")
-    logger.info("=" * 60)
-    logger.info(
-        f"Energy delivered (annual): {energy_delivered_annual_mwh_yr:,.2f} MWh/yr"
-    )
-    logger.info(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
-    logger.info(f"Lifetime benefit (nominal): ${delivered_benefit_nominal:,.2f}")
-    logger.info(f"Lifetime benefit (PV): ${delivered_benefit_pv:,.2f}")
-    logger.info("=" * 60)
-
-    # ========================================================================
-    # CSV OUTPUT - Write results to batch summary and detail CSV
-    # ========================================================================
-
-    # Initialize CSV output manager
-    csv_manager = SmartOutputManager()
-
-    # Prepare results dictionary with all calculated values
-    results = {
-        # BENEFITS - Congestion reduction (operational benefits)
-        "congestion_benefit_annual": congestion_results.annual_congestion_benefit,
-        "congestion_benefit_nominal": congestion_results.lifetime_congestion_benefit,
-        "congestion_benefit_pv": congestion_results.lifetime_congestion_benefit_pv,
-        # BENEFITS - Delivered energy (throughput value at value of load)
-        "delivered_benefit_annual": delivered_benefit_annual,
-        "delivered_benefit_nominal": delivered_benefit_nominal,
-        "delivered_benefit_pv": delivered_benefit_pv,
-        "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
-        # COSTS - Delay/construction opportunity costs
-        "congestion_delay_cost_nominal": congestion_results.congestion_delay_cost_nominal,
-        "congestion_delay_cost_pv": congestion_results.congestion_delay_cost_pv,
-        # Physical metrics (for reference)
-        "effective_capacity_mw": congestion_results.effective_capacity_mw,
-        "constrained_hours": congestion_results.constrained_hours,
-        "relief_mw": congestion_results.relief_mw,
-    }
-
-    # ========================================================================
-    # Capacity value benefit
-    # ========================================================================
-    from forge.scripts.utils.run_context import get_run_state
+    from forge.scripts.utils.run_context import get_run_context, get_run_state
     cap_params = get_run_state().inputs.get("20_capacity_value") or {}
-
     cap_results = calculate_capacity_value_benefit(
         delta_c_effective=delta_c_effective,
         capacity_credit=float(cap_params.get("capacity_credit", 0)),
@@ -387,18 +294,91 @@ def main() -> None:
         benefit_price_escalation_real=params.benefit_price_escalation_real,
     )
 
-    results["capacity_value_annual"] = cap_results["capacity_value_annual"]
-    results["capacity_value_nominal"] = cap_results["capacity_value_nominal"]
-    results["capacity_value_pv"] = cap_results["capacity_value_pv"]
+    ctx = get_run_context()
+    g_benefit = params.benefit_price_escalation_real
+    lifetime = int(project_details_cc.project_lifetime)
+    congestion = _growing_benefit(
+        congestion_results.annual_congestion_benefit,
+        g_benefit,
+        lifetime,
+        ctx.social_discount_rate,
+        financing.wacc_real,
+        ctx.t_cod,
+        ctx.horizon,
+    )
+    delivered = _growing_benefit(
+        delivered_benefit_annual,
+        g_benefit,
+        lifetime,
+        ctx.social_discount_rate,
+        financing.wacc_real,
+        ctx.t_cod,
+        ctx.horizon,
+    )
+    capacity = _growing_benefit(
+        cap_results["capacity_value_annual"],
+        g_benefit,
+        lifetime,
+        ctx.social_discount_rate,
+        financing.wacc_real,
+        ctx.t_cod,
+        ctx.horizon,
+    )
+
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("CONGESTION REDUCTION BENEFIT RESULTS")
+    logger.info("=" * 60)
+    logger.info(f"Annual congestion benefit: ${congestion_results.annual_congestion_benefit:,.2f}")
+    logger.info(f"Lifetime congestion benefit: ${congestion['nominal']:,.2f}")
+    logger.info(f"Lifetime congestion benefit (social PV): ${congestion['pv']:,.2f}")
+    logger.info(f"Lifetime congestion benefit (WACC PV): ${congestion['pv_wacc']:,.2f}")
+
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("BENEFIT OF DELIVERED ENERGY")
+    logger.info("=" * 60)
+    logger.info(
+        f"Energy delivered (annual): {energy_delivered_annual_mwh_yr:,.2f} MWh/yr"
+    )
+    logger.info(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
+    logger.info(f"Lifetime benefit (nominal): ${delivered['nominal']:,.2f}")
+    logger.info(f"Lifetime benefit (social PV): ${delivered['pv']:,.2f}")
+    logger.info("=" * 60)
 
     logger.info("")
     logger.info("=" * 60)
     logger.info("CAPACITY VALUE BENEFIT")
     logger.info("=" * 60)
     logger.info(f"Annual capacity value: ${cap_results['capacity_value_annual']:,.2f}")
-    logger.info(f"Lifetime capacity value (nominal): ${cap_results['capacity_value_nominal']:,.2f}")
-    logger.info(f"Lifetime capacity value (PV): ${cap_results['capacity_value_pv']:,.2f}")
+    logger.info(f"Lifetime capacity value (nominal): ${capacity['nominal']:,.2f}")
+    logger.info(f"Lifetime capacity value (social PV): ${capacity['pv']:,.2f}")
     logger.info("=" * 60)
+
+    csv_manager = SmartOutputManager()
+    results = {
+        "congestion_benefit_annual": congestion_results.annual_congestion_benefit,
+        "congestion_benefit_nominal": congestion["nominal"],
+        "congestion_benefit_pv": congestion["pv"],
+        "congestion_benefit_pv_wacc": congestion["pv_wacc"],
+        "delivered_benefit_annual": delivered_benefit_annual,
+        "delivered_benefit_nominal": delivered["nominal"],
+        "delivered_benefit_pv": delivered["pv"],
+        "delivered_benefit_pv_wacc": delivered["pv_wacc"],
+        "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
+        "capacity_value_annual": cap_results["capacity_value_annual"],
+        "capacity_value_nominal": capacity["nominal"],
+        "capacity_value_pv": capacity["pv"],
+        "capacity_value_pv_wacc": capacity["pv_wacc"],
+        "streams": {
+            "congestion_benefit": congestion["stream"],
+            "delivered_energy_benefit": delivered["stream"],
+            "capacity_value_benefit": capacity["stream"],
+        },
+        "effective_capacity_mw": congestion_results.effective_capacity_mw,
+        "constrained_hours": congestion_results.constrained_hours,
+        "relief_mw": congestion_results.relief_mw,
+    }
 
     from forge.scripts.utils.run_context import add_derived
     add_derived({
@@ -406,7 +386,6 @@ def main() -> None:
         "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
     })
 
-    # Write to CSV/JSON
     csv_manager.add_congestion(results)
     csv_manager.write_batch_summary()
 

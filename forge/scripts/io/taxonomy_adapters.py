@@ -357,37 +357,29 @@ def adapt_displacement_delay_cost(disp_delay: dict) -> list[TaxonomyResult]:
 
 
 def adapt_congestion(cc: dict) -> list[TaxonomyResult]:
-    """Adapt benefits.congestion -> 4 taxonomy items.
+    """Adapt benefits.congestion -> congestion, delivered energy, and capacity value.
 
-    Two benefits (congestion, delivered energy), capacity value benefit,
-    and congestion delay cost.
+    Each item carries its stream and both present values.
     """
     if not cc:
         return []
+    streams = cc.get("streams") or {}
+
+    def _item(taxonomy_id: str, pv_key: str, nominal_key: str, annual_key: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(cc, pv_key),
+            value_nominal=_safe(cc, nominal_key),
+            value_annual=_safe(cc, annual_key),
+            value_pv_wacc=_safe(cc, f"{pv_key}_wacc"),
+            stream=list(stream) if stream is not None else None,
+        )
+
     return [
-        TaxonomyResult(
-            "congestion_benefit",
-            value_pv=_safe(cc, "congestion_benefit_pv"),
-            value_nominal=_safe(cc, "congestion_benefit_nominal"),
-            value_annual=_safe(cc, "congestion_benefit_annual"),
-        ),
-        TaxonomyResult(
-            "delivered_energy_benefit",
-            value_pv=_safe(cc, "delivered_benefit_pv"),
-            value_nominal=_safe(cc, "delivered_benefit_nominal"),
-            value_annual=_safe(cc, "delivered_benefit_annual"),
-        ),
-        TaxonomyResult(
-            "capacity_value_benefit",
-            value_pv=_safe(cc, "capacity_value_pv"),
-            value_nominal=_safe(cc, "capacity_value_nominal"),
-            value_annual=_safe(cc, "capacity_value_annual"),
-        ),
-        TaxonomyResult(
-            "congestion_delay",
-            value_pv=_safe(cc, "congestion_delay_cost_pv"),
-            value_nominal=_safe(cc, "congestion_delay_cost_nominal"),
-        ),
+        _item("congestion_benefit", "congestion_benefit_pv", "congestion_benefit_nominal", "congestion_benefit_annual"),
+        _item("delivered_energy_benefit", "delivered_benefit_pv", "delivered_benefit_nominal", "delivered_benefit_annual"),
+        _item("capacity_value_benefit", "capacity_value_pv", "capacity_value_nominal", "capacity_value_annual"),
     ]
 
 
@@ -513,8 +505,6 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "outage_nominal": _nom("outage_eac"),
         "delay_cost_pv": _pv("base_delay"),
         "delay_cost_nominal": _nom("base_delay"),
-        "congestion_delay_cost_pv": _pv("congestion_delay"),
-        "congestion_delay_cost_nominal": _nom("congestion_delay"),
         "congestion_benefit_pv": _pv("congestion_benefit"),
         "congestion_benefit_nominal": _nom("congestion_benefit"),
         "delivered_benefit_pv": _pv("delivered_energy_benefit"),

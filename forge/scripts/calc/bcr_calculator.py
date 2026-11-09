@@ -113,7 +113,7 @@ _BCR_OUTPUT_KEYS = frozenset({
     "emissions_comp_cost_pv", "fac_emissions_project_pv",
     "displacement_avoided_benefit_pv",
     "wildfire_pv", "outage_pv",
-    "delay_cost_pv", "congestion_delay_cost_pv",
+    "delay_cost_pv",
     "emissions_displacement_delay_pv",
     "congestion_benefit_pv",
     "delivered_benefit_pv", "delivered_benefit_nominal",
@@ -298,7 +298,6 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info("")
     logger.info("  Delay Costs:")
     logger.info(f"    Construction Delay:        ${_g('delay_cost_pv'):>15,.0f}")
-    logger.info(f"    Congestion Delay:          ${_g('congestion_delay_cost_pv'):>15,.0f}")
     logger.info(f"    Subtotal:                  ${_g('delay_costs_pv'):>15,.0f}")
     logger.info("")
     logger.info("  " + "-" * 78)

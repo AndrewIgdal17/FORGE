@@ -131,7 +131,7 @@ utilities:
     benefit_price_escalation_real:
       path: 17_congestion_reductions.benefit_price_escalation_real
       unit: decimal (real annual)
-      source: Flat-price default aligned with current CAISO TEAM practice
+      source: Default 1%/yr real
       citation: CAISO2004TEAM; ChangPfeifenbergerHagerty2013
       yaml_file: 17_congestion_reductions.yaml
       basis: Sourced
