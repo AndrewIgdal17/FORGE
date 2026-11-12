@@ -19,6 +19,7 @@ _SCALAR = (int, float, str, bool, type(None))
 _MAX_STRING_LENGTH = 200
 _NUMERIC_INPUT_TYPES = ("number", "currency", "percent")
 _ROW_AGREEMENT_TYPE_PATH = "01_project_technical_details.project.row_agreement_type"
+_BASE_YEAR_PATH = "03_financing.financial.base_year"
 _FEE_SIMPLE_REJECTED_MESSAGE = (
     "fee_simple is no longer an agreement type. Choose another agreement."
 )
@@ -274,6 +275,11 @@ def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
             continue
         if path == _ROW_AGREEMENT_TYPE_PATH and decoded == "fee_simple":
             errors.append({"path": path, "message": _FEE_SIMPLE_REJECTED_MESSAGE})
+            continue
+        if path == _BASE_YEAR_PATH:
+            # Options are [2025]. The release lock is the InvalidInputs raise
+            # in _bootstrap_run_context. Enforcing the option here would raise
+            # UnknownInputPath before that check, so the value still resolves.
             continue
         field = metadata.get(path)
         if field is not None:

@@ -326,7 +326,7 @@ _TAB3: list[InputField] = [
        yaml_section="03_financing", field_path="financial.base_year",
        label="Base Year", help_text="Reference year for all present values (base-year dollars)",
        input_type="dropdown", tier="first-glance", display_order=1,
-       validation={"options": list(range(2020, 2051))}),
+       validation={"options": [2025]}),
     _f("inflation_rate", taxonomy_id="financial_rates", input_tab="financial",
        sub_tab="rates", condition="always_hidden",
        yaml_section="03_financing", field_path="financial.inflation_rate",

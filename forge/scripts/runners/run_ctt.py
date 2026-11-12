@@ -51,7 +51,7 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     # --- 03: Financial ---
     fin = inputs["03_financing"]["financial"]
     fin["inflation_rate"] = 0.025
-    fin["base_year"] = 2026
+    fin["base_year"] = 2025
     fin["wacc_nominal"] = 0.0626
     fin["social_discount_rate"] = 0.02
     fin["afudc"]["apply_afudc"] = True

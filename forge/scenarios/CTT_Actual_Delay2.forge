@@ -63,7 +63,7 @@
     "03_financing": {
       "financial": {
         "inflation_rate": 0.025,
-        "base_year": 2026,
+        "base_year": 2025,
         "wacc_nominal": 0.0626,
         "social_discount_rate": 0.02,
         "construction_cost_escalation_nominal": 0.04,

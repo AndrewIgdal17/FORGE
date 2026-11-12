@@ -276,6 +276,11 @@ def _bootstrap_run_context() -> "RunContext":
         inputs["19_cost_timing_patterns"]["construction_spending_profiles"],
     )
     financing = load_financing_details()
+    if financing.base_year != 2025:
+        raise InvalidInputs(
+            "base_year must be 2025 in this release "
+            "(emissions schedules and dollar conversions are anchored to it)."
+        )
     contingencies = load_contingencies()
     physical_raw = get_physical_data_raw()
     terrain_miles = physical_raw["terrain"]["terrain_miles"]

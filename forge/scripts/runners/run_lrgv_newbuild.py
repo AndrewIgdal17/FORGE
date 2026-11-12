@@ -55,7 +55,7 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
 
     # --- 03: Financial ---
     fin = inputs["03_financing"]["financial"]
-    fin["base_year"] = 2026
+    fin["base_year"] = 2025
     fin["inflation_rate"] = 0.025
     fin["wacc_nominal"] = 0.0666
     fin["social_discount_rate"] = 0.02

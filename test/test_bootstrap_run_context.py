@@ -46,6 +46,7 @@ def test_bootstrap_run_context_sets_and_returns_populated_context(monkeypatch):
         capacity_mw=500,
     )
     financing = SimpleNamespace(
+        base_year=2025,
         wacc_real=0.04,
         wacc_nominal=0.07,
         inflation_rate=0.02,
@@ -199,6 +200,7 @@ def test_bootstrap_rejects_zero_construction_years(monkeypatch):
         capacity_mw=500,
     )
     financing = SimpleNamespace(
+        base_year=2025,
         wacc_real=0.04,
         wacc_nominal=0.07,
         inflation_rate=0.02,
