@@ -40,3 +40,7 @@ dev = [
     "asyncpg>=0.32.0",
     "httpx>=0.28.1",
 ]
+build = ["openpyxl>=3.1"]
+
+[tool.uv]
+default-groups = ["dev", "build"]

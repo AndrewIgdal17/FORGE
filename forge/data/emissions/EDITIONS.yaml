@@ -1,0 +1,47 @@
+cambium:
+  title: Cambium 2024 Mid-case, annual, GEA (NLR TP-6A40-93005), lrmer_co2e_c + lrmer_co2e_p
+  edition: Cambium 2024 Mid-case, annual, GEA (file id 69141; NLR TP-6A40-93005)
+  raw_files:
+  - name: Cambium24_allScenarios_annual_gea.zip
+    sha256: b5438ee16c0cf03054bac62520155cbfdc8e98797aba025e48e793fb1527c189
+  transform: CSV member, skip 5 preamble lines. scenario == MidCase. lrmer_co2e_kg_per_mwh
+    = lrmer_co2e_c + lrmer_co2e_p. Year column t.
+egrid:
+  title: eGRID2023 rev2 (data year 2023), SRL23 SRSO2RTA/SRNOXRTA
+  edition: eGRID2023 revision 2, released 12 June 2025, data year 2023
+  raw_files:
+  - name: egrid2023_data_rev2.xlsx
+    sha256: 895cd81dd8662406189ad8adf5a2578dcb362cdb5cff7cca81b10ee6bd2447c6
+  transform: Sheet SRL23, header row 2. SRSO2RTA and SRNOXRTA in lb/MWh, each times
+    0.45359237. Drop AKGD, AKMS, HIMS, HIOA, and PRMS. The workbook is not committed.
+sc_ghg:
+  title: EPA 2023 SC-GHG Table A.5.1, SC-CO2, 2.0% near-term, 2020$
+  edition: EPA 2023 SC-GHG Table A.5.1, SC-CO2, 2.0 percent near-term, 2020 dollars,
+    extracted 2026-11-11
+  raw_files:
+  - name: sc_co2_2pct_2020usd.csv
+    sha256: c7f01ff8374c431f580492265018042d0508af41e4f6e62902707a8e31e8af35
+  transform: Rename emission_year to year. Integer 2020 dollars per metric ton for
+    2020 through 2080.
+bpt:
+  title: EPA 2024 BPT, EGU by state, 2025 analysis year, 2%, low mortality (PM) +
+    short-term ozone, 2019$
+  edition: EPA 2024 BPT TSD, EGU state workbooks, 2025 analysis year, 2 percent
+  raw_files:
+  - name: BPT_PM_results_EGU_2025.xlsx
+    sha256: 957762656e8796e127e332ce8ec738de005802cbfb7a10d84be2f4a88d4c8cbd
+  - name: BPT_O3MDA8_results_EGU_2025.xlsx
+    sha256: 047d1a783d1b7652fdcfae024d73b729b4843cc8f9d21b1ef46170cfe64fc0ed
+  transform: PM sheet most_sectors_low_2, opened from the unmodified bytes plus one
+    trailing NUL in memory. Ozone sheet most_sectors_short_2. One numeric cell per
+    pollutant. Own USPS sectorname, else the paired sectorname. South Carolina fine-particle
+    NOx borrows North Carolina.
+  notes: NC (borrowed for SC; EPA 2025 PM workbook has no SC NOx row)
+cpi_u:
+  title: BLS CUUR0000SA0 annual average; 2025 = 321.943
+  edition: BLS CUUR0000SA0 annual average, SeriesReport generated 2026-11-09
+  raw_files:
+  - name: SeriesReport-20261109105107_c8ce69.xlsx
+    sha256: 5cb9ba9d9190f789e1e586cb3f146f91b2799b6a0856a3bf7cc13335b1a0de62
+  transform: Header row containing Year and Annual. Annual column (BLS period M13),
+    years 2010, 2019, 2020, 2024, and 2025. Written only to forge/data/cpi_u.csv.
