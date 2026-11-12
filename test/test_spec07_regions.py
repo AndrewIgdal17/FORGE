@@ -1,14 +1,18 @@
-"""Terminal region dropdowns. Optional until a later task requires them."""
+"""Terminal region dropdowns. Required after a route, with no template default."""
 import csv
 
+import pytest
 import yaml
 
-from forge.contract import validate_changes
+from forge.contract import resolve_inputs, validate_changes
 from forge.data import get_defaults_template, get_emissions_path, get_yamls_path
+from forge.errors import InvalidInputs
 from forge.scripts.io.input_metadata import input_metadata_to_dict
 from forge.scripts.io.region_codes import EGRID_SUBREGIONS, GEA_NAMES, STATES
 from forge.scripts.io.yaml_loaders import load_project_technical_details
 from forge.scripts.utils.run_context import RunState, reset_run_state, set_run_state
+from test.spec05_project import project_changes
+from test.spec07_regions import REGION_SENTINELS
 
 emissions = get_emissions_path()
 
@@ -50,6 +54,14 @@ def test_dropdowns_match_the_data_files():
     assert len(STATES) == 49
 
 
+def test_a_missing_region_names_the_label():
+    changes = project_changes()
+    for path in REGION_SENTINELS:
+        changes.pop(path, None)
+    with pytest.raises(InvalidInputs, match="Receiving terminal GEA region is required."):
+        resolve_inputs(changes)
+
+
 def test_a_region_string_must_be_in_the_list():
     errors = validate_changes({
         "01_project_technical_details.terminals.receiving.gea": "MISO Central",
@@ -57,7 +69,7 @@ def test_a_region_string_must_be_in_the_list():
     assert errors[0]["message"].startswith("'MISO Central' is not one of the allowed options")
 
 
-def test_terminal_paths_are_null_and_not_required():
+def test_terminal_paths_are_null_and_required_after_route():
     template = get_defaults_template()["01_project_technical_details"]["terminals"]
     by_path = {
         f"{field['yaml_section']}.{field['field_path']}": field
@@ -77,7 +89,8 @@ def test_terminal_paths_are_null_and_not_required():
             assert field["taxonomy_id"] == "project_technology"
             assert field["input_tab"] == "routing"
             assert field["sub_tab"] == "terminals"
-            assert field["required_when"] is None
+            assert field["required_when"] == "always"
+            assert field["required_stage"] == "after_route"
             assert list(field["validation"]["options"]) == options[key]
 
 

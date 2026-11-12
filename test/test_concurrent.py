@@ -6,6 +6,7 @@ import threading
 from pathlib import Path
 
 import forge
+from test.spec07_regions import REGION_SENTINELS
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
 _REL_TOL = 1e-9
@@ -78,6 +79,8 @@ def test_eight_threads_match_golden():
                 "02_project_physical_details.terrain.protected_area_acres.rolling_hills": 0.0,
                 "02_project_physical_details.terrain.protected_area_acres.mountain": 0.0,
             })
+            for path, value in REGION_SENTINELS.items():
+                changes.setdefault(path, value)
             resolved = forge.resolve_inputs(changes)
             run_id = f"{scenario_name}_{run_index}"
             results = forge.run_calculation(resolved, scenario_id=run_id)

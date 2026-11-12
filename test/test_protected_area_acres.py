@@ -3,6 +3,7 @@ import pytest
 import forge
 from forge.contract import missing_protected_area_acres
 from forge.errors import InvalidInputs
+from test.spec07_regions import REGION_SENTINELS
 
 PATHS = (
     "02_project_physical_details.terrain.protected_area_acres.forested",
@@ -30,6 +31,8 @@ def test_explicit_zero_is_accepted_and_a_string_is_named():
         "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
         "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
     })
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     resolved = forge.resolve_inputs(changes)
     assert missing_protected_area_acres(resolved) == []
     changes[PATHS[0]] = "nope"

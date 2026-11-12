@@ -6,6 +6,7 @@ import pytest
 
 import forge
 from test.spec05_project import ACRE_ZEROS
+from test.spec07_regions import REGION_SENTINELS
 
 SCN = Path(forge.get_scenarios_path())
 
@@ -20,7 +21,10 @@ OLD = {"SunZia_Delay2": (4000, 15.0), "SunZia_Delay17": (4000, 15.0),
 @pytest.mark.parametrize("stem", sorted(OLD))
 def test_relief_unchanged_by_conversion(stem):
     doc = json.loads((SCN / f"{stem}.forge").read_text())
-    changes = forge.diff_changes(doc["inputs"]); changes.update(ACRE_ZEROS)
+    changes = forge.diff_changes(doc["inputs"])
+    changes.update(ACRE_ZEROS)
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     r = forge.run_calculation(forge.resolve_inputs(changes))
     H, p = OLD[stem]
     old_annual = H * r["benefits"]["congestion"]["relief_mw"] * p

@@ -10,6 +10,7 @@ from forge.scripts.utils.run_context import (
     reset_run_state,
     set_run_state,
 )
+from test.spec07_regions import REGION_SENTINELS
 
 
 def _with_required_inputs(inputs: dict, *, capacity_mw: float = 500) -> dict:
@@ -31,6 +32,13 @@ def _with_required_inputs(inputs: dict, *, capacity_mw: float = 500) -> dict:
     greenfield["prices"] = prices
     congestion["greenfield_congestion_reductions"] = greenfield
     merged["17_congestion_reductions"] = congestion
+    # Nested document. A dotted key would not survive diff_changes.
+    for path, value in REGION_SENTINELS.items():
+        node = merged
+        *parents, leaf = path.split(".")
+        for part in parents:
+            node = node.setdefault(part, {})
+        node.setdefault(leaf, value)
     return merged
 
 

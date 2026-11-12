@@ -3,6 +3,7 @@ import re
 import yaml
 from forge.contract import resolve_inputs
 from forge.data import get_defaults_template, get_yamls_path
+from test.spec07_regions import REGION_SENTINELS
 
 _INDEX = re.compile(r"\[(\d+)\]")
 _ACRE_PATHS = (
@@ -44,6 +45,8 @@ _RUNNABLE = {
     "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
     "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
 }
+for path, value in REGION_SENTINELS.items():
+    _RUNNABLE.setdefault(path, value)
 
 
 def test_registry_paths_resolve_and_values_are_gone():

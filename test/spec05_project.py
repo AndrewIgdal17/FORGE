@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 import forge
+from test.spec07_regions import REGION_SENTINELS
 
 SCENARIO = "SunZia_Delay2"
 
@@ -30,15 +31,18 @@ _BASE_SPREAD = 15.0
 
 def project_changes(**overrides: object) -> dict:
     """forge.diff_changes(bundled scenario inputs), then the five
-    protected-area acres set to 0.0, then the energy value and greenfield
-    spread when the bundled file lacks them, then the overrides. Each override
-    key is a dotted input path, passed through **{}:
+    protected-area acres set to 0.0, then a terminal region when the bundled
+    file left that path out, then the energy value and greenfield spread when
+    the bundled file lacks them, then the overrides. Each override key is a
+    dotted input path, passed through **{}:
     project_changes(**{"01_project_technical_details.timeline.delay_years": 2})."""
     forge_file = forge.get_scenarios_path() / f"{SCENARIO}.forge"
     with open(forge_file) as handle:
         document = json.load(handle)
     changes = forge.diff_changes(document["inputs"])
     changes.update(ACRE_ZEROS)
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     project = document["inputs"]["01_project_technical_details"]["project"]
     prices = document["inputs"]["17_congestion_reductions"]["greenfield_congestion_reductions"]["prices"]
     if project.get("value_of_load_per_mwh") is None:

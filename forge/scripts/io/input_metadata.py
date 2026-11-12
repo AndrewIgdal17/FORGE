@@ -529,6 +529,7 @@ for _end_i, (_end, _end_label) in enumerate((("sending", "Sending"), ("receiving
             tier="working",
             display_order=_end_i * 3 + _key_i + 1,
             validation={"options": _options},
+            required_when="always", required_stage="after_route",
             sub_tab="terminals",
         ))
 

@@ -10,6 +10,7 @@ import forge
 import forge.contract
 from forge.contract import canonical_dumps, validate_changes
 from forge.errors import InvalidInputs, UnknownInputPath
+from test.spec07_regions import REGION_SENTINELS
 
 PATHS = (
     "02_project_physical_details.terrain.protected_area_acres.forested",
@@ -25,6 +26,8 @@ _TEMPLATE_RUN = {
     "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance": 0.0,
     "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
 }
+for path, value in REGION_SENTINELS.items():
+    _TEMPLATE_RUN.setdefault(path, value)
 
 
 def test_validate_changes_catches_bad_values():
@@ -275,6 +278,8 @@ def test_each_case_study_round_trips_through_changes():
         inputs = document["inputs"]
         changes = forge.diff_changes(inputs)
         changes.update({path: 0.0 for path in PATHS})
+        for path, value in REGION_SENTINELS.items():
+            changes.setdefault(path, value)
         resolved = forge.resolve_inputs(changes)
         # Compare against what was submitted: the case study plus this test's
         # own protected-area overrides (the .forge files store them as null).

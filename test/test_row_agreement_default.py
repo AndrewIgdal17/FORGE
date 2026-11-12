@@ -11,6 +11,7 @@ import pytest
 
 import forge
 from forge.errors import InvalidInputs
+from test.spec07_regions import REGION_SENTINELS
 
 AGREEMENT = "01_project_technical_details.project.row_agreement_type"
 ZONE_MILES = "11_project_row_details.right_of_way.zone_1.miles"
@@ -25,6 +26,8 @@ def _run(scenario: str, **overrides) -> dict:
     changes = forge.diff_changes(doc["inputs"])
     changes.update(ACRES)
     changes.update({ZONE_MILES: 50.0})
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     changes.update(overrides)
     return forge.run_calculation(forge.resolve_inputs(changes))
 

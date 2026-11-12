@@ -2,6 +2,7 @@
 import json
 
 import forge
+from test.spec07_regions import REGION_SENTINELS
 
 
 def test_run_calculation_is_silent(capsys):
@@ -22,6 +23,8 @@ def test_run_calculation_is_silent(capsys):
         "02_project_physical_details.terrain.protected_area_acres.rolling_hills": 0.0,
         "02_project_physical_details.terrain.protected_area_acres.mountain": 0.0,
     })
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     inputs = forge.resolve_inputs(changes)
     forge.run_calculation(inputs, scenario_id="silent_test")
     captured = capsys.readouterr()

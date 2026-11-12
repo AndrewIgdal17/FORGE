@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 import forge
+from test.spec07_regions import REGION_SENTINELS
 
 
 def _runnable_inputs() -> dict:
@@ -25,6 +26,8 @@ def _runnable_inputs() -> dict:
         "02_project_physical_details.terrain.protected_area_acres.rolling_hills": 0.0,
         "02_project_physical_details.terrain.protected_area_acres.mountain": 0.0,
     })
+    for path, value in REGION_SENTINELS.items():
+        changes.setdefault(path, value)
     return forge.resolve_inputs(changes)
 
 
