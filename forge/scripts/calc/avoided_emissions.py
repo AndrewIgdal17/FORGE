@@ -125,6 +125,66 @@ def calculate_avoided_emissions(
     }
 
 
+def calculate_avoided_benefit(
+    e_deliv_mwh_per_year: float,
+    *,
+    sending_source: str,
+    rcv_co2e: list[float],
+    snd_co2e: list[float],
+    rcv_so2: float,
+    rcv_nox: float,
+    snd_so2: float,
+    snd_nox: float,
+    c_co2e: list[float],
+    c_so2_rcv: list[float],
+    c_nox_rcv: list[float],
+    c_so2_snd: list[float],
+    c_nox_snd: list[float],
+    t_cod: int,
+    horizon: int,
+    social_discount_rate: float,
+    rates_used: dict,
+) -> dict[str, Any]:
+    """Price delivered energy at the receiving rate minus the sending rate.
+
+    CO2e dollars are that mass times the year's social cost. SO2 and NOx
+    dollars use each terminal's own damage price, ``E * (eps * c)`` at that
+    end, not the mass difference times one price. ``E_deliv == 0`` still
+    returns this dict; the benefit stream is zeros of length ``horizon``.
+    """
+    annual: list[float] = []
+    kg: dict[str, list[float]] = {"co2e": [], "so2": [], "nox": []}
+    for i, eps_rcv in enumerate(rcv_co2e):
+        q_co2e = e_deliv_mwh_per_year * (eps_rcv - snd_co2e[i])
+        q_so2 = e_deliv_mwh_per_year * (rcv_so2 - snd_so2)
+        q_nox = e_deliv_mwh_per_year * (rcv_nox - snd_nox)
+        dollars = (
+            q_co2e * c_co2e[i]
+            + e_deliv_mwh_per_year * (rcv_so2 * c_so2_rcv[i] - snd_so2 * c_so2_snd[i])
+            + e_deliv_mwh_per_year * (rcv_nox * c_nox_rcv[i] - snd_nox * c_nox_snd[i])
+        )
+        annual.append(dollars)
+        kg["co2e"].append(q_co2e)
+        kg["so2"].append(q_so2)
+        kg["nox"].append(q_nox)
+    stream = place_operating_years(annual, t_cod, horizon)
+    used: dict[str, Any] = {
+        key: (dict(value) if isinstance(value, dict) else value)
+        for key, value in rates_used.items()
+    }
+    sending = dict(used.get("sending", {}))
+    sending["source"] = sending_source
+    used["sending"] = sending
+    return {
+        "avoided_emissions_pv": pv(stream, social_discount_rate),
+        "avoided_emissions_nominal": undiscounted(stream),
+        "avoided_emissions_annual_values": annual,
+        "streams": {"avoided_emissions_benefit": stream},
+        "annual_kg_avoided": kg,
+        "rates_used": used,
+    }
+
+
 def main() -> None:
     """Entry point for the avoided-emissions pipeline step."""
     from forge.scripts.utils.run_context import get_run_context
