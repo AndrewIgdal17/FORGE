@@ -12,6 +12,7 @@ import copy
 import json
 from pathlib import Path
 
+from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
 from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -112,26 +113,7 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     gf["constraints"]["average_exceedance"] = 400
     gf["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
-    # --- 18: Grid Mix (single-trajectory model; same ERCOT region as LRGV) ---
-    # Sources: ERCOT CDR 2010; EIA Texas electricity profile 2010; Potomac
-    # Economics IMM. rate_post_cod = rate_pre_cod: this is a congestion-relief
-    # line, not a renewable corridor — it relieves import constraints to LRGV
-    # but does not enable new generation or change system-level investment.
-    mix = inputs["18_energy_source_mix"]
-    mix["grid_mix"] = {
-        "initial": {
-            "coal": 39.5, "oil": 0.3, "natural_gas": 38, "solar": 0.1,
-            "wind": 7.8, "hydro": 0.2, "nuclear": 13, "other": 1.1,
-        },
-        "rate_pre_cod": {
-            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
-            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
-        },
-        "rate_post_cod": {
-            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
-            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
-        },
-    }
+    apply_terminals(inputs, ERCOT)
 
     return inputs
 

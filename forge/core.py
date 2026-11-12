@@ -214,6 +214,32 @@ def _raise_if_required_inputs_missing() -> None:
         raise InvalidInputs(detail)
 
 
+def _require_known_regions(details: Any) -> None:
+    """Reject a present terminal code that is absent from its schedule.
+
+    eGRID and BPT ignore the year for membership. Cambium uses 2025, a
+    published year. ``InvalidInputs`` from the lookup propagates.
+    """
+    from forge.emissions_data import (
+        criteria_damage_2025_usd_per_kg,
+        egrid_rates,
+        lrmer_co2e,
+    )
+
+    checks = (
+        ("sending_gea", lambda value: lrmer_co2e(value, 2025)),
+        ("receiving_gea", lambda value: lrmer_co2e(value, 2025)),
+        ("sending_egrid_subregion", lambda value: egrid_rates(value)),
+        ("receiving_egrid_subregion", lambda value: egrid_rates(value)),
+        ("sending_state", lambda value: criteria_damage_2025_usd_per_kg(value, "so2", 2025)),
+        ("receiving_state", lambda value: criteria_damage_2025_usd_per_kg(value, "so2", 2025)),
+    )
+    for name, lookup in checks:
+        value = getattr(details, name, None)
+        if value is not None:
+            lookup(value)
+
+
 def _bootstrap_run_context() -> "RunContext":
     """Load input sections once and populate the shared RunContext.
 
@@ -239,6 +265,7 @@ def _bootstrap_run_context() -> "RunContext":
 
     _raise_if_required_inputs_missing()
     project_details = load_project_technical_details()
+    _require_known_regions(project_details)
     inputs = get_run_state().inputs
     missing = missing_protected_area_acres(inputs)
     if missing:

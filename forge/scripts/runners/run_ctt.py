@@ -9,6 +9,7 @@ Scenario B: CTT_Counterfactual_Delay7 — what would have happened without CREZ 
 
 import copy
 
+from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
 from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
 
 def patch_ctt_inputs(inputs: dict) -> dict:
@@ -90,27 +91,7 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     gf["constraints"]["average_exceedance"] = 600
     gf["prices"]["average_congestion_price"] = 11.47 * 1800 / 8760
 
-    # --- 18: Grid Mix (single-trajectory model) ---
-    # Sources: ERCOT 2008 Annual Report; ERCOT CDR 2008-2024; Potomac Economics
-    # IMM; Baker Institute CREZ report (2020). CREZ is the outlier case study: a
-    # system-transforming $6.9B program that unlocked 18,500 MW of West Texas
-    # wind. Wind went from 5% to 24% of ERCOT generation (2008-2023); post-COD
-    # coal decline accelerated 2.5x due to merit-order displacement by cheap wind.
-    mix = inputs["18_energy_source_mix"]
-    mix["grid_mix"] = {
-        "initial": {
-            "coal": 37, "oil": 0.3, "natural_gas": 43, "solar": 0.1,
-            "wind": 5, "hydro": 0.2, "nuclear": 13, "other": 1.4,
-        },
-        "rate_pre_cod": {
-            "coal": -0.025, "oil": -0.02, "natural_gas": 0.013, "solar": 0.25,
-            "wind": 0.035, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
-        },
-        "rate_post_cod": {
-            "coal": -0.063, "oil": -0.02, "natural_gas": 0.0, "solar": 0.33,
-            "wind": 0.11, "hydro": 0.0, "nuclear": -0.018, "other": -0.01,
-        },
-    }
+    apply_terminals(inputs, ERCOT)
 
     return inputs
 

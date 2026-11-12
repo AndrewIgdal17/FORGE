@@ -11,8 +11,6 @@ import yaml
 from forge.data import get_cpi_path, get_defaults_template
 
 ROOT = Path(__file__).resolve().parents[1]
-# Task 11 removes this skip, when it deletes the emissions-cost block.
-SCAN_SKIP = {"16_emissions_reductions.yaml"}
 BANNED_FACTORS = (
     "1.4762",
     "1.2438",
@@ -187,7 +185,7 @@ def scan_text(text: str) -> list[str]:
 def _scanned_files():
     yamls = sorted((ROOT / "forge" / "yamls").glob("*.yaml"))
     scripts = sorted(path for path in (ROOT / "forge" / "scripts").rglob("*.py"))
-    return [path for path in yamls + scripts if path.name not in SCAN_SKIP]
+    return yamls + scripts
 
 
 def test_habitat_credits_use_the_2010_cpi_ratio():

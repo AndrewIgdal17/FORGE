@@ -3,7 +3,7 @@
 import pytest
 
 from forge.emissions_data import calendar_year
-from forge.scripts.calc.avoided_emissions import calculate_avoided_benefit
+from forge.scripts.calc.avoided_emissions import calculate_avoided_emissions
 
 # 2025$/kg from the BPT short-ton rows. NM and AZ share the AZNM SO2 row.
 # Injected here; this test does not call the damage loader.
@@ -75,7 +75,7 @@ def _benefit(e_deliv: float = 100.0, **overrides):
         "rates_used": rates,
     }
     kwargs.update(overrides)
-    return calculate_avoided_benefit(e_deliv, **kwargs)
+    return calculate_avoided_emissions(e_deliv, **kwargs)
 
 
 def test_margin_one_operating_year_prices_each_terminal():

@@ -430,34 +430,8 @@ def load_delay_costs() -> Dict[str, Any]:
     return delay_costs
 
 
-def load_grid_mix() -> Dict[str, Any]:
-    """Load the single-trajectory grid mix from 18_energy_source_mix.yaml.
-
-    Returns a dict with keys 'initial', 'rate_pre_cod', 'rate_post_cod', each mapping
-    source name -> value ('initial' values are percentages 0-100; rate values are
-    fractional annual growth/decline rates). No backward compatibility: old
-    'energy_source_mix' / 'counterfactual_energy_source_mix' keys are not recognized.
-    """
-    data = section("18_energy_source_mix")
-    if not data or "grid_mix" not in data:
-        raise KeyError("Missing 'grid_mix' key in 18_energy_source_mix.yaml")
-    grid_mix = data["grid_mix"]
-    required_keys = ["initial", "rate_pre_cod", "rate_post_cod"]
-    for key in required_keys:
-        if key not in grid_mix:
-            raise KeyError(
-                f"Missing '{key}' key in grid_mix section of 18_energy_source_mix.yaml"
-            )
-    return grid_mix
-
-
-def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
-    """Load emissions reductions details from YAML (compensation, intensities, societal costs).
-
-    Grid mix is loaded separately via load_grid_mix() — callers that need the mix
-    (avoided_emissions.py, emissions.py) load it and
-    derive the COD-state trajectory themselves.
-    """
+def load_emissions_details() -> float:
+    """Return the loss-compensation fraction from 16_emissions_reductions."""
     try:
         data = section("16_emissions_reductions")
         if not data:
@@ -465,21 +439,11 @@ def load_emissions_details() -> Tuple[float, Dict[str, Any], Dict[str, Any]]:
         if "emissions_reductions" not in data:
             raise KeyError("Missing 'emissions_reductions' key in YAML file")
         emissions_reductions_data = data["emissions_reductions"]
-        required_keys = [
-            "compensation_percent",
-            "emission_intensities",
-            "societal_costs_per_kg",
-        ]
-        for key in required_keys:
-            if key not in emissions_reductions_data:
-                raise KeyError(
-                    f"Missing '{key}' key in emissions_reductions section of YAML"
-                )
-        return (
-            emissions_reductions_data["compensation_percent"],
-            emissions_reductions_data["emission_intensities"],
-            emissions_reductions_data["societal_costs_per_kg"],
-        )
+        if "compensation_percent" not in emissions_reductions_data:
+            raise KeyError(
+                "Missing 'compensation_percent' key in emissions_reductions section of YAML"
+            )
+        return float(emissions_reductions_data["compensation_percent"])
     except KeyError as e:
         raise KeyError(f"Missing required key in emissions reductions YAML: {e}")
 

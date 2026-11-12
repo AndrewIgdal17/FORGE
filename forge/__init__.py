@@ -12,7 +12,6 @@ from forge.contract import (
     validate_changes,
 )
 from forge.errors import UnknownInputPath, InvalidInputs, CalculationError
-from forge.presets import get_grid_mix_presets
 
 __all__ = [
     "run_calculation",
@@ -28,7 +27,6 @@ __all__ = [
     "validate_changes",
     "diff_changes",
     "calculator_info",
-    "get_grid_mix_presets",
     "UnknownInputPath",
     "InvalidInputs",
     "CalculationError",

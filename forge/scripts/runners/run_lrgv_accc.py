@@ -3,11 +3,12 @@
 Builds inputs from canonical YAML defaults, patches with LRGV corridor parameters
 extracted from the legacy case-study scenarios, runs both variants through the
 calculation engine, and saves updated .forge files in the current format
-(grid_mix, single-constraint congestion, no allowed_return_rate).
+(single-constraint congestion, no allowed_return_rate).
 """
 
 import copy
 
+from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
 from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
 
 def _patch_lrgv_common(inputs: dict) -> dict:
@@ -86,22 +87,7 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     rc["constraints"]["average_exceedance"] = 400
     rc["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
-    # --- 18: Grid Mix (same ERCOT region as Laredo newbuild) ---
-    mix = inputs["18_energy_source_mix"]
-    mix["grid_mix"] = {
-        "initial": {
-            "coal": 39.5, "oil": 0.3, "natural_gas": 38, "solar": 0.1,
-            "wind": 7.8, "hydro": 0.2, "nuclear": 13, "other": 1.1,
-        },
-        "rate_pre_cod": {
-            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
-            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
-        },
-        "rate_post_cod": {
-            "coal": -0.07, "oil": -0.02, "natural_gas": 0.025, "solar": 0.25,
-            "wind": 0.10, "hydro": 0.0, "nuclear": -0.005, "other": 0.0,
-        },
-    }
+    apply_terminals(inputs, ERCOT)
 
     return inputs
 

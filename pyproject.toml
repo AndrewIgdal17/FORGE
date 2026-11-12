@@ -28,7 +28,6 @@ forge = [
     "yamls/**/*.yml",
     "scenarios/**/*.forge",
     "scenarios/**/*.yaml",
-    "presets/**/*.yaml",
     "data/emissions/**",
     "data/cpi_u.csv",
     "data/converted_defaults.yaml",

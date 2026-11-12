@@ -6,37 +6,65 @@ from forge.scripts.utils.streams import pv
 
 from test.spec05_project import item, project_changes, run
 
-MIX = "18_energy_source_mix.grid_mix."
 EXT = ("wildfire_eac", "outage_eac", "emissions_comp", "avoided_emissions_benefit")
-_FUELS = ("coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other")
-
-
-def _mix_changes():
-    c = {MIX + "initial.coal": 0.5, MIX + "initial.natural_gas": 0.5,
-         MIX + "rate_pre_cod.coal": 0.0, MIX + "rate_post_cod.coal": -0.03}
-    return project_changes(**c)
+_SOURCE = "01_project_technical_details.project.sending_source"
+_SEND = "01_project_technical_details.terminals.sending."
+_RECV = "01_project_technical_details.terminals.receiving."
+_RATE = "01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh."
 
 
 def test_avoided_emissions_survive():
-    r = run(_mix_changes())
-    assert item(r, "avoided_emissions_benefit")["value_pv"] != 0.0
+    """Two different margins. The benefit is the rate gap, and the source stays margin."""
+    changes = project_changes(**{
+        _SOURCE: "margin",
+        _SEND + "gea": "WestConnect_South",
+        _SEND + "egrid_subregion": "AZNM",
+        _SEND + "state": "AZ",
+        _RECV + "gea": "CAISO",
+        _RECV + "egrid_subregion": "CAMX",
+        _RECV + "state": "CA",
+    })
+    results = run(changes)
+    mass = results["benefits"]["avoided_emissions"]["annual_kg_avoided"]["co2e"]
+    assert any(year != 0.0 for year in mass)
+    assert item(results, "avoided_emissions_benefit")["value_pv"] != 0.0
 
 
 def test_avoided_emissions_zero_when_rates_equal():
-    # Spec over brief: SunZia_Delay2 pre- and post-COD rates differ, so bare
-    # project_changes() is not the zero case. Copy each post-COD rate onto the
-    # matching pre-COD rate. Intensities in 16_emissions_reductions.yaml are
-    # already non-zero, so this case adds no intensity overrides.
-    changes = project_changes()
-    for fuel in _FUELS:
-        post_key = MIX + "rate_post_cod." + fuel
-        pre_key = MIX + "rate_pre_cod." + fuel
-        changes[pre_key] = changes[post_key] if post_key in changes else 0.0
-    assert item(run(changes), "avoided_emissions_benefit")["value_pv"] == 0.0
+    """The same margin at both ends. Equal rates, still margin, so the benefit is zero."""
+    same = {
+        _SOURCE: "margin",
+        _SEND + "gea": "ERCOT",
+        _SEND + "egrid_subregion": "ERCT",
+        _SEND + "state": "TX",
+        _RECV + "gea": "ERCOT",
+        _RECV + "egrid_subregion": "ERCT",
+        _RECV + "state": "TX",
+    }
+    results = run(project_changes(**same))
+    benefit = item(results, "avoided_emissions_benefit")
+    assert benefit["value_pv"] == 0.0
+    assert benefit["stream"] == pytest.approx([0.0] * len(benefit["stream"]))
+    mass = results["benefits"]["avoided_emissions"]["annual_kg_avoided"]
+    for pollutant in ("co2e", "so2", "nox"):
+        assert mass[pollutant] == pytest.approx([0.0] * len(mass[pollutant]))
+
+
+def test_dedicated_wind_avoids_positive_co2e_mass():
+    """A dedicated wind resource at rate 0. Not a case study. Avoided CO2e mass is positive."""
+    changes = project_changes(**{
+        _SOURCE: "dedicated",
+        "01_project_technical_details.project.dedicated_resource.contract_price_per_mwh": 0.0,
+        _RATE + "co2e": 0.0,
+        _RATE + "so2": 0.0,
+        _RATE + "nox": 0.0,
+    })
+    mass = run(changes)["benefits"]["avoided_emissions"]["annual_kg_avoided"]["co2e"]
+    assert sum(mass) > 0.0
 
 
 def test_externalities_societal_only():
-    r = run(_mix_changes())
+    r = run(project_changes())
     for tid in EXT:
         i = item(r, tid)
         assert i["value_pv_wacc"] is None

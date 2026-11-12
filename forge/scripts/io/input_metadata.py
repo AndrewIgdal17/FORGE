@@ -17,7 +17,7 @@ from forge.scripts.io.region_codes import EGRID_SUBREGIONS, GEA_NAMES, STATES
 
 InputType = Literal[
     "number", "currency", "percent", "toggle", "dropdown",
-    "dynamic_dropdown", "year", "text", "fuel_mix_row",
+    "dynamic_dropdown", "year", "text",
 ]
 Tier = Literal["first-glance", "working", "advanced"]
 InputCondition = Literal[
@@ -29,7 +29,6 @@ TERRAINS = (
     "forested", "scrubbed_flat", "wetland", "farmland",
     "desert_barren", "urban", "rolling_hills", "mountain",
 )
-FUELS = ("coal", "oil", "natural_gas", "solar", "wind", "hydro", "nuclear", "other")
 CONSTRUCTION_TYPES = ("overhead", "underground")
 WILDFIRE_CONSTRUCTION_TYPES = (
     "overhead",
@@ -893,9 +892,8 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
         sub_tab="outage-risk"))
 
 # ===================================================================
-# Tab 8 — Emissions (29 fields) + Energy Mix (32 fields)
-# Most fields are condition="always_hidden" — rendered via custom tables, not renderTaxonomySections.
-# compensation_percent is visible (no always_hidden) so the Emissions page can bind it.
+# Tab 8 — Emissions
+# compensation_percent is visible so the Emissions page can bind it.
 # ===================================================================
 
 _TAB8: list[InputField] = [
@@ -907,68 +905,6 @@ _TAB8: list[InputField] = [
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="energy-emissions-emissions"),
 ]
-# Societal costs (3)
-for _pi, (_pk, _pl) in enumerate([("co2_cost_per_kg", "CO\u2082 Cost per kg"),
-                                    ("sox_cost_per_kg", "SO\u2093 Cost per kg"),
-                                    ("nox_cost_per_kg", "NO\u2093 Cost per kg")]):
-    _TAB8.append(_f(
-        f"societal_{_pk}", taxonomy_id="emissions_comp", input_tab="emissions",
-        yaml_section="16_emissions_reductions",
-        field_path=f"emissions_reductions.societal_costs_per_kg.{_pk}",
-        label=_pl, help_text=f"Social cost per kg of {_pl.split()[0]} emissions (externality value)",
-        unit="$/kg", input_type="currency", condition="always_hidden", tier="first-glance",
-        display_order=2 + _pi, sub_tab="energy-emissions-emissions"))
-
-_TAB8.append(_f(
-    "co2_cost_annual_growth", taxonomy_id="emissions_comp", input_tab="emissions",
-    yaml_section="16_emissions_reductions",
-    field_path="emissions_reductions.societal_costs_per_kg.co2_cost_annual_growth",
-    label="CO\u2082 Cost Annual Growth",
-    help_text="Real annual escalation rate for CO\u2082 societal cost (Rennert et al. 2022). Default 2%/yr.",
-    input_type="percent", condition="always_hidden", tier="working",
-    display_order=6, sub_tab="energy-emissions-emissions",
-    validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True}))
-
-# Emission intensities: 3 pollutants × 8 fuels = 24
-_POLLUTANTS = [("co2", "CO\u2082"), ("sox", "SO\u2093"), ("nox", "NO\u2093")]
-_int_order = 10
-for _pk, _pl in _POLLUTANTS:
-    for _fi, _fuel in enumerate(FUELS):
-        _TAB8.append(_f(
-            f"intensity_{_pk}_{_fuel}", taxonomy_id="emissions_comp", input_tab="emissions",
-            yaml_section="16_emissions_reductions",
-            field_path=f"emissions_reductions.emission_intensities.{_pk}_intensity_kg_per_mwh.{_fuel}",
-            label=_fuel.replace("_", " ").title(),
-            help_text=f"{_pl} emitted per MWh from {_fuel.replace('_', ' ')} generation",
-            section_label=f"{_pl} Intensity (kg/MWh)",
-            unit="kg/MWh", condition="always_hidden", tier="advanced", display_order=_int_order,
-            sub_tab="energy-emissions-emissions"))
-        _int_order += 1
-
-# Grid mix (single-trajectory model): 8 fuels × 3 groups = 24 fields.
-# initial = starting regional grid mix (%); rate_pre_cod/rate_post_cod = annual
-# growth/decline rates without/with the line's influence.
-for _group_key, _group_label in [
-    ("initial", "Grid Mix — Initial (Year 0)"),
-    ("rate_pre_cod", "Grid Mix — Rate Without Line (Pre-COD)"),
-    ("rate_post_cod", "Grid Mix — Rate With Line (Post-COD)"),
-]:
-    _is_pct = _group_key == "initial"
-    for _fi, _fuel in enumerate(FUELS):
-        _TAB8.append(_f(
-            f"grid_mix_{_group_key}_{_fuel}", taxonomy_id="avoided_emissions_benefit", input_tab="energy-mix",
-            yaml_section="18_energy_source_mix",
-            field_path=f"grid_mix.{_group_key}.{_fuel}",
-            label="Percentage" if _is_pct else "Rate Of Change",
-            help_text=(
-                f"Share of {_fuel.replace('_', ' ')} in the regional grid at year 0 (must sum to 100)"
-                if _is_pct else
-                f"Annual growth/decline rate for {_fuel.replace('_', ' ')} share under this regime (decimal; mix renormalized yearly)"
-            ),
-            section_label=f"{_group_label} — {_fuel.replace('_', ' ').title()}",
-            input_type="fuel_mix_row" if _is_pct else "number",
-            condition="always_hidden", tier="working",
-            display_order=_fi + 1, sub_tab="energy-emissions-energy"))
 
 # ===================================================================
 # Tab 9 — Benefits (24 fields)

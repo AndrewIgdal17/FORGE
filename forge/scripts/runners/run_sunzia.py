@@ -6,6 +6,7 @@ runs both scenarios through the calculation engine, and saves results.
 
 import copy
 
+from forge.scripts.runners.case_study_terminals import SUNZIA, apply_terminals
 from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
 
 def patch_sunzia_inputs(inputs: dict) -> dict:
@@ -88,26 +89,7 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     gf["constraints"]["average_exceedance"] = 500
     gf["prices"]["average_congestion_price"] = 15 * 4000 / 8760
 
-    # --- Tab 18: Grid Mix (single-trajectory model) ---
-    # Sources: EIA State Electricity Profiles 2008 (Table 5) for AZ+NM;
-    # NM Energy Transition Act; APS/SRP/PNM IRPs. Post-COD rates diverge from
-    # pre-COD because SunZia adds ~2,400 MW wind to a 30-35 GW region, accelerating
-    # wind growth (+10%/yr -> +14%/yr) and coal decline (-4%/yr -> -5%/yr).
-    mix = inputs["18_energy_source_mix"]
-    mix["grid_mix"] = {
-        "initial": {
-            "coal": 45, "oil": 0, "natural_gas": 30, "solar": 0,
-            "wind": 1, "hydro": 5, "nuclear": 19, "other": 0,
-        },
-        "rate_pre_cod": {
-            "coal": -0.04, "oil": 0.0, "natural_gas": 0.01, "solar": 0.15,
-            "wind": 0.10, "hydro": 0.0, "nuclear": 0.0, "other": 0.0,
-        },
-        "rate_post_cod": {
-            "coal": -0.05, "oil": 0.0, "natural_gas": 0.01, "solar": 0.15,
-            "wind": 0.14, "hydro": 0.0, "nuclear": 0.0, "other": 0.0,
-        },
-    }
+    apply_terminals(inputs, SUNZIA)
 
     # --- 20: Capacity Value (SunZia into CAISO/AZ — capacity-constrained) ---
     # κ = 0.35: CPUC MTR Wind NM 2026 ELCC (E3/Astrapé Jan 2023 Update, Table 1 p.10)
