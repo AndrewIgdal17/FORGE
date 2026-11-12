@@ -190,11 +190,14 @@ def test_data_releases_are_the_edition_titles():
     assert set(info["data_releases"]) == {"cambium", "egrid", "sc_ghg", "bpt", "cpi_u"}
 
 
-def test_defaults_id_changes_when_emissions_bytes_change(monkeypatch):
+def test_defaults_id_changes_when_emissions_bytes_change():
     from forge.contract import _digest_for
+    from forge.data import get_cpi_path, iter_emissions_files
     first = _digest_for([("a.csv", b"1")])
     second = _digest_for([("a.csv", b"2")])
     assert first != second
+    live = list(iter_emissions_files()) + [("cpi_u.csv", get_cpi_path().read_bytes())]
+    assert forge.get_defaults_id() == _digest_for(live)
 
 
 def test_provenance_copies_data_releases():
