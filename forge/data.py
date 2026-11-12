@@ -12,6 +12,25 @@ def get_yamls_path() -> Path:
     return Path(str(files("forge") / "yamls"))
 
 
+def get_emissions_path() -> Path:
+    return Path(str(files("forge") / "data" / "emissions"))
+
+
+def get_cpi_path() -> Path:
+    return Path(str(files("forge") / "data" / "cpi_u.csv"))
+
+
+def iter_emissions_files() -> list[tuple[str, bytes]]:
+    root = get_emissions_path()
+    pairs = []
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            pairs.append((path.relative_to(root).as_posix(), path.read_bytes()))
+    if not pairs:
+        raise FileNotFoundError("forge/data/emissions is empty")
+    return pairs
+
+
 def get_scenarios_path() -> Path:
     """Return absolute path to the bundled scenarios/ directory."""
     return Path(str(files("forge") / "scenarios"))

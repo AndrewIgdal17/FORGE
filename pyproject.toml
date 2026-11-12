@@ -29,6 +29,8 @@ forge = [
     "scenarios/**/*.forge",
     "scenarios/**/*.yaml",
     "presets/**/*.yaml",
+    "data/emissions/**",
+    "data/cpi_u.csv",
 ]
 
 [tool.pytest.ini_options]

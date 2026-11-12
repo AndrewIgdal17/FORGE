@@ -60,6 +60,9 @@ jobs:
           import sys
 
           import forge
+          from importlib.resources import files
+          if not (files("forge") / "data" / "cpi_u.csv").is_file():
+              sys.exit("wheel is missing data/cpi_u.csv")
 
           scenarios = sorted(forge.get_scenarios_path().glob("*.forge"))
           if not scenarios:
