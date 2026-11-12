@@ -145,6 +145,8 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
 
 
 def test_run_calculation_does_not_reread_bundled_yaml(monkeypatch):
+    # Edition titles load once through calculator_info and stay cached.
+    forge.calculator_info()
     inputs = forge.resolve_inputs({
         **{path: 0.0 for path in PATHS},
         **_TEMPLATE_RUN,
@@ -180,6 +182,30 @@ def test_calculator_info_and_provenance():
     assert provenance["inputs_id"] == "sha256:" + hashlib.sha256(
         canonical_dumps(inputs).encode("utf-8")
     ).hexdigest()
+
+
+def test_data_releases_are_the_edition_titles():
+    info = forge.calculator_info()
+    assert info["data_releases"]["cambium"].startswith("Cambium 2024 Mid-case")
+    assert set(info["data_releases"]) == {"cambium", "egrid", "sc_ghg", "bpt", "cpi_u"}
+
+
+def test_defaults_id_changes_when_emissions_bytes_change(monkeypatch):
+    from forge.contract import _digest_for
+    first = _digest_for([("a.csv", b"1")])
+    second = _digest_for([("a.csv", b"2")])
+    assert first != second
+
+
+def test_provenance_copies_data_releases():
+    info = forge.calculator_info()
+    inputs = forge.resolve_inputs({
+        **{path: 0.0 for path in PATHS},
+        **_TEMPLATE_RUN,
+        "01_project_technical_details.project.capacity_mw": 1792,
+    })
+    results = forge.run_calculation(inputs, scenario_id="data-releases")
+    assert results["provenance"]["data_releases"] == info["data_releases"]
 
 
 def _assert_present_leaves_match(template_node, resolved_node, input_node):

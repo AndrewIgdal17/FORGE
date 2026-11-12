@@ -45,9 +45,21 @@ def canonical_dumps(value: Any) -> str:
     )
 
 
+def _digest_for(files: list[tuple[str, bytes]]) -> str:
+    digest = hashlib.sha256(canonical_dumps(get_defaults_template()).encode("utf-8"))
+    for name, raw in files:
+        digest.update(name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(raw)
+        digest.update(b"\0")
+    return "sha256:" + digest.hexdigest()
+
+
 def _compute_defaults_id() -> str:
-    digest = hashlib.sha256(canonical_dumps(get_defaults_template()).encode("utf-8")).hexdigest()
-    return f"sha256:{digest}"
+    from forge.data import get_cpi_path, iter_emissions_files
+    files = list(iter_emissions_files())
+    files.append(("cpi_u.csv", get_cpi_path().read_bytes()))
+    return _digest_for(files)
 
 
 # Bundled YAML is package data and does not change during a process.
@@ -60,6 +72,8 @@ def get_defaults_id() -> str:
 
 
 def calculator_info() -> dict:
+    from forge.emissions_data import data_releases
+
     try:
         package_version = version("forge-calc")
     except PackageNotFoundError:
@@ -77,6 +91,7 @@ def calculator_info() -> dict:
         "version": package_version,
         "commit": commit,
         "defaults_id": get_defaults_id(),
+        "data_releases": data_releases(),
     }
 
 
