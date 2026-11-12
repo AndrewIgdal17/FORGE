@@ -13,6 +13,8 @@ from dataclasses import dataclass, field as dc_field
 from functools import lru_cache
 from typing import Any, Literal
 
+from forge.scripts.io.region_codes import EGRID_SUBREGIONS, GEA_NAMES, STATES
+
 InputType = Literal[
     "number", "currency", "percent", "toggle", "dropdown",
     "dynamic_dropdown", "year", "text", "fuel_mix_row",
@@ -283,7 +285,7 @@ for _tier, _ceiling in enumerate(_CORONA_CEILINGS):
         validation={"min": 0}))
 
 # ===================================================================
-# Tab 2 — Routing (79 fields: 18 terrain + 60 ROW + 1 flag)
+# Tab 2 — Routing (85 fields: 18 terrain + 60 ROW + 1 flag + 6 terminals)
 # ===================================================================
 
 _TAB2: list[InputField] = []
@@ -508,6 +510,27 @@ _TAB2.append(_f(
     input_type="percent", tier="working", display_order=61,
     validation={"min": 0, "max": 0.2, "step": 0.005, "pct": True},
     sub_tab="rights-of-way"))
+
+for _end_i, (_end, _end_label) in enumerate((("sending", "Sending"), ("receiving", "Receiving"))):
+    for _key_i, (_key, _kind, _options) in enumerate((
+        ("gea", "GEA region", list(GEA_NAMES)),
+        ("egrid_subregion", "eGRID subregion", list(EGRID_SUBREGIONS)),
+        ("state", "state", list(STATES)),
+    )):
+        _TAB2.append(_f(
+            f"{_end}_terminal_{_key}",
+            taxonomy_id="project_technology",
+            input_tab="routing",
+            yaml_section="01_project_technical_details",
+            field_path=f"terminals.{_end}.{_key}",
+            label=f"{_end_label} terminal {_kind}",
+            help_text=f"{_end_label} terminal {_kind}. Route analysis fills this. No default.",
+            input_type="dropdown",
+            tier="working",
+            display_order=_end_i * 3 + _key_i + 1,
+            validation={"options": _options},
+            sub_tab="terminals",
+        ))
 
 # ===================================================================
 # Tab 4 — Environmental Costs (40 fields: 1 uplift + 31 base + 6 credits + 2 read-only displays)

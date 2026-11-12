@@ -1525,3 +1525,46 @@ sending_end:
     citation: null
     yaml_file: 17_congestion_reductions.yaml
     basis: Author judgment
+terminals:
+  sending_gea:
+    path: 01_project_technical_details.terminals.sending.gea
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  sending_egrid_subregion:
+    path: 01_project_technical_details.terminals.sending.egrid_subregion
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  sending_state:
+    path: 01_project_technical_details.terminals.sending.state
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  receiving_gea:
+    path: 01_project_technical_details.terminals.receiving.gea
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  receiving_egrid_subregion:
+    path: 01_project_technical_details.terminals.receiving.egrid_subregion
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  receiving_state:
+    path: 01_project_technical_details.terminals.receiving.state
+    unit: region code
+    source: Route analysis. No default.
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived

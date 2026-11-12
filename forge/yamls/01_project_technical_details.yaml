@@ -28,6 +28,16 @@ project:
   old_ac_dc: null # AC or DC
   old_converter_type: null
 
+terminals:
+  sending:
+    gea: null
+    egrid_subregion: null
+    state: null
+  receiving:
+    gea: null
+    egrid_subregion: null
+    state: null
+
 timeline:
   construction_years: 1 # years (> 0)
   delay_years: 0 # years (>= 0)

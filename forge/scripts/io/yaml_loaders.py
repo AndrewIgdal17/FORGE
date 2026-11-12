@@ -38,6 +38,12 @@ class ProjectTechnicalDetails:
     emission_rate_co2e: Optional[float] = None
     emission_rate_so2: Optional[float] = None
     emission_rate_nox: Optional[float] = None
+    sending_gea: Optional[str] = None
+    sending_egrid_subregion: Optional[str] = None
+    sending_state: Optional[str] = None
+    receiving_gea: Optional[str] = None
+    receiving_egrid_subregion: Optional[str] = None
+    receiving_state: Optional[str] = None
 
 
 @dataclass
@@ -250,6 +256,9 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             n_conv = 0
         dedicated = project_data.get("dedicated_resource") or {}
         rates = dedicated.get("emission_rate_kg_per_mwh") or {}
+        terminals = project_details.get("terminals") or {}
+        sending_terminal = terminals.get("sending") or {}
+        receiving_terminal = terminals.get("receiving") or {}
         return ProjectTechnicalDetails(
             construction_type=construction_type,
             ac_dc=ac_dc,
@@ -269,6 +278,12 @@ def load_project_technical_details() -> ProjectTechnicalDetails:
             emission_rate_co2e=_optional_float(rates.get("co2e")),
             emission_rate_so2=_optional_float(rates.get("so2")),
             emission_rate_nox=_optional_float(rates.get("nox")),
+            sending_gea=sending_terminal.get("gea"),
+            sending_egrid_subregion=sending_terminal.get("egrid_subregion"),
+            sending_state=sending_terminal.get("state"),
+            receiving_gea=receiving_terminal.get("gea"),
+            receiving_egrid_subregion=receiving_terminal.get("egrid_subregion"),
+            receiving_state=receiving_terminal.get("state"),
         )
     except KeyError as e:
         raise KeyError(f"Missing required key in project technical details YAML: {e}")
