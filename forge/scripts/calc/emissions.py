@@ -230,6 +230,65 @@ def place_operating_years(
     return stream
 
 
+def calculate_loss_compensation(
+    e_loss_mwh_per_year: float,
+    compensation_fraction: float,
+    *,
+    co2e_kg_per_mwh: list[float],
+    so2_kg_per_mwh: float,
+    nox_kg_per_mwh: float,
+    c_co2e_usd_per_kg: list[float],
+    c_so2_usd_per_kg: list[float],
+    c_nox_usd_per_kg: list[float],
+    t_cod: int,
+    horizon: int,
+    social_discount_rate: float,
+    receiving: dict[str, str],
+) -> dict:
+    """Price loss-compensation emissions from rates the caller already looked up.
+
+    ``annual_cost`` is the mean of the operating-year dollars. Present value
+    uses ``place_operating_years`` and then ``streams.pv``.
+    """
+    e_comp = compensation_fraction * e_loss_mwh_per_year
+    annual: list[float] = []
+    annual_kg_co2e: list[float] = []
+    for i, eps_co2e in enumerate(co2e_kg_per_mwh):
+        annual.append(
+            e_comp
+            * (
+                eps_co2e * c_co2e_usd_per_kg[i]
+                + so2_kg_per_mwh * c_so2_usd_per_kg[i]
+                + nox_kg_per_mwh * c_nox_usd_per_kg[i]
+            )
+        )
+        annual_kg_co2e.append(e_comp * eps_co2e)
+    n = len(annual)
+    stream = place_operating_years(annual, t_cod, horizon)
+    return {
+        "total_nominal": undiscounted(stream),
+        "total_pv": pv(stream, social_discount_rate),
+        "annual_cost": (sum(annual) / n) if n else 0.0,
+        "emissions_comp_annual_values": annual,
+        "streams": {"emissions_comp": stream},
+        "annual_kg": {
+            "co2e": annual_kg_co2e,
+            "so2": [e_comp * so2_kg_per_mwh] * n,
+            "nox": [e_comp * nox_kg_per_mwh] * n,
+        },
+        "damage_cost_per_kg": {
+            "co2e": list(c_co2e_usd_per_kg[:n]),
+            "so2": list(c_so2_usd_per_kg[:n]),
+            "nox": list(c_nox_usd_per_kg[:n]),
+        },
+        "rates_used": {
+            "gea": receiving["gea"],
+            "egrid_subregion": receiving["egrid_subregion"],
+            "state": receiving["state"],
+        },
+    }
+
+
 def monetize_annual_emissions(
     emissions_by_pollutant: dict,
     societal_costs: dict,
