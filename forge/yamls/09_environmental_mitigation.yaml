@@ -33,8 +33,8 @@ environmental_mitigation:
       mountain: 9000
   wetland_credit_cost_per_acre: 51361
   habitat_credit_cost_per_credit:
-    forested: 46770
-    scrubbed_flat: 46770
-    desert_barren: 46770
-    rolling_hills: 46770
-    mountain: 46770
+    forested: 46778
+    scrubbed_flat: 46778
+    desert_barren: 46778
+    rolling_hills: 46778
+    mountain: 46778

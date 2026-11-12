@@ -6,25 +6,25 @@ outage:
   value_of_lost_load:
     tiers:
     - max_hours: 1
-      value_per_mwh: 36620
+      value_per_mwh: 36624
     - max_hours: 2
-      value_per_mwh: 21885
+      value_per_mwh: 21887
     - max_hours: 4
-      value_per_mwh: 13689
+      value_per_mwh: 13691
     - max_hours: 8
-      value_per_mwh: 10708
+      value_per_mwh: 10710
     - max_hours: 16
-      value_per_mwh: 13937
+      value_per_mwh: 13938
     - max_hours: 32
-      value_per_mwh: 20628
+      value_per_mwh: 20631
     - max_hours: 64
-      value_per_mwh: 36282
+      value_per_mwh: 36286
     - max_hours: 168
-      value_per_mwh: 88512
+      value_per_mwh: 88522
     - max_hours: 720
-      value_per_mwh: 367280
+      value_per_mwh: 367324
     - max_hours: .inf
-      value_per_mwh: 367280
+      value_per_mwh: 367324
   outage_duration: 6
   outage_duration_multiplier:
     overhead: 1.0

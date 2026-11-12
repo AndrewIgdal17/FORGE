@@ -1,0 +1,267 @@
+# 2025$ template leaves. CPI ratios use forge/data/cpi_u.csv. BLM rents use inflation_deflate:2026.
+entries:
+  - path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.forested
+    source_value: 31683
+    source_basis: cpi:2010
+    source: Ecosystem Marketplace/Forest Trends national average
+    round_to: 1
+  - path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.scrubbed_flat
+    source_value: 31683
+    source_basis: cpi:2010
+    source: Ecosystem Marketplace/Forest Trends national average
+    round_to: 1
+  - path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.desert_barren
+    source_value: 31683
+    source_basis: cpi:2010
+    source: Ecosystem Marketplace/Forest Trends national average
+    round_to: 1
+  - path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.rolling_hills
+    source_value: 31683
+    source_basis: cpi:2010
+    source: Ecosystem Marketplace/Forest Trends national average
+    round_to: 1
+  - path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.mountain
+    source_value: 31683
+    source_basis: cpi:2010
+    source: Ecosystem Marketplace/Forest Trends national average
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+    source_value: 35685
+    source_basis: cpi:2024
+    source: Brattle/ERCOT 2024 system-wide survey Table 13
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+    source_value: 21326
+    source_basis: cpi:2024
+    source: Brattle/ERCOT 2024 system-wide survey Table 13
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+    source_value: 13340
+    source_basis: cpi:2024
+    source: Brattle/ERCOT 2024 system-wide survey Table 13
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+    source_value: 10435
+    source_basis: cpi:2024
+    source: Brattle/ERCOT 2024 system-wide survey Table 13
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+    source_value: 13581
+    source_basis: cpi:2024
+    source: Brattle/ERCOT 2024 system-wide survey Table 13
+    round_to: 1
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh
+    source_basis: cpi:2024
+    source: Fitted a0/h + a1 + a2*h to the five survey tiers
+    round_to: 1
+    derived_from:
+      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh
+    source_basis: cpi:2024
+    source: Fitted a0/h + a1 + a2*h to the five survey tiers
+    round_to: 1
+    derived_from:
+      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh
+    source_basis: cpi:2024
+    source: Fitted a0/h + a1 + a2*h to the five survey tiers
+    round_to: 1
+    derived_from:
+      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh
+    source_basis: cpi:2024
+    source: Fitted a0/h + a1 + a2*h to the five survey tiers
+    round_to: 1
+    derived_from:
+      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh
+    source_basis: cpi:2024
+    source: Fitted a0/h + a1 + a2*h to the five survey tiers
+    round_to: 1
+    derived_from:
+      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 11_project_row_details.right_of_way.zone_1.rent_cost
+    source_value: 8.08
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_1.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_1.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_2.rent_cost
+    source_value: 15.65
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_2.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_2.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_3.rent_cost
+    source_value: 30.60
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_3.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_3.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_4.rent_cost
+    source_value: 46.12
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_4.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_4.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_5.rent_cost
+    source_value: 63.53
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_5.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_5.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_6.rent_cost
+    source_value: 91.76
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_6.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_6.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_7.rent_cost
+    source_value: 128.31
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_7.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_7.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_8.rent_cost
+    source_value: 177.97
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_8.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_8.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_9.rent_cost
+    source_value: 440.10
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_9.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_9.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_10.rent_cost
+    source_value: 1351.76
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_10.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_10.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_11.rent_cost
+    source_value: 2703.51
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_11.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_11.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_12.rent_cost
+    source_value: 6758.78
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_12.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_12.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_13.rent_cost
+    source_value: 13517.55
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_13.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_13.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_14.rent_cost
+    source_value: 20276.33
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_14.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_14.rent_cost
+  - path: 11_project_row_details.right_of_way.zone_15.rent_cost
+    source_value: 27035.10
+    source_basis: inflation_deflate:2026
+    source: BLM CY2026 linear rent schedule
+    round_to: 0.01
+  - path: 11_project_row_details.right_of_way.zone_15.hold_cost
+    source_basis: inflation_deflate:2026
+    source: 10 percent of the unrounded deflated rent
+    round_to: 0.01
+    derived_from:
+      - 11_project_row_details.right_of_way.zone_15.rent_cost

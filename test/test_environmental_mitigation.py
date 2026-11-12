@@ -99,7 +99,7 @@ def test_defaults_expose_split_ratios_and_null_acres():
     assert "mitigation_ratio" not in env
     assert "rebuild_env_mitigation_fraction" not in env
     for name in ("forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain"):
-        assert env["habitat_credit_cost_per_credit"][name] == 46770
+        assert env["habitat_credit_cost_per_credit"][name] == 46778
     acres = template["02_project_physical_details"]["terrain"]["protected_area_acres"]
     assert list(acres) == [
         "forested", "scrubbed_flat", "desert_barren", "rolling_hills", "mountain",

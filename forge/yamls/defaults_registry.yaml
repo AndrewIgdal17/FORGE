@@ -203,125 +203,380 @@ hard_costs:
       basis: Sourced
   row:
     blm_zone_1:
-      acquisition_cost_per_acre: 299
-      rent_cost_per_acre_yr: 8
-      hold_cost_per_acre_yr: 0.8
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_1.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_1.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_1.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_2:
-      acquisition_cost_per_acre: 579
-      rent_cost_per_acre_yr: 15
-      hold_cost_per_acre_yr: 2
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_2.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_2.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_2.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_3:
-      acquisition_cost_per_acre: 1132
-      rent_cost_per_acre_yr: 30
-      hold_cost_per_acre_yr: 3
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_3.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_3.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_3.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_4:
-      acquisition_cost_per_acre: 1706
-      rent_cost_per_acre_yr: 45
-      hold_cost_per_acre_yr: 4
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_4.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_4.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_4.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_5:
-      acquisition_cost_per_acre: 2350
-      rent_cost_per_acre_yr: 62
-      hold_cost_per_acre_yr: 6
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_5.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_5.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_5.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_6:
-      acquisition_cost_per_acre: 3394
-      rent_cost_per_acre_yr: 89
-      hold_cost_per_acre_yr: 9
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_6.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_6.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_6.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_7:
-      acquisition_cost_per_acre: 4746
-      rent_cost_per_acre_yr: 125
-      hold_cost_per_acre_yr: 12
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_7.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_7.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_7.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_8:
-      acquisition_cost_per_acre: 6583
-      rent_cost_per_acre_yr: 173
-      hold_cost_per_acre_yr: 17
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_8.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_8.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_8.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_9:
-      acquisition_cost_per_acre: 16279
-      rent_cost_per_acre_yr: 428
-      hold_cost_per_acre_yr: 43
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_9.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_9.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_9.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_10:
-      acquisition_cost_per_acre: 50000
-      rent_cost_per_acre_yr: 1315
-      hold_cost_per_acre_yr: 132
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_10.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_10.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_10.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_11:
-      acquisition_cost_per_acre: 100000
-      rent_cost_per_acre_yr: 2630
-      hold_cost_per_acre_yr: 263
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_11.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_11.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_11.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_12:
-      acquisition_cost_per_acre: 250000
-      rent_cost_per_acre_yr: 6575
-      hold_cost_per_acre_yr: 658
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_12.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_12.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_12.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_13:
-      acquisition_cost_per_acre: 500000
-      rent_cost_per_acre_yr: 13150
-      hold_cost_per_acre_yr: 1315
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_13.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_13.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_13.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_14:
-      acquisition_cost_per_acre: 750000
-      rent_cost_per_acre_yr: 19725
-      hold_cost_per_acre_yr: 1972
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_14.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_14.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_14.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
     blm_zone_15:
-      acquisition_cost_per_acre: 1000000
-      rent_cost_per_acre_yr: 26300
-      hold_cost_per_acre_yr: 2630
-      unit: $/acre or $/acre/yr (2025$)
-      citation: BLM2026LinearRentSchedule
-      yaml_file: 11_project_row_details.yaml
-      basis: Sourced
+      acquisition_cost:
+        path: 11_project_row_details.right_of_way.zone_15.acquisition_cost
+        unit: $/acre
+        source: BLM zone value, not converted
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      rent_cost:
+        path: 11_project_row_details.right_of_way.zone_15.rent_cost
+        unit: $/acre/yr (2025$)
+        source: BLM CY2026 linear rent schedule
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
+      hold_cost:
+        path: 11_project_row_details.right_of_way.zone_15.hold_cost
+        unit: $/acre (2025$)
+        source: 10 percent of the unrounded deflated rent
+        dollar_year: null
+        citation: BLM2026LinearRentSchedule
+        yaml_file: 11_project_row_details.yaml
+        basis: Sourced
   environmental_mitigation:
     mitigation_uplift_factor:
       path: 09_environmental_mitigation.environmental_mitigation.mitigation_uplift_factor
@@ -365,6 +620,7 @@ hard_costs:
       citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
       yaml_file: 09_environmental_mitigation.yaml
       basis: Derived
+      dollar_year: 2010
     habitat_credit_scrubbed_flat:
       path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.scrubbed_flat
       unit: $/credit (2025$)
@@ -372,6 +628,7 @@ hard_costs:
       citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
       yaml_file: 09_environmental_mitigation.yaml
       basis: Derived
+      dollar_year: 2010
     habitat_credit_desert_barren:
       path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.desert_barren
       unit: $/credit (2025$)
@@ -379,6 +636,7 @@ hard_costs:
       citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
       yaml_file: 09_environmental_mitigation.yaml
       basis: Derived
+      dollar_year: 2010
     habitat_credit_rolling_hills:
       path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.rolling_hills
       unit: $/credit (2025$)
@@ -386,6 +644,7 @@ hard_costs:
       citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
       yaml_file: 09_environmental_mitigation.yaml
       basis: Derived
+      dollar_year: 2010
     habitat_credit_mountain:
       path: 09_environmental_mitigation.environmental_mitigation.habitat_credit_cost_per_credit.mountain
       unit: $/credit (2025$)
@@ -393,6 +652,7 @@ hard_costs:
       citation: Madsen2010BiodiversityMarkets; GAO2024ConservationMitigation
       yaml_file: 09_environmental_mitigation.yaml
       basis: Derived
+      dollar_year: 2010
     base_cost_oh_forested:
       path: 09_environmental_mitigation.environmental_mitigation.base_mitigation_cost_per_acre.overhead.forested
       unit: $/acre (2025$)
@@ -862,6 +1122,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
+      dollar_year: 2024
     voll_tier_2_1_to_2h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
       unit: $/MWh (2025$)
@@ -869,6 +1130,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
+      dollar_year: 2024
     voll_tier_3_2_to_4h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
       unit: $/MWh (2025$)
@@ -876,6 +1138,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
+      dollar_year: 2024
     voll_tier_4_4_to_8h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
       unit: $/MWh (2025$)
@@ -883,6 +1146,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
+      dollar_year: 2024
     voll_tier_5_8_to_16h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
       unit: $/MWh (2025$)
@@ -890,13 +1154,15 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
+      dollar_year: 2024
     voll_tier_6_16_to_32h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh
       unit: $/MWh (2025$)
-      source: Extrapolated via V(t) = 32210/t + 3339 + 492t
+      source: Fitted a0/h + a1 + a2*h to the five survey tiers
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Derived
+      dollar_year: 2024
     voll_tier_7_32_to_64h:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh
       unit: $/MWh (2025$)
@@ -904,6 +1170,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Derived
+      dollar_year: 2024
     voll_tier_8_64h_to_7d:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh
       unit: $/MWh (2025$)
@@ -911,6 +1178,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Derived
+      dollar_year: 2024
     voll_tier_9_7d_to_30d:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh
       unit: $/MWh (2025$)
@@ -918,6 +1186,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Derived
+      dollar_year: 2024
     voll_tier_10_over_30d:
       path: 07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh
       unit: $/MWh (2025$)
@@ -925,6 +1194,7 @@ risk_costs:
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Derived
+      dollar_year: 2024
 emissions_costs:
   social_costs:
     co2_cost_per_kg:
