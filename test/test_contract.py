@@ -185,6 +185,8 @@ def test_calculator_info_and_provenance():
     assert provenance["inputs_id"] == "sha256:" + hashlib.sha256(
         canonical_dumps(inputs).encode("utf-8")
     ).hexdigest()
+    assert info["results_schema"] == 2
+    assert provenance["results_schema"] == 2
 
 
 def test_data_releases_are_the_edition_titles():

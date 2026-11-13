@@ -23,6 +23,7 @@ _BASE_YEAR_PATH = "03_financing.financial.base_year"
 _FEE_SIMPLE_REJECTED_MESSAGE = (
     "fee_simple is no longer an agreement type. Choose another agreement."
 )
+RESULTS_SCHEMA = 2
 
 
 def _encode(value: Any) -> Any:
@@ -93,6 +94,7 @@ def calculator_info() -> dict:
         "commit": commit,
         "defaults_id": get_defaults_id(),
         "data_releases": data_releases(),
+        "results_schema": RESULTS_SCHEMA,
     }
 
 

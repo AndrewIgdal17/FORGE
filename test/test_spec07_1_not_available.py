@@ -48,3 +48,39 @@ def test_acceptance_9_measurement_rules_are_invalid_inputs():
         assert "market_measurements" in str(calculated.value)
     missing = forge.missing_required_inputs({})
     assert not any("market_measurements" in item["path"] for item in missing)
+
+
+def test_acceptance_14_results_schema_is_2():
+    info = forge.calculator_info()
+    assert info["results_schema"] == 2
+
+
+def test_not_available_item_keeps_null_dollars():
+    from forge.scripts.io.taxonomy_adapters import adapt_all_results
+    congestion = {
+        "availability": {
+            "congestion_benefit": {
+                "available": False,
+                "missing_inputs": (
+                    "01_project_technical_details.market_measurements.congestion_spread_per_mwh",
+                ),
+            }
+        },
+        "congestion_benefit_pv": None,
+        "congestion_benefit_nominal": None,
+        "congestion_benefit_annual": None,
+        "congestion_benefit_pv_wacc": None,
+        "delivered_benefit_pv": 0.0,
+        "delivered_benefit_nominal": 0.0,
+        "delivered_benefit_annual": 0.0,
+        "delivered_benefit_pv_wacc": 0.0,
+        "streams": {
+            "congestion_benefit": None,
+            "delivered_energy_benefit": [0.0],
+        },
+    }
+    items = adapt_all_results({"benefits": {"congestion": congestion}, "costs": {}})
+    benefit = next(item for item in items if item.taxonomy_id == "congestion_benefit")
+    assert benefit.available is False
+    assert benefit.value_pv is None
+    assert benefit.value_nominal is None

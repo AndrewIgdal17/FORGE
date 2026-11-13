@@ -10,7 +10,7 @@ No calculation module is modified by this file.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal
 
 from .taxonomy import TAXONOMY
@@ -33,11 +33,13 @@ class DetailRow:
 class TaxonomyResult:
     taxonomy_id: str
     value_pv: float | None
-    value_nominal: float
+    value_nominal: float | None
     value_annual: float | None = None
     detail: tuple[DetailRow, ...] | None = None
     value_pv_wacc: float | None = None
     stream: list[float] | None = None
+    available: bool = True
+    missing_inputs: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -45,12 +47,33 @@ class TaxonomyResult:
 # ---------------------------------------------------------------------------
 
 
-def _safe(d: dict, key: str) -> float:
-    """Return numeric value from dict, treating None/empty/missing as 0."""
-    v = d.get(key, 0)
-    if v is None or v == "":
+def _safe(d: dict, key: str) -> float | None:
+    """Missing key or empty string is 0.0. A present None stays None."""
+    if key not in d:
+        return 0.0
+    v = d[key]
+    if v is None:
+        return None
+    if v == "":
         return 0.0
     return float(v)
+
+
+def _copy_availability(module: dict, items: list[TaxonomyResult]) -> list[TaxonomyResult]:
+    """Copy module availability onto each item the adapter emits."""
+    availability = module.get("availability") or {}
+    stamped: list[TaxonomyResult] = []
+    for item in items:
+        block = availability.get(item.taxonomy_id) or {}
+        missing = block.get("missing_inputs") or ()
+        stamped.append(
+            replace(
+                item,
+                available=block["available"] if "available" in block else True,
+                missing_inputs=tuple(missing),
+            )
+        )
+    return stamped
 
 
 # ---------------------------------------------------------------------------
@@ -78,11 +101,11 @@ def adapt_build(build: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
         )
 
-    return [
+    return _copy_availability(build, [
         _item("build_conductor", "conductor"),
         _item("build_structure", "structure"),
         _item("build_converter", "converter"),
-    ]
+    ])
 
 
 def adapt_row(row: dict) -> list[TaxonomyResult]:
@@ -105,11 +128,11 @@ def adapt_row(row: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
         )
 
-    return [
+    return _copy_availability(row, [
         _item("row_acquisition", "acquisition_pv", "acquisition_nominal"),
         _item("row_holding", "row_holding_pv", "holding_nominal"),
         _item("row_rent", "row_rent_pv", "row_rent_nominal"),
-    ]
+    ])
 
 
 def adapt_environmental(env: dict) -> list[TaxonomyResult]:
@@ -138,7 +161,7 @@ def adapt_environmental(env: dict) -> list[TaxonomyResult]:
                 value_nominal=credits_nom,
             ),
         )
-    return [
+    return _copy_availability(env, [
         TaxonomyResult(
             "env_mitigation",
             value_pv=_safe(env, "total_pv"),
@@ -147,7 +170,7 @@ def adapt_environmental(env: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
             detail=detail,
         ),
-    ]
+    ])
 
 
 def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
@@ -170,7 +193,7 @@ def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
             detail_rows.append(
                 DetailRow("component", comp, value_pv=pv, value_nominal=nom, value_annual=ann)
             )
-    return [
+    return _copy_availability(oandm, [
         TaxonomyResult(
             "oandm",
             value_pv=_safe(oandm, "total_pv"),
@@ -180,7 +203,7 @@ def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
             detail=tuple(detail_rows) if detail_rows else None,
         ),
-    ]
+    ])
 
 
 def adapt_insurance(insurance: dict) -> list[TaxonomyResult]:
@@ -189,7 +212,7 @@ def adapt_insurance(insurance: dict) -> list[TaxonomyResult]:
         return []
     streams = insurance.get("streams") or {}
     stream = streams.get("insurance")
-    return [
+    return _copy_availability(insurance, [
         TaxonomyResult(
             "insurance",
             value_pv=_safe(insurance, "pv_total"),
@@ -198,7 +221,7 @@ def adapt_insurance(insurance: dict) -> list[TaxonomyResult]:
             value_pv_wacc=_safe(insurance, "pv_total_wacc"),
             stream=list(stream) if stream is not None else None,
         ),
-    ]
+    ])
 
 
 def adapt_line_loss(line_loss: dict) -> list[TaxonomyResult]:
@@ -218,10 +241,10 @@ def adapt_line_loss(line_loss: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
         )
 
-    return [
+    return _copy_availability(line_loss, [
         _item("line_loss_conductor", "line_cost_pv", "line_nominal_total", "line_annual_cost"),
         _item("line_loss_converter", "converter_cost_pv", "converter_nominal_total", "converter_annual_cost"),
-    ]
+    ])
 
 
 def adapt_delay(delay: dict) -> list[TaxonomyResult]:
@@ -230,7 +253,7 @@ def adapt_delay(delay: dict) -> list[TaxonomyResult]:
         return []
     streams = delay.get("streams") or {}
     stream = streams.get("base_delay")
-    return [
+    return _copy_availability(delay, [
         TaxonomyResult(
             "base_delay",
             value_pv=_safe(delay, "total_pv"),
@@ -238,7 +261,7 @@ def adapt_delay(delay: dict) -> list[TaxonomyResult]:
             value_pv_wacc=_safe(delay, "total_pv_wacc"),
             stream=list(stream) if stream is not None else None,
         ),
-    ]
+    ])
 
 
 def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
@@ -247,7 +270,7 @@ def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
         return []
     streams = wildfire.get("streams") or {}
     stream = streams.get("wildfire_eac")
-    return [
+    return _copy_availability(wildfire, [
         TaxonomyResult(
             "wildfire_eac",
             value_pv=_safe(wildfire, "pv_cost"),
@@ -256,7 +279,7 @@ def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
             value_pv_wacc=None,
             stream=list(stream) if stream is not None else None,
         ),
-    ]
+    ])
 
 
 def adapt_outage(outage: dict) -> list[TaxonomyResult]:
@@ -275,7 +298,7 @@ def adapt_outage(outage: dict) -> list[TaxonomyResult]:
         detail_rows.append(
             DetailRow("component", "redispatch_per_event", value_pv=0.0, value_annual=rd)
         )
-    return [
+    return _copy_availability(outage, [
         TaxonomyResult(
             "outage_eac",
             value_pv=_safe(outage, "pv_cost"),
@@ -285,7 +308,7 @@ def adapt_outage(outage: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
             detail=tuple(detail_rows) if detail_rows else None,
         ),
-    ]
+    ])
 
 
 def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
@@ -304,7 +327,7 @@ def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
         for p in pollutants
         if _safe(emissions, f"{p}_cost_pv") or _safe(emissions, f"{p}_cost_nominal")
     )
-    return [
+    return _copy_availability(emissions, [
         TaxonomyResult(
             "emissions_comp",
             value_pv=_safe(emissions, "total_pv"),
@@ -314,7 +337,7 @@ def adapt_emissions_comp(emissions: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
             detail=detail_rows if detail_rows else None,
         ),
-    ]
+    ])
 
 
 def adapt_avoided_emissions(avoided: dict) -> list[TaxonomyResult]:
@@ -323,7 +346,7 @@ def adapt_avoided_emissions(avoided: dict) -> list[TaxonomyResult]:
         return []
     streams = avoided.get("streams") or {}
     stream = streams.get("avoided_emissions_benefit")
-    return [
+    return _copy_availability(avoided, [
         TaxonomyResult(
             "avoided_emissions_benefit",
             value_pv=_safe(avoided, "avoided_emissions_pv"),
@@ -331,7 +354,7 @@ def adapt_avoided_emissions(avoided: dict) -> list[TaxonomyResult]:
             value_pv_wacc=None,
             stream=list(stream) if stream is not None else None,
         ),
-    ]
+    ])
 
 
 def adapt_congestion(cc: dict) -> list[TaxonomyResult]:
@@ -354,11 +377,11 @@ def adapt_congestion(cc: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
         )
 
-    return [
+    return _copy_availability(cc, [
         _item("congestion_benefit", "congestion_benefit_pv", "congestion_benefit_nominal", "congestion_benefit_annual"),
         _item("delivered_energy_benefit", "delivered_benefit_pv", "delivered_benefit_nominal", "delivered_benefit_annual"),
         _item("capacity_value_benefit", "capacity_value_pv", "capacity_value_nominal", "capacity_value_annual"),
-    ]
+    ])
 
 
 def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
@@ -372,7 +395,7 @@ def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
         return []
     streams = capital_recovery.get("streams") or {}
     stream = streams.get("capital_recovery")
-    return [
+    return _copy_availability(capital_recovery, [
         TaxonomyResult(
             "capital_recovery",
             value_pv=None,
@@ -381,7 +404,7 @@ def adapt_capital_recovery(capital_recovery: dict) -> list[TaxonomyResult]:
             value_pv_wacc=_safe(capital_recovery, "capital_recovery_pv_wacc"),
             stream=list(stream) if stream is not None else None,
         ),
-    ]
+    ])
 
 
 # ---------------------------------------------------------------------------
@@ -505,6 +528,8 @@ def taxonomy_results_to_json_list(results: list[TaxonomyResult]) -> list[dict]:
     return [
         {
             "taxonomy_id": r.taxonomy_id,
+            "available": r.available,
+            "missing_inputs": list(r.missing_inputs),
             "value_pv": r.value_pv,
             "value_nominal": r.value_nominal,
             "value_annual": r.value_annual,

@@ -457,6 +457,7 @@ def _run_once(
         csv_equivalent = None
         summary_override = None
         taxonomy_results_json = None
+        availability_by_id = None
         try:
             from forge.scripts.io.taxonomy_adapters import (
                 adapt_all_results,
@@ -466,6 +467,13 @@ def _run_once(
 
             taxonomy_results = adapt_all_results(json_results)
             taxonomy_results_json = taxonomy_results_to_json_list(taxonomy_results)
+            availability_by_id = {
+                item.taxonomy_id: {
+                    "available": item.available,
+                    "missing_inputs": list(item.missing_inputs),
+                }
+                for item in taxonomy_results
+            }
             bcr_results = compute_all_bcrs(taxonomy_results)
             csv_equivalent = build_csv_equivalent(json_results, bcr_results, bcr_results)
             summary_override = build_summary_from_csv_equivalent(csv_equivalent)
@@ -485,6 +493,8 @@ def _run_once(
             results["summary"] = summary_override
         if taxonomy_results_json is not None:
             results["taxonomy_results"] = taxonomy_results_json
+        if availability_by_id is not None:
+            results["availability"] = availability_by_id
 
         ctx = get_run_context()
         if ctx is not None and ctx.derived_parameters:
