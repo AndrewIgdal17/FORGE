@@ -10,7 +10,7 @@ from forge.emissions_data import (
     criteria_damage_2025_usd_per_kg,
     egrid_rates,
 )
-from test.spec05_project import ACRE_ZEROS, item
+from test.spec05_project import ACRE_ZEROS, item, measured, project_changes
 from test.spec07_regions import REGION_SENTINELS
 
 SUNZIA = ("SunZia_Delay2", "SunZia_Delay17")
@@ -83,37 +83,70 @@ def test_same_region_case_studies_avoid_nothing(name):
     assert avoided["rates_used"]["receiving"]["gea"] == "ERCOT"
     assert avoided["rates_used"]["receiving"]["egrid_subregion"] == "ERCT"
     assert avoided["rates_used"]["receiving"]["state"] == "TX"
-    stream = item(results, "avoided_emissions_benefit")["stream"]
-    assert stream
-    assert stream == pytest.approx([0.0] * len(stream))
+    benefit = item(results, "avoided_emissions_benefit")
+    assert benefit["available"] is False
+    assert benefit["value_pv"] is None
+    assert benefit["stream"] is None
+    assert avoided["annual_kg_avoided"] is None
+    assert avoided["net_binding_hours"] is None
 
 
 @pytest.mark.parametrize("name", SUNZIA)
-def test_sunzia_co2e_mass_is_zero_and_so2_dollars_follow_the_state_gap(name):
+def test_sunzia_unmeasured_hours_leave_avoided_emissions_unavailable(name):
+    """Stored SunZia hours are null. Terminals stay on rates_used."""
     results = _run(name)
     avoided = results["benefits"]["avoided_emissions"]
-    delivered = results["benefits"]["congestion"]["energy_delivered_annual_mwh_yr"]
-    co2e_kg = avoided["annual_kg_avoided"]["co2e"]
-    assert co2e_kg == pytest.approx([0.0] * len(co2e_kg))
-    assert delivered > 0
+    assert avoided["rates_used"]["sending"]["source"] == "margin"
+    assert avoided["rates_used"]["sending"] == {
+        "gea": "WestConnect_South",
+        "egrid_subregion": "AZNM",
+        "state": "NM",
+        "source": "margin",
+    }
+    assert avoided["rates_used"]["receiving"] == SUNZIA_RECEIVING
+    assert avoided["annual_kg_avoided"] is None
+    assert avoided["avoided_emissions_annual_values"] is None
+    assert avoided["net_binding_hours"] is None
+    assert isinstance(avoided["relief_mw"], (int, float))
+    benefit = item(results, "avoided_emissions_benefit")
+    assert benefit["available"] is False
+    assert benefit["value_pv"] is None
+    assert benefit["stream"] is None
+
+
+def test_sunzia_state_gap_uses_net_binding_hours():
+    """Same GEA, different states. Dollars use relief times net hours, not delivered energy."""
+    changes = project_changes(**{
+        "01_project_technical_details.timeline.project_lifetime": 1,
+        **measured(
+            congestion_spread_per_mwh=5,
+            hours_receiving_more_congested=2000,
+            hours_sending_more_congested=0,
+            receiving_energy_value_per_mwh=30,
+        ),
+    })
+    results = forge.run_calculation(forge.resolve_inputs(changes))
+    avoided = results["benefits"]["avoided_emissions"]
+    relief = results["derived_parameters"]["relief_mw"]
+    assert relief == 500
+    assert avoided["relief_mw"] == 500
+    assert avoided["net_binding_hours"] == 2000
+    factor = 500 * 2000
+    assert avoided["annual_kg_avoided"]["co2e"] == pytest.approx([0.0])
+    assert avoided["annual_kg_avoided"]["so2"] == pytest.approx([0.0])
+    year = calendar_year(results["derived_parameters"]["t_cod"])
     so2_rate, nox_rate = egrid_rates("AZNM")
-    t_cod = results["derived_parameters"]["t_cod"]
-    lifetime = len(avoided["avoided_emissions_annual_values"])
-    for index, dollars in enumerate(avoided["avoided_emissions_annual_values"]):
-        year = calendar_year(t_cod + index)
-        c_az = criteria_damage_2025_usd_per_kg("AZ", "so2", year)
-        c_nm = criteria_damage_2025_usd_per_kg("NM", "so2", year)
-        so2_dollars = delivered * so2_rate * (c_az - c_nm)
-        c_az_nox = criteria_damage_2025_usd_per_kg("AZ", "nox", year)
-        c_nm_nox = criteria_damage_2025_usd_per_kg("NM", "nox", year)
-        nox_dollars = delivered * nox_rate * (c_az_nox - c_nm_nox)
-        # CO2e mass is zero, so the year's dollars are the two criteria terms.
-        # The SO2 term is delivered energy times the shared AZNM rate times
-        # (c_AZ - c_NM). Subtracting the NOx term from the year's dollars
-        # leaves a few billionths from float cancellation.
-        assert dollars - nox_dollars == pytest.approx(so2_dollars, abs=1e-4)
-    assert lifetime == len(co2e_kg)
-    assert calendar_year(t_cod) >= 2025
+    dollars = avoided["avoided_emissions_annual_values"][0]
+    so2_dollars = factor * so2_rate * (
+        criteria_damage_2025_usd_per_kg("AZ", "so2", year)
+        - criteria_damage_2025_usd_per_kg("NM", "so2", year)
+    )
+    nox_dollars = factor * nox_rate * (
+        criteria_damage_2025_usd_per_kg("AZ", "nox", year)
+        - criteria_damage_2025_usd_per_kg("NM", "nox", year)
+    )
+    assert dollars - nox_dollars == pytest.approx(so2_dollars, abs=1e-4)
+    assert results["derived_parameters"]["energy_delivered_annual_mwh_yr"] != factor
 
 
 def test_unknown_receiving_gea_has_no_cambium_row():

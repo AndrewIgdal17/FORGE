@@ -4,7 +4,7 @@ import pytest
 from forge.scripts.io.taxonomy import TAXONOMY
 from forge.scripts.utils.streams import pv
 
-from test.spec05_project import item, project_changes, run
+from test.spec05_project import item, measured, project_changes, run
 
 EXT = ("wildfire_eac", "outage_eac", "emissions_comp", "avoided_emissions_benefit")
 _SOURCE = "01_project_technical_details.project.sending_source"
@@ -23,6 +23,7 @@ def test_avoided_emissions_survive():
         _RECV + "gea": "CAISO",
         _RECV + "egrid_subregion": "CAMX",
         _RECV + "state": "CA",
+        **measured(),
     })
     results = run(changes)
     mass = results["benefits"]["avoided_emissions"]["annual_kg_avoided"]["co2e"]
@@ -41,7 +42,7 @@ def test_avoided_emissions_zero_when_rates_equal():
         _RECV + "egrid_subregion": "ERCT",
         _RECV + "state": "TX",
     }
-    results = run(project_changes(**same))
+    results = run(project_changes(**same, **measured()))
     benefit = item(results, "avoided_emissions_benefit")
     assert benefit["value_pv"] == 0.0
     assert benefit["stream"] == pytest.approx([0.0] * len(benefit["stream"]))
@@ -68,9 +69,9 @@ def test_externalities_societal_only():
     for tid in EXT:
         i = item(r, tid)
         assert i["value_pv_wacc"] is None
-        # An unmeasured margin line has no reverse-hour count, so loss
-        # compensation is not available and has no stream to discount.
-        if tid == "emissions_comp":
+        # An unmeasured margin line has no hour counts, so loss compensation
+        # and avoided emissions are not available and have no stream to discount.
+        if tid in ("emissions_comp", "avoided_emissions_benefit"):
             assert i["available"] is False
             assert i["value_pv"] is None
             assert i["stream"] is None
