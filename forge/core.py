@@ -627,7 +627,9 @@ def _delay_comparison(
     on_time_avoid = _societal_value_pv(ot, "avoided_emissions_benefit")
     cong = None if entered_cong is None or on_time_cong is None else on_time_cong - entered_cong
     avoid = None if entered_avoid is None or on_time_avoid is None else on_time_avoid - entered_avoid
-    delta_nb = ot["bcr"]["net_benefit_pv"] - results["bcr"]["net_benefit_pv"]
+    on_time_nb = ot["bcr"]["net_benefit_pv"]
+    entered_nb = results["bcr"]["net_benefit_pv"]
+    delta_nb = None if on_time_nb is None or entered_nb is None else on_time_nb - entered_nb
     return _delay_block(
         baseline=baseline,
         delay_years=delay_years,
