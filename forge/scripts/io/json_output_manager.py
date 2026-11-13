@@ -11,6 +11,38 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 
+def _stored(mapping: dict, key: str, default=0):
+    """Missing key uses default. A present None stays None."""
+    if key not in mapping:
+        return default
+    return mapping[key]
+
+
+def _sum_stored(*values):
+    """Sum numbers. One None addend makes the sum None."""
+    total = 0
+    for value in values:
+        if value is None:
+            return None
+        total += value
+    return total
+
+
+def _acquisition_or_total(row: dict, acquisition_key: str, total_key: str):
+    """Use a positive acquisition figure, else the module total.
+
+    A present None stays None. A missing acquisition key, or a stored 0,
+    falls through to the total key. A missing total is 0.
+    """
+    if acquisition_key in row:
+        value = row[acquisition_key]
+        if value is None:
+            return None
+        if value:
+            return value
+    return _stored(row, total_key, 0)
+
+
 def _require_when_reconductoring(
     project: Dict[str, Any], key: str, is_reconductoring_or_rebuild: bool, irrelevant_default: Any
 ) -> Any:
@@ -256,115 +288,99 @@ class JSONOutputManager:
     def calculate_summary(self):
         """
         Calculate summary totals from all cost and benefit modules.
+
+        A missing component key is 0. A present None stays None and is not
+        added to a number. On the JSON-input path, summary_override from
+        build_summary_from_csv_equivalent() replaces this fallback.
         """
-        # Capital costs
         build = self.costs.get("build", {})
         row = self.costs.get("row", {})
         env = self.costs.get("environmental", {})
-
-        # Operational costs
         insurance = self.costs.get("insurance", {})
         oandm = self.costs.get("oandm", {})
         line_loss = self.costs.get("line_loss", {})
         emissions = self.costs.get("emissions", {})
-
-        # Risk costs
         wildfire = self.costs.get("wildfire", {})
         outage = self.costs.get("outage", {})
-
-        # Delay costs
         delay = self.costs.get("delay", {})
 
+        total_capital_nominal = _sum_stored(
+            _stored(build, "total_nominal"),
+            _acquisition_or_total(row, "acquisition_nominal_total", "total_nominal"),
+            _stored(env, "total_nominal"),
+        )
+        total_capital_afudc = _sum_stored(
+            _stored(build, "total_afudc"),
+            _stored(row, "total_afudc"),
+            _stored(env, "total_afudc"),
+        )
+        total_capital_pv = _sum_stored(
+            _stored(build, "total_pv"),
+            _acquisition_or_total(row, "acquisition_pv", "total_pv"),
+            _stored(env, "total_pv"),
+        )
+        total_operational_nominal = _sum_stored(
+            _stored(insurance, "nominal_lifetime_cost"),
+            _stored(oandm, "total_nominal"),
+            _stored(row, "row_rent_nominal"),
+        )
+        total_operational_pv = _sum_stored(
+            _stored(insurance, "pv_total"),
+            _stored(oandm, "total_pv"),
+            _stored(row, "row_rent_pv"),
+        )
+        total_energy_emissions_nominal = _sum_stored(
+            _stored(line_loss, "total_nominal"),
+            _stored(emissions, "total_nominal"),
+        )
+        total_energy_emissions_pv = _sum_stored(
+            _stored(line_loss, "total_pv"),
+            _stored(emissions, "total_pv"),
+        )
+        total_risk_nominal = _sum_stored(
+            _stored(wildfire, "nominal_total"),
+            _stored(outage, "nominal_total"),
+        )
+        total_risk_pv = _sum_stored(
+            _stored(wildfire, "pv_cost"),
+            _stored(outage, "pv_cost"),
+        )
+        delay_nominal = _stored(delay, "total_nominal")
+        delay_afudc = _stored(delay, "total_afudc")
+        delay_pv = _stored(delay, "total_pv")
+
         self.summary = {
-            # Capital costs (ROW = acquisition + holding only; rent is operational)
-            "total_capital_nominal": (
-                build.get("total_nominal", 0)
-                + (row.get("acquisition_nominal_total", 0) or row.get("total_nominal", 0))
-                + env.get("total_nominal", 0)
+            "total_capital_nominal": total_capital_nominal,
+            "total_capital_afudc": total_capital_afudc,
+            "total_capital_pv": total_capital_pv,
+            "total_operational_nominal": total_operational_nominal,
+            "total_operational_pv": total_operational_pv,
+            "total_energy_emissions_nominal": total_energy_emissions_nominal,
+            "total_energy_emissions_pv": total_energy_emissions_pv,
+            "total_risk_nominal": total_risk_nominal,
+            "total_risk_pv": total_risk_pv,
+            "grand_total_cost_nominal": _sum_stored(
+                total_capital_nominal,
+                total_operational_nominal,
+                total_risk_nominal,
+                delay_nominal,
+                total_energy_emissions_nominal,
             ),
-            "total_capital_afudc": (
-                build.get("total_afudc", 0)
-                + row.get("total_afudc", 0)
-                + env.get("total_afudc", 0)
+            "grand_total_cost_afudc": _sum_stored(total_capital_afudc, delay_afudc),
+            "grand_total_cost_pv": _sum_stored(
+                total_capital_pv,
+                total_operational_pv,
+                total_risk_pv,
+                delay_pv,
+                total_energy_emissions_pv,
             ),
-            "total_capital_pv": (
-                build.get("total_pv", 0)
-                + (row.get("acquisition_pv", 0) or row.get("total_pv", 0))
-                + env.get("total_pv", 0)
+            "reporting_category_hard_pv": total_capital_pv,
+            "reporting_category_soft_pv": _sum_stored(
+                delay_pv, total_operational_pv, _stored(line_loss, "total_pv")
             ),
-            # Operational costs (O&M + insurance + ROW rent; residual exceedance is in energy/emissions)
-            "total_operational_nominal": (
-                insurance.get("nominal_lifetime_cost", 0)
-                + oandm.get("total_nominal", 0)
-                + row.get("row_rent_nominal", 0)
-            ),
-            "total_operational_pv": (
-                insurance.get("pv_total", 0)
-                + oandm.get("total_pv", 0)
-                + row.get("row_rent_pv", 0)
-            ),
-            # Energy/emissions costs (line losses + loss-comp emissions + residual exceedance; residual added below)
-            "total_energy_emissions_nominal": (
-                line_loss.get("total_nominal", 0)
-                + emissions.get("total_nominal", 0)
-            ),
-            "total_energy_emissions_pv": (
-                line_loss.get("total_pv", 0)
-                + emissions.get("total_pv", 0)
-            ),
-            # Risk costs
-            "total_risk_nominal": (
-                wildfire.get("nominal_total", 0)
-                + outage.get("nominal_total", 0)
-            ),
-            "total_risk_pv": (
-                wildfire.get("pv_cost", 0)
-                + outage.get("pv_cost", 0)
-            ),
-            # Grand totals
-            "grand_total_cost_nominal": 0,  # Calculated below
-            "grand_total_cost_afudc": 0,  # Calculated below
-            "grand_total_cost_pv": 0,  # Calculated below
+            "reporting_category_risk_pv": total_risk_pv,
+            "reporting_category_emissions_pv": _stored(emissions, "total_pv"),
         }
-
-        # Calculate grand totals
-        self.summary["grand_total_cost_nominal"] = (
-            self.summary["total_capital_nominal"]
-            + self.summary["total_operational_nominal"]
-            + self.summary["total_risk_nominal"]
-            + delay.get("total_nominal", 0)
-            + self.summary["total_energy_emissions_nominal"]
-        )
-
-        self.summary["grand_total_cost_afudc"] = self.summary[
-            "total_capital_afudc"
-        ] + delay.get("total_afudc", 0)
-
-        self.summary["grand_total_cost_pv"] = (
-            self.summary["total_capital_pv"]
-            + self.summary["total_operational_pv"]
-            + self.summary["total_risk_pv"]
-            + delay.get("total_pv", 0)
-            + self.summary["total_energy_emissions_pv"]
-        )
-
-        # Appendix reporting categories — fallback derivation from nested dicts.
-        # On the JSON-input path, summary_override from build_summary_from_csv_equivalent()
-        # provides authoritative category values computed by calculate_costs(); this block
-        # serves as a fallback for any path that does not set summary_override.
-        _ll = self.costs.get("line_loss", {})
-        _em = self.costs.get("emissions", {})
-        _dl = self.costs.get("delay", {})
-        _delay_total_pv = _dl.get("total_pv", 0) or 0
-        _energy_line_pv = _ll.get("total_pv", 0) or 0
-        self.summary["reporting_category_hard_pv"] = self.summary["total_capital_pv"]
-        self.summary["reporting_category_soft_pv"] = (
-            _delay_total_pv + self.summary["total_operational_pv"] + _energy_line_pv
-        )
-        self.summary["reporting_category_risk_pv"] = self.summary["total_risk_pv"]
-        self.summary["reporting_category_emissions_pv"] = (
-            (_em.get("total_pv", 0) or 0)
-        )
 
     def get_json_results(self) -> Dict[str, Any]:
         """

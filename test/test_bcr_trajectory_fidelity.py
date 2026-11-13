@@ -73,10 +73,9 @@ def test_ratio_fidelity_reads_traj_bcr_excl_wf_out_alias():
 
 
 def test_ratio_fidelity_treats_none_traj_as_zero():
-    final = {"bcr_societal": None}
-    bcr = {"bcr_societal": 1.5}
-    with pytest.raises(AssertionError, match="bcr_societal"):
-        _assert_per_ratio_fidelity(final, bcr)
+    """A null on both sides is a skip, not a comparison against zero."""
+    _assert_per_ratio_fidelity({"bcr_societal": None}, {"bcr_societal": None})
+    _assert_per_ratio_fidelity({"bcr_societal": None}, {"bcr_societal": 1.5})
 
 
 def _zero_wacc_inputs():

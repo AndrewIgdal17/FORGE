@@ -1,6 +1,11 @@
+import logging
+
 import pytest
 import forge
 from forge.errors import InvalidInputs, UnknownInputPath
+from forge.scripts.calc.bcr_calculator import compute_all_bcrs, print_bcr_summary
+from forge.scripts.calc.bcr_trajectory import compute_trajectory
+from forge.scripts.io.taxonomy_adapters import TaxonomyResult
 
 SPREAD = "01_project_technical_details.market_measurements.congestion_spread_per_mwh"
 HFWD = "01_project_technical_details.market_measurements.hours_receiving_more_congested"
@@ -84,3 +89,185 @@ def test_not_available_item_keeps_null_dollars():
     assert benefit.available is False
     assert benefit.value_pv is None
     assert benefit.value_nominal is None
+
+
+# Spec table: trajectory key -> bcr.omitted source. Nine ratios and nine NPVs.
+TRAJECTORY_OMITTED = {
+    "bcr_societal": "bcr_societal",
+    "npv_societal": "net_benefit_pv",
+    "bcr_utility": "bcr_utility",
+    "npv_utility": "net_benefit_utility_pv",
+    "bcr_ratepayer": "bcr_ratepayer",
+    "npv_ratepayer": "net_benefit_ratepayer_pv",
+    "bcr_excl_avoided_emissions": "bcr_excluding_avoided_emissions",
+    "npv_excl_avoided_emissions": "net_benefit_excluding_avoided_emissions_pv",
+    "bcr_excl_emissions_costs": "bcr_excluding_emissions",
+    "npv_excl_emissions_costs": "net_benefit_excluding_emissions_pv",
+    "bcr_excl_all_emissions": "bcr_excluding_avoided_emissions_and_emissions",
+    "npv_excl_all_emissions": "net_benefit_excluding_avoided_emissions_and_emissions_pv",
+    "bcr_excl_outage": "bcr_excluding_outage_risk",
+    "npv_excl_outage": "net_benefit_excluding_outage_risk_pv",
+    "bcr_excl_wildfire": "bcr_excluding_wildfire_risk",
+    "npv_excl_wildfire": "net_benefit_excluding_wildfire_risk_pv",
+    "bcr_excl_wf_out": "bcr_excluding_wildfire_risk_and_outage_risk",
+    "npv_excl_wf_out": "net_benefit_excluding_wildfire_risk_and_outage_risk_pv",
+}
+
+CUMULATIVE_TO_BCR = {
+    "cum_C_hard": "hard_costs_pv",
+    "cum_C_soft": "soft_costs_pv",
+    "cum_C_risk": "risk_costs_pv",
+    "cum_C_emissions": "emissions_costs_pv",
+    "cum_C_total": "total_costs_pv",
+    "cum_B_remedial": "benefits_remedial_pv",
+    "cum_B_enabling": "benefits_enabling_pv",
+    "cum_B_avoided_emissions": "benefits_avoided_emissions_pv",
+    "cum_B_total": "total_benefits_pv",
+}
+
+
+def _partial_items():
+    """Avoided emissions and congestion are not available. Converter is an available 0."""
+    unavailable = ("avoided_emissions_benefit", "congestion_benefit")
+    items = [
+        TaxonomyResult(
+            taxonomy_id,
+            value_pv=None,
+            value_nominal=None,
+            value_pv_wacc=None,
+            stream=None,
+            available=False,
+        )
+        for taxonomy_id in unavailable
+    ]
+    items.append(
+        TaxonomyResult(
+            "line_loss_converter",
+            value_pv=0.0,
+            value_nominal=0.0,
+            value_pv_wacc=0.0,
+            stream=[0.0, 0.0, 0.0],
+            available=True,
+        )
+    )
+    return items
+
+
+@pytest.fixture
+def partial_items():
+    return _partial_items()
+
+
+@pytest.fixture
+def bcr(partial_items):
+    return compute_all_bcrs(partial_items)
+
+
+def test_acceptance_11_exclusion_and_perspective_sums(bcr):
+    assert "avoided_emissions_benefit" not in bcr["omitted"]["bcr_excluding_avoided_emissions"]
+    assert bcr["omitted"]["bcr_excluding_avoided_emissions"] == ["congestion_benefit"]
+    assert bcr["omitted"]["bcr_societal"] == [
+        "avoided_emissions_benefit",
+        "congestion_benefit",
+    ]
+    assert bcr["omitted"]["bcr_utility"] == []
+    assert "energy_losses_pv" not in bcr["omitted"]
+    assert bcr["energy_losses_pv"] == 0.0
+    assert bcr["benefits_remedial_pv"] is None
+    assert bcr["bcr_ratepayer"] is None or isinstance(bcr["bcr_ratepayer"], float)
+    assert bcr["bcr_ratepayer"] is None
+    assert bcr["bcr_utility"] is not None
+
+
+def test_energy_losses_keep_available_zero_when_conductor_is_unavailable():
+    bcr = compute_all_bcrs([
+        TaxonomyResult(
+            "line_loss_conductor",
+            value_pv=None,
+            value_nominal=None,
+            value_pv_wacc=None,
+            available=False,
+        ),
+        TaxonomyResult(
+            "line_loss_converter",
+            value_pv=0.0,
+            value_nominal=0.0,
+            value_pv_wacc=0.0,
+            available=True,
+        ),
+    ])
+    assert bcr["energy_losses_pv"] == 0.0
+    assert bcr["conductor_loss_pv"] is None
+    assert bcr["converter_loss_pv"] == 0.0
+    assert "energy_losses_pv" not in bcr["omitted"]
+
+
+def _trajectory_inputs():
+    return {
+        "01_project_technical_details": {
+            "timeline": {
+                "delay_years": 1,
+                "construction_years": 1,
+                "project_lifetime": 1,
+            }
+        }
+    }
+
+
+def test_acceptance_12_trajectory_omitted_matches_bcr(bcr, partial_items):
+    assert len(TRAJECTORY_OMITTED) == 18
+    results = {
+        "bcr": bcr,
+        "taxonomy_results": partial_items,
+        "derived_parameters": {
+            "social_discount_rate": 0.0,
+            "wacc_real": 0.0,
+        },
+    }
+    trajectory = compute_trajectory(results, _trajectory_inputs())
+    assert isinstance(trajectory, list)
+    assert trajectory
+    assert results["trajectory_omitted"] == {
+        key: bcr["omitted"][source] for key, source in TRAJECTORY_OMITTED.items()
+    }
+    final = trajectory[-1]
+    for traj_key, bcr_key in CUMULATIVE_TO_BCR.items():
+        actual = final[traj_key]
+        expected = bcr[bcr_key]
+        if actual is not None and expected is not None:
+            assert actual == pytest.approx(expected, abs=0.01)
+    assert all(row["pv_B_remedial"] is None for row in trajectory)
+
+
+def test_print_bcr_summary_prints_not_available_for_none(caplog):
+    with caplog.at_level(logging.INFO, logger="forge.scripts.calc.bcr_calculator"):
+        print_bcr_summary({
+            "total_benefits_pv": None,
+            "total_costs_pv": None,
+            "bcr_societal": None,
+            "bcr_utility": None,
+            "bcr_ratepayer": None,
+            "net_benefit_pv": None,
+        })
+    messages = [record.message for record in caplog.records]
+    benefits = next(message for message in messages if message.startswith("  Total Benefits:"))
+    societal = next(message for message in messages if "Societal BCR:" in message)
+    net = next(message for message in messages if message.startswith("  Net Benefit (PV):"))
+    assert "not available" in benefits and "$" not in benefits
+    assert "not available" in societal and "0.000" not in societal
+    assert "not available" in net and "$" not in net
+
+
+def test_calculate_summary_does_not_add_none():
+    from forge.scripts.io.json_output_manager import JSONOutputManager
+
+    manager = JSONOutputManager.__new__(JSONOutputManager)
+    manager.costs = {
+        "line_loss": {"total_pv": None, "total_nominal": None},
+        "emissions": {"total_pv": 0, "total_nominal": 0},
+    }
+    manager.summary = {}
+    manager.calculate_summary()
+    assert manager.summary["total_energy_emissions_pv"] is None
+    assert manager.summary["total_energy_emissions_nominal"] is None
+    assert manager.summary["total_capital_pv"] == 0

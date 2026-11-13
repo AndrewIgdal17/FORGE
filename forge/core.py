@@ -50,6 +50,13 @@ _PRELOAD_MODULES = [
 for _mod_name in _PRELOAD_MODULES:
     importlib.import_module(_mod_name)
 
+def _absent_default(mapping: dict, key: str, default=0):
+    """Missing key uses default. A present None stays None."""
+    if key not in mapping:
+        return default
+    return mapping[key]
+
+
 def build_csv_equivalent(
     json_results: dict,
     bcr_results: dict | None,
@@ -76,29 +83,32 @@ def build_csv_equivalent(
     if bcr_results:
         merged.update(bcr_results)
 
-    return {field: merged.get(field, 0) for field in BATCH_SUMMARY_FIELDS}
+    return {field: _absent_default(merged, field, 0) for field in BATCH_SUMMARY_FIELDS}
 
 
 def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
     """Create a minimal summary aligned with CSV/BCR totals and appendix categories."""
+    def field(key: str):
+        return _absent_default(csv_equivalent, key, 0)
+
     return {
         # Pipeline groupings (cost/benefit category subtotals for the summary dict)
-        "total_capital_pv": csv_equivalent.get("capital_costs_pv", 0),
-        "total_operational_pv": csv_equivalent.get("operational_costs_pv", 0),
-        "total_energy_emissions_pv": csv_equivalent.get("energy_emissions_costs_pv", 0),
-        "total_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
-        "total_delay_pv": csv_equivalent.get("delay_costs_pv", 0),
-        "total_costs_pv": csv_equivalent.get("total_costs_pv", 0),
-        "total_benefits_pv": csv_equivalent.get("total_benefits_pv", 0),
+        "total_capital_pv": field("capital_costs_pv"),
+        "total_operational_pv": field("operational_costs_pv"),
+        "total_energy_emissions_pv": field("energy_emissions_costs_pv"),
+        "total_risk_pv": field("risk_costs_pv"),
+        "total_delay_pv": field("delay_costs_pv"),
+        "total_costs_pv": field("total_costs_pv"),
+        "total_benefits_pv": field("total_benefits_pv"),
         # Appendix-aligned cost categories (C_hard + C_soft + C_risk + C_emissions)
-        "reporting_category_hard_pv": csv_equivalent.get("hard_costs_pv", 0),
-        "reporting_category_soft_pv": csv_equivalent.get("soft_costs_pv", 0),
-        "reporting_category_risk_pv": csv_equivalent.get("risk_costs_pv", 0),
-        "reporting_category_emissions_pv": csv_equivalent.get("emissions_costs_pv", 0),
-        "displacement_avoided_benefit_pv": csv_equivalent.get("displacement_avoided_benefit_pv", 0),
+        "reporting_category_hard_pv": field("hard_costs_pv"),
+        "reporting_category_soft_pv": field("soft_costs_pv"),
+        "reporting_category_risk_pv": field("risk_costs_pv"),
+        "reporting_category_emissions_pv": field("emissions_costs_pv"),
+        "displacement_avoided_benefit_pv": field("displacement_avoided_benefit_pv"),
         # Appendix-aligned benefit categories (B_remedial + B_enabling)
-        "benefits_remedial_pv": csv_equivalent.get("benefits_remedial_pv", 0),
-        "benefits_enabling_pv": csv_equivalent.get("benefits_enabling_pv", 0),
+        "benefits_remedial_pv": field("benefits_remedial_pv"),
+        "benefits_enabling_pv": field("benefits_enabling_pv"),
     }
 
 

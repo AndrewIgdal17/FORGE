@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from typing import Dict, Tuple
 
 from forge.scripts.io.taxonomy import TAXONOMY, ALL_BCR_DEFINITIONS, get_excluded_taxonomy_ids
@@ -119,6 +120,13 @@ _BCR_OUTPUT_KEYS = frozenset({
     "capital_recovery_pv_wacc",
 })
 
+_BUILD_IDS = frozenset({"build_conductor", "build_structure", "build_converter"})
+_ROW_CAPITAL_IDS = frozenset({"row_acquisition", "row_holding"})
+_LINE_LOSS_IDS = frozenset({"line_loss_conductor", "line_loss_converter"})
+# Flat-key sums add these directly. A null on one of them has to be bridged
+# so that call returns; the sums below then apply the availability rule.
+_BRIDGE_IDS = _BUILD_IDS | _ROW_CAPITAL_IDS | _LINE_LOSS_IDS
+
 def _excl_output_suffix(exclude_groups: frozenset[str]) -> str:
     """Generate the legacy output key suffix for an exclusion variant."""
     parts = [_GROUP_TO_SUFFIX[g] for g in _EXCL_KEY_ORDER if g in exclude_groups]
@@ -132,66 +140,119 @@ def _excl_output_suffix(exclude_groups: frozenset[str]) -> str:
 def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     """Compute all BCR metrics from taxonomy-tagged results.
 
-    Returns a flat dict with 102 keys matching the legacy output format:
-    individual item PVs, category subtotals, BCR ratios, net benefits,
-    and total_costs_excluding variants.
+    Sums skip items with ``available is False``. A sum is null when every
+    present item in that set is not available. ``omitted`` names those ids
+    for every key except the item keys in ``_BCR_OUTPUT_KEYS``.
     """
     by_id: dict[str, TaxonomyResult] = {r.taxonomy_id: r for r in results}
 
-    def _sum_pv(ids: frozenset[str]) -> float:
-        return sum(by_id[tid].value_pv for tid in ids if tid in by_id)
-
-    def _sum_wacc(ids: frozenset[str]) -> float:
+    def _sum_attr(ids: frozenset[str] | set[str], attr: str, *, wacc: bool = False):
+        present = [by_id[tid] for tid in ids if tid in by_id]
+        if not present:
+            return 0.0
+        available = [row for row in present if row.available]
+        if not available:
+            return None
         total = 0.0
-        for tid in ids:
-            result = by_id.get(tid)
-            if result is None:
-                continue
-            if result.value_pv_wacc is None:
-                raise ValueError(f"{tid} has no WACC present value")
-            total += result.value_pv_wacc
+        for row in available:
+            value = getattr(row, attr)
+            if wacc and value is None:
+                raise ValueError(f"{row.taxonomy_id} has no WACC present value")
+            total += value
         return total
 
-    def _sum_nom(ids: frozenset[str]) -> float:
-        return sum(by_id[tid].value_nominal for tid in ids if tid in by_id)
+    def _sum_pv(ids: frozenset[str] | set[str]):
+        return _sum_attr(ids, "value_pv")
 
-    # Individual item keys (filtered to legacy BCR output set)
-    flat = taxonomy_results_to_flat_keys(results)
-    out = {k: v for k, v in flat.items() if k in _BCR_OUTPUT_KEYS}
-    # energy_losses_nominal is not in legacy BCR output but is needed by csv_equivalent
-    out["energy_losses_nominal"] = flat.get("energy_losses_nominal", 0)
+    def _sum_wacc(ids: frozenset[str] | set[str]):
+        return _sum_attr(ids, "value_pv_wacc", wacc=True)
 
-    # Category subtotals
+    def _sum_nom(ids: frozenset[str] | set[str]):
+        return _sum_attr(ids, "value_nominal")
+
+    def _omitted(ids: frozenset[str] | set[str]) -> list[str]:
+        return sorted(
+            tid for tid in ids
+            if tid in by_id and by_id[tid].available is False
+        )
+
+    def _ratio(numerator, denominator):
+        if numerator is None or denominator is None:
+            return None
+        return safe_divide(numerator, denominator)
+
+    def _net(numerator, denominator):
+        if numerator is None or denominator is None:
+            return None
+        return numerator - denominator
+
+    bridged: list[TaxonomyResult] = []
+    for row in results:
+        if row.taxonomy_id in _BRIDGE_IDS and (
+            row.value_pv is None or row.value_nominal is None
+        ):
+            bridged.append(replace(
+                row,
+                value_pv=0.0 if row.value_pv is None else row.value_pv,
+                value_nominal=0.0 if row.value_nominal is None else row.value_nominal,
+            ))
+        else:
+            bridged.append(row)
+    flat = taxonomy_results_to_flat_keys(bridged)
+    out: dict = {k: v for k, v in flat.items() if k in _BCR_OUTPUT_KEYS}
+    components: dict[str, frozenset[str] | set[str]] = {}
+
+    def put(key: str, value, ids: frozenset[str] | set[str]) -> None:
+        out[key] = value
+        if key not in _BCR_OUTPUT_KEYS:
+            components[key] = ids
+
+    # Aggregate item keys follow the same sum rule and stay out of omitted.
+    out["build_cost_pv"] = _sum_pv(_BUILD_IDS)
+    out["row_cost_pv"] = _sum_pv(_ROW_CAPITAL_IDS)
+    out["acquisition_pv"] = out["row_cost_pv"]
+    out["acquisition_nominal_total"] = _sum_nom(_ROW_CAPITAL_IDS)
+    out["energy_losses_pv"] = _sum_pv(_LINE_LOSS_IDS)
+    out["conductor_loss_pv"] = _sum_pv(frozenset({"line_loss_conductor"}))
+    out["converter_loss_pv"] = _sum_pv(frozenset({"line_loss_converter"}))
+    put("energy_losses_nominal", _sum_nom(_LINE_LOSS_IDS), _LINE_LOSS_IDS)
+
     total_costs_pv = _sum_pv(_ALL_COST_IDS)
     total_costs_nominal = _sum_nom(_ALL_COST_IDS)
     total_benefits_pv = _sum_pv(_ALL_BENEFIT_IDS)
     total_benefits_nominal = _sum_nom(_ALL_BENEFIT_IDS)
+    societal_ids = _ALL_BENEFIT_IDS | _ALL_COST_IDS
 
-    out.update({
-        "total_costs_pv": total_costs_pv,
-        "total_costs_nominal": total_costs_nominal,
-        "total_benefits_pv": total_benefits_pv,
-        "total_benefits_nominal": total_benefits_nominal,
-        "hard_costs_pv": _sum_pv(_HARD_IDS),
-        "soft_costs_pv": _sum_pv(_SOFT_IDS),
-        "risk_costs_pv": _sum_pv(_RISK_IDS),
-        "risk_costs_nominal": _sum_nom(_RISK_IDS),
-        "emissions_costs_pv": _sum_pv(_EMISSIONS_IDS),
-        "capital_costs_pv": _sum_pv(_HARD_IDS),
-        "capital_costs_nominal": _sum_nom(_HARD_IDS),
-        "operational_costs_pv": _sum_pv(_OPERATIONAL_IDS),
-        "operational_costs_nominal": _sum_nom(_OPERATIONAL_IDS),
-        "delay_costs_pv": _sum_pv(_DELAY_IDS),
-        "delay_costs_nominal": _sum_nom(_DELAY_IDS),
-        "energy_emissions_costs_pv": _sum_pv(_ENERGY_EMISSIONS_IDS),
-        "energy_emissions_costs_nominal": _sum_nom(_ENERGY_EMISSIONS_IDS),
-        "benefits_remedial_pv": _sum_pv(_REMEDIAL_IDS),
-        "benefits_enabling_pv": _sum_pv(_ENABLING_IDS),
-        "benefits_avoided_emissions_pv": _sum_pv(_AVOIDED_EMISSIONS_IDS),
-        "line_loss_benefit_pv": 0,
-    })
+    put("total_costs_pv", total_costs_pv, _ALL_COST_IDS)
+    put("total_costs_nominal", total_costs_nominal, _ALL_COST_IDS)
+    put("total_benefits_pv", total_benefits_pv, _ALL_BENEFIT_IDS)
+    put("total_benefits_nominal", total_benefits_nominal, _ALL_BENEFIT_IDS)
+    put("hard_costs_pv", _sum_pv(_HARD_IDS), _HARD_IDS)
+    put("soft_costs_pv", _sum_pv(_SOFT_IDS), _SOFT_IDS)
+    put("risk_costs_pv", _sum_pv(_RISK_IDS), _RISK_IDS)
+    put("risk_costs_nominal", _sum_nom(_RISK_IDS), _RISK_IDS)
+    put("emissions_costs_pv", _sum_pv(_EMISSIONS_IDS), _EMISSIONS_IDS)
+    put("capital_costs_pv", _sum_pv(_HARD_IDS), _HARD_IDS)
+    put("capital_costs_nominal", _sum_nom(_HARD_IDS), _HARD_IDS)
+    put("operational_costs_pv", _sum_pv(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
+    put("operational_costs_nominal", _sum_nom(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
+    put("delay_costs_pv", _sum_pv(_DELAY_IDS), _DELAY_IDS)
+    put("delay_costs_nominal", _sum_nom(_DELAY_IDS), _DELAY_IDS)
+    put("energy_emissions_costs_pv", _sum_pv(_ENERGY_EMISSIONS_IDS), _ENERGY_EMISSIONS_IDS)
+    put(
+        "energy_emissions_costs_nominal",
+        _sum_nom(_ENERGY_EMISSIONS_IDS),
+        _ENERGY_EMISSIONS_IDS,
+    )
+    put("benefits_remedial_pv", _sum_pv(_REMEDIAL_IDS), _REMEDIAL_IDS)
+    put("benefits_enabling_pv", _sum_pv(_ENABLING_IDS), _ENABLING_IDS)
+    put(
+        "benefits_avoided_emissions_pv",
+        _sum_pv(_AVOIDED_EMISSIONS_IDS),
+        _AVOIDED_EMISSIONS_IDS,
+    )
+    put("line_loss_benefit_pv", 0, frozenset())
 
-    # BCR ratios, net benefits, total_costs_excluding variants
     for bcr_def in ALL_BCR_DEFINITIONS.values():
         excluded_ids = (
             get_excluded_taxonomy_ids(list(bcr_def.exclude_groups))
@@ -203,32 +264,40 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         # ratepayer ratios, and their subtotals, sum value_pv_wacc.
         use_wacc = bcr_def.id in ("bcr_utility", "bcr_ratepayer")
         summer = _sum_wacc if use_wacc else _sum_pv
-        numerator = summer(_NUMER_SETS[bcr_def.numerator_rule] - excluded_ids)
-        denominator = summer(_DENOM_SETS[bcr_def.denominator_rule] - excluded_ids)
-        bcr_value = safe_divide(numerator, denominator)
-        net_benefit = numerator - denominator
+        numer_ids = _NUMER_SETS[bcr_def.numerator_rule] - excluded_ids
+        denom_ids = _DENOM_SETS[bcr_def.denominator_rule] - excluded_ids
+        numerator = summer(numer_ids)
+        denominator = summer(denom_ids)
+        bcr_value = _ratio(numerator, denominator)
+        net_benefit = _net(numerator, denominator)
+        ratio_ids = numer_ids | denom_ids
 
         if bcr_def.exclude_groups:
             suffix = _excl_output_suffix(bcr_def.exclude_groups)
-            out[f"bcr_excluding_{suffix}"] = bcr_value
-            out[f"net_benefit_excluding_{suffix}_pv"] = net_benefit
-            out[f"total_costs_excluding_{suffix}_pv"] = denominator
-            out[f"total_benefits_excluding_{suffix}_pv"] = numerator
+            put(f"bcr_excluding_{suffix}", bcr_value, ratio_ids)
+            put(f"net_benefit_excluding_{suffix}_pv", net_benefit, ratio_ids)
+            put(f"total_costs_excluding_{suffix}_pv", denominator, denom_ids)
+            put(f"total_benefits_excluding_{suffix}_pv", numerator, numer_ids)
         elif bcr_def.id == "bcr_societal":
-            out["bcr_societal"] = bcr_value
-            out["net_benefit_pv"] = net_benefit
-            out["net_benefit_nominal"] = total_benefits_nominal - total_costs_nominal
+            put("bcr_societal", bcr_value, ratio_ids)
+            put("net_benefit_pv", net_benefit, ratio_ids)
+            put(
+                "net_benefit_nominal",
+                _net(total_benefits_nominal, total_costs_nominal),
+                societal_ids,
+            )
         elif bcr_def.id == "bcr_utility":
-            out["bcr_utility"] = bcr_value
-            out["net_benefit_utility_pv"] = net_benefit
-            out["utility_costs_pv"] = denominator
-            out["utility_benefits_pv"] = numerator
+            put("bcr_utility", bcr_value, ratio_ids)
+            put("net_benefit_utility_pv", net_benefit, ratio_ids)
+            put("utility_costs_pv", denominator, denom_ids)
+            put("utility_benefits_pv", numerator, numer_ids)
         elif bcr_def.id == "bcr_ratepayer":
-            out["bcr_ratepayer"] = bcr_value
-            out["net_benefit_ratepayer_pv"] = net_benefit
-            out["ratepayer_costs_pv"] = denominator
-            out["ratepayer_benefits_pv"] = numerator
+            put("bcr_ratepayer", bcr_value, ratio_ids)
+            put("net_benefit_ratepayer_pv", net_benefit, ratio_ids)
+            put("ratepayer_costs_pv", denominator, denom_ids)
+            put("ratepayer_benefits_pv", numerator, numer_ids)
 
+    out["omitted"] = {key: _omitted(components[key]) for key in components}
     return out
 
 
@@ -239,11 +308,28 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
 def print_bcr_summary(results: Dict[str, float]) -> None:
     """Print formatted BCR summary to terminal.
 
-    Args:
-        results: The 102-key dict from compute_all_bcrs().
+    A missing key prints as 0. A present None prints ``not available`` and is
+    not coerced to 0 first.
     """
-    def _g(key: str) -> float:
-        return results.get(key, 0) or 0
+    def _raw(key: str):
+        if key not in results:
+            return 0
+        return results[key]
+
+    def _money(value) -> str:
+        if value is None:
+            return "not available"
+        return f"${value:>15,.0f}"
+
+    def _bcr_text(value) -> str:
+        if value is None:
+            return "not available"
+        symbol, text = format_bcr_viability(value)
+        return f"{value:>6.3f}  {symbol} ({text})"
+
+    def _positive(key: str) -> bool:
+        value = _raw(key)
+        return value is not None and value > 0
 
     logger.info("")
     logger.info("=" * 80)
@@ -252,72 +338,67 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info("")
 
     logger.info("BENEFITS (Present Value):")
-    logger.info(f"  Congestion Reduction:        ${_g('congestion_benefit_pv'):>15,.0f}")
+    logger.info(f"  Congestion Reduction:        {_money(_raw('congestion_benefit_pv'))}")
 
-    if _g("capital_recovery_pv") > 0:
-        logger.info(f"  Capital Recovery (Rate-Based): ${_g('capital_recovery_pv'):>15,.0f}")
+    if _positive("capital_recovery_pv"):
+        logger.info(f"  Capital Recovery (Rate-Based): {_money(_raw('capital_recovery_pv'))}")
 
     logger.info("  " + "-" * 78)
-    logger.info(f"  Total Benefits:              ${_g('total_benefits_pv'):>15,.0f}")
+    logger.info(f"  Total Benefits:              {_money(_raw('total_benefits_pv'))}")
     logger.info("  (societal; excludes revenue transfer)")
     logger.info("")
 
     logger.info("COSTS (Present Value):")
     logger.info("  Capital Costs:")
-    logger.info(f"    Build:                     ${_g('build_cost_pv'):>15,.0f}")
-    logger.info(f"    Right-of-Way (acquisition): ${_g('acquisition_pv'):>15,.0f}")
-    logger.info(f"    Environmental:             ${_g('env_mitigation_pv'):>15,.0f}")
-    logger.info(f"    Subtotal:                  ${_g('capital_costs_pv'):>15,.0f}")
+    logger.info(f"    Build:                     {_money(_raw('build_cost_pv'))}")
+    logger.info(f"    Right-of-Way (acquisition): {_money(_raw('acquisition_pv'))}")
+    logger.info(f"    Environmental:             {_money(_raw('env_mitigation_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('capital_costs_pv'))}")
     logger.info("")
     logger.info("  Operational Costs:")
-    logger.info(f"    O&M:                       ${_g('oandm_pv'):>15,.0f}")
-    logger.info(f"    Insurance (operational):  ${_g('insurance_pv'):>15,.0f}")
-    if _g("row_rent_pv") > 0:
-        logger.info(f"    ROW rent (operational):    ${_g('row_rent_pv'):>15,.0f}")
-    logger.info(f"    Subtotal:                  ${_g('operational_costs_pv'):>15,.0f}")
+    logger.info(f"    O&M:                       {_money(_raw('oandm_pv'))}")
+    logger.info(f"    Insurance (operational):  {_money(_raw('insurance_pv'))}")
+    if _positive("row_rent_pv"):
+        logger.info(f"    ROW rent (operational):    {_money(_raw('row_rent_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('operational_costs_pv'))}")
     logger.info("")
     logger.info("  Energy & Emissions Costs:")
-    if _g("converter_loss_pv") > 0:
-        logger.info(f"    Converter Losses:          ${_g('converter_loss_pv'):>15,.0f}")
-        logger.info(f"    Conductor Losses:          ${_g('conductor_loss_pv'):>15,.0f}")
+    if _positive("converter_loss_pv"):
+        logger.info(f"    Converter Losses:          {_money(_raw('converter_loss_pv'))}")
+        logger.info(f"    Conductor Losses:          {_money(_raw('conductor_loss_pv'))}")
     else:
-        logger.info(f"    Energy Losses:             ${_g('energy_losses_pv'):>15,.0f}")
-    logger.info(f"    Loss-Comp. Emissions:      ${_g('emissions_comp_cost_pv'):>15,.0f}")
-    logger.info(f"    Subtotal:                  ${_g('energy_emissions_costs_pv'):>15,.0f}")
+        logger.info(f"    Energy Losses:             {_money(_raw('energy_losses_pv'))}")
+    logger.info(f"    Loss-Comp. Emissions:      {_money(_raw('emissions_comp_cost_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('energy_emissions_costs_pv'))}")
     logger.info("")
     logger.info("  Risk Costs:")
-    logger.info(f"    Wildfire:                  ${_g('wildfire_pv'):>15,.0f}")
-    logger.info(f"    Outage:                    ${_g('outage_pv'):>15,.0f}")
-    logger.info(f"    Subtotal:                  ${_g('risk_costs_pv'):>15,.0f}")
+    logger.info(f"    Wildfire:                  {_money(_raw('wildfire_pv'))}")
+    logger.info(f"    Outage:                    {_money(_raw('outage_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('risk_costs_pv'))}")
     logger.info("")
     logger.info("  Delay Costs:")
-    logger.info(f"    Construction Delay:        ${_g('delay_cost_pv'):>15,.0f}")
-    logger.info(f"    Subtotal:                  ${_g('delay_costs_pv'):>15,.0f}")
+    logger.info(f"    Construction Delay:        {_money(_raw('delay_cost_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('delay_costs_pv'))}")
     logger.info("")
     logger.info("  " + "-" * 78)
-    logger.info(f"  Total Costs:                 ${_g('total_costs_pv'):>15,.0f}")
+    logger.info(f"  Total Costs:                 {_money(_raw('total_costs_pv'))}")
     logger.info("")
 
     logger.info("BENEFIT-COST RATIOS:")
-    bcr_societal = _g("bcr_societal")
-    viable_symbol, viable_text = format_bcr_viability(bcr_societal)
-    logger.info(f"  Societal BCR:                {bcr_societal:>6.3f}  {viable_symbol} ({viable_text})")
+    logger.info(f"  Societal BCR:                {_bcr_text(_raw('bcr_societal'))}")
     logger.info("")
-
-    bcr_utility = _g("bcr_utility")
-    us, ut = format_bcr_viability(bcr_utility)
-    logger.info(f"  Utility/TSP BCR:             {bcr_utility:>6.3f}  {us} ({ut})")
-
-    bcr_ratepayer = _g("bcr_ratepayer")
-    rs, rt = format_bcr_viability(bcr_ratepayer)
-    logger.info(f"  Ratepayer BCR:               {bcr_ratepayer:>6.3f}  {rs} ({rt})")
+    logger.info(f"  Utility/TSP BCR:             {_bcr_text(_raw('bcr_utility'))}")
+    logger.info(f"  Ratepayer BCR:               {_bcr_text(_raw('bcr_ratepayer'))}")
     logger.info("")
 
     logger.info("NET BENEFITS:")
-    nb = _g("net_benefit_pv")
-    ns = "✅" if nb >= 0 else "❌"
-    nt = "positive: benefits exceed costs" if nb >= 0 else "negative: costs exceed benefits"
-    logger.info(f"  Net Benefit (PV):            ${nb:>15,.0f}  {ns} ({nt})")
+    nb = _raw("net_benefit_pv")
+    if nb is None:
+        logger.info("  Net Benefit (PV):            not available")
+    else:
+        ns = "✅" if nb >= 0 else "❌"
+        nt = "positive: benefits exceed costs" if nb >= 0 else "negative: costs exceed benefits"
+        logger.info(f"  Net Benefit (PV):            ${nb:>15,.0f}  {ns} ({nt})")
     logger.info("")
     logger.info("=" * 80)
     logger.info("")

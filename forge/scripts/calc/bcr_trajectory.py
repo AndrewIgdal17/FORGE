@@ -36,21 +36,32 @@ _TRAJ_RATIO_ALIASES = {
     "bcr_excl_outage_wildfire": "bcr_excl_wf_out",
 }
 
+# Nine ratios and nine NPVs. Each copies one bcr.omitted list.
+_TRAJECTORY_OMITTED_SOURCES = (
+    ("bcr_societal", "bcr_societal"),
+    ("npv_societal", "net_benefit_pv"),
+    ("bcr_utility", "bcr_utility"),
+    ("npv_utility", "net_benefit_utility_pv"),
+    ("bcr_ratepayer", "bcr_ratepayer"),
+    ("npv_ratepayer", "net_benefit_ratepayer_pv"),
+    ("bcr_excl_avoided_emissions", "bcr_excluding_avoided_emissions"),
+    ("npv_excl_avoided_emissions", "net_benefit_excluding_avoided_emissions_pv"),
+    ("bcr_excl_emissions_costs", "bcr_excluding_emissions"),
+    ("npv_excl_emissions_costs", "net_benefit_excluding_emissions_pv"),
+    ("bcr_excl_all_emissions", "bcr_excluding_avoided_emissions_and_emissions"),
+    ("npv_excl_all_emissions", "net_benefit_excluding_avoided_emissions_and_emissions_pv"),
+    ("bcr_excl_outage", "bcr_excluding_outage_risk"),
+    ("npv_excl_outage", "net_benefit_excluding_outage_risk_pv"),
+    ("bcr_excl_wildfire", "bcr_excluding_wildfire_risk"),
+    ("npv_excl_wildfire", "net_benefit_excluding_wildfire_risk_pv"),
+    ("bcr_excl_wf_out", "bcr_excluding_wildfire_risk_and_outage_risk"),
+    ("npv_excl_wf_out", "net_benefit_excluding_wildfire_risk_and_outage_risk_pv"),
+)
+
 _BUCKETS = (
     "C_hard", "C_soft", "C_risk", "C_emissions",
     "B_remedial", "B_enabling", "B_avoided_emissions",
 )
-_COST_BUCKET = {
-    "hard": "C_hard",
-    "soft": "C_soft",
-    "risk": "C_risk",
-    "emissions": "C_emissions",
-}
-_BENEFIT_BUCKET = {
-    "remedial": "B_remedial",
-    "enabling": "B_enabling",
-    "avoided_emissions": "B_avoided_emissions",
-}
 
 # Utility: revenue requirement over that set plus base delay.
 # Ratepayer: remedial and enabling over the revenue requirement plus line losses.
@@ -67,27 +78,58 @@ _RATEPAYER_DENOMINATOR = frozenset({
     "line_loss_conductor", "line_loss_converter",
 })
 _WACC_IDS = _UTILITY_NUMERATOR | _UTILITY_DELAY | _RATEPAYER_NUMERATOR | _RATEPAYER_DENOMINATOR
-_WILDFIRE_IDS = get_excluded_taxonomy_ids(["wildfire"])
-_OUTAGE_IDS = get_excluded_taxonomy_ids(["outage"])
-
-
-def _as_float(value: Any, default: float = 0.0) -> float:
-    if value is None:
-        return default
-    return float(value)
+_WILDFIRE_IDS = frozenset(get_excluded_taxonomy_ids(["wildfire"]))
+_OUTAGE_IDS = frozenset(get_excluded_taxonomy_ids(["outage"]))
+_COST_IDS = frozenset(tid for tid, item in TAXONOMY.items() if item.side == "cost")
+_BENEFIT_IDS = frozenset(tid for tid, item in TAXONOMY.items() if item.side == "benefit")
+_BUCKET_IDS = {
+    "C_hard": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "cost" and item.category == "hard"
+    ),
+    "C_soft": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "cost" and item.category == "soft"
+    ),
+    "C_risk": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "cost" and item.category == "risk"
+    ),
+    "C_emissions": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "cost" and item.category == "emissions"
+    ),
+    "B_remedial": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "benefit" and item.category == "remedial"
+    ),
+    "B_enabling": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "benefit" and item.category == "enabling"
+    ),
+    "B_avoided_emissions": frozenset(
+        tid for tid, item in TAXONOMY.items()
+        if item.side == "benefit" and item.category == "avoided_emissions"
+    ),
+}
 
 
 def _assert_per_ratio_fidelity(final: dict, bcr: dict) -> None:
     """Assert trajectory final-year BCR ratios match bcr_calculator values.
 
     Looks up calculator keys via `_BCR_CALC_KEYS` (legacy `bcr_excluding_*`
-    names) and trajectory keys via `_TRAJ_RATIO_ALIASES`. Skips a ratio when
-    the calculator value is near zero.
+    names) and trajectory keys via `_TRAJ_RATIO_ALIASES`. A missing key stays
+    0. A present null on either side is a skip. A near-zero calculator value
+    is also skipped.
     """
     for key in _BCR_RATIO_KEYS:
         traj_key = _TRAJ_RATIO_ALIASES.get(key, key)
-        traj_val = _as_float(final.get(traj_key, 0.0))
-        bcr_val = _as_float(bcr.get(_BCR_CALC_KEYS[key], 0.0))
+        traj_val = final.get(traj_key, 0.0)
+        bcr_val = bcr.get(_BCR_CALC_KEYS[key], 0.0)
+        if traj_val is None or bcr_val is None:
+            continue
+        traj_val = float(traj_val)
+        bcr_val = float(bcr_val)
         if abs(bcr_val) > FIDELITY_TOLERANCE:
             diff = abs(traj_val - bcr_val)
             rel_diff = diff / abs(bcr_val)
@@ -121,8 +163,56 @@ def _discount(nominal: float, rate: float, year: int) -> float:
     return nominal / (1.0 + rate) ** year
 
 
-def _sum_ids(values: dict[str, float], ids: frozenset[str] | set[str]) -> float:
-    return sum(values.get(tid, 0.0) for tid in ids)
+def _entry_available(entry: Any) -> bool:
+    if isinstance(entry, dict):
+        if "available" not in entry:
+            return True
+        return bool(entry["available"])
+    return bool(getattr(entry, "available", True))
+
+
+def _group_sum(
+    source: dict[str, float],
+    ids: frozenset[str] | set[str],
+    present_ids: set[str],
+    unavailable_ids: set[str],
+):
+    """Sum available ids. Null when every present id in the set is not available."""
+    included = set(ids) & present_ids
+    if not included:
+        return 0.0
+    if included <= unavailable_ids:
+        return None
+    return sum(source.get(tid, 0.0) for tid in included if tid not in unavailable_ids)
+
+
+def _positive_ratio(numerator, denominator):
+    if numerator is None or denominator is None or denominator <= 0:
+        return None
+    return numerator / denominator
+
+
+def _difference(left, right):
+    if left is None or right is None:
+        return None
+    return left - right
+
+
+def _trajectory_omitted(bcr: dict) -> dict[str, list]:
+    omitted = bcr.get("omitted") or {}
+    copied: dict[str, list] = {}
+    for traj_key, source_key in _TRAJECTORY_OMITTED_SOURCES:
+        value = omitted.get(source_key)
+        copied[traj_key] = list(value) if value else []
+    return copied
+
+
+def _close(actual, expected, label: str) -> None:
+    if actual is None or expected is None:
+        return
+    assert abs(actual - expected) < FIDELITY_TOLERANCE, (
+        f"{label}: {actual} vs {expected}"
+    )
 
 
 def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
@@ -149,42 +239,39 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     entries = results["taxonomy_results"]
 
     total_years = delay_years + construction_years + project_lifetime
-    cum = {name: 0.0 for name in _BUCKETS}
-    cum_wf = 0.0
-    cum_out = 0.0
+    present_ids: set[str] = set()
+    unavailable_ids: set[str] = set()
+    for entry in entries:
+        tid = _field(entry, "taxonomy_id")
+        if tid not in TAXONOMY:
+            continue
+        present_ids.add(tid)
+        if not _entry_available(entry):
+            unavailable_ids.add(tid)
+
+    def grouped(source: dict[str, float], ids: frozenset[str] | set[str]):
+        return _group_sum(source, ids, present_ids, unavailable_ids)
+
+    cum_social: dict[str, float] = {}
     cum_wacc: dict[str, float] = {}
     trajectory: list[dict] = []
 
     for t in range(1, total_years + 1):
-        year = {name: 0.0 for name in _BUCKETS}
-        year_wf = 0.0
-        year_out = 0.0
+        year_social: dict[str, float] = {}
         for entry in entries:
+            if not _entry_available(entry):
+                continue
             tid = _field(entry, "taxonomy_id")
             item = TAXONOMY.get(tid)
             if item is None:
                 continue
             nominal = _year_nominal(_field(entry, "stream"), t)
             if item.side in ("cost", "benefit"):
-                social = _discount(nominal, r_social, t)
-                bucket = (
-                    _COST_BUCKET.get(item.category)
-                    if item.side == "cost"
-                    else _BENEFIT_BUCKET.get(item.category)
-                )
-                if bucket is not None:
-                    year[bucket] += social
-                if tid in _WILDFIRE_IDS:
-                    year_wf += social
-                elif tid in _OUTAGE_IDS:
-                    year_out += social
+                year_social[tid] = year_social.get(tid, 0.0) + _discount(nominal, r_social, t)
             if tid in _WACC_IDS:
                 cum_wacc[tid] = cum_wacc.get(tid, 0.0) + _discount(nominal, r_wacc, t)
-
-        for name in _BUCKETS:
-            cum[name] += year[name]
-        cum_wf += year_wf
-        cum_out += year_out
+        for tid, amount in year_social.items():
+            cum_social[tid] = cum_social.get(tid, 0.0) + amount
 
         if t <= delay_years:
             phase = "delay"
@@ -196,6 +283,57 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             phase = "operation"
             year_operational = t - delay_years - construction_years
 
+        year = {name: grouped(year_social, _BUCKET_IDS[name]) for name in _BUCKETS}
+        cum = {name: grouped(cum_social, _BUCKET_IDS[name]) for name in _BUCKETS}
+        cum_C_total = grouped(cum_social, _COST_IDS)
+        cum_B_total = grouped(cum_social, _BENEFIT_IDS)
+        denom_excl_risk = grouped(cum_social, _COST_IDS - _WILDFIRE_IDS - _OUTAGE_IDS)
+        denom_excl_outage = grouped(cum_social, _COST_IDS - _OUTAGE_IDS)
+        denom_excl_wf = grouped(cum_social, _COST_IDS - _WILDFIRE_IDS)
+        denom_excl_emissions = grouped(cum_social, _COST_IDS - _BUCKET_IDS["C_emissions"])
+        num_excl_av_em = grouped(cum_social, _BENEFIT_IDS - _BUCKET_IDS["B_avoided_emissions"])
+        atrr = grouped(cum_wacc, _UTILITY_NUMERATOR)
+        denom_utility = grouped(cum_wacc, _UTILITY_NUMERATOR | _UTILITY_DELAY)
+        ratepayer_benefits = grouped(cum_wacc, _RATEPAYER_NUMERATOR)
+        denom_ratepayer = grouped(cum_wacc, _RATEPAYER_DENOMINATOR)
+
+        bcr_societal = _positive_ratio(cum_B_total, cum_C_total)
+        bcr_excl_wf_out = _positive_ratio(cum_B_total, denom_excl_risk)
+        bcr_excl_outage = _positive_ratio(cum_B_total, denom_excl_outage)
+        bcr_ratepayer = _positive_ratio(ratepayer_benefits, denom_ratepayer)
+        bcr_utility = _positive_ratio(atrr, denom_utility)
+        bcr_excl_emissions_costs = _positive_ratio(cum_B_total, denom_excl_emissions)
+        bcr_excl_all_emissions = _positive_ratio(num_excl_av_em, denom_excl_emissions)
+        bcr_excl_avoided_emissions = _positive_ratio(num_excl_av_em, cum_C_total)
+        bcr_excl_wildfire = _positive_ratio(cum_B_total, denom_excl_wf)
+
+        npv_societal = _difference(cum_B_total, cum_C_total)
+        npv_excl_wf_out = (
+            _difference(cum_B_total, denom_excl_risk) if bcr_excl_wf_out is not None else None
+        )
+        npv_excl_outage = (
+            _difference(cum_B_total, denom_excl_outage) if bcr_excl_outage is not None else None
+        )
+        npv_ratepayer = (
+            _difference(ratepayer_benefits, denom_ratepayer) if bcr_ratepayer is not None else None
+        )
+        npv_utility = _difference(atrr, denom_utility) if bcr_utility is not None else None
+        npv_excl_emissions_costs = (
+            _difference(cum_B_total, denom_excl_emissions)
+            if bcr_excl_emissions_costs is not None else None
+        )
+        npv_excl_all_emissions = (
+            _difference(num_excl_av_em, denom_excl_emissions)
+            if bcr_excl_all_emissions is not None else None
+        )
+        npv_excl_avoided_emissions = (
+            _difference(num_excl_av_em, cum_C_total)
+            if bcr_excl_avoided_emissions is not None else None
+        )
+        npv_excl_wildfire = (
+            _difference(cum_B_total, denom_excl_wf) if bcr_excl_wildfire is not None else None
+        )
+
         cum_C_hard = cum["C_hard"]
         cum_C_soft = cum["C_soft"]
         cum_C_risk = cum["C_risk"]
@@ -203,61 +341,6 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         cum_B_remedial = cum["B_remedial"]
         cum_B_enabling = cum["B_enabling"]
         cum_B_avoided_emissions = cum["B_avoided_emissions"]
-        cum_C_total = cum_C_hard + cum_C_soft + cum_C_risk + cum_C_emissions
-        cum_B_total = cum_B_remedial + cum_B_enabling + cum_B_avoided_emissions
-
-        denom_excl_risk = cum_C_total - cum_C_risk
-        denom_excl_outage = cum_C_total - cum_out
-        atrr = _sum_ids(cum_wacc, _UTILITY_NUMERATOR)
-        base_delay = _sum_ids(cum_wacc, _UTILITY_DELAY)
-        denom_utility = atrr + base_delay
-        ratepayer_benefits = _sum_ids(cum_wacc, _RATEPAYER_NUMERATOR)
-        denom_ratepayer = _sum_ids(cum_wacc, _RATEPAYER_DENOMINATOR)
-
-        bcr_societal = cum_B_total / cum_C_total if cum_C_total > 0 else None
-        bcr_excl_wf_out = cum_B_total / denom_excl_risk if denom_excl_risk > 0 else None
-        bcr_excl_outage = cum_B_total / denom_excl_outage if denom_excl_outage > 0 else None
-        bcr_ratepayer = (
-            ratepayer_benefits / denom_ratepayer if denom_ratepayer > 0 else None
-        )
-        bcr_utility = atrr / denom_utility if denom_utility > 0 else None
-
-        npv_societal = cum_B_total - cum_C_total
-        npv_excl_wf_out = cum_B_total - denom_excl_risk if bcr_excl_wf_out is not None else None
-        npv_excl_outage = cum_B_total - denom_excl_outage if bcr_excl_outage is not None else None
-        npv_ratepayer = (
-            ratepayer_benefits - denom_ratepayer if bcr_ratepayer is not None else None
-        )
-        npv_utility = atrr - denom_utility if bcr_utility is not None else None
-
-        denom_excl_emissions = cum_C_total - cum_C_emissions
-        num_excl_all_emissions = cum_B_total - cum_B_avoided_emissions
-        num_excl_av_em = num_excl_all_emissions
-        bcr_excl_emissions_costs = (
-            cum_B_total / denom_excl_emissions if denom_excl_emissions > 0 else None
-        )
-        bcr_excl_all_emissions = (
-            num_excl_all_emissions / denom_excl_emissions if denom_excl_emissions > 0 else None
-        )
-        bcr_excl_avoided_emissions = (
-            num_excl_av_em / cum_C_total if cum_C_total > 0 else None
-        )
-        denom_excl_wf = cum_C_total - cum_wf
-        bcr_excl_wildfire = cum_B_total / denom_excl_wf if denom_excl_wf > 0 else None
-
-        npv_excl_emissions_costs = (
-            cum_B_total - denom_excl_emissions if bcr_excl_emissions_costs is not None else None
-        )
-        npv_excl_all_emissions = (
-            num_excl_all_emissions - denom_excl_emissions
-            if bcr_excl_all_emissions is not None else None
-        )
-        npv_excl_avoided_emissions = (
-            num_excl_av_em - cum_C_total if bcr_excl_avoided_emissions is not None else None
-        )
-        npv_excl_wildfire = (
-            cum_B_total - denom_excl_wf if bcr_excl_wildfire is not None else None
-        )
 
         trajectory.append({
             "year": t,
@@ -299,15 +382,10 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             "npv_excl_wildfire": npv_excl_wildfire,
         })
 
-    target_total_costs_pv = bcr.get("total_costs_pv", 0.0)
-    target_total_benefits_pv = bcr.get("total_benefits_pv", 0.0)
+    results["trajectory_omitted"] = _trajectory_omitted(bcr)
     final = trajectory[-1]
-    assert abs(final["cum_C_total"] - target_total_costs_pv) < FIDELITY_TOLERANCE, (
-        f"Cost fidelity: {final['cum_C_total']} vs {target_total_costs_pv}"
-    )
-    assert abs(final["cum_B_total"] - target_total_benefits_pv) < FIDELITY_TOLERANCE, (
-        f"Benefit fidelity: {final['cum_B_total']} vs {target_total_benefits_pv}"
-    )
+    _close(final["cum_C_total"], bcr.get("total_costs_pv", 0.0), "Cost fidelity")
+    _close(final["cum_B_total"], bcr.get("total_benefits_pv", 0.0), "Benefit fidelity")
     _assert_per_ratio_fidelity(final, bcr)
 
     return trajectory
