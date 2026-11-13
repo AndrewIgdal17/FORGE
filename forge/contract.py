@@ -337,7 +337,6 @@ def _is_value_error(path: str, message: str) -> bool:
 
 
 _CAPACITY_MW_PATH = "01_project_technical_details.project.capacity_mw"
-_ENERGY_VALUE_PATH = "01_project_technical_details.project.value_of_load_per_mwh"
 
 
 def _project_section(document: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -384,8 +383,9 @@ def _missing_required_in(
     no_linelosses: bool,
 ) -> list[dict]:
     project = _project_section(document)
-    sending_source = project.get("sending_source")
     missing: list[dict] = []
+    # Retained for callers. It no longer drops a field.
+    _ = no_linelosses
     for field in input_metadata_to_dict():
         required_when = field.get("required_when")
         stage = field.get("required_stage")
@@ -394,12 +394,6 @@ def _missing_required_in(
         if capital_only and stage == "after_route":
             continue
         path = f"{field['yaml_section']}.{field['field_path']}"
-        if (
-            no_linelosses
-            and path == _ENERGY_VALUE_PATH
-            and sending_source != "dedicated"
-        ):
-            continue
         if not _required_condition(required_when, project):
             continue
         try:
@@ -427,8 +421,8 @@ def missing_required_inputs(
 ) -> list[dict]:
     """Fields whose condition holds and whose resolved value is missing.
 
-    ``capital_only`` drops every after-route field. ``no_linelosses`` drops
-    the energy value unless the sending-end source is a dedicated resource.
+    ``capital_only`` drops every after-route field. ``no_linelosses`` is
+    retained for callers and has no effect.
     """
     resolved = copy.deepcopy(get_defaults_template())
     for path, value in changes.items():

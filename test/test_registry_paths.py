@@ -41,9 +41,7 @@ def _walk(root, path):
 # A blank template no longer resolves. These are the zeros the old defaults supplied.
 _RUNNABLE = {
     "01_project_technical_details.project.capacity_mw": 500,
-    "01_project_technical_details.project.value_of_load_per_mwh": 0.0,
     "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
-    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
 }
 for path, value in REGION_SENTINELS.items():
     _RUNNABLE.setdefault(path, value)

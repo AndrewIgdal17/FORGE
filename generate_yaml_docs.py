@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 class YAMLParser:
-    def __init__(self, yamls_dir: str = "yamls"):
+    def __init__(self, yamls_dir: str = "forge/yamls"):
         self.yamls_dir = Path(yamls_dir)
         self.data = {
             "metadata": {

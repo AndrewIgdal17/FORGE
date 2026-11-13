@@ -52,7 +52,6 @@ class CongestionParams:
 
     flow_factor: Optional[float]
     average_exceedance: Optional[float]
-    average_congestion_price: Optional[float]
     benefit_price_escalation_real: float = 0.0
 
 
@@ -484,13 +483,9 @@ def load_congestion_reductions() -> CongestionParams:
                 )
             reductions_data = data["incremental_congestion_reductions"]
             constraints = reductions_data["constraints"]
-            prices = reductions_data["prices"]
             constraints.pop("congestion_fraction", None)
-            # Legacy key from the removed separately-modeled curtailment stream.
-            prices.pop("average_curtailment_price", None)
             flow_factor = 0.0
             average_exceedance = _optional_float(constraints["average_exceedance"])
-            average_congestion_price = _optional_float(prices["average_congestion_price"])
         else:
             if "greenfield_congestion_reductions" not in data:
                 raise KeyError(
@@ -498,18 +493,13 @@ def load_congestion_reductions() -> CongestionParams:
                 )
             reductions_data = data["greenfield_congestion_reductions"]
             constraints = reductions_data["constraints"]
-            prices = reductions_data["prices"]
             constraints.pop("congestion_fraction", None)
-            # Legacy key from the removed separately-modeled curtailment stream.
-            prices.pop("average_curtailment_price", None)
             flow_factor = _optional_float(constraints["flow_factor"])
             average_exceedance = _optional_float(constraints["average_exceedance"])
-            average_congestion_price = _optional_float(prices["average_congestion_price"])
 
         return CongestionParams(
             flow_factor=flow_factor,
             average_exceedance=average_exceedance,
-            average_congestion_price=average_congestion_price,
             benefit_price_escalation_real=float(
                 data["benefit_price_escalation_real"]
             ),

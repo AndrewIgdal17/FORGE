@@ -2,13 +2,16 @@
 import pytest
 
 from forge.scripts.io.taxonomy import TAXONOMY
-from test.spec05_project import item, project_changes, run
+from test.spec05_project import item, measured, project_changes, run
 
 COST_IDS = {tid for tid, entry in TAXONOMY.items() if entry.side == "cost"}
 
 
 def test_holding_enters_total_costs():
-    r = run(project_changes(**{"01_project_technical_details.timeline.delay_years": 3}))
+    r = run(project_changes(**{
+        **measured(),
+        "01_project_technical_details.timeline.delay_years": 3,
+    }))
     hold = item(r, "row_holding")
     h = hold["stream"][0]
     assert h > 0 and hold["stream"][3:] == [0.0] * (len(hold["stream"]) - 3)

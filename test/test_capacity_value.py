@@ -1,10 +1,8 @@
-"""Tests for capacity value benefit computation and delivered-energy parameter checks."""
+"""Tests for capacity value benefit computation and the market energy value."""
 import pytest
 
-from forge.scripts.calc.congestion_reduction import (
-    calculate_capacity_value_benefit,
-    require_value_of_load_per_mwh,
-)
+from forge.scripts.calc.congestion_reduction import calculate_capacity_value_benefit
+from test.spec05_project import project_changes, run
 
 def test_capacity_value_basic():
     """Gate on, known inputs → expected annual and PV."""
@@ -73,12 +71,31 @@ def test_capacity_value_zero_price():
     assert result["capacity_value_pv"] == 0.0
 
 
-def test_missing_value_of_load_per_mwh_raises_keyerror():
-    """Missing value_of_load_per_mwh must fail loudly, not default to 0."""
-    with pytest.raises(KeyError, match="value_of_load_per_mwh"):
-        require_value_of_load_per_mwh({"line_utilization": 0.5})
+_DEDICATED = {
+    "01_project_technical_details.project.sending_source": "dedicated",
+    "01_project_technical_details.project.dedicated_resource.contract_price_per_mwh": 55.0,
+    "01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.co2e": 0.0,
+    "01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.so2": 0.0,
+    "01_project_technical_details.project.dedicated_resource.emission_rate_kg_per_mwh.nox": 0.0,
+}
+_ENERGY = "01_project_technical_details.market_measurements.receiving_energy_value_per_mwh"
 
 
-def test_value_of_load_per_mwh_present():
-    """Present value_of_load_per_mwh is returned as float."""
-    assert require_value_of_load_per_mwh({"value_of_load_per_mwh": 30.0}) == 30.0
+def test_missing_receiving_energy_value_is_not_available():
+    """A null receiving energy value does not raise. Dedicated delivery is not available."""
+    results = run(project_changes(**_DEDICATED))
+    benefit = results["benefits"]["congestion"]
+    assert benefit["delivered_benefit_annual"] is None
+    availability = benefit["availability"]["delivered_energy_benefit"]
+    assert availability["available"] is False
+    assert availability["missing_inputs"] == (_ENERGY,)
+    assert benefit["congestion_benefit_annual"] == 0.0
+
+
+def test_receiving_energy_value_prices_dedicated_delivery():
+    """The market block's receiving energy value prices dedicated delivered energy."""
+    results = run(project_changes(**{**_DEDICATED, _ENERGY: 30.0}))
+    delivered_mwh = results["benefits"]["congestion"]["energy_delivered_annual_mwh_yr"]
+    assert results["benefits"]["congestion"]["delivered_benefit_annual"] == pytest.approx(
+        delivered_mwh * (30.0 - 55.0)
+    )

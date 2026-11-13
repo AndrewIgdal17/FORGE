@@ -19,17 +19,13 @@ def _with_required_inputs(inputs: dict, *, capacity_mw: float = 500) -> dict:
     technical = dict(merged.get("01_project_technical_details") or {})
     project = dict(technical.get("project") or {})
     project["capacity_mw"] = capacity_mw
-    project["value_of_load_per_mwh"] = 0.0
     technical["project"] = project
     merged["01_project_technical_details"] = technical
     congestion = dict(merged.get("17_congestion_reductions") or {})
     greenfield = dict(congestion.get("greenfield_congestion_reductions") or {})
     constraints = dict(greenfield.get("constraints") or {})
     constraints["flow_factor"] = 0.0
-    prices = dict(greenfield.get("prices") or {})
-    prices["average_congestion_price"] = 0.0
     greenfield["constraints"] = constraints
-    greenfield["prices"] = prices
     congestion["greenfield_congestion_reductions"] = greenfield
     merged["17_congestion_reductions"] = congestion
     # Nested document. A dotted key would not survive diff_changes.

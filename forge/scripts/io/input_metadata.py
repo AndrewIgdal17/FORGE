@@ -222,14 +222,6 @@ _TAB1: list[InputField] = [
        input_type="percent", tier="first-glance", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="technology"),
-    _f("baseline_price_mwh", taxonomy_id="project_utilization", input_tab="benefits",
-       yaml_section="01_project_technical_details", field_path="project.value_of_load_per_mwh",
-       label="Receiving-end energy value ($/MWh)",
-       help_text="Receiving-end energy value; prices losses and, for a dedicated resource, delivered energy.",
-       unit="$/MWh", input_type="currency", tier="first-glance", display_order=2,
-       validation={"min": 0, "nullable_number": True},
-       required_when="always", required_stage="after_route",
-       sub_tab="economic-details"),
     _f("construction_years", taxonomy_id="project_timing", input_tab="project-identity",
        yaml_section="01_project_technical_details", field_path="timeline.construction_years",
        label="Construction Years", help_text="Construction duration; affects AFUDC compounding and PV discounting",
@@ -958,9 +950,6 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
     fields: list[InputField] = []
     _has_flow = "greenfield" in yaml_root
     _base = "17_congestion_reductions"
-    spread_when = (
-        "greenfield_margin" if _has_flow else "reconductoring_or_rebuild_and_margin"
-    )
     # Congestion fields stay hidden here; the benefits panel renders them.
     if _has_flow:
         fields.append(_f(
@@ -978,15 +967,6 @@ def _cc_fields(prefix: str, label_prefix: str, yaml_root: str) -> list[InputFiel
            help_text="Empty means equal to the effective capacity, so the minimum does not bind. A supplied value is at least 0.",
            unit="MW", condition="always_hidden", tier="first-glance", display_order=3,
            validation={"min": 0, "nullable_number": True},
-           sub_tab="system-constraints"),
-        _f(f"{prefix}_cong_price", taxonomy_id="congestion_benefit", input_tab="benefits",
-           yaml_section=_base, field_path=f"{yaml_root}.prices.average_congestion_price",
-           label="Congestion spread ($/MWh, mean over all 8,760 hours)",
-           help_text="Mean congestion spread over all 8,760 hours. A negative spread is allowed.",
-           unit="$/MWh", input_type="currency", condition="always_hidden",
-           tier="first-glance", display_order=4,
-           validation={"nullable_number": True},
-           required_when=spread_when, required_stage="after_route",
            sub_tab="system-constraints"),
     ]
     return fields

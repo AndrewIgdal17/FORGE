@@ -22,7 +22,6 @@ _PROJECT_BASE = {
     "converter_type": "NA",
     "converter_loss_percentage": None,
     "line_utilization": 0.65,
-    "value_of_load_per_mwh": 42.0,
 }
 
 _TIMELINE = {

@@ -43,6 +43,10 @@ from forge.scripts.utils.run_context import get_run_context
 
 logger = logging.getLogger(__name__)
 
+_ENERGY_PATH = (
+    "01_project_technical_details.market_measurements.receiving_energy_value_per_mwh"
+)
+
 
 @dataclass
 class LineLossProjectDetails:
@@ -55,7 +59,7 @@ class LineLossProjectDetails:
     number_of_converters: int
     converter_type: str
     line_utilization_percent: float
-    value_of_load: float
+    value_of_load: float | None
     wacc_real: float
     benefit_price_escalation_real: float
     project_type: str  # "greenfield" | "reconductoring" | "rebuild"
@@ -125,11 +129,11 @@ def load_project_details() -> LineLossProjectDetails:
             raise KeyError("Missing 'project' key in project technical details")
         project = project_details["project"]
 
-        if "value_of_load_per_mwh" not in project or project["value_of_load_per_mwh"] is None:
-            raise KeyError(
-                "Missing required parameter 'value_of_load_per_mwh' for line losses"
-            )
-        value_of_load = float(project["value_of_load_per_mwh"])
+        measurements = project_details.get("market_measurements") or {}
+        if not isinstance(measurements, dict):
+            measurements = {}
+        raw_energy_value = measurements.get("receiving_energy_value_per_mwh")
+        value_of_load = None if raw_energy_value is None else float(raw_energy_value)
         financing = load_financing_details()
         wacc_real = financing.wacc_real
         congestion_params = load_congestion_reductions()
@@ -250,9 +254,8 @@ def calculate_configuration_losses(
 
     return losses_mwh_per_year, lifetime_losses_mwh
 
-def _operating_loss_values(
-    line_annual: float,
-    converter_annual: float,
+def _component_money(
+    annual: float | None,
     growth: float,
     lifetime: int,
     social_discount_rate: float,
@@ -260,23 +263,94 @@ def _operating_loss_values(
     t_cod: int,
     horizon: int,
 ) -> dict:
-    """Conductor and converter loss streams, grown from year 1 and paid from COD."""
-    line_stream = growing(line_annual, growth, t_cod, lifetime, horizon)
-    converter_stream = growing(converter_annual, growth, t_cod, lifetime, horizon)
+    """One loss component. A null annual is not available."""
+    if annual is None:
+        return {
+            "annual": None,
+            "stream": None,
+            "nominal": None,
+            "pv": None,
+            "pv_wacc": None,
+        }
+    stream = growing(annual, growth, t_cod, lifetime, horizon)
     return {
+        "annual": annual,
+        "stream": stream,
+        "nominal": undiscounted(stream),
+        "pv": pv(stream, social_discount_rate),
+        "pv_wacc": pv(stream, wacc_real),
+    }
+
+
+def _priced_losses(
+    line_mwh: float,
+    converter_mwh: float,
+    price: float | None,
+    growth: float,
+    lifetime: int,
+    social_discount_rate: float,
+    wacc_real: float,
+    t_cod: int,
+    horizon: int,
+) -> dict:
+    """Conductor and converter dollars from the receiving-end energy value.
+
+    Conductor dollars are not available when that value is null. Converter
+    dollars are not available only when it is null and converter MWh is above
+    0; a line with no converter loss is 0 and available. The four totals are
+    null when either component is not available.
+    """
+    if price is None:
+        line_annual = None
+        converter_annual = None if converter_mwh > 0 else 0.0
+    else:
+        line_annual = line_mwh * price
+        converter_annual = converter_mwh * price
+    line = _component_money(
+        line_annual, growth, lifetime, social_discount_rate, wacc_real, t_cod, horizon
+    )
+    converter = _component_money(
+        converter_annual, growth, lifetime, social_discount_rate, wacc_real, t_cod, horizon
+    )
+    line_available = line["annual"] is not None
+    converter_available = converter["annual"] is not None
+    if line_available and converter_available:
+        annual_cost = line["annual"] + converter["annual"]
+        total_nominal = line["nominal"] + converter["nominal"]
+        total_pv = line["pv"] + converter["pv"]
+        total_pv_wacc = line["pv_wacc"] + converter["pv_wacc"]
+    else:
+        annual_cost = None
+        total_nominal = None
+        total_pv = None
+        total_pv_wacc = None
+    return {
+        "annual_cost": annual_cost,
+        "line_annual_cost": line["annual"],
+        "converter_annual_cost": converter["annual"],
         "streams": {
-            "line_loss_conductor": line_stream,
-            "line_loss_converter": converter_stream,
+            "line_loss_conductor": line["stream"],
+            "line_loss_converter": converter["stream"],
         },
-        "line_nominal_total": undiscounted(line_stream),
-        "converter_nominal_total": undiscounted(converter_stream),
-        "total_nominal": undiscounted(line_stream) + undiscounted(converter_stream),
-        "line_cost_pv": pv(line_stream, social_discount_rate),
-        "line_cost_pv_wacc": pv(line_stream, wacc_real),
-        "converter_cost_pv": pv(converter_stream, social_discount_rate),
-        "converter_cost_pv_wacc": pv(converter_stream, wacc_real),
-        "total_pv": pv(line_stream, social_discount_rate) + pv(converter_stream, social_discount_rate),
-        "total_pv_wacc": pv(line_stream, wacc_real) + pv(converter_stream, wacc_real),
+        "line_nominal_total": line["nominal"],
+        "converter_nominal_total": converter["nominal"],
+        "total_nominal": total_nominal,
+        "line_cost_pv": line["pv"],
+        "line_cost_pv_wacc": line["pv_wacc"],
+        "converter_cost_pv": converter["pv"],
+        "converter_cost_pv_wacc": converter["pv_wacc"],
+        "total_pv": total_pv,
+        "total_pv_wacc": total_pv_wacc,
+        "availability": {
+            "line_loss_conductor": {
+                "available": line_available,
+                "missing_inputs": () if line_available else (_ENERGY_PATH,),
+            },
+            "line_loss_converter": {
+                "available": converter_available,
+                "missing_inputs": () if converter_available else (_ENERGY_PATH,),
+            },
+        },
     }
 
 
@@ -300,15 +374,11 @@ def main() -> None:
         primary_line_mwh = loss_data["losses_mwh_per_year"]
         primary_converter_mwh = loss_data.get("total_converter_losses_mwh", 0)
         primary_total_mwh = loss_data["total_losses_mwh_per_year"]
-        price = project_details.value_of_load
-
-        primary_annual_loss_cost = primary_total_mwh * price
-        primary_line_annual = primary_line_mwh * price
-        primary_converter_annual = primary_converter_mwh * price
         ctx = get_run_context()
-        loss_values = _operating_loss_values(
-            primary_line_annual,
-            primary_converter_annual,
+        loss_values = _priced_losses(
+            primary_line_mwh,
+            primary_converter_mwh,
+            project_details.value_of_load,
             g_benefit,
             int(project_details.project_lifetime),
             ctx.social_discount_rate,
@@ -319,13 +389,10 @@ def main() -> None:
 
         csv_manager = SmartOutputManager()
         results = {
-            "annual_cost": primary_annual_loss_cost,
             "total_afudc": 0,
             "line_loss_mwh_yr": primary_line_mwh,
             "converter_loss_mwh_yr": primary_converter_mwh,
             "total_loss_mwh_yr": primary_total_mwh,
-            "line_annual_cost": primary_line_annual,
-            "converter_annual_cost": primary_converter_annual,
             **loss_values,
         }
         csv_manager.add_line_loss_costs(results)
@@ -371,7 +438,8 @@ def main() -> None:
         f"Line Utilization: {to_percent(project_details.line_utilization_percent):.1f}%"
     )
     logger.info(f"Project Lifetime: {project_details.project_lifetime} years")
-    logger.info(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
+    if project_details.value_of_load is not None:
+        logger.info(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
     logger.info("")
 
     logger.info(f"BASELINE CONFIGURATION (Old)")
@@ -488,16 +556,10 @@ def main() -> None:
 
     # METHOD 1: Direct Comparison - Compare absolute losses
     direct_loss_reduction_mwh = baseline_losses_mwh_per_year - new_losses_mwh_per_year
-    direct_annual_benefit = (
-        direct_loss_reduction_mwh * project_details.value_of_load
-    )
 
     # METHOD 2: Counterfactual Comparison - Compare old vs new conductor at new capacity
     counterfactual_loss_reduction_mwh = (
         counterfactual_baseline_losses_mwh_per_year - new_losses_mwh_per_year
-    )
-    counterfactual_annual_benefit = (
-        counterfactual_loss_reduction_mwh * project_details.value_of_load
     )
 
     # METHOD 3: Normalized (Per MWh) Comparison
@@ -505,9 +567,15 @@ def main() -> None:
     normalized_loss_reduction_mwh = (
         from_percent(baseline_loss_percent - new_loss_percent) * new_delivered_mwh
     )
-    normalized_annual_benefit = (
-        normalized_loss_reduction_mwh * project_details.value_of_load
-    )
+    price = project_details.value_of_load
+    if price is None:
+        direct_annual_benefit = None
+        counterfactual_annual_benefit = None
+        normalized_annual_benefit = None
+    else:
+        direct_annual_benefit = direct_loss_reduction_mwh * price
+        counterfactual_annual_benefit = counterfactual_loss_reduction_mwh * price
+        normalized_annual_benefit = normalized_loss_reduction_mwh * price
 
     # Print results
     logger.info("=" * 70)
@@ -530,37 +598,38 @@ def main() -> None:
     )
     logger.info("")
 
-    logger.info("=" * 70)
-    logger.info("METHOD 1: DIRECT COMPARISON")
-    logger.info("=" * 70)
-    logger.info("Compares: Baseline losses @ old capacity vs. New losses @ new capacity")
-    logger.info("")
-    logger.info("NOMINAL VALUES:")
-    logger.info(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
-    logger.info(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
-    logger.info("")
+    if price is not None:
+        logger.info("=" * 70)
+        logger.info("METHOD 1: DIRECT COMPARISON")
+        logger.info("=" * 70)
+        logger.info("Compares: Baseline losses @ old capacity vs. New losses @ new capacity")
+        logger.info("")
+        logger.info("NOMINAL VALUES:")
+        logger.info(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
+        logger.info(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
+        logger.info("")
 
-    logger.info("=" * 70)
-    logger.info("METHOD 2: COUNTERFACTUAL COMPARISON")
-    logger.info("=" * 70)
-    logger.info("Compares: Old conductor @ new capacity vs. New conductor @ new capacity")
-    logger.info("")
-    logger.info("NOMINAL VALUES:")
-    logger.info(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
-    logger.info(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
-    logger.info("")
+        logger.info("=" * 70)
+        logger.info("METHOD 2: COUNTERFACTUAL COMPARISON")
+        logger.info("=" * 70)
+        logger.info("Compares: Old conductor @ new capacity vs. New conductor @ new capacity")
+        logger.info("")
+        logger.info("NOMINAL VALUES:")
+        logger.info(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
+        logger.info(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
+        logger.info("")
 
-    logger.info("=" * 70)
-    logger.info("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
-    logger.info("=" * 70)
-    logger.info("Compares: Loss percentages weighted by delivered energy")
-    logger.info("")
-    logger.info("NOMINAL VALUES:")
-    logger.info(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
-    logger.info(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
-    logger.info("")
+        logger.info("=" * 70)
+        logger.info("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
+        logger.info("=" * 70)
+        logger.info("Compares: Loss percentages weighted by delivered energy")
+        logger.info("")
+        logger.info("NOMINAL VALUES:")
+        logger.info(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
+        logger.info(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
+        logger.info("")
 
-    logger.info("=" * 70)
+        logger.info("=" * 70)
 
     # ========================================================================
     # CSV OUTPUT - Write results to batch summary and detail CSV
@@ -568,17 +637,14 @@ def main() -> None:
     # Use NEW configuration's total losses (line + converter for DC) for BCR
 
     csv_manager = SmartOutputManager()
-    price = project_details.value_of_load
 
     g_benefit = project_details.benefit_price_escalation_real
 
-    new_line_annual_cost = new_line_mwh * price
-    new_converter_annual_cost = new_converter_mwh * price
-    new_total_annual_cost = new_total_mwh * price
     ctx = get_run_context()
-    loss_values = _operating_loss_values(
-        new_line_annual_cost,
-        new_converter_annual_cost,
+    loss_values = _priced_losses(
+        new_line_mwh,
+        new_converter_mwh,
+        price,
         g_benefit,
         int(project_details.project_lifetime),
         ctx.social_discount_rate,
@@ -588,13 +654,10 @@ def main() -> None:
     )
 
     results = {
-        "annual_cost": new_total_annual_cost,
         "total_afudc": 0,
         "line_loss_mwh_yr": new_line_mwh,
         "converter_loss_mwh_yr": new_converter_mwh,
         "total_loss_mwh_yr": new_total_mwh,
-        "line_annual_cost": new_line_annual_cost,
-        "converter_annual_cost": new_converter_annual_cost,
         **loss_values,
     }
 

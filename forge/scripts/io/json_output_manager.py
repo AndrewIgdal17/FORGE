@@ -11,6 +11,22 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 
+_MARKET_KEYS = (
+    "congestion_spread_per_mwh",
+    "hours_receiving_more_congested",
+    "hours_sending_more_congested",
+    "receiving_energy_value_per_mwh",
+)
+
+
+def _stored_market_measurements(technical: dict) -> dict:
+    """Four route measurements as stored, including null."""
+    block = technical.get("market_measurements") or {}
+    if not isinstance(block, dict):
+        block = {}
+    return {key: block.get(key) for key in _MARKET_KEYS}
+
+
 def _stored(mapping: dict, key: str, default=0):
     """Missing key uses default. A present None stays None."""
     if key not in mapping:
@@ -157,10 +173,8 @@ class JSONOutputManager:
                     project, "old_ac_dc", is_reconductoring_or_rebuild, ""
                 )
             ),
-            # Financial parameters
-            "value_of_load_per_mwh": project.get(
-                "value_of_load_per_mwh", 0
-            ),
+            # Route measurements, including null when the archive has no price.
+            "market_measurements": _stored_market_measurements(tech_data),
             "social_discount_rate": financing_data["financial"].get(
                 "social_discount_rate", 0
             ),

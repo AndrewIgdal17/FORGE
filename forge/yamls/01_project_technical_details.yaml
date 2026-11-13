@@ -12,8 +12,6 @@ project:
 
   line_utilization: 0.70 # % [0,1]
 
-  value_of_load_per_mwh: null # $/MWh (>= 0)
-
   project_type: "greenfield" # "greenfield" | "reconductoring" | "rebuild"
   sending_source: "margin" # "margin" (regional margin) or "dedicated"
   dedicated_resource:

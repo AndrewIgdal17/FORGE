@@ -258,6 +258,45 @@ def test_print_bcr_summary_prints_not_available_for_none(caplog):
     assert "not available" in net and "$" not in net
 
 
+OLD = [
+    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price",
+    "17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price",
+    "01_project_technical_details.project.value_of_load_per_mwh",
+]
+
+
+def test_acceptance_10_removed_paths_and_absent_block():
+    for path in OLD:
+        with pytest.raises(UnknownInputPath):
+            forge.resolve_inputs({path: 1})
+    listed = forge.missing_required_inputs({})
+    assert not any("market_measurements" in item["path"] for item in listed)
+    document = forge.get_defaults_template()
+    # resolve_inputs still rejects a bare template for acres, capacity, flow,
+    # and terminals. Fill those, then drop the measurement block.
+    acres = document["02_project_physical_details"]["terrain"]["protected_area_acres"]
+    for key in acres:
+        acres[key] = 0.0
+    document["01_project_technical_details"]["project"]["capacity_mw"] = 500
+    document["17_congestion_reductions"]["greenfield_congestion_reductions"]["constraints"]["flow_factor"] = 0.0
+    for end in ("sending", "receiving"):
+        document["01_project_technical_details"]["terminals"][end] = {
+            "gea": "CAISO",
+            "egrid_subregion": "AZNM",
+            "state": "AZ",
+        }
+    document["01_project_technical_details"].pop("market_measurements", None)
+    changes = forge.diff_changes(document)
+    resolved = forge.resolve_inputs(changes)
+    block = resolved["01_project_technical_details"]["market_measurements"]
+    assert block == {
+        "congestion_spread_per_mwh": None,
+        "hours_receiving_more_congested": None,
+        "hours_sending_more_congested": None,
+        "receiving_energy_value_per_mwh": None,
+    }
+
+
 def test_calculate_summary_does_not_add_none():
     from forge.scripts.io.json_output_manager import JSONOutputManager
 

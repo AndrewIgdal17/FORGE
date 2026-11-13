@@ -21,10 +21,8 @@ PATHS = (
 )
 # The template used to carry zeros for these. A runnable draft now has to set them.
 _TEMPLATE_RUN = {
-    "01_project_technical_details.project.value_of_load_per_mwh": 0.0,
     "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
     "17_congestion_reductions.greenfield_congestion_reductions.constraints.average_exceedance": 0.0,
-    "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
 }
 for path, value in REGION_SENTINELS.items():
     _TEMPLATE_RUN.setdefault(path, value)

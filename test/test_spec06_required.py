@@ -6,7 +6,6 @@ from forge.errors import InvalidInputs
 
 P = "01_project_technical_details.project."
 FF = "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor"
-SP = "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price"
 
 
 def _paths(lst):
@@ -18,8 +17,7 @@ def test_blank_greenfield_margin_draft():
     p = _paths(miss)
     assert (P + "capacity_mw", "before_route") in p
     assert (FF, "before_route") in p
-    assert (SP, "after_route") in p
-    assert (P + "value_of_load_per_mwh", "after_route") in p
+    assert not any("market_measurements" in path for path, _ in p)
     assert all(m["message"] == f'{m["label"]} is required.' for m in miss)
 
 
@@ -35,7 +33,7 @@ def test_dedicated_requires_price_and_rates_not_spread_or_flow_share():
         "emission_rate_kg_per_mwh.nox",
     ):
         assert (P + "dedicated_resource." + k, "before_route") in miss
-    assert not any(path in (FF, SP) for path, _ in miss)
+    assert not any(path == FF or "market_measurements" in path for path, _ in miss)
 
 
 def test_rebuild_requires_old_line_fields():

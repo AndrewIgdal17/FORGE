@@ -60,7 +60,7 @@ class RunState:
     ``run_context``  — populated by _bootstrap_run_context; None until then.
     ``derived_parameters`` — accumulated by add_derived().
     ``capital_only`` — required-input check skips after-route fields.
-    ``no_linelosses`` — energy value is not required on the regional margin.
+    ``no_linelosses`` — retained flag. It does not change required inputs.
     """
     inputs: dict[str, Any]
     scenario_id: str = ""

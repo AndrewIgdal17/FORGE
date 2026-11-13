@@ -27,9 +27,7 @@ def test_explicit_zero_is_accepted_and_a_string_is_named():
     changes = {path: 0.0 for path in PATHS}
     changes.update({
         "01_project_technical_details.project.capacity_mw": 500,
-        "01_project_technical_details.project.value_of_load_per_mwh": 0.0,
         "17_congestion_reductions.greenfield_congestion_reductions.constraints.flow_factor": 0.0,
-        "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price": 0.0,
     })
     for path, value in REGION_SENTINELS.items():
         changes.setdefault(path, value)

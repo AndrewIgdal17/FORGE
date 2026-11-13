@@ -6,15 +6,18 @@ from test.spec05_project import item, project_changes, run
 
 P = "01_project_technical_details.project."
 G = "17_congestion_reductions.greenfield_congestion_reductions."
+M = "01_project_technical_details.market_measurements."
 # SunZia_Delay2 stores average_exceedance of 500. The default is null, which
 # means the minimum does not bind. Reset it so these cases test that default.
 BASE = {
     P + "capacity_mw": 2400,
     P + "line_utilization": 0.7,
-    P + "value_of_load_per_mwh": 40.0,
+    M + "congestion_spread_per_mwh": 5.0,
+    M + "hours_receiving_more_congested": 1,
+    M + "hours_sending_more_congested": 0,
+    M + "receiving_energy_value_per_mwh": 40.0,
     G + "constraints.flow_factor": 0.5,
     G + "constraints.average_exceedance": None,
-    G + "prices.average_congestion_price": 5.0,
 }
 DED = {
     P + "sending_source": "dedicated",
@@ -56,9 +59,20 @@ def test_exceedance_default_and_bound():
     )
 
 
-def test_negative_spread_gives_negative_relief():
-    r = run(project_changes(**{**BASE, G + "prices.average_congestion_price": -2.0}))
-    assert _annual(r, "congestion_benefit_annual") < 0
+def test_null_spread_is_not_available():
+    r = run(project_changes(**{
+        **BASE,
+        M + "congestion_spread_per_mwh": None,
+        M + "hours_receiving_more_congested": None,
+        M + "hours_sending_more_congested": None,
+    }))
+    cong = r["benefits"]["congestion"]
+    assert cong["congestion_benefit_annual"] is None
+    availability = cong["availability"]["congestion_benefit"]
+    assert availability["available"] is False
+    assert availability["missing_inputs"] == (M + "congestion_spread_per_mwh",)
+    assert cong["delivered_benefit_annual"] == 0.0
+    assert cong["availability"]["delivered_energy_benefit"]["available"] is True
 
 
 def test_capacity_value_same_under_both_sources():
@@ -80,7 +94,7 @@ def test_constrained_hours_is_unknown():
 
 def test_losses_priced_at_entered_energy_value():
     a = run(project_changes(**BASE))
-    b = run(project_changes(**{**BASE, P + "value_of_load_per_mwh": 80.0}))
+    b = run(project_changes(**{**BASE, M + "receiving_energy_value_per_mwh": 80.0}))
     assert b["costs"]["line_loss"]["annual_cost"] == pytest.approx(
         2 * a["costs"]["line_loss"]["annual_cost"]
     )

@@ -12,7 +12,7 @@ import numpy as np
 import argparse
 import math
 from dataclasses import dataclass
-from typing import Dict, Any, Tuple
+from typing import Any
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, HOURS_PER_YEAR
@@ -25,6 +25,13 @@ from forge.scripts.utils.smart_loaders import (
 )
 
 logger = logging.getLogger(__name__)
+
+_SPREAD_PATH = (
+    "01_project_technical_details.market_measurements.congestion_spread_per_mwh"
+)
+_ENERGY_PATH = (
+    "01_project_technical_details.market_measurements.receiving_energy_value_per_mwh"
+)
 
 
 @dataclass
@@ -47,10 +54,11 @@ class CongestionReductionResults:
     effective_capacity_mw: float
     average_exceedance: float | None
     relief_mw: float
-    # Congestion benefit (remedial). Zero unless the sending end is the margin.
-    annual_congestion_benefit: float
+    # Congestion benefit (remedial). Zero on a dedicated line. None when the
+    # margin spread is null.
+    annual_congestion_benefit: float | None
     # Total remedial (= congestion only)
-    annual_remedial_benefit: float
+    annual_remedial_benefit: float | None
 
 def _get_old_capacity_mw() -> int:
     """
@@ -75,13 +83,17 @@ def _get_old_capacity_mw() -> int:
     return old_capacity_mw if old_capacity_mw is not None else 0
 
 
-def require_value_of_load_per_mwh(project: Dict[str, Any]) -> float:
-    """Return γ_load; fail loudly if the required delivered-energy parameter is missing."""
-    if "value_of_load_per_mwh" not in project:
-        raise KeyError(
-            "Missing required parameter 'value_of_load_per_mwh' for delivered energy benefit"
-        )
-    return float(project["value_of_load_per_mwh"])
+def _market_block() -> dict[str, Any]:
+    """Route measurements. A missing block is four absent values."""
+    block = get_project_data_raw().get("market_measurements") or {}
+    return block if isinstance(block, dict) else {}
+
+
+def _measurement(name: str) -> float | None:
+    value = _market_block().get(name)
+    if value is None:
+        return None
+    return float(value)
 
 
 def load_project_technical_details() -> CongestionProjectDetails:
@@ -123,7 +135,7 @@ def calculate_congestion_reduction_costs(
     old_capacity_mw: int,
     flow_factor: float | None,
     average_exceedance: float | None,
-    average_congestion_price: float | None,
+    congestion_spread_per_mwh: float | None,
 ) -> CongestionReductionResults:
     """Single-constraint congestion relief over all 8,760 hours.
 
@@ -131,7 +143,9 @@ def calculate_congestion_reduction_costs(
     the regional margin, ``1 × capacity`` for a greenfield dedicated resource
     (an entered flow factor is ignored), and ``capacity − old_capacity`` for
     reconductoring or rebuild. Empty exceedance means relief equals that
-    capacity. The annual benefit is earned only on the margin.
+    capacity. The annual benefit is earned only on the margin, and only when
+    the measured spread is set. A dedicated line is a measured zero and does
+    not read the spread.
     """
     if project_type == "greenfield" and sending_source == "dedicated":
         delta_c_eff = 1.0 * capacity_mw
@@ -150,13 +164,12 @@ def calculate_congestion_reduction_costs(
         relief_mw = min(delta_c_eff, average_exceedance)
 
     if sending_source == "margin":
-        if average_congestion_price is None:
-            raise ValueError(
-                "average_congestion_price is required for a line on the regional margin"
+        if congestion_spread_per_mwh is None:
+            annual_congestion_benefit = None
+        else:
+            annual_congestion_benefit = (
+                HOURS_PER_YEAR * relief_mw * congestion_spread_per_mwh
             )
-        annual_congestion_benefit = (
-            HOURS_PER_YEAR * relief_mw * average_congestion_price
-        )
     else:
         annual_congestion_benefit = 0.0
 
@@ -192,6 +205,32 @@ def _growing_benefit(
     }
 
 
+def _money_or_absent(
+    annual: float | None,
+    growth: float,
+    lifetime: int,
+    social_discount_rate: float,
+    wacc_real: float,
+    t_cod: int,
+    horizon: int,
+) -> dict[str, Any]:
+    """A null annual is not available: the four money fields and the stream stay null."""
+    if annual is None:
+        return {"stream": None, "nominal": None, "pv": None, "pv_wacc": None}
+    return _growing_benefit(
+        annual, growth, lifetime, social_discount_rate, wacc_real, t_cod, horizon
+    )
+
+
+def _log_dollars(label: str, annual: float | None, money: dict[str, Any]) -> None:
+    if annual is None:
+        logger.info(f"{label}: not available")
+        return
+    logger.info(f"{label}: ${annual:,.2f}")
+    logger.info(f"Lifetime {label.lower()} (nominal): ${money['nominal']:,.2f}")
+    logger.info(f"Lifetime {label.lower()} (social PV): ${money['pv']:,.2f}")
+
+
 def main() -> None:
     """
     Main function to calculate and display congestion reduction costs.
@@ -205,7 +244,12 @@ def main() -> None:
     # Load congestion reduction parameters
     params = load_congestion_reductions()
 
-    # Calculate congestion reduction costs
+    # The spread is read only for a margin line. Dedicated congestion is zero.
+    spread = (
+        _measurement("congestion_spread_per_mwh")
+        if project_details_cc.sending_source == "margin"
+        else None
+    )
     congestion_results = calculate_congestion_reduction_costs(
         project_details_cc.project_type,
         project_details_cc.sending_source,
@@ -213,7 +257,7 @@ def main() -> None:
         project_details_cc.old_capacity_mw,
         params.flow_factor,
         params.average_exceedance,
-        params.average_congestion_price,
+        spread,
     )
 
     logger.info("=" * 60)
@@ -236,20 +280,23 @@ def main() -> None:
     project_data = get_project_data_raw()
     project = project_data["project"]
     line_utilization = float(project["line_utilization"])
-    value_of_load_per_mwh = require_value_of_load_per_mwh(project)
+    receiving_energy_value = _measurement("receiving_energy_value_per_mwh")
     delta_c_effective = congestion_results.effective_capacity_mw
     energy_delivered_annual_mwh_yr = (
         delta_c_effective * line_utilization * HOURS_PER_YEAR
     )
     if project_details_cc.sending_source == "dedicated":
-        contract_price = project_details_cc.contract_price_per_mwh
-        if contract_price is None:
-            raise ValueError(
-                "contract_price_per_mwh is required for a dedicated resource"
+        if receiving_energy_value is None:
+            delivered_benefit_annual = None
+        else:
+            contract_price = project_details_cc.contract_price_per_mwh
+            if contract_price is None:
+                raise ValueError(
+                    "contract_price_per_mwh is required for a dedicated resource"
+                )
+            delivered_benefit_annual = energy_delivered_annual_mwh_yr * (
+                receiving_energy_value - contract_price
             )
-        delivered_benefit_annual = energy_delivered_annual_mwh_yr * (
-            value_of_load_per_mwh - contract_price
-        )
     else:
         delivered_benefit_annual = 0.0
 
@@ -270,7 +317,7 @@ def main() -> None:
     ctx = get_run_context()
     g_benefit = params.benefit_price_escalation_real
     lifetime = int(project_details_cc.project_lifetime)
-    congestion = _growing_benefit(
+    congestion = _money_or_absent(
         congestion_results.annual_congestion_benefit,
         g_benefit,
         lifetime,
@@ -279,7 +326,7 @@ def main() -> None:
         ctx.t_cod,
         ctx.horizon,
     )
-    delivered = _growing_benefit(
+    delivered = _money_or_absent(
         delivered_benefit_annual,
         g_benefit,
         lifetime,
@@ -302,10 +349,11 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("CONGESTION REDUCTION BENEFIT RESULTS")
     logger.info("=" * 60)
-    logger.info(f"Annual congestion benefit: ${congestion_results.annual_congestion_benefit:,.2f}")
-    logger.info(f"Lifetime congestion benefit: ${congestion['nominal']:,.2f}")
-    logger.info(f"Lifetime congestion benefit (social PV): ${congestion['pv']:,.2f}")
-    logger.info(f"Lifetime congestion benefit (WACC PV): ${congestion['pv_wacc']:,.2f}")
+    _log_dollars(
+        "Annual congestion benefit",
+        congestion_results.annual_congestion_benefit,
+        congestion,
+    )
 
     logger.info("")
     logger.info("=" * 60)
@@ -314,9 +362,7 @@ def main() -> None:
     logger.info(
         f"Energy delivered (annual): {energy_delivered_annual_mwh_yr:,.2f} MWh/yr"
     )
-    logger.info(f"Annual benefit: ${delivered_benefit_annual:,.2f}")
-    logger.info(f"Lifetime benefit (nominal): ${delivered['nominal']:,.2f}")
-    logger.info(f"Lifetime benefit (social PV): ${delivered['pv']:,.2f}")
+    _log_dollars("Annual benefit", delivered_benefit_annual, delivered)
     logger.info("=" * 60)
 
     logger.info("")
@@ -350,12 +396,31 @@ def main() -> None:
         },
         "effective_capacity_mw": congestion_results.effective_capacity_mw,
         "relief_mw": congestion_results.relief_mw,
+        "availability": {
+            "congestion_benefit": {
+                "available": congestion_results.annual_congestion_benefit is not None,
+                "missing_inputs": (
+                    ()
+                    if congestion_results.annual_congestion_benefit is not None
+                    else (_SPREAD_PATH,)
+                ),
+            },
+            "delivered_energy_benefit": {
+                "available": delivered_benefit_annual is not None,
+                "missing_inputs": (
+                    ()
+                    if delivered_benefit_annual is not None
+                    else (_ENERGY_PATH,)
+                ),
+            },
+        },
     }
 
     from forge.scripts.utils.run_context import add_derived
     add_derived({
         "effective_capacity_mw": congestion_results.effective_capacity_mw,
         "energy_delivered_annual_mwh_yr": energy_delivered_annual_mwh_yr,
+        "relief_mw": congestion_results.relief_mw,
     })
 
     csv_manager.add_congestion(results)
