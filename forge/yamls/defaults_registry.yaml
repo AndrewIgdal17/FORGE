@@ -1371,3 +1371,32 @@ terminals:
     citation: null
     yaml_file: 01_project_technical_details.yaml
     basis: Derived
+market_measurements:
+  congestion_spread_per_mwh:
+    path: 01_project_technical_details.market_measurements.congestion_spread_per_mwh
+    unit: $/MWh
+    source: "Route-derived (price archive, Spec 08)"
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  hours_receiving_more_congested:
+    path: 01_project_technical_details.market_measurements.hours_receiving_more_congested
+    unit: hours
+    source: "Route-derived (price archive, Spec 08)"
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  hours_sending_more_congested:
+    path: 01_project_technical_details.market_measurements.hours_sending_more_congested
+    unit: hours
+    source: "Route-derived (price archive, Spec 08)"
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived
+  receiving_energy_value_per_mwh:
+    path: 01_project_technical_details.market_measurements.receiving_energy_value_per_mwh
+    unit: $/MWh
+    source: "Route-derived (price archive, Spec 08)"
+    citation: null
+    yaml_file: 01_project_technical_details.yaml
+    basis: Derived

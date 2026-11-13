@@ -28,6 +28,12 @@ project:
   old_ac_dc: null # AC or DC
   old_converter_type: null
 
+market_measurements:
+  congestion_spread_per_mwh: null
+  hours_receiving_more_congested: null
+  hours_sending_more_congested: null
+  receiving_energy_value_per_mwh: null
+
 terminals:
   sending:
     gea: null

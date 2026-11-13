@@ -198,6 +198,15 @@ def _require_whole_year(name: str, value: Any) -> int:
     return int(value)
 
 
+def _raise_if_market_measurements_invalid() -> None:
+    from forge.contract import check_market_measurements
+    from forge.scripts.utils.run_context import get_run_state
+
+    failures = check_market_measurements(get_run_state().inputs)
+    if failures:
+        raise InvalidInputs("; ".join(failures))
+
+
 def _raise_if_required_inputs_missing() -> None:
     """Repeat the required-input check against the active run and its flags."""
     from forge.contract import diff_changes, missing_required_inputs
@@ -263,6 +272,7 @@ def _bootstrap_run_context() -> "RunContext":
     from forge.contract import missing_protected_area_acres
     from forge.scripts.utils.run_context import get_run_state
 
+    _raise_if_market_measurements_invalid()
     _raise_if_required_inputs_missing()
     project_details = load_project_technical_details()
     _require_known_regions(project_details)
@@ -408,6 +418,9 @@ def _run_once(
     )
     token = set_run_state(state)
     try:
+        # Measurement failures name their paths. Raise them before the
+        # required-input guard, which would otherwise hide them.
+        _raise_if_market_measurements_invalid()
         # The output manager loads capacity before bootstrap. Reject a blank
         # draft first so a null capacity stays InvalidInputs.
         _raise_if_required_inputs_missing()

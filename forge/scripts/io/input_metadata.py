@@ -56,6 +56,7 @@ class InputField:
     sub_tab: str | None = None
     required_when: str | None = None
     required_stage: Literal["before_route", "after_route"] | None = None
+    source: Literal["route"] | None = None
 
 
 def _f(id: str, **kwargs: Any) -> InputField:
@@ -284,7 +285,7 @@ for _tier, _ceiling in enumerate(_CORONA_CEILINGS):
         validation={"min": 0}))
 
 # ===================================================================
-# Tab 2 — Routing (85 fields: 18 terrain + 60 ROW + 1 flag + 6 terminals)
+# Tab 2 — Routing (93 fields, including 4 market measurements)
 # ===================================================================
 
 _TAB2: list[InputField] = []
@@ -531,6 +532,48 @@ for _end_i, (_end, _end_label) in enumerate((("sending", "Sending"), ("receiving
             required_when="always", required_stage="after_route",
             sub_tab="terminals",
         ))
+
+_MARKET_HELP = "Measured from the route; not available outside the price archive."
+_TAB2.append(_f(
+    "mm_congestion_spread", taxonomy_id="route_market_measurements", input_tab="routing",
+    yaml_section="01_project_technical_details",
+    field_path="market_measurements.congestion_spread_per_mwh",
+    label="Congestion spread ($/MWh, mean absolute hourly difference)",
+    help_text=_MARKET_HELP, unit="$/MWh", input_type="currency",
+    tier="first-glance", display_order=1, source="route",
+    validation={"nullable_number": True, "min": 0},
+    sub_tab="market-measurements",
+))
+_TAB2.append(_f(
+    "mm_hours_fwd", taxonomy_id="route_market_measurements", input_tab="routing",
+    yaml_section="01_project_technical_details",
+    field_path="market_measurements.hours_receiving_more_congested",
+    label="Hours the receiving zone is more congested",
+    help_text=_MARKET_HELP, unit="hours",
+    tier="first-glance", display_order=2, source="route",
+    validation={"nullable_number": True, "integer": True, "min": 0, "max": 8760},
+    sub_tab="market-measurements",
+))
+_TAB2.append(_f(
+    "mm_hours_rev", taxonomy_id="route_market_measurements", input_tab="routing",
+    yaml_section="01_project_technical_details",
+    field_path="market_measurements.hours_sending_more_congested",
+    label="Hours the sending zone is more congested",
+    help_text=_MARKET_HELP, unit="hours",
+    tier="first-glance", display_order=3, source="route",
+    validation={"nullable_number": True, "integer": True, "min": 0, "max": 8760},
+    sub_tab="market-measurements",
+))
+_TAB2.append(_f(
+    "mm_energy_value", taxonomy_id="route_market_measurements", input_tab="routing",
+    yaml_section="01_project_technical_details",
+    field_path="market_measurements.receiving_energy_value_per_mwh",
+    label="Receiving-end energy value ($/MWh)",
+    help_text=_MARKET_HELP, unit="$/MWh", input_type="currency",
+    tier="first-glance", display_order=4, source="route",
+    validation={"nullable_number": True},
+    sub_tab="market-measurements",
+))
 
 # ===================================================================
 # Tab 4 — Environmental Costs (40 fields: 1 uplift + 31 base + 6 credits + 2 read-only displays)

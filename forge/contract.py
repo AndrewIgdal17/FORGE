@@ -324,10 +324,14 @@ def missing_protected_area_acres(document: Mapping[str, Any]) -> list[str]:
     return missing
 
 
-def _is_value_error(message: str) -> bool:
+def _is_value_error(path: str, message: str) -> bool:
     """A known path holding a value the user must change, as opposed to an
     unknown path. These raise InvalidInputs so the message reaches the user."""
-    return "is not a whole number" in message or "is no longer" in message
+    return (
+        "market_measurements" in path
+        or "is not a whole number" in message
+        or "is no longer" in message
+    )
 
 
 _CAPACITY_MW_PATH = "01_project_technical_details.project.capacity_mw"
@@ -439,10 +443,100 @@ def _required_inputs_message(missing: list[dict]) -> str:
     return "; ".join(f"{item['path']}: {item['message']}" for item in missing)
 
 
+_HOURS_IN_YEAR = 8760
+_MARKET_SECTION = "01_project_technical_details"
+
+
+def _market_path(name: str) -> str:
+    return f"{_MARKET_SECTION}.market_measurements.{name}"
+
+
+def _market_block(inputs: Mapping) -> Mapping:
+    section = inputs.get(_MARKET_SECTION) if isinstance(inputs, Mapping) else None
+    if not isinstance(section, Mapping):
+        return {}
+    block = section.get("market_measurements") or {}
+    if not isinstance(block, Mapping):
+        return {}
+    return block
+
+
+def _finite_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    )
+
+
+def _hour_count(value: Any) -> bool:
+    return is_whole_number(value) and 0 <= value <= _HOURS_IN_YEAR
+
+
+def check_market_measurements(inputs: Mapping) -> list[str]:
+    """Return one failure string per broken market-measurement rule.
+
+    Each string names the dotted path or paths it concerns. Null means the
+    measurement is absent. The spread and both hour counts are one comparison,
+    so they are all null or all set. Metadata still applies min, max, and
+    integer through validate_changes; the same bounds are repeated here so a
+    full document fails without a change list.
+    """
+    block = _market_block(inputs)
+    spread = block.get("congestion_spread_per_mwh")
+    hours_fwd = block.get("hours_receiving_more_congested")
+    hours_rev = block.get("hours_sending_more_congested")
+    energy = block.get("receiving_energy_value_per_mwh")
+    spread_path = _market_path("congestion_spread_per_mwh")
+    fwd_path = _market_path("hours_receiving_more_congested")
+    rev_path = _market_path("hours_sending_more_congested")
+    energy_path = _market_path("receiving_energy_value_per_mwh")
+    failures: list[str] = []
+
+    if spread is not None and (not _finite_number(spread) or spread < 0):
+        failures.append(
+            f"{spread_path} must be a finite number greater than or equal to 0"
+        )
+    if hours_fwd is not None and not _hour_count(hours_fwd):
+        failures.append(
+            f"{fwd_path} must be a whole number from 0 through {_HOURS_IN_YEAR}"
+        )
+    if hours_rev is not None and not _hour_count(hours_rev):
+        failures.append(
+            f"{rev_path} must be a whole number from 0 through {_HOURS_IN_YEAR}"
+        )
+    if energy is not None and not _finite_number(energy):
+        failures.append(f"{energy_path} must be a finite number")
+
+    present = (spread is not None, hours_fwd is not None, hours_rev is not None)
+    if any(present) and not all(present):
+        failures.append(
+            f"{spread_path}, {fwd_path}, and {rev_path} must all be null or all be set"
+        )
+    elif (
+        all(present)
+        and _hour_count(hours_fwd)
+        and _hour_count(hours_rev)
+    ):
+        if hours_fwd + hours_rev > _HOURS_IN_YEAR:
+            failures.append(
+                f"{fwd_path} + {rev_path} must be at most {_HOURS_IN_YEAR}"
+            )
+        if _finite_number(spread) and (
+            (hours_fwd == 0 and hours_rev == 0) != (spread == 0)
+        ):
+            failures.append(
+                f"{spread_path} is 0 exactly when {fwd_path} and {rev_path} are both 0"
+            )
+    if spread is not None and energy is None:
+        failures.append(f"{energy_path} is required when {spread_path} is set")
+    return failures
+
+
 def resolve_inputs(changes: Mapping[str, Any]) -> dict:
     errors = validate_changes(changes)
     if errors:
-        if all(_is_value_error(error["message"]) for error in errors):
+        if all(_is_value_error(error["path"], error["message"]) for error in errors):
             detail = "; ".join(f"{error['path']}: {error['message']}" for error in errors)
             raise InvalidInputs(detail)
         raise UnknownInputPath([error["path"] for error in errors])
@@ -451,6 +545,9 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
     parts: list[str] = []
+    measurement_failures = check_market_measurements(resolved)
+    if measurement_failures:
+        parts.append("; ".join(measurement_failures))
     missing_acres = missing_protected_area_acres(resolved)
     if missing_acres:
         parts.append(
