@@ -52,8 +52,9 @@ def test_no_delay_runs_once(monkeypatch):
 
 def test_no_emissions_gives_none_not_zero():
     d = run(_priced(**{T+"delay_years": 4}), no_emissions=True)["delay_comparison"]
-    assert d["delay_cost_avoid"] is None and d["delay_cost_forgone"] is None
+    assert d["delay_cost_avoid"] is None
     assert d["delay_cost_cong"] is not None
+    assert d["delay_cost_forgone"] == d["delay_cost_cong"]
 
 
 def test_capital_only_has_no_block():

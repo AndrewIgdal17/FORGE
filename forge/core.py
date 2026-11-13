@@ -539,11 +539,74 @@ def _societal_value_pv(results: dict[str, Any], taxonomy_id: str) -> Any:
     return None
 
 
+def _component_available(results: dict[str, Any], taxonomy_id: str) -> bool:
+    """True only when ``results["availability"]`` records that id as available.
+
+    An id missing from the map is not available.
+    """
+    entry = (results.get("availability") or {}).get(taxonomy_id)
+    if not isinstance(entry, dict):
+        return False
+    return entry.get("available") is True
+
+
 def _forgone_delay(cong: Any, avoid: Any) -> Any:
-    """Sum of the two benefit differences. None when either difference is None."""
-    if cong is None or avoid is None:
+    """Sum the component delays that are not null. None only when both are null."""
+    present = [value for value in (cong, avoid) if value is not None]
+    if not present:
         return None
-    return cong + avoid
+    return sum(present)
+
+
+_FORGONE_IDS = ("avoided_emissions_benefit", "congestion_benefit")
+
+
+def _forgone_omitted(
+    on_time: dict[str, Any] | None,
+    entered: dict[str, Any],
+) -> list[str]:
+    """Sorted benefit ids that are not available in either run being compared."""
+    runs = (entered,) if on_time is None else (entered, on_time)
+    return sorted(
+        taxonomy_id
+        for taxonomy_id in _FORGONE_IDS
+        if any(not _component_available(run, taxonomy_id) for run in runs)
+    )
+
+
+def _delta_nb_omitted(
+    on_time: dict[str, Any] | None,
+    entered: dict[str, Any],
+) -> list[str]:
+    """Union of the two runs' omitted net-benefit ids, or the one run's list."""
+    entered_ids = list(entered["bcr"]["omitted"]["net_benefit_pv"])
+    if on_time is None:
+        return entered_ids
+    return sorted(set(entered_ids) | set(on_time["bcr"]["omitted"]["net_benefit_pv"]))
+
+
+def _component_delay(
+    on_time: dict[str, Any] | None,
+    entered: dict[str, Any],
+    taxonomy_id: str,
+) -> Any:
+    """On-time ``value_pv`` minus entered, or 0.0 when there is no second run.
+
+    The difference is null when the id is not available in either run.
+    """
+    if on_time is None:
+        if not _component_available(entered, taxonomy_id):
+            return None
+        return 0.0
+    if (
+        not _component_available(entered, taxonomy_id)
+        or not _component_available(on_time, taxonomy_id)
+    ):
+        return None
+    return (
+        _societal_value_pv(on_time, taxonomy_id)
+        - _societal_value_pv(entered, taxonomy_id)
+    )
 
 
 def _on_time_metrics(results: dict[str, Any]) -> dict[str, Any]:
@@ -565,6 +628,7 @@ def _delay_block(
     avoid: Any,
     delta_nb: float,
     on_time: dict[str, Any],
+    omitted: dict[str, list[str]],
 ) -> dict[str, Any]:
     return {
         "baseline_delay_years": baseline,
@@ -575,6 +639,7 @@ def _delay_block(
         "delay_cost_forgone": _forgone_delay(cong, avoid),
         "delta_nb_delay": delta_nb,
         "on_time": on_time,
+        "omitted": omitted,
     }
 
 
@@ -599,34 +664,32 @@ def _delay_comparison(
     """Compare the run as entered with the same project at the baseline delay.
 
     Capital-only runs have no benefits, so the block is None. A run already at
-    the baseline delay is not run again. A module that did not run contributes
-    None, including when the two delays are equal.
+    the baseline delay is not run again. Availability comes from
+    ``results["availability"]``. An id missing from that map, or present with
+    ``available`` false, contributes None, including when the two delays are
+    equal. A difference that is computed is on-time ``value_pv`` minus entered.
     """
     if flags["capital_only"]:
         return None
     delay_years, baseline = _entered_delay_years(inputs)
     if delay_years == baseline:
-        cong = 0.0 if _societal_value_pv(results, "congestion_benefit") is not None else None
-        avoid = 0.0 if _societal_value_pv(results, "avoided_emissions_benefit") is not None else None
         return _delay_block(
             baseline=baseline,
             delay_years=delay_years,
             on_time_run=False,
-            cong=cong,
-            avoid=avoid,
+            cong=_component_delay(None, results, "congestion_benefit"),
+            avoid=_component_delay(None, results, "avoided_emissions_benefit"),
             delta_nb=0.0,
             on_time=_on_time_metrics(results),
+            omitted={
+                "delay_cost_forgone": _forgone_omitted(None, results),
+                "delta_nb_delay": _delta_nb_omitted(None, results),
+            },
         )
     ot_inputs = copy.deepcopy(inputs)
     ot_inputs["01_project_technical_details"]["timeline"]["delay_years"] = baseline
     # Look up the module global at call time so a test patch of _run_once counts.
     ot = _run_once(ot_inputs, scenario_id, trajectory=False, **flags)
-    entered_cong = _societal_value_pv(results, "congestion_benefit")
-    on_time_cong = _societal_value_pv(ot, "congestion_benefit")
-    entered_avoid = _societal_value_pv(results, "avoided_emissions_benefit")
-    on_time_avoid = _societal_value_pv(ot, "avoided_emissions_benefit")
-    cong = None if entered_cong is None or on_time_cong is None else on_time_cong - entered_cong
-    avoid = None if entered_avoid is None or on_time_avoid is None else on_time_avoid - entered_avoid
     on_time_nb = ot["bcr"]["net_benefit_pv"]
     entered_nb = results["bcr"]["net_benefit_pv"]
     delta_nb = None if on_time_nb is None or entered_nb is None else on_time_nb - entered_nb
@@ -634,10 +697,14 @@ def _delay_comparison(
         baseline=baseline,
         delay_years=delay_years,
         on_time_run=True,
-        cong=cong,
-        avoid=avoid,
+        cong=_component_delay(ot, results, "congestion_benefit"),
+        avoid=_component_delay(ot, results, "avoided_emissions_benefit"),
         delta_nb=delta_nb,
         on_time=_on_time_metrics(ot),
+        omitted={
+            "delay_cost_forgone": _forgone_omitted(ot, results),
+            "delta_nb_delay": _delta_nb_omitted(ot, results),
+        },
     )
 
 

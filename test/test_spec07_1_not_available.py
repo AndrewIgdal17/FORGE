@@ -727,3 +727,40 @@ def test_acceptance_8_energy_value_only():
     assert item(results, "congestion_benefit")["available"] is False
     assert item(results, "avoided_emissions_benefit")["available"] is False
     assert item(results, "emissions_comp")["available"] is False
+
+
+def run_margin_all_null(*, delay_years: int, baseline_delay_years: int) -> dict:
+    """Margin AC, four null measurements, acres 0, MN/MO terminals."""
+    changes = project_changes(**{
+        "01_project_technical_details.project.ac_dc": "AC",
+        "01_project_technical_details.project.capacity_mw": 1792,
+        "01_project_technical_details.project.converter_type": "NA",
+        "01_project_technical_details.project.number_of_converters": 0,
+        "01_project_technical_details.project.sending_source": "margin",
+        "01_project_technical_details.project.project_type": "greenfield",
+        "01_project_technical_details.timeline.delay_years": delay_years,
+        "01_project_technical_details.timeline.baseline_delay_years": baseline_delay_years,
+        **_margin_terminals(),
+        **_null_measurements(),
+    })
+    return {"results": _run(changes)}
+
+
+def test_acceptance_13_delay_null_measurements():
+    entered = run_margin_all_null(delay_years=4, baseline_delay_years=0)
+    block = entered["results"]["delay_comparison"]
+    assert block["delay_cost_cong"] is None
+    assert block["delay_cost_avoid"] is None
+    assert block["delay_cost_forgone"] is None
+    assert block["omitted"]["delay_cost_forgone"] == [
+        "avoided_emissions_benefit",
+        "congestion_benefit",
+    ]
+    assert isinstance(block["delta_nb_delay"], float)
+    assert "congestion_benefit" in block["omitted"]["delta_nb_delay"]
+
+    same = run_margin_all_null(delay_years=0, baseline_delay_years=0)
+    same_block = same["results"]["delay_comparison"]
+    assert same_block["delay_cost_cong"] is None
+    assert same_block["delta_nb_delay"] == 0.0
+    assert same_block["omitted"]["delta_nb_delay"] == same["results"]["bcr"]["omitted"]["net_benefit_pv"]
