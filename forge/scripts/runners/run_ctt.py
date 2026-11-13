@@ -10,7 +10,13 @@ Scenario B: CTT_Counterfactual_Delay7 — what would have happened without CREZ 
 import copy
 
 from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
-from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
+from forge.scripts.utils.scenario_utils import (
+    build_default_inputs,
+    fmt,
+    fmt_ratio,
+    run_scenario,
+    save_forge_file,
+)
 
 def patch_ctt_inputs(inputs: dict) -> dict:
     """Patch S1 inputs with CTT Panhandle CREZ values (Scenario A: actual 2yr delay)."""
@@ -26,7 +32,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     proj["project"]["converter_type"] = "NA"
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.45
-    proj["project"]["value_of_load_per_mwh"] = 35.0
     proj["project"]["project_type"] = "greenfield"
     proj["project"]["row_agreement_type"] = "permanent_easement_new"
     proj["project"]["old_capacity_mw"] = None
@@ -89,7 +94,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.50
     gf["constraints"]["average_exceedance"] = 600
-    gf["prices"]["average_congestion_price"] = 11.47 * 1800 / 8760
 
     apply_terminals(inputs, ERCOT)
 
@@ -129,15 +133,15 @@ def print_results(results: dict, label: str):
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
-    print(f"  BCR Societal:           {bcr.get('bcr_societal', 'N/A'):.3f}")
-    print(f"  BCR Utility:            {bcr.get('bcr_utility', 'N/A'):.3f}")
-    print(f"  BCR Ratepayer:          {bcr.get('bcr_ratepayer', 'N/A'):.3f}")
-    excl_wf = bcr.get("bcr_excluding_wildfire_risk")
-    if excl_wf:
-        print(f"  BCR Excl. Wildfire:     {excl_wf:.3f}")
-    excl_both = bcr.get("bcr_excluding_wildfire_risk_and_outage_risk")
-    if excl_both:
-        print(f"  BCR Excl. WF+Outage:   {excl_both:.3f}")
+    print(f"  BCR Societal:           {fmt_ratio(bcr.get('bcr_societal', 0))}")
+    print(f"  BCR Utility:            {fmt_ratio(bcr.get('bcr_utility', 0))}")
+    print(f"  BCR Ratepayer:          {fmt_ratio(bcr.get('bcr_ratepayer', 0))}")
+    excl_wf = bcr.get("bcr_excluding_wildfire_risk", 0)
+    if excl_wf is None or excl_wf:
+        print(f"  BCR Excl. Wildfire:     {fmt_ratio(excl_wf)}")
+    excl_both = bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0)
+    if excl_both is None or excl_both:
+        print(f"  BCR Excl. WF+Outage:   {fmt_ratio(excl_both)}")
 
     print(f"\n  --- SUMMARY ---")
     print(f"  Total costs PV:         {fmt(bcr.get('total_costs_pv', 0))}")
@@ -179,9 +183,11 @@ def main():
     print(f"\n{'='*60}")
     print(f"  DELAY IMPACT COMPARISON: CTT Panhandle CREZ")
     print(f"{'='*60}")
-    print(f"  BCR Societal: {bcr_a.get('bcr_societal',0):.3f} (2yr) vs {bcr_b.get('bcr_societal',0):.3f} (7yr)")
-    print(f"  Net Benefit: {fmt(bcr_a.get('net_benefit_pv',0))} (2yr) vs {fmt(bcr_b.get('net_benefit_pv',0))} (7yr)")
-    delta_nb = bcr_a.get("net_benefit_pv", 0) - bcr_b.get("net_benefit_pv", 0)
+    print(f"  BCR Societal: {fmt_ratio(bcr_a.get('bcr_societal', 0))} (2yr) vs {fmt_ratio(bcr_b.get('bcr_societal', 0))} (7yr)")
+    nb_a = bcr_a.get("net_benefit_pv", 0)
+    nb_b = bcr_b.get("net_benefit_pv", 0)
+    print(f"  Net Benefit: {fmt(nb_a)} (2yr) vs {fmt(nb_b)} (7yr)")
+    delta_nb = None if nb_a is None or nb_b is None else nb_a - nb_b
     print(f"  Value of CREZ mandate (avoided delay cost): {fmt(delta_nb)}")
 
     # Delay-specific costs
@@ -197,7 +203,9 @@ def main():
     print(f"\n  --- VALIDATION ---")
     print(f"  FORGE build cost PV:     {fmt(build_pv)}")
     print(f"  CTT actual all-in cost: ~$450M (2013$), ~$560M (2026$, 2.5% inflation)")
-    print(f"  FORGE annual benefits:   {fmt(cc_a['congestion_benefit_pv'] / 50)}/yr (approx)")
+    cong_pv = cc_a["congestion_benefit_pv"]
+    annual = "not available" if cong_pv is None else fmt(cong_pv / 50)
+    print(f"  FORGE annual benefits:   {annual}/yr (approx)")
     print(f"  Observed CTT benefits:  $110M-$220M/year (estimated attribution)")
 
     print("\nDone.")

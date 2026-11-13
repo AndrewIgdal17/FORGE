@@ -9,7 +9,13 @@ calculation engine, and saves updated .forge files in the current format
 import copy
 
 from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
-from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
+from forge.scripts.utils.scenario_utils import (
+    build_default_inputs,
+    fmt,
+    fmt_ratio,
+    run_scenario,
+    save_forge_file,
+)
 
 def _patch_lrgv_common(inputs: dict) -> dict:
     """Shared LRGV corridor parameters (existing ROW, South Texas terrain, ERCOT grid)."""
@@ -81,11 +87,9 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
     gf["constraints"]["average_exceedance"] = 400
-    gf["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     rc = cc["incremental_congestion_reductions"]
     rc["constraints"]["average_exceedance"] = 400
-    rc["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     apply_terminals(inputs, ERCOT)
 
@@ -106,7 +110,6 @@ def patch_lrgv_accc(inputs: dict) -> dict:
     proj["project"]["converter_type"] = "NA"
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
-    proj["project"]["value_of_load_per_mwh"] = 42.0
     proj["project"]["project_type"] = "reconductoring"
     proj["project"]["row_agreement_type"] = "lease_license_existing"
     proj["project"]["old_capacity_mw"] = 1792
@@ -135,7 +138,6 @@ def patch_lrgv_acsr_rebuild(inputs: dict) -> dict:
     proj["project"]["converter_type"] = "NA"
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
-    proj["project"]["value_of_load_per_mwh"] = 42.0
     proj["project"]["project_type"] = "rebuild"
     proj["project"]["row_agreement_type"] = "lease_license_existing"
     proj["project"]["old_capacity_mw"] = 1792
@@ -182,9 +184,9 @@ def print_results(results: dict, label: str):
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
-    print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
-    print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")
-    print(f"  BCR Ratepayer:                  {bcr.get('bcr_ratepayer', 0):.3f}")
+    print(f"  BCR Societal:                   {fmt_ratio(bcr.get('bcr_societal', 0))}")
+    print(f"  BCR Utility:                    {fmt_ratio(bcr.get('bcr_utility', 0))}")
+    print(f"  BCR Ratepayer:                  {fmt_ratio(bcr.get('bcr_ratepayer', 0))}")
 
     print(f"\n  --- SUMMARY ---")
     print(f"  Total costs PV:         {fmt(bcr.get('total_costs_pv', 0))}")
@@ -219,12 +221,12 @@ def main():
     print(f"  {'Metric':<28} {'ACCC':>12} {'ACSR Rebuild':>14}")
     print(f"  {'-'*28} {'-'*12} {'-'*14}")
     print(
-        f"  {'BCR Societal':<28} {bcr_accc.get('bcr_societal', 0):>12.3f}"
-        f" {bcr_acsr.get('bcr_societal', 0):>14.3f}"
+        f"  {'BCR Societal':<28} {fmt_ratio(bcr_accc.get('bcr_societal', 0), '>12.3f')}"
+        f" {fmt_ratio(bcr_acsr.get('bcr_societal', 0), '>14.3f')}"
     )
     print(
-        f"  {'BCR Utility':<28} {bcr_accc.get('bcr_utility', 0):>12.3f}"
-        f" {bcr_acsr.get('bcr_utility', 0):>14.3f}"
+        f"  {'BCR Utility':<28} {fmt_ratio(bcr_accc.get('bcr_utility', 0), '>12.3f')}"
+        f" {fmt_ratio(bcr_acsr.get('bcr_utility', 0), '>14.3f')}"
     )
     print(
         f"  {'Net Benefit':<28} {fmt(bcr_accc.get('net_benefit_pv', 0)):>12}"

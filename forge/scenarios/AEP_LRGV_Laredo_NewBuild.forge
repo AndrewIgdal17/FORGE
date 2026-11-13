@@ -12,7 +12,6 @@
         "converter_type": "NA",
         "converter_loss_percentage": null,
         "line_utilization": 0.65,
-        "value_of_load_per_mwh": 42.0,
         "project_type": "greenfield",
         "sending_source": "margin",
         "row_agreement_type": "permanent_easement_new",
@@ -21,6 +20,12 @@
         "old_ac_dc": null,
         "old_converter_type": null,
         "name": "AEP_LRGV_Laredo_NewBuild_345kV_AC"
+      },
+      "market_measurements": {
+        "congestion_spread_per_mwh": null,
+        "hours_receiving_more_congested": null,
+        "hours_sending_more_congested": null,
+        "receiving_energy_value_per_mwh": null
       },
       "terminals": {
         "sending": {
@@ -1201,17 +1206,11 @@
         "constraints": {
           "flow_factor": 0.8,
           "average_exceedance": 400
-        },
-        "prices": {
-          "average_congestion_price": 2.0547945205479454
         }
       },
       "incremental_congestion_reductions": {
         "constraints": {
           "average_exceedance": 0
-        },
-        "prices": {
-          "average_congestion_price": 0
         }
       }
     },

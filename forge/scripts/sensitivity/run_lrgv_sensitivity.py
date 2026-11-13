@@ -49,7 +49,7 @@ def run_with_discount_rate(inputs: dict, rate: float, scenario_id: str) -> dict:
 
 def fmt(val, prefix="$"):
     if val is None:
-        return "N/A"
+        return "not available"
     if abs(val) >= 1e9:
         return f"{prefix}{val/1e9:.2f}B"
     elif abs(val) >= 1e6:
@@ -59,7 +59,7 @@ def fmt(val, prefix="$"):
 
 def fmt_ratio(val):
     if val is None:
-        return "N/A"
+        return "not available"
     return f"{val:.2f}"
 
 def extract_lifetime_metrics(results: dict) -> dict:

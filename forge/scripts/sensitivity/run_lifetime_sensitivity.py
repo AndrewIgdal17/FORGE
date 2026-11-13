@@ -47,12 +47,23 @@ def extract_metrics(results: dict) -> dict:
     }
 
 def fmt(val, prefix="$"):
+    if val is None:
+        return "not available"
     if abs(val) >= 1e9:
         return f"{prefix}{val/1e9:.2f}B"
     elif abs(val) >= 1e6:
         return f"{prefix}{val/1e6:.0f}M"
     else:
         return f"{prefix}{val:,.0f}"
+
+
+def show_cell(val, format_str):
+    """A present null prints ``not available``. A number uses ``format_str``."""
+    if val is None:
+        return "not available"
+    if format_str == "fmt":
+        return fmt(val)
+    return format_str.format(val)
 
 def print_sensitivity_table(project_name: str, results_by_lifetime: dict):
     print(f"\n{'='*70}")
@@ -74,13 +85,7 @@ def print_sensitivity_table(project_name: str, results_by_lifetime: dict):
     ]
 
     for label, key, format_str in metrics_to_show:
-        vals = []
-        for lt in LIFETIMES:
-            v = results_by_lifetime[lt][key]
-            if format_str == "fmt":
-                vals.append(fmt(v))
-            else:
-                vals.append(format_str.format(v))
+        vals = [show_cell(results_by_lifetime[lt][key], format_str) for lt in LIFETIMES]
         print(f"  {label:<35} {vals[0]:>10} {vals[1]:>10} {vals[2]:>10}")
 
 def main():
@@ -177,10 +182,7 @@ def main():
         ("Total Costs (PV)", "total_costs_pv", "fmt"),
         ("Avoided Emissions (PV)", "displacement_avoided_pv", "fmt"),
     ]:
-        vals = []
-        for lt in vw1_lifetimes:
-            v = vw1_results[lt][key]
-            vals.append(fmt(v) if format_str == "fmt" else format_str.format(v))
+        vals = [show_cell(vw1_results[lt][key], format_str) for lt in vw1_lifetimes]
         print(f"  {label:<35} {vals[0]:>10} {vals[1]:>10} {vals[2]:>10}")
 
     # --- VW1 (2-year delay, counterfactual) ---
@@ -210,10 +212,7 @@ def main():
         ("Total Costs (PV)", "total_costs_pv", "fmt"),
         ("Avoided Emissions (PV)", "displacement_avoided_pv", "fmt"),
     ]:
-        vals = []
-        for lt in vw1_lifetimes:
-            v = vw1_2_results[lt][key]
-            vals.append(fmt(v) if format_str == "fmt" else format_str.format(v))
+        vals = [show_cell(vw1_2_results[lt][key], format_str) for lt in vw1_lifetimes]
         print(f"  {label:<35} {vals[0]:>10} {vals[1]:>10} {vals[2]:>10}")
 
     print("\nDone.")

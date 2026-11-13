@@ -84,11 +84,24 @@ def save_forge_file(
     return out_path
 
 
-def fmt(val: float, prefix: str = "$") -> str:
-    """Format large numbers with B/M suffixes."""
+def fmt(val: float | None, prefix: str = "$") -> str:
+    """Format large numbers with B/M suffixes.
+
+    A present null prints ``not available``. A missing key is the caller's
+    default, often 0, and still formats as money.
+    """
+    if val is None:
+        return "not available"
     if abs(val) >= 1e9:
         return f"{prefix}{val/1e9:.2f}B"
     elif abs(val) >= 1e6:
         return f"{prefix}{val/1e6:.1f}M"
     else:
         return f"{prefix}{val:,.0f}"
+
+
+def fmt_ratio(val: float | None, spec: str = ".3f") -> str:
+    """Format a BCR ratio. A present null prints ``not available``."""
+    if val is None:
+        return "not available"
+    return format(val, spec)

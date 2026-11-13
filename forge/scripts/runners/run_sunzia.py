@@ -7,7 +7,13 @@ runs both scenarios through the calculation engine, and saves results.
 import copy
 
 from forge.scripts.runners.case_study_terminals import SUNZIA, apply_terminals
-from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
+from forge.scripts.utils.scenario_utils import (
+    build_default_inputs,
+    fmt,
+    fmt_ratio,
+    run_scenario,
+    save_forge_file,
+)
 
 def patch_sunzia_inputs(inputs: dict) -> dict:
     """Patch S9 inputs with SunZia-specific values."""
@@ -23,7 +29,6 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     proj["project"]["number_of_converters"] = 2
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.67
-    proj["project"]["value_of_load_per_mwh"] = 30.0
     proj["project"]["project_type"] = "greenfield"
     proj["project"]["row_agreement_type"] = "permanent_easement_new"
     proj["project"]["old_capacity_mw"] = None
@@ -87,7 +92,6 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 1.0
     gf["constraints"]["average_exceedance"] = 500
-    gf["prices"]["average_congestion_price"] = 15 * 4000 / 8760
 
     apply_terminals(inputs, SUNZIA)
 
@@ -136,9 +140,9 @@ def print_results(results: dict, label: str):
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
-    print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
-    print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")
-    print(f"  BCR Ratepayer:                  {bcr.get('bcr_ratepayer', 0):.3f}")
+    print(f"  BCR Societal:                   {fmt_ratio(bcr.get('bcr_societal', 0))}")
+    print(f"  BCR Utility:                    {fmt_ratio(bcr.get('bcr_utility', 0))}")
+    print(f"  BCR Ratepayer:                  {fmt_ratio(bcr.get('bcr_ratepayer', 0))}")
 
     print(f"\n  --- EXCLUSION VARIANTS ---")
     excl_variants = [
@@ -156,7 +160,7 @@ def print_results(results: dict, label: str):
         if ben_excl:
             parts.append(f"excl benefit={fmt(bcr.get(ben_excl, 0))}")
         extra = f"  ({', '.join(parts)})" if parts else ""
-        print(f"  {label:<30} {val:.3f}{extra}")
+        print(f"  {label:<30} {fmt_ratio(val)}{extra}")
 
     # Print excluded PVs summary
     print(f"\n  --- EXCLUDED PVs ---")
@@ -205,18 +209,20 @@ def main():
     print(f"  {'Metric':<20} {'17yr':>10} {'2yr':>10}")
     print(f"  {'-'*20} {'-'*10} {'-'*10}")
     print(
-        f"  {'BCR Societal':<20} {bcr17.get('bcr_societal', 0):>10.3f}"
-        f" {bcr2.get('bcr_societal', 0):>10.3f}"
+        f"  {'BCR Societal':<20} {fmt_ratio(bcr17.get('bcr_societal', 0), '>10.3f')}"
+        f" {fmt_ratio(bcr2.get('bcr_societal', 0), '>10.3f')}"
     )
     print(
-        f"  {'BCR Utility':<20} {bcr17.get('bcr_utility', 0):>10.3f}"
-        f" {bcr2.get('bcr_utility', 0):>10.3f}"
+        f"  {'BCR Utility':<20} {fmt_ratio(bcr17.get('bcr_utility', 0), '>10.3f')}"
+        f" {fmt_ratio(bcr2.get('bcr_utility', 0), '>10.3f')}"
     )
+    nb17 = bcr17.get("net_benefit_pv", 0)
+    nb2 = bcr2.get("net_benefit_pv", 0)
     print(
-        f"  {'Net Benefit':<20} {fmt(bcr17.get('net_benefit_pv', 0)):>10}"
-        f" {fmt(bcr2.get('net_benefit_pv', 0)):>10}"
+        f"  {'Net Benefit':<20} {fmt(nb17):>10}"
+        f" {fmt(nb2):>10}"
     )
-    delta_17_to_2 = bcr2.get("net_benefit_pv", 0) - bcr17.get("net_benefit_pv", 0)
+    delta_17_to_2 = None if nb17 is None or nb2 is None else nb2 - nb17
     print(f"  Social cost of 15 extra years (17→2): {fmt(delta_17_to_2)}")
     print(f"\n  Build cost PV (validation): {fmt(results_delay17['costs']['build']['total_pv'])}")
     print(f"  Target: $1.6-1.8B (reported $1.8-2.0B at 3,000 MW)")

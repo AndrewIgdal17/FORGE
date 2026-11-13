@@ -1,4 +1,5 @@
 import logging
+import pathlib
 
 import pytest
 import forge
@@ -764,3 +765,30 @@ def test_acceptance_13_delay_null_measurements():
     assert same_block["delay_cost_cong"] is None
     assert same_block["delta_nb_delay"] == 0.0
     assert same_block["omitted"]["delta_nb_delay"] == same["results"]["bcr"]["omitted"]["net_benefit_pv"]
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SURFACES = [
+    ROOT / "forge/scenarios",
+    ROOT / "forge/yamls",
+    ROOT / "forge/scripts/io/input_metadata.py",
+    ROOT / "forge/scripts/io/yaml_loaders.py",
+    ROOT / "forge/scripts/runners",
+    ROOT / "test/spec05_project.py",
+]
+
+
+def test_acceptance_15_bundled_inputs_round_trip_without_old_paths():
+    forbidden = ("average_congestion_price", "value_of_load_per_mwh")
+    for surface in SURFACES:
+        paths = [surface] if surface.is_file() else surface.rglob("*")
+        for path in paths:
+            if path.suffix not in {".py", ".yaml", ".forge"}:
+                continue
+            text = path.read_text()
+            if path.suffix == ".forge":
+                inputs = text.split('"results"', 1)[0]
+                assert not any(token in inputs for token in forbidden)
+            else:
+                assert not any(token in text for token in forbidden)
+    # round-trip is the existing test_each_case_study_round_trips_through_changes

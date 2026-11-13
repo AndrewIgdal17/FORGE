@@ -13,7 +13,13 @@ import json
 from pathlib import Path
 
 from forge.scripts.runners.case_study_terminals import ERCOT, apply_terminals
-from forge.scripts.utils.scenario_utils import build_default_inputs, run_scenario, save_forge_file, fmt
+from forge.scripts.utils.scenario_utils import (
+    build_default_inputs,
+    fmt,
+    fmt_ratio,
+    run_scenario,
+    save_forge_file,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -31,7 +37,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     proj["project"]["converter_type"] = "NA"
     proj["project"]["converter_loss_percentage"] = None
     proj["project"]["line_utilization"] = 0.65
-    proj["project"]["value_of_load_per_mwh"] = 42.0
     proj["project"]["project_type"] = "greenfield"
     proj["project"]["row_agreement_type"] = "permanent_easement_new"
     proj["project"]["old_capacity_mw"] = None
@@ -111,7 +116,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     gf = cc["greenfield_congestion_reductions"]
     gf["constraints"]["flow_factor"] = 0.80
     gf["constraints"]["average_exceedance"] = 400
-    gf["prices"]["average_congestion_price"] = 15.0 * 1200 / 8760
 
     apply_terminals(inputs, ERCOT)
 
@@ -150,9 +154,9 @@ def print_results(results: dict, label: str):
     print(f"  Capital recovery (transfer): {fmt(benefits['capital_recovery']['capital_recovery_pv'])}")
 
     print(f"\n  --- BCR RATIOS ---")
-    print(f"  BCR Societal:                   {bcr.get('bcr_societal', 0):.3f}")
-    print(f"  BCR Utility:                    {bcr.get('bcr_utility', 0):.3f}")
-    print(f"  BCR Ratepayer:                  {bcr.get('bcr_ratepayer', 0):.3f}")
+    print(f"  BCR Societal:                   {fmt_ratio(bcr.get('bcr_societal', 0))}")
+    print(f"  BCR Utility:                    {fmt_ratio(bcr.get('bcr_utility', 0))}")
+    print(f"  BCR Ratepayer:                  {fmt_ratio(bcr.get('bcr_ratepayer', 0))}")
 
     print(f"\n  --- EXCLUSION VARIANTS ---")
     for label_str, key in [
@@ -163,8 +167,8 @@ def print_results(results: dict, label: str):
         ("Excl. AvEmis+Out+WF", "bcr_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk"),
     ]:
         val = bcr.get(key, 0)
-        if val:
-            print(f"  {label_str:<30} {val:.3f}")
+        if val is None or val:
+            print(f"  {label_str:<30} {fmt_ratio(val)}")
 
     print(f"\n  --- SUMMARY ---")
     print(f"  Total costs PV:         {fmt(bcr.get('total_costs_pv', 0))}")
@@ -198,8 +202,8 @@ def main():
                 ref = json.load(f)
             ref_bcr = ref["results"]["bcr"]
             print(f"\n  vs {ref_name}:")
-            print(f"    BCR Societal: {ref_bcr.get('bcr_societal', 0):.3f} vs {bcr_nb.get('bcr_societal', 0):.3f} (new-build)")
-            print(f"    BCR Utility:  {ref_bcr.get('bcr_utility', 0):.3f} vs {bcr_nb.get('bcr_utility', 0):.3f} (new-build)")
+            print(f"    BCR Societal: {fmt_ratio(ref_bcr.get('bcr_societal', 0))} vs {fmt_ratio(bcr_nb.get('bcr_societal', 0))} (new-build)")
+            print(f"    BCR Utility:  {fmt_ratio(ref_bcr.get('bcr_utility', 0))} vs {fmt_ratio(bcr_nb.get('bcr_utility', 0))} (new-build)")
             print(f"    Net Benefit:  {fmt(ref_bcr.get('net_benefit_pv', 0))} vs {fmt(bcr_nb.get('net_benefit_pv', 0))} (new-build)")
             ref_build = ref["results"]["costs"]["build"]["total_pv"]
             nb_build = results["costs"]["build"]["total_pv"]
