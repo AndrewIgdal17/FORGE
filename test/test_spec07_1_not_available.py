@@ -2,10 +2,18 @@ import logging
 
 import pytest
 import forge
+from forge.emissions_data import (
+    calendar_year,
+    criteria_damage_2025_usd_per_kg,
+    egrid_rates,
+    lrmer_co2e,
+    sc_co2_2025_usd_per_kg,
+)
 from forge.errors import InvalidInputs, UnknownInputPath
 from forge.scripts.calc.bcr_calculator import compute_all_bcrs, print_bcr_summary
 from forge.scripts.calc.bcr_trajectory import compute_trajectory
 from forge.scripts.io.taxonomy_adapters import TaxonomyResult
+from test.spec05_project import measured, project_changes
 
 SPREAD = "01_project_technical_details.market_measurements.congestion_spread_per_mwh"
 HFWD = "01_project_technical_details.market_measurements.hours_receiving_more_congested"
@@ -310,3 +318,64 @@ def test_calculate_summary_does_not_add_none():
     assert manager.summary["total_energy_emissions_pv"] is None
     assert manager.summary["total_energy_emissions_nominal"] is None
     assert manager.summary["total_capital_pv"] == 0
+
+
+def test_acceptance_6_margin_loss_split():
+    """One operating year, split 0.9 sending / 0.1 receiving at loaded rates."""
+    send = "01_project_technical_details.terminals.sending"
+    recv = "01_project_technical_details.terminals.receiving"
+    changes = project_changes(**{
+        f"{send}.gea": "MISO_North",
+        f"{send}.egrid_subregion": "MROW",
+        f"{send}.state": "MN",
+        f"{recv}.gea": "MISO_Central",
+        f"{recv}.egrid_subregion": "SRMW",
+        f"{recv}.state": "MO",
+        "01_project_technical_details.project.sending_source": "margin",
+        "01_project_technical_details.timeline.project_lifetime": 1,
+        **measured(
+            congestion_spread_per_mwh=5.0,
+            hours_receiving_more_congested=2000,
+            hours_sending_more_congested=876,
+            receiving_energy_value_per_mwh=30,
+        ),
+    })
+    resolved = forge.resolve_inputs(changes)
+    results = forge.run_calculation(resolved)
+    emissions = results["costs"]["emissions"]
+    assert emissions["rates_used"]["share_receiving"] == 0.1
+
+    year = calendar_year(results["derived_parameters"]["t_cod"])
+    eps_snd_co2e = lrmer_co2e("MISO_North", year)
+    eps_rcv_co2e = lrmer_co2e("MISO_Central", year)
+    eps_snd_so2, eps_snd_nox = egrid_rates("MROW")
+    eps_rcv_so2, eps_rcv_nox = egrid_rates("SRMW")
+    c_co2e = sc_co2_2025_usd_per_kg(year)
+    c_so2_snd = criteria_damage_2025_usd_per_kg("MN", "so2", year)
+    c_nox_snd = criteria_damage_2025_usd_per_kg("MN", "nox", year)
+    c_so2_rcv = criteria_damage_2025_usd_per_kg("MO", "so2", year)
+    c_nox_rcv = criteria_damage_2025_usd_per_kg("MO", "nox", year)
+    snd_bundle = (
+        eps_snd_co2e * c_co2e
+        + eps_snd_so2 * c_so2_snd
+        + eps_snd_nox * c_nox_snd
+    )
+    rcv_bundle = (
+        eps_rcv_co2e * c_co2e
+        + eps_rcv_so2 * c_so2_rcv
+        + eps_rcv_nox * c_nox_rcv
+    )
+    fraction = resolved["16_emissions_reductions"]["emissions_reductions"]["compensation_percent"]
+    e_comp = fraction * results["costs"]["line_loss"]["total_loss_mwh_yr"]
+    assert e_comp != 0
+    expected = e_comp * (0.9 * snd_bundle + 0.1 * rcv_bundle)
+    assert emissions["emissions_comp_annual_values"] == pytest.approx([expected])
+    eps_snd = {"co2e": eps_snd_co2e, "so2": eps_snd_so2, "nox": eps_snd_nox}
+    eps_rcv = {"co2e": eps_rcv_co2e, "so2": eps_rcv_so2, "nox": eps_rcv_nox}
+    for pollutant in ("co2e", "so2", "nox"):
+        assert emissions["annual_kg"]["sending"][pollutant][0] == pytest.approx(
+            e_comp * 0.9 * eps_snd[pollutant]
+        )
+        assert emissions["annual_kg"]["receiving"][pollutant][0] == pytest.approx(
+            e_comp * 0.1 * eps_rcv[pollutant]
+        )

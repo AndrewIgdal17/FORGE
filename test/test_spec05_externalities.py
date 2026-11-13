@@ -68,7 +68,14 @@ def test_externalities_societal_only():
     for tid in EXT:
         i = item(r, tid)
         assert i["value_pv_wacc"] is None
-        assert i["value_pv"] == pytest.approx(pv(i["stream"], 0.02), rel=1e-9)
+        # An unmeasured margin line has no reverse-hour count, so loss
+        # compensation is not available and has no stream to discount.
+        if tid == "emissions_comp":
+            assert i["available"] is False
+            assert i["value_pv"] is None
+            assert i["stream"] is None
+        else:
+            assert i["value_pv"] == pytest.approx(pv(i["stream"], 0.02), rel=1e-9)
 
 
 def test_taxonomy_has_31_items_and_no_removed_ids():
