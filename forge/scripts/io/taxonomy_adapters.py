@@ -40,6 +40,7 @@ class TaxonomyResult:
     stream: list[float] | None = None
     available: bool = True
     missing_inputs: tuple[str, ...] = ()
+    applies: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -66,11 +67,16 @@ def _copy_availability(module: dict, items: list[TaxonomyResult]) -> list[Taxono
     for item in items:
         block = availability.get(item.taxonomy_id) or {}
         missing = block.get("missing_inputs") or ()
+        available = block["available"] if "available" in block else True
+        applies = block.get("applies", True)
+        if not applies and not available:
+            raise ValueError(f"{item.taxonomy_id}: applies false but not available")
         stamped.append(
             replace(
                 item,
-                available=block["available"] if "available" in block else True,
+                available=available,
                 missing_inputs=tuple(missing),
+                applies=applies,
             )
         )
     return stamped
@@ -530,6 +536,7 @@ def taxonomy_results_to_json_list(results: list[TaxonomyResult]) -> list[dict]:
             "taxonomy_id": r.taxonomy_id,
             "available": r.available,
             "missing_inputs": list(r.missing_inputs),
+            "applies": r.applies,
             "value_pv": r.value_pv,
             "value_nominal": r.value_nominal,
             "value_annual": r.value_annual,

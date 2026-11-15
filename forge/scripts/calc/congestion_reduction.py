@@ -302,11 +302,12 @@ def main() -> None:
 
     from forge.scripts.utils.run_context import get_run_context, get_run_state
     cap_params = get_run_state().inputs.get("20_capacity_value") or {}
+    capacity_gate = bool(cap_params.get("applicability_gate", False))
     cap_results = calculate_capacity_value_benefit(
         delta_c_effective=delta_c_effective,
         capacity_credit=float(cap_params.get("capacity_credit", 0)),
         capacity_price=float(cap_params.get("capacity_price", 0)),
-        applicability_gate=bool(cap_params.get("applicability_gate", False)),
+        applicability_gate=capacity_gate,
         project_lifetime=project_details_cc.project_lifetime,
         delay_years=project_details_cc.delay_years,
         construction_years=project_details_cc.construction_years,
@@ -404,6 +405,7 @@ def main() -> None:
                     if congestion_results.annual_congestion_benefit is not None
                     else (_SPREAD_PATH,)
                 ),
+                "applies": project_details_cc.sending_source == "margin",
             },
             "delivered_energy_benefit": {
                 "available": delivered_benefit_annual is not None,
@@ -412,6 +414,12 @@ def main() -> None:
                     if delivered_benefit_annual is not None
                     else (_ENERGY_PATH,)
                 ),
+                "applies": project_details_cc.sending_source == "dedicated",
+            },
+            "capacity_value_benefit": {
+                "available": True,
+                "missing_inputs": (),
+                "applies": capacity_gate,
             },
         },
     }

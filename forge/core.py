@@ -481,6 +481,7 @@ def _run_once(
                 item.taxonomy_id: {
                     "available": item.available,
                     "missing_inputs": list(item.missing_inputs),
+                    "applies": item.applies,
                 }
                 for item in taxonomy_results
             }
