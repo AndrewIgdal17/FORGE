@@ -171,13 +171,22 @@ def _entry_available(entry: Any) -> bool:
     return bool(getattr(entry, "available", True))
 
 
+def _entry_applies(entry: Any) -> bool:
+    if isinstance(entry, dict):
+        return bool(entry.get("applies", True))
+    return bool(getattr(entry, "applies", True))
+
+
 def _group_sum(
     source: dict[str, float],
     ids: frozenset[str] | set[str],
     present_ids: set[str],
     unavailable_ids: set[str],
 ):
-    """Sum available ids. Null when every present id in the set is not available."""
+    """Sum available ids. Null when every present id in the set is not available.
+
+    An id that does not apply is never present, as in ``compute_all_bcrs``.
+    """
     included = set(ids) & present_ids
     if not included:
         return 0.0
@@ -243,7 +252,7 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
     unavailable_ids: set[str] = set()
     for entry in entries:
         tid = _field(entry, "taxonomy_id")
-        if tid not in TAXONOMY:
+        if tid not in TAXONOMY or not _entry_applies(entry):
             continue
         present_ids.add(tid)
         if not _entry_available(entry):

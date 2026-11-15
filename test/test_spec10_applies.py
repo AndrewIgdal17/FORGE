@@ -123,3 +123,11 @@ def test_dedicated_without_energy_value_omits_delivered_not_congestion():  # Rev
     omitted = r["bcr"]["omitted"]["total_benefits_pv"]
     assert "delivered_energy_benefit" in omitted
     assert "congestion_benefit" not in omitted
+
+
+def test_routeless_trajectory_final_row_not_available():  # final review C1
+    rows = run(project_changes(**_ROUTELESS))["trajectory"]
+    last = rows[-1]
+    for key in ("bcr_societal", "npv_societal", "bcr_ratepayer", "npv_ratepayer"):
+        assert last[key] is None, key
+    assert last["bcr_utility"] == pytest.approx(0.9902051338550503, rel=0.01)
