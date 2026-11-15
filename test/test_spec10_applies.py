@@ -63,3 +63,63 @@ def test_not_applying_and_not_available_raises():
     }
     with pytest.raises(ValueError):
         _copy_availability(module, [TaxonomyResult("congestion_benefit", None, None)])
+
+
+_ROUTELESS = {
+    MARGIN: "margin",
+    GATE: False,
+    **measured(
+        congestion_spread_per_mwh=None,
+        hours_receiving_more_congested=None,
+        hours_sending_more_congested=None,
+        receiving_energy_value_per_mwh=None,
+    ),
+}
+
+
+def test_routeless_margin_line_ratios_not_available():  # spec acceptance 1
+    r = run(project_changes(**_ROUTELESS))
+    b = r["bcr"]
+    for key in (
+        "bcr_societal",
+        "bcr_ratepayer",
+        "net_benefit_pv",
+        "net_benefit_ratepayer_pv",
+        "total_benefits_pv",
+    ):
+        assert b[key] is None, key
+    assert r["summary"]["total_benefits_pv"] is None
+    assert r["delay_comparison"]["delta_nb_delay"] is None
+    assert b["bcr_utility"] == pytest.approx(0.9902051338550503)
+    assert b["omitted"]["total_benefits_pv"] == [
+        "avoided_emissions_benefit",
+        "congestion_benefit",
+    ]
+    assert b["benefits_enabling_pv"] == 0.0  # nothing in the set applies
+
+
+def test_sunzia_ratios_unchanged():  # spec acceptance 2
+    b = run()["bcr"]
+    assert b["bcr_societal"] == pytest.approx(0.15623096978640783)
+    assert b["bcr_ratepayer"] == pytest.approx(0.5281776435390445)
+    assert b["bcr_utility"] == pytest.approx(0.9902051338550503)
+
+
+def test_no_omitted_list_names_an_item_that_does_not_apply():  # spec acceptance 6
+    for changes in (
+        project_changes(),
+        project_changes(**_ROUTELESS),
+        project_changes(**_DEDICATED, **measured()),
+    ):
+        r = run(changes)
+        off = {e["taxonomy_id"] for e in r["taxonomy_results"] if not e["applies"]}
+        for ids in r["bcr"]["omitted"].values():
+            assert not off & set(ids)
+
+
+def test_dedicated_without_energy_value_omits_delivered_not_congestion():  # Review Focus 4
+    nulls = {k: v for k, v in _ROUTELESS.items() if k not in (MARGIN, GATE)}
+    r = run(project_changes(**_DEDICATED, **nulls))
+    omitted = r["bcr"]["omitted"]["total_benefits_pv"]
+    assert "delivered_energy_benefit" in omitted
+    assert "congestion_benefit" not in omitted

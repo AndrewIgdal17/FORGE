@@ -140,14 +140,15 @@ def _excl_output_suffix(exclude_groups: frozenset[str]) -> str:
 def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     """Compute all BCR metrics from taxonomy-tagged results.
 
-    Sums skip items with ``available is False``. A sum is null when every
-    present item in that set is not available. ``omitted`` names those ids
+    An item with ``applies is False`` counts as absent from every sum. Sums
+    skip items with ``available is False``. A sum is 0.0 when no item of the
+    set applies, and null when every applying item is not available. ``omitted`` names those ids
     for every key except the item keys in ``_BCR_OUTPUT_KEYS``.
     """
     by_id: dict[str, TaxonomyResult] = {r.taxonomy_id: r for r in results}
 
     def _sum_attr(ids: frozenset[str] | set[str], attr: str, *, wacc: bool = False):
-        present = [by_id[tid] for tid in ids if tid in by_id]
+        present = [by_id[tid] for tid in ids if tid in by_id and by_id[tid].applies]
         if not present:
             return 0.0
         available = [row for row in present if row.available]
