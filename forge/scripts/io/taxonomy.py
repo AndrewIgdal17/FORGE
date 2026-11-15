@@ -121,7 +121,7 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "Converter Losses", "per_perspective", "dc_only", 5,
                  "Energy losses from AC/DC converter stations. Zero for AC projects."),
     TaxonomyItem("base_delay", "cost", "soft", "delay",
-                 "Base Delay Cost", "per_perspective", None, 6,
+                 "Direct delay cost", "per_perspective", None, 6,
                  "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
     # --- Risk costs (category: risk) ---
     TaxonomyItem("wildfire_eac", "cost", "risk", "wildfire",

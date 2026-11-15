@@ -807,7 +807,7 @@ _TAB6: list[InputField] = [
     _f("delay_annual_base", taxonomy_id="base_delay", input_tab="operating",
        sub_tab="delay-costs",
        yaml_section="05_delays", field_path="annual_base_delay_cost",
-       label="Annual Base Delay Cost",
+       label="Annual direct delay cost",
        help_text="Total direct out-of-pocket annual spend during the pre-construction/permitting period (legal, admin, PM, regulatory, etc.). Foregone congestion benefits during delay are modeled separately.",
        unit="$/year",
        input_type="currency", tier="first-glance", display_order=1),
