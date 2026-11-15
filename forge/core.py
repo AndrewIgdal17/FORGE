@@ -552,12 +552,39 @@ def _component_available(results: dict[str, Any], taxonomy_id: str) -> bool:
     return entry.get("available") is True
 
 
-def _forgone_delay(cong: Any, avoid: Any) -> Any:
-    """Sum the component delays that are not null. None only when both are null."""
-    present = [value for value in (cong, avoid) if value is not None]
-    if not present:
-        return None
-    return sum(present)
+def _component_applies(results: dict[str, Any], taxonomy_id: str) -> bool:
+    """False only when ``results["availability"]`` records the id as not applying."""
+    entry = (results.get("availability") or {}).get(taxonomy_id)
+    if not isinstance(entry, dict):
+        return True
+    return entry.get("applies", True) is not False
+
+
+def _component_state(
+    on_time: dict[str, Any] | None,
+    entered: dict[str, Any],
+    taxonomy_id: str,
+) -> str:
+    """The state of a forgone benefit is the state of the benefit it compares (§VI)."""
+    if not _component_applies(entered, taxonomy_id):
+        return "does_not_apply"
+    runs = (entered,) if on_time is None else (entered, on_time)
+    if any(not _component_available(run, taxonomy_id) for run in runs):
+        return "not_available"
+    return "measured"
+
+
+def _forgone_delay(parts: list[tuple[Any, str]]) -> tuple[Any, str]:
+    """Total of the forgone benefits by the §I.4 rules: parts that do not apply are
+    absent; a measured zero when none applies; not available when every applying
+    part is not available; otherwise the sum of the measured parts."""
+    applying = [(value, state) for value, state in parts if state != "does_not_apply"]
+    if not applying:
+        return 0.0, "measured"
+    measured = [value for value, state in applying if state == "measured"]
+    if not measured:
+        return None, "not_available"
+    return sum(measured), "measured"
 
 
 _FORGONE_IDS = ("avoided_emissions_benefit", "congestion_benefit")
@@ -567,12 +594,11 @@ def _forgone_omitted(
     on_time: dict[str, Any] | None,
     entered: dict[str, Any],
 ) -> list[str]:
-    """Sorted benefit ids that are not available in either run being compared."""
-    runs = (entered,) if on_time is None else (entered, on_time)
+    """Sorted benefit ids that apply and are not available in either run."""
     return sorted(
         taxonomy_id
         for taxonomy_id in _FORGONE_IDS
-        if any(not _component_available(run, taxonomy_id) for run in runs)
+        if _component_state(on_time, entered, taxonomy_id) == "not_available"
     )
 
 
@@ -594,8 +620,11 @@ def _component_delay(
 ) -> Any:
     """On-time ``value_pv`` minus entered, or 0.0 when there is no second run.
 
-    The difference is null when the id is not available in either run.
+    The difference is null when the id does not apply, or is not available in
+    either run.
     """
+    if not _component_applies(entered, taxonomy_id):
+        return None
     if on_time is None:
         if not _component_available(entered, taxonomy_id):
             return None
@@ -628,20 +657,29 @@ def _delay_block(
     on_time_run: bool,
     cong: Any,
     avoid: Any,
+    cong_state: str,
+    avoid_state: str,
     delta_nb: float,
     on_time: dict[str, Any],
     omitted: dict[str, list[str]],
 ) -> dict[str, Any]:
+    forgone, forgone_state = _forgone_delay([(cong, cong_state), (avoid, avoid_state)])
     return {
         "baseline_delay_years": baseline,
         "delay_years": delay_years,
         "on_time_run": on_time_run,
         "delay_cost_cong": cong,
         "delay_cost_avoid": avoid,
-        "delay_cost_forgone": _forgone_delay(cong, avoid),
+        "delay_cost_forgone": forgone,
         "delta_nb_delay": delta_nb,
         "on_time": on_time,
         "omitted": omitted,
+        "states": {
+            "delay_cost_cong": cong_state,
+            "delay_cost_avoid": avoid_state,
+            "delay_cost_forgone": forgone_state,
+            "delta_nb_delay": "not_available" if delta_nb is None else "measured",
+        },
     }
 
 
@@ -681,6 +719,8 @@ def _delay_comparison(
             on_time_run=False,
             cong=_component_delay(None, results, "congestion_benefit"),
             avoid=_component_delay(None, results, "avoided_emissions_benefit"),
+            cong_state=_component_state(None, results, "congestion_benefit"),
+            avoid_state=_component_state(None, results, "avoided_emissions_benefit"),
             delta_nb=0.0,
             on_time=_on_time_metrics(results),
             omitted={
@@ -701,6 +741,8 @@ def _delay_comparison(
         on_time_run=True,
         cong=_component_delay(ot, results, "congestion_benefit"),
         avoid=_component_delay(ot, results, "avoided_emissions_benefit"),
+        cong_state=_component_state(ot, results, "congestion_benefit"),
+        avoid_state=_component_state(ot, results, "avoided_emissions_benefit"),
         delta_nb=delta_nb,
         on_time=_on_time_metrics(ot),
         omitted={
