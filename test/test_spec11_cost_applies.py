@@ -167,3 +167,16 @@ def test_numbers_unchanged_from_5_1_1():
                     assert got[section][key] is None, (name, key)
                 else:
                     assert got[section][key] == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
+
+
+def test_capacity_inputs_are_not_marked_hidden():
+    from forge.scripts.io.input_metadata import INPUT_METADATA
+
+    fields = [f for f in INPUT_METADATA.values() if f.yaml_section == "20_capacity_value"]
+    assert len(fields) == 3
+    assert all(f.condition is None for f in fields)
+    gate = next(f for f in fields if f.field_path == "applicability_gate")
+    assert gate.help_text == (
+        "Capacity value does not apply unless this is on. "
+        "With it on, a credit or price of 0 gives a measured $0."
+    )
