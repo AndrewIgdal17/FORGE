@@ -42,6 +42,15 @@ class TaxonomyResult:
     missing_inputs: tuple[str, ...] = ()
     applies: bool = True
 
+    @property
+    def state(self) -> str:
+        """One of the three states of methodology §I.4."""
+        if not self.applies:
+            return "does_not_apply"
+        if not self.available:
+            return "not_available"
+        return "measured"
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -537,6 +546,7 @@ def taxonomy_results_to_json_list(results: list[TaxonomyResult]) -> list[dict]:
             "available": r.available,
             "missing_inputs": list(r.missing_inputs),
             "applies": r.applies,
+            "state": r.state,
             "value_pv": r.value_pv,
             "value_nominal": r.value_nominal,
             "value_annual": r.value_annual,

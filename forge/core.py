@@ -482,6 +482,7 @@ def _run_once(
                     "available": item.available,
                     "missing_inputs": list(item.missing_inputs),
                     "applies": item.applies,
+                    "state": item.state,
                 }
                 for item in taxonomy_results
             }
