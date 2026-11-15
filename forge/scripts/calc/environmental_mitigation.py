@@ -39,11 +39,21 @@ HABITAT_CLASSES = (
 )
 
 
-def disturbance_multiplier(project_type: str, rebuild_multiplier: float) -> float:
+def mitigation_indicator(project_type: str) -> float:
+    """1_mit = 1[type != reconductoring] (methodology eq. IV.11)."""
     from forge.errors import InvalidInputs
 
     if project_type == "reconductoring":
         return 0.0
+    if project_type in ("greenfield", "rebuild"):
+        return 1.0
+    raise InvalidInputs(f"project_type '{project_type}' is not allowed.")
+
+
+def disturbance_multiplier(project_type: str, rebuild_multiplier: float) -> float:
+    """mu_dist for the types mitigation applies to: rebuild and greenfield (eq. IV.11)."""
+    from forge.errors import InvalidInputs
+
     if project_type == "rebuild":
         return float(rebuild_multiplier)
     if project_type == "greenfield":
@@ -64,8 +74,11 @@ def calculate_environmental_mitigation_costs(
     uplift = float(config["mitigation_uplift_factor"])
     mu_wet = float(config["wetland_compensation_ratio"])
     mu_hab = float(config["habitat_compensation_ratio"])
-    mu_d = disturbance_multiplier(
-        project_type, float(config["disturbance_multiplier_rebuild"])
+    indicator = mitigation_indicator(project_type)
+    mu_d = indicator * (
+        disturbance_multiplier(project_type, float(config["disturbance_multiplier_rebuild"]))
+        if indicator
+        else 0.0
     )
     from forge.errors import InvalidInputs
 
@@ -257,6 +270,12 @@ def main() -> None:
     # Prepare results dictionary
     csv_results = {
         "streams": {"env_mitigation": mitigation_stream},
+        "availability": {
+            "env_mitigation": {
+                "available": True,
+                "applies": mitigation_indicator(project_details.project_type) == 1.0,
+            },
+        },
         "total_nominal": total_nominal,
         "total_afudc": total_afudc,
         "total_pv": total_pv,

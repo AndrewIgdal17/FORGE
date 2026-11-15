@@ -49,6 +49,13 @@ class BuildCosts:
     weighted_miles: float
     average_terrain_multiplier: float
 
+def build_selectors(project_type: str, number_of_converters: int) -> tuple[float, float]:
+    """The appendix's structure and DC indicators, (xi_structure, xi_dc)."""
+    xi_structure = 0.0 if project_type == "reconductoring" else 1.0
+    xi_dc = 1.0 if number_of_converters > 0 else 0.0
+    return xi_structure, xi_dc
+
+
 def load_costs(
     category: str,
     number_of_converters: int,
@@ -121,8 +128,7 @@ def load_costs(
     converter_cost = fixed_converter_cost * number_of_converters
 
     # Explicit binary selectors matching appendix (ξ_structure, ξ_DC)
-    xi_structure = 0.0 if project_type == "reconductoring" else 1.0
-    xi_dc = 1.0 if number_of_converters > 0 else 0.0
+    xi_structure, xi_dc = build_selectors(project_type, number_of_converters)
 
     total_cost = (
         conductor_cost
@@ -173,6 +179,15 @@ def load_costs(
         weighted_miles=weighted_miles,
         average_terrain_multiplier=average_terrain_multiplier,
     )
+
+
+def _build_availability(project_type: str, number_of_converters: int) -> dict:
+    """Structures and converters do not apply where their indicators are 0 (Spec 11)."""
+    xi_structure, xi_dc = build_selectors(project_type, number_of_converters)
+    return {
+        "build_structure": {"available": True, "applies": xi_structure == 1.0},
+        "build_converter": {"available": True, "applies": xi_structure * xi_dc == 1.0},
+    }
 
 
 def main() -> None:
@@ -342,6 +357,7 @@ def main() -> None:
         "structure_base_cost": bases["structure"],
         "converter_base_cost": bases["converter"],
         "streams": build_streams,
+        "availability": _build_availability(project_details.project_type, number_of_converters),
         "total_nominal": total_nominal,
         "total_afudc": capitalized_cost_with_contingencies,
         "total_pv": total_pv,

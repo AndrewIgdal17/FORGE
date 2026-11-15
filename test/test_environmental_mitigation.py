@@ -4,6 +4,7 @@ from forge.errors import InvalidInputs
 from forge.scripts.calc.environmental_mitigation import (
     calculate_environmental_mitigation_costs,
     disturbance_multiplier,
+    mitigation_indicator,
 )
 
 
@@ -46,7 +47,8 @@ def _price(uplift: float, project_type: str = "greenfield", gap_forested: float 
 
 
 def test_disturbance_multiplier_cases():
-    assert disturbance_multiplier("reconductoring", 0.5) == 0.0
+    # eq. IV.11: reconductoring is switched off by the indicator, not the multiplier.
+    assert mitigation_indicator("reconductoring") == 0.0
     assert disturbance_multiplier("rebuild", 0.5) == 0.5
     assert disturbance_multiplier("greenfield", 0.5) == 1.0
     with pytest.raises(InvalidInputs, match="project_type 'nope' is not allowed"):

@@ -292,6 +292,7 @@ def _priced_losses(
     wacc_real: float,
     t_cod: int,
     horizon: int,
+    converter_applies: bool = True,
 ) -> dict:
     """Conductor and converter dollars from the receiving-end energy value.
 
@@ -349,6 +350,7 @@ def _priced_losses(
             "line_loss_converter": {
                 "available": converter_available,
                 "missing_inputs": () if converter_available else (_ENERGY_PATH,),
+                "applies": converter_applies,
             },
         },
     }
@@ -385,6 +387,7 @@ def main() -> None:
             project_details.wacc_real,
             ctx.t_cod,
             ctx.horizon,
+            converter_applies=ctx.number_of_converters > 0,
         )
 
         csv_manager = SmartOutputManager()
@@ -651,6 +654,7 @@ def main() -> None:
         project_details.wacc_real,
         ctx.t_cod,
         ctx.horizon,
+        converter_applies=ctx.number_of_converters > 0,
     )
 
     results = {

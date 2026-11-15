@@ -251,6 +251,11 @@ def main() -> None:
     csv_manager = SmartOutputManager()
     results = {
         "streams": row_streams,
+        "availability": {
+            "row_acquisition": {"available": True, "applies": xi_acquisition == 1.0},
+            "row_holding": {"available": True, "applies": xi_holding == 1.0},
+            "row_rent": {"available": True, "applies": xi_rent == 1.0},
+        },
         "total_nominal": total_nominal,
         "total_afudc": total_afudc,
         "total_pv": total_pv,

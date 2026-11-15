@@ -41,3 +41,129 @@ def test_state_values_for_known_items():
     sunzia = run()
     assert item(sunzia, "delivered_energy_benefit")["state"] == "does_not_apply"
     assert item(sunzia, "build_conductor")["state"] == "measured"
+
+
+# --- Task 2: the seven cost indicators ----------------------------------------
+
+AGREEMENT = PROJECT + "row_agreement_type"
+DELAY = "01_project_technical_details.timeline.delay_years"
+
+
+def _states(results: dict, *ids: str) -> dict:
+    return {tid: item(results, tid)["state"] for tid in ids}
+
+
+@pytest.fixture(scope="module")
+def runs():
+    return {
+        "dc_greenfield": run(project_changes(**measured())),  # SunZia: DC, easement
+        "ac_greenfield": run(scenario_changes("CTT_Actual_Delay2")),  # AC, easement
+        "ac_reconductoring": run(scenario_changes("AEP_LRGV_ACCC")),  # AC, lease
+        "rebuild": run(scenario_changes("AEP_LRGV_ACSR_Rebuild")),  # AC, lease
+    }
+
+
+def test_structures(runs):
+    assert item(runs["ac_reconductoring"], "build_structure")["state"] == "does_not_apply"
+    assert item(runs["ac_greenfield"], "build_structure")["state"] == "measured"
+    assert item(runs["rebuild"], "build_structure")["state"] == "measured"
+
+
+def test_converter_stations(runs):
+    assert item(runs["ac_greenfield"], "build_converter")["state"] == "does_not_apply"
+    assert item(runs["ac_reconductoring"], "build_converter")["state"] == "does_not_apply"
+    assert item(runs["dc_greenfield"], "build_converter")["state"] == "measured"
+    assert item(runs["dc_greenfield"], "build_converter")["value_pv"] > 0
+
+
+def test_converter_losses(runs):
+    assert item(runs["ac_greenfield"], "line_loss_converter")["state"] == "does_not_apply"
+    assert item(runs["dc_greenfield"], "line_loss_converter")["state"] == "measured"
+    assert item(runs["dc_greenfield"], "line_loss_converter")["value_pv"] > 0
+
+
+def test_dc_without_energy_value_converter_losses_not_available():  # Review Focus 1
+    r = run(project_changes(**_ROUTELESS))
+    assert item(r, "line_loss_converter")["state"] == "not_available"
+
+
+def test_row_acquisition_and_holding(runs):
+    lease = _states(runs["ac_reconductoring"], "row_acquisition", "row_holding")
+    assert set(lease.values()) == {"does_not_apply"}
+    easement = _states(runs["ac_greenfield"], "row_acquisition", "row_holding")
+    assert set(easement.values()) == {"measured"}
+
+
+def test_row_rent(runs):
+    assert item(runs["ac_greenfield"], "row_rent")["state"] == "does_not_apply"
+    assert item(runs["ac_reconductoring"], "row_rent")["state"] == "measured"
+    assert item(runs["ac_reconductoring"], "row_rent")["value_pv"] > 0
+
+
+def test_federal_hybrid_applies_all_three():  # Review Focus 3
+    r = run(scenario_changes("CTT_Actual_Delay2", **{AGREEMENT: "federal_hybrid"}))
+    states = _states(r, "row_acquisition", "row_holding", "row_rent")
+    assert set(states.values()) == {"measured"}
+
+
+def test_environmental_mitigation(runs):
+    assert item(runs["ac_reconductoring"], "env_mitigation")["state"] == "does_not_apply"
+    assert item(runs["ac_greenfield"], "env_mitigation")["state"] == "measured"
+    assert item(runs["rebuild"], "env_mitigation")["state"] == "measured"
+
+
+def test_zero_delay_holding_is_a_measured_zero():  # Review Focus 4
+    r = run(scenario_changes("CTT_Actual_Delay2", **{DELAY: 0}))
+    hold = item(r, "row_holding")
+    assert hold["state"] == "measured"
+    assert hold["value_pv"] == 0.0
+
+
+def test_mitigation_indicator_and_multiplier():
+    from forge.errors import InvalidInputs
+    from forge.scripts.calc.environmental_mitigation import (
+        disturbance_multiplier,
+        mitigation_indicator,
+    )
+
+    assert mitigation_indicator("reconductoring") == 0.0
+    assert mitigation_indicator("rebuild") == 1.0
+    assert mitigation_indicator("greenfield") == 1.0
+    assert disturbance_multiplier("rebuild", 0.5) == 0.5
+    assert disturbance_multiplier("greenfield", 0.5) == 1.0
+    for bad in ("reconductoring", "nope"):
+        with pytest.raises(InvalidInputs):
+            disturbance_multiplier(bad, 0.5)
+    with pytest.raises(InvalidInputs):
+        mitigation_indicator("nope")
+
+
+# On AC lines with no measured energy value, the energy-loss subtotals held only
+# not-available conductor losses and an AC converter loss reported as a measured
+# $0. Under methodology §I.4 the converter loss does not apply, so these
+# subtotals are now not available. Nothing else moves.
+_NOW_NOT_AVAILABLE = {
+    "energy_emissions_costs_nominal",
+    "energy_emissions_costs_pv",
+    "energy_losses_nominal",
+    "energy_losses_pv",
+}
+_AC_WITHOUT_ENERGY_VALUE = {"CTT_Actual_Delay2", "AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"}
+
+
+def test_numbers_unchanged_from_5_1_1():
+    expected = json.loads(
+        (pathlib.Path(__file__).parent / "data" / "spec11_v511_numbers.json").read_text()
+    )
+    for name in SCENARIOS:
+        got = numbers(run(scenario_changes(name)))
+        for section in ("bcr", "items"):
+            assert set(got[section]) == set(expected[name][section]), (name, section)
+            for key, value in expected[name][section].items():
+                if section == "bcr" and name in _AC_WITHOUT_ENERGY_VALUE and key in _NOW_NOT_AVAILABLE:
+                    assert value == 0.0, (name, key)
+                    assert got[section][key] is None, (name, key)
+                elif value is None:
+                    assert got[section][key] is None, (name, key)
+                else:
+                    assert got[section][key] == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
