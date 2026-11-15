@@ -180,3 +180,31 @@ def test_capacity_inputs_are_not_marked_hidden():
         "Capacity value does not apply unless this is on. "
         "With it on, a credit or price of 0 gives a measured $0."
     )
+
+
+def test_greenfield_without_wetland_or_habitat_credits_are_a_measured_zero():  # acceptance 5
+    r = run(project_changes(**{"02_project_physical_details.terrain.terrain_miles.wetland": 0.0}))
+    assert item(r, "env_mitigation")["state"] == "measured"
+    assert r["costs"]["environmental"]["credits_pv"] == 0.0
+
+
+def test_zero_delay_direct_delay_cost_is_a_measured_zero():  # acceptance 6
+    r = run(scenario_changes("CTT_Actual_Delay2", **{DELAY: 0}))
+    delay = item(r, "base_delay")
+    assert delay["state"] == "measured"
+    assert delay["value_pv"] == 0.0
+
+
+def test_dc_reconductoring_converter_cost_off_losses_on():  # acceptance 11, Review Focus 2
+    r = run(scenario_changes("AEP_LRGV_ACCC", **{
+        PROJECT + "ac_dc": "DC",
+        PROJECT + "old_ac_dc": "DC",
+        PROJECT + "number_of_converters": 2,
+        PROJECT + "converter_type": "VSC Converter",
+        PROJECT + "old_converter_type": "VSC Converter",
+        PROJECT + "capacity_mw": 2400,
+        PROJECT + "old_capacity_mw": 2400,
+    }))
+    assert item(r, "build_converter")["state"] == "does_not_apply"
+    assert item(r, "build_structure")["state"] == "does_not_apply"
+    assert item(r, "line_loss_converter")["applies"] is True
