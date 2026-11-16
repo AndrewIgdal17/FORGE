@@ -32,7 +32,7 @@ METRICS = [
     ("Total Costs PV",                   "total_costs_pv",   "dollar"),
     ("Total Benefits PV",               "total_benefits_pv", "dollar"),
     ("Net Benefit PV",                   "net_benefit_pv",    "dollar"),
-    ("Avoided Emissions PV",            "benefits_avoided_emissions_pv", "dollar"),
+    ("Avoided Emissions PV",            "benefits_external_pv", "dollar"),
     ("Wildfire PV",                      "wildfire_pv",       "dollar"),
     ("Outage PV",                        "outage_pv",         "dollar"),
 ]

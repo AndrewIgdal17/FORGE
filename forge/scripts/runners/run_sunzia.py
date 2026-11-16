@@ -147,7 +147,7 @@ def print_results(results: dict, label: str):
         ("Excl. Wildfire", "bcr_excluding_wildfire_risk", "wildfire_pv", None),
         ("Excl. Outage", "bcr_excluding_outage_risk", "outage_pv", None),
         ("Excl. WF+Outage", "bcr_excluding_wildfire_risk_and_outage_risk", None, None),
-        ("Excl. Avoided Emissions", "bcr_excluding_avoided_emissions", None, "benefits_avoided_emissions_pv"),
+        ("Excl. Avoided Emissions", "bcr_excluding_avoided_emissions", None, "benefits_external_pv"),
         ("Excl. AvEmis+Outage+WF", "bcr_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk", None, None),
     ]
     for label, key, cost_excl, ben_excl in excl_variants:
@@ -164,7 +164,7 @@ def print_results(results: dict, label: str):
     print(f"\n  --- EXCLUDED PVs ---")
     print(f"  Wildfire PV:                    {fmt(bcr.get('wildfire_pv', 0))}")
     print(f"  Outage PV:                      {fmt(bcr.get('outage_pv', 0))}")
-    print(f"  Avoided Emissions PV (benefit): {fmt(bcr.get('benefits_avoided_emissions_pv', 0))}")
+    print(f"  Avoided Emissions PV (benefit): {fmt(bcr.get('benefits_external_pv', 0))}")
 
     print(f"\n  --- SUMMARY ---")
     print(f"  Total costs PV:         {fmt(bcr.get('total_costs_pv', 0))}")

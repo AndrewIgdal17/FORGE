@@ -78,7 +78,7 @@ def extract_discount_metrics(results: dict) -> dict:
         "bcr_ratepayer": bcr.get("bcr_ratepayer", 0),
         "bcr_excl_wf_outage": bcr.get("bcr_excluding_wildfire_risk_and_outage_risk", 0),
         "bcr_excl_avemis_outage_wf": bcr.get("bcr_excluding_avoided_emissions_and_wildfire_risk_and_outage_risk", 0),
-        "avoided_emissions_pv": bcr.get("benefits_avoided_emissions_pv", 0),
+        "avoided_emissions_pv": bcr.get("benefits_external_pv", 0),
         "outage_pv": bcr.get("outage_pv", 0),
         "net_benefit_pv": bcr.get("net_benefit_pv", 0),
     }
