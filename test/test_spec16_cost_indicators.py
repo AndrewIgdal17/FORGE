@@ -18,6 +18,7 @@ from test.spec11_scenarios import DC_RECONDUCTORING, scenario_changes
 BEFORE = json.loads(
     (Path(__file__).parent / "data" / "spec16_before_numbers.json").read_text()
 )
+MOVED = {"AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild", "DC_reconductoring"}
 PROJECT = "01_project_technical_details.project."
 ATRR_PARTS = frozenset(
     {"capital_recovery", "row_rent", *OANDM_IDS, *INSURANCE_IDS}
@@ -69,6 +70,8 @@ def _scenario_run(name: str) -> dict:
 
 def test_split_moves_no_number():
     for name in BEFORE:
+        if name in MOVED:
+            continue
         expected = BEFORE[name]
         r = _scenario_run(name)
         got_bcr = {k: v for k, v in r["bcr"].items() if k != "omitted"}
@@ -98,6 +101,49 @@ def test_revenue_requirement_sums_applying_parts(scenario):
         if e["applies"] and e["value_pv_wacc"] is not None:
             total += e["value_pv_wacc"]
     assert r["bcr"]["utility_benefits_pv"] == pytest.approx(total, rel=1e-9)
+
+
+def test_dc_reconductoring():  # Review Focus 1
+    r = _scenario_run("DC_reconductoring")
+    for tid in ("oandm_line", "oandm_converter", "insurance_converter"):
+        assert item(r, tid)["state"] == "does_not_apply"
+    assert r["bcr"]["oandm_pv"] == 0.0
+    assert item(r, "line_loss_converter")["applies"] is True
+    assert item(r, "insurance_line")["state"] == "measured"
+    ins = r["costs"]["insurance"]
+    assert ins["line_annual_premium"] == pytest.approx(
+        ins["line_rate"] * r["derived_parameters"]["conductor_cost_with_contingencies"]
+    )
+
+
+def test_rebuild_insurance_on_conductor_and_structures():
+    r = _scenario_run("AEP_LRGV_ACSR_Rebuild")
+    ins = r["costs"]["insurance"]
+    dp = r["derived_parameters"]
+    base = dp["conductor_cost_with_contingencies"] + dp["structure_cost_with_contingencies"]
+    assert ins["line_annual_premium"] == pytest.approx(ins["line_rate"] * base)
+
+
+def test_only_line_om_moves():
+    for name in MOVED:
+        before = BEFORE[name]
+        r = _scenario_run(name)
+        oandm_legacy = before["items"]["oandm"]
+        assert r["bcr"]["total_costs_pv"] == pytest.approx(
+            before["bcr"]["total_costs_pv"] - oandm_legacy, rel=1e-9, abs=1e-6
+        )
+        assert r["bcr"]["utility_benefits_pv"] == pytest.approx(
+            before["bcr"]["utility_benefits_pv"]
+            - before["costs"]["oandm"]["total_pv_wacc"],
+            rel=1e-9,
+            abs=1e-6,
+        )
+        assert r["bcr"]["insurance_pv"] == pytest.approx(
+            before["costs"]["insurance"]["pv_total"], rel=1e-9, abs=1e-6
+        )
+        assert r["bcr"]["total_benefits_pv"] == pytest.approx(
+            before["bcr"]["total_benefits_pv"], rel=1e-9, abs=1e-6
+        )
 
 
 def test_dc_without_converters():

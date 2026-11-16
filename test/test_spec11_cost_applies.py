@@ -149,6 +149,8 @@ _NOW_NOT_AVAILABLE = {
     "energy_losses_pv",
 }
 _AC_WITHOUT_ENERGY_VALUE = {"CTT_Actual_Delay2", "AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"}
+# Spec 16 F8: line O&M only on greenfield — BCR deltas covered by test_only_line_om_moves.
+_LINE_OM_F8_SKIP_BCR = {"AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"}
 
 
 def _legacy_operating_pv(got_items: dict, legacy_key: str) -> float | None:
@@ -185,11 +187,15 @@ def test_numbers_unchanged_from_5_1_1():
                 assert set(got[section]) >= exp_keys, (name, section)
             for key, value in expected[name][section].items():
                 if section == "items" and key in ("oandm", "insurance"):
+                    if key == "oandm" and name in _LINE_OM_F8_SKIP_BCR:
+                        continue
                     got_val = _legacy_operating_pv(got_items, key)
                     if value is None:
                         assert got_val is None, (name, key)
                     else:
                         assert got_val == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
+                    continue
+                if section == "bcr" and name in _LINE_OM_F8_SKIP_BCR:
                     continue
                 if section == "bcr" and name in _AC_WITHOUT_ENERGY_VALUE and key in _NOW_NOT_AVAILABLE:
                     assert got[section][key] is None, (name, key)
@@ -232,6 +238,14 @@ def test_dc_reconductoring_converter_cost_off_losses_on():  # acceptance 11, Rev
     assert item(r, "line_loss_converter")["applies"] is True
     for tid in ("oandm_converter", "insurance_converter"):
         assert item(r, tid)["state"] == "does_not_apply"
+
+
+def test_line_om_greenfield_only(runs):
+    for name in ("ac_reconductoring", "rebuild"):
+        e = item(runs[name], "oandm_line")
+        assert e["state"] == "does_not_apply" and e["value_pv"] is None
+    for name in ("ac_greenfield", "dc_greenfield"):
+        assert item(runs[name], "oandm_line")["state"] == "measured"
 
 
 def test_converter_om_and_insurance(runs):

@@ -139,12 +139,13 @@ def main() -> None:
         project_details.number_of_converters,
     )
     converter_applies = sel.converter == 1.0
+    line_applies = sel.greenfield == 1.0
     total_converter_cost_per_year = load_converter_om_costs(
         project_details.converter_type,
         sel.converter,
     )
 
-    if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
+    if line_applies and project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         # Overhead: base O&M rate (flat $/mile) + vegetation management (terrain-specific)
         try:
             struct_data = section("14_category_om_structures")
@@ -178,7 +179,7 @@ def main() -> None:
         variable_structure_cost_per_mile_year = 0.0
         variable_structure_cost_per_year = 0.0
         structure_dict = {}
-    else:
+    elif line_applies:
         # Non-overhead: total line O&M as % of line CAPEX
         total_line_om_per_year = load_nonoverhead_line_om(
             project_details.construction_type,
@@ -196,15 +197,32 @@ def main() -> None:
 
         struct_data = section("14_category_om_structures")
         om_real_escalation_rate = struct_data["om_real_escalation_rate"]
+    else:
+        total_line_om_per_year = None
+        total_conductor_cost_per_year = None
+        variable_conductor_cost_per_mile_year = None
+        variable_structure_cost_per_mile_year = None
+        variable_structure_cost_per_year = None
+        total_vegetation_management_cost_per_year = None
+        structure_dict = {}
+        om_real_escalation_rate = None
+
+    if om_real_escalation_rate is None and (line_applies or converter_applies):
+        struct_data = section("14_category_om_structures")
+        om_real_escalation_rate = struct_data["om_real_escalation_rate"]
 
     lifetime = int(project_details.project_lifetime)
     r_social = ctx.social_discount_rate
     r_wacc = financing.wacc_real
 
-    def _grow(amount: float) -> list[float]:
+    def _grow(amount: float | None) -> list[float] | None:
+        if amount is None:
+            return None
         return growing(amount, om_real_escalation_rate, ctx.t_cod, lifetime, ctx.horizon)
 
-    def _values(stream: list[float]) -> tuple[float, float, float]:
+    def _values(stream: list[float] | None) -> tuple[float | None, float | None, float | None]:
+        if stream is None:
+            return None, None, None
         return pv(stream, r_social), pv(stream, r_wacc), undiscounted(stream)
 
     conductor_stream = _grow(total_conductor_cost_per_year)
@@ -213,7 +231,10 @@ def main() -> None:
     line_stream = _grow(total_line_om_per_year)
     if converter_applies and total_converter_cost_per_year is not None:
         converter_stream = _grow(total_converter_cost_per_year)
-        oandm_stream = add(line_stream, converter_stream)
+        if line_stream is not None:
+            oandm_stream = add(line_stream, converter_stream)
+        else:
+            oandm_stream = converter_stream
     else:
         converter_stream = None
         oandm_stream = line_stream
@@ -232,10 +253,15 @@ def main() -> None:
         pv_converter = None
         converter_pv_wacc = None
         total_converter_cost_lifetime = None
-    pv_total, total_pv_wacc, _total_nominal_oandm = _values(oandm_stream)
+    if oandm_stream is not None:
+        pv_total, total_pv_wacc, _total_nominal_oandm = _values(oandm_stream)
+    else:
+        pv_total = 0.0
+        total_pv_wacc = 0.0
+        _total_nominal_oandm = 0.0
 
     converter_annual = total_converter_cost_per_year if converter_applies else None
-    _total_annual_oandm = total_line_om_per_year + (converter_annual or 0.0)
+    _total_annual_oandm = (total_line_om_per_year or 0.0) + (converter_annual or 0.0)
     add_derived({
         "total_structures": structure_dict.get("total", 0) if structure_dict else 0,
         "veg_mgmt_cost_per_year": total_vegetation_management_cost_per_year,
@@ -276,43 +302,67 @@ def main() -> None:
             ]:  # Show at least common terrains
                 logger.info(f"  {label:20s}: {structures:6d}")
 
+    def _money(v: float | None) -> float:
+        return 0.0 if v is None else v
+
     logger.info("\n--- Unit Costs (per mile per year) ---")
-    logger.info(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
+    logger.info(f"Conductor:  ${_money(variable_conductor_cost_per_mile_year):,.2f}")
     logger.info(f"Converter:  ${(converter_annual or 0.0):,.2f} (total $/year; % of station CAPEX)")
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
-        logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
+        logger.info(f"Structure:  ${_money(variable_structure_cost_per_year):,.2f} (total per year)")
     else:
-        logger.info(f"Structure:  ${variable_structure_cost_per_mile_year:,.2f}")
+        logger.info(f"Structure:  ${_money(variable_structure_cost_per_mile_year):,.2f}")
 
     logger.info("\n--- Annual Total Costs ---")
-    logger.info(f"Conductor:  ${total_conductor_cost_per_year:,.2f}")
+    logger.info(f"Conductor:  ${_money(total_conductor_cost_per_year):,.2f}")
     logger.info(f"Converter:  ${(converter_annual or 0.0):,.2f}")
-    logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f}")
-    logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_per_year:,.2f}")
+    logger.info(f"Structure:  ${_money(variable_structure_cost_per_year):,.2f}")
+    if line_applies:
+        logger.info(f"Vegetation Management:  ${_money(total_vegetation_management_cost_per_year):,.2f}")
+    else:
+        logger.info("Vegetation Management:  (does not apply)")
     logger.info(f"{'─' * 40}")
     logger.info(f"Total:      ${_total_annual_oandm:,.2f}")
 
     logger.info("\n--- Lifetime Total Costs (Undiscounted) ---")
-    logger.info(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
+    if total_conductor_cost_lifetime is not None:
+        logger.info(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
+    else:
+        logger.info("Conductor:  (does not apply)")
     if total_converter_cost_lifetime is not None:
         logger.info(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
     else:
         logger.info("Converter:  (does not apply)")
-    logger.info(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
-    logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
+    if total_structure_cost_lifetime is not None:
+        logger.info(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
+    else:
+        logger.info("Structure:  (does not apply)")
+    if total_vegetation_management_cost_lifetime is not None:
+        logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
+    else:
+        logger.info("Vegetation Management:  (does not apply)")
     logger.info(f"{'─' * 40}")
     logger.info(f"Total:      ${_total_nominal_oandm:,.2f}")
 
     logger.info("\n--- Present Value Calculations ---")
     logger.info(f"Social Discount Rate: {r_social:.4f}")
     logger.info(f"Real WACC: {r_wacc:.4f}")
-    logger.info(f"PV Conductor:  ${pv_conductor:,.2f}")
+    if pv_conductor is not None:
+        logger.info(f"PV Conductor:  ${pv_conductor:,.2f}")
+    else:
+        logger.info("PV Conductor:  (does not apply)")
     if pv_converter is not None:
         logger.info(f"PV Converter:  ${pv_converter:,.2f}")
     else:
         logger.info("PV Converter:  (does not apply)")
-    logger.info(f"PV Structure:  ${pv_structure:,.2f}")
-    logger.info(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
+    if pv_structure is not None:
+        logger.info(f"PV Structure:  ${pv_structure:,.2f}")
+    else:
+        logger.info("PV Structure:  (does not apply)")
+    if pv_vegetation_management is not None:
+        logger.info(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
+    else:
+        logger.info("PV Vegetation Management:  (does not apply)")
     logger.info(f"{'─' * 40}")
     logger.info(f"PV Total (social): ${pv_total:,.2f}")
     logger.info(f"PV Total (WACC):   ${total_pv_wacc:,.2f}")
@@ -331,7 +381,7 @@ def main() -> None:
             "oandm_converter": converter_stream,
         },
         "availability": {
-            "oandm_line": {"available": True, "applies": True},
+            "oandm_line": {"available": True, "applies": line_applies},
             "oandm_converter": {"available": True, "applies": converter_applies},
         },
         "total_annual": _total_annual_oandm,
