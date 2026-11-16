@@ -1087,13 +1087,6 @@ risk_costs:
       citation: CIGRETB815
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
-    redispatch_cost_per_mwh:
-      path: 07_outage_costs.outage.redispatch_cost_per_mwh
-      unit: $/MWh (2025$)
-      source: LBNL Millstein et al. 2022, empirical congestion relief, CPI-U adjusted
-      citation: Millstein2022EmpiricalTransmissionValue
-      yaml_file: 07_outage_costs.yaml
-      basis: Sourced
     outage_risk_growth_rate:
       path: 07_outage_costs.outage.risk_growth_rate
       unit: decimal (annual)

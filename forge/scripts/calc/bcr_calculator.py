@@ -12,6 +12,7 @@ from forge.scripts.io.taxonomy import (
     ALL_BCR_DEFINITIONS,
     INSURANCE_IDS,
     OANDM_IDS,
+    OUTAGE_IDS,
     TAXONOMY,
     get_excluded_taxonomy_ids,
 )
@@ -206,19 +207,22 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     out: dict = {k: v for k, v in flat.items() if k in _BCR_OUTPUT_KEYS}
     out["oandm_pv"] = _sum_pv(OANDM_IDS)
     out["insurance_pv"] = _sum_pv(INSURANCE_IDS)
-    for tid in OANDM_IDS | INSURANCE_IDS:
+    for tid in OANDM_IDS | INSURANCE_IDS | OUTAGE_IDS:
         key = f"{tid}_pv"
         if tid in by_id:
             row = by_id[tid]
             out[key] = row.value_pv if row.applies else None
         else:
             out[key] = 0.0
+    out["outage_pv"] = _sum_pv(OUTAGE_IDS)
     components: dict[str, frozenset[str] | set[str]] = {}
 
     def put(key: str, value, ids: frozenset[str] | set[str]) -> None:
         out[key] = value
         if key not in _BCR_OUTPUT_KEYS:
             components[key] = ids
+
+    put("outage_nominal", _sum_nom(OUTAGE_IDS), OUTAGE_IDS)
 
     # Aggregate item keys follow the same sum rule and stay out of omitted.
     out["build_cost_pv"] = _sum_pv(_BUILD_IDS)

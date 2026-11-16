@@ -43,6 +43,7 @@ REMOVED_INPUTS: dict[str, Any] = {
     "04_insurance.insurance.insurable_components.conductors": True,
     "04_insurance.insurance.insurable_components.structures": True,
     "04_insurance.insurance.insurable_components.converters": True,
+    "07_outage_costs.outage.redispatch_cost_per_mwh": 24,
 }
 for _voll_index, _voll_max_hours in enumerate(_VOLL_TIER_MAX_HOURS):
     REMOVED_INPUTS[

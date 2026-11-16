@@ -88,7 +88,7 @@ def test_split_moves_no_number():
             if key in ("oandm", "insurance"):
                 continue
             if key == "outage_eac":
-                total = sum(got_items[tid] for tid in OUTAGE_IDS)
+                total = sum(got_items.get(tid) or 0.0 for tid in OUTAGE_IDS)
                 assert total == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
                 continue
             if value is None:

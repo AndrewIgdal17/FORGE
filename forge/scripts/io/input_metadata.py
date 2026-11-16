@@ -846,11 +846,6 @@ _TAB7 += [
        input_type="percent", condition="always_hidden", tier="working", display_order=2,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="outage-risk"),
-    _f("out_redispatch_cost", taxonomy_id="outage_load_shed", input_tab="risk",
-       yaml_section="07_outage_costs", field_path="outage.redispatch_cost_per_mwh",
-       label="Redispatch Cost", help_text="Congestion premium for rerouting power during outage ($/MWh). Default $20 from LBNL empirical data.",
-       unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
-       display_order=4, sub_tab="outage-risk"),
 ]
 
 # Base outage duration (single scalar)

@@ -530,6 +530,7 @@ def test_acceptance_1_null_measurements_margin_ac(null_margin_ac):
         "congestion_benefit",
         "emissions_comp",
         "line_loss_conductor",
+        "outage_redispatch",
     ]
     converter = item(results, "line_loss_converter")
     assert converter["available"] is True

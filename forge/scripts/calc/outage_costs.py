@@ -17,6 +17,7 @@ from forge.scripts.utils.smart_output import SmartOutputManager
 # Local utility imports
 from forge.scripts.utils.constants import MIN_DISCOUNT_RATE, GROWTH_RATE_TOLERANCE
 from forge.scripts.utils.smart_loaders import (
+    get_project_data_raw,
     load_project_technical_details,
     load_outage_costs,
 )
@@ -25,6 +26,22 @@ from forge.scripts.utils.streams import growing, pv, undiscounted
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
 
 logger = logging.getLogger(__name__)
+
+SPREAD_PATH = (
+    "01_project_technical_details.market_measurements.congestion_spread_per_mwh"
+)
+
+
+def _market_block() -> Dict[str, Any]:
+    block = get_project_data_raw().get("market_measurements") or {}
+    return block if isinstance(block, dict) else {}
+
+
+def _congestion_spread() -> float | None:
+    value = _market_block().get("congestion_spread_per_mwh")
+    if value is None:
+        return None
+    return float(value)
 
 
 def value_of_lost_load(duration_hours: float, points: list[dict[str, float]]) -> float:
@@ -64,6 +81,8 @@ def calculate_outage_costs(
     line_utilization: float = 1.0,
     t_cod: int | None = None,
     horizon: int | None = None,
+    sending_source: str,
+    congestion_spread_per_mwh: float | None,
 ) -> Dict[str, Any]:
     """
     Calculate expected outage costs using line-level outage rate model.
@@ -98,7 +117,7 @@ def calculate_outage_costs(
     else:
         capacity_at_risk = float(phi_config)
     load_shed_fraction = float(outage_config["load_shed_fraction"])
-    redispatch_cost = outage_config["redispatch_cost_per_mwh"]
+    redispatch_applies = sending_source == "margin"
 
     voll_points = outage_config["value_of_lost_load"]["points"]
     outage_duration = outage_config["outage_duration"]
@@ -129,38 +148,74 @@ def calculate_outage_costs(
     # MW lost per event
     mw_lost_per_event = capacity_at_risk * capacity_mw * line_utilization
 
-      # Unserved energy per event (load-shed share of lost flow)
+        # Unserved energy per event (load-shed share of lost flow)
     unserved_mwh_per_event = load_shed_fraction * duration_effective * mw_lost_per_event
 
-    # Two-tier cost per event: load-shed (VoLL) + redispatch (flat rate)
+    # Two-tier cost per event: load-shed (VoLL) + redispatch (congestion spread)
     mw_shed = load_shed_fraction * mw_lost_per_event
     mw_redisp = (1 - load_shed_fraction) * mw_lost_per_event
     voll_per_mwh = value_of_lost_load(duration_effective, voll_points)
     cost_loadshed = mw_shed * duration_effective * voll_per_mwh
-    cost_redispatch = mw_redisp * duration_effective * redispatch_cost
-    cost_per_event = cost_loadshed + cost_redispatch
 
-    annual_load_shed = lambda_total * cost_loadshed
-    annual_redispatch = lambda_total * cost_redispatch
-    expected_annual_loss = annual_load_shed + annual_redispatch
+    if redispatch_applies and congestion_spread_per_mwh is not None:
+        spread = float(congestion_spread_per_mwh)
+        cost_redispatch: float | None = mw_redisp * duration_effective * spread
+    else:
+        spread = congestion_spread_per_mwh
+        cost_redispatch = None
 
     if t_cod is None:
         t_cod = int(delay_years) + int(construction_years) + 1
     lifetime = int(project_lifetime)
     if horizon is None:
         horizon = t_cod + lifetime - 1
+
+    annual_load_shed = lambda_total * cost_loadshed
     stream_load_shed = growing(
         annual_load_shed, growth_rate, int(t_cod), lifetime, int(horizon)
     )
-    stream_redispatch = growing(
-        annual_redispatch, growth_rate, int(t_cod), lifetime, int(horizon)
-    )
     nominal_load_shed = undiscounted(stream_load_shed)
-    nominal_redispatch = undiscounted(stream_redispatch)
-    nominal_total = nominal_load_shed + nominal_redispatch
     pv_load_shed = pv(stream_load_shed, discount_rate)
-    pv_redispatch = pv(stream_redispatch, discount_rate)
-    pv_cost = pv_load_shed + pv_redispatch
+
+    if cost_redispatch is not None:
+        annual_redispatch: float | None = lambda_total * cost_redispatch
+        stream_redispatch = growing(
+            annual_redispatch, growth_rate, int(t_cod), lifetime, int(horizon)
+        )
+        nominal_redispatch: float | None = undiscounted(stream_redispatch)
+        pv_redispatch: float | None = pv(stream_redispatch, discount_rate)
+        cost_per_event = cost_loadshed + cost_redispatch
+        expected_annual_loss = annual_load_shed + annual_redispatch
+        nominal_total = nominal_load_shed + nominal_redispatch
+    else:
+        annual_redispatch = None
+        stream_redispatch = None
+        nominal_redispatch = None
+        pv_redispatch = None
+        cost_per_event = cost_loadshed
+        expected_annual_loss = annual_load_shed
+        nominal_total = nominal_load_shed
+
+    pv_cost = pv_load_shed + (pv_redispatch if pv_redispatch is not None else 0.0)
+
+    if not redispatch_applies:
+        redispatch_availability = {
+            "available": True,
+            "applies": False,
+            "missing_inputs": (),
+        }
+    elif congestion_spread_per_mwh is None:
+        redispatch_availability = {
+            "available": False,
+            "applies": True,
+            "missing_inputs": (SPREAD_PATH,),
+        }
+    else:
+        redispatch_availability = {
+            "available": True,
+            "applies": True,
+            "missing_inputs": (),
+        }
 
     return {
         "lambda_total": lambda_total,
@@ -183,7 +238,7 @@ def calculate_outage_costs(
         },
         "availability": {
             "outage_load_shed": {"available": True, "applies": True, "missing_inputs": ()},
-            "outage_redispatch": {"available": True, "applies": True, "missing_inputs": ()},
+            "outage_redispatch": redispatch_availability,
         },
         "total_miles": total_miles,
         "outage_rate": outage_rate,
@@ -196,7 +251,7 @@ def calculate_outage_costs(
         "cost_loadshed": cost_loadshed,
         "cost_redispatch": cost_redispatch,
         "voll_per_mwh": voll_per_mwh,
-        "redispatch_cost_per_mwh": redispatch_cost,
+        "congestion_spread_per_mwh": spread,
         "unserved_mwh_per_event": unserved_mwh_per_event,
     }
 
@@ -223,6 +278,13 @@ def main() -> None:
     discount_rate = ctx.social_discount_rate
     discount_source = "social"
 
+    project_data = get_project_data_raw()
+    sending_source = project_data["project"]["sending_source"]
+    if sending_source == "margin":
+        spread = _congestion_spread()
+    else:
+        spread = None
+
     results = calculate_outage_costs(
         outage_yaml,
         project_details.construction_type,
@@ -236,6 +298,8 @@ def main() -> None:
         line_utilization=project_details.line_utilization,
         t_cod=ctx.t_cod,
         horizon=ctx.horizon,
+        sending_source=sending_source,
+        congestion_spread_per_mwh=spread,
     )
 
     from forge.scripts.utils.run_context import add_derived
@@ -272,9 +336,17 @@ def main() -> None:
     logger.info("")
     logger.info("TWO-TIER COST PER EVENT:")
     logger.info(f"  Load-shed fraction: {results['load_shed_fraction']:.2f}")
-    logger.info(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
+    spread = results["congestion_spread_per_mwh"]
+    redispatch_avail = results["availability"]["outage_redispatch"]
+    if not redispatch_avail["applies"]:
+        logger.info("  Redispatch: does not apply (not a margin line)")
+    elif spread is None:
+        logger.info("  Redispatch: not available (no measured congestion spread)")
+    else:
+        logger.info(f"  Congestion spread: ${spread:,.2f}/MWh")
     logger.info(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
-    logger.info(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
+    if results["cost_redispatch"] is not None:
+        logger.info(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
     logger.info(f"  Total cost/event: ${results['cost_per_event']:,.0f}")
     logger.info("")
 

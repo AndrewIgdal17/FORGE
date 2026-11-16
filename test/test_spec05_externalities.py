@@ -81,6 +81,8 @@ def test_externalities_societal_only():
             assert i["available"] is False
             assert i["value_pv"] is None
             assert i["stream"] is None
+        elif i["stream"] is None:
+            assert i["value_pv"] is None
         else:
             assert i["value_pv"] == pytest.approx(pv(i["stream"], 0.02), rel=1e-9)
 

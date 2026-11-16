@@ -31,7 +31,6 @@ def _outage_yaml() -> dict:
     return {
         "outage": {
             "risk_growth_rate": 0.0,
-            "redispatch_cost_per_mwh": 0.0,
             "value_of_lost_load": {
                 "points": [
                     {"hours": 1, "value_per_mwh": 1.0},
@@ -63,7 +62,8 @@ def test_outage_costs_require_construction_years():
     with pytest.raises(TypeError, match="construction_years"):
         calculate_outage_costs(yaml, "overhead", terrain, 100, 10, 0.05)
     result = calculate_outage_costs(
-        yaml, "overhead", terrain, 100, 10, 0.05, construction_years=1
+        yaml, "overhead", terrain, 100, 10, 0.05, construction_years=1,
+        sending_source="margin", congestion_spread_per_mwh=None,
     )
     assert result["pv_cost"] == pytest.approx(0.0)
 
