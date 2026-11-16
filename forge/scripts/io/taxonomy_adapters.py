@@ -485,8 +485,10 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
 
     build_pv = _pv("build_conductor") + _pv("build_structure") + _pv("build_converter")
     build_nom = _nom("build_conductor") + _nom("build_structure") + _nom("build_converter")
-    row_cap_pv = _pv("row_acquisition") + _pv("row_holding")
-    row_cap_nom = _nom("row_acquisition") + _nom("row_holding")
+    row_cap_pv = _pv("row_acquisition")
+    row_cap_nom = _nom("row_acquisition")
+    holding_pv = _pv("row_holding")
+    holding_nom = _nom("row_holding")
     energy_losses_pv = _pv("line_loss_conductor") + _pv("line_loss_converter")
     energy_losses_nom = _nom("line_loss_conductor") + _nom("line_loss_converter")
 
@@ -497,6 +499,8 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "row_cost_nominal": row_cap_nom,
         "acquisition_pv": row_cap_pv,
         "acquisition_nominal_total": row_cap_nom,
+        "holding_pv": holding_pv,
+        "holding_nominal": holding_nom,
         "row_rent_pv": _pv("row_rent"),
         "row_rent_nominal": _nom("row_rent"),
         "env_mitigation_pv": _pv("env_mitigation"),

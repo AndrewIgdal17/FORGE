@@ -41,7 +41,24 @@ def load_project_technical_details() -> Tuple[float, int, int]:
     project_details: ProjectTechnicalDetails = load_project_technical_details_centralized()
     return project_details.delay_years, project_details.construction_years, project_details.project_lifetime
 
-def get_rate_base() -> float:
+_RATE_BASE_UPSTREAM = (
+    ("costs.build.total_afudc", "build", "total_afudc"),
+    ("costs.row.total_afudc", "row", "total_afudc"),
+    ("costs.environmental.total_afudc", "environmental", "total_afudc"),
+)
+
+
+def _missing_rate_base_inputs(shared) -> list[str]:
+    missing: list[str] = []
+    for label, module_key, field in _RATE_BASE_UPSTREAM:
+        try:
+            shared.require_upstream("costs", module_key, field)
+        except KeyError:
+            missing.append(label)
+    return missing
+
+
+def get_rate_base() -> float | None:
     """
     Get rate base (AFUDC capital at COD) from the shared run aggregator.
 
@@ -49,18 +66,18 @@ def get_rate_base() -> float:
     Rate base in real (base-year) dollars after AFUDC compounding at real WACC.
 
     Returns:
-        float: Rate base (real, AFUDC-capitalized), or 0 if not found
+        float | None: Rate base (real, AFUDC-capitalized), or None if an upstream value is missing
     """
-    try:
-        shared = get_output_manager()
-        if shared is not None and getattr(shared, "costs", None) is not None:
-            build_afudc = shared.require_upstream("costs", "build", "total_afudc")
-            row_afudc = shared.require_upstream("costs", "row", "total_afudc")
-            env_afudc = shared.require_upstream("costs", "environmental", "total_afudc")
-            return build_afudc + row_afudc + env_afudc
-    except KeyError as exc:
-        logger.warning("Rate base lookup failed: %s", exc)
-    return 0.0
+    shared = get_output_manager()
+    if shared is None or getattr(shared, "costs", None) is None:
+        return None
+    missing = _missing_rate_base_inputs(shared)
+    if missing:
+        return None
+    build_afudc = shared.require_upstream("costs", "build", "total_afudc")
+    row_afudc = shared.require_upstream("costs", "row", "total_afudc")
+    env_afudc = shared.require_upstream("costs", "environmental", "total_afudc")
+    return build_afudc + row_afudc + env_afudc
 
 def main() -> None:
     """
@@ -77,13 +94,33 @@ def main() -> None:
 
     # Get rate base (AFUDC capital at COD, real $) from batch summary or JSON outputs
     rate_base = get_rate_base()
+    shared = get_output_manager()
 
-    if rate_base == 0:
-        logger.warning("⚠️  Warning: Rate base (AFUDC capital) is zero. Revenue will be zero.")
-        logger.info(
-            "   Make sure build_costs.py, row_costs.py, and environmental_mitigation.py"
-        )
-        logger.info("   have run before revenue.py")
+    if rate_base is None:
+        missing = _missing_rate_base_inputs(shared) if shared is not None else []
+        csv_manager = SmartOutputManager()
+        results = {
+            "availability": {
+                "capital_recovery": {
+                    "available": False,
+                    "applies": True,
+                    "missing_inputs": missing,
+                },
+            },
+            "streams": {},
+            "capital_recovery_real": None,
+            "capital_recovery_pv": None,
+            "capital_recovery_pv_wacc": None,
+            "annual_revenue": None,
+            "rate_base": None,
+            "rate_base_real": None,
+            "annual_revenue_real": None,
+            "revenue_year_1": None,
+            "revenue_year_n": None,
+        }
+        csv_manager.add_revenue(results)
+        csv_manager.write_batch_summary()
+        return
 
     cod_year = calculate_cod_year(delay_years, construction_years)
     rate_base_real = rate_base

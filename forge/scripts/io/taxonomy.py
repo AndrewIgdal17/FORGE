@@ -292,7 +292,7 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     "bcr_utility": BCRDefinition(
         "bcr_utility", "Utility / TSP", "firm", "stakeholder",
         "revenue_requirement", "atrr_delay", frozenset(), 6,
-        "Pure utility: ATRR / (ATRR + base delay). BCR = 1.0 by identity for zero-delay regulated projects.",
+        "Utility: ATRR / (ATRR + delay-period costs: direct delay plus ROW holding), at the real WACC (eq. VII.10). 1.0 for a zero-delay regulated project.",
     ),
     "bcr_ratepayer": BCRDefinition(
         "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
@@ -368,7 +368,7 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "build_converter": "build_cost_pv",
     # Hard costs — ROW items share aggregate key acquisition_pv
     "row_acquisition": "acquisition_pv",
-    "row_holding": "acquisition_pv",
+    "row_holding": "holding_pv",
     # Hard costs — individual keys
     "env_mitigation": "env_mitigation_pv",
     # Soft costs — operational

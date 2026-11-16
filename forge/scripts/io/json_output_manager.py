@@ -320,7 +320,7 @@ class JSONOutputManager:
 
         total_capital_nominal = _sum_stored(
             _stored(build, "total_nominal"),
-            _acquisition_or_total(row, "acquisition_nominal_total", "total_nominal"),
+            _acquisition_or_total(row, "acquisition_nominal", "total_nominal"),
             _stored(env, "total_nominal"),
         )
         total_capital_afudc = _sum_stored(

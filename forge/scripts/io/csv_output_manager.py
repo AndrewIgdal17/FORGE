@@ -18,6 +18,8 @@ BATCH_SUMMARY_FIELDS = [
     "build_cost_pv",
     "row_cost_pv",
     "acquisition_pv",
+    "holding_pv",
+    "holding_nominal",
     "row_rent_pv",
     "acquisition_afudc",
     "acquisition_nominal_total",

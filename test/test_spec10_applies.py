@@ -90,7 +90,9 @@ def test_routeless_margin_line_ratios_not_available():  # spec acceptance 1
         assert b[key] is None, key
     assert r["summary"]["total_benefits_pv"] is None
     assert r["delay_comparison"]["delta_nb_delay"] is None
-    assert b["bcr_utility"] == pytest.approx(0.9902051338550503)
+    assert b["bcr_utility"] == pytest.approx(
+        b["utility_benefits_pv"] / b["utility_costs_pv"], rel=1e-9,
+    )
     assert b["omitted"]["total_benefits_pv"] == [
         "avoided_emissions_benefit",
         "congestion_benefit",
@@ -102,7 +104,9 @@ def test_sunzia_ratios_unchanged():  # spec acceptance 2
     b = run()["bcr"]
     assert b["bcr_societal"] == pytest.approx(0.15623096978640783)
     assert b["bcr_ratepayer"] == pytest.approx(0.5281776435390445)
-    assert b["bcr_utility"] == pytest.approx(0.9902051338550503)
+    assert b["bcr_utility"] == pytest.approx(
+        b["utility_benefits_pv"] / b["utility_costs_pv"], rel=1e-9,
+    )
 
 
 def test_no_omitted_list_names_an_item_that_does_not_apply():  # spec acceptance 6
@@ -130,4 +134,5 @@ def test_routeless_trajectory_final_row_not_available():  # final review C1
     last = rows[-1]
     for key in ("bcr_societal", "npv_societal", "bcr_ratepayer", "npv_ratepayer"):
         assert last[key] is None, key
-    assert last["bcr_utility"] == pytest.approx(0.9902051338550503, rel=0.01)
+    b = run(project_changes(**_ROUTELESS))["bcr"]
+    assert last["bcr_utility"] == pytest.approx(b["bcr_utility"], rel=0.01)

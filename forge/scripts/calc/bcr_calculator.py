@@ -67,14 +67,12 @@ _ENERGY_EMISSIONS_IDS = (
     get_excluded_taxonomy_ids(["line_losses"]) | _EXTERNAL_EMISSIONS_IDS
 )
 _DELAY_IDS = frozenset({"base_delay"})
+_ATRR_IDS = frozenset({"capital_recovery", "oandm", "insurance", "row_rent"})
 
 _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
-    "atrr_delay": frozenset({
-        "capital_recovery", "oandm", "insurance", "row_rent", "base_delay",
-    }),
-    "revenue_requirement_loss": frozenset({
-        "capital_recovery", "oandm", "insurance", "row_rent",
+    "atrr_delay": _ATRR_IDS | _DELAY_PERIOD_IDS,
+    "revenue_requirement_loss": _ATRR_IDS | frozenset({
         "line_loss_conductor", "line_loss_converter",
     }),
 }
@@ -82,7 +80,7 @@ _NUMER_SETS: dict[str, frozenset[str]] = {
     "all_benefits": _ALL_BENEFIT_IDS,
     "market": _MARKET_IDS,
     "capital_recovery": frozenset({"capital_recovery"}),
-    "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance", "row_rent"}),
+    "revenue_requirement": _ATRR_IDS,
 }
 
 # Output key generation for exclusion BCR variants
@@ -99,6 +97,7 @@ _GROUP_TO_SUFFIX: dict[str, str] = {
 _BCR_OUTPUT_KEYS = frozenset({
     "build_cost_pv",
     "row_cost_pv", "acquisition_pv", "acquisition_nominal_total",
+    "holding_pv", "holding_nominal",
     "row_rent_pv", "row_rent_nominal",
     "env_mitigation_pv",
     "oandm_pv", "insurance_pv",
@@ -115,11 +114,12 @@ _BCR_OUTPUT_KEYS = frozenset({
 })
 
 _BUILD_IDS = frozenset({"build_conductor", "build_structure", "build_converter"})
-_ROW_CAPITAL_IDS = frozenset({"row_acquisition", "row_holding"})
+_ROW_ACQUISITION_IDS = frozenset({"row_acquisition"})
+_ROW_HOLDING_IDS = frozenset({"row_holding"})
 _LINE_LOSS_IDS = frozenset({"line_loss_conductor", "line_loss_converter"})
 # Flat-key sums add these directly. A null on one of them has to be bridged
 # so that call returns; the sums below then apply the availability rule.
-_BRIDGE_IDS = _BUILD_IDS | _ROW_CAPITAL_IDS | _LINE_LOSS_IDS
+_BRIDGE_IDS = _BUILD_IDS | _ROW_ACQUISITION_IDS | _ROW_HOLDING_IDS | _LINE_LOSS_IDS
 
 def _excl_output_suffix(exclude_groups: frozenset[str]) -> str:
     """Generate the legacy output key suffix for an exclusion variant."""
@@ -204,9 +204,11 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
 
     # Aggregate item keys follow the same sum rule and stay out of omitted.
     out["build_cost_pv"] = _sum_pv(_BUILD_IDS)
-    out["row_cost_pv"] = _sum_pv(_ROW_CAPITAL_IDS)
+    out["row_cost_pv"] = _sum_pv(_ROW_ACQUISITION_IDS)
     out["acquisition_pv"] = out["row_cost_pv"]
-    out["acquisition_nominal_total"] = _sum_nom(_ROW_CAPITAL_IDS)
+    out["holding_pv"] = _sum_pv(_ROW_HOLDING_IDS)
+    out["acquisition_nominal_total"] = _sum_nom(_ROW_ACQUISITION_IDS)
+    out["holding_nominal"] = _sum_nom(_ROW_HOLDING_IDS)
     out["energy_losses_pv"] = _sum_pv(_LINE_LOSS_IDS)
     out["conductor_loss_pv"] = _sum_pv(frozenset({"line_loss_conductor"}))
     out["converter_loss_pv"] = _sum_pv(frozenset({"line_loss_converter"}))

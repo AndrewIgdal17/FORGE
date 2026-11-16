@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from forge.scripts.calc.bcr_calculator import _DELAY_PERIOD_IDS
 from forge.scripts.io.taxonomy import TAXONOMY, get_excluded_taxonomy_ids
 
 FIDELITY_TOLERANCE = 0.01  # $0.01 — IEEE 754 floating-point accumulation only; no formula disagreement
@@ -68,7 +69,7 @@ _BUCKETS = (
 # Ratepayer: remedial and enabling over the revenue requirement plus line losses.
 # The four externalities are in neither set.
 _UTILITY_NUMERATOR = frozenset({"capital_recovery", "oandm", "insurance", "row_rent"})
-_UTILITY_DELAY = frozenset({"base_delay"})
+_UTILITY_DELAY = _DELAY_PERIOD_IDS
 _RATEPAYER_NUMERATOR = frozenset(
     item.id
     for item in TAXONOMY.values()
