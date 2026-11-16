@@ -5,8 +5,19 @@ import textwrap
 import pytest
 import yaml
 
-from forge.scripts.calc.build_costs import load_costs
+from forge.errors import InvalidInputs
+from forge.scripts.calc.build_costs import build_selectors, load_costs
 from forge.scripts.utils.run_context import RunState, reset_run_state, set_run_state
+
+
+def test_build_selectors_indicators():
+    assert build_selectors("greenfield", 2) == (1.0, 1.0, 1.0)
+    assert build_selectors("greenfield", 0).converter == 0.0
+    assert build_selectors("reconductoring", 2) == (0.0, 1.0, 0.0)
+    assert build_selectors("reconductoring", 2).converter == 0.0
+    assert build_selectors("rebuild", 0) == (1.0, 0.0, 0.0)
+    with pytest.raises(InvalidInputs):
+        build_selectors("nope", 0)
 
 
 def test_load_costs_has_no_total_miles_parameter():

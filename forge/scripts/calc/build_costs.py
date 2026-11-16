@@ -9,7 +9,9 @@ import logging
 # Standard library imports
 import math
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, NamedTuple, Tuple
+
+from forge.errors import InvalidInputs
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 
@@ -49,11 +51,25 @@ class BuildCosts:
     weighted_miles: float
     average_terrain_multiplier: float
 
-def build_selectors(project_type: str, number_of_converters: int) -> tuple[float, float]:
-    """The appendix's structure and DC indicators, (xi_structure, xi_dc)."""
-    xi_structure = 0.0 if project_type == "reconductoring" else 1.0
-    xi_dc = 1.0 if number_of_converters > 0 else 0.0
-    return xi_structure, xi_dc
+class BuildSelectors(NamedTuple):
+    structure: float  # 1_str: 0.0 for reconductoring, else 1.0
+    dc: float  # 1_DC: 1.0 when number_of_converters > 0
+    greenfield: float  # 1_gf: 1.0 for greenfield only
+
+    @property
+    def converter(self) -> float:
+        return self.structure * self.dc
+
+
+def build_selectors(project_type: str, number_of_converters: int) -> BuildSelectors:
+    """The appendix's structure, DC, and greenfield indicators."""
+    allowed = ("greenfield", "reconductoring", "rebuild")
+    if project_type not in allowed:
+        raise InvalidInputs(f"project_type '{project_type}' is not allowed.")
+    structure = 0.0 if project_type == "reconductoring" else 1.0
+    dc = 1.0 if number_of_converters > 0 else 0.0
+    greenfield = 1.0 if project_type == "greenfield" else 0.0
+    return BuildSelectors(structure, dc, greenfield)
 
 
 def load_costs(
@@ -128,25 +144,24 @@ def load_costs(
     converter_cost = fixed_converter_cost * number_of_converters
 
     # Explicit binary selectors matching appendix (ξ_structure, ξ_DC)
-    xi_structure, xi_dc = build_selectors(project_type, number_of_converters)
+    sel = build_selectors(project_type, number_of_converters)
 
     total_cost = (
         conductor_cost
-        + xi_structure * structure_cost
-        + xi_structure * xi_dc * converter_cost
+        + sel.structure * structure_cost
+        + sel.converter * converter_cost
     )
 
     conductor_cost_with_contingencies = conductor_cost * (
         1 + contingencies["conductor_contingency"]
     )
     structure_cost_with_contingencies = (
-        xi_structure
+        sel.structure
         * structure_cost
         * (1 + contingencies["structure_contingency"])
     )
     converter_cost_with_contingencies = (
-        xi_structure
-        * xi_dc
+        sel.converter
         * converter_cost
         * (1 + contingencies["converter_contingency"])
     )
@@ -183,10 +198,10 @@ def load_costs(
 
 def _build_availability(project_type: str, number_of_converters: int) -> dict:
     """Structures and converters do not apply where their indicators are 0 (Spec 11)."""
-    xi_structure, xi_dc = build_selectors(project_type, number_of_converters)
+    sel = build_selectors(project_type, number_of_converters)
     return {
-        "build_structure": {"available": True, "applies": xi_structure == 1.0},
-        "build_converter": {"available": True, "applies": xi_structure * xi_dc == 1.0},
+        "build_structure": {"available": True, "applies": sel.structure == 1.0},
+        "build_converter": {"available": True, "applies": sel.converter == 1.0},
     }
 
 
