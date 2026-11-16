@@ -9,11 +9,11 @@ T = "01_project_technical_details.timeline."
 def test_operating_streams_grow_from_year_one():                    # A2
     r = run(project_changes(**{T+"delay_years": 2, T+"construction_years": 3,
                                "14_category_om_structures.om_real_escalation_rate": 0.02}))
-    st = item(r, "oandm")["stream"]
+    st = item(r, "oandm_line")["stream"]
     assert st[6] / st[5] == pytest.approx(1.02)
     r0 = run(project_changes(**{T+"delay_years": 2, T+"construction_years": 3,
                                 "14_category_om_structures.om_real_escalation_rate": 0.0}))
-    assert st[5] == pytest.approx(item(r0, "oandm")["stream"][5] * 1.02**5)
+    assert st[5] == pytest.approx(item(r0, "oandm_line")["stream"][5] * 1.02**5)
 
 
 def test_capital_bases_do_not_depend_on_delay():

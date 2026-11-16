@@ -1,6 +1,6 @@
 """FORGE taxonomy — single source of truth for Python.
 
-Defines the 31-item taxonomy, dimensions
+Defines the 33-item taxonomy, dimensions
 registry, BCR definitions, excludable groups, and calculator key mappings.
 Read-only reference data; importable by any module without circular imports.
 """
@@ -32,7 +32,9 @@ Category = Literal[
 ]
 Subgroup = Literal["risk", "emissions"]
 DiscountRate = Literal["social", "wacc_real", "per_perspective"]
-Condition = Literal["dc_only", "not_reconductoring", "reconductoring_only", "rebuild_only"]
+Condition = Literal[
+    "dc_only", "greenfield_only", "not_reconductoring", "reconductoring_only", "rebuild_only",
+]
 NumeratorRule = Literal[
     "all_benefits",
     "market",
@@ -121,20 +123,26 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
                  "ROW Holding Cost", "per_perspective", None, 2,
                  "Annual option/holding fee during delay period."),
     # --- Operating costs ---
-    TaxonomyItem("oandm", "cost", "operating", None,
-                 "O&M", "per_perspective", None, 1,
-                 "Line O&M (greenfield only: overhead base and terrain vegetation management per mile, or a share of underground line capital) plus converter O&M as a share of converter capital."),
-    TaxonomyItem("insurance", "cost", "operating", None,
-                 "Operational Insurance", "per_perspective", None, 2,
-                 "Annual cost of bearing asset risk: a share of line conductor and structure capital (self-insured reserve) and of converter capital (commercial property insurance), at separate rates."),
+    TaxonomyItem("oandm_line", "cost", "operating", None,
+                 "Line O&M", "per_perspective", "greenfield_only", 1,
+                 "Greenfield only (eq. om-line): overhead base cost and vegetation management on actual miles; underground, a capital share of K_line. Does not apply to reconductoring or rebuild."),
+    TaxonomyItem("oandm_converter", "cost", "operating", None,
+                 "Converter O&M", "per_perspective", "dc_only", 2,
+                 "A capital share of K_conv (eq. om-conv). Does not apply where converter stations do not."),
+    TaxonomyItem("insurance_line", "cost", "operating", None,
+                 "Line insurance", "per_perspective", None, 3,
+                 "Self-insurance reserve on K_line, only the conductor and structures the project builds (eq. ins). Applies to every project type."),
+    TaxonomyItem("insurance_converter", "cost", "operating", None,
+                 "Converter insurance", "per_perspective", "dc_only", 4,
+                 "Commercial property rate on K_conv (eq. ins). Does not apply where converter stations do not."),
     TaxonomyItem("row_rent", "cost", "operating", None,
-                 "ROW Rent", "per_perspective", None, 3,
+                 "ROW Rent", "per_perspective", None, 5,
                  "Annual per-acre rent for existing/leased ROW corridor."),
     TaxonomyItem("line_loss_conductor", "cost", "operating", None,
-                 "Conductor Losses", "per_perspective", None, 4,
+                 "Conductor Losses", "per_perspective", None, 6,
                  "Thermal energy losses from conductor resistance, valued at electricity price."),
     TaxonomyItem("line_loss_converter", "cost", "operating", None,
-                 "Converter Losses", "per_perspective", "dc_only", 5,
+                 "Converter Losses", "per_perspective", "dc_only", 7,
                  "Energy losses from AC/DC converter stations. Zero for AC projects."),
     # --- External costs ---
     TaxonomyItem("wildfire_eac", "cost", "external", "risk",
@@ -203,7 +211,10 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 31, f"Expected 31 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 33, f"Expected 33 taxonomy items, got {len(TAXONOMY)}"
+
+OANDM_IDS = frozenset({"oandm_line", "oandm_converter"})
+INSURANCE_IDS = frozenset({"insurance_line", "insurance_converter"})
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -227,8 +238,7 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     ),
     DimensionEntry("env_mitigation", "terrain", "Per-terrain base mitigation acreage"),
     DimensionEntry("env_mitigation", "credit_type", "Wetland credits, habitat credits"),
-    DimensionEntry("oandm", "terrain", "Vegetation management varies by terrain"),
-    DimensionEntry("oandm", "component", "Conductor, structure, converter, vegetation sub-totals"),
+    DimensionEntry("oandm_line", "terrain", "Vegetation management varies by terrain"),
     DimensionEntry("row_rent", "zone", "Per-zone annual rent"),
     DimensionEntry("line_loss_conductor", "terrain", "Loss MWh varies with resistance (terrain-adjusted miles)"),
     DimensionEntry("wildfire_eac", "year", "Risk growth over project lifetime"),
@@ -241,7 +251,7 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("avoided_emissions_benefit", "year", "Evolving differential over project lifetime"),
     DimensionEntry("congestion_benefit", "allocation", "Overlap vs. non-overlap binding hours"),
     DimensionEntry("base_delay", "category", "One annual direct delay cost"),
-    DimensionEntry("insurance", "component", "Conductors, structures, converters insurable base"),
+    DimensionEntry("insurance_line", "component", "Conductor and structure insurable base"),
 )
 
 _dim_map: dict[str, list[str]] = defaultdict(list)
@@ -372,8 +382,10 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     # Hard costs — individual keys
     "env_mitigation": "env_mitigation_pv",
     # Soft costs — operational
-    "oandm": "oandm_pv",
-    "insurance": "insurance_pv",
+    "oandm_line": "oandm_line_pv",
+    "oandm_converter": "oandm_converter_pv",
+    "insurance_line": "insurance_line_pv",
+    "insurance_converter": "insurance_converter_pv",
     "row_rent": "row_rent_pv",
     # Soft costs — energy
     "line_loss_conductor": "conductor_loss_pv",

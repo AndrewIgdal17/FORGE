@@ -16,8 +16,8 @@ def test_trajectory_final_row_matches_ratios(delay):
 
 
 def test_missing_wacc_value_raises():
-    rs = [TaxonomyResult("oandm", value_pv=1.0, value_nominal=0.0, value_pv_wacc=None)]
-    with pytest.raises(ValueError, match="oandm has no WACC present value"):
+    rs = [TaxonomyResult("oandm_line", value_pv=1.0, value_nominal=0.0, value_pv_wacc=None)]
+    with pytest.raises(ValueError, match="oandm_line has no WACC present value"):
         compute_all_bcrs(rs)
 
 

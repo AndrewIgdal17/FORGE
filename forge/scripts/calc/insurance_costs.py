@@ -11,6 +11,7 @@ import logging
 import yaml
 from typing import Dict, Any
 
+from forge.scripts.calc.build_costs import build_selectors
 from forge.scripts.utils.smart_output import SmartOutputManager
 
 # Local utility imports
@@ -20,7 +21,7 @@ from forge.scripts.utils.smart_loaders import (
     load_insurance_details,
 )
 from forge.scripts.utils.calculation_utils import normalize_construction_type_for_yaml
-from forge.scripts.utils.streams import growing, pv, undiscounted
+from forge.scripts.utils.streams import add, growing, pv, undiscounted
 from forge.scripts.utils.weighted_miles import calculate_weighted_miles
 from forge.scripts.utils.run_context import get_run_context
 
@@ -38,6 +39,8 @@ def calculate_insurance_costs(
     social_discount_rate: float,
     t_cod: int,
     horizon: int,
+    *,
+    converter_applies: bool,
 ) -> Dict[str, Any]:
     """
     Calculate operational insurance costs based on insurable asset value.
@@ -80,13 +83,35 @@ def calculate_insurance_costs(
     converter_insurable = converter_cost_with_contingencies
 
     insurable_value = line_insurable + converter_insurable
-    annual_premium = (line_insurable * line_rate) + (converter_insurable * converter_rate)
-    premium_rate = annual_premium / insurable_value if insurable_value > 0 else 0.0
-
+    line_annual_premium = line_insurable * line_rate
     escalation_rate = ins_cfg["escalation_rate"]
-    stream = growing(
-        annual_premium, escalation_rate, t_cod, int(project_lifetime), horizon
+
+    line_stream = growing(
+        line_annual_premium, escalation_rate, t_cod, int(project_lifetime), horizon
     )
+    line_nominal = undiscounted(line_stream)
+    line_pv = pv(line_stream, social_discount_rate)
+    line_pv_wacc = pv(line_stream, wacc_real)
+
+    if converter_applies:
+        converter_annual_premium = converter_insurable * converter_rate
+        converter_stream = growing(
+            converter_annual_premium, escalation_rate, t_cod, int(project_lifetime), horizon
+        )
+        converter_nominal = undiscounted(converter_stream)
+        converter_pv = pv(converter_stream, social_discount_rate)
+        converter_pv_wacc = pv(converter_stream, wacc_real)
+        stream = add(line_stream, converter_stream)
+    else:
+        converter_annual_premium = None
+        converter_stream = None
+        converter_nominal = None
+        converter_pv = None
+        converter_pv_wacc = None
+        stream = line_stream
+
+    annual_premium = line_annual_premium + (converter_annual_premium or 0.0)
+    premium_rate = annual_premium / insurable_value if insurable_value > 0 else 0.0
     nominal_lifetime_cost = undiscounted(stream)
     insurance_pv = pv(stream, social_discount_rate)
     insurance_pv_wacc = pv(stream, wacc_real)
@@ -102,6 +127,16 @@ def calculate_insurance_costs(
         "insurance_pv": insurance_pv,
         "insurance_pv_wacc": insurance_pv_wacc,
         "stream": stream,
+        "line_annual_premium": line_annual_premium,
+        "line_stream": line_stream,
+        "line_nominal": line_nominal,
+        "line_pv": line_pv,
+        "line_pv_wacc": line_pv_wacc,
+        "converter_annual_premium": converter_annual_premium,
+        "converter_stream": converter_stream,
+        "converter_nominal": converter_nominal,
+        "converter_pv": converter_pv,
+        "converter_pv_wacc": converter_pv_wacc,
     }
 
 def main() -> None:
@@ -133,6 +168,11 @@ def main() -> None:
     financing = load_financing_details()
 
     # Premium on the unescalated build cost, then grown from year 1.
+    sel = build_selectors(
+        project_details.project_type,
+        project_details.number_of_converters,
+    )
+    converter_applies = sel.converter == 1.0
     results = calculate_insurance_costs(
         insurance_yaml,
         costs.conductor_cost_with_contingencies,
@@ -144,6 +184,7 @@ def main() -> None:
         ctx.social_discount_rate,
         ctx.t_cod,
         ctx.horizon,
+        converter_applies=converter_applies,
     )
 
     from forge.scripts.utils.run_context import add_derived
@@ -195,13 +236,28 @@ def main() -> None:
 
     # Prepare operational insurance results dictionary for CSV
     csv_results = {
-        "streams": {"insurance": results["stream"]},
+        "streams": {
+            "insurance_line": results["line_stream"],
+            "insurance_converter": results["converter_stream"],
+        },
+        "availability": {
+            "insurance_line": {"available": True, "applies": True},
+            "insurance_converter": {"available": True, "applies": converter_applies},
+        },
         "annual_premium": results["annual_premium"],
         "nominal_lifetime_cost": results["nominal_lifetime_cost"],
         "pv_total": results["insurance_pv"],
         "pv_total_wacc": results["insurance_pv_wacc"],
         "insurable_value": results["insurable_value"],
         "premium_rate": results["premium_rate"],
+        "line_annual_premium": results["line_annual_premium"],
+        "line_nominal": results["line_nominal"],
+        "line_pv": results["line_pv"],
+        "line_pv_wacc": results["line_pv_wacc"],
+        "converter_annual_premium": results["converter_annual_premium"],
+        "converter_nominal": results["converter_nominal"],
+        "converter_pv": results["converter_pv"],
+        "converter_pv_wacc": results["converter_pv_wacc"],
     }
     csv_manager.add_insurance_costs(csv_results)
 

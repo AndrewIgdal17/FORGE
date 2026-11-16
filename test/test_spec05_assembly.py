@@ -16,8 +16,8 @@ def _r(i, pv, wacc):  # value_nominal irrelevant here
 
 
 def test_utility_and_ratepayer_use_wacc_values_societal_uses_social():
-    rs = [_r("congestion_benefit", 300.0, 200.0), _r("oandm", 50.0, 40.0),
-          _r("insurance", 10.0, 8.0), _r("row_rent", 0.0, 0.0),
+    rs = [_r("congestion_benefit", 300.0, 200.0), _r("oandm_line", 50.0, 40.0),
+          _r("insurance_line", 10.0, 8.0), _r("row_rent", 0.0, 0.0),
           _r("line_loss_conductor", 20.0, 15.0), _r("line_loss_converter", 0.0, 0.0),
           _r("base_delay", 5.0, 4.0), TaxonomyResult("capital_recovery", value_pv=None,
           value_nominal=0.0, value_pv_wacc=100.0), _r("build_conductor", 90.0, 70.0)]
@@ -28,12 +28,12 @@ def test_utility_and_ratepayer_use_wacc_values_societal_uses_social():
 
 
 def test_json_and_flat_keys_carry_both_values():
-    rs = [TaxonomyResult("oandm", value_pv=50.0, value_nominal=0.0, value_pv_wacc=40.0, stream=[1.0]),
+    rs = [TaxonomyResult("oandm_line", value_pv=50.0, value_nominal=0.0, value_pv_wacc=40.0, stream=[1.0]),
           TaxonomyResult("capital_recovery", value_pv=None, value_nominal=0.0, value_pv_wacc=100.0)]
     j = {x["taxonomy_id"]: x for x in taxonomy_results_to_json_list(rs)}
-    assert j["oandm"]["value_pv_wacc"] == 40.0 and j["oandm"]["stream"] == [1.0]
+    assert j["oandm_line"]["value_pv_wacc"] == 40.0 and j["oandm_line"]["stream"] == [1.0]
     f = taxonomy_results_to_flat_keys(rs)
-    assert f["oandm_pv_wacc"] == 40.0 and f["capital_recovery_pv"] == 100.0
+    assert f["oandm_line_pv_wacc"] == 40.0 and f["capital_recovery_pv"] == 100.0
 
 
 def test_discount_rate_metadata():
@@ -41,7 +41,7 @@ def test_discount_rate_metadata():
     for i in _SOCIAL:
         assert rate[i] == "social"
     assert rate["capital_recovery"] == "wacc_real"
-    assert rate["oandm"] == "per_perspective"
+    assert rate["oandm_line"] == "per_perspective"
     for i, item_rate in rate.items():
         if i in _SOCIAL or i == "capital_recovery":
             continue

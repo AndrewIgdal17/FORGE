@@ -68,17 +68,22 @@ _BUCKETS = (
 # Utility: revenue requirement over that set plus base delay.
 # Ratepayer: remedial and enabling over the revenue requirement plus line losses.
 # The four externalities are in neither set.
-_UTILITY_NUMERATOR = frozenset({"capital_recovery", "oandm", "insurance", "row_rent"})
+from forge.scripts.io.taxonomy import INSURANCE_IDS, OANDM_IDS
+
+_UTILITY_NUMERATOR = (
+    frozenset({"capital_recovery", "row_rent"}) | OANDM_IDS | INSURANCE_IDS
+)
 _UTILITY_DELAY = _DELAY_PERIOD_IDS
 _RATEPAYER_NUMERATOR = frozenset(
     item.id
     for item in TAXONOMY.values()
     if item.side == "benefit" and item.category == "market"
 )
-_RATEPAYER_DENOMINATOR = frozenset({
-    "capital_recovery", "oandm", "insurance", "row_rent",
-    "line_loss_conductor", "line_loss_converter",
-})
+_RATEPAYER_DENOMINATOR = (
+    frozenset({"capital_recovery", "row_rent", "line_loss_conductor", "line_loss_converter"})
+    | OANDM_IDS
+    | INSURANCE_IDS
+)
 _WACC_IDS = _UTILITY_NUMERATOR | _UTILITY_DELAY | _RATEPAYER_NUMERATOR | _RATEPAYER_DENOMINATOR
 _WILDFIRE_IDS = frozenset(get_excluded_taxonomy_ids(["wildfire"]))
 _OUTAGE_IDS = frozenset(get_excluded_taxonomy_ids(["outage"]))

@@ -140,8 +140,8 @@ def test_bcr_utility_uses_atrr_excluding_line_losses_and_congestion_delay():
         },
         "taxonomy_results": [
             {"taxonomy_id": "base_delay", "stream": at(1, delay_pv)},
-            {"taxonomy_id": "oandm", "stream": at(3, annual_om)},
-            {"taxonomy_id": "insurance", "stream": at(3, annual_insurance)},
+            {"taxonomy_id": "oandm_line", "stream": at(3, annual_om)},
+            {"taxonomy_id": "insurance_line", "stream": at(3, annual_insurance)},
             {"taxonomy_id": "line_loss_conductor", "stream": at(3, annual_loss)},
             {"taxonomy_id": "capital_recovery", "stream": at(3, rate_base)},
             {"taxonomy_id": "wildfire_eac", "stream": at(3, wildfire_pv), "value_pv_wacc": None},

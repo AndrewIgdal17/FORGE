@@ -151,15 +151,46 @@ _NOW_NOT_AVAILABLE = {
 _AC_WITHOUT_ENERGY_VALUE = {"CTT_Actual_Delay2", "AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"}
 
 
+def _legacy_operating_pv(got_items: dict, legacy_key: str) -> float | None:
+    if legacy_key == "oandm":
+        parts = ("oandm_line", "oandm_converter")
+    else:
+        parts = ("insurance_line", "insurance_converter")
+    total = 0.0
+    any_measured = False
+    for tid in parts:
+        if tid not in got_items:
+            return None
+        v = got_items[tid]
+        if v is not None:
+            total += v
+            any_measured = True
+    return total if any_measured else None
+
+
 def test_numbers_unchanged_from_5_1_1():
     expected = json.loads(
         (pathlib.Path(__file__).parent / "data" / "spec11_v511_numbers.json").read_text()
     )
     for name in SCENARIOS:
-        got = numbers(run(scenario_changes(name)))
+        results = run(scenario_changes(name))
+        got = numbers(results)
+        got_items = got["items"]
         for section in ("bcr", "items"):
-            assert set(got[section]) == set(expected[name][section]), (name, section)
+            exp_keys = set(expected[name][section])
+            if section == "items":
+                exp_keys -= {"oandm", "insurance"}
+                assert exp_keys <= set(got_items), (name, exp_keys - set(got_items))
+            else:
+                assert set(got[section]) >= exp_keys, (name, section)
             for key, value in expected[name][section].items():
+                if section == "items" and key in ("oandm", "insurance"):
+                    got_val = _legacy_operating_pv(got_items, key)
+                    if value is None:
+                        assert got_val is None, (name, key)
+                    else:
+                        assert got_val == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
+                    continue
                 if section == "bcr" and name in _AC_WITHOUT_ENERGY_VALUE and key in _NOW_NOT_AVAILABLE:
                     assert got[section][key] is None, (name, key)
                 elif value is None:
@@ -199,3 +230,17 @@ def test_dc_reconductoring_converter_cost_off_losses_on():  # acceptance 11, Rev
     assert item(r, "build_converter")["state"] == "does_not_apply"
     assert item(r, "build_structure")["state"] == "does_not_apply"
     assert item(r, "line_loss_converter")["applies"] is True
+    for tid in ("oandm_converter", "insurance_converter"):
+        assert item(r, tid)["state"] == "does_not_apply"
+
+
+def test_converter_om_and_insurance(runs):
+    for name in ("ac_greenfield", "ac_reconductoring", "rebuild"):
+        for tid in ("oandm_converter", "insurance_converter"):
+            e = item(runs[name], tid)
+            assert e["state"] == "does_not_apply"
+            assert e["value_pv"] is None and e["value_pv_wacc"] is None and e["stream"] is None
+    for tid in ("oandm_converter", "insurance_converter"):
+        assert item(runs["dc_greenfield"], tid)["state"] == "measured"
+        assert item(runs["dc_greenfield"], tid)["value_pv"] > 0
+    assert item(runs["ac_greenfield"], "insurance_line")["state"] == "measured"

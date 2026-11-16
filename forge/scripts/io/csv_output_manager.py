@@ -33,6 +33,10 @@ BATCH_SUMMARY_FIELDS = [
     # 4. Operational Costs PV (with breakdown)
     "insurance_pv",
     "oandm_pv",
+    "oandm_line_pv",
+    "oandm_converter_pv",
+    "insurance_line_pv",
+    "insurance_converter_pv",
     "operational_costs_pv",
     "operational_costs_nominal",
     "operating_costs_pv",

@@ -63,13 +63,7 @@ def test_oandm_converter_om_raises_without_run_context():
 
     clear_run_context()
     with pytest.raises(RuntimeError, match="RunContext"):
-        oandm.load_converter_om_costs(
-            ac_dc="DC",
-            converter_type="VSC Converter",
-            construction_type="Subsea",
-            capacity_mw=1000,
-            conductor_type="XLPE",
-        )
+        oandm.load_converter_om_costs("VSC Converter", 1.0)
 
 
 def test_oandm_line_om_raises_without_run_context():
@@ -103,13 +97,7 @@ def test_oandm_converter_reads_ctx_build_costs():
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
     try:
-        result = oandm.load_converter_om_costs(
-            ac_dc="DC",
-            converter_type="VSC Converter",
-            construction_type="Subsea",
-            capacity_mw=1000,
-            conductor_type="XLPE",
-        )
+        result = oandm.load_converter_om_costs("VSC Converter", 1.0)
         assert abs(result - 10_000.0) < 1e-9
     finally:
         reset_run_state(token)

@@ -8,7 +8,13 @@ import logging
 from dataclasses import replace
 from typing import Dict, Tuple
 
-from forge.scripts.io.taxonomy import TAXONOMY, ALL_BCR_DEFINITIONS, get_excluded_taxonomy_ids
+from forge.scripts.io.taxonomy import (
+    ALL_BCR_DEFINITIONS,
+    INSURANCE_IDS,
+    OANDM_IDS,
+    TAXONOMY,
+    get_excluded_taxonomy_ids,
+)
 from forge.scripts.io.taxonomy_adapters import TaxonomyResult, taxonomy_results_to_flat_keys
 
 BCR_VIABILITY_THRESHOLD = 1.0
@@ -67,7 +73,7 @@ _ENERGY_EMISSIONS_IDS = (
     get_excluded_taxonomy_ids(["line_losses"]) | _EXTERNAL_EMISSIONS_IDS
 )
 _DELAY_IDS = frozenset({"base_delay"})
-_ATRR_IDS = frozenset({"capital_recovery", "oandm", "insurance", "row_rent"})
+_ATRR_IDS = frozenset({"capital_recovery", "row_rent"}) | OANDM_IDS | INSURANCE_IDS
 
 _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
@@ -101,6 +107,8 @@ _BCR_OUTPUT_KEYS = frozenset({
     "row_rent_pv", "row_rent_nominal",
     "env_mitigation_pv",
     "oandm_pv", "insurance_pv",
+    "oandm_line_pv", "oandm_converter_pv",
+    "insurance_line_pv", "insurance_converter_pv",
     "energy_losses_pv", "conductor_loss_pv", "converter_loss_pv",
     "emissions_comp_cost_pv",
     "displacement_avoided_benefit_pv",
@@ -195,6 +203,15 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
             bridged.append(row)
     flat = taxonomy_results_to_flat_keys(bridged)
     out: dict = {k: v for k, v in flat.items() if k in _BCR_OUTPUT_KEYS}
+    out["oandm_pv"] = _sum_pv(OANDM_IDS)
+    out["insurance_pv"] = _sum_pv(INSURANCE_IDS)
+    for tid in OANDM_IDS | INSURANCE_IDS:
+        key = f"{tid}_pv"
+        if tid in by_id:
+            row = by_id[tid]
+            out[key] = row.value_pv if row.applies else None
+        else:
+            out[key] = 0.0
     components: dict[str, frozenset[str] | set[str]] = {}
 
     def put(key: str, value, ids: frozenset[str] | set[str]) -> None:

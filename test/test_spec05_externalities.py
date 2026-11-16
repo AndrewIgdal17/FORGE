@@ -79,10 +79,17 @@ def test_externalities_societal_only():
             assert i["value_pv"] == pytest.approx(pv(i["stream"], 0.02), rel=1e-9)
 
 
-def test_taxonomy_has_31_items_and_no_removed_ids():
+def test_taxonomy_has_33_items_and_no_removed_ids():
     ids = {t.id for t in TAXONOMY.values()}
-    assert len(ids) == 31
-    assert not ids & {"emissions_fac", "emissions_displacement_delay", "congestion_delay"}
+    assert len(ids) == 33
+    removed = {
+        "emissions_fac",
+        "emissions_displacement_delay",
+        "congestion_delay",
+        "oandm",
+        "insurance",
+    }
+    assert not ids & removed
 
 
 def test_wildfire_grows_from_base_year():                              # A2

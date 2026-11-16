@@ -76,7 +76,10 @@ def test_insurable_true_is_ignored_and_false_refused(part):
 def test_insurance_has_no_component_flags():
     yaml_ = {"insurance": {"premium_rate_default": 0.002, "escalation_rate": 0.0,
              "premium_rate_by_type": {"overhead": 0.002, "converter": 0.007}}}
-    r = calculate_insurance_costs(yaml_, 100.0, 50.0, 30.0, 2, "Overhead", 0.05, 0.02, 2, 3)
+    r = calculate_insurance_costs(
+        yaml_, 100.0, 50.0, 30.0, 2, "Overhead", 0.05, 0.02, 2, 3,
+        converter_applies=True,
+    )
     assert r["insurable_value"] == 180.0
     assert r["annual_premium"] == pytest.approx(150.0 * 0.002 + 30.0 * 0.007)
     assert "insurable_components" not in forge.get_defaults_template()["04_insurance"]["insurance"]

@@ -59,13 +59,7 @@ def test_converter_om_uses_run_inputs_not_canonical_rates():
     ctx.build_costs = _FAKE_COSTS
     set_run_context(ctx)
     try:
-        result = oandm.load_converter_om_costs(
-            ac_dc="DC",
-            converter_type="VSC Converter",
-            construction_type="Subsea",
-            capacity_mw=1000,
-            conductor_type="XLPE",
-        )
+        result = oandm.load_converter_om_costs("VSC Converter", 1.0)
         # 2_000_000 * 0.01 custom rate. Canonical YAML is 0.005 → 10_000.
         assert abs(result - 20_000.0) < 1e-9
     finally:

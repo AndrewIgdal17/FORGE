@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from .taxonomy import TAXONOMY
+from .taxonomy import INSURANCE_IDS, OANDM_IDS, TAXONOMY
 
 # ---------------------------------------------------------------------------
 # Result envelope dataclasses
@@ -189,53 +189,64 @@ def adapt_environmental(env: dict) -> list[TaxonomyResult]:
 
 
 def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
-    """Adapt costs.oandm -> oandm with component detail.
-
-    Copies the O&M stream and the social and WACC present values already
-    computed from that stream. Detail rows use the societal component values.
-    """
+    """Adapt costs.oandm -> oandm_line, oandm_converter."""
     if not oandm:
         return []
     streams = oandm.get("streams") or {}
-    stream = streams.get("oandm")
-    components = ("conductor", "converter", "structure", "vegetation")
-    detail_rows: list[DetailRow] = []
-    for comp in components:
-        pv = _safe(oandm, f"{comp}_pv")
-        nom = _safe(oandm, f"{comp}_nominal")
-        ann = _safe(oandm, f"{comp}_annual")
-        if pv or nom or ann:
-            detail_rows.append(
-                DetailRow("component", comp, value_pv=pv, value_nominal=nom, value_annual=ann)
-            )
-    return _copy_availability(oandm, [
-        TaxonomyResult(
-            "oandm",
-            value_pv=_safe(oandm, "total_pv"),
-            value_nominal=_safe(oandm, "total_nominal"),
-            value_annual=_safe(oandm, "total_annual"),
-            value_pv_wacc=_safe(oandm, "total_pv_wacc"),
+
+    def _item(taxonomy_id: str, prefix: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(oandm, f"{prefix}_pv") if prefix != "line_om" else _safe(oandm, "line_om_pv"),
+            value_nominal=_safe(oandm, f"{prefix}_nominal") if prefix != "line_om" else _safe(oandm, "line_om_nominal"),
+            value_annual=_safe(oandm, f"{prefix}_annual") if prefix != "line_om" else _safe(oandm, "line_om_annual"),
+            value_pv_wacc=_safe(oandm, f"{prefix}_pv_wacc") if prefix != "line_om" else _safe(oandm, "line_om_pv_wacc"),
             stream=list(stream) if stream is not None else None,
-            detail=tuple(detail_rows) if detail_rows else None,
-        ),
+        )
+
+    detail_rows: list[DetailRow] = []
+    veg_pv = _safe(oandm, "vegetation_pv")
+    if veg_pv:
+        detail_rows.append(
+            DetailRow(
+                "component",
+                "vegetation",
+                value_pv=veg_pv,
+                value_nominal=_safe(oandm, "vegetation_nominal"),
+                value_annual=_safe(oandm, "vegetation_annual"),
+            )
+        )
+    line_item = _item("oandm_line", "line_om")
+    if detail_rows:
+        line_item = replace(line_item, detail=tuple(detail_rows))
+
+    return _copy_availability(oandm, [
+        line_item,
+        _item("oandm_converter", "converter"),
     ])
 
 
 def adapt_insurance(insurance: dict) -> list[TaxonomyResult]:
-    """Adapt costs.insurance -> insurance."""
+    """Adapt costs.insurance -> insurance_line, insurance_converter."""
     if not insurance:
         return []
     streams = insurance.get("streams") or {}
-    stream = streams.get("insurance")
-    return _copy_availability(insurance, [
-        TaxonomyResult(
-            "insurance",
-            value_pv=_safe(insurance, "pv_total"),
-            value_nominal=_safe(insurance, "nominal_lifetime_cost"),
-            value_annual=_safe(insurance, "annual_premium"),
-            value_pv_wacc=_safe(insurance, "pv_total_wacc"),
+
+    def _item(taxonomy_id: str, prefix: str) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(insurance, f"{prefix}_pv"),
+            value_nominal=_safe(insurance, f"{prefix}_nominal"),
+            value_annual=_safe(insurance, f"{prefix}_annual_premium"),
+            value_pv_wacc=_safe(insurance, f"{prefix}_pv_wacc"),
             stream=list(stream) if stream is not None else None,
-        ),
+        )
+
+    return _copy_availability(insurance, [
+        _item("insurance_line", "line"),
+        _item("insurance_converter", "converter"),
     ])
 
 
@@ -479,6 +490,42 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
             return r.value_pv_wacc if r.value_pv_wacc is not None else 0.0
         return r.value_pv
 
+    def _part_pv(tid: str) -> float | None:
+        r = by_id.get(tid)
+        if r is None:
+            return 0.0
+        if not r.applies:
+            return None
+        return r.value_pv
+
+    def _sum_pv(ids: frozenset[str]) -> float | None:
+        present = [by_id[tid] for tid in ids if tid in by_id and by_id[tid].applies]
+        if not present:
+            return 0.0
+        available = [row for row in present if row.available]
+        if not available:
+            return None
+        total = 0.0
+        for row in available:
+            if row.value_pv is None:
+                return None
+            total += row.value_pv
+        return total
+
+    def _sum_nom(ids: frozenset[str]) -> float | None:
+        present = [by_id[tid] for tid in ids if tid in by_id and by_id[tid].applies]
+        if not present:
+            return 0.0
+        available = [row for row in present if row.available]
+        if not available:
+            return None
+        total = 0.0
+        for row in available:
+            if row.value_nominal is None:
+                return None
+            total += row.value_nominal
+        return total
+
     def _nom(tid: str) -> float:
         r = by_id.get(tid)
         return r.value_nominal if r else 0.0
@@ -505,10 +552,14 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "row_rent_nominal": _nom("row_rent"),
         "env_mitigation_pv": _pv("env_mitigation"),
         "env_mitigation_nominal": _nom("env_mitigation"),
-        "oandm_pv": _pv("oandm"),
-        "oandm_nominal": _nom("oandm"),
-        "insurance_pv": _pv("insurance"),
-        "insurance_nominal": _nom("insurance"),
+        "oandm_pv": _sum_pv(OANDM_IDS),
+        "oandm_nominal": _sum_nom(OANDM_IDS),
+        "insurance_pv": _sum_pv(INSURANCE_IDS),
+        "insurance_nominal": _sum_nom(INSURANCE_IDS),
+        "oandm_line_pv": _part_pv("oandm_line"),
+        "oandm_converter_pv": _part_pv("oandm_converter"),
+        "insurance_line_pv": _part_pv("insurance_line"),
+        "insurance_converter_pv": _part_pv("insurance_converter"),
         "energy_losses_pv": energy_losses_pv,
         "energy_losses_nominal": energy_losses_nom,
         "conductor_loss_pv": _pv("line_loss_conductor"),

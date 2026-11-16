@@ -48,8 +48,10 @@ _EXPECTED_COST_BENEFIT = {
     "env_mitigation": ("capital", None),
     "base_delay": ("delay_period", None),
     "row_holding": ("delay_period", None),
-    "oandm": ("operating", None),
-    "insurance": ("operating", None),
+    "oandm_line": ("operating", None),
+    "oandm_converter": ("operating", None),
+    "insurance_line": ("operating", None),
+    "insurance_converter": ("operating", None),
     "row_rent": ("operating", None),
     "line_loss_conductor": ("operating", None),
     "line_loss_converter": ("operating", None),
@@ -323,8 +325,8 @@ def _assembly_rows_with_row(
 
     return [
         _r("congestion_benefit", 300.0, 200.0),
-        _r("oandm", 50.0, 40.0),
-        _r("insurance", 10.0, 8.0),
+        _r("oandm_line", 50.0, 40.0),
+        _r("insurance_line", 10.0, 8.0),
         _r("row_rent", 0.0, 0.0),
         _r("line_loss_conductor", 20.0, 15.0),
         _r("line_loss_converter", 0.0, 0.0),

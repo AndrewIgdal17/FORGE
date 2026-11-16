@@ -12,6 +12,7 @@ from typing import Dict
 from forge.scripts.utils.smart_output import SmartOutputManager
 
 # Local utility imports
+from forge.scripts.calc.build_costs import build_selectors
 from forge.scripts.io.yaml_loaders import (
     load_financing_details,
     load_project_technical_details,
@@ -53,23 +54,13 @@ def load_vegetation_management_om_costs(construction_type: str) -> Dict[str, flo
     except KeyError as e:
         raise KeyError(f"Missing required key in vegetation management O&M YAML: {e}")
 
-def load_converter_om_costs(
-    ac_dc: str,
-    converter_type: str,
-    construction_type: str,
-    capacity_mw: int,
-    conductor_type: str,
-) -> float:
-    """
-    Calculate annual converter O&M as r_om,conv × K_converter × ξ_DC.
+def load_converter_om_costs(converter_type: str, converter_selector: float) -> float | None:
+    """Annual converter O&M as r_om,conv × K_conv when the converter selector is on.
 
-    K_converter is post-contingency, post-soft-cost total converter CAPEX
-    (includes N_conv) from ctx.build_costs. ξ_DC = 1 for DC projects
-    (ac_dc == "DC"), else 0 for AC projects.
-
-    Returns:
-        float: Total annual converter O&M cost ($/year), NOT per-mile.
+    Returns None when ``converter_selector`` is 0.0 without reading rates or context.
     """
+    if converter_selector == 0.0:
+        return None
     ctx = get_run_context()
     if ctx is None or ctx.build_costs is None:
         raise RuntimeError(
@@ -78,26 +69,16 @@ def load_converter_om_costs(
         )
     converter_capex = ctx.build_costs.converter_cost_with_contingencies
 
-    # Appendix §4: ξ_DC gates converter O&M by project type (not upstream CAPEX value)
-    xi_dc = 1.0 if ac_dc == "DC" else 0.0
-
-    # Load converter O&M rate by technology type
     data = section("15_category_om_converters")
     if not data or "converter_om_rate" not in data:
         raise ValueError("Missing 'converter_om_rate' key in converter O&M YAML")
     rates = data["converter_om_rate"]
     if converter_type not in rates:
-        if xi_dc == 0.0:
-            om_rate = 0.0
-        else:
-            raise KeyError(
-                f"Converter type '{converter_type}' not found in converter_om_rate. "
-                f"Available: {list(rates.keys())}"
-            )
-    else:
-        om_rate = rates[converter_type]
-
-    return converter_capex * om_rate * xi_dc
+        raise KeyError(
+            f"Converter type '{converter_type}' not found in converter_om_rate. "
+            f"Available: {list(rates.keys())}"
+        )
+    return converter_capex * rates[converter_type]
 
 def load_nonoverhead_line_om(
     construction_type: str,
@@ -147,13 +128,20 @@ def main() -> None:
     project_details = load_project_technical_details()
     physical_details = load_physical_details_detailed()
     financing = load_financing_details()
-    # Converter O&M (applies to both overhead and non-overhead DC projects)
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    sel = build_selectors(
+        project_details.project_type,
+        project_details.number_of_converters,
+    )
+    converter_applies = sel.converter == 1.0
     total_converter_cost_per_year = load_converter_om_costs(
-        project_details.ac_dc,
         project_details.converter_type,
-        project_details.construction_type,
-        project_details.capacity_mw,
-        project_details.conductor_type,
+        sel.converter,
     )
 
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
@@ -209,12 +197,6 @@ def main() -> None:
         struct_data = section("14_category_om_structures")
         om_real_escalation_rate = struct_data["om_real_escalation_rate"]
 
-    ctx = get_run_context()
-    if ctx is None:
-        raise RuntimeError(
-            f"{__name__} requires a RunContext. Run via forge.py or set up "
-            "RunContext in your test fixture."
-        )
     lifetime = int(project_details.project_lifetime)
     r_social = ctx.social_discount_rate
     r_wacc = financing.wacc_real
@@ -228,11 +210,13 @@ def main() -> None:
     conductor_stream = _grow(total_conductor_cost_per_year)
     structure_stream = _grow(variable_structure_cost_per_year)
     vegetation_stream = _grow(total_vegetation_management_cost_per_year)
-    converter_stream = _grow(total_converter_cost_per_year)
     line_stream = _grow(total_line_om_per_year)
-    # Line O&M already contains vegetation and, for overhead, the base rate.
-    # Conductor and structure annuals are legacy zeros beside that line total.
-    oandm_stream = add(line_stream, converter_stream)
+    if converter_applies and total_converter_cost_per_year is not None:
+        converter_stream = _grow(total_converter_cost_per_year)
+        oandm_stream = add(line_stream, converter_stream)
+    else:
+        converter_stream = None
+        oandm_stream = line_stream
 
     pv_conductor, conductor_pv_wacc, total_conductor_cost_lifetime = _values(conductor_stream)
     pv_structure, structure_pv_wacc, total_structure_cost_lifetime = _values(structure_stream)
@@ -241,11 +225,17 @@ def main() -> None:
         vegetation_pv_wacc,
         total_vegetation_management_cost_lifetime,
     ) = _values(vegetation_stream)
-    pv_converter, converter_pv_wacc, total_converter_cost_lifetime = _values(converter_stream)
-    pv_line_om, line_om_pv_wacc, _line_nominal = _values(line_stream)
+    pv_line_om, line_om_pv_wacc, line_om_nominal = _values(line_stream)
+    if converter_applies and converter_stream is not None:
+        pv_converter, converter_pv_wacc, total_converter_cost_lifetime = _values(converter_stream)
+    else:
+        pv_converter = None
+        converter_pv_wacc = None
+        total_converter_cost_lifetime = None
     pv_total, total_pv_wacc, _total_nominal_oandm = _values(oandm_stream)
 
-    _total_annual_oandm = total_line_om_per_year + total_converter_cost_per_year
+    converter_annual = total_converter_cost_per_year if converter_applies else None
+    _total_annual_oandm = total_line_om_per_year + (converter_annual or 0.0)
     add_derived({
         "total_structures": structure_dict.get("total", 0) if structure_dict else 0,
         "veg_mgmt_cost_per_year": total_vegetation_management_cost_per_year,
@@ -288,7 +278,7 @@ def main() -> None:
 
     logger.info("\n--- Unit Costs (per mile per year) ---")
     logger.info(f"Conductor:  ${variable_conductor_cost_per_mile_year:,.2f}")
-    logger.info(f"Converter:  ${total_converter_cost_per_year:,.2f} (total $/year; % of station CAPEX)")
+    logger.info(f"Converter:  ${(converter_annual or 0.0):,.2f} (total $/year; % of station CAPEX)")
     if project_details.construction_type == CONSTRUCTION_TYPE_OVERHEAD:
         logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f} (total per year)")
     else:
@@ -296,7 +286,7 @@ def main() -> None:
 
     logger.info("\n--- Annual Total Costs ---")
     logger.info(f"Conductor:  ${total_conductor_cost_per_year:,.2f}")
-    logger.info(f"Converter:  ${total_converter_cost_per_year:,.2f}")
+    logger.info(f"Converter:  ${(converter_annual or 0.0):,.2f}")
     logger.info(f"Structure:  ${variable_structure_cost_per_year:,.2f}")
     logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_per_year:,.2f}")
     logger.info(f"{'─' * 40}")
@@ -304,7 +294,10 @@ def main() -> None:
 
     logger.info("\n--- Lifetime Total Costs (Undiscounted) ---")
     logger.info(f"Conductor:  ${total_conductor_cost_lifetime:,.2f}")
-    logger.info(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
+    if total_converter_cost_lifetime is not None:
+        logger.info(f"Converter:  ${total_converter_cost_lifetime:,.2f}")
+    else:
+        logger.info("Converter:  (does not apply)")
     logger.info(f"Structure:  ${total_structure_cost_lifetime:,.2f}")
     logger.info(f"Vegetation Management:  ${total_vegetation_management_cost_lifetime:,.2f}")
     logger.info(f"{'─' * 40}")
@@ -314,7 +307,10 @@ def main() -> None:
     logger.info(f"Social Discount Rate: {r_social:.4f}")
     logger.info(f"Real WACC: {r_wacc:.4f}")
     logger.info(f"PV Conductor:  ${pv_conductor:,.2f}")
-    logger.info(f"PV Converter:  ${pv_converter:,.2f}")
+    if pv_converter is not None:
+        logger.info(f"PV Converter:  ${pv_converter:,.2f}")
+    else:
+        logger.info("PV Converter:  (does not apply)")
     logger.info(f"PV Structure:  ${pv_structure:,.2f}")
     logger.info(f"PV Vegetation Management:  ${pv_vegetation_management:,.2f}")
     logger.info(f"{'─' * 40}")
@@ -330,7 +326,14 @@ def main() -> None:
     csv_manager = SmartOutputManager()
 
     results = {
-        "streams": {"oandm": oandm_stream},
+        "streams": {
+            "oandm_line": line_stream,
+            "oandm_converter": converter_stream,
+        },
+        "availability": {
+            "oandm_line": {"available": True, "applies": True},
+            "oandm_converter": {"available": True, "applies": converter_applies},
+        },
         "total_annual": _total_annual_oandm,
         "total_nominal": _total_nominal_oandm,
         "total_pv": pv_total,
@@ -339,7 +342,7 @@ def main() -> None:
         "conductor_nominal": total_conductor_cost_lifetime,
         "conductor_pv": pv_conductor,
         "conductor_pv_wacc": conductor_pv_wacc,
-        "converter_annual": total_converter_cost_per_year,
+        "converter_annual": converter_annual,
         "converter_nominal": total_converter_cost_lifetime,
         "converter_pv": pv_converter,
         "converter_pv_wacc": converter_pv_wacc,
@@ -352,6 +355,7 @@ def main() -> None:
         "vegetation_pv": pv_vegetation_management,
         "vegetation_pv_wacc": vegetation_pv_wacc,
         "line_om_annual": total_line_om_per_year,
+        "line_om_nominal": line_om_nominal,
         "line_om_pv": pv_line_om,
         "line_om_pv_wacc": line_om_pv_wacc,
     }
