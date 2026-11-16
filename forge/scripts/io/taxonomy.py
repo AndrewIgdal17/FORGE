@@ -201,10 +201,18 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("build_conductor", "terrain", "Per-terrain weighted-mile cost breakdown"),
     DimensionEntry("build_structure", "terrain", "Per-terrain weighted-mile cost breakdown"),
     DimensionEntry("row_acquisition", "zone", "Per-zone (up to 15 ROW zones) acquisition cost"),
-    DimensionEntry("row_acquisition", "row_regime", "Easement, fee simple, lease, license"),
+    DimensionEntry(
+        "row_acquisition",
+        "row_regime",
+        "New permanent easement, federal hybrid, lease or license of an existing corridor",
+    ),
     DimensionEntry("row_acquisition", "terrain", "Per-terrain ROW valuation (future terrain-mile mode)"),
     DimensionEntry("row_holding", "zone", "Per-zone holding/option fee over delay period"),
-    DimensionEntry("row_holding", "row_regime", "Easement, fee simple, lease, license"),
+    DimensionEntry(
+        "row_holding",
+        "row_regime",
+        "New permanent easement, federal hybrid, lease or license of an existing corridor",
+    ),
     DimensionEntry("env_mitigation", "terrain", "Per-terrain base mitigation acreage"),
     DimensionEntry("env_mitigation", "credit_type", "Wetland credits, habitat credits"),
     DimensionEntry("oandm", "terrain", "Vegetation management varies by terrain"),
@@ -220,7 +228,7 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("avoided_emissions_benefit", "pollutant", "CO2, SOx, NOx avoided mass + cost"),
     DimensionEntry("avoided_emissions_benefit", "year", "Evolving differential over project lifetime"),
     DimensionEntry("congestion_benefit", "allocation", "Overlap vs. non-overlap binding hours"),
-    DimensionEntry("base_delay", "category", "Legal, admin, labor, regulatory, etc. (8 categories from YAML)"),
+    DimensionEntry("base_delay", "category", "One annual direct delay cost"),
     DimensionEntry("insurance", "component", "Conductors, structures, converters insurable base"),
 )
 

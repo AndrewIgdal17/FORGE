@@ -32,6 +32,7 @@ environmental_mitigation:
       rolling_hills: 1500
       mountain: 9000
   wetland_credit_cost_per_acre: 51361
+  # Habitat credit price (D1): 31,683 x 321.943 / 218.056 = 46,777.53 (2010$ to 2025$, CPI-U, forge/data/cpi_u.csv), rounded to 46,778.
   habitat_credit_cost_per_credit:
     forested: 46778
     scrubbed_flat: 46778

@@ -4,7 +4,7 @@
 #   345/500/765 kV = 80/90/95/100/125/175/200/225 ft. HVDC single circuit: +/-250/400/500/
 #   600/640 kV = 130/180/200/215/225 ft. Ratings map to voltage through
 #   21_project_category_circuit_and_resistance_detail.yaml; every overhead row matches.
-# Gap: the guide gives no underground widths. The underground rows (30-50 ft) are unsourced.
+# Underground rows (30-50 ft) are author estimates (methodology Appendix A.11): no published table gives underground corridor widths.
 # Conductor and converter type do not change the width.
 project_categories_row_widths:
   Overhead/AC/140MW/Standard Aluminum Conductor/NA:

@@ -184,12 +184,17 @@ def scan_text(text: str) -> list[str]:
 
 def _scanned_files():
     yamls = sorted((ROOT / "forge" / "yamls").glob("*.yaml"))
+    data_yaml = sorted((ROOT / "forge" / "data").rglob("*.yaml"))
+    data_csv = sorted((ROOT / "forge" / "data").rglob("*.csv"))
     scripts = sorted(path for path in (ROOT / "forge" / "scripts").rglob("*.py"))
-    return yamls + scripts
+    top_scripts = sorted((ROOT / "scripts").glob("*.py"))
+    return yamls + data_yaml + data_csv + scripts + top_scripts
 
 
 def test_habitat_credits_use_the_2010_cpi_ratio():
     cpi = _cpi()
+    assert (cpi[2025], cpi[2010]) == (321.943, 218.056)
+    assert 31683 * cpi[2025] / cpi[2010] == pytest.approx(46777.53, abs=0.005)
     template = get_defaults_template()
     expected = _round_to(31683 * cpi[2025] / cpi[2010], 1)
     assert expected == 46778
@@ -314,6 +319,13 @@ def test_blm_comments_name_the_cy2026_source_and_the_deflator():
     assert text.count("CY2026 source value") == 31
     for source, _rent_result, _hold_result in RENTS:
         assert text.count(f"CY2026 source value {source:.2f}") == 2
+
+
+def test_factor_scan_covers_data_and_top_level_scripts():
+    scanned = {p.relative_to(ROOT).as_posix() for p in _scanned_files()}
+    assert "forge/data/converted_defaults.yaml" in scanned
+    assert "forge/data/cpi_u.csv" in scanned
+    assert "scripts/build_emissions_data.py" in scanned
 
 
 def test_templates_and_scripts_do_not_embed_cpi_factors():
