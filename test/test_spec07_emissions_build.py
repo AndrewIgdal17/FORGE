@@ -14,7 +14,7 @@ EGRID = Path(os.environ.get(
 SC_BORROW = "NC (borrowed for SC; EPA 2025 PM workbook has no SC NOx row)"
 TITLES = {
     "cambium": "Cambium 2024 Mid-case, annual, GEA (NLR TP-6A40-93005), lrmer_co2e_c + lrmer_co2e_p",
-    "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRSO2RTA/SRNOXRTA",
+    "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRNBSO2/SRNBNOX (non-baseload)",
     "sc_ghg": "EPA 2023 SC-GHG Table A.5.1, SC-CO2, 2.0% near-term, 2020$",
     "bpt": "EPA 2024 BPT, EGU by state, 2025 analysis year, 2%, low mortality (PM) + short-term ozone, 2019$",
     "cpi_u": "BLS CUUR0000SA0 annual average; 2025 = 321.943",
@@ -254,10 +254,82 @@ def test_vendored_tables_exist_without_a_second_cpi_path():
     assert not (emissions / "cpi_u.csv").exists()
     import yaml
 
+    from scripts.build_emissions_data import EGRID_SHA256
+
     doc = yaml.safe_load((emissions / "EDITIONS.yaml").read_text())
     for key, title in TITLES.items():
         assert doc[key]["title"] == title
+    assert doc["egrid"]["raw_files"][0]["sha256"] == EGRID_SHA256
     assert SC_BORROW in doc["bpt"]["notes"]
+
+
+EGRID_SUBREGIONS = (
+    "AZNM", "CAMX", "ERCT", "FRCC", "MROE", "MROW", "NEWE", "NWPP", "NYCW", "NYLI",
+    "NYUP", "RFCE", "RFCM", "RFCW", "RMPA", "SPNO", "SPSO", "SRMV", "SRMW", "SRSO",
+    "SRTV", "SRVC",
+)
+
+
+def _minimal_egrid_workbook(path: Path) -> None:
+    from openpyxl import Workbook
+
+    from scripts.build_emissions_data import (
+        EGRID_COLUMN_DESCRIPTIONS,
+        EGRID_NOX_COLUMN,
+        EGRID_SO2_COLUMN,
+    )
+
+    book = Workbook()
+    sheet = book.active
+    sheet.title = "SRL23"
+    sheet.append([
+        "",
+        EGRID_COLUMN_DESCRIPTIONS[EGRID_SO2_COLUMN],
+        EGRID_COLUMN_DESCRIPTIONS[EGRID_NOX_COLUMN],
+    ])
+    sheet.append(["SUBRGN", EGRID_SO2_COLUMN, EGRID_NOX_COLUMN])
+    sheet.append(["AZNM", 0.171, 0.627])
+    book.save(path)
+
+
+def test_build_egrid_stops_on_wrong_hash_or_header(tmp_path, monkeypatch):
+    from scripts.build_emissions_data import (
+        EGRID_SHA256,
+        EGRID_SO2_COLUMN,
+        build_egrid,
+    )
+
+    path = tmp_path / "egrid-fake.xlsx"
+    _minimal_egrid_workbook(path)
+    with pytest.raises(SystemExit, match="sha256"):
+        build_egrid(path)
+
+    monkeypatch.setattr(
+        "scripts.build_emissions_data.EGRID_SHA256",
+        hashlib.sha256(path.read_bytes()).hexdigest(),
+    )
+    from openpyxl import load_workbook
+
+    book = load_workbook(path)
+    sheet = book["SRL23"]
+    sheet.cell(row=2, column=2, value="WRONGSO2")
+    book.save(path)
+    monkeypatch.setattr(
+        "scripts.build_emissions_data.EGRID_SHA256",
+        hashlib.sha256(path.read_bytes()).hexdigest(),
+    )
+    with pytest.raises(SystemExit, match=EGRID_SO2_COLUMN):
+        build_egrid(path)
+    assert EGRID_SHA256 != hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_egrid_subregions_unchanged():
+    import csv
+
+    path = ROOT / "forge" / "data" / "emissions" / "egrid_criteria_rates.csv"
+    with path.open(newline="") as handle:
+        codes = [row["subregion"] for row in csv.DictReader(handle)]
+    assert codes == list(EGRID_SUBREGIONS)
 
 
 @pytest.mark.skipif(not EGRID.is_file(), reason="eGRID workbook not on this machine")
@@ -266,6 +338,6 @@ def test_egrid_aznm_unrounded():
 
     rows = {sub: (so2, nox) for sub, so2, nox in build_egrid(EGRID)}
     assert len(rows) == 22
-    assert rows["AZNM"] == (0.103 * 0.45359237, 0.360 * 0.45359237)
+    assert rows["AZNM"] == (0.171 * 0.45359237, 0.627 * 0.45359237)
     for dropped in ("AKGD", "AKMS", "HIMS", "HIOA", "PRMS"):
         assert dropped not in rows

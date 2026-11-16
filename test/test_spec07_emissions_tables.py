@@ -23,7 +23,7 @@ def test_caiso_interpolates_and_holds():
 
 
 def test_aznm_is_the_unrounded_product():
-    assert egrid_rates("AZNM") == (0.103 * 0.45359237, 0.360 * 0.45359237)
+    assert egrid_rates("AZNM") == (0.171 * 0.45359237, 0.627 * 0.45359237)
 
 
 def test_social_cost_2025_uses_the_cpi_table():
@@ -93,7 +93,7 @@ def test_data_releases_follow_edition_order():
             "Cambium 2024 Mid-case, annual, GEA (NLR TP-6A40-93005), "
             "lrmer_co2e_c + lrmer_co2e_p"
         ),
-        "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRSO2RTA/SRNOXRTA",
+        "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRNBSO2/SRNBNOX (non-baseload)",
         "sc_ghg": "EPA 2023 SC-GHG Table A.5.1, SC-CO2, 2.0% near-term, 2020$",
         "bpt": (
             "EPA 2024 BPT, EGU by state, 2025 analysis year, 2%, low mortality (PM) + "

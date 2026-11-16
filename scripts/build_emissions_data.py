@@ -14,6 +14,17 @@ import yaml
 from openpyxl import load_workbook
 
 KG_PER_LB = 0.45359237
+EGRID_SHA256 = "895cd81dd8662406189ad8adf5a2578dcb362cdb5cff7cca81b10ee6bd2447c6"
+EGRID_SO2_COLUMN = "SRNBSO2"
+EGRID_NOX_COLUMN = "SRNBNOX"
+EGRID_COLUMN_DESCRIPTIONS = {
+    EGRID_SO2_COLUMN: (
+        "eGRID subregion annual SO2 non-baseload output emission rate (lb/MWh)"
+    ),
+    EGRID_NOX_COLUMN: (
+        "eGRID subregion annual NOx non-baseload output emission rate (lb/MWh)"
+    ),
+}
 DROP_EGRID = {"AKGD", "AKMS", "HIMS", "HIOA", "PRMS"}
 STATES = (
     "AL", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "ID", "IL", "IN", "IA",
@@ -29,7 +40,7 @@ PAIRS = {
 SC_BORROW = "NC (borrowed for SC; EPA 2025 PM workbook has no SC NOx row)"
 TITLES = {
     "cambium": "Cambium 2024 Mid-case, annual, GEA (NLR TP-6A40-93005), lrmer_co2e_c + lrmer_co2e_p",
-    "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRSO2RTA/SRNOXRTA",
+    "egrid": "eGRID2023 rev2 (data year 2023), SRL23 SRNBSO2/SRNBNOX (non-baseload)",
     "sc_ghg": "EPA 2023 SC-GHG Table A.5.1, SC-CO2, 2.0% near-term, 2020$",
     "bpt": "EPA 2024 BPT, EGU by state, 2025 analysis year, 2%, low mortality (PM) + short-term ozone, 2019$",
     "cpi_u": "BLS CUUR0000SA0 annual average; 2025 = 321.943",
@@ -99,7 +110,42 @@ def build_cambium(zip_path: Path) -> list[tuple[str, int, float]]:
     return rows
 
 
+def _egrid_header_descriptions(xlsx: Path) -> dict[str, str]:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=_NO_DEFAULT_STYLE, category=UserWarning)
+        book = load_workbook(xlsx, read_only=True, data_only=True)
+    try:
+        sheet = book["SRL23"]
+        header_rows = sheet.iter_rows(min_row=1, max_row=2, values_only=True)
+        descriptions = next(header_rows)
+        codes = next(header_rows)
+        by_code: dict[str, str] = {}
+        for desc, code in zip(descriptions, codes):
+            if code is None:
+                continue
+            by_code[str(code)] = "" if desc is None else str(desc)
+        return by_code
+    finally:
+        book.close()
+
+
+def _check_egrid_workbook(xlsx: Path) -> None:
+    digest = sha256_file(xlsx)
+    if digest != EGRID_SHA256:
+        raise SystemExit(f"eGRID workbook sha256 expected {EGRID_SHA256}, found {digest}")
+    descriptions = _egrid_header_descriptions(xlsx)
+    for code in (EGRID_SO2_COLUMN, EGRID_NOX_COLUMN):
+        expected = EGRID_COLUMN_DESCRIPTIONS[code]
+        found = descriptions.get(code)
+        if found != expected:
+            raise SystemExit(
+                f"eGRID column {code} description expected {expected!r}, found {found!r}"
+            )
+
+
 def build_egrid(xlsx: Path) -> list[tuple[str, float, float]]:
+    xlsx = Path(xlsx)
+    _check_egrid_workbook(xlsx)
     frame = _read_excel(xlsx, sheet_name="SRL23", header=1)
     rows = []
     for record in frame.itertuples(index=False):
@@ -108,8 +154,8 @@ def build_egrid(xlsx: Path) -> list[tuple[str, float, float]]:
             continue
         rows.append((
             code,
-            float(getattr(record, "SRSO2RTA")) * KG_PER_LB,
-            float(getattr(record, "SRNOXRTA")) * KG_PER_LB,
+            float(getattr(record, EGRID_SO2_COLUMN)) * KG_PER_LB,
+            float(getattr(record, EGRID_NOX_COLUMN)) * KG_PER_LB,
         ))
     rows = [row for row in rows if row[0] not in DROP_EGRID]
     rows.sort()
@@ -328,7 +374,8 @@ def write_release(raw_dir: Path, out_dir: Path, cpi_out: Path, egrid_xlsx: Path 
             TITLES["egrid"],
             "eGRID2023 revision 2, released 12 June 2025, data year 2023",
             egrid_files,
-            "Sheet SRL23, header row 2. SRSO2RTA and SRNOXRTA in lb/MWh, each times 0.45359237. "
+            f"Sheet SRL23, header row 2. {EGRID_SO2_COLUMN} and {EGRID_NOX_COLUMN} "
+            "(annual non-baseload output emission rates) in lb/MWh, each times 0.45359237. "
             "Drop AKGD, AKMS, HIMS, HIOA, and PRMS. The workbook is not committed.",
         ),
         "sc_ghg": _edition(
