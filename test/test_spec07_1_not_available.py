@@ -268,6 +268,52 @@ def test_print_bcr_summary_prints_not_available_for_none(caplog):
     assert "not available" in net and "$" not in net
 
 
+def test_print_bcr_summary_category_sections_match_subtotal_keys(caplog):
+    payload = {
+        "congestion_benefit_pv": 0,
+        "total_benefits_pv": 0,
+        "build_cost_pv": 1,
+        "acquisition_pv": 2,
+        "env_mitigation_pv": 3,
+        "capital_costs_pv": 6,
+        "oandm_pv": 10,
+        "insurance_pv": 11,
+        "row_rent_pv": 12,
+        "conductor_loss_pv": 4,
+        "converter_loss_pv": 5,
+        "operating_costs_pv": 42,
+        "energy_losses_pv": 9,
+        "emissions_comp_cost_pv": 7,
+        "external_emissions_costs_pv": 7,
+        "wildfire_pv": 1,
+        "outage_pv": 2,
+        "external_risk_costs_pv": 3,
+        "delay_cost_pv": 20,
+        "holding_pv": 8,
+        "delay_period_costs_pv": 28,
+        "total_costs_pv": 100,
+        "bcr_societal": 0,
+        "bcr_utility": 0,
+        "bcr_ratepayer": 0,
+        "net_benefit_pv": 0,
+    }
+    with caplog.at_level(logging.INFO, logger="forge.scripts.calc.bcr_calculator"):
+        print_bcr_summary(payload)
+    messages = [record.message for record in caplog.records]
+    text = "\n".join(messages)
+    op_idx = text.index("  Operating costs:")
+    em_idx = text.index("  Emissions:")
+    delay_idx = text.index("  Delay-period costs:")
+    operating = text[op_idx:em_idx]
+    delay = text[delay_idx : text.index("  " + "-" * 78, delay_idx)]
+    assert "Conductor Losses:" in operating
+    assert "Subtotal:" in operating
+    assert "$             42" in operating.split("Subtotal:")[-1]
+    assert "$              7" not in operating.split("Subtotal:")[-1]
+    assert "Direct delay:" in delay
+    assert "ROW holding:" in delay
+
+
 OLD = [
     "17_congestion_reductions.greenfield_congestion_reductions.prices.average_congestion_price",
     "17_congestion_reductions.incremental_congestion_reductions.prices.average_congestion_price",

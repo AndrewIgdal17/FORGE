@@ -359,14 +359,14 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info(f"    Insurance (operational):  {_money(_raw('insurance_pv'))}")
     if _positive("row_rent_pv"):
         logger.info(f"    ROW rent (operational):    {_money(_raw('row_rent_pv'))}")
-    logger.info(f"    Subtotal:                  {_money(_raw('operating_costs_pv'))}")
-    logger.info("")
-    logger.info("  Emissions:")
     if _positive("converter_loss_pv"):
         logger.info(f"    Converter Losses:          {_money(_raw('converter_loss_pv'))}")
         logger.info(f"    Conductor Losses:          {_money(_raw('conductor_loss_pv'))}")
     else:
         logger.info(f"    Energy Losses:             {_money(_raw('energy_losses_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('operating_costs_pv'))}")
+    logger.info("")
+    logger.info("  Emissions:")
     logger.info(f"    Loss-Comp. Emissions:      {_money(_raw('emissions_comp_cost_pv'))}")
     logger.info(f"    Subtotal:                  {_money(_raw('external_emissions_costs_pv'))}")
     logger.info("")
@@ -377,6 +377,7 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info("")
     logger.info("  Delay-period costs:")
     logger.info(f"    Direct delay:              {_money(_raw('delay_cost_pv'))}")
+    logger.info(f"    ROW holding:               {_money(_raw('holding_pv'))}")
     logger.info(f"    Subtotal:                  {_money(_raw('delay_period_costs_pv'))}")
     logger.info("")
     logger.info("  " + "-" * 78)
