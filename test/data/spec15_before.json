@@ -65,9 +65,9 @@
     "holding_pv_wacc": 39337.75772276585
   },
   "SunZia_Delay17": {
-    "bcr_societal": 0.5110147205445644,
-    "net_benefit_pv": -2261581478.8525467,
-    "total_costs_pv": 13935249384.430202,
+    "bcr_societal": 0.5338091246474863,
+    "net_benefit_pv": -2064085297.0632286,
+    "total_costs_pv": 4427554047.475631,
     "total_benefits_pv": 2363468750.412401,
     "bcr_ratepayer": 0.5082111244407037,
     "net_benefit_ratepayer_pv": -888908144.2324585,
@@ -78,12 +78,12 @@
     "holding_pv_wacc": 348273.2633412108
   },
   "SunZia_Delay2": {
-    "bcr_societal": 0.5472018088007773,
-    "net_benefit_pv": -2267195616.2194524,
-    "total_costs_pv": 17537379724.52318,
+    "bcr_societal": 0.5778788724249478,
+    "net_benefit_pv": -2001391758.2093043,
+    "total_costs_pv": 4741273600.084045,
     "total_benefits_pv": 2739881841.874741,
-    "bcr_ratepayer": 0.5281776435390446,
-    "net_benefit_ratepayer_pv": -1342359494.8496375,
+    "bcr_ratepayer": 0.5281776435390445,
+    "net_benefit_ratepayer_pv": -1342359494.849638,
     "bcr_utility": 0.9902051338550503,
     "utility_costs_pv": 2873195317.9752,
     "utility_benefits_pv": 2845052754.4273367,

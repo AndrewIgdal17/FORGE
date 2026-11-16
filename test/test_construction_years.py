@@ -33,7 +33,10 @@ def _outage_yaml() -> dict:
             "risk_growth_rate": 0.0,
             "redispatch_cost_per_mwh": 0.0,
             "value_of_lost_load": {
-                "tiers": [{"max_hours": ".inf", "value_per_mwh": 1.0}],
+                "points": [
+                    {"hours": 1, "value_per_mwh": 1.0},
+                    {"hours": 16, "value_per_mwh": 1.0},
+                ],
             },
             "outage_duration": 1.0,
             "outage_duration_multiplier": {"overhead": 1.0},

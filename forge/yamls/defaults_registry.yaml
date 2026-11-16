@@ -1101,85 +1101,45 @@ risk_costs:
       citation: null
       yaml_file: 07_outage_costs.yaml
       basis: Author judgment
-    voll_tier_1_0_to_1h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+    voll_1h:
+      path: 07_outage_costs.outage.value_of_lost_load.points[0].value_per_mwh
       unit: $/MWh (2025$)
       source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
       dollar_year: 2024
-    voll_tier_2_1_to_2h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+    voll_2h:
+      path: 07_outage_costs.outage.value_of_lost_load.points[1].value_per_mwh
       unit: $/MWh (2025$)
-      source: Brattle/ERCOT 2024 observed
+      source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
       dollar_year: 2024
-    voll_tier_3_2_to_4h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+    voll_4h:
+      path: 07_outage_costs.outage.value_of_lost_load.points[2].value_per_mwh
       unit: $/MWh (2025$)
-      source: Brattle/ERCOT 2024 observed
+      source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
       dollar_year: 2024
-    voll_tier_4_4_to_8h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+    voll_8h:
+      path: 07_outage_costs.outage.value_of_lost_load.points[3].value_per_mwh
       unit: $/MWh (2025$)
-      source: Brattle/ERCOT 2024 observed
+      source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
       dollar_year: 2024
-    voll_tier_5_8_to_16h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+    voll_16h:
+      path: 07_outage_costs.outage.value_of_lost_load.points[4].value_per_mwh
       unit: $/MWh (2025$)
-      source: Brattle/ERCOT 2024 observed
+      source: Brattle/ERCOT 2024 system-wide survey Table 13, CPI-U adjusted
       citation: BrattleERCOT2024
       yaml_file: 07_outage_costs.yaml
       basis: Sourced
-      dollar_year: 2024
-    voll_tier_6_16_to_32h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh
-      unit: $/MWh (2025$)
-      source: Fitted a0/h + a1 + a2*h to the five survey tiers
-      citation: BrattleERCOT2024
-      yaml_file: 07_outage_costs.yaml
-      basis: Derived
-      dollar_year: 2024
-    voll_tier_7_32_to_64h:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh
-      unit: $/MWh (2025$)
-      source: Extrapolated
-      citation: BrattleERCOT2024
-      yaml_file: 07_outage_costs.yaml
-      basis: Derived
-      dollar_year: 2024
-    voll_tier_8_64h_to_7d:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh
-      unit: $/MWh (2025$)
-      source: Extrapolated
-      citation: BrattleERCOT2024
-      yaml_file: 07_outage_costs.yaml
-      basis: Derived
-      dollar_year: 2024
-    voll_tier_9_7d_to_30d:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh
-      unit: $/MWh (2025$)
-      source: Extrapolated
-      citation: BrattleERCOT2024
-      yaml_file: 07_outage_costs.yaml
-      basis: Derived
-      dollar_year: 2024
-    voll_tier_10_over_30d:
-      path: 07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh
-      unit: $/MWh (2025$)
-      source: Flat cap at 30-day extrapolated value
-      citation: BrattleERCOT2024
-      yaml_file: 07_outage_costs.yaml
-      basis: Derived
       dollar_year: 2024
 emissions_costs:
   social_costs:

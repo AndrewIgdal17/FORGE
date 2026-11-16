@@ -25,81 +25,31 @@ entries:
     source_basis: cpi:2010
     source: Ecosystem Marketplace/Forest Trends national average
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.points[0].value_per_mwh
     source_value: 35685
     source_basis: cpi:2024
     source: Brattle/ERCOT 2024 system-wide survey Table 13
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.points[1].value_per_mwh
     source_value: 21326
     source_basis: cpi:2024
     source: Brattle/ERCOT 2024 system-wide survey Table 13
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.points[2].value_per_mwh
     source_value: 13340
     source_basis: cpi:2024
     source: Brattle/ERCOT 2024 system-wide survey Table 13
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.points[3].value_per_mwh
     source_value: 10435
     source_basis: cpi:2024
     source: Brattle/ERCOT 2024 system-wide survey Table 13
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
+  - path: 07_outage_costs.outage.value_of_lost_load.points[4].value_per_mwh
     source_value: 13581
     source_basis: cpi:2024
     source: Brattle/ERCOT 2024 system-wide survey Table 13
     round_to: 1
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[5].value_per_mwh
-    source_basis: cpi:2024
-    source: Fitted a0/h + a1 + a2*h to the five survey tiers
-    round_to: 1
-    derived_from:
-      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[6].value_per_mwh
-    source_basis: cpi:2024
-    source: Fitted a0/h + a1 + a2*h to the five survey tiers
-    round_to: 1
-    derived_from:
-      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[7].value_per_mwh
-    source_basis: cpi:2024
-    source: Fitted a0/h + a1 + a2*h to the five survey tiers
-    round_to: 1
-    derived_from:
-      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[8].value_per_mwh
-    source_basis: cpi:2024
-    source: Fitted a0/h + a1 + a2*h to the five survey tiers
-    round_to: 1
-    derived_from:
-      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
-  - path: 07_outage_costs.outage.value_of_lost_load.tiers[9].value_per_mwh
-    source_basis: cpi:2024
-    source: Fitted a0/h + a1 + a2*h to the five survey tiers
-    round_to: 1
-    derived_from:
-      - 07_outage_costs.outage.value_of_lost_load.tiers[0].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[1].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[2].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[3].value_per_mwh
-      - 07_outage_costs.outage.value_of_lost_load.tiers[4].value_per_mwh
   - path: 11_project_row_details.right_of_way.zone_1.rent_cost
     source_value: 8.08
     source_basis: inflation_deflate:2026

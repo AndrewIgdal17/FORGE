@@ -4,7 +4,6 @@ import csv
 import re
 from pathlib import Path
 
-import numpy as np
 import pytest
 import yaml
 
@@ -40,9 +39,6 @@ HABITAT_CLASSES = (
 )
 SURVEY_VALUES = (35685, 21326, 13340, 10435, 13581)
 SURVEY_RESULTS = (36624, 21887, 13691, 10710, 13938)
-FIT_HOURS = (1, 2, 4, 8, 16)
-FIT_AT = (32, 64, 168, 720)
-FIT_RESULTS = (20631, 36286, 88522, 367324)
 RENTS = (
     (8.08, 7.84, 0.78),
     (15.65, 15.19, 1.52),
@@ -64,9 +60,6 @@ ACQUISITION = (
     299, 579, 1132, 1706, 2350, 3394, 4746, 6583, 16279,
     50000, 100000, 250000, 500000, 750000, 1000000,
 )
-ROUNDED_FORMULA = "V(t) = 32210/t + 3339 + 492t"
-
-
 def _lookup(root, path):
     current = root
     for part in path.split("."):
@@ -121,7 +114,7 @@ def _round_to(value, step):
 
 
 def _voll(index):
-    return f"07_outage_costs.outage.value_of_lost_load.tiers[{index}].value_per_mwh"
+    return f"07_outage_costs.outage.value_of_lost_load.points[{index}].value_per_mwh"
 
 
 def _rent(zone):
@@ -138,19 +131,6 @@ def _acquisition(zone):
 
 def _survey_paths():
     return [_voll(index) for index in range(5)]
-
-
-def _fitted_results(cpi):
-    hours = np.array(FIT_HOURS, dtype=float)
-    values = np.array(SURVEY_VALUES, dtype=float)
-    design = np.column_stack((1.0 / hours, np.ones_like(hours), hours))
-    coeff, *_ = np.linalg.lstsq(design, values, rcond=None)
-    ratio = cpi[2025] / cpi[2024]
-    converted = []
-    for hour in FIT_AT:
-        raw = coeff[0] / hour + coeff[1] + coeff[2] * hour
-        converted.append(_round_to(raw * ratio, 1))
-    return converted
 
 
 def _entries():
@@ -227,33 +207,16 @@ def test_survey_voll_uses_the_2024_cpi_ratio():
         assert _leaf(path)["dollar_year"] == 2024
 
 
-def test_long_voll_tiers_follow_the_survey_fit():
-    cpi = _cpi()
-    template = get_defaults_template()
-    fitted = _fitted_results(cpi)
-    assert fitted == list(FIT_RESULTS)
-    survey_paths = _survey_paths()
-    for offset, value in enumerate(fitted):
-        path = _voll(offset + 5)
-        assert _lookup(template, path) == value
-        entry = _entries()[path]
-        assert "source_value" not in entry
-        assert entry["derived_from"] == survey_paths
-        assert entry["source_basis"] == "cpi:2024"
-        assert entry["round_to"] == 1
-        for key in ("a0", "a1", "a2", "coefficients"):
-            assert key not in entry
-        _require_source(entry)
-        assert _leaf(path)["dollar_year"] == 2024
-    assert _lookup(template, _voll(9)) == _lookup(template, _voll(8))
-    tier_nine = _entries()[_voll(9)]
-    assert tier_nine["derived_from"] == survey_paths
-    assert "source_value" not in tier_nine
-    registry_text = (ROOT / "forge" / "yamls" / "defaults_registry.yaml").read_text()
-    converted_text = (ROOT / "forge" / "data" / "converted_defaults.yaml").read_text()
-    assert ROUNDED_FORMULA not in registry_text
-    assert "32210" not in registry_text
-    assert "32210" not in converted_text
+def test_no_fitted_voll_remains():
+    needles = ("20631", "36286", "88522", "367324", "value_of_lost_load.tiers")
+    for name in (
+        "forge/yamls/07_outage_costs.yaml",
+        "forge/data/converted_defaults.yaml",
+        "forge/yamls/defaults_registry.yaml",
+    ):
+        text = (ROOT / name).read_text()
+        for needle in needles:
+            assert needle not in text, f"{needle} found in {name}"
 
 
 def test_blm_rents_deflate_by_the_template_inflation_rate():
@@ -306,7 +269,7 @@ def test_dollar_year_other_than_2025_or_null_is_converted():
 
 def test_converted_paths_are_only_the_habitat_voll_and_blm_leaves():
     expected = [f"{HABITAT}.{name}" for name in HABITAT_CLASSES]
-    expected += [_voll(index) for index in range(10)]
+    expected += [_voll(index) for index in range(5)]
     for zone in range(1, 16):
         expected.append(_rent(zone))
         expected.append(_hold(zone))

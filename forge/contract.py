@@ -24,6 +24,19 @@ _FEE_SIMPLE_REJECTED_MESSAGE = (
     "fee_simple is no longer an agreement type. Choose another agreement."
 )
 RESULTS_SCHEMA = 2
+_VOLL_TIER_MAX_HOURS = (1, 2, 4, 8, 16, 32, 64, 168, 720, float("inf"))
+_VOLL_TIER_VALUES = (
+    36624,
+    21887,
+    13691,
+    10710,
+    13938,
+    20631,
+    36286,
+    88522,
+    367324,
+    367324,
+)
 REMOVED_INPUTS: dict[str, Any] = {
     "03_financing.financial.afudc.apply_afudc": True,
     "03_financing.financial.revenue.rate_based.enabled": True,
@@ -31,6 +44,13 @@ REMOVED_INPUTS: dict[str, Any] = {
     "04_insurance.insurance.insurable_components.structures": True,
     "04_insurance.insurance.insurable_components.converters": True,
 }
+for _voll_index, _voll_max_hours in enumerate(_VOLL_TIER_MAX_HOURS):
+    REMOVED_INPUTS[
+        f"07_outage_costs.outage.value_of_lost_load.tiers[{_voll_index}].max_hours"
+    ] = _voll_max_hours
+    REMOVED_INPUTS[
+        f"07_outage_costs.outage.value_of_lost_load.tiers[{_voll_index}].value_per_mwh"
+    ] = _VOLL_TIER_VALUES[_voll_index]
 MIGRATED_VALUES: dict[str, dict[Any, Any]] = {
     "07_outage_costs.outage.load_shed_fraction": {"auto": 0.05},
 }
@@ -252,10 +272,27 @@ def _validate_against_template(path: str, decoded: Any, template: dict) -> str |
     return "does not refer to a scalar leaf"
 
 
-def _removed_input_message(path: str) -> str:
+def _matches_removed_default(decoded: Any, old_default: Any) -> bool:
+    if decoded is None:
+        return True
+    if old_default is True:
+        return decoded is True
+    if isinstance(old_default, float) and math.isinf(old_default):
+        return isinstance(decoded, float) and math.isinf(decoded) and (
+            (old_default > 0) == (decoded > 0)
+        )
+    return decoded == old_default
+
+
+def _removed_input_message(path: str, value: Any, default: Any) -> str:
+    if default is True:
+        return (
+            f"{path} is no longer an input. Only its old value (true) is accepted, "
+            "and it is ignored."
+        )
     return (
-        f"{path} is no longer an input. Only its old value (true) is accepted, "
-        "and it is ignored."
+        f"{path} is no longer an input. Its stored value {value!r} is not the old "
+        f"default {default!r}, so it cannot be ignored."
     )
 
 
@@ -265,11 +302,15 @@ def migrate_changes(changes: Mapping[str, Any]) -> tuple[dict[str, Any], list[di
     errors: list[dict] = []
     for path in list(migrated.keys()):
         if path in REMOVED_INPUTS:
+            old_default = REMOVED_INPUTS[path]
             decoded = _decode(migrated[path])
-            if decoded is True or decoded is None:
+            if _matches_removed_default(decoded, old_default):
                 del migrated[path]
                 continue
-            errors.append({"path": path, "message": _removed_input_message(path)})
+            errors.append({
+                "path": path,
+                "message": _removed_input_message(path, decoded, old_default),
+            })
             del migrated[path]
         elif path in MIGRATED_VALUES:
             decoded = _decode(migrated[path])
@@ -279,20 +320,27 @@ def migrate_changes(changes: Mapping[str, Any]) -> tuple[dict[str, Any], list[di
     return migrated, errors
 
 
+_LEGACY_VOLL_TIER_PREFIX = "07_outage_costs.outage.value_of_lost_load.tiers"
+
+
 def removed_input_errors(document: Mapping[str, Any]) -> list[str]:
     """One message per removed path present with a value other than true or null."""
     if not isinstance(document, dict):
         return []
     messages: list[str] = []
     for path in REMOVED_INPUTS:
+        if path.startswith(_LEGACY_VOLL_TIER_PREFIX):
+            continue
         try:
             parent, key = _walk(document, path)
         except KeyError:
             continue
         value = parent[key]
-        if value is True or value is None:
+        old_default = REMOVED_INPUTS[path]
+        decoded = _decode(value) if isinstance(value, str) else value
+        if _matches_removed_default(decoded, old_default):
             continue
-        messages.append(_removed_input_message(path))
+        messages.append(_removed_input_message(path, decoded, old_default))
     return messages
 
 

@@ -127,11 +127,11 @@ def test_resolve_inputs_applies_leaves_and_rejects_the_rest():
         **{path: 0.0 for path in PATHS},
         **_TEMPLATE_RUN,
         "01_project_technical_details.project.capacity_mw": 1792,
-        "07_outage_costs.outage.value_of_lost_load.tiers[9].max_hours": "Infinity",
+        "07_outage_costs.outage.outage_duration": "Infinity",
         "01_project_technical_details.project.old_converter_type": "NaN",
     })
     assert resolved["01_project_technical_details"]["project"]["capacity_mw"] == 1792
-    assert math.isinf(resolved["07_outage_costs"]["outage"]["value_of_lost_load"]["tiers"][9]["max_hours"])
+    assert math.isinf(resolved["07_outage_costs"]["outage"]["outage_duration"])
     assert math.isnan(resolved["01_project_technical_details"]["project"]["old_converter_type"])
     try:
         forge.resolve_inputs({

@@ -789,7 +789,7 @@ _TAB6: list[InputField] = [
 ]
 
 # ===================================================================
-# Tab 7 — Risk Costs (24 fields: 8 wildfire + 16 outage)
+# Tab 7 — Risk Costs (18 fields: 7 wildfire + 11 outage)
 # ===================================================================
 
 _TAB7: list[InputField] = [
@@ -821,7 +821,7 @@ for _ci, _ct in enumerate(WILDFIRE_CONSTRUCTION_TYPES):
         condition="always_hidden", tier="working", display_order=20 + _ci,
         validation={"min": 0}, sub_tab="wildfire-risk"))
 
-# Outage (16 fields) — all always_hidden, custom rendered
+# Outage (11 fields) — all always_hidden, custom rendered
 _TAB7 += [
     _f("out_growth_rate", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
@@ -852,28 +852,6 @@ _TAB7 += [
        unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
        display_order=4, sub_tab="outage-risk"),
 ]
-# VoLL tiers (10 tiers × 2 fields = 20) — moved to System Details (Economic Details)
-# Fields are always_hidden; rendered via custom table in renderEconomicDetailsPanel()
-_VOLL_TIER_LABELS = [
-    "0-1h", "1-2h", "2-4h", "4-8h", "8-16h",
-    "16-32h", "32-64h", "64h-7d", "7-30d", ">30d",
-]
-for _ti in range(10):
-    _tier_label = _VOLL_TIER_LABELS[_ti]
-    _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_load_shed", input_tab="benefits",
-        yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].max_hours",
-        label=f"Max Hours — {_tier_label}", help_text=f"Upper bound for {_tier_label} duration tier",
-        section_label="Value of Lost Load (VoLL Tiers)",
-        unit="hours", condition="always_hidden", tier="working", display_order=10 + _ti * 2,
-        sub_tab="economic-details"))
-    _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_value", taxonomy_id="outage_load_shed", input_tab="benefits",
-        yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].value_per_mwh",
-        label=f"Value — {_tier_label}", help_text=f"Cost of unserved energy in {_tier_label} tier",
-        section_label="Value of Lost Load (VoLL Tiers)",
-        unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
-        display_order=11 + _ti * 2, sub_tab="economic-details"))
 
 # Base outage duration (single scalar)
 _TAB7.append(_f(

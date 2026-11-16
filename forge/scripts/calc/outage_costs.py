@@ -1,10 +1,11 @@
 # Date: 2025-10-29
 # Description: This script calculates expected outage costs using simplified probabilistic
 #              reliability approach with line-level outage rates, multiplicative duration model,
-#              and piecewise value of lost load (VoLL).
+#              and interpolated value of lost load (VoLL).
 
 from __future__ import annotations
 
+import bisect
 import logging
 
 # Standard library imports
@@ -26,40 +27,28 @@ from forge.scripts.utils.calculation_utils import normalize_construction_type_fo
 logger = logging.getLogger(__name__)
 
 
-def calculate_voll_cost_piecewise(
-    duration_hours: float, mw_lost: float, tiers: List[Dict[str, Any]]
-) -> float:
-    """
-    Calculate total cost using piecewise VoLL.
-    Iterates over an arbitrary number of duration tiers, each with a max_hours
-    threshold and a value_per_mwh rate.
+def value_of_lost_load(duration_hours: float, points: list[dict[str, float]]) -> float:
+    """Interpolate VoLL ($/MWh) at the outage duration from survey knot points."""
+    if duration_hours < 0:
+        raise ValueError("duration_hours must be non-negative")
+    if len(points) < 2:
+        raise ValueError("points must contain at least two entries")
+    hours = [float(point["hours"]) for point in points]
+    if any(hours[index] >= hours[index + 1] for index in range(len(hours) - 1)):
+        raise ValueError("hours must be strictly increasing")
+    if duration_hours <= hours[0]:
+        return float(points[0]["value_per_mwh"])
+    if duration_hours >= hours[-1]:
+        return float(points[-1]["value_per_mwh"])
+    index = bisect.bisect_right(hours, duration_hours) - 1
+    if duration_hours == hours[index]:
+        return float(points[index]["value_per_mwh"])
+    h0, h1 = hours[index], hours[index + 1]
+    v0 = float(points[index]["value_per_mwh"])
+    v1 = float(points[index + 1]["value_per_mwh"])
+    weight = (duration_hours - h0) / (h1 - h0)
+    return v0 + weight * (v1 - v0)
 
-    Args:
-        duration_hours: Duration of outage in hours
-        mw_lost: MW capacity lost during outage
-        tiers: List of tier dicts with max_hours and value_per_mwh
-
-    Returns:
-        float: Total cost ($) for the outage
-    """
-    total_cost = 0
-    hours_remaining = duration_hours
-    prev_threshold = 0
-
-    for tier in tiers:
-        max_hours = float("inf") if tier["max_hours"] in (".inf", None) else tier["max_hours"]
-        value_per_mwh = tier["value_per_mwh"]
-
-        hours_in_tier = min(hours_remaining, max_hours - prev_threshold)
-        if hours_in_tier > 0:
-            mwh_in_tier = hours_in_tier * mw_lost
-            total_cost += mwh_in_tier * value_per_mwh
-            hours_remaining -= hours_in_tier
-            prev_threshold = max_hours
-        if hours_remaining <= 0:
-            break
-
-    return total_cost
 
 def calculate_outage_costs(
     outage_yaml: Dict[str, Any],
@@ -111,7 +100,7 @@ def calculate_outage_costs(
     load_shed_fraction = float(outage_config["load_shed_fraction"])
     redispatch_cost = outage_config["redispatch_cost_per_mwh"]
 
-    voll_tiers = outage_config["value_of_lost_load"]["tiers"]
+    voll_points = outage_config["value_of_lost_load"]["points"]
     outage_duration = outage_config["outage_duration"]
     duration_multiplier_dict = outage_config["outage_duration_multiplier"]
     outage_rate_config = outage_config["outage_rate"]
@@ -146,9 +135,8 @@ def calculate_outage_costs(
     # Two-tier cost per event: load-shed (VoLL) + redispatch (flat rate)
     mw_shed = load_shed_fraction * mw_lost_per_event
     mw_redisp = (1 - load_shed_fraction) * mw_lost_per_event
-    cost_loadshed = calculate_voll_cost_piecewise(
-        duration_effective, mw_shed, voll_tiers
-    )
+    voll_per_mwh = value_of_lost_load(duration_effective, voll_points)
+    cost_loadshed = mw_shed * duration_effective * voll_per_mwh
     cost_redispatch = mw_redisp * duration_effective * redispatch_cost
     cost_per_event = cost_loadshed + cost_redispatch
 
@@ -207,6 +195,7 @@ def calculate_outage_costs(
         "cost_per_event": cost_per_event,
         "cost_loadshed": cost_loadshed,
         "cost_redispatch": cost_redispatch,
+        "voll_per_mwh": voll_per_mwh,
         "redispatch_cost_per_mwh": redispatch_cost,
         "unserved_mwh_per_event": unserved_mwh_per_event,
     }
