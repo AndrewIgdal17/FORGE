@@ -181,7 +181,7 @@ def test_acceptance_11_exclusion_and_perspective_sums(bcr):
         "congestion_benefit",
     ]
     assert bcr["omitted"]["bcr_utility"] == []
-    assert "energy_losses_pv" not in bcr["omitted"]
+    assert bcr["omitted"].get("energy_losses_pv", []) == []
     assert bcr["energy_losses_pv"] == 0.0
     assert bcr["benefits_market_pv"] is None
     assert bcr["bcr_ratepayer"] is None or isinstance(bcr["bcr_ratepayer"], float)
@@ -209,7 +209,7 @@ def test_energy_losses_keep_available_zero_when_conductor_is_unavailable():
     assert bcr["energy_losses_pv"] == 0.0
     assert bcr["conductor_loss_pv"] is None
     assert bcr["converter_loss_pv"] == 0.0
-    assert "energy_losses_pv" not in bcr["omitted"]
+    assert bcr["omitted"]["energy_losses_pv"] == ["line_loss_conductor"]
 
 
 def _trajectory_inputs():

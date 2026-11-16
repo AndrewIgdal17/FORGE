@@ -219,19 +219,18 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
 
     def put(key: str, value, ids: frozenset[str] | set[str]) -> None:
         out[key] = value
-        if key not in _BCR_OUTPUT_KEYS:
-            components[key] = ids
+        components[key] = ids
 
     put("outage_nominal", _sum_nom(OUTAGE_IDS), OUTAGE_IDS)
 
-    # Aggregate item keys follow the same sum rule and stay out of omitted.
+    # Aggregate item keys follow the same sum rule; use put() when omitted should list them.
     out["build_cost_pv"] = _sum_pv(_BUILD_IDS)
     out["row_cost_pv"] = _sum_pv(_ROW_ACQUISITION_IDS)
     out["acquisition_pv"] = out["row_cost_pv"]
     out["holding_pv"] = _sum_pv(_ROW_HOLDING_IDS)
     out["acquisition_nominal_total"] = _sum_nom(_ROW_ACQUISITION_IDS)
     out["holding_nominal"] = _sum_nom(_ROW_HOLDING_IDS)
-    out["energy_losses_pv"] = _sum_pv(_LINE_LOSS_IDS)
+    put("energy_losses_pv", _sum_pv(_LINE_LOSS_IDS), _LINE_LOSS_IDS)
     out["conductor_loss_pv"] = _sum_pv(frozenset({"line_loss_conductor"}))
     out["converter_loss_pv"] = _sum_pv(frozenset({"line_loss_converter"}))
     put("energy_losses_nominal", _sum_nom(_LINE_LOSS_IDS), _LINE_LOSS_IDS)
