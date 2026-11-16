@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 
 from dataclasses import dataclass
-from typing import Tuple, Optional
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 
@@ -17,22 +16,9 @@ from forge.scripts.utils.smart_output import SmartOutputManager
 import yaml
 
 # Local utility imports
-from forge.scripts.calc.energy_losses import (
-    get_total_energy_losses,
-    load_physical_details,
-    load_circuit_and_resistance_details,
-    calculate_phase_current,
-    full_load_adjusted,
-    calculate_line_losses,
-)
+from forge.scripts.calc.energy_losses import net_energy_losses
 from forge.scripts.utils.streams import growing, pv, undiscounted
-from forge.scripts.utils.calculation_utils import (
-    to_percent,
-    from_percent,
-    build_category_string,
-    calculate_converter_losses,
-)
-from forge.scripts.utils.constants import HOURS_PER_YEAR
+from forge.scripts.utils.calculation_utils import to_percent
 from forge.scripts.utils.smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
@@ -170,90 +156,6 @@ def load_project_details() -> LineLossProjectDetails:
         project_lifetime=project_lifetime,
     )
 
-def calculate_configuration_losses(
-    construction_type: str,
-    ac_dc: str,
-    capacity_mw: int,
-    conductor_type: str,
-    converter_type: str,
-    line_utilization_percent: float,
-    project_lifetime: int,
-    voltage_kv_override: Optional[float] = None,
-) -> Tuple[float, float]:
-    """
-    Calculate line losses for a given configuration.
-
-    Args:
-        construction_type: Construction type (Overhead, Underground, etc.)
-        ac_dc: "AC" or "DC"
-        capacity_mw: Capacity in MW (numeric)
-        conductor_type: Type of conductor
-        converter_type: Converter type (for DC) or "NA" for AC
-        line_utilization_percent: Line utilization as decimal (0-1)
-        project_lifetime: Project lifetime in years
-        voltage_kv_override: Optional voltage override (if None, looks up from category)
-
-    Returns:
-        tuple: (losses_mwh_per_year, lifetime_losses_mwh)
-    """
-    # Build category string for lookup
-    category = build_category_string(
-        construction_type, ac_dc, capacity_mw, conductor_type, converter_type
-    )
-
-    # Load physical details (line length)
-    line_length = load_physical_details()
-
-    # Load circuit and resistance details
-    circuit = load_circuit_and_resistance_details(category)
-
-    # Use override voltage if provided, otherwise use lookup voltage
-    voltage_kv = (
-        voltage_kv_override if voltage_kv_override is not None else circuit.voltage_kv
-    )
-
-    # Convert capacity_mw to string for calculate_phase_current
-    capacity_mw_str = f"{capacity_mw}MW"
-
-    # Calculate phase current and full load adjustment
-    phase_current = calculate_phase_current(
-        capacity_mw_str,
-        voltage_kv,
-        circuit.number_of_phases,
-        circuit.number_of_circuits_poles,
-        ac_dc,
-    )
-    full_load_adj = full_load_adjusted(line_utilization_percent)
-
-    # Calculate line losses
-    (
-        losses_mwh_per_year,
-        lifetime_losses_mwh,
-        losses_mw_per_mile,
-        resistance_per_mile,
-        line_loss_per_mile_percent,
-        total_line_loss_mw,
-        total_line_loss_percent,
-    ) = calculate_line_losses(
-        phase_current,
-        full_load_adj,
-        circuit.AC_75_resistance,
-        circuit.DC_20_resistance,
-        circuit.alpha_20,
-        ac_dc,
-        circuit.number_of_circuits_poles,
-        circuit.conductors_per_phase,
-        circuit.number_of_phases,
-        line_length,
-        project_lifetime,
-        capacity_mw,
-        line_utilization_percent,
-        voltage_kv,
-        construction_type,
-    )
-
-    return losses_mwh_per_year, lifetime_losses_mwh
-
 def _component_money(
     annual: float | None,
     growth: float,
@@ -303,7 +205,9 @@ def _priced_losses(
     """
     if price is None:
         line_annual = None
-        converter_annual = None if converter_mwh > 0 else 0.0
+        converter_annual = (
+            None if converter_applies and converter_mwh != 0 else 0.0
+        )
     else:
         line_annual = line_mwh * price
         converter_annual = converter_mwh * price
@@ -357,313 +261,74 @@ def _priced_losses(
 
 
 def main() -> None:
-    """Main function to calculate line loss costs for reconductoring projects."""
+    """Line loss costs: gross for greenfield, net change for reconductoring/rebuild."""
 
     project_details = load_project_details()
+    losses = net_energy_losses()
+    g_benefit = project_details.benefit_price_escalation_real
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
 
     logger.info("=" * 70)
     logger.info("LINE LOSS COST CALCULATOR")
     logger.info("=" * 70)
-    logger.info("")
-
-    if project_details.project_type == "greenfield":
-        logger.info("Greenfield project detected - calculating line loss costs.")
-        logger.info("")
-
-        g_benefit = project_details.benefit_price_escalation_real
-
-        loss_data = get_total_energy_losses()
-        primary_line_mwh = loss_data["losses_mwh_per_year"]
-        primary_converter_mwh = loss_data.get("total_converter_losses_mwh", 0)
-        primary_total_mwh = loss_data["total_losses_mwh_per_year"]
-        ctx = get_run_context()
-        loss_values = _priced_losses(
-            primary_line_mwh,
-            primary_converter_mwh,
-            project_details.value_of_load,
-            g_benefit,
-            int(project_details.project_lifetime),
-            ctx.social_discount_rate,
-            project_details.wacc_real,
-            ctx.t_cod,
-            ctx.horizon,
-            converter_applies=ctx.number_of_converters > 0,
+    logger.info(f"Project type: {project_details.project_type}")
+    logger.info(
+        f"Line utilization: {to_percent(project_details.line_utilization_percent):.1f}%"
+    )
+    if losses["replaced"]:
+        logger.info(
+            "Net line MWh/yr: %.2f (new %.2f − old %.2f)",
+            losses["line_mwh"],
+            losses["line_mwh_new"],
+            losses["line_mwh_old"],
         )
-
-        csv_manager = SmartOutputManager()
-        results = {
-            "total_afudc": 0,
-            "line_loss_mwh_yr": primary_line_mwh,
-            "converter_loss_mwh_yr": primary_converter_mwh,
-            "total_loss_mwh_yr": primary_total_mwh,
-            **loss_values,
-        }
-        csv_manager.add_line_loss_costs(results)
-        csv_manager.write_batch_summary()
-        return
-
-    # Load baseline configuration details using helper
-    try:
-        raw_project_data = get_project_data_raw()
-        if not raw_project_data:
-            raise ValueError("Project technical details file is empty or invalid")
-        if "project" not in raw_project_data:
-            raise KeyError("Missing 'project' key in project technical details")
-        project = raw_project_data["project"]
-        required_keys = ["old_capacity_mw", "old_conductor_type", "old_ac_dc"]
-        for key in required_keys:
-            if key not in project:
-                raise KeyError(
-                    f"Missing '{key}' key in project section of technical details"
-                )
-        old_capacity_mw = project["old_capacity_mw"]
-        old_conductor_type = project["old_conductor_type"]
-        old_ac_dc = project["old_ac_dc"]
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Project technical details not found")
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing project technical details: {e}")
-    except KeyError as e:
-        raise KeyError(f"Missing required key in project technical details: {e}")
-
-    # For DC to DC, keep the same converter type
-    if project_details.ac_dc == "DC" and old_ac_dc == "DC":
-        old_converter_type = project_details.converter_type
-    elif old_ac_dc == "AC":
-        old_converter_type = "NA"
-    else:
-        old_converter_type = project_details.converter_type
-
-    logger.info(f"PROJECT CONFIGURATION")
-    logger.info("-" * 70)
-    logger.info(f"Construction Type: {project_details.construction_type}")
-    logger.info(
-        f"Line Utilization: {to_percent(project_details.line_utilization_percent):.1f}%"
-    )
-    logger.info(f"Project Lifetime: {project_details.project_lifetime} years")
-    if project_details.value_of_load is not None:
-        logger.info(f"Value of Load: ${project_details.value_of_load:.2f}/MWh")
-    logger.info("")
-
-    logger.info(f"BASELINE CONFIGURATION (Old)")
-    logger.info("-" * 70)
-    logger.info(f"Capacity: {old_capacity_mw} MW")
-    logger.info(f"AC/DC: {old_ac_dc}")
-    logger.info(f"Conductor Type: {old_conductor_type}")
-    logger.info("")
-
-    # Calculate baseline losses (line only from configuration)
-    baseline_losses_mwh_per_year, baseline_lifetime_losses_mwh = (
-        calculate_configuration_losses(
-            project_details.construction_type,
-            old_ac_dc,
-            old_capacity_mw,
-            old_conductor_type,
-            old_converter_type,
-            project_details.line_utilization_percent,
-            project_details.project_lifetime,
+        logger.info(
+            "Net converter MWh/yr: %.2f (new %.2f − old %.2f)",
+            losses["converter_mwh"],
+            losses["converter_mwh_new"],
+            losses["converter_mwh_old"],
         )
-    )
-    # Baseline converter losses (for DC reconductoring)
-    num_converters = project_details.number_of_converters if old_ac_dc == "DC" else 0
-    (
-        _baseline_conv_mw,
-        baseline_converter_losses_mwh,
-        _baseline_conv_pct,
-    ) = calculate_converter_losses(
-        num_converters,
-        old_converter_type,
-        project_details.line_utilization_percent,
-        old_capacity_mw,
-        old_ac_dc,
-    )
-    baseline_total_losses_mwh_per_year = (
-        baseline_losses_mwh_per_year + baseline_converter_losses_mwh
-    )
-
-    logger.info(f"NEW CONFIGURATION (After Reconductoring)")
-    logger.info("-" * 70)
-    logger.info(f"Capacity: {project_details.capacity_mw} MW")
-    logger.info(f"AC/DC: {project_details.ac_dc}")
-    logger.info(f"Conductor Type: {project_details.conductor_type}")
-    logger.info("")
-
-    # Look up old voltage (only relevant for reconductoring, where the physical
-    # towers are unchanged; rebuild replaces structures, so the new configuration
-    # uses its own standard voltage class instead of this override).
-    old_category = build_category_string(
-        project_details.construction_type,
-        old_ac_dc,
-        old_capacity_mw,
-        old_conductor_type,
-        old_converter_type,
-    )
-    old_circuit = load_circuit_and_resistance_details(old_category)
-    old_voltage_kv = old_circuit.voltage_kv
-    voltage_override = (
-        old_voltage_kv if project_details.project_type == "reconductoring" else None
-    )
-
-    # Calculate new configuration losses (line only). Reconductoring keeps the old
-    # voltage class (towers unchanged); rebuild and greenfield use the new
-    # configuration's own voltage class (new structures).
-    new_losses_mwh_per_year, new_lifetime_losses_mwh = calculate_configuration_losses(
-        project_details.construction_type,
-        project_details.ac_dc,
-        project_details.capacity_mw,
-        project_details.conductor_type,
-        project_details.converter_type,
-        project_details.line_utilization_percent,
-        project_details.project_lifetime,
-        voltage_kv_override=voltage_override,
-    )
-    # New config total (line + converter) for cost written to batch and breakdown
-    new_loss_data = get_total_energy_losses()
-    new_line_mwh = new_loss_data["losses_mwh_per_year"]
-    new_converter_mwh = new_loss_data.get("total_converter_losses_mwh", 0)
-    new_total_mwh = new_loss_data["total_losses_mwh_per_year"]
-
-    # Calculate counterfactual baseline losses (old conductor at new capacity).
-    # For reconductoring, hold voltage at the old value for a fair apples-to-apples
-    # comparison (towers unchanged). For rebuild, both configurations already use
-    # the new voltage class, so no override is needed.
-    (
-        counterfactual_baseline_losses_mwh_per_year,
-        counterfactual_baseline_lifetime_losses_mwh,
-    ) = calculate_configuration_losses(
-        project_details.construction_type,
-        old_ac_dc,
-        project_details.capacity_mw,  # Use NEW capacity
-        old_conductor_type,
-        old_converter_type,
-        project_details.line_utilization_percent,
-        project_details.project_lifetime,
-        voltage_kv_override=voltage_override,
-    )
-
-    # Calculate delivered energy for each configuration
-    baseline_delivered_mwh = (
-        old_capacity_mw * project_details.line_utilization_percent * HOURS_PER_YEAR
-    )
-    new_delivered_mwh = (
-        project_details.capacity_mw
-        * project_details.line_utilization_percent
-        * HOURS_PER_YEAR
-    )
-
-    # Calculate loss percentages
-    baseline_loss_percent = to_percent(
-        baseline_losses_mwh_per_year / baseline_delivered_mwh
-    )
-    new_loss_percent = to_percent(new_losses_mwh_per_year / new_delivered_mwh)
-
-    # METHOD 1: Direct Comparison - Compare absolute losses
-    direct_loss_reduction_mwh = baseline_losses_mwh_per_year - new_losses_mwh_per_year
-
-    # METHOD 2: Counterfactual Comparison - Compare old vs new conductor at new capacity
-    counterfactual_loss_reduction_mwh = (
-        counterfactual_baseline_losses_mwh_per_year - new_losses_mwh_per_year
-    )
-
-    # METHOD 3: Normalized (Per MWh) Comparison
-    # Apply the difference in loss percentages to the new delivered energy
-    normalized_loss_reduction_mwh = (
-        from_percent(baseline_loss_percent - new_loss_percent) * new_delivered_mwh
-    )
-    price = project_details.value_of_load
-    if price is None:
-        direct_annual_benefit = None
-        counterfactual_annual_benefit = None
-        normalized_annual_benefit = None
     else:
-        direct_annual_benefit = direct_loss_reduction_mwh * price
-        counterfactual_annual_benefit = counterfactual_loss_reduction_mwh * price
-        normalized_annual_benefit = normalized_loss_reduction_mwh * price
-
-    # Print results
-    logger.info("=" * 70)
-    logger.info("LINE LOSS COST RESULTS")
-    logger.info("=" * 70)
+        logger.info("Greenfield gross line MWh/yr: %.2f", losses["line_mwh"])
     logger.info("")
 
-    logger.info("LOSS COMPARISON:")
-    logger.info("-" * 70)
-    logger.info(f"Baseline (Old Config): {baseline_losses_mwh_per_year:,.2f} MWh/year")
-    logger.info(f"  Capacity: {old_capacity_mw} MW | Loss Rate: {baseline_loss_percent:.2f}%")
-    logger.info("")
-    logger.info(f"New Configuration: {new_losses_mwh_per_year:,.2f} MWh/year")
-    logger.info(
-        f"  Capacity: {project_details.capacity_mw} MW | Loss Rate: {new_loss_percent:.2f}%"
-    )
-    logger.info("")
-    logger.info(
-        f"Counterfactual (Old Conductor @ New Capacity): {counterfactual_baseline_losses_mwh_per_year:,.2f} MWh/year"
-    )
-    logger.info("")
-
-    if price is not None:
-        logger.info("=" * 70)
-        logger.info("METHOD 1: DIRECT COMPARISON")
-        logger.info("=" * 70)
-        logger.info("Compares: Baseline losses @ old capacity vs. New losses @ new capacity")
-        logger.info("")
-        logger.info("NOMINAL VALUES:")
-        logger.info(f"  Loss Reduction: {direct_loss_reduction_mwh:,.2f} MWh/year")
-        logger.info(f"  Annual Benefit: ${direct_annual_benefit:,.2f}/year")
-        logger.info("")
-
-        logger.info("=" * 70)
-        logger.info("METHOD 2: COUNTERFACTUAL COMPARISON")
-        logger.info("=" * 70)
-        logger.info("Compares: Old conductor @ new capacity vs. New conductor @ new capacity")
-        logger.info("")
-        logger.info("NOMINAL VALUES:")
-        logger.info(f"  Loss Reduction: {counterfactual_loss_reduction_mwh:,.2f} MWh/year")
-        logger.info(f"  Annual Benefit: ${counterfactual_annual_benefit:,.2f}/year")
-        logger.info("")
-
-        logger.info("=" * 70)
-        logger.info("METHOD 3: NORMALIZED (PER MWH) COMPARISON")
-        logger.info("=" * 70)
-        logger.info("Compares: Loss percentages weighted by delivered energy")
-        logger.info("")
-        logger.info("NOMINAL VALUES:")
-        logger.info(f"  Loss Reduction: {normalized_loss_reduction_mwh:,.2f} MWh/year")
-        logger.info(f"  Annual Benefit: ${normalized_annual_benefit:,.2f}/year")
-        logger.info("")
-
-        logger.info("=" * 70)
-
-    # ========================================================================
-    # CSV OUTPUT - Write results to batch summary and detail CSV
-    # ========================================================================
-    # Use NEW configuration's total losses (line + converter for DC) for BCR
-
-    csv_manager = SmartOutputManager()
-
-    g_benefit = project_details.benefit_price_escalation_real
-
-    ctx = get_run_context()
     loss_values = _priced_losses(
-        new_line_mwh,
-        new_converter_mwh,
-        price,
+        losses["line_mwh"],
+        losses["converter_mwh"],
+        project_details.value_of_load,
         g_benefit,
         int(project_details.project_lifetime),
         ctx.social_discount_rate,
         project_details.wacc_real,
         ctx.t_cod,
         ctx.horizon,
-        converter_applies=ctx.number_of_converters > 0,
+        converter_applies=losses["converters_apply"],
     )
 
-    results = {
+    results: dict = {
         "total_afudc": 0,
-        "line_loss_mwh_yr": new_line_mwh,
-        "converter_loss_mwh_yr": new_converter_mwh,
-        "total_loss_mwh_yr": new_total_mwh,
+        "line_loss_mwh_yr": losses["line_mwh"],
+        "converter_loss_mwh_yr": losses["converter_mwh"],
+        "total_loss_mwh_yr": losses["total_mwh"],
         **loss_values,
     }
+    if losses["replaced"]:
+        results.update(
+            {
+                "line_loss_mwh_yr_new": losses["line_mwh_new"],
+                "line_loss_mwh_yr_old": losses["line_mwh_old"],
+                "converter_loss_mwh_yr_new": losses["converter_mwh_new"],
+                "converter_loss_mwh_yr_old": losses["converter_mwh_old"],
+                "total_loss_mwh_yr_new": losses["line_mwh_new"] + losses["converter_mwh_new"],
+                "total_loss_mwh_yr_old": losses["line_mwh_old"] + losses["converter_mwh_old"],
+            }
+        )
 
+    csv_manager = SmartOutputManager()
     csv_manager.add_line_loss_costs(results)
     csv_manager.write_batch_summary()

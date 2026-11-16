@@ -12,8 +12,8 @@ import logging
 from typing import Any
 
 from forge.scripts.calc.energy_losses import (
-    get_total_energy_losses,
     load_project_technical_details,
+    net_energy_losses,
 )
 from forge.scripts.utils.constants import HOURS_PER_YEAR
 from forge.scripts.utils.smart_loaders import (
@@ -235,7 +235,7 @@ def main() -> None:
             "RunContext in your test fixture."
         )
 
-    total_losses_mwh_per_year = get_total_energy_losses()["total_losses_mwh_per_year"]
+    total_losses_mwh_per_year = net_energy_losses()["total_mwh"]
     compensation_fraction = load_emissions_details()
     details = load_project_technical_details()
     lifetime = int(details.project_lifetime)

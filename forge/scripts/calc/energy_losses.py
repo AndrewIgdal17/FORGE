@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 # Local utility imports
+from forge.errors import InvalidInputs
 from forge.scripts.utils.smart_loaders import (
     load_project_technical_details,
     load_physical_details,
@@ -13,15 +15,182 @@ from forge.scripts.utils.smart_loaders import (
     get_project_data_raw,
 )
 from forge.scripts.utils.calculation_utils import (
+    build_category_string,
     calculate_phase_current,
     full_load_adjusted,
     calculate_line_losses,
     calculate_converter_losses,
+    get_converter_type,
     to_percent,
 )
 from forge.scripts.utils.run_context import get_run_context
 
 logger = logging.getLogger(__name__)
+
+_PROJECT_PREFIX = "01_project_technical_details.project."
+
+
+@dataclass(frozen=True)
+class ReplacedConfiguration:
+    ac_dc: str
+    capacity_mw: int
+    conductor_type: str
+    converter_type: str
+    number_of_converters: int
+
+
+def load_replaced_configuration() -> ReplacedConfiguration | None:
+    """Old line configuration for reconductoring or rebuild; None for greenfield."""
+    details = load_project_technical_details()
+    if details.project_type == "greenfield":
+        return None
+    project = get_project_data_raw()["project"]
+    missing: list[str] = []
+    old_capacity_mw = project.get("old_capacity_mw")
+    old_conductor_type = project.get("old_conductor_type")
+    old_ac_dc = project.get("old_ac_dc")
+    if old_capacity_mw is None:
+        missing.append("old_capacity_mw")
+    if old_conductor_type is None:
+        missing.append("old_conductor_type")
+    if old_ac_dc is None:
+        missing.append("old_ac_dc")
+    old_converter_type = project.get("old_converter_type")
+    if old_ac_dc == "DC" and old_converter_type is None:
+        missing.append("old_converter_type")
+    if missing:
+        path = _PROJECT_PREFIX + missing[0]
+        raise InvalidInputs(f"{path} is required.")
+    assert old_ac_dc is not None
+    assert old_capacity_mw is not None
+    assert old_conductor_type is not None
+    if old_ac_dc == "DC":
+        conv_type = get_converter_type("DC", old_converter_type)
+        ctx = get_run_context()
+        if ctx is None:
+            raise RuntimeError(
+                f"{__name__} requires a RunContext. Run via forge.py or set up "
+                "RunContext in your test fixture."
+            )
+        num_converters = ctx.number_of_converters
+    else:
+        conv_type = "NA"
+        num_converters = 0
+    return ReplacedConfiguration(
+        ac_dc=old_ac_dc,
+        capacity_mw=int(old_capacity_mw),
+        conductor_type=old_conductor_type,
+        converter_type=conv_type,
+        number_of_converters=num_converters,
+    )
+
+
+def configuration_losses(
+    construction_type: str,
+    ac_dc: str,
+    capacity_mw: int,
+    conductor_type: str,
+    converter_type: str,
+    number_of_converters: int,
+    line_utilization: float,
+    converter_loss_percentage: float | None,
+    project_lifetime: int,
+) -> tuple[float, float]:
+    """Annual line and converter MWh at this category's voltage (no overrides)."""
+    category = build_category_string(
+        construction_type, ac_dc, capacity_mw, conductor_type, converter_type
+    )
+    line_length = load_physical_details()
+    circuit = load_circuit_and_resistance_details(category)
+    voltage_kv = circuit.voltage_kv
+    capacity_mw_str = f"{capacity_mw}MW"
+    phase_current = calculate_phase_current(
+        capacity_mw_str,
+        voltage_kv,
+        circuit.number_of_phases,
+        circuit.number_of_circuits_poles,
+        ac_dc,
+    )
+    full_load_adj = full_load_adjusted(line_utilization)
+    losses_mwh_per_year, *_rest = calculate_line_losses(
+        phase_current,
+        full_load_adj,
+        circuit.AC_75_resistance,
+        circuit.DC_20_resistance,
+        circuit.alpha_20,
+        ac_dc,
+        circuit.number_of_circuits_poles,
+        circuit.conductors_per_phase,
+        circuit.number_of_phases,
+        line_length,
+        project_lifetime,
+        capacity_mw,
+        line_utilization,
+        voltage_kv,
+        construction_type,
+    )
+    _conv_mw, converter_mwh, _conv_pct = calculate_converter_losses(
+        number_of_converters,
+        converter_type,
+        line_utilization,
+        capacity_mw,
+        ac_dc,
+        converter_loss_percentage,
+    )
+    return losses_mwh_per_year, converter_mwh
+
+
+def net_energy_losses() -> dict:
+    """Net annual MWh (new minus old) for reconductoring and rebuild projects."""
+    details = load_project_technical_details()
+    new_data = get_total_energy_losses()
+    line_mwh_new = new_data["losses_mwh_per_year"]
+    converter_mwh_new = new_data["total_converter_losses_mwh"]
+    ctx = get_run_context()
+    if ctx is None:
+        raise RuntimeError(
+            f"{__name__} requires a RunContext. Run via forge.py or set up "
+            "RunContext in your test fixture."
+        )
+    replaced = load_replaced_configuration()
+    new_dc = details.ac_dc == "DC" and ctx.number_of_converters > 0
+    if replaced is None:
+        return {
+            "replaced": False,
+            "line_mwh_new": line_mwh_new,
+            "line_mwh_old": 0.0,
+            "line_mwh": line_mwh_new,
+            "converter_mwh_new": converter_mwh_new,
+            "converter_mwh_old": 0.0,
+            "converter_mwh": converter_mwh_new,
+            "total_mwh": line_mwh_new + converter_mwh_new,
+            "converters_apply": new_dc,
+        }
+    line_mwh_old, converter_mwh_old = configuration_losses(
+        details.construction_type,
+        replaced.ac_dc,
+        replaced.capacity_mw,
+        replaced.conductor_type,
+        replaced.converter_type,
+        replaced.number_of_converters,
+        details.line_utilization,
+        details.converter_loss_percentage,
+        details.project_lifetime,
+    )
+    line_mwh = line_mwh_new - line_mwh_old
+    converter_mwh = converter_mwh_new - converter_mwh_old
+    old_dc = replaced.ac_dc == "DC" and replaced.number_of_converters > 0
+    return {
+        "replaced": True,
+        "line_mwh_new": line_mwh_new,
+        "line_mwh_old": line_mwh_old,
+        "line_mwh": line_mwh,
+        "converter_mwh_new": converter_mwh_new,
+        "converter_mwh_old": converter_mwh_old,
+        "converter_mwh": converter_mwh,
+        "total_mwh": line_mwh + converter_mwh,
+        "converters_apply": new_dc or old_dc,
+    }
 
 
 def get_total_energy_losses() -> dict:
@@ -71,19 +240,15 @@ def get_total_energy_losses() -> dict:
 
     # For reconductoring: use old voltage (towers unchanged), but new resistance (new conductors)
     if project_details.project_type == "reconductoring":
-        # Build old category to get old voltage (towers unchanged)
-        project_data = get_project_data_raw()
-        if "project" not in project_data:
-            raise KeyError("Missing 'project' key in project technical details")
-        project = project_data["project"]
-        old_capacity = project["old_capacity_mw"]
-        old_conductor = project["old_conductor_type"]
-        old_ac_dc = project["old_ac_dc"]
-        from forge.scripts.utils.calculation_utils import get_converter_type
-        old_converter = get_converter_type(old_ac_dc, project_details.converter_type)
-        
+        replaced = load_replaced_configuration()
+        if replaced is None:
+            raise RuntimeError("reconductoring project missing replaced configuration")
         old_category = build_category_string(
-            project_details.construction_type, old_ac_dc, old_capacity, old_conductor, old_converter
+            project_details.construction_type,
+            replaced.ac_dc,
+            replaced.capacity_mw,
+            replaced.conductor_type,
+            replaced.converter_type,
         )
         old_circuit = load_circuit_and_resistance_details(old_category)
         voltage_kv = old_circuit.voltage_kv

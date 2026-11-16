@@ -1,0 +1,60 @@
+{
+  "CTT_Actual_Delay2": {
+    "annual_cost": 36195671.993517324,
+    "availability": {
+      "line_loss_conductor": {
+        "available": true,
+        "missing_inputs": []
+      },
+      "line_loss_converter": {
+        "applies": false,
+        "available": true,
+        "missing_inputs": []
+      }
+    },
+    "converter_annual_cost": 0.0,
+    "converter_cost_pv": 0.0,
+    "converter_cost_pv_wacc": 0.0,
+    "converter_loss_mwh_yr": 0,
+    "converter_nominal_total": 0.0,
+    "line_annual_cost": 36195671.993517324,
+    "line_cost_pv": 1353509723.517439,
+    "line_cost_pv_wacc": 890335866.5753508,
+    "line_loss_mwh_yr": 1206522.3997839107,
+    "line_nominal_total": 2428029055.3291206,
+    "total_afudc": 0,
+    "total_loss_mwh_yr": 1206522.3997839107,
+    "total_nominal": 2428029055.3291206,
+    "total_pv": 1353509723.517439,
+    "total_pv_wacc": 890335866.5753508
+  },
+  "SunZia_Delay2": {
+    "annual_cost": 29203347.102453664,
+    "availability": {
+      "line_loss_conductor": {
+        "available": true,
+        "missing_inputs": []
+      },
+      "line_loss_converter": {
+        "applies": true,
+        "available": true,
+        "missing_inputs": []
+      }
+    },
+    "converter_annual_cost": 8451648.000000002,
+    "converter_cost_pv": 312944511.4184759,
+    "converter_cost_pv_wacc": 171634995.62032527,
+    "converter_loss_mwh_yr": 281721.60000000003,
+    "converter_nominal_total": 572611426.6429547,
+    "line_annual_cost": 20751699.102453664,
+    "line_cost_pv": 768386276.4659135,
+    "line_cost_pv_wacc": 421422873.3335725,
+    "line_loss_mwh_yr": 691723.3034151221,
+    "line_nominal_total": 1405957752.6562054,
+    "total_afudc": 0,
+    "total_loss_mwh_yr": 973444.9034151221,
+    "total_nominal": 1978569179.29916,
+    "total_pv": 1081330787.8843894,
+    "total_pv_wacc": 593057868.9538977
+  }
+}
