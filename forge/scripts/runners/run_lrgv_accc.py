@@ -39,7 +39,6 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     fin["inflation_rate"] = 0.025
     fin["wacc_nominal"] = 0.0666
     fin["social_discount_rate"] = 0.02
-    fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 06: Wildfire (South Texas coastal plain — low but nonzero) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]

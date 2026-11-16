@@ -417,12 +417,6 @@ _TAB3: list[InputField] = [
        section_label="Build cost overrides",
        tier="working", display_order=8,
        validation={"min": 0, "allowBlank": True}),
-    # --- Revenue (Rates sub-tab, custom-rendered) ---
-    _f("revenue_enabled", taxonomy_id="financial_revenue_config", input_tab="financial",
-       sub_tab="rates", condition="always_hidden",
-       yaml_section="03_financing", field_path="financial.revenue.rate_based.enabled",
-       label="Revenue Requirement", help_text="Enable rate-based revenue calculation",
-       input_type="toggle", tier="working", display_order=1),
 ]
 
 # Construction spending profiles (26 year-weights: 5 + 6 + 7 + 8).

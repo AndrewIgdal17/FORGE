@@ -9,8 +9,7 @@ from __future__ import annotations
 import logging
 
 # Standard library imports
-import yaml
-from typing import Tuple, Dict, Any
+from typing import Tuple
 
 from forge.scripts.utils.smart_output import SmartOutputManager
 
@@ -18,7 +17,6 @@ from forge.scripts.utils.smart_output import SmartOutputManager
 from forge.scripts.utils.smart_loaders import (
     load_financing_details,
     load_project_technical_details as load_project_technical_details_centralized,
-    get_financing_data_raw,
 )
 from forge.scripts.utils.financial_utils import calculate_cod_year
 from forge.scripts.utils.streams import pv, undiscounted
@@ -31,31 +29,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
-def load_rate_based_revenue_parameters() -> bool:
-    """
-    Load rate-based revenue parameters from financing data.
-    Supports both YAML and JSON input modes.
-
-    Returns:
-        bool: enabled
-    """
-    try:
-        financing_data = get_financing_data_raw()
-        if not financing_data:
-            raise ValueError("Financing data is empty or invalid")
-        revenue_config = financing_data.get("financial", {}).get("revenue", {})
-        rate_based_config = revenue_config.get("rate_based", {})
-
-        enabled = rate_based_config.get("enabled", False)
-
-        return enabled
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"Financing data not found"
-        )
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing financing data: {e}")
 
 def load_project_technical_details() -> Tuple[float, int, int]:
     """
@@ -96,36 +69,6 @@ def main() -> None:
     straight-line depreciation plus return on the declining balance,
     discounted at real WACC.
     """
-    # Check if rate-based revenue is enabled
-    enabled = load_rate_based_revenue_parameters()
-
-    if not enabled:
-        logger.info("=" * 60)
-        logger.info("RATE-BASED REVENUE CALCULATION SKIPPED")
-        logger.info("(revenue.rate_based.enabled = false in financing.yaml)")
-        logger.info("=" * 60)
-        # Still write zeros to CSV for consistency. No societal present value.
-        from forge.scripts.utils.run_context import get_run_context
-
-        ctx = get_run_context()
-        horizon = ctx.horizon if ctx is not None else 0
-        csv_manager = SmartOutputManager()
-        results = {
-            "streams": {"capital_recovery": [0.0] * horizon},
-            "capital_recovery_real": 0,
-            "capital_recovery_pv": 0,
-            "capital_recovery_pv_wacc": 0,
-            "annual_revenue": 0,
-            "rate_base": 0,
-            "rate_base_real": 0,
-            "annual_revenue_real": 0,
-            "revenue_year_1": 0,
-            "revenue_year_n": 0,
-        }
-        csv_manager.add_revenue(results)
-        csv_manager.write_batch_summary()
-        return
-
     # Load project details
     delay_years, construction_years, project_lifetime = load_project_technical_details()
 

@@ -10,9 +10,3 @@ financial:
     conductor_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
     structure_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
     converter_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
-
-  # Revenue structures (firm perspective)
-  revenue:
-    # Rate-based revenue requirement (return on rate base)
-    rate_based:
-      enabled: true # Toggle rate-based revenue calculation

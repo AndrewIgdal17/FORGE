@@ -5,6 +5,7 @@ import re
 import pytest
 
 import forge
+from forge.scripts.calc import revenue
 from forge.scripts.calc.insurance_costs import calculate_insurance_costs
 from forge.scripts.io import yaml_loaders
 from forge.scripts.io.input_metadata import INPUT_METADATA
@@ -79,3 +80,17 @@ def test_insurance_has_no_component_flags():
     assert r["insurable_value"] == 180.0
     assert r["annual_premium"] == pytest.approx(150.0 * 0.002 + 30.0 * 0.007)
     assert "insurable_components" not in forge.get_defaults_template()["04_insurance"]["insurance"]
+
+
+REV = "03_financing.financial.revenue.rate_based.enabled"
+
+def test_revenue_true_is_ignored_and_false_refused():
+    base = run()["bcr"]["capital_recovery_pv"]
+    assert run(project_changes(**{REV: True}))["bcr"]["capital_recovery_pv"] == base
+    with pytest.raises(forge.InvalidInputs, match=re.escape(MSG.format(REV))):
+        forge.resolve_inputs(project_changes(**{REV: False}))
+
+def test_revenue_switch_is_gone():
+    assert not hasattr(revenue, "load_rate_based_revenue_parameters")
+    assert "revenue_enabled" not in INPUT_METADATA
+    assert "revenue" not in forge.get_defaults_template()["03_financing"]["financial"]

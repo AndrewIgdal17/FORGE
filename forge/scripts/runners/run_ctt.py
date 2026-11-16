@@ -60,7 +60,6 @@ def patch_ctt_inputs(inputs: dict) -> dict:
     fin["base_year"] = 2025
     fin["wacc_nominal"] = 0.0626
     fin["social_discount_rate"] = 0.02
-    fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 05: Delay Costs (Scenario A: streamlined CREZ permitting) ---
     inputs["05_delays"]["annual_base_delay_cost"] = 5_000_000
