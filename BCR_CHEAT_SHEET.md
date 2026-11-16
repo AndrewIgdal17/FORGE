@@ -9,16 +9,17 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 ## Cost and Benefit Categories
 
 **Benefits:**
-- **Remedial** ($B_{\text{remedial}}$): congestion relief
-- **Enabling** ($B_{\text{enabling}}$): delivered energy benefit + capacity value benefit
-- **Avoided emissions** ($B_{\text{avoided,emissions}}$): displacement of dirtier generation
+- **Market** ($B_{\text{market}}$): congestion relief + delivered energy + capacity value
+- **External** ($B_{\text{external}}$): avoided emissions
 
 **Costs:**
-- **Hard** ($C_{\text{hard}}$): build + ROW capital + environmental mitigation (AFUDC-eligible, in rate base)
-- **Operational** ($C_{\text{operational}}$): O&M + insurance + ROW rent
-- **Energy/Emissions** ($C_{\text{loss}} + C_{\text{emissions}}$): line losses (conductor + converter) + loss-compensation emissions
-- **Risk** ($C_{\text{risk}}$): expected wildfire cost + expected outage cost
-- **Delay** ($C_{\text{delay}}$): base delay only. Cost-of-delay comparison: `delay_comparison`.
+- **Capital** ($C_{\text{capital}}$): build (conductor, structure, converter) + ROW acquisition + environmental mitigation (capitalized with AFUDC, in rate base)
+- **Delay-period** ($C_{\text{delay}}$): direct delay cost + ROW holding
+- **Operating** ($C_{\text{operating}}$): line and converter O&M + line and converter insurance + ROW rent + line losses (conductor and converter)
+- **External, risk** ($C_{\text{risk}}$): expected wildfire cost + expected outage cost (load shed + redispatch)
+- **External, emissions** ($C_{\text{emissions}}$): loss-compensation emissions
+
+A part that does not apply is left out of its total; a part that is not available is left out and named in `bcr.omitted`. Cost-of-delay comparison: `delay_comparison`.
 
 ---
 
@@ -38,21 +39,21 @@ Revenue (the utility's annual transmission revenue requirement, ATRR) is a **tra
 
 ### `bcr_utility` — Utility / TSP
 
-**Formula:** $\text{ATRR}_{\text{PV}} / (\text{ATRR}_{\text{PV}} + C_{\text{base\ delay}})$
+**Formula:** $\text{ATRR}_{\text{PV}} / (\text{ATRR}_{\text{PV}} + C_{\text{delay}})$, where $C_{\text{delay}}$ is the direct delay cost plus ROW holding, at the real WACC
 
 **Question:** Does the revenue the utility collects cover everything the utility pays?
 
 **Audience:** Utility financial planners, transmission service providers.
 
-**Pure utility perspective:** Both numerator and denominator use the utility's own cost basis. ATRR (capital recovery + O&M + insurance + ROW rent) appears on both sides and cancels. What remains is the delay penalty.
+**Pure utility perspective:** Both numerator and denominator use the utility's own cost basis. ATRR (capital recovery + O&M + insurance + ROW rent) appears on both sides and cancels. What remains is the delay-period cost.
 
-**BCR = 1.0:** Structural identity for zero-delay regulated projects — revenue covers all recoverable costs by design. **BCR < 1.0:** The utility bears unrecoverable pre-construction delay costs (legal, admin, permitting) not in rate base.
+**BCR = 1.0:** Structural identity for zero-delay regulated projects — revenue covers all recoverable costs by design. **BCR < 1.0:** The utility bears delay-period costs (direct delay costs and ROW holding) that are not in rate base.
 
 ---
 
 ### `bcr_ratepayer` — Ratepayer
 
-**Formula:** $(B_{\text{remedial}} + B_{\text{enabling}}) / (\text{ATRR}_{\text{PV}} + C_{\text{loss}})$
+**Formula:** $B_{\text{market}} / (\text{ATRR}_{\text{PV}} + C_{\text{loss}})$
 
 **Question:** Do bill-relevant benefits exceed what ratepayers pay?
 

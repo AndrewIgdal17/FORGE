@@ -166,7 +166,7 @@ Pytest collects `test/` and `forge/scripts/tests/`.
 - **README.md** (this file) — Quick start
 - **BCR_CHEAT_SHEET.md** — BCR perspectives and exclusion variants
 - **docs/** — Execution workflow notes and the YAML input explorer
-- **documentation/FORGE_METHODOLOGY.md** — Methodology description
+- **documentation/FORGE_METHODOLOGY.md** — Edition 1 methodology description (superseded; not maintained)
 - **generate_yaml_docs.py** — Regenerates YAML documentation
 
 ## Version

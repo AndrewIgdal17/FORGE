@@ -1,5 +1,7 @@
 # FORGE Methodology
 
+> **Superseded.** This document describes the earlier method (Edition 1, calculator v2–v5) and is no longer maintained. Calculator v6 implements Edition 2 of the FORGE methodology, which differs throughout: route-based inputs, three right-of-way agreements, reporting categories (capital, delay-period, operating, external; market and external benefits), value of lost load interpolated at the outage's own duration, redispatch at the measured congestion spread, and the change in losses for reconductoring and rebuild. Where this document and the code disagree, the code follows Edition 2.
+
 > This document describes the FORGE methodology and equation reference for developers working on the calculator.
 
 **Purpose (for editors and readers):** This document captures the **logic and method** of the FORGE — variables, equations, and procedural logic — in a Markdown format readable without LaTeX. It is **pen-and-paper reproducible**: a reader should be able to replicate every cost and benefit from this document alone, with no reference to code or implementation. Do not add code, config, or software-specific references; keep the doc self-contained and method-only.
