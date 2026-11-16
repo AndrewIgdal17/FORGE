@@ -272,7 +272,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     )
     put("benefits_market_pv", _sum_pv(_MARKET_IDS), _MARKET_IDS)
     put("benefits_external_pv", _sum_pv(_EXTERNAL_BENEFIT_IDS), _EXTERNAL_BENEFIT_IDS)
-    put("line_loss_benefit_pv", 0, frozenset())
 
     for bcr_def in ALL_BCR_DEFINITIONS.values():
         excluded_ids = (
