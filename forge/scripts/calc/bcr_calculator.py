@@ -159,15 +159,6 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     def _sum_pv(ids: frozenset[str] | set[str]):
         return _sum_attr(ids, "value_pv")
 
-    def _sum_pv_null_if_any_unavailable(ids: frozenset[str] | set[str]):
-        """Category total is null when any applying item is unavailable (§I.4 market/route)."""
-        present = [by_id[tid] for tid in ids if tid in by_id and by_id[tid].applies]
-        if not present:
-            return 0.0
-        if any(row.available is False for row in present):
-            return None
-        return _sum_attr(ids, "value_pv")
-
     def _sum_wacc(ids: frozenset[str] | set[str]):
         return _sum_attr(ids, "value_pv_wacc", wacc=True)
 
@@ -237,6 +228,8 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     put("delay_period_costs_nominal", _sum_nom(_DELAY_PERIOD_IDS), _DELAY_PERIOD_IDS)
     put("operating_costs_pv", _sum_pv(_OPERATING_IDS), _OPERATING_IDS)
     put("operating_costs_nominal", _sum_nom(_OPERATING_IDS), _OPERATING_IDS)
+    put("operational_costs_pv", _sum_pv(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
+    put("operational_costs_nominal", _sum_nom(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
     put("delay_costs_pv", _sum_pv(_DELAY_IDS), _DELAY_IDS)
     put("delay_costs_nominal", _sum_nom(_DELAY_IDS), _DELAY_IDS)
     put("energy_emissions_costs_pv", _sum_pv(_ENERGY_EMISSIONS_IDS), _ENERGY_EMISSIONS_IDS)
@@ -253,7 +246,7 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         _sum_pv(_EXTERNAL_EMISSIONS_IDS),
         _EXTERNAL_EMISSIONS_IDS,
     )
-    put("benefits_market_pv", _sum_pv_null_if_any_unavailable(_MARKET_IDS), _MARKET_IDS)
+    put("benefits_market_pv", _sum_pv(_MARKET_IDS), _MARKET_IDS)
     put("benefits_external_pv", _sum_pv(_EXTERNAL_BENEFIT_IDS), _EXTERNAL_BENEFIT_IDS)
     put("line_loss_benefit_pv", 0, frozenset())
 

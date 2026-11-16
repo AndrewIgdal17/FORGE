@@ -15,7 +15,9 @@ T = "01_project_technical_details.timeline."
 
 def test_summary_delay_is_direct_delay_only():
     r = run(_priced(**{T+"delay_years": 4, "05_delays.annual_base_delay_cost": 1000.0}))
-    assert r["summary"]["total_delay_pv"] == pytest.approx(item(r, "base_delay")["value_pv"])
+    period = item(r, "base_delay")["value_pv"] + item(r, "row_holding")["value_pv"]
+    assert r["summary"]["total_delay_pv"] == pytest.approx(period)
+    assert r["bcr"]["delay_costs_pv"] == pytest.approx(item(r, "base_delay")["value_pv"])
 
 
 def test_forgone_benefits_are_differences_between_runs():

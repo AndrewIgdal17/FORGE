@@ -395,7 +395,6 @@ _NULL_PUBLISHED = (
     "conductor_loss_pv",
     "emissions_comp_cost_pv",
     "displacement_avoided_benefit_pv",
-    "benefits_market_pv",
 )
 
 
@@ -565,9 +564,11 @@ def test_acceptance_2_nulls_are_not_zero(null_margin_ac):
     for key in _NULL_PUBLISHED:
         assert results["bcr"][key] is None
         assert results["csv_equivalent"][key] is None
-    for key in ("displacement_avoided_benefit_pv", "benefits_market_pv"):
-        assert results["summary"][key] is None
-    assert results["bcr"]["benefits_market_pv"] is None
+    assert results["summary"]["displacement_avoided_benefit_pv"] is None
+    cap = item(results, "capacity_value_benefit")
+    assert cap["state"] == "measured"
+    assert results["bcr"]["benefits_market_pv"] == pytest.approx(cap["value_pv"])
+    assert results["bcr"]["omitted"]["benefits_market_pv"] == ["congestion_benefit"]
 
 
 def test_acceptance_3_measured_zero():

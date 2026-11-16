@@ -31,6 +31,8 @@ BATCH_SUMMARY_FIELDS = [
     # 4. Operational Costs PV (with breakdown)
     "insurance_pv",
     "oandm_pv",
+    "operational_costs_pv",
+    "operational_costs_nominal",
     "operating_costs_pv",
     "operating_costs_nominal",
     # 5. External / risk PV (with breakdown)
@@ -40,6 +42,8 @@ BATCH_SUMMARY_FIELDS = [
     "external_risk_costs_nominal",
     # 6. Delay-period costs PV
     "delay_cost_pv",
+    "delay_costs_pv",
+    "delay_costs_nominal",
     "delay_period_costs_pv",
     "delay_period_costs_nominal",
     # 7. Energy/Emissions Costs PV (with breakdown)

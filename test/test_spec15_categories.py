@@ -22,7 +22,7 @@ from test.spec05_project import measured, project_changes, run
 from test.spec11_scenarios import scenario_changes
 from test.test_spec11_cost_applies import DELAY
 from test.test_golden import _approx_equal
-from test.test_spec11_cost_applies import _ROUTELESS
+from test.test_spec10_applies import _ROUTELESS
 
 _DATA = Path(__file__).resolve().parent / "data" / "spec15_before.json"
 _BEFORE = json.loads(_DATA.read_text())
@@ -254,6 +254,30 @@ def test_routeless_market_is_not_available():
     r = run(project_changes(**_ROUTELESS))
     assert r["bcr"]["benefits_market_pv"] is None
     assert "congestion_benefit" in r["bcr"]["omitted"]["benefits_market_pv"]
+
+
+def test_partial_market_unavailable_sums_available_items():
+    from forge.scripts.calc.bcr_calculator import compute_all_bcrs
+    from forge.scripts.io.taxonomy_adapters import TaxonomyResult
+
+    def _r(tid: str, pv: float) -> TaxonomyResult:
+        return TaxonomyResult(tid, value_pv=pv, value_nominal=pv, value_pv_wacc=pv)
+
+    rs = [
+        TaxonomyResult(
+            "congestion_benefit",
+            value_pv=None,
+            value_nominal=None,
+            value_pv_wacc=None,
+            available=False,
+        ),
+        _r("delivered_energy_benefit", 100.0),
+        _r("capacity_value_benefit", 50.0),
+    ]
+    b = compute_all_bcrs(rs)
+    assert b["benefits_market_pv"] is not None
+    assert b["benefits_market_pv"] == pytest.approx(150.0)
+    assert b["omitted"]["benefits_market_pv"] == ["congestion_benefit"]
 
 
 def test_societal_and_ratepayer_unchanged():

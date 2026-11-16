@@ -91,23 +91,9 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
     def field(key: str):
         return _absent_default(csv_equivalent, key, 0)
 
-    operating = field("operating_costs_pv")
-
-    def _loss_part(key: str) -> float:
-        value = field(key)
-        return 0.0 if value is None else value
-
-    total_operational = (
-        operating
-        - _loss_part("conductor_loss_pv")
-        - _loss_part("converter_loss_pv")
-        if operating is not None
-        else None
-    )
-
     return {
         "total_capital_pv": field("capital_costs_pv"),
-        "total_operational_pv": total_operational,
+        "total_operational_pv": field("operational_costs_pv"),
         "total_energy_emissions_pv": field("energy_emissions_costs_pv"),
         "total_risk_pv": field("external_risk_costs_pv"),
         "total_delay_pv": field("delay_period_costs_pv"),

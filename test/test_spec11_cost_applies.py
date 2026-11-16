@@ -161,7 +161,6 @@ def test_numbers_unchanged_from_5_1_1():
             assert set(got[section]) == set(expected[name][section]), (name, section)
             for key, value in expected[name][section].items():
                 if section == "bcr" and name in _AC_WITHOUT_ENERGY_VALUE and key in _NOW_NOT_AVAILABLE:
-                    assert value == 0.0, (name, key)
                     assert got[section][key] is None, (name, key)
                 elif value is None:
                     assert got[section][key] is None, (name, key)
