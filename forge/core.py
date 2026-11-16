@@ -91,24 +91,37 @@ def build_summary_from_csv_equivalent(csv_equivalent: dict) -> dict:
     def field(key: str):
         return _absent_default(csv_equivalent, key, 0)
 
+    operating = field("operating_costs_pv")
+
+    def _loss_part(key: str) -> float:
+        value = field(key)
+        return 0.0 if value is None else value
+
+    total_operational = (
+        operating
+        - _loss_part("conductor_loss_pv")
+        - _loss_part("converter_loss_pv")
+        if operating is not None
+        else None
+    )
+
     return {
-        # Pipeline groupings (cost/benefit category subtotals for the summary dict)
         "total_capital_pv": field("capital_costs_pv"),
-        "total_operational_pv": field("operational_costs_pv"),
+        "total_operational_pv": total_operational,
         "total_energy_emissions_pv": field("energy_emissions_costs_pv"),
-        "total_risk_pv": field("risk_costs_pv"),
-        "total_delay_pv": field("delay_costs_pv"),
+        "total_risk_pv": field("external_risk_costs_pv"),
+        "total_delay_pv": field("delay_period_costs_pv"),
         "total_costs_pv": field("total_costs_pv"),
         "total_benefits_pv": field("total_benefits_pv"),
-        # Appendix-aligned cost categories (C_hard + C_soft + C_risk + C_emissions)
-        "reporting_category_hard_pv": field("hard_costs_pv"),
-        "reporting_category_soft_pv": field("soft_costs_pv"),
-        "reporting_category_risk_pv": field("risk_costs_pv"),
-        "reporting_category_emissions_pv": field("emissions_costs_pv"),
+        "reporting_category_capital_pv": field("capital_costs_pv"),
+        "reporting_category_delay_period_pv": field("delay_period_costs_pv"),
+        "reporting_category_operating_pv": field("operating_costs_pv"),
+        "reporting_category_external_pv": field("external_costs_pv"),
+        "reporting_category_external_risk_pv": field("external_risk_costs_pv"),
+        "reporting_category_external_emissions_pv": field("external_emissions_costs_pv"),
+        "benefits_market_pv": field("benefits_market_pv"),
+        "benefits_external_pv": field("benefits_external_pv"),
         "displacement_avoided_benefit_pv": field("displacement_avoided_benefit_pv"),
-        # Appendix-aligned benefit categories (B_remedial + B_enabling)
-        "benefits_remedial_pv": field("benefits_remedial_pv"),
-        "benefits_enabling_pv": field("benefits_enabling_pv"),
     }
 
 

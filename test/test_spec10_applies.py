@@ -95,7 +95,7 @@ def test_routeless_margin_line_ratios_not_available():  # spec acceptance 1
         "avoided_emissions_benefit",
         "congestion_benefit",
     ]
-    assert b["benefits_enabling_pv"] == 0.0  # nothing in the set applies
+    assert b["benefits_market_pv"] is None
 
 
 def test_sunzia_ratios_unchanged():  # spec acceptance 2

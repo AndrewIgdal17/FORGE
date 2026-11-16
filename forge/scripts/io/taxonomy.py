@@ -13,24 +13,36 @@ from functools import lru_cache
 from typing import Literal
 
 # ---------------------------------------------------------------------------
-# Type aliases (mirror SQL CHECK constraints)
+# Type aliases — the live database has no CHECK constraint on category names
+# (queried pg_constraint on supabase-db, 2026-11-15); these literals are the only check.
 # ---------------------------------------------------------------------------
 
 Side = Literal["cost", "benefit", "transfer", "reporting_only", "utility"]
 Category = Literal[
-    "hard", "soft", "risk", "emissions",
-    "remedial", "enabling", "transfer", "reporting",
-    "project", "route", "financial",
+    "capital",
+    "delay_period",
+    "operating",
+    "external",
+    "market",
+    "transfer",
+    "reporting",
+    "project",
+    "route",
+    "financial",
 ]
+Subgroup = Literal["risk", "emissions"]
 DiscountRate = Literal["social", "wacc_real", "per_perspective"]
 Condition = Literal["dc_only", "not_reconductoring", "reconductoring_only", "rebuild_only"]
 NumeratorRule = Literal[
-    "all_benefits", "remedial", "remedial_enabling",
-    "capital_recovery", "revenue_requirement",
+    "all_benefits",
+    "market",
+    "capital_recovery",
+    "revenue_requirement",
 ]
 DenominatorRule = Literal[
-    "all_costs", "hard", "hard_delay",
-    "atrr_delay", "revenue_requirement_loss",
+    "all_costs",
+    "atrr_delay",
+    "revenue_requirement_loss",
 ]
 Perspective = Literal["societal", "stakeholder"]
 Family = Literal["societal", "firm"]
@@ -45,7 +57,7 @@ class TaxonomyItem:
     id: str
     side: Side
     category: Category
-    subgroup: str
+    subgroup: Subgroup | None
     label: str
     discount_rate: DiscountRate
     condition: Condition | None
@@ -85,107 +97,107 @@ class BCRDefinition:
 # ---------------------------------------------------------------------------
 
 TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
-    # --- Hard costs (category: hard) ---
-    TaxonomyItem("build_conductor", "cost", "hard", "build",
+  # --- Capital costs ---
+    TaxonomyItem("build_conductor", "cost", "capital", None,
                  "Conductor Cost", "per_perspective", None, 1,
                  "Terrain-adjusted, contingency-applied conductor cost (variable + fixed)."),
-    TaxonomyItem("build_structure", "cost", "hard", "build",
+    TaxonomyItem("build_structure", "cost", "capital", None,
                  "Structure Cost", "per_perspective", "not_reconductoring", 2,
                  "Terrain-adjusted structure cost. Zero for reconductoring; full for greenfield and rebuild."),
-    TaxonomyItem("build_converter", "cost", "hard", "build",
+    TaxonomyItem("build_converter", "cost", "capital", None,
                  "Converter Cost", "per_perspective", "dc_only", 3,
                  "Fixed converter station cost. Zero for AC and reconductoring."),
-    TaxonomyItem("row_acquisition", "cost", "hard", "row_capital",
+    TaxonomyItem("row_acquisition", "cost", "capital", None,
                  "ROW Acquisition", "per_perspective", None, 4,
-                 "One-time land acquisition cost (fee simple or easement)."),
-    TaxonomyItem("row_holding", "cost", "hard", "row_capital",
-                 "ROW Holding Cost", "per_perspective", None, 5,
-                 "Annual option/holding fee during delay period."),
-    TaxonomyItem("env_mitigation", "cost", "hard", "environmental",
-                 "Environmental Mitigation", "per_perspective", None, 6,
+                 "One-time payment for the right to use the land: a new permanent easement, or the acquisition part of a federal hybrid."),
+    TaxonomyItem("env_mitigation", "cost", "capital", None,
+                 "Environmental Mitigation", "per_perspective", None, 5,
                  "Base per-acre mitigation + wetland/habitat credit costs."),
-    # --- Soft costs (category: soft) ---
-    TaxonomyItem("oandm", "cost", "soft", "operational",
+    # --- Delay-period costs ---
+    TaxonomyItem("base_delay", "cost", "delay_period", None,
+                 "Direct delay cost", "per_perspective", None, 1,
+                 "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
+    TaxonomyItem("row_holding", "cost", "delay_period", None,
+                 "ROW Holding Cost", "per_perspective", None, 2,
+                 "Annual option/holding fee during delay period."),
+    # --- Operating costs ---
+    TaxonomyItem("oandm", "cost", "operating", None,
                  "O&M", "per_perspective", None, 1,
-                 "Annual conductor + structure + converter + vegetation management O&M."),
-    TaxonomyItem("insurance", "cost", "soft", "operational",
+                 "Line O&M (greenfield only: overhead base and terrain vegetation management per mile, or a share of underground line capital) plus converter O&M as a share of converter capital."),
+    TaxonomyItem("insurance", "cost", "operating", None,
                  "Operational Insurance", "per_perspective", None, 2,
-                 "Annual premium on insurable asset value (build components)."),
-    TaxonomyItem("row_rent", "cost", "soft", "operational",
+                 "Annual cost of bearing asset risk: a share of line conductor and structure capital (self-insured reserve) and of converter capital (commercial property insurance), at separate rates."),
+    TaxonomyItem("row_rent", "cost", "operating", None,
                  "ROW Rent", "per_perspective", None, 3,
                  "Annual per-acre rent for existing/leased ROW corridor."),
-    TaxonomyItem("line_loss_conductor", "cost", "soft", "energy",
+    TaxonomyItem("line_loss_conductor", "cost", "operating", None,
                  "Conductor Losses", "per_perspective", None, 4,
                  "Thermal energy losses from conductor resistance, valued at electricity price."),
-    TaxonomyItem("line_loss_converter", "cost", "soft", "energy",
+    TaxonomyItem("line_loss_converter", "cost", "operating", None,
                  "Converter Losses", "per_perspective", "dc_only", 5,
                  "Energy losses from AC/DC converter stations. Zero for AC projects."),
-    TaxonomyItem("base_delay", "cost", "soft", "delay",
-                 "Direct delay cost", "per_perspective", None, 6,
-                 "Annual pre-construction delay costs (legal, admin, labor, regulatory)."),
-    # --- Risk costs (category: risk) ---
-    TaxonomyItem("wildfire_eac", "cost", "risk", "wildfire",
+    # --- External costs ---
+    TaxonomyItem("wildfire_eac", "cost", "external", "risk",
                  "Expected Wildfire Cost", "social", None, 1,
                  "Expected annual loss from wildfire (ignition rate x severity x risk growth)."),
-    TaxonomyItem("outage_eac", "cost", "risk", "outage",
+    TaxonomyItem("outage_eac", "cost", "external", "risk",
                  "Expected Outage Cost", "social", None, 2,
                  "Expected annual cost from transmission outages (rate x duration x VoLL x risk growth)."),
-    # --- Emissions costs (category: emissions) ---
-    TaxonomyItem("emissions_comp", "cost", "emissions", "loss_compensation",
-                 "Loss-Compensation Emissions", "social", None, 1,
+    TaxonomyItem("emissions_comp", "cost", "external", "emissions",
+                 "Loss-Compensation Emissions", "social", None, 3,
                  "Social cost of emissions from generation compensating for line losses."),
-    # --- Benefits (categories: remedial, enabling, avoided_emissions) ---
-    TaxonomyItem("congestion_benefit", "benefit", "remedial", "congestion",
+    # --- Market benefits ---
+    TaxonomyItem("congestion_benefit", "benefit", "market", None,
                  "Congestion Reduction Benefit", "per_perspective", None, 1,
-                 "Value of congestion relief MWh. Remedial: fixes pre-existing deadweight loss."),
-    TaxonomyItem("delivered_energy_benefit", "benefit", "enabling", "delivered_energy",
-                 "Delivered Energy Benefit", "per_perspective", None, 1,
-                 "Value of deliverable energy. Enabling: new throughput."),
-    TaxonomyItem("capacity_value_benefit", "benefit", "enabling", "capacity_value",
-                 "Capacity Value Benefit", "per_perspective", None, 2,
+                 "Value of congestion relief MWh."),
+    TaxonomyItem("delivered_energy_benefit", "benefit", "market", None,
+                 "Delivered Energy Benefit", "per_perspective", None, 2,
+                 "Value of deliverable energy."),
+    TaxonomyItem("capacity_value_benefit", "benefit", "market", None,
+                 "Capacity Value Benefit", "per_perspective", None, 3,
                  "Resource adequacy value of incremental transfer capability. "
                  "Net CONE × capacity credit × effective capacity × applicability gate. "
                  "Parametric screening proxy (Brattle 2013); not LOLE/RPM simulation."),
     # --- Transfer ---
-    TaxonomyItem("capital_recovery", "transfer", "transfer", "capital_recovery",
+    TaxonomyItem("capital_recovery", "transfer", "transfer", None,
                  "Capital Recovery (Rate-Based)", "wacc_real", None, 1,
                  "Utility-ratepayer transfer: allowed return x rate base. Not in societal NB."),
-    # --- Avoided emissions benefit ---
-    TaxonomyItem("avoided_emissions_benefit", "benefit", "avoided_emissions", "displacement",
+    # --- External benefit ---
+    TaxonomyItem("avoided_emissions_benefit", "benefit", "external", None,
                  "Avoided Emissions Benefit", "social", None, 1,
                  "Benefit from cleaner generation enabled by this project. Equals the difference between the no-line and project-path societal emission costs, discounted at the social rate."),
     # --- Utility (shared input groups, no scenario_results) ---
-    TaxonomyItem("project_identity", "utility", "project", "configuration",
+    TaxonomyItem("project_identity", "utility", "project", None,
                  "Project Identity", "per_perspective", None, 1,
                  "Project name and scenario identifier."),
-    TaxonomyItem("project_technology", "utility", "project", "configuration",
+    TaxonomyItem("project_technology", "utility", "project", None,
                  "Technology Configuration", "per_perspective", None, 2,
                  "Construction type, AC/DC, capacity, conductor/converter selection."),
-    TaxonomyItem("project_timing", "utility", "project", "timing",
+    TaxonomyItem("project_timing", "utility", "project", None,
                  "Project Timing", "per_perspective", None, 3,
                  "Construction years, delay years, project lifetime."),
-    TaxonomyItem("project_utilization", "utility", "project", "utilization",
+    TaxonomyItem("project_utilization", "utility", "project", None,
                  "Line Utilization", "per_perspective", None, 4,
                  "Line utilization factor."),
-    TaxonomyItem("route_terrain_miles", "utility", "route", "terrain",
+    TaxonomyItem("route_terrain_miles", "utility", "route", None,
                  "Terrain Miles", "per_perspective", None, 1,
                  "Route miles by terrain type. Zero-mile terrains hidden from cost calculations."),
-    TaxonomyItem("route_terrain_multipliers", "utility", "route", "terrain",
+    TaxonomyItem("route_terrain_multipliers", "utility", "route", None,
                  "Terrain Multipliers", "per_perspective", None, 2,
                  "Cost multiplier by terrain type for weighted miles."),
-    TaxonomyItem("financial_rates", "utility", "financial", "rates",
+    TaxonomyItem("financial_rates", "utility", "financial", None,
                  "Financial Parameters", "per_perspective", None, 1,
                  "Base year, inflation, WACC nominal, social discount rate."),
-    TaxonomyItem("financial_contingencies", "utility", "financial", "contingencies",
+    TaxonomyItem("financial_contingencies", "utility", "financial", None,
                  "Build Contingencies", "per_perspective", None, 2,
                  "Contingency factors for conductor, structure, converter costs."),
-    TaxonomyItem("financial_revenue_config", "utility", "financial", "revenue",
+    TaxonomyItem("financial_revenue_config", "utility", "financial", None,
                  "Revenue & Return Configuration", "per_perspective", None, 4,
                  "Rate-based revenue: enabled flag, FERC declining-balance formula."),
-    TaxonomyItem("financial_afudc", "utility", "financial", "afudc",
+    TaxonomyItem("financial_afudc", "utility", "financial", None,
                  "AFUDC Configuration", "per_perspective", None, 5,
                  "AFUDC application toggle."),
-    TaxonomyItem("financial_timing_patterns", "utility", "financial", "timing_patterns",
+    TaxonomyItem("financial_timing_patterns", "utility", "financial", None,
                  "Construction Spending Profiles", "per_perspective", None, 6,
                  "Year-by-year weights that spread construction spending."),
 )
@@ -284,7 +296,7 @@ BCR_DEFINITIONS: dict[str, BCRDefinition] = {
     ),
     "bcr_ratepayer": BCRDefinition(
         "bcr_ratepayer", "Ratepayer", "firm", "stakeholder",
-        "remedial_enabling", "revenue_requirement_loss", frozenset(), 7,
+        "market", "revenue_requirement_loss", frozenset(), 7,
         "Whether ratepayers receive more value than they pay through rates (full ATRR + losses).",
     ),
 }
@@ -395,10 +407,15 @@ def get_items_by_side(side: Side) -> list[TaxonomyItem]:
     )
 
 
-def get_items_by_category(category: Category) -> list[TaxonomyItem]:
-    """Return taxonomy items filtered by category, sorted by display_order."""
+def get_items_by_category(
+    category: Category, side: Side | None = None,
+) -> list[TaxonomyItem]:
+    """Return taxonomy items filtered by category (and optionally side)."""
     return sorted(
-        (item for item in TAXONOMY_ITEMS if item.category == category),
+        (
+            item for item in TAXONOMY_ITEMS
+            if item.category == category and (side is None or item.side == side)
+        ),
         key=lambda item: item.display_order,
     )
 

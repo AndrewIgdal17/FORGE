@@ -388,12 +388,6 @@ class JSONOutputManager:
                 delay_pv,
                 total_energy_emissions_pv,
             ),
-            "reporting_category_hard_pv": total_capital_pv,
-            "reporting_category_soft_pv": _sum_stored(
-                delay_pv, total_operational_pv, _stored(line_loss, "total_pv")
-            ),
-            "reporting_category_risk_pv": total_risk_pv,
-            "reporting_category_emissions_pv": _stored(emissions, "total_pv"),
         }
 
     def get_json_results(self) -> Dict[str, Any]:

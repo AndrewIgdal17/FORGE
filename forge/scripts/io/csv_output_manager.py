@@ -24,20 +24,24 @@ BATCH_SUMMARY_FIELDS = [
     "row_rent_nominal",
     "env_mitigation_pv",
     "capital_costs_pv",
+    "capital_costs_nominal",
     "build_cost_afudc",
     "row_cost_afudc",
     "env_mitigation_afudc",
     # 4. Operational Costs PV (with breakdown)
     "insurance_pv",
     "oandm_pv",
-    "operational_costs_pv",
-    # 5. Risk Costs PV (with breakdown)
+    "operating_costs_pv",
+    "operating_costs_nominal",
+    # 5. External / risk PV (with breakdown)
     "wildfire_pv",
     "outage_pv",
-    "risk_costs_pv",
-    # 6. Delay Costs PV
+    "external_risk_costs_pv",
+    "external_risk_costs_nominal",
+    # 6. Delay-period costs PV
     "delay_cost_pv",
-    "delay_costs_pv",
+    "delay_period_costs_pv",
+    "delay_period_costs_nominal",
     # 7. Energy/Emissions Costs PV (with breakdown)
     "emissions_comp_cost_pv",
     "energy_losses_pv",
@@ -47,10 +51,9 @@ BATCH_SUMMARY_FIELDS = [
     "energy_emissions_costs_pv",
     # 8. Total Costs PV
     "total_costs_pv",
-    # 8a. Appendix-aligned cost categories
-    "hard_costs_pv",
-    "soft_costs_pv",
-    "emissions_costs_pv",
+    # 8a. Method-aligned cost categories
+    "external_costs_pv",
+    "external_emissions_costs_pv",
     # 9. Benefits PV (with breakdown)
     "congestion_benefit_pv",
     "delivered_benefit_annual",
@@ -62,9 +65,9 @@ BATCH_SUMMARY_FIELDS = [
     "annual_revenue_real",
     "displacement_avoided_benefit_pv",
     "total_benefits_pv",
-    # 9a. Appendix-aligned benefit categories
-    "benefits_remedial_pv",
-    "benefits_enabling_pv",
+    # 9a. Method-aligned benefit categories
+    "benefits_market_pv",
+    "benefits_external_pv",
     # 10. BCR Metrics
     "bcr_societal",
     # Tier 1 exclusion BCRs (3 analytically motivated variants)

@@ -123,14 +123,15 @@ TRAJECTORY_OMITTED = {
 }
 
 CUMULATIVE_TO_BCR = {
-    "cum_C_hard": "hard_costs_pv",
-    "cum_C_soft": "soft_costs_pv",
-    "cum_C_risk": "risk_costs_pv",
-    "cum_C_emissions": "emissions_costs_pv",
+    "cum_C_capital": "capital_costs_pv",
+    "cum_C_delay_period": "delay_period_costs_pv",
+    "cum_C_operating": "operating_costs_pv",
+    "cum_C_external": "external_costs_pv",
+    "cum_C_external_risk": "external_risk_costs_pv",
+    "cum_C_external_emissions": "external_emissions_costs_pv",
     "cum_C_total": "total_costs_pv",
-    "cum_B_remedial": "benefits_remedial_pv",
-    "cum_B_enabling": "benefits_enabling_pv",
-    "cum_B_avoided_emissions": "benefits_avoided_emissions_pv",
+    "cum_B_market": "benefits_market_pv",
+    "cum_B_external": "benefits_external_pv",
     "cum_B_total": "total_benefits_pv",
 }
 
@@ -182,7 +183,7 @@ def test_acceptance_11_exclusion_and_perspective_sums(bcr):
     assert bcr["omitted"]["bcr_utility"] == []
     assert "energy_losses_pv" not in bcr["omitted"]
     assert bcr["energy_losses_pv"] == 0.0
-    assert bcr["benefits_remedial_pv"] is None
+    assert bcr["benefits_market_pv"] is None
     assert bcr["bcr_ratepayer"] is None or isinstance(bcr["bcr_ratepayer"], float)
     assert bcr["bcr_ratepayer"] is None
     assert bcr["bcr_utility"] is not None
@@ -245,7 +246,7 @@ def test_acceptance_12_trajectory_omitted_matches_bcr(bcr, partial_items):
         expected = bcr[bcr_key]
         if actual is not None and expected is not None:
             assert actual == pytest.approx(expected, abs=0.01)
-    assert all(row["pv_B_remedial"] is None for row in trajectory)
+    assert all(row["pv_B_market"] is None for row in trajectory)
 
 
 def test_print_bcr_summary_prints_not_available_for_none(caplog):
@@ -394,7 +395,7 @@ _NULL_PUBLISHED = (
     "conductor_loss_pv",
     "emissions_comp_cost_pv",
     "displacement_avoided_benefit_pv",
-    "benefits_remedial_pv",
+    "benefits_market_pv",
 )
 
 
@@ -564,9 +565,9 @@ def test_acceptance_2_nulls_are_not_zero(null_margin_ac):
     for key in _NULL_PUBLISHED:
         assert results["bcr"][key] is None
         assert results["csv_equivalent"][key] is None
-    for key in ("displacement_avoided_benefit_pv", "benefits_remedial_pv"):
+    for key in ("displacement_avoided_benefit_pv", "benefits_market_pv"):
         assert results["summary"][key] is None
-    assert results["bcr"]["benefits_remedial_pv"] is None
+    assert results["bcr"]["benefits_market_pv"] is None
 
 
 def test_acceptance_3_measured_zero():

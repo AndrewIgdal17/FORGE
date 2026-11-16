@@ -1,0 +1,93 @@
+{
+  "AEP_LRGV_ACCC": {
+    "bcr_societal": null,
+    "net_benefit_pv": null,
+    "total_costs_pv": 939790583.3796968,
+    "total_benefits_pv": null,
+    "bcr_ratepayer": null,
+    "net_benefit_ratepayer_pv": null,
+    "bcr_utility": 0.9836575233045036,
+    "utility_costs_pv": 352822003.7587627,
+    "utility_benefits_pv": 347056018.3846768,
+    "rate_base": 217819215.83404544,
+    "holding_pv_wacc": 0.0
+  },
+  "AEP_LRGV_ACSR_Rebuild": {
+    "bcr_societal": null,
+    "net_benefit_pv": null,
+    "total_costs_pv": 1100182221.6932817,
+    "total_benefits_pv": null,
+    "bcr_ratepayer": null,
+    "net_benefit_ratepayer_pv": null,
+    "bcr_utility": 0.9688708360417797,
+    "utility_costs_pv": 605385316.3917465,
+    "utility_benefits_pv": 586540177.6198888,
+    "rate_base": 555118972.8208132,
+    "holding_pv_wacc": 0.0
+  },
+  "AEP_LRGV_Laredo_NewBuild": {
+    "bcr_societal": null,
+    "net_benefit_pv": null,
+    "total_costs_pv": 1224864990.6565108,
+    "total_benefits_pv": null,
+    "bcr_ratepayer": null,
+    "net_benefit_ratepayer_pv": null,
+    "bcr_utility": 0.8942881031263478,
+    "utility_costs_pv": 509893710.49210894,
+    "utility_benefits_pv": 455991879.1520432,
+    "rate_base": 485254447.10488653,
+    "holding_pv_wacc": 55898195.46377186
+  },
+  "CTT_Actual_Delay2": {
+    "bcr_societal": null,
+    "net_benefit_pv": null,
+    "total_costs_pv": 1182523316.377931,
+    "total_benefits_pv": null,
+    "bcr_ratepayer": null,
+    "net_benefit_ratepayer_pv": null,
+    "bcr_utility": 0.985387774538163,
+    "utility_costs_pv": 648462953.7086606,
+    "utility_benefits_pv": 638987466.8254209,
+    "rate_base": 504479696.40946627,
+    "holding_pv_wacc": 12268.745562032444
+  },
+  "CTT_Counterfactual_Delay7": {
+    "bcr_societal": null,
+    "net_benefit_pv": null,
+    "total_costs_pv": 1174649049.7177444,
+    "total_benefits_pv": null,
+    "bcr_ratepayer": null,
+    "net_benefit_ratepayer_pv": null,
+    "bcr_utility": 0.9224550309939433,
+    "utility_costs_pv": 626869777.2552391,
+    "utility_benefits_pv": 578259179.807148,
+    "rate_base": 541854126.911113,
+    "holding_pv_wacc": 39337.75772276585
+  },
+  "SunZia_Delay17": {
+    "bcr_societal": 0.16960362066093307,
+    "net_benefit_pv": -11571780634.017801,
+    "total_costs_pv": 13935249384.430202,
+    "total_benefits_pv": 2363468750.412401,
+    "bcr_ratepayer": 0.5082111244407037,
+    "net_benefit_ratepayer_pv": -888908144.2324585,
+    "bcr_utility": 0.9106376898711843,
+    "utility_costs_pv": 1984872266.0281303,
+    "utility_benefits_pv": 1807499495.0252395,
+    "rate_base": 2947976665.907584,
+    "holding_pv_wacc": 348273.2633412108
+  },
+  "SunZia_Delay2": {
+    "bcr_societal": 0.15623096978640777,
+    "net_benefit_pv": -14797497882.648438,
+    "total_costs_pv": 17537379724.52318,
+    "total_benefits_pv": 2739881841.874741,
+    "bcr_ratepayer": 0.5281776435390445,
+    "net_benefit_ratepayer_pv": -1342359494.849638,
+    "bcr_utility": 0.9902051338550503,
+    "utility_costs_pv": 2873195317.9752,
+    "utility_benefits_pv": 2845052754.4273367,
+    "rate_base": 2555022966.5603704,
+    "holding_pv_wacc": 55258.21347991543
+  }
+}

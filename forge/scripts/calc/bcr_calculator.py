@@ -40,41 +40,36 @@ _ALL_COST_IDS = frozenset(
 _ALL_BENEFIT_IDS = frozenset(
     tid for tid, item in TAXONOMY.items() if item.side == "benefit"
 )
-_SOFT_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "soft"
-)
-_HARD_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "hard"
-)
-_RISK_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "risk"
-)
-_EMISSIONS_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].category == "emissions"
-)
-_OPERATIONAL_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS if TAXONOMY[tid].subgroup == "operational"
+def _cost_ids(*, category: str, subgroup: str | None = None) -> frozenset[str]:
+    return frozenset(
+        tid for tid in _ALL_COST_IDS
+        if TAXONOMY[tid].category == category
+        and (subgroup is None or TAXONOMY[tid].subgroup == subgroup)
+    )
+
+
+def _benefit_ids(*, category: str) -> frozenset[str]:
+    return frozenset(
+        tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == category
+    )
+
+
+_CAPITAL_IDS = _cost_ids(category="capital")
+_DELAY_PERIOD_IDS = _cost_ids(category="delay_period")
+_OPERATING_IDS = _cost_ids(category="operating")
+_EXTERNAL_COST_IDS = _cost_ids(category="external")
+_EXTERNAL_RISK_IDS = _cost_ids(category="external", subgroup="risk")
+_EXTERNAL_EMISSIONS_IDS = _cost_ids(category="external", subgroup="emissions")
+_MARKET_IDS = _benefit_ids(category="market")
+_EXTERNAL_BENEFIT_IDS = _benefit_ids(category="external")
+_OPERATIONAL_IDS = _OPERATING_IDS - get_excluded_taxonomy_ids(["line_losses"])
+_ENERGY_EMISSIONS_IDS = (
+    get_excluded_taxonomy_ids(["line_losses"]) | _EXTERNAL_EMISSIONS_IDS
 )
 _DELAY_IDS = frozenset({"base_delay"})
-_BASE_DELAY_IDS = frozenset({"base_delay"})
-_ENERGY_EMISSIONS_IDS = frozenset(
-    tid for tid in _ALL_COST_IDS
-    if TAXONOMY[tid].subgroup == "energy" or TAXONOMY[tid].category == "emissions"
-)
-_REMEDIAL_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "remedial"
-)
-_ENABLING_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "enabling"
-)
-_AVOIDED_EMISSIONS_IDS = frozenset(
-    tid for tid in _ALL_BENEFIT_IDS if TAXONOMY[tid].category == "avoided_emissions"
-)
 
 _DENOM_SETS: dict[str, frozenset[str]] = {
     "all_costs": _ALL_COST_IDS,
-    "hard": _HARD_IDS,
-    "hard_delay": _HARD_IDS | _DELAY_IDS,
     "atrr_delay": frozenset({
         "capital_recovery", "oandm", "insurance", "row_rent", "base_delay",
     }),
@@ -85,8 +80,7 @@ _DENOM_SETS: dict[str, frozenset[str]] = {
 }
 _NUMER_SETS: dict[str, frozenset[str]] = {
     "all_benefits": _ALL_BENEFIT_IDS,
-    "remedial": _REMEDIAL_IDS,
-    "remedial_enabling": _REMEDIAL_IDS | _ENABLING_IDS,
+    "market": _MARKET_IDS,
     "capital_recovery": frozenset({"capital_recovery"}),
     "revenue_requirement": frozenset({"capital_recovery", "oandm", "insurance", "row_rent"}),
 }
@@ -165,6 +159,15 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     def _sum_pv(ids: frozenset[str] | set[str]):
         return _sum_attr(ids, "value_pv")
 
+    def _sum_pv_null_if_any_unavailable(ids: frozenset[str] | set[str]):
+        """Category total is null when any applying item is unavailable (§I.4 market/route)."""
+        present = [by_id[tid] for tid in ids if tid in by_id and by_id[tid].applies]
+        if not present:
+            return 0.0
+        if any(row.available is False for row in present):
+            return None
+        return _sum_attr(ids, "value_pv")
+
     def _sum_wacc(ids: frozenset[str] | set[str]):
         return _sum_attr(ids, "value_pv_wacc", wacc=True)
 
@@ -228,15 +231,12 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
     put("total_costs_nominal", total_costs_nominal, _ALL_COST_IDS)
     put("total_benefits_pv", total_benefits_pv, _ALL_BENEFIT_IDS)
     put("total_benefits_nominal", total_benefits_nominal, _ALL_BENEFIT_IDS)
-    put("hard_costs_pv", _sum_pv(_HARD_IDS), _HARD_IDS)
-    put("soft_costs_pv", _sum_pv(_SOFT_IDS), _SOFT_IDS)
-    put("risk_costs_pv", _sum_pv(_RISK_IDS), _RISK_IDS)
-    put("risk_costs_nominal", _sum_nom(_RISK_IDS), _RISK_IDS)
-    put("emissions_costs_pv", _sum_pv(_EMISSIONS_IDS), _EMISSIONS_IDS)
-    put("capital_costs_pv", _sum_pv(_HARD_IDS), _HARD_IDS)
-    put("capital_costs_nominal", _sum_nom(_HARD_IDS), _HARD_IDS)
-    put("operational_costs_pv", _sum_pv(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
-    put("operational_costs_nominal", _sum_nom(_OPERATIONAL_IDS), _OPERATIONAL_IDS)
+    put("capital_costs_pv", _sum_pv(_CAPITAL_IDS), _CAPITAL_IDS)
+    put("capital_costs_nominal", _sum_nom(_CAPITAL_IDS), _CAPITAL_IDS)
+    put("delay_period_costs_pv", _sum_pv(_DELAY_PERIOD_IDS), _DELAY_PERIOD_IDS)
+    put("delay_period_costs_nominal", _sum_nom(_DELAY_PERIOD_IDS), _DELAY_PERIOD_IDS)
+    put("operating_costs_pv", _sum_pv(_OPERATING_IDS), _OPERATING_IDS)
+    put("operating_costs_nominal", _sum_nom(_OPERATING_IDS), _OPERATING_IDS)
     put("delay_costs_pv", _sum_pv(_DELAY_IDS), _DELAY_IDS)
     put("delay_costs_nominal", _sum_nom(_DELAY_IDS), _DELAY_IDS)
     put("energy_emissions_costs_pv", _sum_pv(_ENERGY_EMISSIONS_IDS), _ENERGY_EMISSIONS_IDS)
@@ -245,13 +245,16 @@ def compute_all_bcrs(results: list[TaxonomyResult]) -> dict:
         _sum_nom(_ENERGY_EMISSIONS_IDS),
         _ENERGY_EMISSIONS_IDS,
     )
-    put("benefits_remedial_pv", _sum_pv(_REMEDIAL_IDS), _REMEDIAL_IDS)
-    put("benefits_enabling_pv", _sum_pv(_ENABLING_IDS), _ENABLING_IDS)
+    put("external_costs_pv", _sum_pv(_EXTERNAL_COST_IDS), _EXTERNAL_COST_IDS)
+    put("external_risk_costs_pv", _sum_pv(_EXTERNAL_RISK_IDS), _EXTERNAL_RISK_IDS)
+    put("external_risk_costs_nominal", _sum_nom(_EXTERNAL_RISK_IDS), _EXTERNAL_RISK_IDS)
     put(
-        "benefits_avoided_emissions_pv",
-        _sum_pv(_AVOIDED_EMISSIONS_IDS),
-        _AVOIDED_EMISSIONS_IDS,
+        "external_emissions_costs_pv",
+        _sum_pv(_EXTERNAL_EMISSIONS_IDS),
+        _EXTERNAL_EMISSIONS_IDS,
     )
+    put("benefits_market_pv", _sum_pv_null_if_any_unavailable(_MARKET_IDS), _MARKET_IDS)
+    put("benefits_external_pv", _sum_pv(_EXTERNAL_BENEFIT_IDS), _EXTERNAL_BENEFIT_IDS)
     put("line_loss_benefit_pv", 0, frozenset())
 
     for bcr_def in ALL_BCR_DEFINITIONS.values():
@@ -350,36 +353,36 @@ def print_bcr_summary(results: Dict[str, float]) -> None:
     logger.info("")
 
     logger.info("COSTS (Present Value):")
-    logger.info("  Capital Costs:")
+    logger.info("  Capital costs:")
     logger.info(f"    Build:                     {_money(_raw('build_cost_pv'))}")
     logger.info(f"    Right-of-Way (acquisition): {_money(_raw('acquisition_pv'))}")
     logger.info(f"    Environmental:             {_money(_raw('env_mitigation_pv'))}")
     logger.info(f"    Subtotal:                  {_money(_raw('capital_costs_pv'))}")
     logger.info("")
-    logger.info("  Operational Costs:")
+    logger.info("  Operating costs:")
     logger.info(f"    O&M:                       {_money(_raw('oandm_pv'))}")
     logger.info(f"    Insurance (operational):  {_money(_raw('insurance_pv'))}")
     if _positive("row_rent_pv"):
         logger.info(f"    ROW rent (operational):    {_money(_raw('row_rent_pv'))}")
-    logger.info(f"    Subtotal:                  {_money(_raw('operational_costs_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('operating_costs_pv'))}")
     logger.info("")
-    logger.info("  Energy & Emissions Costs:")
+    logger.info("  Emissions:")
     if _positive("converter_loss_pv"):
         logger.info(f"    Converter Losses:          {_money(_raw('converter_loss_pv'))}")
         logger.info(f"    Conductor Losses:          {_money(_raw('conductor_loss_pv'))}")
     else:
         logger.info(f"    Energy Losses:             {_money(_raw('energy_losses_pv'))}")
     logger.info(f"    Loss-Comp. Emissions:      {_money(_raw('emissions_comp_cost_pv'))}")
-    logger.info(f"    Subtotal:                  {_money(_raw('energy_emissions_costs_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('external_emissions_costs_pv'))}")
     logger.info("")
-    logger.info("  Risk Costs:")
+    logger.info("  Risk:")
     logger.info(f"    Wildfire:                  {_money(_raw('wildfire_pv'))}")
     logger.info(f"    Outage:                    {_money(_raw('outage_pv'))}")
-    logger.info(f"    Subtotal:                  {_money(_raw('risk_costs_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('external_risk_costs_pv'))}")
     logger.info("")
-    logger.info("  Delay Costs:")
-    logger.info(f"    Construction Delay:        {_money(_raw('delay_cost_pv'))}")
-    logger.info(f"    Subtotal:                  {_money(_raw('delay_costs_pv'))}")
+    logger.info("  Delay-period costs:")
+    logger.info(f"    Direct delay:              {_money(_raw('delay_cost_pv'))}")
+    logger.info(f"    Subtotal:                  {_money(_raw('delay_period_costs_pv'))}")
     logger.info("")
     logger.info("  " + "-" * 78)
     logger.info(f"  Total Costs:                 {_money(_raw('total_costs_pv'))}")

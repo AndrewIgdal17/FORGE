@@ -59,8 +59,9 @@ _TRAJECTORY_OMITTED_SOURCES = (
 )
 
 _BUCKETS = (
-    "C_hard", "C_soft", "C_risk", "C_emissions",
-    "B_remedial", "B_enabling", "B_avoided_emissions",
+    "C_capital", "C_delay_period", "C_operating", "C_external",
+    "C_external_risk", "C_external_emissions",
+    "B_market", "B_external",
 )
 
 # Utility: revenue requirement over that set plus base delay.
@@ -71,7 +72,7 @@ _UTILITY_DELAY = frozenset({"base_delay"})
 _RATEPAYER_NUMERATOR = frozenset(
     item.id
     for item in TAXONOMY.values()
-    if item.side == "benefit" and item.category in ("remedial", "enabling")
+    if item.side == "benefit" and item.category == "market"
 )
 _RATEPAYER_DENOMINATOR = frozenset({
     "capital_recovery", "oandm", "insurance", "row_rent",
@@ -82,35 +83,25 @@ _WILDFIRE_IDS = frozenset(get_excluded_taxonomy_ids(["wildfire"]))
 _OUTAGE_IDS = frozenset(get_excluded_taxonomy_ids(["outage"]))
 _COST_IDS = frozenset(tid for tid, item in TAXONOMY.items() if item.side == "cost")
 _BENEFIT_IDS = frozenset(tid for tid, item in TAXONOMY.items() if item.side == "benefit")
+def _ids(side: str, category: str, subgroup: str | None = None) -> frozenset[str]:
+    return frozenset(
+        tid
+        for tid, item in TAXONOMY.items()
+        if item.side == side
+        and item.category == category
+        and (subgroup is None or item.subgroup == subgroup)
+    )
+
+
 _BUCKET_IDS = {
-    "C_hard": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "cost" and item.category == "hard"
-    ),
-    "C_soft": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "cost" and item.category == "soft"
-    ),
-    "C_risk": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "cost" and item.category == "risk"
-    ),
-    "C_emissions": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "cost" and item.category == "emissions"
-    ),
-    "B_remedial": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "benefit" and item.category == "remedial"
-    ),
-    "B_enabling": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "benefit" and item.category == "enabling"
-    ),
-    "B_avoided_emissions": frozenset(
-        tid for tid, item in TAXONOMY.items()
-        if item.side == "benefit" and item.category == "avoided_emissions"
-    ),
+    "C_capital": _ids("cost", "capital"),
+    "C_delay_period": _ids("cost", "delay_period"),
+    "C_operating": _ids("cost", "operating"),
+    "C_external": _ids("cost", "external"),
+    "C_external_risk": _ids("cost", "external", "risk"),
+    "C_external_emissions": _ids("cost", "external", "emissions"),
+    "B_market": _ids("benefit", "market"),
+    "B_external": _ids("benefit", "external"),
 }
 
 
@@ -299,8 +290,10 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
         denom_excl_risk = grouped(cum_social, _COST_IDS - _WILDFIRE_IDS - _OUTAGE_IDS)
         denom_excl_outage = grouped(cum_social, _COST_IDS - _OUTAGE_IDS)
         denom_excl_wf = grouped(cum_social, _COST_IDS - _WILDFIRE_IDS)
-        denom_excl_emissions = grouped(cum_social, _COST_IDS - _BUCKET_IDS["C_emissions"])
-        num_excl_av_em = grouped(cum_social, _BENEFIT_IDS - _BUCKET_IDS["B_avoided_emissions"])
+        denom_excl_emissions = grouped(
+            cum_social, _COST_IDS - _BUCKET_IDS["C_external_emissions"],
+        )
+        num_excl_av_em = grouped(cum_social, _BENEFIT_IDS - _BUCKET_IDS["B_external"])
         atrr = grouped(cum_wacc, _UTILITY_NUMERATOR)
         denom_utility = grouped(cum_wacc, _UTILITY_NUMERATOR | _UTILITY_DELAY)
         ratepayer_benefits = grouped(cum_wacc, _RATEPAYER_NUMERATOR)
@@ -343,33 +336,27 @@ def compute_trajectory(results: dict, inputs: dict) -> list[dict]:
             _difference(cum_B_total, denom_excl_wf) if bcr_excl_wildfire is not None else None
         )
 
-        cum_C_hard = cum["C_hard"]
-        cum_C_soft = cum["C_soft"]
-        cum_C_risk = cum["C_risk"]
-        cum_C_emissions = cum["C_emissions"]
-        cum_B_remedial = cum["B_remedial"]
-        cum_B_enabling = cum["B_enabling"]
-        cum_B_avoided_emissions = cum["B_avoided_emissions"]
-
         trajectory.append({
             "year": t,
             "phase": phase,
             "year_operational": year_operational,
-            "pv_C_hard": year["C_hard"],
-            "pv_C_soft": year["C_soft"],
-            "pv_C_risk": year["C_risk"],
-            "pv_C_emissions": year["C_emissions"],
-            "pv_B_remedial": year["B_remedial"],
-            "pv_B_enabling": year["B_enabling"],
-            "pv_B_avoided_emissions": year["B_avoided_emissions"],
-            "cum_C_hard": cum_C_hard,
-            "cum_C_soft": cum_C_soft,
-            "cum_C_risk": cum_C_risk,
-            "cum_C_emissions": cum_C_emissions,
+            "pv_C_capital": year["C_capital"],
+            "pv_C_delay_period": year["C_delay_period"],
+            "pv_C_operating": year["C_operating"],
+            "pv_C_external": year["C_external"],
+            "pv_C_external_risk": year["C_external_risk"],
+            "pv_C_external_emissions": year["C_external_emissions"],
+            "pv_B_market": year["B_market"],
+            "pv_B_external": year["B_external"],
+            "cum_C_capital": cum["C_capital"],
+            "cum_C_delay_period": cum["C_delay_period"],
+            "cum_C_operating": cum["C_operating"],
+            "cum_C_external": cum["C_external"],
+            "cum_C_external_risk": cum["C_external_risk"],
+            "cum_C_external_emissions": cum["C_external_emissions"],
             "cum_C_total": cum_C_total,
-            "cum_B_remedial": cum_B_remedial,
-            "cum_B_enabling": cum_B_enabling,
-            "cum_B_avoided_emissions": cum_B_avoided_emissions,
+            "cum_B_market": cum["B_market"],
+            "cum_B_external": cum["B_external"],
             "cum_B_total": cum_B_total,
             "bcr_societal": bcr_societal,
             "bcr_excl_wf_out": bcr_excl_wf_out,
