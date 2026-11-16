@@ -17,6 +17,7 @@ except ImportError:
 from forge.errors import CalculationError, InvalidInputs, UnknownInputPath
 
 _METRIC_KEYS = ("net_benefit_pv", "bcr_societal", "bcr_utility", "bcr_ratepayer")
+_ABSENT = object()
 
 
 def _strip_run_meta(results: dict) -> dict:
@@ -133,10 +134,48 @@ def changed_leaves(before: Any, after: Any, rel_tol: float = 1e-9) -> list[str]:
     return sorted(paths)
 
 
-def compare_runs(before: dict, after: dict) -> list[dict]:
+def _resolve_path(root: Any, path: str) -> Any:
+    if root is None:
+        return _ABSENT
+    cur: Any = root
+    for part in path.split("."):
+        if not part:
+            return _ABSENT
+        if "[" in part:
+            key, bracket = part.split("[", 1)
+            try:
+                idx = int(bracket.rstrip("]"))
+            except ValueError:
+                return _ABSENT
+            if key:
+                if not isinstance(cur, dict) or key not in cur:
+                    return _ABSENT
+                cur = cur[key]
+            if not isinstance(cur, list) or idx >= len(cur):
+                return _ABSENT
+            cur = cur[idx]
+        else:
+            if not isinstance(cur, dict) or part not in cur:
+                return _ABSENT
+            cur = cur[part]
+    return cur
+
+
+def _metric_path_label(before_path: str, after_path: str) -> str:
+    if before_path == after_path:
+        return before_path
+    return f"{before_path}:{after_path}"
+
+
+def compare_runs(
+    before: dict,
+    after: dict,
+    metric_paths: list[tuple[str, str]] | None = None,
+) -> list[dict]:
     before_by_id = {r["id"]: r for r in before["rows"]}
     after_by_id = {r["id"]: r for r in after["rows"]}
     ids = sorted(set(before_by_id) | set(after_by_id), key=lambda i: before_by_id.get(i, after_by_id[i])["name"])
+    metric_paths = metric_paths or []
     compared: list[dict] = []
     for row_id in ids:
         b = before_by_id[row_id]
@@ -156,6 +195,16 @@ def compare_runs(before: dict, after: dict) -> list[dict]:
         for key in _METRIC_KEYS:
             entry[f"{key}_before"] = b["metrics"].get(key)
             entry[f"{key}_after"] = a["metrics"].get(key)
+        extra_columns: list[dict[str, Any]] = []
+        for before_path, after_path in metric_paths:
+            extra_columns.append(
+                {
+                    "label": _metric_path_label(before_path, after_path),
+                    "before": _resolve_path(res_b, before_path),
+                    "after": _resolve_path(res_a, after_path),
+                }
+            )
+        entry["extra_columns"] = extra_columns
         compared.append(entry)
     return compared
 
@@ -174,31 +223,51 @@ def _fmt_cell(before: float | None, after: float | None) -> str:
     return f"{_fmt_metric(before)} → {_fmt_metric(after)}"
 
 
+def _fmt_extra_value(value: Any) -> str:
+    if value is _ABSENT:
+        return "absent"
+    if isinstance(value, (int, float)) or value is None:
+        return _fmt_metric(value)
+    return str(value)
+
+
+def _fmt_extra_cell(before: Any, after: Any) -> str:
+    return f"{_fmt_extra_value(before)} → {_fmt_extra_value(after)}"
+
+
 def format_report(compared: list[dict]) -> str:
+    extra_labels: list[str] = []
+    if compared and compared[0].get("extra_columns"):
+        extra_labels = [col["label"] for col in compared[0]["extra_columns"]]
+    header = ["Row", "Legacy", "Status", "Net benefit", "Societal", "Utility", "Ratepayer", *extra_labels, "Changed leaves"]
     lines = [
-        "| Row | Legacy | Status | Net benefit | Societal | Utility | Ratepayer | Changed leaves |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| " + " | ".join(header) + " |",
+        "| " + " | ".join(["---"] * len(header)) + " |",
     ]
     for row in compared:
         legacy = "yes" if row["legacy"] else "no"
         status = f"{row['status_before']} → {row['status_after']}"
-        lines.append(
-            "| "
-            + " | ".join(
-                [
-                    row["name"],
-                    legacy,
-                    status,
-                    _fmt_cell(row["net_benefit_pv_before"], row["net_benefit_pv_after"]),
-                    _fmt_cell(row["bcr_societal_before"], row["bcr_societal_after"]),
-                    _fmt_cell(row["bcr_utility_before"], row["bcr_utility_after"]),
-                    _fmt_cell(row["bcr_ratepayer_before"], row["bcr_ratepayer_after"]),
-                    str(row["changed_leaves"]),
-                ]
-            )
-            + " |"
-        )
+        cells = [
+            row["name"],
+            legacy,
+            status,
+            _fmt_cell(row["net_benefit_pv_before"], row["net_benefit_pv_after"]),
+            _fmt_cell(row["bcr_societal_before"], row["bcr_societal_after"]),
+            _fmt_cell(row["bcr_utility_before"], row["bcr_utility_after"]),
+            _fmt_cell(row["bcr_ratepayer_before"], row["bcr_ratepayer_after"]),
+        ]
+        for col in row.get("extra_columns") or []:
+            cells.append(_fmt_extra_cell(col["before"], col["after"]))
+        cells.append(str(row["changed_leaves"]))
+        lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
+
+
+def _parse_metric_arg(raw: str) -> tuple[str, str]:
+    if ":" in raw:
+        left, right = raw.split(":", 1)
+        return left.strip(), right.strip()
+    return raw.strip(), raw.strip()
 
 
 def _cmd_run(args: argparse.Namespace) -> None:
@@ -213,7 +282,8 @@ def _cmd_run(args: argparse.Namespace) -> None:
 def _cmd_compare(args: argparse.Namespace) -> None:
     before = json.loads(Path(args.before).read_text())
     after = json.loads(Path(args.after).read_text())
-    table = format_report(compare_runs(before, after))
+    metric_paths = [_parse_metric_arg(m) for m in (args.metric or [])]
+    table = format_report(compare_runs(before, after, metric_paths=metric_paths or None))
     Path(args.out).write_text(table)
 
 
@@ -231,6 +301,13 @@ def main(argv: list[str] | None = None) -> None:
     cmp_p.add_argument("--before", required=True)
     cmp_p.add_argument("--after", required=True)
     cmp_p.add_argument("--out", required=True)
+    cmp_p.add_argument(
+        "--metric",
+        action="append",
+        default=None,
+        metavar="BEFORE[:AFTER]",
+        help="Extra results column from dotted path (repeatable)",
+    )
     cmp_p.set_defaults(func=_cmd_compare)
 
     args = parser.parse_args(argv)
