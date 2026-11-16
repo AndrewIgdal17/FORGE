@@ -11,11 +11,6 @@ financial:
     structure_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
     converter_contingency: .20 # % [0,1]. MISO MTEP25 planning-level contingency (MISO, 2025).
 
-
-  # AFUDC configuration
-  afudc:
-    apply_afudc: true # Toggle AFUDC calculations on/off
-
   # Revenue structures (firm perspective)
   revenue:
     # Rate-based revenue requirement (return on rate base)

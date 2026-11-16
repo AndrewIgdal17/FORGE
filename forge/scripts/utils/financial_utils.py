@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from typing import Dict, Any, Tuple
-from .constants import MIN_DISCOUNT_RATE, TIMING_PATTERN_TOLERANCE
+from .constants import MIN_DISCOUNT_RATE
 
 
 def validate_discount_rate(
@@ -237,14 +237,12 @@ def capitalize_yearly_spending(
     yearly: list[float],
     t_cod: int,
     afudc_rate: float,
-    apply_afudc: bool,
 ) -> float:
     """Capitalize construction-period spending to COD.
 
     Year ``t`` is ``yearly[t - 1]``. Each amount in a year ``t < t_cod``
-    compounds from mid-year to the end of year ``t_cod - 1`` when
-    ``apply_afudc`` is true. Otherwise those amounts are summed with no
-    financing allowance. A non-zero amount in year ``t >= t_cod`` is an error.
+    compounds from mid-year to the end of year ``t_cod - 1``. A non-zero
+    amount in year ``t >= t_cod`` is an error.
     """
     for t, amount in enumerate(yearly, start=1):
         if t >= t_cod and amount != 0:
@@ -256,118 +254,7 @@ def capitalize_yearly_spending(
     for t, amount in enumerate(yearly, start=1):
         if t >= t_cod:
             break
-        if apply_afudc:
-            years_to_cod = last_construction_year - t + 0.5
-            total += amount * (1.0 + afudc_rate) ** years_to_cod
-        else:
-            total += amount
+        years_to_cod = last_construction_year - t + 0.5
+        total += amount * (1.0 + afudc_rate) ** years_to_cod
     return total
 
-
-def calculate_afudc_capitalized_cost(
-    nominal_cost: float,
-    timing_pattern: Dict[str, Any],
-    delay_years: float,
-    construction_years: float,
-    afudc_rate: float,
-    delay_has_active_work: bool = False,
-    spending_profiles: dict[str, list[float]] | None = None,
-) -> Tuple[float, float]:
-    """
-    Capitalize a cost using AFUDC (compound forward to COD).
-
-    Per FERC USoA Account 107 (CWIP): AFUDC applies when:
-    (i) capital expenditures are being incurred, AND
-    (ii) activities necessary to ready the project for service are in progress
-
-    Logic:
-    - Cost incurred during delay: uniform annual spending, each year's spend
-      compounded from its midpoint to COD.
-    - Cost incurred during construction: year-by-year compounding using S-curve
-      spending weights from MISO MTEP25 Table 5-1 (when spending_profiles is
-      provided). Each year's spend is compounded from its midpoint to COD.
-      Falls back to uniform annual weights when profiles are not available.
-    - Compounds to Commercial Operation Date (end of construction).
-
-    Args:
-        nominal_cost (float): Total nominal cost amount
-        timing_pattern (dict): Dict with 'during_delay', 'during_construction', 'afudc_eligible'
-        delay_years (float): Number of delay years
-        construction_years (float): Number of construction years
-        afudc_rate (float): AFUDC rate (annual)
-        delay_has_active_work (bool): Whether active CWIP work continues during delay
-        spending_profiles: Optional dict mapping duration string to annual weight
-            list (e.g. {"5": [0.01, 0.04, 0.35, 0.35, 0.25], ...}). When provided,
-            weights are interpolated via get_construction_spending_weights().
-
-    Returns:
-        tuple: (capitalized_cost, afudc_amount)
-
-    Raises:
-        ValueError: If afudc_rate <= MIN_DISCOUNT_RATE (would cause division by zero)
-        ValueError: If AFUDC-eligible and during_delay + during_construction != 1.0 (within TIMING_PATTERN_TOLERANCE)
-        ValueError: If construction cost is positive and construction_years < 1
-
-    For AFUDC-eligible patterns, during_delay and during_construction must sum to 1.0 (within TIMING_PATTERN_TOLERANCE).
-    """
-    validate_discount_rate(afudc_rate, "afudc_rate")
-    # Check if cost is AFUDC-eligible
-    if not timing_pattern.get("afudc_eligible", False):
-        # Not eligible: return nominal cost with zero AFUDC
-        return nominal_cost, 0.0
-
-    theta_d = timing_pattern["during_delay"]
-    theta_c = timing_pattern["during_construction"]
-    if abs((theta_d + theta_c) - 1.0) > TIMING_PATTERN_TOLERANCE:
-        raise ValueError(
-            f"Cost timing pattern (during_delay + during_construction) must sum to 1.0 (tolerance {TIMING_PATTERN_TOLERANCE}). "
-            f"Got during_delay={theta_d}, during_construction={theta_c}, sum={theta_d + theta_c}."
-        )
-
-    # Total time to COD
-    total_years_to_cod = delay_years + construction_years
-
-    # Cost incurred during delay period
-    delay_cost = nominal_cost * timing_pattern["during_delay"]
-
-    # Cost incurred during construction period
-    construction_cost = nominal_cost * timing_pattern["during_construction"]
-
-    capitalized_cost = 0.0
-
-    # 1) Process delay period costs (uniform annual spending)
-    if delay_cost > 0:
-        if delay_has_active_work and delay_years > 0:
-            n_delay = int(delay_years)
-            if n_delay >= 1:
-                annual_delay_spend = delay_cost / n_delay
-                for yr in range(n_delay):
-                    years_to_cod = total_years_to_cod - (yr + 0.5)
-                    capitalized_cost += annual_delay_spend * (1 + afudc_rate) ** years_to_cod
-            else:
-                capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
-        else:
-            if delay_years > 0:
-                capitalized_cost += delay_cost * (1 + afudc_rate) ** construction_years
-            else:
-                capitalized_cost += delay_cost
-
-    # 2) Process construction period costs (year-by-year S-curve compounding)
-    if construction_cost > 0:
-        n_years = int(construction_years)
-        if n_years < 1:
-            raise ValueError(
-                f"construction_years must be >= 1, got {construction_years}"
-            )
-        if spending_profiles:
-            weights = get_construction_spending_weights(n_years, spending_profiles)
-        else:
-            weights = [1.0 / n_years] * n_years
-        for yr, w in enumerate(weights):
-            years_to_cod = construction_years - (yr + 0.5)
-            capitalized_cost += construction_cost * w * (1 + afudc_rate) ** years_to_cod
-
-    # Calculate AFUDC amount
-    afudc_amount = capitalized_cost - nominal_cost
-
-    return capitalized_cost, afudc_amount

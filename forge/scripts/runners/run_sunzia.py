@@ -74,7 +74,6 @@ def patch_sunzia_inputs(inputs: dict) -> dict:
     fin["inflation_rate"] = 0.03
     fin["wacc_nominal"] = 0.075
     fin["social_discount_rate"] = 0.02
-    fin["afudc"]["apply_afudc"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- Tab 5: Delay Costs ---

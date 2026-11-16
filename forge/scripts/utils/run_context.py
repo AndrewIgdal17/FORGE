@@ -45,7 +45,6 @@ class RunContext:
     t_end: int = 0
     t_cod: int = 0
     spending_weights: list[float] = dc_field(default_factory=list)
-    apply_afudc: bool = True
     build_costs: BuildCosts | None = None
     derived_parameters: dict[str, Any] = dc_field(default_factory=dict)
 

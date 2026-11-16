@@ -6,7 +6,7 @@ from __future__ import annotations
 import copy
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Optional
 from forge.scripts.utils.inputs import section
 from forge.scripts.utils.run_context import get_run_context
 from forge.scripts.utils.calculation_utils import normalize_capacity_mw
@@ -610,24 +610,6 @@ def load_cost_timing_patterns() -> Dict[str, Any]:
     if not cost_timing:
         raise ValueError("Cost timing patterns YAML file is empty or invalid")
     return cost_timing
-
-
-def load_afudc_config() -> Tuple[bool, bool]:
-    """Return ``(apply_afudc, False)``.
-
-    Delay-period active work is not an input. The second value stays so
-    existing unpackers keep working, and it is always false.
-    """
-    try:
-        financing_data = section("03_financing")
-        if not financing_data:
-            raise ValueError("Financing YAML file is empty or invalid")
-        if "financial" not in financing_data:
-            raise KeyError("Missing 'financial' key in financing YAML file")
-        afudc_cfg = financing_data["financial"].get("afudc", {})
-        return (afudc_cfg.get("apply_afudc", False), False)
-    except KeyError as e:
-        raise KeyError(f"Missing required key in financing YAML: {e}")
 
 
 def load_insurance_details() -> Dict[str, Any]:

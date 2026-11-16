@@ -265,6 +265,13 @@ def _bootstrap_run_context() -> "RunContext":
     Called by _run_once() after RunState is set. Returns the populated
     RunContext; also calls set_run_context() and add_derived() as side effects.
     """
+    from forge.contract import removed_input_errors
+    from forge.scripts.utils.run_context import get_run_state
+
+    removed = removed_input_errors(get_run_state().inputs)
+    if removed:
+        raise InvalidInputs("; ".join(removed))
+
     from forge.scripts.utils.run_context import RunContext, add_derived, set_run_context
     from forge.scripts.utils.smart_loaders import get_physical_data_raw
     from forge.scripts.io.yaml_loaders import (
@@ -280,7 +287,6 @@ def _bootstrap_run_context() -> "RunContext":
     from forge.scripts.utils.smart_loaders import get_financing_data_raw
 
     from forge.contract import missing_protected_area_acres
-    from forge.scripts.utils.run_context import get_run_state
 
     _raise_if_market_measurements_invalid()
     _raise_if_required_inputs_missing()
@@ -339,10 +345,6 @@ def _bootstrap_run_context() -> "RunContext":
 
     fin_raw = get_financing_data_raw()
     afudc_rate, afudc_source = calculate_afudc_rate(fin_raw)
-    afudc_cfg = fin_raw.get("financial", {}).get("afudc", {})
-    apply_afudc = True
-    if isinstance(afudc_cfg, dict) and "apply_afudc" in afudc_cfg:
-        apply_afudc = bool(afudc_cfg["apply_afudc"])
     social_discount_rate = getattr(financing, "social_discount_rate", None)
     if social_discount_rate is None:
         social_discount_rate = fin_raw["financial"].get("social_discount_rate", 0)
@@ -372,7 +374,6 @@ def _bootstrap_run_context() -> "RunContext":
         t_end=t_end,
         t_cod=t_cod,
         spending_weights=spending_weights,
-        apply_afudc=apply_afudc,
     )
     set_run_context(ctx)
 

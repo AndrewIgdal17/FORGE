@@ -203,7 +203,7 @@ def main() -> None:
         ctx.horizon,
     )
     total_afudc = capitalize_yearly_spending(
-        mitigation_stream, ctx.t_cod, ctx.afudc_rate, ctx.apply_afudc
+        mitigation_stream, ctx.t_cod, ctx.afudc_rate
     )
     r_social = ctx.social_discount_rate
     r_wacc = financing.wacc_real
@@ -214,7 +214,7 @@ def main() -> None:
     base_cost_nominal = undiscounted(base_stream)
     credits_nominal = undiscounted(credits_stream)
     total_nominal = undiscounted(mitigation_stream)
-    afudc_amount = total_afudc - total_nominal if ctx.apply_afudc else 0.0
+    afudc_amount = total_afudc - total_nominal
 
     # Display results
     logger.info("=" * 80)
@@ -241,13 +241,12 @@ def main() -> None:
     logger.info(f"  TOTAL NOMINAL COST: ${total_nominal:,.2f}")
     logger.info("")
 
-    if ctx.apply_afudc:
-        logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
-        logger.info("")
-        logger.info(f"  TOTAL CAPITALIZED COST (at COD): ${total_afudc:,.2f}")
-        logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
-        logger.info("")
+    logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+    logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
+    logger.info("")
+    logger.info(f"  TOTAL CAPITALIZED COST (at COD): ${total_afudc:,.2f}")
+    logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
+    logger.info("")
 
     logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
     logger.info(f"  Social Discount Rate: {r_social:.2%}")

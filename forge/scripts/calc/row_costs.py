@@ -175,17 +175,14 @@ def main() -> None:
     acquisition_nominal_total = acquisition_nominal + holding_nominal
 
     # Only the acquisition stream is capitalized. Holding and rent stay outside
-    # rate base. With AFUDC off this is the undiscounted acquisition spending.
+    # rate base.
     total_afudc = capitalize_yearly_spending(
         acq_stream,
         ctx.t_cod,
         ctx.afudc_rate,
-        ctx.apply_afudc,
     )
     acquisition_afudc = total_afudc
-    afudc_on_acquisition = (
-        total_afudc - acquisition_nominal if ctx.apply_afudc else 0.0
-    )
+    afudc_on_acquisition = total_afudc - acquisition_nominal
 
     # Display results
     logger.info("=" * 80)
@@ -211,7 +208,7 @@ def main() -> None:
     logger.info(f"  TOTAL NOMINAL ROW COST: ${total_nominal:,.2f}")
     logger.info("")
 
-    if ctx.apply_afudc and acquisition_nominal != 0:
+    if acquisition_nominal != 0:
         logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
         logger.info(
             f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})"

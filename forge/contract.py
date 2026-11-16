@@ -24,6 +24,9 @@ _FEE_SIMPLE_REJECTED_MESSAGE = (
     "fee_simple is no longer an agreement type. Choose another agreement."
 )
 RESULTS_SCHEMA = 2
+REMOVED_INPUTS: dict[str, Any] = {
+    "03_financing.financial.afudc.apply_afudc": True,
+}
 
 
 def _encode(value: Any) -> Any:
@@ -242,6 +245,30 @@ def _validate_against_template(path: str, decoded: Any, template: dict) -> str |
     return "does not refer to a scalar leaf"
 
 
+def _removed_input_message(path: str) -> str:
+    return (
+        f"{path} is no longer an input. Only its old value (true) is accepted, "
+        "and it is ignored."
+    )
+
+
+def removed_input_errors(document: Mapping[str, Any]) -> list[str]:
+    """One message per removed path present with a value other than true or null."""
+    if not isinstance(document, dict):
+        return []
+    messages: list[str] = []
+    for path in REMOVED_INPUTS:
+        try:
+            parent, key = _walk(document, path)
+        except KeyError:
+            continue
+        value = parent[key]
+        if value is True or value is None:
+            continue
+        messages.append(_removed_input_message(path))
+    return messages
+
+
 def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
     """Validate proposed input changes before they are applied.
 
@@ -253,6 +280,11 @@ def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
     errors: list[dict] = []
     for path, raw_value in changes.items():
         decoded = _decode(raw_value)
+        if path in REMOVED_INPUTS:
+            if decoded is True or decoded is None:
+                continue
+            errors.append({"path": path, "message": _removed_input_message(path)})
+            continue
         if not isinstance(decoded, _SCALAR):
             errors.append({"path": path, "message": "value must be a scalar (not a dict or list)"})
             continue
@@ -426,6 +458,8 @@ def missing_required_inputs(
     """
     resolved = copy.deepcopy(get_defaults_template())
     for path, value in changes.items():
+        if path in REMOVED_INPUTS:
+            continue
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
     return _missing_required_in(
@@ -538,6 +572,8 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
         raise UnknownInputPath([error["path"] for error in errors])
     resolved = copy.deepcopy(get_defaults_template())
     for path, value in changes.items():
+        if path in REMOVED_INPUTS:
+            continue
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
     parts: list[str] = []
@@ -572,6 +608,9 @@ def diff_changes(full_inputs: Mapping) -> dict[str, Any]:
     behavior. ``UnknownInputPath`` is only raised when a present value sits
     where the template expects a dict or list, or a list's length differs.
     """
+    removed = removed_input_errors(full_inputs)
+    if removed:
+        raise InvalidInputs("; ".join(removed))
     template = get_defaults_template()
     changes: dict[str, Any] = {}
 

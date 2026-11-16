@@ -423,12 +423,6 @@ _TAB3: list[InputField] = [
        yaml_section="03_financing", field_path="financial.revenue.rate_based.enabled",
        label="Revenue Requirement", help_text="Enable rate-based revenue calculation",
        input_type="toggle", tier="working", display_order=1),
-    # --- AFUDC (AFUDC sub-tab, custom-rendered) ---
-    _f("apply_afudc", taxonomy_id="financial_afudc", input_tab="financial",
-       sub_tab="afudc", condition="always_hidden",
-       yaml_section="03_financing", field_path="financial.afudc.apply_afudc",
-       label="Apply AFUDC", help_text="Toggle AFUDC capitalization",
-       input_type="toggle", tier="advanced", display_order=1),
 ]
 
 # Construction spending profiles (26 year-weights: 5 + 6 + 7 + 8).

@@ -65,7 +65,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     fin["inflation_rate"] = 0.025
     fin["wacc_nominal"] = 0.0666
     fin["social_discount_rate"] = 0.02
-    fin["afudc"]["apply_afudc"] = True
     fin["revenue"]["rate_based"]["enabled"] = True
 
     # --- 04: Insurance ---

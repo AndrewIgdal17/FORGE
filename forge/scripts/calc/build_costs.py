@@ -266,14 +266,9 @@ def main() -> None:
         summed,
         ctx.t_cod,
         ctx.afudc_rate,
-        ctx.apply_afudc,
     )
     total_nominal = undiscounted(summed)
-    afudc_amount = (
-        capitalized_cost_with_contingencies - total_nominal
-        if ctx.apply_afudc
-        else 0.0
-    )
+    afudc_amount = capitalized_cost_with_contingencies - total_nominal
     r_social = ctx.social_discount_rate
     r_wacc = financing.wacc_real
     component_pv = {
@@ -318,18 +313,17 @@ def main() -> None:
     )
     logger.info("")
 
-    if ctx.apply_afudc:
-        logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
-        logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
-        logger.info("")
-        logger.info(
-            f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
-        )
-        logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
-        logger.info(
-            f"    (Build costs incurred during {project_details.construction_years} year construction)"
-        )
-        logger.info("")
+    logger.info("[REGULATORY PERSPECTIVE - AFUDC Capitalization]")
+    logger.info(f"  AFUDC Rate: {ctx.afudc_rate:.2%} ({ctx.afudc_source})")
+    logger.info("")
+    logger.info(
+        f"  TOTAL CAPITALIZED COST (at COD): ${capitalized_cost_with_contingencies:,.2f}"
+    )
+    logger.info(f"  Total AFUDC Amount: ${afudc_amount:,.2f}")
+    logger.info(
+        f"    (Build costs incurred during {project_details.construction_years} year construction)"
+    )
+    logger.info("")
 
     logger.info("[SOCIETAL PERSPECTIVE - Present Value]")
     logger.info(f"  Social Discount Rate: {r_social:.2%}")
