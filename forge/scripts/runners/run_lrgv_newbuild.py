@@ -67,12 +67,6 @@ def patch_laredo_newbuild(inputs: dict) -> dict:
     fin["social_discount_rate"] = 0.02
     fin["revenue"]["rate_based"]["enabled"] = True
 
-    # --- 04: Insurance ---
-    ins = inputs["04_insurance"]["insurance"]
-    ins["insurable_components"]["conductors"] = True
-    ins["insurable_components"]["structures"] = True
-    ins["insurable_components"]["converters"] = True
-
     # --- 05: Delay Costs (annual, 7yr permitting for new corridor) ---
     inputs["05_delays"]["annual_base_delay_cost"] = 9_000_000
 

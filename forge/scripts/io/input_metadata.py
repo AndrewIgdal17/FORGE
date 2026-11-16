@@ -652,7 +652,7 @@ _TAB4.append(_f(
     validation={"min": 0, "max": 1, "step": 0.01, "pct": True}))
 
 # ===================================================================
-# Tab 5 — Operating Costs (53 fields: 10 insurance + 36 veg + 5 structure + 2 converter)
+# Tab 5 — Operating Costs (50 fields: 7 insurance + 36 veg + 5 structure + 2 converter)
 # ===================================================================
 
 _TAB5: list[InputField] = [
@@ -662,21 +662,6 @@ _TAB5: list[InputField] = [
        help_text="Used only when the construction type has no specific rate. All default construction types have specific rates.",
        input_type="percent", condition="always_hidden", tier="working", display_order=1,
        validation={"min": 0, "max": 1, "step": 0.001, "pct": True},
-       sub_tab="operational-insurance"),
-    _f("insurable_conductors", taxonomy_id="insurance", input_tab="operating",
-       yaml_section="04_insurance", field_path="insurance.insurable_components.conductors",
-       label="Conductors", help_text="Include conductor costs in insurable value",
-       input_type="toggle", condition="always_hidden", tier="working", display_order=2,
-       sub_tab="operational-insurance"),
-    _f("insurable_structures", taxonomy_id="insurance", input_tab="operating",
-       yaml_section="04_insurance", field_path="insurance.insurable_components.structures",
-       label="Structures", help_text="Include structure costs in insurable value",
-       input_type="toggle", condition="always_hidden", tier="working", display_order=3,
-       sub_tab="operational-insurance"),
-    _f("insurable_converters", taxonomy_id="insurance", input_tab="operating",
-       yaml_section="04_insurance", field_path="insurance.insurable_components.converters",
-       label="Converters", help_text="Include converter costs in insurable value",
-       input_type="toggle", condition="always_hidden", tier="working", display_order=4,
        sub_tab="operational-insurance"),
     _f("insurance_premium_overhead", taxonomy_id="insurance", input_tab="operating",
        yaml_section="04_insurance", field_path="insurance.premium_rate_by_type.overhead",

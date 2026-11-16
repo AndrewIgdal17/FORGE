@@ -67,7 +67,6 @@ def calculate_insurance_costs(
               insurance_pv_wacc, and stream
     """
     ins_cfg = insurance_yaml["insurance"]
-    components = ins_cfg["insurable_components"]
 
     # Look up rate by construction type (fall back to default)
     rate_by_type = ins_cfg["premium_rate_by_type"]
@@ -75,15 +74,10 @@ def calculate_insurance_costs(
     line_rate = rate_by_type.get(yaml_ct, ins_cfg["premium_rate_default"])
     converter_rate = rate_by_type.get("converter", line_rate)
 
-    # Explicit binary selectors (appendix §5 ξ_conductor, ξ_structure, ξ_converter)
-    xi_conductor = 1.0 if components["conductors"] else 0.0
-    xi_structure = 1.0 if components["structures"] else 0.0
-    xi_converter = 1.0 if components["converters"] else 0.0
     line_insurable = (
-        xi_conductor * conductor_cost_with_contingencies
-        + xi_structure * structure_cost_with_contingencies
+        conductor_cost_with_contingencies + structure_cost_with_contingencies
     )
-    converter_insurable = xi_converter * converter_cost_with_contingencies
+    converter_insurable = converter_cost_with_contingencies
 
     insurable_value = line_insurable + converter_insurable
     annual_premium = (line_insurable * line_rate) + (converter_insurable * converter_rate)
@@ -164,13 +158,9 @@ def main() -> None:
     logger.info("")
 
     logger.info("INSURABLE ASSET VALUE:")
-    ins_components = insurance_yaml["insurance"]["insurable_components"]
-    if ins_components["conductors"]:
-        logger.info(f"  Conductor Costs: ${costs.conductor_cost_with_contingencies:,.2f}")
-    if ins_components["structures"]:
-        logger.info(f"  Structure Costs: ${costs.structure_cost_with_contingencies:,.2f}")
-    if ins_components["converters"]:
-        logger.info(f"  Converter Costs: ${costs.converter_cost_with_contingencies:,.2f}")
+    logger.info(f"  Conductor Costs: ${costs.conductor_cost_with_contingencies:,.2f}")
+    logger.info(f"  Structure Costs: ${costs.structure_cost_with_contingencies:,.2f}")
+    logger.info(f"  Converter Costs: ${costs.converter_cost_with_contingencies:,.2f}")
     logger.info(f"  ---")
     logger.info(f"  Total Insurable Value: ${results['insurable_value']:,.2f}")
     logger.info("")

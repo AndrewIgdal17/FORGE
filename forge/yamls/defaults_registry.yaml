@@ -964,27 +964,6 @@ soft_costs:
       citation: null
       yaml_file: 04_insurance.yaml
       basis: Author judgment
-    insurable_conductors:
-      path: 04_insurance.insurance.insurable_components.conductors
-      unit: boolean
-      source: All major components included in insurable value
-      citation: null
-      yaml_file: 04_insurance.yaml
-      basis: Author judgment
-    insurable_structures:
-      path: 04_insurance.insurance.insurable_components.structures
-      unit: boolean
-      source: All major components included in insurable value
-      citation: null
-      yaml_file: 04_insurance.yaml
-      basis: Author judgment
-    insurable_converters:
-      path: 04_insurance.insurance.insurable_components.converters
-      unit: boolean
-      source: All major components included in insurable value
-      citation: null
-      yaml_file: 04_insurance.yaml
-      basis: Author judgment
   energy_losses:
     corona_tier_1_max_230kv:
       path: 22_corona_losses.corona.voltage_class_tiers[0].kw_per_mile

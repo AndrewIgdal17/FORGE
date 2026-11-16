@@ -5,6 +5,7 @@ import re
 import pytest
 
 import forge
+from forge.scripts.calc.insurance_costs import calculate_insurance_costs
 from forge.scripts.io import yaml_loaders
 from forge.scripts.io.input_metadata import INPUT_METADATA
 from forge.scripts.utils import financial_utils
@@ -13,6 +14,7 @@ from forge.scripts.utils.run_context import RunContext
 from test.spec05_project import item, project_changes, run
 
 AFUDC = "03_financing.financial.afudc.apply_afudc"
+INS = "04_insurance.insurance.insurable_components."
 MSG = "{} is no longer an input. Only its old value (true) is accepted, and it is ignored."
 
 # The brief names `item` as a helper for this file. These cases do not call it.
@@ -59,3 +61,21 @@ def test_afudc_switch_is_gone():
     assert "apply_afudc" not in RunContext.__dataclass_fields__
     assert "apply_afudc" not in INPUT_METADATA
     assert "afudc" not in forge.get_defaults_template()["03_financing"]["financial"]
+
+
+@pytest.mark.parametrize("part", ["conductors", "structures", "converters"])
+def test_insurable_true_is_ignored_and_false_refused(part):
+    base = run()["costs"]["insurance"]
+    same = run(project_changes(**{INS + part: True}))["costs"]["insurance"]
+    assert (same["insurable_value"], same["pv_total"]) == (base["insurable_value"], base["pv_total"])
+    with pytest.raises(forge.InvalidInputs, match=re.escape(MSG.format(INS + part))):
+        forge.resolve_inputs(project_changes(**{INS + part: False}))
+
+
+def test_insurance_has_no_component_flags():
+    yaml_ = {"insurance": {"premium_rate_default": 0.002, "escalation_rate": 0.0,
+             "premium_rate_by_type": {"overhead": 0.002, "converter": 0.007}}}
+    r = calculate_insurance_costs(yaml_, 100.0, 50.0, 30.0, 2, "Overhead", 0.05, 0.02, 2, 3)
+    assert r["insurable_value"] == 180.0
+    assert r["annual_premium"] == pytest.approx(150.0 * 0.002 + 30.0 * 0.007)
+    assert "insurable_components" not in forge.get_defaults_template()["04_insurance"]["insurance"]

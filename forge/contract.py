@@ -26,6 +26,9 @@ _FEE_SIMPLE_REJECTED_MESSAGE = (
 RESULTS_SCHEMA = 2
 REMOVED_INPUTS: dict[str, Any] = {
     "03_financing.financial.afudc.apply_afudc": True,
+    "04_insurance.insurance.insurable_components.conductors": True,
+    "04_insurance.insurance.insurable_components.structures": True,
+    "04_insurance.insurance.insurable_components.converters": True,
 }
 
 

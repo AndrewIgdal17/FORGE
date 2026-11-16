@@ -11,7 +11,3 @@ insurance:
     underground_tunnel: 0.002
     converter: 0.007
   escalation_rate: 0.02
-  insurable_components:
-    conductors: true
-    structures: true
-    converters: true

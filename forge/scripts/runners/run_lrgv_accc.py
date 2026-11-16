@@ -41,12 +41,6 @@ def _patch_lrgv_common(inputs: dict) -> dict:
     fin["social_discount_rate"] = 0.02
     fin["revenue"]["rate_based"]["enabled"] = True
 
-    # --- 04: Insurance ---
-    ins = inputs["04_insurance"]["insurance"]
-    ins["insurable_components"]["conductors"] = True
-    ins["insurable_components"]["structures"] = True
-    ins["insurable_components"]["converters"] = True
-
     # --- 06: Wildfire (South Texas coastal plain — low but nonzero) ---
     wf = inputs["06_wildfire_costs"]["wildfire"]
     wf["base_ignition_rate"] = 0.0005  # ~1/4 of CA default; STX irrigated ag/scrub
