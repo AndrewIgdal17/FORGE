@@ -383,7 +383,26 @@ def _project_section(document: Mapping[str, Any]) -> Mapping[str, Any]:
     return project if isinstance(project, dict) else {}
 
 
-def _required_condition(name: str, project: Mapping[str, Any]) -> bool:
+def _timeline_section(document: Mapping[str, Any]) -> Mapping[str, Any]:
+    section = document.get("01_project_technical_details", {})
+    if not isinstance(section, dict):
+        return {}
+    timeline = section.get("timeline", {})
+    return timeline if isinstance(timeline, dict) else {}
+
+
+def delay_cost_required_message(delay_years: int | float) -> str:
+    return (
+        f"Annual direct delay cost is required when delay_years is {int(delay_years)}. "
+        "Enter 0 if there is none."
+    )
+
+
+def _required_condition(
+    name: str,
+    project: Mapping[str, Any],
+    timeline: Mapping[str, Any],
+) -> bool:
     project_type = project.get("project_type")
     sending_source = project.get("sending_source")
     replaced_line = project_type in {"reconductoring", "rebuild"}
@@ -399,6 +418,11 @@ def _required_condition(name: str, project: Mapping[str, Any]) -> bool:
         return replaced_line
     if name == "reconductoring_or_rebuild_dc":
         return replaced_line and project.get("old_ac_dc") == "DC"
+    if name == "delay_positive":
+        delay_years = timeline.get("delay_years")
+        if isinstance(delay_years, bool) or not isinstance(delay_years, (int, float)):
+            return False
+        return delay_years > 0
     raise ValueError(f"unknown required_when condition {name!r}")
 
 
@@ -419,6 +443,7 @@ def _missing_required_in(
     no_linelosses: bool,
 ) -> list[dict]:
     project = _project_section(document)
+    timeline = _timeline_section(document)
     missing: list[dict] = []
     # Retained for callers. It no longer drops a field.
     _ = no_linelosses
@@ -430,7 +455,7 @@ def _missing_required_in(
         if capital_only and stage == "after_route":
             continue
         path = f"{field['yaml_section']}.{field['field_path']}"
-        if not _required_condition(required_when, project):
+        if not _required_condition(required_when, project, timeline):
             continue
         try:
             parent, key = _walk(document, path)
@@ -440,11 +465,18 @@ def _missing_required_in(
         if not _value_is_missing(path, value):
             continue
         label = field["label"]
+        if required_when == "delay_positive":
+            delay_years = timeline.get("delay_years", 0)
+            message = delay_cost_required_message(
+                int(delay_years) if isinstance(delay_years, (int, float)) else 0
+            )
+        else:
+            message = f"{label} is required."
         missing.append({
             "path": path,
             "label": label,
             "stage": stage,
-            "message": f"{label} is required.",
+            "message": message,
         })
     return missing
 

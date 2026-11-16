@@ -1188,7 +1188,7 @@ benefits:
     annual_base_delay_cost:
       path: 05_delays.annual_base_delay_cost
       unit: $/year
-      source: Project-specific; no published benchmark. Default 0.
+      source: "Project-specific; no published benchmark. No default: required when delay_years > 0."
       citation: null
       yaml_file: 05_delays.yaml
       basis: Author judgment

@@ -783,7 +783,9 @@ _TAB6: list[InputField] = [
        label="Annual direct delay cost",
        help_text="Total direct out-of-pocket annual spend during the pre-construction/permitting period (legal, admin, PM, regulatory, etc.). Foregone congestion benefits during delay are modeled separately.",
        unit="$/year",
-       input_type="currency", tier="first-glance", display_order=1),
+       input_type="currency", tier="first-glance", display_order=1,
+       required_when="delay_positive", required_stage="before_route",
+       validation={"min": 0, "allowBlank": True}),
 ]
 
 # ===================================================================

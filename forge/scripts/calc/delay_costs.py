@@ -9,6 +9,8 @@ import logging
 # Standard library imports
 import yaml
 
+from forge.contract import delay_cost_required_message
+from forge.errors import InvalidInputs
 from forge.scripts.utils.smart_output import SmartOutputManager
 
 # Local utility imports
@@ -43,7 +45,13 @@ def main() -> None:
     delay_cost_df = load_delay_costs()
     delay_year = load_project_technical_details()
 
-    total_yearly_delay_cost = delay_cost_df["annual_base_delay_cost"]
+    delay_years = int(delay_year)
+    amount = delay_cost_df.get("annual_base_delay_cost")
+    if delay_years > 0 and amount is None:
+        raise InvalidInputs(delay_cost_required_message(delay_years))
+    if amount is None:
+        amount = 0.0
+    total_yearly_delay_cost = amount
 
     ctx = get_run_context()
     if ctx is None:
@@ -51,7 +59,6 @@ def main() -> None:
             f"{__name__} requires a RunContext. Run via forge.py or set up "
             "RunContext in your test fixture."
         )
-    delay_years = int(delay_year)
     base_delay_stream = level(total_yearly_delay_cost, 1, delay_years, ctx.horizon)
     total_delay_cost = undiscounted(base_delay_stream)
 
