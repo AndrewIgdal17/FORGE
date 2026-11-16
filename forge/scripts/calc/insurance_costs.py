@@ -250,6 +250,7 @@ def main() -> None:
         "pv_total_wacc": results["insurance_pv_wacc"],
         "insurable_value": results["insurable_value"],
         "premium_rate": results["premium_rate"],
+        "line_rate": results["line_rate"],
         "line_annual_premium": results["line_annual_premium"],
         "line_nominal": results["line_nominal"],
         "line_pv": results["line_pv"],

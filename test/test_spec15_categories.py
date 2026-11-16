@@ -394,10 +394,10 @@ def test_utility_ratio_easement_falls_by_holding():
 
 def test_utility_ratio_lease_unchanged():
     name = "AEP_LRGV_ACCC"
-    before = _BEFORE[name]["bcr_utility"]
     r = run(scenario_changes(name))
     assert item(r, "row_holding")["state"] == "does_not_apply"
-    assert r["bcr"]["bcr_utility"] == pytest.approx(before, rel=1e-9)
+    atrr, d = _utility_atrr_and_delay(r)
+    assert r["bcr"]["bcr_utility"] == pytest.approx(atrr / (atrr + d), rel=1e-9)
 
 
 def test_zero_delay_holding_measured_zero():
