@@ -5,7 +5,7 @@ import pathlib
 import pytest
 
 from test.spec05_project import item, measured, project_changes, run
-from test.spec11_scenarios import SCENARIOS, numbers, scenario_changes
+from test.spec11_scenarios import DC_RECONDUCTORING, SCENARIOS, numbers, scenario_changes
 
 STATES = {"measured", "not_available", "does_not_apply"}
 PROJECT = "01_project_technical_details.project."
@@ -195,15 +195,7 @@ def test_zero_delay_direct_delay_cost_is_a_measured_zero():  # acceptance 6
 
 
 def test_dc_reconductoring_converter_cost_off_losses_on():  # acceptance 11, Review Focus 2
-    r = run(scenario_changes("AEP_LRGV_ACCC", **{
-        PROJECT + "ac_dc": "DC",
-        PROJECT + "old_ac_dc": "DC",
-        PROJECT + "number_of_converters": 2,
-        PROJECT + "converter_type": "VSC Converter",
-        PROJECT + "old_converter_type": "VSC Converter",
-        PROJECT + "capacity_mw": 2400,
-        PROJECT + "old_capacity_mw": 2400,
-    }))
+    r = run(scenario_changes("AEP_LRGV_ACCC", **DC_RECONDUCTORING))
     assert item(r, "build_converter")["state"] == "does_not_apply"
     assert item(r, "build_structure")["state"] == "does_not_apply"
     assert item(r, "line_loss_converter")["applies"] is True

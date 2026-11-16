@@ -9,6 +9,18 @@ from test.spec07_regions import REGION_SENTINELS
 
 SCENARIOS = ("SunZia_Delay2", "CTT_Actual_Delay2", "AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild")
 
+_PROJECT = "01_project_technical_details.project."
+
+DC_RECONDUCTORING: dict[str, object] = {
+    _PROJECT + "ac_dc": "DC",
+    _PROJECT + "old_ac_dc": "DC",
+    _PROJECT + "number_of_converters": 2,
+    _PROJECT + "converter_type": "VSC Converter",
+    _PROJECT + "old_converter_type": "VSC Converter",
+    _PROJECT + "capacity_mw": 2400,
+    _PROJECT + "old_capacity_mw": 2400,
+}
+
 
 def scenario_changes(name: str, **overrides: object) -> dict:
     """forge.diff_changes(bundled inputs) with protected acres 0, region sentinels, then overrides."""
