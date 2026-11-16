@@ -6,9 +6,15 @@ Run once on the last 1.x release before any spec-4 refactoring:
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 import forge
+from test.spec11_scenarios import scenario_changes
 
 GOLDEN_DIR = Path(__file__).resolve().parent.parent / "test" / "golden"
 
@@ -30,12 +36,10 @@ def main():
     scenarios_dir = forge.get_scenarios_path()
 
     for forge_file in sorted(scenarios_dir.glob("*.forge")):
-        with open(forge_file) as f:
-            document = json.load(f)
-        full_inputs = document["inputs"]
-        changes = forge.diff_changes(full_inputs)
+        stem = forge_file.stem
+        changes = scenario_changes(stem)
         resolved = forge.resolve_inputs(changes)
-        results = forge.run_calculation(resolved, scenario_id=forge_file.stem)
+        results = forge.run_calculation(resolved, scenario_id=stem)
         clean = _strip_excluded(results)
 
         out = GOLDEN_DIR / f"{forge_file.stem}.json"

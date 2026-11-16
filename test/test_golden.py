@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 import forge
+from test.spec11_scenarios import scenario_changes
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
 EXCLUDED_KEYS = {"timestamp", "provenance"}
@@ -60,3 +61,14 @@ def test_bundled_scenario_omits_protected_area_acres(scenario):
     document = json.loads(forge_file.read_text())
     with pytest.raises(forge.InvalidInputs, match="protected_area_acres are required"):
         forge.resolve_inputs(forge.diff_changes(document["inputs"]))
+
+
+def test_golden_matches_current_results(scenario):
+    """Each bundled case study matches its golden fixture under scenario_changes."""
+    changes = scenario_changes(scenario)
+    results = forge.run_calculation(
+        forge.resolve_inputs(changes), scenario_id=scenario,
+    )
+    actual = json.loads(forge.canonical_dumps(_strip_excluded(results)))
+    expected = json.loads((GOLDEN_DIR / f"{scenario}.json").read_text())
+    assert _approx_equal(actual, expected), scenario
