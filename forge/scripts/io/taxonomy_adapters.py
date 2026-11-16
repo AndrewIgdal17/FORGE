@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from .taxonomy import INSURANCE_IDS, OANDM_IDS, TAXONOMY
+from .taxonomy import INSURANCE_IDS, OANDM_IDS, OUTAGE_IDS, TAXONOMY
 
 # ---------------------------------------------------------------------------
 # Result envelope dataclasses
@@ -309,31 +309,27 @@ def adapt_wildfire(wildfire: dict) -> list[TaxonomyResult]:
 
 
 def adapt_outage(outage: dict) -> list[TaxonomyResult]:
-    """Adapt costs.outage -> outage_eac with two-tier detail rows. Societal only."""
+    """Adapt costs.outage -> outage_load_shed and outage_redispatch. Societal only."""
     if not outage:
         return []
     streams = outage.get("streams") or {}
-    stream = streams.get("outage_eac")
-    detail_rows: list[DetailRow] = []
-    ls = _safe(outage, "cost_loadshed")
-    rd = _safe(outage, "cost_redispatch")
-    if ls or rd:
-        detail_rows.append(
-            DetailRow("component", "load_shed_per_event", value_pv=0.0, value_annual=ls)
-        )
-        detail_rows.append(
-            DetailRow("component", "redispatch_per_event", value_pv=0.0, value_annual=rd)
-        )
-    return _copy_availability(outage, [
-        TaxonomyResult(
-            "outage_eac",
-            value_pv=_safe(outage, "pv_cost"),
-            value_nominal=_safe(outage, "nominal_total"),
-            value_annual=_safe(outage, "expected_annual_loss"),
+
+    def _item(
+        taxonomy_id: str, pv_key: str, nom_key: str, annual_key: str,
+    ) -> TaxonomyResult:
+        stream = streams.get(taxonomy_id)
+        return TaxonomyResult(
+            taxonomy_id,
+            value_pv=_safe(outage, pv_key),
+            value_nominal=_safe(outage, nom_key),
+            value_annual=_safe(outage, annual_key),
             value_pv_wacc=None,
             stream=list(stream) if stream is not None else None,
-            detail=tuple(detail_rows) if detail_rows else None,
-        ),
+        )
+
+    return _copy_availability(outage, [
+        _item("outage_load_shed", "pv_load_shed", "nominal_load_shed", "annual_load_shed"),
+        _item("outage_redispatch", "pv_redispatch", "nominal_redispatch", "annual_redispatch"),
     ])
 
 
@@ -569,8 +565,10 @@ def taxonomy_results_to_flat_keys(results: list[TaxonomyResult]) -> dict:
         "displacement_avoided_benefit_pv": _pv("avoided_emissions_benefit"),
         "wildfire_pv": _pv("wildfire_eac"),
         "wildfire_nominal": _nom("wildfire_eac"),
-        "outage_pv": _pv("outage_eac"),
-        "outage_nominal": _nom("outage_eac"),
+        "outage_load_shed_pv": _part_pv("outage_load_shed"),
+        "outage_redispatch_pv": _part_pv("outage_redispatch"),
+        "outage_pv": _sum_pv(OUTAGE_IDS),
+        "outage_nominal": _sum_nom(OUTAGE_IDS),
         "delay_cost_pv": _pv("base_delay"),
         "delay_cost_nominal": _nom("base_delay"),
         "congestion_benefit_pv": _pv("congestion_benefit"),

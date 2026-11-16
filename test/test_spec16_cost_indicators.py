@@ -8,6 +8,7 @@ from forge.scripts.io.input_metadata import INPUT_METADATA
 from forge.scripts.io.taxonomy import (
     INSURANCE_IDS,
     OANDM_IDS,
+    OUTAGE_IDS,
     TAXONOMY,
     TAXONOMY_TO_CALCULATOR_KEY,
 )
@@ -85,6 +86,10 @@ def test_split_moves_no_number():
         got_items = {e["taxonomy_id"]: e["value_pv"] for e in r["taxonomy_results"]}
         for key, value in expected["items"].items():
             if key in ("oandm", "insurance"):
+                continue
+            if key == "outage_eac":
+                total = sum(got_items[tid] for tid in OUTAGE_IDS)
+                assert total == pytest.approx(value, rel=1e-9, abs=1e-6), (name, key)
                 continue
             if value is None:
                 assert got_items.get(key) is None, (name, key)

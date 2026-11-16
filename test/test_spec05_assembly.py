@@ -8,7 +8,13 @@ from forge.scripts.io.taxonomy_adapters import (
     taxonomy_results_to_json_list,
 )
 
-_SOCIAL = ("wildfire_eac", "outage_eac", "emissions_comp", "avoided_emissions_benefit")
+_SOCIAL = (
+    "wildfire_eac",
+    "outage_load_shed",
+    "outage_redispatch",
+    "emissions_comp",
+    "avoided_emissions_benefit",
+)
 
 
 def _r(i, pv, wacc):  # value_nominal irrelevant here

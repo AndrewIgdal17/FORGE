@@ -113,6 +113,7 @@ _BCR_OUTPUT_KEYS = frozenset({
     "emissions_comp_cost_pv",
     "displacement_avoided_benefit_pv",
     "wildfire_pv", "outage_pv",
+    "outage_load_shed_pv", "outage_redispatch_pv",
     "delay_cost_pv",
     "congestion_benefit_pv",
     "delivered_benefit_pv", "delivered_benefit_nominal",

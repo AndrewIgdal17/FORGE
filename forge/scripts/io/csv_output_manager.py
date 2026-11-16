@@ -44,6 +44,8 @@ BATCH_SUMMARY_FIELDS = [
     # 5. External / risk PV (with breakdown)
     "wildfire_pv",
     "outage_pv",
+    "outage_load_shed_pv",
+    "outage_redispatch_pv",
     "external_risk_costs_pv",
     "external_risk_costs_nominal",
     # 6. Delay-period costs PV

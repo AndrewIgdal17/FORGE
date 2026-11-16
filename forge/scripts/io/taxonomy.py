@@ -148,11 +148,14 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
     TaxonomyItem("wildfire_eac", "cost", "external", "risk",
                  "Expected Wildfire Cost", "social", None, 1,
                  "Expected annual loss from wildfire (ignition rate x severity x risk growth)."),
-    TaxonomyItem("outage_eac", "cost", "external", "risk",
-                 "Expected Outage Cost", "social", None, 2,
-                 "Expected annual cost from transmission outages (rate x duration x VoLL x risk growth)."),
+    TaxonomyItem("outage_load_shed", "cost", "external", "risk",
+                 "Outage cost: load shed", "social", None, 2,
+                 "Expected annual cost of load shed in outages: rate × share shed × power lost × duration × VoLL at that duration."),
+    TaxonomyItem("outage_redispatch", "cost", "external", "risk",
+                 "Outage cost: redispatch", "social", None, 3,
+                 "Expected annual cost of redispatch in outages: rate × share redispatched × power lost × duration × congestion spread."),
     TaxonomyItem("emissions_comp", "cost", "external", "emissions",
-                 "Loss-Compensation Emissions", "social", None, 3,
+                 "Loss-Compensation Emissions", "social", None, 4,
                  "Social cost of emissions from generation compensating for line losses."),
     # --- Market benefits ---
     TaxonomyItem("congestion_benefit", "benefit", "market", None,
@@ -211,10 +214,11 @@ TAXONOMY_ITEMS: tuple[TaxonomyItem, ...] = (
 )
 
 TAXONOMY: dict[str, TaxonomyItem] = {item.id: item for item in TAXONOMY_ITEMS}
-assert len(TAXONOMY) == 33, f"Expected 33 taxonomy items, got {len(TAXONOMY)}"
+assert len(TAXONOMY) == 34, f"Expected 34 taxonomy items, got {len(TAXONOMY)}"
 
 OANDM_IDS = frozenset({"oandm_line", "oandm_converter"})
 INSURANCE_IDS = frozenset({"insurance_line", "insurance_converter"})
+OUTAGE_IDS = frozenset({"outage_load_shed", "outage_redispatch"})
 
 # ---------------------------------------------------------------------------
 # Section 2 — Dimensions registry
@@ -242,8 +246,8 @@ TAXONOMY_DIMENSIONS: tuple[DimensionEntry, ...] = (
     DimensionEntry("row_rent", "zone", "Per-zone annual rent"),
     DimensionEntry("line_loss_conductor", "terrain", "Loss MWh varies with resistance (terrain-adjusted miles)"),
     DimensionEntry("wildfire_eac", "year", "Risk growth over project lifetime"),
-    DimensionEntry("outage_eac", "year", "Risk growth over project lifetime"),
-    DimensionEntry("outage_eac", "voll_tier", "VoLL is piecewise by duration tier"),
+    DimensionEntry("outage_load_shed", "year", "Risk growth over project lifetime"),
+    DimensionEntry("outage_redispatch", "year", "Risk growth over project lifetime"),
     DimensionEntry("emissions_comp", "pollutant", "CO2, SOx, NOx"),
     DimensionEntry("emissions_comp", "source", "Per-source mix contribution"),
     DimensionEntry("emissions_comp", "year", "Evolving mix over project lifetime"),
@@ -285,7 +289,7 @@ EXCLUDABLE_GROUPS: dict[str, ExcludableGroup] = {
     ),
     "outage": ExcludableGroup(
         "outage", "Outage Risk",
-        frozenset({"outage_eac"}),
+        frozenset({"outage_load_shed", "outage_redispatch"}),
     ),
 }
 
@@ -394,7 +398,8 @@ TAXONOMY_TO_CALCULATOR_KEY: dict[str, str] = {
     "base_delay": "delay_cost_pv",
     # Risk costs
     "wildfire_eac": "wildfire_pv",
-    "outage_eac": "outage_pv",
+    "outage_load_shed": "outage_load_shed_pv",
+    "outage_redispatch": "outage_redispatch_pv",
     # Emissions costs
     "emissions_comp": "emissions_comp_cost_pv",
     # Benefits

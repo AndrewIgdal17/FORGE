@@ -6,7 +6,13 @@ from forge.scripts.utils.streams import pv
 
 from test.spec05_project import item, measured, project_changes, run
 
-EXT = ("wildfire_eac", "outage_eac", "emissions_comp", "avoided_emissions_benefit")
+EXT = (
+    "wildfire_eac",
+    "outage_load_shed",
+    "outage_redispatch",
+    "emissions_comp",
+    "avoided_emissions_benefit",
+)
 _SOURCE = "01_project_technical_details.project.sending_source"
 _SEND = "01_project_technical_details.terminals.sending."
 _RECV = "01_project_technical_details.terminals.receiving."
@@ -81,7 +87,7 @@ def test_externalities_societal_only():
 
 def test_taxonomy_has_33_items_and_no_removed_ids():
     ids = {t.id for t in TAXONOMY.values()}
-    assert len(ids) == 33
+    assert len(ids) == 34
     removed = {
         "emissions_fac",
         "emissions_displacement_delay",

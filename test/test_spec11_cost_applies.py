@@ -156,6 +156,8 @@ _LINE_OM_F8_SKIP_BCR = {"AEP_LRGV_ACCC", "AEP_LRGV_ACSR_Rebuild"}
 def _legacy_operating_pv(got_items: dict, legacy_key: str) -> float | None:
     if legacy_key == "oandm":
         parts = ("oandm_line", "oandm_converter")
+    elif legacy_key == "outage_eac":
+        parts = ("outage_load_shed", "outage_redispatch")
     else:
         parts = ("insurance_line", "insurance_converter")
     total = 0.0
@@ -181,12 +183,12 @@ def test_numbers_unchanged_from_5_1_1():
         for section in ("bcr", "items"):
             exp_keys = set(expected[name][section])
             if section == "items":
-                exp_keys -= {"oandm", "insurance"}
+                exp_keys -= {"oandm", "insurance", "outage_eac"}
                 assert exp_keys <= set(got_items), (name, exp_keys - set(got_items))
             else:
                 assert set(got[section]) >= exp_keys, (name, section)
             for key, value in expected[name][section].items():
-                if section == "items" and key in ("oandm", "insurance"):
+                if section == "items" and key in ("oandm", "insurance", "outage_eac"):
                     if key == "oandm" and name in _LINE_OM_F8_SKIP_BCR:
                         continue
                     got_val = _legacy_operating_pv(got_items, key)

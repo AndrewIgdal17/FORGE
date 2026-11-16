@@ -112,9 +112,9 @@ def calculate_outage_costs(
         capacity_at_risk = float(phi_config)
     rho_config = outage_config.get("load_shed_fraction", "auto")
     if rho_config in ("auto", None):
-        rho = 0.05 if ac_dc == "AC" else 0.80
+        load_shed_fraction = 0.05 if ac_dc == "AC" else 0.80
     else:
-        rho = float(rho_config)
+        load_shed_fraction = float(rho_config)
     redispatch_cost = outage_config["redispatch_cost_per_mwh"]
 
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
@@ -146,38 +146,63 @@ def calculate_outage_costs(
     # MW lost per event
     mw_lost_per_event = capacity_at_risk * capacity_mw * line_utilization
 
-    # Unserved energy per event (ρ = load_shed_fraction)
-    unserved_mwh_per_event = rho * duration_effective * mw_lost_per_event
+      # Unserved energy per event (load-shed share of lost flow)
+    unserved_mwh_per_event = load_shed_fraction * duration_effective * mw_lost_per_event
 
     # Two-tier cost per event: load-shed (VoLL) + redispatch (flat rate)
-    mw_shed = rho * mw_lost_per_event
-    mw_redisp = (1 - rho) * mw_lost_per_event
+    mw_shed = load_shed_fraction * mw_lost_per_event
+    mw_redisp = (1 - load_shed_fraction) * mw_lost_per_event
     cost_loadshed = calculate_voll_cost_piecewise(
         duration_effective, mw_shed, voll_tiers
     )
     cost_redispatch = mw_redisp * duration_effective * redispatch_cost
     cost_per_event = cost_loadshed + cost_redispatch
 
-    # Expected annual loss
-    expected_annual_loss = lambda_total * cost_per_event
+    annual_load_shed = lambda_total * cost_loadshed
+    annual_redispatch = lambda_total * cost_redispatch
+    expected_annual_loss = annual_load_shed + annual_redispatch
 
     if t_cod is None:
         t_cod = int(delay_years) + int(construction_years) + 1
     lifetime = int(project_lifetime)
     if horizon is None:
         horizon = t_cod + lifetime - 1
-    stream = growing(expected_annual_loss, growth_rate, int(t_cod), lifetime, int(horizon))
-    nominal_total = undiscounted(stream)
-    pv_cost = pv(stream, discount_rate)
+    stream_load_shed = growing(
+        annual_load_shed, growth_rate, int(t_cod), lifetime, int(horizon)
+    )
+    stream_redispatch = growing(
+        annual_redispatch, growth_rate, int(t_cod), lifetime, int(horizon)
+    )
+    nominal_load_shed = undiscounted(stream_load_shed)
+    nominal_redispatch = undiscounted(stream_redispatch)
+    nominal_total = nominal_load_shed + nominal_redispatch
+    pv_load_shed = pv(stream_load_shed, discount_rate)
+    pv_redispatch = pv(stream_redispatch, discount_rate)
+    pv_cost = pv_load_shed + pv_redispatch
 
     return {
         "lambda_total": lambda_total,
+        "mw_lost_per_event": mw_lost_per_event,
+        "load_shed_fraction": load_shed_fraction,
         "expected_annual_loss": expected_annual_loss,
+        "annual_load_shed": annual_load_shed,
+        "annual_redispatch": annual_redispatch,
         "capacity_at_risk": capacity_at_risk,
         "growth_rate": growth_rate,
         "nominal_total": nominal_total,
+        "nominal_load_shed": nominal_load_shed,
+        "nominal_redispatch": nominal_redispatch,
         "pv_cost": pv_cost,
-        "stream": stream,
+        "pv_load_shed": pv_load_shed,
+        "pv_redispatch": pv_redispatch,
+        "streams": {
+            "outage_load_shed": stream_load_shed,
+            "outage_redispatch": stream_redispatch,
+        },
+        "availability": {
+            "outage_load_shed": {"available": True, "applies": True, "missing_inputs": ()},
+            "outage_redispatch": {"available": True, "applies": True, "missing_inputs": ()},
+        },
         "total_miles": total_miles,
         "outage_rate": outage_rate,
         "lambda_terminal": lambda_terminal,
@@ -188,7 +213,6 @@ def calculate_outage_costs(
         "cost_per_event": cost_per_event,
         "cost_loadshed": cost_loadshed,
         "cost_redispatch": cost_redispatch,
-        "rho": rho,
         "redispatch_cost_per_mwh": redispatch_cost,
         "unserved_mwh_per_event": unserved_mwh_per_event,
     }
@@ -265,7 +289,10 @@ def main() -> None:
     logger.info(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
     logger.info("")
     logger.info("TWO-TIER COST PER EVENT:")
-    logger.info(f"  Load-shed fraction (rho): {results['rho']:.2f} ({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})")
+    logger.info(
+        f"  Load-shed fraction: {results['load_shed_fraction']:.2f} "
+        f"({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})"
+    )
     logger.info(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
     logger.info(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
     logger.info(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
@@ -300,6 +327,5 @@ def main() -> None:
     logger.info("=" * 80)
 
     csv_manager = SmartOutputManager()
-    results["streams"] = {"outage_eac": results["stream"]}
     csv_manager.add_outage_costs(results)
     csv_manager.write_batch_summary()

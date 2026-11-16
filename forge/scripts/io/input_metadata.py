@@ -823,26 +823,26 @@ for _ci, _ct in enumerate(WILDFIRE_CONSTRUCTION_TYPES):
 
 # Outage (16 fields) — all always_hidden, custom rendered
 _TAB7 += [
-    _f("out_growth_rate", taxonomy_id="outage_eac", input_tab="risk",
+    _f("out_growth_rate", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.risk_growth_rate",
        label="Risk Growth Rate", help_text="Annual increase in outage rates over project lifetime",
        input_type="percent", condition="always_hidden", tier="working", display_order=1,
        validation={"min": 0, "max": 0.1, "step": 0.005, "pct": True},
        sub_tab="outage-risk"),
-    _f("out_capacity_at_risk", taxonomy_id="outage_eac", input_tab="risk",
+    _f("out_capacity_at_risk", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.capacity_at_risk_factor",
        label="Capacity at risk (fraction of nameplate)", help_text="Fraction of capacity lost per outage. Default 'auto' = 1/N_poles from conductor table (1.0 for AC, 0.5 for DC bipole). Numeric override accepted.",
        input_type="number", condition="always_hidden", tier="working", display_order=3,
        validation={"min": 0, "max": 1, "step": 0.01},
        sub_tab="outage-risk"),
-    _f("out_load_shed_fraction", taxonomy_id="outage_eac", input_tab="risk",
+    _f("out_load_shed_fraction", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.load_shed_fraction",
        label="Load-shed fraction (%)",
        help_text="Share of lost megawatts priced at the value of lost load. The rest uses the redispatch cost. Auto is 5% for AC and 80% for DC.",
        input_type="percent", condition="always_hidden", tier="working", display_order=2,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="outage-risk"),
-    _f("out_redispatch_cost", taxonomy_id="outage_eac", input_tab="risk",
+    _f("out_redispatch_cost", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.redispatch_cost_per_mwh",
        label="Redispatch Cost", help_text="Congestion premium for rerouting power during outage ($/MWh). Default $20 from LBNL empirical data.",
        unit="$/MWh", input_type="currency", condition="always_hidden", tier="working",
@@ -857,14 +857,14 @@ _VOLL_TIER_LABELS = [
 for _ti in range(10):
     _tier_label = _VOLL_TIER_LABELS[_ti]
     _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_eac", input_tab="benefits",
+        f"out_voll_tier{_ti+1}_hours", taxonomy_id="outage_load_shed", input_tab="benefits",
         yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].max_hours",
         label=f"Max Hours — {_tier_label}", help_text=f"Upper bound for {_tier_label} duration tier",
         section_label="Value of Lost Load (VoLL Tiers)",
         unit="hours", condition="always_hidden", tier="working", display_order=10 + _ti * 2,
         sub_tab="economic-details"))
     _TAB7.append(_f(
-        f"out_voll_tier{_ti+1}_value", taxonomy_id="outage_eac", input_tab="benefits",
+        f"out_voll_tier{_ti+1}_value", taxonomy_id="outage_load_shed", input_tab="benefits",
         yaml_section="07_outage_costs", field_path=f"outage.value_of_lost_load.tiers[{_ti}].value_per_mwh",
         label=f"Value — {_tier_label}", help_text=f"Cost of unserved energy in {_tier_label} tier",
         section_label="Value of Lost Load (VoLL Tiers)",
@@ -873,7 +873,7 @@ for _ti in range(10):
 
 # Base outage duration (single scalar)
 _TAB7.append(_f(
-    "out_duration", taxonomy_id="outage_eac", input_tab="risk",
+    "out_duration", taxonomy_id="outage_load_shed", input_tab="risk",
     yaml_section="07_outage_costs", field_path="outage.outage_duration",
     label="Base Outage Duration", help_text="Base outage duration (hrs/event); effective = base × construction multiplier",
     section_label="Outage Duration",
@@ -883,7 +883,7 @@ _TAB7.append(_f(
 # Duration multiplier by construction type (3)
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
     _TAB7.append(_f(
-        f"out_dur_mult_{_ct}", taxonomy_id="outage_eac", input_tab="risk",
+        f"out_dur_mult_{_ct}", taxonomy_id="outage_load_shed", input_tab="risk",
         yaml_section="07_outage_costs", field_path=f"outage.outage_duration_multiplier.{_ct}",
         label=_ct.title(), help_text=f"Duration multiplier for {_ct} construction (1.0 = overhead baseline)",
         section_label="Duration Multipliers by Construction Type",
@@ -893,7 +893,7 @@ for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
 # Outage rates by construction type (3)
 for _ci, _ct in enumerate(CONSTRUCTION_TYPES):
     _TAB7.append(_f(
-        f"out_rate_{_ct}", taxonomy_id="outage_eac", input_tab="risk",
+        f"out_rate_{_ct}", taxonomy_id="outage_load_shed", input_tab="risk",
         yaml_section="07_outage_costs", field_path=f"outage.outage_rate.{_ct}",
         label=_ct.title(), help_text=f"Line-level outage frequency for {_ct} construction",
         section_label="Outage Frequency by Construction Type",
