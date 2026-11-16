@@ -838,7 +838,11 @@ _TAB7 += [
     _f("out_load_shed_fraction", taxonomy_id="outage_load_shed", input_tab="risk",
        yaml_section="07_outage_costs", field_path="outage.load_shed_fraction",
        label="Load-shed fraction (%)",
-       help_text="Share of lost megawatts priced at the value of lost load. The rest uses the redispatch cost. Auto is 5% for AC and 80% for DC.",
+       help_text=(
+           "Share of lost power shed as unserved energy and priced at the value of lost load. "
+           "Default 0.05 for AC and DC lines alike (ENTSO-E 2021). "
+           "The rest is redispatched at the route's congestion spread."
+       ),
        input_type="percent", condition="always_hidden", tier="working", display_order=2,
        validation={"min": 0, "max": 1, "step": 0.01, "pct": True},
        sub_tab="outage-risk"),

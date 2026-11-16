@@ -214,7 +214,12 @@ def test_provenance_copies_data_releases():
     assert results["provenance"]["data_releases"] == info["data_releases"]
 
 
-def _assert_present_leaves_match(template_node, resolved_node, input_node):
+def _assert_present_leaves_match(
+    template_node,
+    resolved_node,
+    input_node,
+    path_prefix: str = "",
+):
     """Compare resolved_node against input_node for every leaf present in input_node.
 
     Walks template_node to find the shape. A key/index missing from input_node
@@ -226,15 +231,29 @@ def _assert_present_leaves_match(template_node, resolved_node, input_node):
             return
         for key, child in template_node.items():
             if key in input_node:
-                _assert_present_leaves_match(child, resolved_node[key], input_node[key])
+                segment = f"{path_prefix}.{key}" if path_prefix else key
+                _assert_present_leaves_match(
+                    child, resolved_node[key], input_node[key], segment,
+                )
         return
     if isinstance(template_node, list):
         if not isinstance(input_node, list) or len(input_node) != len(template_node):
             return
         for index, child in enumerate(template_node):
-            _assert_present_leaves_match(child, resolved_node[index], input_node[index])
+            segment = f"{path_prefix}[{index}]"
+            _assert_present_leaves_match(
+                child, resolved_node[index], input_node[index], segment,
+            )
         return
-    assert forge.canonical_dumps(resolved_node) == forge.canonical_dumps(input_node)
+    expected = input_node
+    migrated = forge.contract.MIGRATED_VALUES.get(path_prefix)
+    if migrated is not None:
+        from forge.contract import _decode
+
+        replacement = migrated.get(_decode(input_node))
+        if replacement is not None:
+            expected = replacement
+    assert forge.canonical_dumps(resolved_node) == forge.canonical_dumps(expected)
 
 
 def test_diff_changes_raises_on_present_value_type_mismatches(monkeypatch):

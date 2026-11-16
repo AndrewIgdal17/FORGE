@@ -102,7 +102,7 @@ def test_routeless_margin_line_ratios_not_available():  # spec acceptance 1
 
 def test_sunzia_ratios_unchanged():  # spec acceptance 2
     b = run()["bcr"]
-    assert b["bcr_societal"] == pytest.approx(0.15623096978640783)
+    assert b["bcr_societal"] == pytest.approx(0.5472018088007773)
     assert b["bcr_ratepayer"] == pytest.approx(0.5281776435390445)
     assert b["bcr_utility"] == pytest.approx(
         b["utility_benefits_pv"] / b["utility_costs_pv"], rel=1e-9,

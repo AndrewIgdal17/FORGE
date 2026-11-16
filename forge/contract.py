@@ -31,6 +31,9 @@ REMOVED_INPUTS: dict[str, Any] = {
     "04_insurance.insurance.insurable_components.structures": True,
     "04_insurance.insurance.insurable_components.converters": True,
 }
+MIGRATED_VALUES: dict[str, dict[Any, Any]] = {
+    "07_outage_costs.outage.load_shed_fraction": {"auto": 0.05},
+}
 
 
 def _encode(value: Any) -> Any:
@@ -256,6 +259,26 @@ def _removed_input_message(path: str) -> str:
     )
 
 
+def migrate_changes(changes: Mapping[str, Any]) -> tuple[dict[str, Any], list[dict]]:
+    """Drop removed inputs at their old default, map migrated values, collect errors."""
+    migrated: dict[str, Any] = dict(changes)
+    errors: list[dict] = []
+    for path in list(migrated.keys()):
+        if path in REMOVED_INPUTS:
+            decoded = _decode(migrated[path])
+            if decoded is True or decoded is None:
+                del migrated[path]
+                continue
+            errors.append({"path": path, "message": _removed_input_message(path)})
+            del migrated[path]
+        elif path in MIGRATED_VALUES:
+            decoded = _decode(migrated[path])
+            replacement = MIGRATED_VALUES[path].get(decoded)
+            if replacement is not None:
+                migrated[path] = replacement
+    return migrated, errors
+
+
 def removed_input_errors(document: Mapping[str, Any]) -> list[str]:
     """One message per removed path present with a value other than true or null."""
     if not isinstance(document, dict):
@@ -279,16 +302,12 @@ def validate_changes(changes: Mapping[str, Any]) -> list[dict]:
     Returns a list of ``{"path": ..., "message": ...}`` entries, one per
     invalid path. An empty list means every change is valid.
     """
+    migrated, migrate_errors = migrate_changes(changes)
     metadata = _metadata_by_path()
     template = get_defaults_template()
-    errors: list[dict] = []
-    for path, raw_value in changes.items():
+    errors: list[dict] = list(migrate_errors)
+    for path, raw_value in migrated.items():
         decoded = _decode(raw_value)
-        if path in REMOVED_INPUTS:
-            if decoded is True or decoded is None:
-                continue
-            errors.append({"path": path, "message": _removed_input_message(path)})
-            continue
         if not isinstance(decoded, _SCALAR):
             errors.append({"path": path, "message": "value must be a scalar (not a dict or list)"})
             continue
@@ -492,10 +511,9 @@ def missing_required_inputs(
     ``capital_only`` drops every after-route field. ``no_linelosses`` is
     retained for callers and has no effect.
     """
+    migrated, _ = migrate_changes(changes)
     resolved = copy.deepcopy(get_defaults_template())
-    for path, value in changes.items():
-        if path in REMOVED_INPUTS:
-            continue
+    for path, value in migrated.items():
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
     return _missing_required_in(
@@ -606,10 +624,9 @@ def resolve_inputs(changes: Mapping[str, Any]) -> dict:
             detail = "; ".join(f"{error['path']}: {error['message']}" for error in errors)
             raise InvalidInputs(detail)
         raise UnknownInputPath([error["path"] for error in errors])
+    migrated, _ = migrate_changes(changes)
     resolved = copy.deepcopy(get_defaults_template())
-    for path, value in changes.items():
-        if path in REMOVED_INPUTS:
-            continue
+    for path, value in migrated.items():
         parent, key = _walk(resolved, path)
         parent[key] = _decode(value)
     parts: list[str] = []

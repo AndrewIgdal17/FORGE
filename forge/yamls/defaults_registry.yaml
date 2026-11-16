@@ -1038,6 +1038,13 @@ risk_costs:
       yaml_file: 06_wildfire_costs.yaml
       basis: Sourced
   outage:
+    load_shed_fraction:
+      path: 07_outage_costs.outage.load_shed_fraction
+      unit: fraction
+      source: 0.05 for every line, AC and DC alike
+      citation: ENTSOE2021CBA
+      yaml_file: 07_outage_costs.yaml
+      basis: Sourced
     lambda_terminal:
       path: 07_outage_costs.outage.outage_rate.overhead.lambda_terminal
       unit: outages/year

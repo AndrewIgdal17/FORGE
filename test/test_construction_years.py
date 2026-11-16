@@ -38,6 +38,7 @@ def _outage_yaml() -> dict:
             "outage_duration": 1.0,
             "outage_duration_multiplier": {"overhead": 1.0},
             "outage_rate": {"overhead": 0.0},
+            "load_shed_fraction": 0.05,
         }
     }
 

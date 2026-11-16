@@ -1,7 +1,7 @@
 outage:
   risk_growth_rate: 0.0
   capacity_at_risk_factor: auto
-  load_shed_fraction: auto
+  load_shed_fraction: 0.05
   redispatch_cost_per_mwh: 24
   value_of_lost_load:
     tiers:

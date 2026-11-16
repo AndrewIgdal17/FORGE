@@ -73,7 +73,6 @@ def calculate_outage_costs(
     construction_years: float,
     number_of_circuits_poles: int = 1,
     line_utilization: float = 1.0,
-    ac_dc: str = "AC",
     t_cod: int | None = None,
     horizon: int | None = None,
 ) -> Dict[str, Any]:
@@ -92,7 +91,6 @@ def calculate_outage_costs(
         number_of_circuits_poles: Number of circuits (AC) or poles (DC); used to
             auto-derive phi = 1/N_poles when capacity_at_risk_factor is "auto"
         line_utilization: Average fraction of line capacity in use (0-1)
-        ac_dc: "AC" or "DC"; used to auto-derive rho when load_shed_fraction is "auto"
 
     Returns:
         dict: Contains expected_annual_loss, nominal_cost, pv_cost
@@ -110,11 +108,7 @@ def calculate_outage_costs(
         capacity_at_risk = 1.0 / number_of_circuits_poles
     else:
         capacity_at_risk = float(phi_config)
-    rho_config = outage_config.get("load_shed_fraction", "auto")
-    if rho_config in ("auto", None):
-        load_shed_fraction = 0.05 if ac_dc == "AC" else 0.80
-    else:
-        load_shed_fraction = float(rho_config)
+    load_shed_fraction = float(outage_config["load_shed_fraction"])
     redispatch_cost = outage_config["redispatch_cost_per_mwh"]
 
     voll_tiers = outage_config["value_of_lost_load"]["tiers"]
@@ -251,7 +245,6 @@ def main() -> None:
         construction_years=project_details.construction_years,
         number_of_circuits_poles=circuit_details.number_of_circuits_poles,
         line_utilization=project_details.line_utilization,
-        ac_dc=project_details.ac_dc,
         t_cod=ctx.t_cod,
         horizon=ctx.horizon,
     )
@@ -289,10 +282,7 @@ def main() -> None:
     logger.info(f"  Unserved Energy/Event: {results['unserved_mwh_per_event']:,.0f} MWh")
     logger.info("")
     logger.info("TWO-TIER COST PER EVENT:")
-    logger.info(
-        f"  Load-shed fraction: {results['load_shed_fraction']:.2f} "
-        f"({'AC meshed' if project_details.ac_dc == 'AC' else 'DC point-to-point'})"
-    )
+    logger.info(f"  Load-shed fraction: {results['load_shed_fraction']:.2f}")
     logger.info(f"  Redispatch cost: ${results['redispatch_cost_per_mwh']:,.0f}/MWh")
     logger.info(f"  Load-shed cost/event: ${results['cost_loadshed']:,.0f}")
     logger.info(f"  Redispatch cost/event: ${results['cost_redispatch']:,.0f}")
