@@ -211,6 +211,8 @@ def main() -> None:
     credits_pv = pv(credits_stream, r_social)
     total_pv = pv(mitigation_stream, r_social)
     total_pv_wacc = pv(mitigation_stream, r_wacc)
+    base_cost_pv_wacc = pv(base_stream, r_wacc)
+    credits_pv_wacc = pv(credits_stream, r_wacc)
     base_cost_nominal = undiscounted(base_stream)
     credits_nominal = undiscounted(credits_stream)
     total_nominal = undiscounted(mitigation_stream)
@@ -281,8 +283,10 @@ def main() -> None:
         "total_pv_wacc": total_pv_wacc,
         "base_cost_nominal": base_cost_nominal,
         "base_cost_pv": base_cost_pv,
+        "base_cost_pv_wacc": base_cost_pv_wacc,
         "credits_nominal": credits_nominal,
         "credits_pv": credits_pv,
+        "credits_pv_wacc": credits_pv_wacc,
     }
 
     # Write to CSV

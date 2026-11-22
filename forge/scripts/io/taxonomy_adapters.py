@@ -27,6 +27,7 @@ class DetailRow:
     value_pv: float
     value_nominal: float | None = None
     value_annual: float | None = None
+    value_pv_wacc: float | None = None
 
 
 @dataclass(frozen=True)
@@ -153,8 +154,8 @@ def adapt_row(row: dict) -> list[TaxonomyResult]:
 def adapt_environmental(env: dict) -> list[TaxonomyResult]:
     """Adapt costs.environmental -> env_mitigation.
 
-    Copies the mitigation stream and both present values. Detail rows use the
-    societal present values of on-site work and credits.
+    Copies the mitigation stream and both present values. Detail rows carry the
+    social and WACC present values of on-site work and credits.
     """
     if not env:
         return []
@@ -169,11 +170,13 @@ def adapt_environmental(env: dict) -> list[TaxonomyResult]:
                 "credit_type", "base",
                 value_pv=_safe(env, "base_cost_pv"),
                 value_nominal=base_nom,
+                value_pv_wacc=_safe(env, "base_cost_pv_wacc"),
             ),
             DetailRow(
                 "credit_type", "credits",
                 value_pv=_safe(env, "credits_pv"),
                 value_nominal=credits_nom,
+                value_pv_wacc=_safe(env, "credits_pv_wacc"),
             ),
         )
     return _copy_availability(env, [
@@ -205,18 +208,22 @@ def adapt_oandm(oandm: dict) -> list[TaxonomyResult]:
             stream=list(stream) if stream is not None else None,
         )
 
+    # Overhead line O&M is a per-mile base rate plus vegetation management;
+    # the two rows add up to the item at either rate.
     detail_rows: list[DetailRow] = []
     veg_pv = _safe(oandm, "vegetation_pv")
     if veg_pv:
-        detail_rows.append(
+        detail_rows = [
             DetailRow(
                 "component",
-                "vegetation",
-                value_pv=veg_pv,
-                value_nominal=_safe(oandm, "vegetation_nominal"),
-                value_annual=_safe(oandm, "vegetation_annual"),
+                key,
+                value_pv=_safe(oandm, f"{key}_pv"),
+                value_nominal=_safe(oandm, f"{key}_nominal"),
+                value_annual=_safe(oandm, f"{key}_annual"),
+                value_pv_wacc=_safe(oandm, f"{key}_pv_wacc"),
             )
-        )
+            for key in ("base", "vegetation")
+        ]
     line_item = _item("oandm_line", "line_om")
     if detail_rows:
         line_item = replace(line_item, detail=tuple(detail_rows))
@@ -612,6 +619,7 @@ def taxonomy_results_to_json_list(results: list[TaxonomyResult]) -> list[dict]:
                     "value_pv": d.value_pv,
                     "value_nominal": d.value_nominal,
                     "value_annual": d.value_annual,
+                    "value_pv_wacc": d.value_pv_wacc,
                 }
                 for d in (r.detail or ())
             ],

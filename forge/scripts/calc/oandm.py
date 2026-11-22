@@ -172,6 +172,7 @@ def main() -> None:
         )
 
         total_line_om_per_year = base_om_per_year + total_vegetation_management_cost_per_year
+        base_line_om_per_year = base_om_per_year
 
         # Legacy fields (zeroed — no longer decomposed into conductor/structure)
         total_conductor_cost_per_year = 0.0
@@ -193,6 +194,7 @@ def main() -> None:
         variable_structure_cost_per_mile_year = 0.0
         variable_structure_cost_per_year = 0.0
         total_vegetation_management_cost_per_year = 0.0
+        base_line_om_per_year = total_line_om_per_year
         structure_dict = {}
 
         struct_data = section("14_category_om_structures")
@@ -204,6 +206,7 @@ def main() -> None:
         variable_structure_cost_per_mile_year = None
         variable_structure_cost_per_year = None
         total_vegetation_management_cost_per_year = None
+        base_line_om_per_year = None
         structure_dict = {}
         om_real_escalation_rate = None
 
@@ -228,6 +231,7 @@ def main() -> None:
     conductor_stream = _grow(total_conductor_cost_per_year)
     structure_stream = _grow(variable_structure_cost_per_year)
     vegetation_stream = _grow(total_vegetation_management_cost_per_year)
+    base_stream = _grow(base_line_om_per_year)
     line_stream = _grow(total_line_om_per_year)
     if converter_applies and total_converter_cost_per_year is not None:
         converter_stream = _grow(total_converter_cost_per_year)
@@ -247,6 +251,7 @@ def main() -> None:
         total_vegetation_management_cost_lifetime,
     ) = _values(vegetation_stream)
     pv_line_om, line_om_pv_wacc, line_om_nominal = _values(line_stream)
+    base_pv, base_pv_wacc, base_nominal = _values(base_stream)
     if converter_applies and converter_stream is not None:
         pv_converter, converter_pv_wacc, total_converter_cost_lifetime = _values(converter_stream)
     else:
@@ -404,6 +409,10 @@ def main() -> None:
         "vegetation_nominal": total_vegetation_management_cost_lifetime,
         "vegetation_pv": pv_vegetation_management,
         "vegetation_pv_wacc": vegetation_pv_wacc,
+        "base_annual": base_line_om_per_year,
+        "base_nominal": base_nominal,
+        "base_pv": base_pv,
+        "base_pv_wacc": base_pv_wacc,
         "line_om_annual": total_line_om_per_year,
         "line_om_nominal": line_om_nominal,
         "line_om_pv": pv_line_om,
